@@ -1,0 +1,44 @@
+{
+  "name": "biblos",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "build:mobile": "cross-env CAPACITOR=1 tsc && cross-env CAPACITOR=1 vite build",
+    "mobile:sync": "npm run build:mobile && npx cap sync android",
+    "mobile:open": "npx cap open android",
+    "mobile:apk": "npm run mobile:sync && npm run mobile:gradle",
+    "mobile:gradle": "cd android && gradlew.bat assembleDebug",
+    "mobile:install": "powershell -ExecutionPolicy Bypass -File scripts/install-android.ps1",
+    "mobile:live": "powershell -ExecutionPolicy Bypass -File scripts/install-android.ps1 -live",
+    "preview": "vite preview",
+    "seed": "node scripts/build-seed.mjs",
+    "sync:cards": "node scripts/sync-flashcards.mjs --apply",
+    "sync:cards:dry": "node scripts/sync-flashcards.mjs --dry-run"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.1",
+    "@capacitor/app": "^8.1.1",
+    "@capacitor/cli": "^8.5.1",
+    "@capacitor/core": "^8.5.1",
+    "@capacitor/filesystem": "^8.1.3",
+    "@capacitor/share": "^8.0.1",
+    "@capacitor/status-bar": "^8.0.3",
+    "@heroicons/react": "^2.2.0",
+    "html-to-image": "^1.11.13",
+    "jspdf": "^4.2.1",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "vite-plugin-pwa": "^1.3.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^5.1.0",
+    "cross-env": "^10.1.0",
+    "typescript": "~5.9.0",
+    "vite": "^8.2.0"
+  }
+}

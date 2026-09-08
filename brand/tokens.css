@@ -1,0 +1,36 @@
+:root {
+  /* Core — CLEVENCODE */
+  --cc-ink: #0d1117;
+  --cc-paper: #ffffff;
+  --cc-action: #2563eb;
+  --cc-line: #e5e7eb;
+  --cc-mute: #6b7280;
+  --cc-mute-dark: #9ca3af;
+  --cc-surface-dark: #161b22;
+
+  --cc-bg: var(--cc-paper);
+  --cc-text: var(--cc-ink);
+  --cc-text-secondary: var(--cc-mute);
+  --cc-border: var(--cc-line);
+  --cc-accent: var(--cc-action);
+
+  /* Tipografia — geométrica premium (referência Azurio) */
+  --cc-font: "Outfit", "Avenir Next", "Segoe UI", sans-serif;
+  --cc-tracking-display: -0.04em;
+  --cc-tracking-body: -0.01em;
+
+  /* Espaço Swiss */
+  --cc-space-1: 8px;
+  --cc-space-2: 16px;
+  --cc-space-3: 24px;
+  --cc-space-4: 48px;
+  --cc-radius: 6px;
+}
+
+[data-theme="dark"] {
+  --cc-bg: var(--cc-ink);
+  --cc-text: var(--cc-paper);
+  --cc-text-secondary: var(--cc-mute-dark);
+  --cc-border: #21262d;
+  --cc-accent: var(--cc-action);
+}

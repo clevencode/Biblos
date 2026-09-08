@@ -1,0 +1,35 @@
+{
+  "notas": [
+    {
+      "nota": {
+        "id": "bucket-versecard",
+        "titulo": "VERSECARD",
+        "url": "",
+        "criadoEm": "2026-09-07T00:00:00.000Z",
+        "cartoes": 1
+      },
+      "materia": {
+        "id": "cat-versecard",
+        "nome": "VERSECARD"
+      },
+      "disciplina": {
+        "id": "disc-versecard",
+        "nome": "VERSECARD"
+      },
+      "flashcards": [
+        {
+          "id": "card-test-jean-316",
+          "frente": "JEAN 3.16.",
+          "verso": "Car Dieu a tant aimé le monde qu'il a donné son Fils unique, afin que quiconque croit en lui ne périsse pas, mais qu'il ait la vie éternelle.",
+          "categoria": null,
+          "status": "estudo",
+          "url": "https://app.notion.com/p/biblos-test-jean-316",
+          "lembrete": "2026-09-07",
+          "cardCategory": "VERSECARD",
+          "criadoEm": "2026-09-07"
+        }
+      ]
+    }
+  ],
+  "plans": []
+}

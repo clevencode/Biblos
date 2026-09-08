@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>clevencode — Brand Identity</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./tokens.css" />
+  <link rel="icon" href="./logo-icon.svg" type="image/svg+xml" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      background: var(--cc-paper);
+      color: var(--cc-ink);
+      font-family: var(--cc-font);
+      -webkit-font-smoothing: antialiased;
+    }
+    .board {
+      width: min(1440px, 100%);
+      margin: 0 auto;
+      padding: 72px 80px;
+      border-bottom: 1px solid var(--cc-line);
+    }
+    .kicker {
+      display: flex; align-items: center; gap: 10px;
+      color: var(--cc-action); font-size: 12px; font-weight: 500;
+      letter-spacing: 0.14em; text-transform: uppercase;
+    }
+    .kicker i { width: 8px; height: 8px; background: var(--cc-action); display: block; }
+    h1 {
+      font-size: clamp(52px, 8vw, 96px); font-weight: 700;
+      letter-spacing: var(--cc-tracking-display); line-height: 0.92;
+    }
+    h2 {
+      font-size: clamp(28px, 4vw, 44px); font-weight: 600;
+      letter-spacing: -0.03em; line-height: 1.1;
+    }
+    h3 { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; }
+    p, li { font-size: 16px; line-height: 1.55; color: var(--cc-mute); letter-spacing: var(--cc-tracking-body); }
+    strong { color: var(--cc-ink); font-weight: 600; }
+    .tagline { color: var(--cc-action); font-weight: 500; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    .grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
+    .stack { display: flex; flex-direction: column; gap: 20px; }
+    .mt { margin-top: 48px; }
+    .mt-sm { margin-top: 24px; }
+    .card {
+      border: 1px solid var(--cc-line); padding: 28px; min-height: 160px;
+      background:
+        linear-gradient(180deg, #fafafa 0%, #fff 40%),
+        radial-gradient(120% 80% at 100% 0%, rgba(37,99,235,0.06), transparent 55%);
+    }
+    .card.dark { background: var(--cc-ink); border-color: var(--cc-ink); color: #fff; }
+    .card.dark p { color: var(--cc-mute-dark); }
+    .card.blue { background: var(--cc-action); border-color: var(--cc-action); color: #fff; }
+    .card.blue p { color: rgba(255,255,255,0.82); }
+    .mark { width: 96px; height: 96px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .mark b { background: var(--cc-ink); border-radius: 6px; }
+    .mark b.spark { background: var(--cc-action); transform: translate(4px, 4px); }
+    .mark.invert b { background: #fff; }
+    .mark.invert b.spark { background: var(--cc-action); }
+    .wordmark {
+      display: inline-flex; align-items: flex-end; gap: 8px;
+      font-size: 40px; font-weight: 700; letter-spacing: -0.04em; line-height: 1;
+    }
+    .wordmark i { width: 10px; height: 10px; background: var(--cc-action); margin-bottom: 6px; }
+    .swatch { min-height: 260px; display: flex; flex-direction: column; justify-content: space-between; padding: 20px; }
+    .swatch small { font-size: 12px; font-weight: 500; letter-spacing: 0.04em; }
+    .type-row {
+      display: grid; grid-template-columns: 160px 1fr; gap: 24px;
+      padding: 20px 0; border-top: 1px solid var(--cc-line); align-items: baseline;
+    }
+    .type-row span { font-size: 12px; font-weight: 500; color: var(--cc-mute); letter-spacing: 0.06em; text-transform: uppercase; }
+    .icon-row { display: flex; gap: 20px; flex-wrap: wrap; }
+    .icon { width: 56px; height: 56px; border: 1px solid var(--cc-line); display: grid; place-items: center; }
+    .ui-window { border: 1px solid var(--cc-line); padding: 20px; background: #fff; }
+    .ui-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .btn {
+      background: var(--cc-action); color: #fff; border: 0; padding: 8px 14px;
+      font: 600 13px/1 var(--cc-font); border-radius: 4px;
+    }
+    .chip { border: 1px solid var(--cc-line); color: var(--cc-mute); padding: 6px 10px; font-size: 12px; font-weight: 500; }
+    .social { aspect-ratio: 1; padding: 28px; display: flex; flex-direction: column; justify-content: space-between; }
+    .num { font-size: 64px; font-weight: 700; letter-spacing: -0.05em; line-height: 1; }
+    .hero-bg {
+      background:
+        radial-gradient(ellipse 80% 60% at 10% 0%, rgba(37,99,235,0.08), transparent 50%),
+        linear-gradient(180deg, #f8f9fb 0%, #ffffff 55%);
+    }
+    @media (max-width: 900px) {
+      .board { padding: 40px 24px; }
+      .grid-2, .grid-3, .grid-4, .grid-5 { grid-template-columns: 1fr; }
+      .type-row { grid-template-columns: 1fr; gap: 8px; }
+    }
+  </style>
+</head>
+<body>
+  <section class="board hero-bg">
+    <div class="kicker"><i></i> CLEVENCODE · Brand 2026</div>
+    <div class="stack mt" style="max-width: 920px; gap: 28px;">
+      <div class="mark" aria-hidden="true"><b></b><b></b><b></b><b class="spark"></b></div>
+      <h1>clevencode</h1>
+      <p class="tagline" style="font-size: 22px;">Widgets que estudam com você.</p>
+      <p>Microaplicativos para estudantes e universitários.<br />Simplicidade. Efetividade. Beleza.</p>
+    </div>
+  </section>
+
+  <section class="board">
+    <div class="kicker"><i></i> 01 / Estratégia</div>
+    <h2 class="mt-sm">Tecnologia que melhora o desempenho nos estudos.</h2>
+    <div class="grid-3 mt">
+      <article class="card dark">
+        <p style="color: var(--cc-action); font-size: 12px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;">Propósito</p>
+        <h3 class="mt-sm" style="color:#fff;">Microapps que ajudam a estudar de forma efetiva</h3>
+        <p class="mt-sm">Com apoio da tecnologia — sem fricção, sem excesso.</p>
+      </article>
+      <article class="card">
+        <p style="color: var(--cc-action); font-size: 12px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;">Missão</p>
+        <h3 class="mt-sm">Simplificar a tecnologia</h3>
+        <p class="mt-sm">Para que estudantes usem ferramentas digitais com clareza e confiança.</p>
+      </article>
+      <article class="card">
+        <p style="color: var(--cc-action); font-size: 12px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;">Visão</p>
+        <h3 class="mt-sm">Acesso fácil ao melhor desempenho</h3>
+        <p class="mt-sm">Ferramentas ao alcance — para dar o melhor nos estudos.</p>
+      </article>
+    </div>
+    <div class="grid-3 mt">
+      <article class="card"><h3>Simplicidade</h3><p class="mt-sm">O caminho mais curto até o resultado.</p></article>
+      <article class="card"><h3>Efetividade</h3><p class="mt-sm">Se não melhora o estudo, não entra.</p></article>
+      <article class="card blue"><h3>Beleza</h3><p class="mt-sm">Premium, limpo, intencional — sem ornamento.</p></article>
+    </div>
+  </section>
+
+  <section class="board">
+    <div class="kicker"><i></i> 02 / Posicionamento</div>
+    <div class="grid-2 mt">
+      <div class="stack">
+        <h3>Produto</h3>
+        <p>Microaplicativos que resolvem problemas de estudantes e universitários.</p>
+        <h3>Diferenciação</h3>
+        <p><strong>Simplicidade funcional.</strong> Um widget, um problema. Modularidade sem complexidade.</p>
+      </div>
+      <div class="stack">
+        <h3>Personalidade</h3>
+        <p>Premium · Simples · Efetiva · Experimental</p>
+        <h3>Público</h3>
+        <p>Estudantes e universitários no mercado educacional.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="board">
+    <div class="kicker"><i></i> 03 / Voz verbal</div>
+    <h2 class="mt-sm">Calmo. Entusiasmado. Descontraído.</h2>
+    <div class="grid-2 mt">
+      <div class="stack">
+        <p><strong>Tom:</strong> calmo com energia — nunca grita, nunca fria.</p>
+        <p><strong>Humor:</strong> descontraído, leve, sem meme forçado.</p>
+        <p><strong>Vocabulário:</strong> simples. Pitch vocal experimental.</p>
+      </div>
+      <div class="stack">
+        <p class="tagline" style="font-size: 20px;">Widgets que estudam com você.</p>
+        <p>Ferramentas digitais para a vida acadêmica.</p>
+        <p>Pequenas ferramentas. Grandes resultados.</p>
+        <p>Seu estudo, mais simples.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="board">
+    <div class="kicker"><i></i> 04 / Logo</div>
+    <h2 class="mt-sm">Letra C em quatro widgets.</h2>
+    <p class="mt-sm" style="max-width:640px;">Três tiles estáveis + um tile azul deslocado: produtividade, módulos de estudo e o “C” implícito. O azul é ação — o ponto de foco.</p>
+    <div class="grid-3 mt">
+      <article class="card dark" style="min-height:260px;display:flex;flex-direction:column;justify-content:space-between;">
+        <div class="mark invert"><b></b><b></b><b></b><b class="spark"></b></div>
+        <p>Marca · fundo escuro</p>
+      </article>
+      <article class="card" style="min-height:260px;display:flex;flex-direction:column;justify-content:space-between;">
+        <div class="mark"><b></b><b></b><b></b><b class="spark"></b></div>
+        <p>Marca · fundo claro</p>
+      </article>
+      <article class="card" style="min-height:260px;display:flex;flex-direction:column;justify-content:space-between;">
+        <div class="wordmark">clevencode<i></i></div>
+        <p class="mt-sm">Wordmark sempre minúsculo. Quadrado azul = ação.</p>
+      </article>
+    </div>
+    <p class="mt">Não alongar o símbolo · não recolorir o azul · não acoplar slogan ao ícone · mínimo 16px.</p>
+  </section>
+
+  <section class="board">
+    <div class="kicker"><i></i> 05 / Cores</div>
+    <h2 class="mt-sm">Azul é ação. Não preenchimento.</h2>
+    <div class="grid-5 mt">
+      <div class="swatch" style="background:#2563EB;color:#fff;"><div><strong>Azul elétrico</strong><br /><small>#2563EB</small><p style="color:rgba(255,255,255,.8);margin-top:8px;">Links, CTAs, destaque.</p></div></div>
+      <div class="swatch" style="background:#0D1117;color:#fff;"><div><strong>Preto tech</strong><br /><small>#0D1117</small><p style="color:#9CA3AF;margin-top:8px;">Texto forte, UI premium.</p></div></div>
+      <div class="swatch" style="background:#6B7280;color:#fff;"><div><strong>Cinza</strong><br /><small>#6B7280</small><p style="color:#E5E7EB;margin-top:8px;">Texto secundário.</p></div></div>
+      <div class="swatch" style="background:#E5E7EB;color:#0D1117;"><div><strong>Cinza claro</strong><br /><small>#E5E7EB</small><p style="margin-top:8px;">Bordas e superfícies.</p></div></div>
+      <div class="swatch" style="background:#fff;color:#0D1117;border:1px solid #E5E7EB;"><div><strong>Branco</strong><br /><small>#FFFFFF</small><p style="margin-top:8px;">Fundo e respiro.</p></div></div>
+    </div>
+  </section>
+
+  <section class="board">
+    <div class="kicker"><i></i> 06 / Tipografia</div>
+    <h2 class="mt-sm">Outfit — geométrica premium.</h2>
+    <p class="mt-sm">Referência Azurio: sans moderna, tracking negativo, hierarquia Swiss.</p>
+    <div class="mt">
+      <div class="type-row"><span>Bold / Display</span><div style="font-size:40px;font-weight:700;letter-spacing:-0.04em;">clevencode</div></div>
+      <div class="type-row"><span>SemiBold / Título</span><div style="font-size:24px;font-weight:600;letter-spacing:-0.03em;">Calendário de provas</div></div>
+      <div class="type-row"><span>Medium / Label</span><div style="font-size:14px;font-weight:500;">Navegação · widget · sessão</div></div>
+      <div class="type-row"><span>Regular / Corpo</span><div style="font-size:16px;color:var(--cc-mute);max-width:560px;">Textos longos e apoio. Títulos curtos. Poucos pesos por tela.</div></div>
+    </div>
+  </section>
+
+  <section class="board">
+    <div class="kicker"><i></i> 07 / Iconografia &amp; foto</div>
+    <div class="grid-2 mt">
+      <div>
+        <h3>Ícones</h3>
+        <p class="mt-sm">Livro + tecnologia. Linear, geométrico, funcional. Azul no claro · branco no escuro.</p>
+        <div class="icon-row mt">
+          <div class="icon"><svg width="24" height="24" fill="none" stroke="#2563EB" stroke-width="1.75" stroke-linecap="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></div>
+          <div class="icon"><svg width="24" height="24" fill="none" stroke="#2563EB" stroke-width="1.75" stroke-linecap="round"><path d="M4 19V5h6l2 3h8v11z"/></svg></div>
+          <div class="icon" style="background:#0D1117;border-color:#0D1117;"><svg width="24" height="24" fill="none" stroke="#fff" stroke-width="1.75"><rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
+        </div>
+      </div>
+      <div>
+        <h3>Fotografia</h3>
+        <p class="mt-sm">Capturas de ferramentas digitais de estudo em uso. Fundo branco premium. Produto em contexto — não stock genérico.</p>
+        <h3 class="mt">Grid</h3>
+        <p class="mt-sm">Swiss modern: colunas rígidas, margens generosas, assimetria controlada, poucos elementos bem posicionados.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="board">
+    <div class="kicker"><i></i> 08 / UI</div>
+    <h2 class="mt-sm">Clareza antes de decoração.</h2>
+    <div class="grid-2 mt">
+      <div class="ui-window">
+        <div class="ui-bar"><strong>widget / provas</strong><button class="btn" type="button">abrir</button></div>
+        <div class="num">3</div>
+        <p class="mt-sm">provas esta semana</p>
+        <div class="icon-row mt-sm"><span class="chip">cálculo II</span><span class="chip">história</span></div>
+      </div>
+      <div class="ui-window" style="background:#0D1117;border-color:#0D1117;color:#fff;">
+        <div class="ui-bar"><strong style="color:#fff;">widget / foco</strong><button class="btn" type="button">iniciar</button></div>
+        <div class="num" style="color:#fff;">25:00</div>
+        <p class="mt-sm" style="color:#9CA3AF;">pomodoro · sessão 2 de 4</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="board">
+    <div class="kicker"><i></i> 09 / Social</div>
+    <div class="grid-3 mt">
+      <article class="social" style="background:#0D1117;color:#fff;">
+        <div class="kicker"><i></i> clevencode</div>
+        <div><div class="num" style="color:#fff;">3</div><p style="color:#9CA3AF;">provas esta semana</p></div>
+      </article>
+      <article class="social" style="border:1px solid var(--cc-line);">
+        <div class="wordmark" style="font-size:28px;">clevencode<i></i></div>
+        <p class="tagline">Widgets que estudam com você.</p>
+      </article>
+      <article class="social" style="background:#2563EB;color:#fff;">
+        <p style="color:rgba(255,255,255,.8);font-size:12px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;">Regra</p>
+        <h3 style="color:#fff;font-size:28px;letter-spacing:-0.03em;">Títulos grandes. Pouco texto. Utilidade visível.</h3>
+      </article>
+    </div>
+  </section>
+</body>
+</html>

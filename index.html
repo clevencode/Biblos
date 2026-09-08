@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="alternate icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/favicon.png" />
+    <meta name="theme-color" content="#FFFFFF" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Biblos</title>
+    <style>
+      html, body, #root { margin: 0; height: 100%; background: #fff; color: #0d1117; }
+      .boot-shell {
+        min-height: 100%;
+        display: grid;
+        place-content: center;
+        gap: 6px;
+        font-family: Outfit, "Avenir Next", "Segoe UI", sans-serif;
+        text-align: center;
+      }
+      .boot-brand { margin: 0; font-size: 1.4rem; font-weight: 700; letter-spacing: -0.03em; }
+      .boot-muted { margin: 0; color: #6b7280; font-size: 0.9rem; }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <div class="boot-shell" aria-busy="true">
+        <p class="boot-brand">Biblos</p>
+        <p class="boot-muted">Chargement…</p>
+      </div>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
