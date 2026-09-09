@@ -10,24 +10,56 @@ type PlanGalleryProps = {
   onClose?: () => void;
 };
 
-const THEME_HUES = [265, 220, 190, 145, 35, 12, 330, 280, 200, 50];
+const THEME_HUES = [18, 32, 205, 228, 265, 340, 152, 188];
 
-function coverColor(id: string): { fill: string; ink: string } {
+function coverStyle(id: string): { background: string } {
   let hash = 0;
   for (let i = 0; i < id.length; i += 1) hash = (hash * 33 + id.charCodeAt(i)) >>> 0;
   const hue = THEME_HUES[hash % THEME_HUES.length];
-  return { fill: `hsl(${hue} 38% 82%)`, ink: `hsl(${hue} 28% 38%)` };
+  const hue2 = (hue + 28) % 360;
+  return {
+    background: [
+      `radial-gradient(120% 90% at 8% 0%, hsl(${hue} 42% 46% / 0.9) 0%, transparent 52%)`,
+      `radial-gradient(80% 70% at 100% 110%, hsl(${hue2} 38% 22%) 0%, transparent 55%)`,
+      `linear-gradient(165deg, hsl(${hue} 28% 14%), hsl(${hue} 36% 28%))`,
+    ].join(", "),
+  };
 }
 
-function snippet(raw: string): string {
-  return raw
-    .replace(/<br\s*\/?>/gi, " ")
-    .replace(/\*\*(.+?)\*\*/g, "$1")
-    .replace(/\s+/g, " ")
-    .trim();
+function planTitle(plan: ReadingPlan): string {
+  const theme = plan.theme?.trim() ?? "";
+  const nome = plan.nome?.trim() ?? "";
+  const generic = (value: string) => !value || /^plan$/i.test(value);
+  if (!generic(theme)) return theme;
+  if (!generic(nome)) return nome;
+  return theme || nome || "Plan";
 }
 
-/** Galerie de Plan — même logique que le Caderno StudyOS, pour les thèmes. */
+function snippet(raw: string, title: string): string {
+  const foldedTitle = title.toLowerCase();
+  const paragraphs = raw
+    .split(/\n+/)
+    .map((line) =>
+      line
+        .replace(/<[^>]+>/g, " ")
+        .replace(/[*_`#]+/g, "")
+        .replace(/^\d+\.\s+/, "")
+        .replace(/\s+/g, " ")
+        .trim(),
+    )
+    .filter((line) => {
+      if (!line || line.length < 36) return false;
+      if (line.toLowerCase() === foldedTitle) return false;
+      if (/^(grande synthèse|introduction|conséquence|conclusion)\b/i.test(line)) return false;
+      return true;
+    });
+  const prose =
+    paragraphs.find((line) => /[.!?]/.test(line)) ?? paragraphs[0] ?? "";
+  if (!prose) return "";
+  return prose.length > 108 ? `${prose.slice(0, 106).trim()}…` : prose;
+}
+
+/** Galerie de plans — cartões Discover (capa + durée + progrès). */
 export function PlanGallery({
   plans,
   selectedId,
@@ -91,11 +123,10 @@ export function PlanGallery({
 
   const content = (
     <>
-      <header className="search-results-head">
-        <div className="search-results-head-copy">
-          <p className="session-kicker">Galerie</p>
-          <h2 className="page-title">Galerie de Plan</h2>
-          <p className="search-results-meta">{countLabel}</p>
+      <header className="plan-discover-head">
+        <div>
+          <h2 className="plan-discover-title">Plans</h2>
+          <p className="plan-discover-meta">{countLabel}</p>
         </div>
         {onClose ? (
           <button
@@ -109,103 +140,69 @@ export function PlanGallery({
         ) : null}
       </header>
       {ordered.length ? (
-        <div className="search-results-scroller" ref={gridRef}>
-          <section className="search-gallery-group">
-            <h3>
-              <i style={{ background: "var(--text)" }} />
-              Thèmes
-              <span>{ordered.length}</span>
-            </h3>
-            <div
-              className={embedded ? "search-results-list" : "search-gallery-grid"}
-              role="listbox"
-              aria-label="Plans de lecture"
-            >
-              {ordered.map((plan) => {
-                const current = plan.id === selectedId;
-                const active = plan.id === activeId;
-                const cover = coverColor(plan.id);
-                const preview = snippet(plan.description ?? plan.theme ?? "");
-                const { done, total } = progressCounts(plan, loadPlanProgress(plan.id));
-                const themeLabel = plan.theme?.trim() || "Plan";
-                if (embedded) {
-                  return (
-                    <button
-                      key={plan.id}
-                      id={`plan-card-${plan.id}`}
-                      type="button"
-                      role="option"
-                      aria-selected={active}
-                      className={`search-result${current ? " is-on" : ""}${active ? " is-active" : ""}`}
-                      onMouseEnter={() => setActiveId(plan.id)}
-                      onClick={() => onPick(plan)}
-                    >
-                      <span className="search-result-cover" style={{ background: cover.fill }}>
-                        <span className="search-card-icon" style={{ color: cover.ink }} aria-hidden="true">
-                          {plan.nome.slice(0, 1)}
+        <div className="plan-discover-scroller" ref={gridRef}>
+          <div
+            className={`plan-discover-grid${embedded ? " is-stack" : ""}`}
+            role="listbox"
+            aria-label="Plans de lecture"
+          >
+            {ordered.map((plan) => {
+              const current = plan.id === selectedId;
+              const active = plan.id === activeId;
+              const title = planTitle(plan);
+              const preview = snippet(plan.description ?? "", title);
+              const { done, total } = progressCounts(plan, loadPlanProgress(plan.id));
+              const started = done > 0;
+              const complete = total > 0 && done >= total;
+              const pct = total ? Math.min(100, Math.round((done / total) * 100)) : 0;
+              const action = complete ? "Terminé" : started ? "Continuer" : "Commencer";
+              return (
+                <button
+                  key={plan.id}
+                  id={`plan-card-${plan.id}`}
+                  type="button"
+                  role="option"
+                  aria-selected={active}
+                  className={`plan-tile${current ? " is-on" : ""}`}
+                  onMouseEnter={() => setActiveId(plan.id)}
+                  onFocus={() => setActiveId(plan.id)}
+                  onClick={() => onPick(plan)}
+                >
+                  <span className="plan-tile-art" style={coverStyle(plan.id)}>
+                    <span className="plan-tile-mark" aria-hidden="true">
+                      {title.charAt(0)}
+                    </span>
+                    {total ? <span className="plan-tile-days">{total} jours</span> : null}
+                    <span className="plan-tile-name">{title}</span>
+                    {preview ? <span className="plan-tile-blurb">{preview}</span> : null}
+                    {total && started ? (
+                      <span className="plan-tile-progress" aria-hidden="true">
+                        <span className="plan-tile-progress-track">
+                          <span className="plan-tile-progress-fill" style={{ width: `${pct}%` }} />
+                        </span>
+                        <span className="plan-tile-progress-label">
+                          {complete ? "Terminé" : `${done}/${total}`}
                         </span>
                       </span>
-                      <span className="search-result-body">
-                        <span className="search-result-title">{plan.nome}</span>
-                        {preview ? <span className="search-result-snippet">{preview}</span> : null}
-                        <span className="search-card-props">
-                          <span className="search-chip">{themeLabel}</span>
-                          {total ? (
-                            <span className="search-chip">
-                              {done}/{total} j
-                            </span>
-                          ) : null}
-                        </span>
-                      </span>
-                    </button>
-                  );
-                }
-                return (
-                  <button
-                    key={plan.id}
-                    id={`plan-card-${plan.id}`}
-                    type="button"
-                    role="option"
-                    aria-selected={active}
-                    className={`search-card${current ? " is-on" : ""}${active ? " is-active" : ""}`}
-                    onMouseEnter={() => setActiveId(plan.id)}
-                    onClick={() => onPick(plan)}
-                  >
-                    <span className="search-card-cover" style={{ background: cover.fill }}>
-                      <span className="search-card-icon" style={{ color: cover.ink }} aria-hidden="true">
-                        {plan.nome.slice(0, 1)}
-                      </span>
-                    </span>
-                    <span className="search-card-body">
-                      <span className="search-card-title">{plan.nome}</span>
-                      {preview ? <span className="search-card-snippet">{preview}</span> : null}
-                      <span className="search-card-props">
-                        <span className="search-chip">{themeLabel}</span>
-                        {total ? (
-                          <span className="search-chip">
-                            {done}/{total} j
-                          </span>
-                        ) : null}
-                      </span>
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </section>
+                    ) : null}
+                  </span>
+                  <span className="plan-tile-cta">
+                    {action}
+                    <span aria-hidden="true">›</span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       ) : (
-        <div className="search-gallery-empty">
-          <p className="search-gallery-empty-title">Aucun plan</p>
-          <p className="muted">Synchronise Notion pour charger la galerie de plans.</p>
+        <div className="plan-discover-empty">
+          <p className="plan-discover-empty-title">Aucun plan</p>
+          <p className="muted">Synchronise Notion pour charger tes plans de lecture.</p>
         </div>
       )}
     </>
   );
 
-  if (embedded) {
-    return <div className="panel-resumo">{content}</div>;
-  }
-
-  return <div className="caderno-gallery">{content}</div>;
+  return <div className={`plan-discover${embedded ? " is-embedded" : ""}`}>{content}</div>;
 }

@@ -362,9 +362,9 @@ export function App() {
             </div>
 
             <section className="graph-pane" aria-label="Contenu">
-              {narrow ? (
+              {narrow && !(mode === "today" && home) ? (
                 <p className="tab-section-title" id="tab-section-title">
-                  {mode === "today" && !home ? "Plan" : activeModeLabel}
+                  {mode === "today" ? "Plan" : activeModeLabel}
                 </p>
               ) : null}
               <div className="graph-pane-body">
