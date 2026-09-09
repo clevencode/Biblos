@@ -1,5 +1,5 @@
 /**
- * Produção: sync leve só da propriedade Description de um PLAN.
+ * Produção: sync leve só da propriedade Devotional de um PLAN.
  * GET /api/description-sync?url=https://app.notion.com/p/...
  * Equivalente a /api/resumo-sync do StudyOS.
  */

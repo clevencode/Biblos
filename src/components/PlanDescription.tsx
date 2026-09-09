@@ -9,8 +9,8 @@ type PlanDescriptionProps = {
   title?: string;
 };
 
-/** Propriedade Notion Description — mesma formatação do Resumo StudyOS. */
-export function PlanDescription({ description, title = "Description" }: PlanDescriptionProps) {
+/** Propriedade Notion Devotional — mesma formatação do Resumo StudyOS. */
+export function PlanDescription({ description, title = "Devotional" }: PlanDescriptionProps) {
   const paragraphs = useMemo(
     () => splitDescriptionParagraphs(description ?? ""),
     [description],
@@ -19,7 +19,7 @@ export function PlanDescription({ description, title = "Description" }: PlanDesc
   if (!paragraphs.length) {
     return (
       <p className="muted">
-        Pas de Description dans Notion — écris la propriété Description manuellement sur le plan.
+        Pas de Devotional dans Notion — écris la propriété Devotional manuellement sur le plan.
       </p>
     );
   }

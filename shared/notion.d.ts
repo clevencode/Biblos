@@ -54,6 +54,7 @@ export function propRichTextFull(
   props: Record<string, unknown>,
   propName: string,
 ): Promise<string>;
+/** Devotional (ex-Description) do PLAN — rich_text paginado. */
 export function propDescriptionFull(
   token: string,
   pageId: string,

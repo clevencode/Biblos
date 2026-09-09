@@ -25,7 +25,7 @@ const FLASHCARD_SYNC_MODES: CenterMode[] = ["cards", "inbox", "calendar"];
 
 /**
  * Polling Notion + révisions locales.
- * Catalogue via /api/catalog ; Description du plan actif via /api/description-sync
+ * Catalogue via /api/catalog ; Devotional du plan actif via /api/description-sync
  * (équivalent Resumo StudyOS).
  */
 export function useNotionSync(options: {

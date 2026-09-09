@@ -232,7 +232,7 @@ export async function propResumoFull(token, pageId, props) {
   return propRichTextFull(token, pageId, props, "Resumo");
 }
 
-/** Propriedade rich_text longa (paginada) — Description / Resumo. */
+/** Propriedade rich_text longa (paginada) — Devotional / Description / Resumo. */
 export async function propRichTextFull(token, pageId, props, propName) {
   const p = props?.[propName];
   const inline = resumoFromProp(p);
@@ -266,8 +266,27 @@ export async function propRichTextFull(token, pageId, props, propName) {
   }
 }
 
+/** Resolve le nom réel de la propriété Notion (Devotional prioritaire). */
+function resolveRichTextPropName(props, ...candidates) {
+  const keys = Object.keys(props ?? {});
+  for (const name of candidates) {
+    const needle = String(name).toLowerCase();
+    const hit = keys.find(
+      (key) =>
+        key.toLowerCase() === needle ||
+        key.toLowerCase().startsWith(`${needle} `) ||
+        key.toLowerCase().startsWith(`${needle}[`),
+    );
+    if (hit) return hit;
+  }
+  return candidates[0] || null;
+}
+
+/** Devotional (ex-Description) du PLAN DE LECTURE. */
 export async function propDescriptionFull(token, pageId, props) {
-  return propRichTextFull(token, pageId, props, "Description");
+  const name = resolveRichTextPropName(props, "Devotional", "Description");
+  if (!name || !props?.[name]) return "";
+  return propRichTextFull(token, pageId, props, name);
 }
 
 export async function fetchNotionResumo(token, urlOrId) {
@@ -290,7 +309,7 @@ export async function fetchNotionResumo(token, urlOrId) {
   }
 }
 
-/** Sync da propriedade Description (PLAN DE LECTURE) — equivalente a Resumo no StudyOS. */
+/** Sync da propriedade Devotional (PLAN DE LECTURE) — equivalente a Resumo no StudyOS. */
 export async function fetchNotionDescription(token, urlOrId) {
   if (!token) {
     return { ok: false, error: "NOTION_TOKEN em falta", hasToken: false, description: "" };

@@ -1,5 +1,5 @@
 /**
- * Description = propriedade Notion `rich_text` do PLAN.
+ * Devotional = propriedade Notion `rich_text` do PLAN (ex-Description).
  * Mesma lógica do Resumo StudyOS: anotações → markdown leve → UI.
  * Soft-breaks (`<br>` / `\\n`) = quebras da propriedade; sem heurísticas de layout.
  */

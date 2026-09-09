@@ -59,7 +59,6 @@ export function TodayView({
     return sanitizePlanDays(plan.days);
   }, [plan]);
 
-  const hasDescription = Boolean(plan?.description?.trim());
   const scheduleTotal = days.length;
   const scheduleDone = days.filter((day) => progress?.completedDays.includes(day.jour)).length;
 
@@ -118,14 +117,14 @@ export function TodayView({
   }
 
   function startReading() {
-    if (hasDescription && !devotionalDone) {
+    if (!devotionalDone) {
       openDevotional();
       return;
     }
     if (canOpenPassage) onOpenPassage?.(passage);
   }
 
-  if (screen === "devotional" && hasDescription) {
+  if (screen === "devotional") {
     return (
       <div className="today-view panel-nota-content plan-yv">
         <header className="page-session-head">
@@ -223,29 +222,27 @@ export function TodayView({
 
       <section className="plan-yv-tasks" aria-label="Lecture du jour">
         <ul className="plan-yv-task-list">
-          {hasDescription ? (
-            <li className="plan-yv-task-row">
-              <button
-                type="button"
-                className={`plan-yv-task-check-btn${devotionalDone ? " is-done" : ""}`}
-                onClick={toggleDevotionalDone}
-                aria-pressed={devotionalDone}
-                aria-label={devotionalDone ? "Démarquer le Devotional" : "Marquer le Devotional"}
-              >
-                {devotionalDone ? "✓" : "○"}
-              </button>
-              <button
-                type="button"
-                className={`plan-yv-task plan-yv-task--grow${devotionalDone ? " is-done" : ""}`}
-                onClick={openDevotional}
-              >
-                <span className="plan-yv-task-label">Devotional</span>
-                <span className="plan-yv-task-chevron" aria-hidden="true">
-                  ›
-                </span>
-              </button>
-            </li>
-          ) : null}
+          <li className="plan-yv-task-row">
+            <button
+              type="button"
+              className={`plan-yv-task-check-btn${devotionalDone ? " is-done" : ""}`}
+              onClick={toggleDevotionalDone}
+              aria-pressed={devotionalDone}
+              aria-label={devotionalDone ? "Démarquer le Devotional" : "Marquer le Devotional"}
+            >
+              {devotionalDone ? "✓" : "○"}
+            </button>
+            <button
+              type="button"
+              className={`plan-yv-task plan-yv-task--grow${devotionalDone ? " is-done" : ""}`}
+              onClick={openDevotional}
+            >
+              <span className="plan-yv-task-label">Devotional</span>
+              <span className="plan-yv-task-chevron" aria-hidden="true">
+                ›
+              </span>
+            </button>
+          </li>
           {selectedDay ? (
             <li className="plan-yv-task-row">
               {onMarkRead ? (
@@ -287,11 +284,9 @@ export function TodayView({
         </ul>
       </section>
 
-      {hasDescription || canOpenPassage ? (
-        <button type="button" className="plan-yv-start" onClick={startReading}>
-          Commencer la lecture
-        </button>
-      ) : null}
+      <button type="button" className="plan-yv-start" onClick={startReading}>
+        Commencer la lecture
+      </button>
     </div>
   );
 }

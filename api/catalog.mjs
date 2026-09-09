@@ -271,7 +271,7 @@ function mapPlanPage(page, bodyText = "", planProp = "", description = "") {
   const theme = themeFromProp(findProp(props, "Thème", "Theme")) || nome;
   const planField = richFromProp(findProp(props, "Plan", "Plan [extration ia]")) || planProp;
   const descriptionField =
-    description || richFromProp(findProp(props, "Description")).trim();
+    description || richFromProp(findProp(props, "Devotional", "Description")).trim();
   const days = parsePlanDays(bodyText);
   const merged = days.length ? days : parsePlanDays(`${bodyText}\n${planField}`);
   return {
@@ -355,13 +355,13 @@ export async function buildCatalog(token, { full = false } = {}) {
       await sleep(80);
     }
     const planProp = richFromProp(findProp(page.properties, "Plan", "Plan [extration ia]"));
-    // Description = Resumo do StudyOS: ler completo (paginado) sempre que possível.
+    // Devotional (ex-Description) = Resumo do StudyOS: ler completo (paginado).
     let description = "";
     try {
       description = await propDescriptionFull(token, page.id, page.properties ?? {});
       await sleep(80);
     } catch {
-      description = richFromProp(findProp(page.properties, "Description"));
+      description = richFromProp(findProp(page.properties, "Devotional", "Description"));
     }
     plans.push(mapPlanPage(page, body, planProp, description));
   }

@@ -29,7 +29,7 @@ export type ReadingPlan = {
   theme: string;
   url: string;
   days: PlanDay[];
-  /** Propriedade Notion `Description` (comme Resumo no StudyOS). */
+  /** Propriedade Notion `Devotional` (ex-Description / comme Resumo no StudyOS). */
   description?: string;
   cardIds?: string[];
   criadoEm?: string | null;

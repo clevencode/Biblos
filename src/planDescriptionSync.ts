@@ -2,7 +2,7 @@ import type { ReadingPlan } from "./types";
 
 const DESCRIPTION_PULL_MS = 20_000;
 
-/** Aplica só a Description Notion no plano correspondente (por id ou URL). */
+/** Aplica só o Devotional Notion no plano correspondente (por id ou URL). */
 export function applyPlanDescription(
   plans: ReadingPlan[],
   match: { planId?: string; url?: string },
@@ -22,7 +22,7 @@ export function applyPlanDescription(
   return { plans: next, changed: true };
 }
 
-/** Puxa só a propriedade Description da página Notion do plano ativo. */
+/** Puxa só a propriedade Devotional da página Notion do plano ativo. */
 export async function pullPlanDescription(
   plans: ReadingPlan[],
   plan: ReadingPlan | null | undefined,
@@ -31,7 +31,7 @@ export async function pullPlanDescription(
   try {
     const response = await fetch(`/api/description-sync?url=${encodeURIComponent(plan.url)}`);
     if (!response.ok && response.status >= 500) {
-      return { plans, changed: false, error: "API de Description indisponível" };
+      return { plans, changed: false, error: "API de Devotional indisponível" };
     }
     const payload = (await response.json().catch(() => ({}))) as {
       ok?: boolean;
@@ -39,13 +39,13 @@ export async function pullPlanDescription(
       error?: string;
     };
     if (!response.ok || !payload.ok || typeof payload.description !== "string") {
-      return { plans, changed: false, error: payload.error ?? "falha ao ler Description" };
+      return { plans, changed: false, error: payload.error ?? "falha ao ler Devotional" };
     }
     return {
       ...applyPlanDescription(plans, { planId: plan.id, url: plan.url }, payload.description),
     };
   } catch {
-    return { plans, changed: false, error: "API de Description indisponível" };
+    return { plans, changed: false, error: "API de Devotional indisponível" };
   }
 }
 
