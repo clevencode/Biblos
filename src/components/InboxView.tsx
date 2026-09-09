@@ -70,7 +70,6 @@ function InboxReviewList({
   return (
     <nav className="flash-list flash-list--inbox" ref={listRef} aria-label="Inbox">
       <header className="inbox-head">
-        <p className="session-kicker">Révision</p>
         <h2>Inbox</h2>
         <p>
           {items.length} carte{items.length === 1 ? "" : "s"} à revoir
@@ -182,7 +181,6 @@ export function InboxView({ items, active, splitLayout = false, onOpenPassage }:
   if (!session.total) {
     return (
       <div className="inbox-view inbox-empty">
-        <p className="session-kicker">Révision</p>
         <p className="inbox-empty-title">Inbox vazia</p>
         <p className="muted">Não há cartões com lembrete vencido.</p>
       </div>

@@ -47,7 +47,6 @@ export function FlashcardDeck({
   if (!session.total && !cards.length) {
     return (
       <div className="flash-empty-state">
-        <p className="session-kicker">Cartes</p>
         <p className="flash-empty-title">Aucune carte</p>
         <p className="muted">Lance npm run seed ou synchronise Notion.</p>
       </div>

@@ -133,7 +133,6 @@ export function FlashcardReview({
     <div className={`flash flash--solo${flipped ? " is-revealed" : ""}${closed ? " is-closed" : ""}`}>
       <div className="flash-main">
         <div className="flash-head" aria-live="polite">
-          <p className="session-kicker flash-session-kicker">Révision</p>
           <div className="flash-session-meter">
             <div
               className="flash-progress"
@@ -345,7 +344,6 @@ export function FlashDeckList({ session, onPick, onRemoveCard }: FlashDeckListPr
   return (
     <nav className="flash-list flash-list--deck" ref={listRef} aria-label="Liste des cartes">
       <header className="flash-list-head">
-        <p className="session-kicker">Liste</p>
         <h2 className="flash-list-heading">Cartes</h2>
         <p className="flash-list-meta-line">{countLabel}</p>
       </header>

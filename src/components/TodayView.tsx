@@ -88,12 +88,14 @@ export function TodayView({
     return (
       <div className="today-view panel-nota-content">
         <header className="page-session-head">
-          <p className="session-kicker">Plan</p>
-          <nav className="crumb page-crumb" aria-label="Local dans la galerie">
-            <button type="button" onClick={() => onSelectGalerie?.()}>
-              Galerie
-            </button>
-          </nav>
+          <button
+            type="button"
+            className="flash-list-back"
+            onClick={() => onSelectGalerie?.()}
+            aria-label="Retour à la galerie"
+          >
+            ← Retour
+          </button>
           <h2 className="page-title">Aucun plan</h2>
           <p className="page-session-meta muted">
             Seed vide (MVP) — synchronise Notion pour charger un plan.
@@ -154,14 +156,14 @@ export function TodayView({
     return (
       <div className="today-view panel-nota-content plan-yv">
         <header className="page-session-head">
-          <p className="session-kicker">Devotional</p>
-          <nav className="crumb page-crumb" aria-label="Navigation du plan">
-            <button type="button" onClick={() => setScreen("timeline")}>
-              Plan
-            </button>
-            <span aria-hidden="true">/</span>
-            <span className="page-crumb-current">Devotional</span>
-          </nav>
+          <button
+            type="button"
+            className="flash-list-back"
+            onClick={() => setScreen("timeline")}
+            aria-label="Retour au plan"
+          >
+            ← Retour
+          </button>
           <h2 className="page-title">{planTitle}</h2>
         </header>
         <PlanDescription description={plan.description} title="Devotional" />
@@ -202,14 +204,14 @@ export function TodayView({
   return (
     <div className="today-view panel-nota-content plan-yv">
       <header className="page-session-head">
-        <p className="session-kicker">Plan</p>
-        <nav className="crumb page-crumb" aria-label="Local dans la galerie">
-          <button type="button" onClick={() => onSelectGalerie?.()}>
-            Galerie
-          </button>
-          <span aria-hidden="true">/</span>
-          <span className="page-crumb-current">Plan</span>
-        </nav>
+        <button
+          type="button"
+          className="flash-list-back"
+          onClick={() => onSelectGalerie?.()}
+          aria-label="Retour à la galerie"
+        >
+          ← Retour
+        </button>
         <h2 className="page-title">{planTitle}</h2>
         <div className="page-session-meta theme-head-meta">
           {scheduleTotal ? (

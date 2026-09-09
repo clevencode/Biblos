@@ -150,6 +150,7 @@ export function BibleReaderView({
   const [moreOpen, setMoreOpen] = useState(false);
   const statusId = useId();
   const highlightRef = useRef<HTMLElement | null>(null);
+  const chapterSelectRef = useRef<HTMLSelectElement | null>(null);
   const booted = useRef(false);
   const loadGen = useRef(0);
 
@@ -217,6 +218,12 @@ export function BibleReaderView({
     highlightRef.current.scrollIntoView({ block: "center", behavior: "smooth" });
   }, [highlightVerse, passage?.id, loading]);
 
+  useEffect(() => {
+    if (!pickerOpen) return;
+    const id = window.setTimeout(() => chapterSelectRef.current?.focus(), 0);
+    return () => window.clearTimeout(id);
+  }, [pickerOpen]);
+
   async function loadChapter(
     nextBook: string,
     nextChapter: string,
@@ -227,7 +234,6 @@ export function BibleReaderView({
     setChapterId(nextChapter);
     setHighlightVerse(verse);
     setSelectedVerse(verse);
-    setPickerOpen(false);
     setLoading(true);
     setError(null);
     const usfm = chapterUsfm(nextBook, nextChapter);
@@ -252,8 +258,28 @@ export function BibleReaderView({
   }
 
   function selectVerse(number: number) {
-    setSelectedVerse((current) => (current === number ? null : number));
+    setSelectedVerse((current) => {
+      const next = current === number ? null : number;
+      setHighlightVerse(next);
+      return next;
+    });
+    setPickerOpen(false);
+    setMoreOpen(false);
+  }
+
+  function jumpToVerse(number: number) {
+    setSelectedVerse(number);
     setHighlightVerse(number);
+    setPickerOpen(false);
+    setMoreOpen(false);
+  }
+
+  function closePicker() {
+    setPickerOpen(false);
+  }
+
+  function togglePicker() {
+    setPickerOpen((open) => !open);
     setMoreOpen(false);
   }
 
@@ -266,7 +292,11 @@ export function BibleReaderView({
   const canPrev = Boolean(adjacentChapter(books, bookId, chapterId, -1));
   const canNext = Boolean(adjacentChapter(books, bookId, chapterId, 1));
   const bookTitle = selectedBook?.title ?? bookId;
-  const locationLabel = `${bookTitle} ${chapterId}`;
+  const locationLabel =
+    selectedVerse != null ? `${bookTitle} ${chapterId}.${selectedVerse}` : `${bookTitle} ${chapterId}`;
+  const verseOptions =
+    passage?.verses?.map((verse) => verse.number) ??
+    (selectedVerse != null ? [selectedVerse] : []);
 
   return (
     <section
@@ -290,15 +320,21 @@ export function BibleReaderView({
           }
           return;
         }
+        if (event.key === "Escape") {
+          if (pickerOpen || moreOpen) {
+            event.preventDefault();
+            setPickerOpen(false);
+            setMoreOpen(false);
+            return;
+          }
+        }
+        if (pickerOpen) return;
         if (event.key === "ArrowLeft") {
           event.preventDefault();
           goAdjacent(-1);
         } else if (event.key === "ArrowRight") {
           event.preventDefault();
           goAdjacent(1);
-        } else if (event.key === "Escape") {
-          setPickerOpen(false);
-          setMoreOpen(false);
         }
       }}
       tabIndex={-1}
@@ -360,43 +396,6 @@ export function BibleReaderView({
         </div>
       ) : null}
 
-      {pickerOpen ? (
-        <div className="bible-yv-picker" role="dialog" aria-label="Choisir livre et chapitre">
-          <label className="bible-field">
-            <span className="sr-only">Livre</span>
-            <select
-              value={bookId}
-              onChange={(e) => void loadChapter(e.target.value, "1", null)}
-              disabled={!books.length || loading}
-            >
-              {books.length ? (
-                books.map((book) => (
-                  <option key={book.id} value={book.id}>
-                    {book.title}
-                  </option>
-                ))
-              ) : (
-                <option value={bookId}>{bookId}</option>
-              )}
-            </select>
-          </label>
-          <label className="bible-field bible-field--chapter">
-            <span className="sr-only">Chapitre</span>
-            <select
-              value={chapterId}
-              onChange={(e) => void loadChapter(bookId, e.target.value, null)}
-              disabled={loading}
-            >
-              {chapters.map((id) => (
-                <option key={id} value={id}>
-                  {id}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-      ) : null}
-
       <div id={statusId} className="sr-only" aria-live="polite">
         {loading ? "Chargement du chapitre…" : error ? error : locationLabel}
       </div>
@@ -415,7 +414,13 @@ export function BibleReaderView({
         </div>
       ) : null}
 
-      <article className="bible-passage" aria-busy={loading}>
+      <article
+        className="bible-passage"
+        aria-busy={loading}
+        onClick={() => {
+          if (pickerOpen) closePicker();
+        }}
+      >
         <header className="bible-passage-head">
           <p className="bible-book-name">{bookTitle}</p>
           <p className="bible-chapter-num">{chapterId}</p>
@@ -509,8 +514,8 @@ export function BibleReaderView({
       </article>
 
       <footer
-        className={`bible-yv-dock${planReading ? " is-plan" : ""}`}
-        aria-label={planReading ? "Lecture du plan" : "Chapitre"}
+        className={`bible-yv-dock${planReading ? " is-plan" : ""}${!planReading && pickerOpen ? " is-picking" : ""}`}
+        aria-label={planReading ? "Lecture du plan" : pickerOpen ? "Choisir livre, chapitre et verset" : "Chapitre"}
       >
         {planReading ? (
           <div className="bible-yv-dock-nav bible-yv-dock-nav--plan">
@@ -533,6 +538,83 @@ export function BibleReaderView({
               {planReading.isLast ? "✓" : "›"}
             </button>
           </div>
+        ) : pickerOpen ? (
+          <div className="bible-yv-dock-nav bible-yv-dock-nav--pick">
+            <button
+              type="button"
+              className="bible-yv-dock-arrow"
+              onClick={() => goAdjacent(-1)}
+              disabled={!canPrev || loading}
+              aria-label="Chapitre précédent"
+            >
+              ‹
+            </button>
+            <div className="bible-yv-dock-picker" role="group" aria-label="Livre, chapitre et verset">
+              <label className="bible-field bible-field--book">
+                <span className="bible-field-label">Livre</span>
+                <select
+                  value={bookId}
+                  onChange={(e) => void loadChapter(e.target.value, "1", null)}
+                  disabled={!books.length || loading}
+                >
+                  {books.length ? (
+                    books.map((book) => (
+                      <option key={book.id} value={book.id}>
+                        {book.title}
+                      </option>
+                    ))
+                  ) : (
+                    <option value={bookId}>{bookId}</option>
+                  )}
+                </select>
+              </label>
+              <label className="bible-field bible-field--chapter">
+                <span className="bible-field-label">Ch.</span>
+                <select
+                  ref={chapterSelectRef}
+                  value={chapterId}
+                  onChange={(e) => void loadChapter(bookId, e.target.value, null)}
+                  disabled={loading}
+                >
+                  {chapters.map((id) => (
+                    <option key={id} value={id}>
+                      {id}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="bible-field bible-field--verse">
+                <span className="bible-field-label">V.</span>
+                <select
+                  value={selectedVerse ?? ""}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (!value) return;
+                    jumpToVerse(Number(value));
+                  }}
+                  disabled={loading || !verseOptions.length}
+                >
+                  <option value="" disabled>
+                    …
+                  </option>
+                  {verseOptions.map((n) => (
+                    <option key={n} value={n}>
+                      {n}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <button
+              type="button"
+              className="bible-yv-dock-arrow"
+              onClick={() => goAdjacent(1)}
+              disabled={!canNext || loading}
+              aria-label="Chapitre suivant"
+            >
+              ›
+            </button>
+          </div>
         ) : (
           <div className="bible-yv-dock-nav">
             <button
@@ -547,13 +629,14 @@ export function BibleReaderView({
             <button
               type="button"
               className="bible-yv-dock-location"
-              onClick={() => {
-                setPickerOpen((v) => !v);
-                setMoreOpen(false);
-              }}
+              onClick={togglePicker}
               aria-expanded={pickerOpen}
+              aria-label={`Choisir un passage · ${locationLabel}`}
             >
-              {locationLabel}
+              <span className="bible-yv-dock-location-text">{locationLabel}</span>
+              <span className="bible-yv-dock-caret" aria-hidden="true">
+                ▾
+              </span>
             </button>
             <button
               type="button"

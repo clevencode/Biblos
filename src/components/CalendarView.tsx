@@ -62,7 +62,6 @@ export function CalendarView({
       <div className="calendar-unified-scroll">
         <section className="calendar-panel" aria-label="Calendário global">
           <header className="calendar-month-head">
-            <p className="session-kicker">Calendrier</p>
             <p className="calendar-month-hint muted">Rappels de tous les thèmes</p>
             <div className="calendar-nav">
               <button type="button" className="flash-btn" onClick={() => shift(-1)} aria-label="Mois précédent">
