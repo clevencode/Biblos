@@ -33,7 +33,7 @@ type ApiResult<T> = T & {
   error?: string;
 };
 
-async function yvFetch<T extends object>(
+async function bibleFetch<T extends object>(
   params: Record<string, string | number | undefined>,
 ): Promise<ApiResult<T>> {
   const qs = new URLSearchParams();
@@ -53,7 +53,7 @@ async function yvFetch<T extends object>(
 }
 
 export async function fetchBooks() {
-  return yvFetch<{
+  return bibleFetch<{
     bible?: YouVersionBible;
     books?: YouVersionBook[];
     usingFallback?: boolean;
@@ -61,9 +61,9 @@ export async function fetchBooks() {
   }>({ action: "books" });
 }
 
-export async function fetchPassage(reference: string, bibleId?: number) {
+export async function fetchPassage(reference: string, _bibleId?: number) {
   const usfm = toUsfm(reference);
-  return yvFetch<{
+  return bibleFetch<{
     bibleId?: number;
     bible?: YouVersionBible;
     usingFallback?: boolean;
@@ -71,18 +71,16 @@ export async function fetchPassage(reference: string, bibleId?: number) {
   }>({
     action: "passage",
     usfm,
-    bibleId: bibleId || LSG_BIBLE_ID,
   });
 }
 
-/** Id YouVersion de la Segond 1910 (seule version du app). */
-export const LSG_BIBLE_ID = 93;
+/** Identifiant local LSG (plus l’id YouVersion 93). */
+export const LSG_BIBLE_ID = 0;
 /** @deprecated Utiliser LSG_BIBLE_ID — Segond 1910 uniquement. */
 export const S21_BIBLE_ID = LSG_BIBLE_ID;
 
-export function openOnBibleCom(reference: string, bibleId: number) {
-  const url = bibleComUrl(reference, bibleId);
-  window.open(url, "_blank", "noopener,noreferrer");
+export function openOnBibleCom(reference: string, _bibleId?: number) {
+  window.open(bibleComUrl(reference), "_blank", "noopener,noreferrer");
 }
 
 /** Chapitre précédent / suivant avec passage de livre (fin Matthieu → Marc 1). */

@@ -109,14 +109,9 @@ async function handleDescriptionSync(req: IncomingMessage, res: ServerResponse, 
 export function notionFlashcardPlugin(mode: string): Plugin {
   const env = loadEnv(mode, process.cwd(), "");
   const token = env.NOTION_TOKEN || "";
-  const yvKey = env.YOUVERSION_APP_KEY || env.YVP_APP_KEY || "";
   if (env.NOTION_BIBLECARDS_DB) process.env.NOTION_BIBLECARDS_DB = env.NOTION_BIBLECARDS_DB;
   if (env.NOTION_PLAN_DB) process.env.NOTION_PLAN_DB = env.NOTION_PLAN_DB;
   if (env.NOTION_TOKEN) process.env.NOTION_TOKEN = env.NOTION_TOKEN;
-  if (yvKey) {
-    process.env.YOUVERSION_APP_KEY = yvKey;
-    process.env.YVP_APP_KEY = yvKey;
-  }
 
   const mount = (server: {
     middlewares: { use: (path: string, fn: (req: IncomingMessage, res: ServerResponse) => void) => void };
@@ -128,7 +123,7 @@ export function notionFlashcardPlugin(mode: string): Plugin {
       void handleCatalog(req, res, token);
     });
     server.middlewares.use("/api/youversion", (req, res) => {
-      void handleYouVersion(req, res, yvKey);
+      void handleYouVersion(req, res);
     });
     server.middlewares.use("/api/description-sync", (req, res) => {
       void handleDescriptionSync(req, res, token);

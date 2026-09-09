@@ -13,7 +13,7 @@ import {
 } from "../youversion/client";
 
 const STORAGE_KEY = "biblos-bible-reader";
-const BOOKS_CACHE_KEY = "biblos-yv-books-lsg";
+const BOOKS_CACHE_KEY = "biblos-bible-books-lsg";
 const FONT_MIN = 16;
 const FONT_MAX = 26;
 const FONT_DEFAULT = 19;
@@ -142,7 +142,6 @@ export function BibleReaderView({
   );
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [hasKey, setHasKey] = useState<boolean | null>(null);
   const [fontSize, setFontSize] = useState(() => {
     const n = Number(prefs.fontSize);
     return Number.isFinite(n) ? Math.min(FONT_MAX, Math.max(FONT_MIN, n)) : FONT_DEFAULT;
@@ -165,7 +164,6 @@ export function BibleReaderView({
       }
       const result = await fetchBooks();
       if (cancelled) return;
-      setHasKey(result.hasKey ?? null);
       if (result.ok && result.books?.length) {
         setBooks(result.books);
         if (result.bible) {
@@ -233,9 +231,8 @@ export function BibleReaderView({
     setLoading(true);
     setError(null);
     const usfm = chapterUsfm(nextBook, nextChapter);
-    const result = await fetchPassage(usfm, LSG_BIBLE_ID);
+    const result = await fetchPassage(usfm);
     if (gen !== loadGen.current) return;
-    setHasKey(result.hasKey ?? null);
     setLoading(false);
     if (!result.ok || !result.passage) {
       // Garde le texte précédent en cas de rate limit / erreur transitoire
@@ -358,7 +355,7 @@ export function BibleReaderView({
               openOnBibleCom(chapterUsfm(bookId, chapterId), bibleId ?? LSG_BIBLE_ID)
             }
           >
-            Ouvrir sur bible.com
+            Ouvrir sur midvash.com
           </button>
         </div>
       ) : null}
@@ -422,9 +419,6 @@ export function BibleReaderView({
         <header className="bible-passage-head">
           <p className="bible-book-name">{bookTitle}</p>
           <p className="bible-chapter-num">{chapterId}</p>
-          {hasKey === false ? (
-            <p className="bible-yv-muted">Clé YouVersion manquante dans .env</p>
-          ) : null}
         </header>
 
         {loading && !passage ? (

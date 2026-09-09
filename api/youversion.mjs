@@ -1,292 +1,220 @@
 /**
- * Proxy YouVersion Platform (App Key só no servidor).
- * GET /api/youversion?action=passage&usfm=JHN.3.16
+ * Texte biblique LSG depuis midvash/bible-data (domaine public).
  * GET /api/youversion?action=books
- * GET /api/youversion?action=resolve
- * GET /api/youversion?action=test
+ * GET /api/youversion?action=passage&usfm=JHN.3
  *
- * Portado de Downloads/flashbible (Flutter YouVersionApiClient).
+ * Source: https://github.com/midvash/bible-data  (versions/fr/lsg)
  */
-const API_BASE = "https://api.youversion.com/v1";
-/** Segond 1910 (Louis Segond) — seule version FR du app. */
-const LSG = 93;
+const DATA_BASES = [
+  "https://cdn.jsdelivr.net/gh/midvash/bible-data@main/versions/fr/lsg/books",
+  "https://raw.githubusercontent.com/midvash/bible-data/main/versions/fr/lsg/books",
+];
 
 const LSG_META = {
-  id: LSG,
+  id: 0,
   abbreviation: "LSG",
   title: "Louis Segond 1910",
   languageCode: "fr",
 };
 
-/** Caches mémoire pour réduire le rate limit YouVersion. */
-let booksCache = null;
-let booksCacheAt = 0;
-const BOOKS_CACHE_MS = 60 * 60_000; // 1 h
+/** Canon protestant : USFM (app) ↔ OSIS (bible-data) + titres FR + nb de chapitres. */
+const CANON = [
+  ["GEN", "Gen", "Genèse", 50],
+  ["EXO", "Exod", "Exode", 40],
+  ["LEV", "Lev", "Lévitique", 27],
+  ["NUM", "Num", "Nombres", 36],
+  ["DEU", "Deut", "Deutéronome", 34],
+  ["JOS", "Josh", "Josué", 24],
+  ["JDG", "Judg", "Juges", 21],
+  ["RUT", "Ruth", "Ruth", 4],
+  ["1SA", "1Sam", "1 Samuel", 31],
+  ["2SA", "2Sam", "2 Samuel", 24],
+  ["1KI", "1Kgs", "1 Rois", 22],
+  ["2KI", "2Kgs", "2 Rois", 25],
+  ["1CH", "1Chr", "1 Chroniques", 29],
+  ["2CH", "2Chr", "2 Chroniques", 36],
+  ["EZR", "Ezra", "Esdras", 10],
+  ["NEH", "Neh", "Néhémie", 13],
+  ["EST", "Esth", "Esther", 10],
+  ["JOB", "Job", "Job", 42],
+  ["PSA", "Ps", "Psaumes", 150],
+  ["PRO", "Prov", "Proverbes", 31],
+  ["ECC", "Eccl", "Ecclésiaste", 12],
+  ["SNG", "Song", "Cantique des cantiques", 8],
+  ["ISA", "Isa", "Ésaïe", 66],
+  ["JER", "Jer", "Jérémie", 52],
+  ["LAM", "Lam", "Lamentations", 5],
+  ["EZK", "Ezek", "Ézéchiel", 48],
+  ["DAN", "Dan", "Daniel", 12],
+  ["HOS", "Hos", "Osée", 14],
+  ["JOL", "Joel", "Joël", 3],
+  ["AMO", "Amos", "Amos", 9],
+  ["OBA", "Obad", "Abdias", 1],
+  ["JON", "Jonah", "Jonas", 4],
+  ["MIC", "Mic", "Michée", 7],
+  ["NAM", "Nah", "Nahum", 3],
+  ["HAB", "Hab", "Habacuc", 3],
+  ["ZEP", "Zeph", "Sophonie", 3],
+  ["HAG", "Hag", "Aggée", 2],
+  ["ZEC", "Zech", "Zacharie", 14],
+  ["MAL", "Mal", "Malachie", 4],
+  ["MAT", "Matt", "Matthieu", 28],
+  ["MRK", "Mark", "Marc", 16],
+  ["LUK", "Luke", "Luc", 24],
+  ["JHN", "John", "Jean", 21],
+  ["ACT", "Acts", "Actes", 28],
+  ["ROM", "Rom", "Romains", 16],
+  ["1CO", "1Cor", "1 Corinthiens", 16],
+  ["2CO", "2Cor", "2 Corinthiens", 13],
+  ["GAL", "Gal", "Galates", 6],
+  ["EPH", "Eph", "Éphésiens", 6],
+  ["PHP", "Phil", "Philippiens", 4],
+  ["COL", "Col", "Colossiens", 4],
+  ["1TH", "1Thess", "1 Thessaloniciens", 5],
+  ["2TH", "2Thess", "2 Thessaloniciens", 3],
+  ["1TI", "1Tim", "1 Timothée", 6],
+  ["2TI", "2Tim", "2 Timothée", 4],
+  ["TIT", "Titus", "Tite", 3],
+  ["PHM", "Phlm", "Philémon", 1],
+  ["HEB", "Heb", "Hébreux", 13],
+  ["JAS", "Jas", "Jacques", 5],
+  ["1PE", "1Pet", "1 Pierre", 5],
+  ["2PE", "2Pet", "2 Pierre", 3],
+  ["1JN", "1John", "1 Jean", 5],
+  ["2JN", "2John", "2 Jean", 1],
+  ["3JN", "3John", "3 Jean", 1],
+  ["JUD", "Jude", "Jude", 1],
+  ["REV", "Rev", "Apocalypse", 22],
+];
 
-const passageCache = new Map();
-const PASSAGE_CACHE_MS = 30 * 60_000; // 30 min
-const PASSAGE_CACHE_MAX = 80;
+const byUsfm = new Map(CANON.map((row) => [row[0], row]));
 
-let queue = Promise.resolve();
-let lastYvAt = 0;
-const MIN_GAP_MS = 350;
+const bookJsonCache = new Map();
+const BOOK_CACHE_MS = 6 * 60 * 60_000;
 
-function appKey() {
-  return (process.env.YOUVERSION_APP_KEY || process.env.YVP_APP_KEY || "").trim();
-}
-
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function stripHtml(input) {
-  return String(input || "")
-    .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<\/(p|div|h[1-6])>/gi, "\n")
-    .replace(/<[^>]*>/g, " ")
-    .replace(/\u00a0/g, " ")
-    .replace(/[ \t]+\n/g, "\n")
-    .replace(/\n{3,}/g, "\n\n")
-    .replace(/[ \t]{2,}/g, " ")
+function cleanVerseText(text) {
+  return String(text || "")
+    .replace(/''/g, "'")
+    .replace(/\s+/g, " ")
     .trim();
 }
 
-/** YouVersion HTML: <span class="yv-v" v="1"></span><span class="yv-vlbl">1</span>texte… */
-function versesFromHtml(html) {
-  const raw = String(html || "");
-  if (!raw.includes("yv-v")) return null;
-
-  const re =
-    /<span\b[^>]*class=["'][^"']*yv-v[^"']*["'][^>]*\bv=["'](\d+)["'][^>]*>\s*<\/span>|<span\b[^>]*\bv=["'](\d+)["'][^>]*class=["'][^"']*yv-v[^"']*["'][^>]*>\s*<\/span>/gi;
-  const matches = [...raw.matchAll(re)];
-  if (!matches.length) return null;
-
-  const verses = [];
-  for (let i = 0; i < matches.length; i += 1) {
-    const number = Number(matches[i][1] || matches[i][2]);
-    const start = (matches[i].index ?? 0) + matches[i][0].length;
-    const end = i + 1 < matches.length ? (matches[i + 1].index ?? raw.length) : raw.length;
-    let chunk = raw.slice(start, end);
-    chunk = chunk.replace(/<span[^>]*class=["'][^"']*yv-vlbl[^"']*["'][^>]*>[\s\S]*?<\/span>/gi, "");
-    chunk = chunk.replace(/<div[^>]*class=["'][^"']*yv-h[^"']*["'][^>]*>[\s\S]*$/i, "");
-    const text = stripHtml(chunk);
-    if (!Number.isFinite(number) || !text) continue;
-    verses.push({ number, text });
-  }
-  return verses.length ? verses : null;
+function listBooks() {
+  return CANON.map(([usfm, osis, title, chapterCount]) => ({
+    id: usfm,
+    title,
+    fullTitle: title,
+    abbreviation: usfm,
+    chapters: Array.from({ length: chapterCount }, (_, i) => {
+      const id = String(i + 1);
+      return { id, passageId: `${usfm}.${id}`, title: null };
+    }),
+    osis,
+  }));
 }
 
-function versesFromPlain(raw) {
-  const text = stripHtml(raw);
-  if (!text) return null;
-  const chunks = text.split(/(?=(?:^|\s)\d{1,3}\s)/).map((s) => s.trim()).filter(Boolean);
-  if (chunks.length < 2) return null;
-  const verses = [];
-  for (const chunk of chunks) {
-    const m = chunk.match(/^(\d{1,3})\s+([\s\S]+)$/);
-    if (!m) continue;
-    verses.push({ number: Number(m[1]), text: m[2].trim() });
+function parseUsfmRef(usfm) {
+  const normalized = String(usfm || "")
+    .trim()
+    .toUpperCase()
+    .replace(/:/g, ".");
+  const [book = "JHN", chapterRaw = "1", versePart] = normalized.split(".");
+  const chapter = Number(chapterRaw);
+  let verseStart = null;
+  let verseEnd = null;
+  if (versePart) {
+    const [a, b] = String(versePart).split("-");
+    verseStart = Number(a);
+    verseEnd = b ? Number(b) : verseStart;
   }
-  return verses.length >= 2 ? verses : null;
-}
-
-function extractVerses(root) {
-  if (Array.isArray(root.verses)) {
-    const verses = [];
-    for (const v of root.verses) {
-      if (!v || typeof v !== "object") continue;
-      const text = stripHtml(String(v.content ?? v.text ?? ""));
-      if (!text) continue;
-      const number = Number(v.verse ?? v.number ?? v.id ?? verses.length + 1);
-      verses.push({
-        number: Number.isFinite(number) ? number : verses.length + 1,
-        text,
-      });
-    }
-    if (verses.length) return verses;
-  }
-
-  for (const c of [root.content, root.text, root.passage]) {
-    if (typeof c !== "string" || !c.trim()) continue;
-    if (/<[^>]+>/.test(c)) {
-      const fromHtml = versesFromHtml(c);
-      if (fromHtml) return fromHtml;
-    }
-    const fromPlain = versesFromPlain(c);
-    if (fromPlain) return fromPlain;
-  }
-  return null;
-}
-
-function extractContent(root) {
-  const verses = extractVerses(root);
-  if (verses) return verses.map((v) => v.text).join(" ");
-  const candidates = [root.content, root.text, root.passage];
-  for (const c of candidates) {
-    if (typeof c === "string" && c.trim()) return stripHtml(c);
-    if (c && typeof c === "object" && typeof c.content === "string") {
-      return stripHtml(c.content);
-    }
-  }
-  return "";
-}
-
-function parsePassage(json) {
-  const root = json?.data && typeof json.data === "object" ? json.data : json;
-  const verses = extractVerses(root);
   return {
-    id: String(root.id ?? root.passage_id ?? ""),
-    content: extractContent(root),
-    reference: root.reference ?? root.human ?? root.title ?? null,
-    verses,
+    book,
+    chapter: Number.isFinite(chapter) && chapter > 0 ? chapter : 1,
+    verseStart: Number.isFinite(verseStart) ? verseStart : null,
+    verseEnd: Number.isFinite(verseEnd) ? verseEnd : null,
   };
 }
 
-function parseBible(json) {
-  const root = json?.data && typeof json.data === "object" ? json.data : json;
-  const language = root.language;
-  const tag = root.language_tag ? String(root.language_tag) : null;
-  return {
-    id: Number(root.id),
-    abbreviation: String(root.abbreviation ?? root.localized_abbreviation ?? "LSG"),
-    title: String(root.localized_title ?? root.title ?? root.name ?? "Louis Segond 1910"),
-    languageCode:
-      language && typeof language === "object"
-        ? String(language.iso_639_1 ?? language.iso_639_3 ?? "")
-        : tag?.split("-")[0] ?? "fr",
-  };
-}
-
-function parseBook(raw) {
-  const chapters = Array.isArray(raw.chapters)
-    ? raw.chapters.map((c) => ({
-        id: String(c.id ?? ""),
-        passageId: String(c.passage_id ?? c.id ?? ""),
-        title: c.title ? String(c.title) : null,
-      }))
-    : [];
-  return {
-    id: String(raw.id ?? ""),
-    title: String(raw.title ?? raw.full_title ?? raw.id ?? ""),
-    fullTitle: raw.full_title ? String(raw.full_title) : null,
-    abbreviation: raw.abbreviation ? String(raw.abbreviation) : null,
-    chapters,
-  };
-}
-
-function rememberPassage(usfm, payload) {
-  passageCache.set(usfm, { at: Date.now(), payload });
-  while (passageCache.size > PASSAGE_CACHE_MAX) {
-    const first = passageCache.keys().next().value;
-    passageCache.delete(first);
-  }
-}
-
-async function yvGet(path, key, { retries = 4 } = {}) {
-  let lastErr = null;
-  for (let attempt = 0; attempt < retries; attempt += 1) {
-    const waitGap = Math.max(0, MIN_GAP_MS - (Date.now() - lastYvAt));
-    if (waitGap) await sleep(waitGap);
-    lastYvAt = Date.now();
-
-    const response = await fetch(`${API_BASE}${path}`, {
-      headers: {
-        "X-YVP-App-Key": key,
-        Accept: "application/json",
-      },
-    });
-    const text = await response.text();
-    let json = {};
-    try {
-      json = text ? JSON.parse(text) : {};
-    } catch {
-      json = { raw: text };
-    }
-
-    if (response.ok) return json;
-
-    const retryAfterRaw = response.headers.get("retry-after");
-    const retryAfter = retryAfterRaw ? Number(retryAfterRaw) * 1000 : NaN;
-    if (response.status === 429 && attempt < retries - 1) {
-      const backoff = Number.isFinite(retryAfter)
-        ? Math.min(Math.max(retryAfter, 800), 12_000)
-        : Math.min(800 * 2 ** attempt, 8_000);
-      await sleep(backoff);
-      lastErr = Object.assign(new Error("Rate limit YouVersion"), { statusCode: 429 });
-      continue;
-    }
-
+async function fetchJson(url) {
+  const response = await fetch(url, {
+    headers: { Accept: "application/json" },
+  });
+  if (!response.ok) {
     const err = new Error(
-      response.status === 401
-        ? "App Key YouVersion inválida"
-        : response.status === 403
-          ? "Acesso negado (licença YouVersion?)"
-          : response.status === 404
-            ? "Recurso não encontrado"
-            : response.status === 429
-              ? "Rate limit YouVersion — réessaie dans un instant"
-              : `YouVersion HTTP ${response.status}`,
+      response.status === 404 ? "Livre introuvable dans bible-data" : `bible-data HTTP ${response.status}`,
     );
     err.statusCode = response.status;
     throw err;
   }
-  throw lastErr || new Error("Rate limit YouVersion");
+  return response.json();
 }
 
-/** Sérialise les appels YouVersion (évite rafales 429). */
-function enqueueYv(task) {
-  const run = queue.then(task, task);
-  queue = run.then(
-    () => undefined,
-    () => undefined,
-  );
-  return run;
-}
+async function loadBook(osis) {
+  const cached = bookJsonCache.get(osis);
+  if (cached && Date.now() - cached.at < BOOK_CACHE_MS) return cached.json;
 
-async function fetchBooksCached(key) {
-  const now = Date.now();
-  if (booksCache && now - booksCacheAt < BOOKS_CACHE_MS) {
-    return booksCache;
+  let lastErr = null;
+  for (const base of DATA_BASES) {
+    try {
+      const json = await fetchJson(`${base}/${osis}.json`);
+      if (!json || !Array.isArray(json.chapters)) {
+        throw new Error("JSON bible-data invalide");
+      }
+      bookJsonCache.set(osis, { at: Date.now(), json });
+      return json;
+    } catch (err) {
+      lastErr = err;
+    }
   }
-  return enqueueYv(async () => {
-    if (booksCache && Date.now() - booksCacheAt < BOOKS_CACHE_MS) return booksCache;
-    const json = await yvGet(`/bibles/${LSG}/books`, key);
-    const list = Array.isArray(json.data) ? json.data : Array.isArray(json.books) ? json.books : [];
-    const payload = {
-      bible: LSG_META,
-      books: list.map(parseBook),
-    };
-    booksCache = payload;
-    booksCacheAt = Date.now();
-    return payload;
-  });
+  throw lastErr || new Error("bible-data indisponible");
 }
 
-async function fetchPassageCached(key, usfm) {
-  const cached = passageCache.get(usfm);
-  if (cached && Date.now() - cached.at < PASSAGE_CACHE_MS) {
-    return cached.payload;
+function chapterFromBook(bookJson, chapter, verseStart, verseEnd) {
+  const found = (bookJson.chapters ?? []).find((item) => Number(item.chapter) === chapter);
+  if (!found) return null;
+  let verses = (found.verses ?? [])
+    .map((verse) => ({
+      number: Number(verse.number),
+      text: cleanVerseText(verse.text),
+    }))
+    .filter((verse) => Number.isFinite(verse.number) && verse.text);
+  if (verseStart != null) {
+    const end = verseEnd ?? verseStart;
+    verses = verses.filter((verse) => verse.number >= verseStart && verse.number <= end);
   }
-  return enqueueYv(async () => {
-    const again = passageCache.get(usfm);
-    if (again && Date.now() - again.at < PASSAGE_CACHE_MS) return again.payload;
-    const json = await yvGet(
-      `/bibles/${LSG}/passages/${encodeURIComponent(usfm)}?format=html&include_headings=true`,
-      key,
-    );
-    const payload = {
-      bibleId: LSG,
-      bible: LSG_META,
-      usingFallback: false,
-      passage: parsePassage(json),
-    };
-    rememberPassage(usfm, payload);
-    return payload;
-  });
+  return verses;
 }
 
-export async function handleYouVersion(req, res, tokenFromEnv) {
-  const key = (tokenFromEnv || appKey()).trim();
+async function fetchPassagePayload(usfm) {
+  const ref = parseUsfmRef(usfm);
+  const meta = byUsfm.get(ref.book);
+  if (!meta) {
+    throw new Error(`Livre inconnu : ${ref.book}`);
+  }
+  const [, osis, title] = meta;
+  const bookJson = await loadBook(osis);
+  const verses = chapterFromBook(bookJson, ref.chapter, ref.verseStart, ref.verseEnd);
+  if (!verses?.length) {
+    throw new Error("Passage introuvable");
+  }
+  const label =
+    ref.verseStart != null
+      ? `${title} ${ref.chapter}.${ref.verseStart}${ref.verseEnd && ref.verseEnd !== ref.verseStart ? `-${ref.verseEnd}` : ""}`
+      : `${title} ${ref.chapter}`;
+  return {
+    bibleId: LSG_META.id,
+    bible: LSG_META,
+    usingFallback: false,
+    passage: {
+      id: `${ref.book}.${ref.chapter}`,
+      content: verses.map((verse) => verse.text).join(" "),
+      reference: label,
+      verses,
+    },
+  };
+}
+
+export async function handleYouVersion(req, res) {
   if (req.method === "OPTIONS") {
     res.statusCode = 204;
     res.end();
@@ -309,20 +237,11 @@ export async function handleYouVersion(req, res, tokenFromEnv) {
     res.end(JSON.stringify(body));
   };
 
-  if (!key) {
-    send(200, {
-      ok: false,
-      hasKey: false,
-      error: "YOUVERSION_APP_KEY em falta no .env (portal platform.youversion.com)",
-    });
-    return;
-  }
-
   try {
     if (action === "resolve" || action === "test") {
       let sample = null;
       if (action === "test") {
-        const result = await fetchPassageCached(key, "JHN.3.16");
+        const result = await fetchPassagePayload("JHN.3.16");
         sample = result.passage;
       }
       send(200, {
@@ -336,22 +255,18 @@ export async function handleYouVersion(req, res, tokenFromEnv) {
     }
 
     if (action === "books") {
-      const payload = await fetchBooksCached(key);
       send(200, {
         ok: true,
         hasKey: true,
-        bible: payload.bible,
+        bible: LSG_META,
         usingFallback: false,
-        books: payload.books,
+        books: listBooks(),
       });
       return;
     }
 
-    const usfm = String(url.searchParams.get("usfm") || "JHN.3.16")
-      .trim()
-      .toUpperCase()
-      .replace(/:/g, ".");
-    const payload = await fetchPassageCached(key, usfm);
+    const usfm = String(url.searchParams.get("usfm") || "JHN.3.16");
+    const payload = await fetchPassagePayload(usfm);
     send(200, {
       ok: true,
       hasKey: true,
@@ -364,5 +279,5 @@ export async function handleYouVersion(req, res, tokenFromEnv) {
 }
 
 export default async function handler(req, res) {
-  await handleYouVersion(req, res, process.env.YOUVERSION_APP_KEY || process.env.YVP_APP_KEY);
+  await handleYouVersion(req, res);
 }

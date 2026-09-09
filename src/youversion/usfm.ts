@@ -124,6 +124,36 @@ const BOOKS: Record<string, string> = {
   jude: "JUD",
   revelation: "REV",
   apocalypse: "REV",
+  exod: "EXO",
+  deut: "DEU",
+  josh: "JOS",
+  judg: "JDG",
+  "1sam": "1SA",
+  "2sam": "2SA",
+  "1kgs": "1KI",
+  "2kgs": "2KI",
+  "1chr": "1CH",
+  "2chr": "2CH",
+  esth: "EST",
+  ps: "PSA",
+  prov: "PRO",
+  eccl: "ECC",
+  song: "SNG",
+  isa: "ISA",
+  jer: "JER",
+  ezek: "EZK",
+  "1thess": "1TH",
+  "2thess": "2TH",
+  "1tim": "1TI",
+  "2tim": "2TI",
+  phlm: "PHM",
+  jas: "JAS",
+  "1pet": "1PE",
+  "2pet": "2PE",
+  "1john": "1JN",
+  "2john": "2JN",
+  "3john": "3JN",
+  matt: "MAT",
 };
 
 /** Normalise le nom de livre pour lookup (accents → ASCII). */
@@ -176,8 +206,9 @@ export function toUsfm(reference: string): string {
   return `${book}.${chapter}.${verse}`;
 }
 
-export function bibleComUrl(usfm: string, bibleId: number): string {
-  return `https://www.bible.com/bible/${bibleId}/${toUsfm(usfm)}`;
+/** Lecteur public LSG (midvash / bible-data). */
+export function bibleComUrl(_usfm?: string, _bibleId?: number): string {
+  return "https://midvash.com/lsg";
 }
 
 /** True se o texto é uma referência de passagem com livro bíblico conhecido. */
