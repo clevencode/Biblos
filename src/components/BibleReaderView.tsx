@@ -153,12 +153,15 @@ export function BibleReaderView({
     return Number.isFinite(n) ? Math.min(FONT_MAX, Math.max(FONT_MIN, n)) : FONT_DEFAULT;
   });
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [passageStep, setPassageStep] = useState<"book" | "chapter" | "verse">("book");
   const [moreOpen, setMoreOpen] = useState(false);
   const [cardBusy, setCardBusy] = useState(false);
   const [cardMsg, setCardMsg] = useState<string | null>(null);
   const statusId = useId();
   const highlightRef = useRef<HTMLElement | null>(null);
-  const chapterSelectRef = useRef<HTMLSelectElement | null>(null);
+  const bookPickRef = useRef<HTMLButtonElement | null>(null);
+  const passagePickRef = useRef<HTMLButtonElement | null>(null);
+  const pendingVerseStep = useRef(false);
   const booted = useRef(false);
   const loadGen = useRef(0);
 
@@ -228,9 +231,25 @@ export function BibleReaderView({
 
   useEffect(() => {
     if (!pickerOpen) return;
-    const id = window.setTimeout(() => chapterSelectRef.current?.focus(), 0);
+    const id = window.setTimeout(() => {
+      if (passageStep === "book") bookPickRef.current?.focus();
+      else passagePickRef.current?.focus();
+    }, 0);
     return () => window.clearTimeout(id);
-  }, [pickerOpen]);
+  }, [pickerOpen, passageStep]);
+
+  useEffect(() => {
+    if (!pickerOpen || passageStep !== "book") return;
+    const cell = document.getElementById(`bible-pick-book-${bookId}`);
+    cell?.scrollIntoView({ block: "nearest" });
+  }, [pickerOpen, passageStep, bookId]);
+
+  useEffect(() => {
+    if (!pickerOpen || !pendingVerseStep.current) return;
+    if (loading) return;
+    pendingVerseStep.current = false;
+    setPassageStep("verse");
+  }, [pickerOpen, loading, chapterId, passage?.id]);
 
   async function loadChapter(
     nextBook: string,
@@ -287,11 +306,42 @@ export function BibleReaderView({
 
   function closePicker() {
     setPickerOpen(false);
+    setPassageStep("book");
+    pendingVerseStep.current = false;
   }
 
   function togglePicker() {
-    setPickerOpen((open) => !open);
+    setPickerOpen((open) => {
+      const next = !open;
+      if (next) {
+        setPassageStep("book");
+        pendingVerseStep.current = false;
+      }
+      return next;
+    });
     setMoreOpen(false);
+  }
+
+  function pickBook(nextBook: string) {
+    pendingVerseStep.current = false;
+    setPassageStep("chapter");
+    if (nextBook.toUpperCase() === bookId.toUpperCase()) return;
+    void loadChapter(nextBook, "1", null);
+  }
+
+  function pickChapter(nextChapter: string) {
+    if (nextChapter === chapterId && passage?.verses?.length) {
+      setPassageStep("verse");
+      return;
+    }
+    pendingVerseStep.current = true;
+    void loadChapter(bookId, nextChapter, null);
+  }
+
+  function closeCreateCard() {
+    setSelectedVerse(null);
+    setHighlightVerse(null);
+    setCardMsg(null);
   }
 
   async function makeFlashcard() {
@@ -339,6 +389,8 @@ export function BibleReaderView({
       ? (passage.verses.find((item) => item.number === selectedVerse)?.text?.trim() ?? "")
       : "";
   const showCreateCard = Boolean(selectedVerse && selectedVerseText && !planReading && !pickerOpen);
+  const passagePickLabel =
+    selectedVerse != null ? `${chapterId}.${selectedVerse}` : chapterId;
 
   return (
     <section
@@ -357,6 +409,7 @@ export function BibleReaderView({
             planReading.onAdvance();
           } else if (event.key === "Escape") {
             setPickerOpen(false);
+            setPassageStep("book");
             setMoreOpen(false);
             onBack?.();
           }
@@ -365,7 +418,7 @@ export function BibleReaderView({
         if (event.key === "Escape") {
           if (pickerOpen || moreOpen) {
             event.preventDefault();
-            setPickerOpen(false);
+            closePicker();
             setMoreOpen(false);
             return;
           }
@@ -557,9 +610,19 @@ export function BibleReaderView({
 
       {showCreateCard ? (
         <div className="bible-verse-actions" role="region" aria-label="Flashcard du verset">
-          <p className="bible-verse-actions-ref">
-            {formatVerseCardFront(bookTitle, chapterId, selectedVerse!)}
-          </p>
+          <div className="bible-verse-actions-head">
+            <p className="bible-verse-actions-ref">
+              {formatVerseCardFront(bookTitle, chapterId, selectedVerse!)}
+            </p>
+            <button
+              type="button"
+              className="bible-verse-actions-close"
+              onClick={closeCreateCard}
+              aria-label="Fermer"
+            >
+              ×
+            </button>
+          </div>
           <button
             type="button"
             className="bible-yv-chip is-primary bible-make-card"
@@ -572,9 +635,107 @@ export function BibleReaderView({
         </div>
       ) : null}
 
+      {pickerOpen && !planReading ? (
+        <div className="bible-yv-pick-sheet" role="dialog" aria-label="Choisir livre, chapitre ou verset">
+          <div className="bible-yv-pick-sheet-head">
+            {passageStep === "verse" ? (
+              <button
+                type="button"
+                className="bible-yv-pick-back"
+                onClick={() => setPassageStep("chapter")}
+              >
+                ← Ch. {chapterId}
+              </button>
+            ) : passageStep === "chapter" ? (
+              <button
+                type="button"
+                className="bible-yv-pick-back"
+                onClick={() => setPassageStep("book")}
+              >
+                ← {bookTitle}
+              </button>
+            ) : (
+              <span className="bible-yv-pick-step">Livre</span>
+            )}
+            <span className="bible-yv-pick-hint">
+              {passageStep === "book"
+                ? "Choisir un livre"
+                : passageStep === "chapter"
+                  ? "Choisir un chapitre"
+                  : "Choisir un verset"}
+            </span>
+          </div>
+          <div
+            className={`bible-yv-pick-grid${passageStep === "book" ? " is-books" : ""}`}
+            role="listbox"
+          >
+            {passageStep === "book"
+              ? books.map((book) => {
+                  const on = book.id.toUpperCase() === bookId.toUpperCase();
+                  return (
+                    <button
+                      key={book.id}
+                      id={`bible-pick-book-${book.id}`}
+                      type="button"
+                      role="option"
+                      aria-selected={on}
+                      className={`bible-yv-pick-cell is-book${on ? " is-on" : ""}`}
+                      onClick={() => pickBook(book.id)}
+                      disabled={loading}
+                    >
+                      {book.title}
+                    </button>
+                  );
+                })
+              : passageStep === "chapter"
+                ? chapters.map((id) => {
+                    const on = id === chapterId;
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        role="option"
+                        aria-selected={on}
+                        className={`bible-yv-pick-cell${on ? " is-on" : ""}`}
+                        onClick={() => pickChapter(id)}
+                        disabled={loading}
+                      >
+                        {id}
+                      </button>
+                    );
+                  })
+                : verseOptions.map((n) => {
+                    const on = n === selectedVerse;
+                    return (
+                      <button
+                        key={n}
+                        type="button"
+                        role="option"
+                        aria-selected={on}
+                        className={`bible-yv-pick-cell${on ? " is-on" : ""}`}
+                        onClick={() => jumpToVerse(n)}
+                        disabled={loading}
+                      >
+                        {n}
+                      </button>
+                    );
+                  })}
+          </div>
+          {passageStep === "book" && !books.length ? (
+            <p className="bible-yv-pick-loading bible-yv-muted">Chargement des livres…</p>
+          ) : null}
+          {passageStep === "verse" && loading ? (
+            <p className="bible-yv-pick-loading bible-yv-muted">Chargement…</p>
+          ) : null}
+          {passageStep === "verse" && !loading && !verseOptions.length ? (
+            <p className="bible-yv-pick-loading bible-yv-muted">Aucun verset</p>
+          ) : null}
+        </div>
+      ) : null}
+
       <footer
         className={`bible-yv-dock${planReading ? " is-plan" : ""}${!planReading && pickerOpen ? " is-picking" : ""}${showCreateCard ? " has-verse-actions" : ""}`}
-        aria-label={planReading ? "Lecture du plan" : pickerOpen ? "Choisir livre, chapitre et verset" : "Chapitre"}
+        aria-label={planReading ? "Lecture du plan" : pickerOpen ? "Choisir livre et passage" : "Chapitre"}
       >
         {planReading ? (
           <div className="bible-yv-dock-nav bible-yv-dock-nav--plan">
@@ -602,72 +763,59 @@ export function BibleReaderView({
             <button
               type="button"
               className="bible-yv-dock-arrow"
-              onClick={() => goAdjacent(-1)}
+              onClick={() => {
+                setPassageStep("chapter");
+                goAdjacent(-1);
+              }}
               disabled={!canPrev || loading}
               aria-label="Chapitre précédent"
             >
               ‹
             </button>
-            <div className="bible-yv-dock-picker" role="group" aria-label="Livre, chapitre et verset">
-              <label className="bible-field bible-field--book">
+            <div className="bible-yv-dock-picker" role="group" aria-label="Livre et passage">
+              <div className="bible-field bible-field--book">
                 <span className="bible-field-label">Livre</span>
-                <select
-                  value={bookId}
-                  onChange={(e) => void loadChapter(e.target.value, "1", null)}
+                <button
+                  ref={bookPickRef}
+                  type="button"
+                  className={`bible-yv-passage-toggle${passageStep === "book" ? " is-verse" : ""}`}
+                  onClick={() => setPassageStep("book")}
+                  aria-label="Choisir un livre"
                   disabled={!books.length || loading}
                 >
-                  {books.length ? (
-                    books.map((book) => (
-                      <option key={book.id} value={book.id}>
-                        {book.title}
-                      </option>
-                    ))
-                  ) : (
-                    <option value={bookId}>{bookId}</option>
-                  )}
-                </select>
-              </label>
-              <label className="bible-field bible-field--chapter">
-                <span className="bible-field-label">Ch.</span>
-                <select
-                  ref={chapterSelectRef}
-                  value={chapterId}
-                  onChange={(e) => void loadChapter(bookId, e.target.value, null)}
-                  disabled={loading}
+                  <span className="bible-yv-passage-toggle-text">{bookTitle}</span>
+                  <span className="bible-yv-dock-caret" aria-hidden="true">
+                    ▾
+                  </span>
+                </button>
+              </div>
+              <div className="bible-field bible-field--passage">
+                <span className="bible-field-label">Ch. / V.</span>
+                <button
+                  ref={passagePickRef}
+                  type="button"
+                  className={`bible-yv-passage-toggle${passageStep !== "book" ? " is-verse" : ""}`}
+                  onClick={() =>
+                    setPassageStep((step) => (step === "verse" ? "chapter" : "verse"))
+                  }
+                  aria-label={
+                    passageStep === "verse" ? "Afficher les chapitres" : "Afficher les versets"
+                  }
                 >
-                  {chapters.map((id) => (
-                    <option key={id} value={id}>
-                      {id}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="bible-field bible-field--verse">
-                <span className="bible-field-label">V.</span>
-                <select
-                  value={selectedVerse ?? ""}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (!value) return;
-                    jumpToVerse(Number(value));
-                  }}
-                  disabled={loading || !verseOptions.length}
-                >
-                  <option value="" disabled>
-                    …
-                  </option>
-                  {verseOptions.map((n) => (
-                    <option key={n} value={n}>
-                      {n}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                  <span>{passagePickLabel}</span>
+                  <span className="bible-yv-dock-caret" aria-hidden="true">
+                    ▾
+                  </span>
+                </button>
+              </div>
             </div>
             <button
               type="button"
               className="bible-yv-dock-arrow"
-              onClick={() => goAdjacent(1)}
+              onClick={() => {
+                setPassageStep("chapter");
+                goAdjacent(1);
+              }}
               disabled={!canNext || loading}
               aria-label="Chapitre suivant"
             >
