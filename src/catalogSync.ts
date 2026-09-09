@@ -1,6 +1,7 @@
 import type { Catalog, ReadingPlan, Seed } from "./types";
 import { applyRemoteOverride } from "./cardOverrides";
 import { isBiblosFlashcard } from "./catalog";
+import { sanitizePlanDays } from "./plan";
 import { normalizeCategoria, normalizeStatus } from "./retention";
 
 const CATALOG_CACHE_KEY = "biblos-catalog-v1";
@@ -21,7 +22,11 @@ export function pruneCatalogToVerseCards(catalog: Catalog): Catalog {
       if (id.includes("versecard") || id.includes("verse")) return true;
       return note.flashcards.length > 0;
     });
-  return { ...catalog, notas };
+  const plans = (catalog.plans ?? []).map((plan) => ({
+    ...plan,
+    days: sanitizePlanDays(plan.days),
+  }));
+  return { ...catalog, notas, plans };
 }
 
 export function hydrateCatalogFromCache(catalog: Catalog): Catalog {
@@ -157,14 +162,15 @@ function mergePlans(prev: ReadingPlan[], incoming: ReadingPlan[]): { plans: Read
   for (const plan of incoming) {
     const existing = byId.get(plan.id);
     if (!existing) {
-      byId.set(plan.id, plan);
+      byId.set(plan.id, { ...plan, days: sanitizePlanDays(plan.days) });
       changed = true;
       continue;
     }
+    const incomingDays = sanitizePlanDays(plan.days);
     const merged = {
       ...existing,
       ...plan,
-      days: plan.days.length ? plan.days : existing.days,
+      days: incomingDays.length ? incomingDays : sanitizePlanDays(existing.days),
       description:
         typeof plan.description === "string" && plan.description.trim()
           ? plan.description

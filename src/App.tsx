@@ -108,8 +108,8 @@ export function App() {
   );
   const inbox = useMemo(() => buildInbox(notes, scopedCardIds), [scopedCardIds, notes, retentionTick]);
   const calendar = useMemo(
-    () => buildCalendarEvents(notes, scopedCardIds),
-    [scopedCardIds, notes, retentionTick],
+    () => buildCalendarEvents(notes, null),
+    [notes, retentionTick],
   );
 
   const planProgress = useMemo(() => {
@@ -186,10 +186,6 @@ export function App() {
   }
 
   function openCalendarCard(item: CalendarCardItem) {
-    if (isPassageReminder(item.title, item.cardCategory)) {
-      openPassageInBible(item.title);
-      return;
-    }
     setHome(false);
     setCardFocusId(item.id);
     setCardFocusSeq((value) => value + 1);
@@ -279,7 +275,14 @@ export function App() {
   const activeModeLabel = modes.find((item) => item.id === mode)?.label ?? "";
 
   const themePanel = (
-    <TodayView plan={activePlan} onSelectGalerie={goHome} />
+    <TodayView
+      plan={activePlan}
+      progress={planProgress}
+      planJour={todayJour}
+      onSelectGalerie={goHome}
+      onMarkRead={handleMarkRead}
+      onOpenPassage={openPassageInBible}
+    />
   );
 
   return (
@@ -402,6 +405,7 @@ export function App() {
                       initialRef="Jean 3.16"
                       focusRef={bibleFocusRef}
                       focusSeq={bibleFocusSeq}
+                      onBack={() => setMode("today")}
                       onFlashcardCreated={handleFlashcardCreated}
                     />
                   </div>
@@ -448,11 +452,6 @@ export function App() {
                       onPickCard={openCalendarCard}
                       active={!home && mode === "calendar"}
                       splitLayout={splitLayout}
-                      plan={activePlan}
-                      progress={planProgress}
-                      planJour={todayJour}
-                      onMarkRead={handleMarkRead}
-                      onOpenPassage={openPassageInBible}
                     />
                   </div>
                 </div>

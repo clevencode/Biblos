@@ -127,41 +127,81 @@ export function parsePlanDays(raw) {
     const title = (match[2] || "").trim();
     const body = match[3] || "";
     const texteMatch = body.match(/Texte\s*:\s*([^\n]+)/i);
-    const defiMatch = body.match(/Défi\s*:\s*([\s\S]+?)(?=\n\s*[•*]?\s*Jour\s+\d+|$)/i);
+    const defiMatch = body.match(/Défi\s*:\s*([^\n]+)/i);
     let texte = texteMatch ? texteMatch[1].trim() : "";
-    let defi = defiMatch ? defiMatch[1].trim() : body.trim();
+    const defi = defiMatch ? defiMatch[1].trim() : "";
     if (!texte && title) texte = title;
-    if (texte || defi) days.push({ jour, texte, defi: defi.replace(/\n+/g, " ").trim() });
+    const passage = extractPassageRefCatalog(`${texte} ${defi} ${title}`);
+    if (!passage) continue;
+    days.push({ jour, texte: passage, defi: "" });
   }
-  if (days.length) return days.sort((a, b) => a.jour - b.jour);
+  if (days.length) return uniqueDays(days);
 
-  // Plan [extration ia] compact: 1**Ésaïe 6:1-8**Focus2**…
   const compactRe =
-    /(\d{1,2})\s*\*\*([^*]+)\*\*\s*([\s\S]*?)(?=(?:\d{1,2}\s*\*\*)|Question de méditation|Semaine|Comment utiliser|$)/gi;
+    /(\d{1,2})\s*\*\*([^*]+)\*\*\s*([\s\S]*?)(?=(?:\d{1,2}\s*\*\*)|Question de méditation|Semaine|Comment utiliser|Objectif|Jour\s+\d|$)/gi;
   while ((match = compactRe.exec(text))) {
     const jour = Number(match[1]);
     if (jour < 1 || jour > 40) continue;
-    days.push({
-      jour,
-      texte: match[2].trim(),
-      defi: match[3].replace(/\s+/g, " ").trim(),
-    });
+    const passage = extractPassageRefCatalog(match[2] || "");
+    if (!passage) continue;
+    days.push({ jour, texte: passage, defi: "" });
   }
-  if (days.length) return days.sort((a, b) => a.jour - b.jour);
+  if (days.length) return uniqueDays(days);
 
-  const tableRe = /(?:^|\n)(\d{1,2})\s+([^\n]+?)(?=\n\d{1,2}\s+|\nQuestion|\nSemaine|\nComment|$)/g;
+  const tableRe =
+    /(?:^|\n)(\d{1,2})\s+\*{0,2}((?:[123]\s+)?[A-Za-zÀ-ÿ][^*\n]{2,80}?\d+(?:[.:]\d+(?:\s*[-–—]\s*\d+)?)?)\*{0,2}\s*([^\n]*)/g;
   while ((match = tableRe.exec(text))) {
     const jour = Number(match[1]);
     if (jour < 1 || jour > 40) continue;
-    const rest = match[2].trim();
-    const split = rest.match(/^(.+?)([A-ZÀÂÄÉÈÊËÎÏÔÖÙÛÜÇ].+)$/);
-    days.push({
-      jour,
-      texte: split ? split[1].trim() : rest,
-      defi: split ? split[2].trim() : "",
-    });
+    const passage = extractPassageRefCatalog(match[2] || "");
+    if (!passage) continue;
+    days.push({ jour, texte: passage, defi: "" });
   }
-  return days.sort((a, b) => a.jour - b.jour);
+  return uniqueDays(days);
+}
+
+function uniqueDays(days) {
+  const byJour = new Map();
+  for (const day of days) {
+    if (!byJour.has(day.jour)) byJour.set(day.jour, day);
+  }
+  return [...byJour.values()].sort((a, b) => a.jour - b.jour);
+}
+
+/** Référence biblique seulement — ignore Objectif / Jour N / longs textes. */
+function extractPassageRefCatalog(raw) {
+  const cleaned = String(raw || "")
+    .replace(/\*\*/g, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!cleaned) return null;
+  if (
+    /^(objectif|question|semaine|comment|grande|introduction|defi|défi|texte|jour|day)\b/i.test(
+      cleaned,
+    )
+  ) {
+    return null;
+  }
+  const match = cleaned.match(
+    /(?:[123]\s+)?[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'’.\-]*(?:\s+[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'’.\-]*){0,3}\s+\d+(?:[.:]\d+(?:\s*[-–—]\s*\d+)?)?(?:\s*[-–—]\s*\d+(?:[.:]\d+)?)?/,
+  );
+  if (!match) return null;
+  const candidate = match[0].trim();
+  if (candidate.length > 72) return null;
+  if (/^(objectif|question|semaine|comment|grande|introduction|jour|day)\b/i.test(candidate)) {
+    return null;
+  }
+  if (!/\d/.test(candidate)) return null;
+  const bookPart = (candidate.split(/\s+\d/)[0] || "").trim();
+  if (!/[A-Za-zÀ-ÿ]{3,}/.test(bookPart)) return null;
+  // Rejette faux positifs du type « Jour 3 »
+  const folded = bookPart
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "");
+  if (/^(jour|day|objectif)$/i.test(folded)) return null;
+  return candidate;
 }
 
 function mapCardPage(page, bodyText = "") {

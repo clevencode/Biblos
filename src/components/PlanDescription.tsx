@@ -6,10 +6,11 @@ import {
 
 type PlanDescriptionProps = {
   description?: string | null;
+  title?: string;
 };
 
 /** Propriedade Notion Description — mesma formatação do Resumo StudyOS. */
-export function PlanDescription({ description }: PlanDescriptionProps) {
+export function PlanDescription({ description, title = "Description" }: PlanDescriptionProps) {
   const paragraphs = useMemo(
     () => splitDescriptionParagraphs(description ?? ""),
     [description],
@@ -24,8 +25,8 @@ export function PlanDescription({ description }: PlanDescriptionProps) {
   }
 
   return (
-    <section className="nota-resumo" aria-label="Description">
-      <h3>Description</h3>
+    <section className="nota-resumo" aria-label={title}>
+      <h3>{title}</h3>
       <div className="nota-resumo-body">{paragraphs.map(renderDescriptionParagraph)}</div>
     </section>
   );
