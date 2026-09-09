@@ -8,6 +8,11 @@ import {
   pullFlashcardStates,
   subscribeFlashcardRevision,
 } from "./flashcardSync";
+import {
+  attachNotionUrlToCatalog,
+  enqueuePendingVerseCreatesFromCatalog,
+  flushVerseCardCreates,
+} from "./verseCardSync";
 import { DESCRIPTION_PULL_MS, pullPlanDescription } from "./planDescriptionSync";
 import type { Catalog, CenterMode, ReadingPlan, Seed } from "./types";
 
@@ -42,7 +47,18 @@ export function useNotionSync(options: {
 
   useEffect(() => {
     void (async () => {
+      enqueuePendingVerseCreatesFromCatalog(catalogRef.current);
       await flushFlashcardQueue();
+      const versePush = await flushVerseCardCreates();
+      if (versePush.updates.length) {
+        setCatalog((prev) => {
+          let next = prev;
+          for (const item of versePush.updates) {
+            next = attachNotionUrlToCatalog(next, item.localId, item.url);
+          }
+          return next;
+        });
+      }
     })();
   }, [setCatalog]);
 
@@ -54,6 +70,17 @@ export function useNotionSync(options: {
       if (busy || cancelled) return;
       busy = true;
       try {
+        enqueuePendingVerseCreatesFromCatalog(catalogRef.current);
+        const versePush = await flushVerseCardCreates();
+        if (!cancelled && versePush.updates.length) {
+          setCatalog((prev) => {
+            let next = prev;
+            for (const item of versePush.updates) {
+              next = attachNotionUrlToCatalog(next, item.localId, item.url);
+            }
+            return next;
+          });
+        }
         const result = await pullCatalog(catalogRef.current);
         if (!cancelled && result.changed) {
           setCatalog(result.catalog);

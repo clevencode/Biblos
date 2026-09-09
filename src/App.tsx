@@ -7,7 +7,7 @@ import { ModeTabIcon } from "./components/ModeTabIcon";
 import { TodayView } from "./components/TodayView";
 import { PlanGallery } from "./components/PlanGallery";
 import { BibleReaderView } from "./components/BibleReaderView";
-import type { Catalog, CalendarCardItem, CenterMode, Flashcard, InboxCard, ReadingPlan } from "./types";
+import type { Catalog, CalendarCardItem, CenterMode, Flashcard, InboxCard, ReadingPlan, Seed } from "./types";
 import {
   buildCalendarEvents,
   buildInbox,
@@ -15,7 +15,7 @@ import {
   planCardIds,
 } from "./catalog";
 import { mergeCard } from "./cardOverrides";
-import { hydrateCatalogFromCache, removeCardFromCatalog } from "./catalogSync";
+import { hydrateCatalogFromCache, persistCatalogCache, removeCardFromCatalog } from "./catalogSync";
 import {
   ensurePlanStart,
   ensureDayCompleted,
@@ -262,11 +262,71 @@ export function App() {
     setPlanProgressTick((value) => value + 1);
   }
 
+  function handleFlashcardCreated(card: Flashcard) {
+    setCatalog((current) => {
+      const notas = [...(current.notas ?? [])];
+      const bucketKey = String(card.cardCategory || "VERSECARD");
+      const bucketId = `bucket-${bucketKey.toLowerCase()}`;
+      let seed = notas.find((item) => item.nota.id === bucketId);
+      if (!seed) {
+        seed = {
+          nota: {
+            id: bucketId,
+            titulo: bucketKey,
+            url: "",
+            criadoEm: card.criadoEm || new Date().toISOString(),
+            cartoes: 0,
+          },
+          materia: { id: `cat-${bucketKey.toLowerCase()}`, nome: bucketKey },
+          disciplina: { id: `disc-${bucketKey.toLowerCase()}`, nome: bucketKey },
+          flashcards: [],
+        };
+        notas.push(seed);
+      }
+      const exists = seed.flashcards.some((item) => item.id === card.id || item.url === card.url);
+      const flashcards = exists
+        ? seed.flashcards.map((item) =>
+            item.id === card.id || item.url === card.url ? { ...item, ...card } : item,
+          )
+        : [card, ...seed.flashcards];
+      const nextSeed: Seed = {
+        ...seed,
+        flashcards,
+        nota: { ...seed.nota, cartoes: flashcards.length },
+      };
+      const nextNotas = notas.map((item) => (item.nota.id === nextSeed.nota.id ? nextSeed : item));
+
+      const plans = (current.plans ?? []).map((plan) => {
+        if (!activePlan || plan.id !== activePlan.id) return plan;
+        if (!plan.cardIds?.length) return plan;
+        if (plan.cardIds.includes(card.id)) return plan;
+        return { ...plan, cardIds: [card.id, ...plan.cardIds] };
+      });
+
+      const next = { ...current, notas: nextNotas, plans };
+      persistCatalogCache(next);
+      return next;
+    });
+    setRetentionTick((value) => value + 1);
+
+    void (async () => {
+      const { syncVerseCardToNotion, attachNotionUrlToCatalog } = await import("./verseCardSync");
+      const result = await syncVerseCardToNotion(card);
+      if (result.ok && result.url) {
+        setCatalog((prev) => attachNotionUrlToCatalog(prev, card.id, result.url!));
+      }
+    })();
+  }
+
   function handleRemoveCard(card: Flashcard) {
     const label = card.frente?.trim() || "cette carte";
     if (!window.confirm(`Supprimer « ${label} » ?`)) return;
     setCatalog((current) => removeCardFromCatalog(current, card.id));
     setRetentionTick((value) => value + 1);
+    void (async () => {
+      const { archiveRemoteVerseCard } = await import("./verseCardSync");
+      await archiveRemoteVerseCard(card);
+    })();
   }
 
   function onTabKey(event: ReactKeyboardEvent<HTMLDivElement>) {
@@ -404,6 +464,7 @@ export function App() {
                           }
                         : null
                     }
+                    onFlashcardCreated={handleFlashcardCreated}
                   />
                 </div>
                 <div

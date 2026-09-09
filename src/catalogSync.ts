@@ -5,14 +5,13 @@ import { sanitizePlanDays } from "./plan";
 import { normalizeCategoria, normalizeStatus } from "./retention";
 
 const CATALOG_CACHE_KEY = "biblos-catalog-v1";
-const VERSE_CREATE_OUTBOX_KEY = "biblos-verse-create-outbox";
 
 function isVerseBucketId(id: string): boolean {
   const key = String(id || "").toLowerCase();
   return key.includes("versecard") || key.includes("verse");
 }
 
-/** Drop VERSECARD / buckets vazios; conserva plans. */
+/** Conserve VERSECARD (bucket verse-*) ; drop buckets vides / ENSEIGNEMENT. */
 export function pruneCatalogToVerseCards(catalog: Catalog): Catalog {
   const notas = (catalog.notas ?? [])
     .map((note) => {
@@ -23,7 +22,10 @@ export function pruneCatalogToVerseCards(catalog: Catalog): Catalog {
         nota: { ...note.nota, cartoes: flashcards.length },
       };
     })
-    .filter((note) => !isVerseBucketId(note.nota.id) && note.flashcards.length > 0);
+    .filter((note) => {
+      if (isVerseBucketId(note.nota.id)) return note.flashcards.length > 0;
+      return note.flashcards.length > 0;
+    });
   const plans = (catalog.plans ?? []).map((plan) => ({
     ...plan,
     days: sanitizePlanDays(plan.days),
@@ -32,11 +34,6 @@ export function pruneCatalogToVerseCards(catalog: Catalog): Catalog {
 }
 
 export function hydrateCatalogFromCache(catalog: Catalog): Catalog {
-  try {
-    localStorage.removeItem(VERSE_CREATE_OUTBOX_KEY);
-  } catch {
-    /* private mode */
-  }
   try {
     const raw = localStorage.getItem(CATALOG_CACHE_KEY);
     if (!raw) {
@@ -61,7 +58,6 @@ export function hydrateCatalogFromCache(catalog: Catalog): Catalog {
 export function persistCatalogCache(catalog: Catalog) {
   try {
     localStorage.setItem(CATALOG_CACHE_KEY, JSON.stringify(catalog));
-    localStorage.removeItem(VERSE_CREATE_OUTBOX_KEY);
   } catch {
     /* quota / private mode */
   }
@@ -93,7 +89,7 @@ function mergeFlashcards(prev: Seed[], incoming: Seed[]): { notes: Seed[]; chang
 
   for (const stub of incoming) {
     const verseCards = (stub.flashcards ?? []).filter(isBiblosFlashcard);
-    if (!verseCards.length || isVerseBucketId(stub.nota.id)) {
+    if (!verseCards.length && !isVerseBucketId(stub.nota.id)) {
       continue;
     }
     const filteredStub = {
@@ -183,7 +179,10 @@ function mergeFlashcards(prev: Seed[], incoming: Seed[]): { notes: Seed[]; chang
       changed = true;
     }
     const key = String(id).toLowerCase();
-    if (!flashcards.length || isVerseBucketId(key)) {
+    if (!flashcards.length) {
+      byId.delete(id);
+      changed = true;
+    } else if (!isVerseBucketId(key) && !flashcards.some(isBiblosFlashcard)) {
       byId.delete(id);
       changed = true;
     }

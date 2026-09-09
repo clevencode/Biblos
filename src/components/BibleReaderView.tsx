@@ -11,6 +11,9 @@ import {
   type YouVersionBook,
   type YouVersionPassage,
 } from "../youversion/client";
+import { formatVerseCardFront } from "../youversion/usfm";
+import { createVerseFlashcard } from "../verseCard";
+import type { Flashcard } from "../types";
 
 const STORAGE_KEY = "biblos-bible-reader";
 const BOOKS_CACHE_KEY = "biblos-bible-books-lsg";
@@ -41,6 +44,8 @@ type BibleReaderViewProps = {
     onPrev: () => void;
     onAdvance: () => void;
   } | null;
+  /** Après création d’une VERSECARD (catalogue local). */
+  onFlashcardCreated?: (card: Flashcard) => void;
 };
 
 /** Ids USFM (JHN, 1SA) — ignore un livre fantôme type VERSECARD. */
@@ -119,6 +124,7 @@ export function BibleReaderView({
   focusSeq = 0,
   onBack,
   planReading = null,
+  onFlashcardCreated,
 }: BibleReaderViewProps) {
   const prefs = readPrefs();
   const prefsBookOk = isUsfmBookId(prefs.bookId || "");
@@ -148,6 +154,8 @@ export function BibleReaderView({
   });
   const [pickerOpen, setPickerOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [cardBusy, setCardBusy] = useState(false);
+  const [cardMsg, setCardMsg] = useState<string | null>(null);
   const statusId = useId();
   const highlightRef = useRef<HTMLElement | null>(null);
   const chapterSelectRef = useRef<HTMLSelectElement | null>(null);
@@ -234,6 +242,7 @@ export function BibleReaderView({
     setChapterId(nextChapter);
     setHighlightVerse(verse);
     setSelectedVerse(verse);
+    setCardMsg(null);
     setLoading(true);
     setError(null);
     const usfm = chapterUsfm(nextBook, nextChapter);
@@ -263,6 +272,7 @@ export function BibleReaderView({
       setHighlightVerse(next);
       return next;
     });
+    setCardMsg(null);
     setPickerOpen(false);
     setMoreOpen(false);
   }
@@ -270,6 +280,7 @@ export function BibleReaderView({
   function jumpToVerse(number: number) {
     setSelectedVerse(number);
     setHighlightVerse(number);
+    setCardMsg(null);
     setPickerOpen(false);
     setMoreOpen(false);
   }
@@ -281,6 +292,32 @@ export function BibleReaderView({
   function togglePicker() {
     setPickerOpen((open) => !open);
     setMoreOpen(false);
+  }
+
+  async function makeFlashcard() {
+    if (!selectedVerse || !passage?.verses?.length || cardBusy) return;
+    const verse = passage.verses.find((item) => item.number === selectedVerse);
+    if (!verse?.text?.trim()) return;
+    const title = selectedBook?.title ?? bookId;
+    const frente = formatVerseCardFront(title, chapterId, selectedVerse);
+    const usfm = `${chapterUsfm(bookId, chapterId)}.${selectedVerse}`;
+    setCardBusy(true);
+    setCardMsg(null);
+    try {
+      const result = createVerseFlashcard({
+        frente,
+        verso: verse.text.trim(),
+        usfm,
+      });
+      if (!result.ok) {
+        setCardMsg(result.error);
+        return;
+      }
+      onFlashcardCreated?.(result.card);
+      setCardMsg(`Flashcard · ${frente}`);
+    } finally {
+      setCardBusy(false);
+    }
   }
 
   const selectedBook = books.find((b) => b.id.toUpperCase() === bookId.toUpperCase());
@@ -297,6 +334,11 @@ export function BibleReaderView({
   const verseOptions =
     passage?.verses?.map((verse) => verse.number) ??
     (selectedVerse != null ? [selectedVerse] : []);
+  const selectedVerseText =
+    selectedVerse && passage?.verses
+      ? (passage.verses.find((item) => item.number === selectedVerse)?.text?.trim() ?? "")
+      : "";
+  const showCreateCard = Boolean(selectedVerse && selectedVerseText && !planReading && !pickerOpen);
 
   return (
     <section
@@ -513,8 +555,25 @@ export function BibleReaderView({
         ) : null}
       </article>
 
+      {showCreateCard ? (
+        <div className="bible-verse-actions" role="region" aria-label="Flashcard du verset">
+          <p className="bible-verse-actions-ref">
+            {formatVerseCardFront(bookTitle, chapterId, selectedVerse!)}
+          </p>
+          <button
+            type="button"
+            className="bible-yv-chip is-primary bible-make-card"
+            disabled={cardBusy}
+            onClick={() => void makeFlashcard()}
+          >
+            {cardBusy ? "Création…" : "Créer flashcard"}
+          </button>
+          {cardMsg ? <p className="bible-verse-actions-msg">{cardMsg}</p> : null}
+        </div>
+      ) : null}
+
       <footer
-        className={`bible-yv-dock${planReading ? " is-plan" : ""}${!planReading && pickerOpen ? " is-picking" : ""}`}
+        className={`bible-yv-dock${planReading ? " is-plan" : ""}${!planReading && pickerOpen ? " is-picking" : ""}${showCreateCard ? " has-verse-actions" : ""}`}
         aria-label={planReading ? "Lecture du plan" : pickerOpen ? "Choisir livre, chapitre et verset" : "Chapitre"}
       >
         {planReading ? (

@@ -211,6 +211,18 @@ export function bibleComUrl(_usfm?: string, _bibleId?: number): string {
   return "https://midvash.com/lsg";
 }
 
+/** Frente VERSECARD : « JEAN 3.16 » (majuscules, point verset). */
+export function formatVerseCardFront(
+  bookTitle: string,
+  chapter: string | number,
+  verse: number,
+): string {
+  const book = String(bookTitle || "")
+    .trim()
+    .toUpperCase();
+  return `${book} ${chapter}.${verse}`;
+}
+
 /** True se o texto é uma referência de passagem com livro bíblico conhecido. */
 export function isPassageRef(text: string): boolean {
   const cleaned = text.replace(/\.+$/, "").trim();

@@ -347,3 +347,153 @@ export function isStatusOptionValidationError(statusCode, detail) {
 export function notesDatabaseId() {
   return env("NOTION_NOTES_DB", "c3815294-294c-48e3-81d7-784d47981e5f");
 }
+
+function notionPageUrl(id) {
+  return `https://www.notion.so/${String(id).replace(/-/g, "")}`;
+}
+
+function bibleCardsParentIds() {
+  const ids = [
+    env("NOTION_BIBLECARDS_DB", ""),
+    BIBLECARDS_DB,
+    BIBLECARDS_PAGE_DB,
+  ].filter(Boolean);
+  return [...new Set(ids.map((id) => String(id).trim()).filter(Boolean))];
+}
+
+function humanizeCreateError(statusCode, detail) {
+  let message = String(detail || "");
+  try {
+    const parsed = JSON.parse(message);
+    if (parsed?.message) message = String(parsed.message);
+  } catch {
+    /* raw */
+  }
+  const lower = message.toLowerCase();
+  if (statusCode === 404 || lower.includes("could not find database")) {
+    return (
+      "Notion: base BIBLECARDS introuvable pour l’intégration. " +
+      "Partage la database BIBLECARDS avec l’intégration du NOTION_TOKEN (.env)."
+    );
+  }
+  if (statusCode === 401 || statusCode === 403) {
+    return "Notion: token sans permission sur BIBLECARDS";
+  }
+  return `Notion ${statusCode}: ${message.replace(/\s+/g, " ").trim().slice(0, 180)}`;
+}
+
+/**
+ * Cria VERSECARD em BIBLECARDS (Notion).
+ * Tenta data-source id + page id da database (env NOTION_BIBLECARDS_DB).
+ */
+export async function createVerseCard(token, input = {}) {
+  const title = String(input.frente || "")
+    .trim()
+    .toUpperCase();
+  const body = String(input.verso || "").trim();
+  const localId = input.localId ? String(input.localId) : null;
+  if (!token) {
+    return { ok: false, error: "NOTION_TOKEN em falta", hasToken: false };
+  }
+  if (!title || !body) {
+    return { ok: false, error: "frente ou verso em falta", hasToken: true };
+  }
+
+  const lembrete =
+    (input.lembrete && String(input.lembrete).slice(0, 10)) ||
+    ensureLembrete({ status: "estudo", lembrete: null, criadoEm: dateKey(new Date()) });
+  const statusName = statusToNotion(input.status) || "Em andamento";
+  const connaissance = categoriaToNotion(input.categoria);
+
+  const properties = {
+    Nom: { title: [{ type: "text", text: { content: title.slice(0, 2000) } }] },
+    Category: { select: { name: "VERSECARD" } },
+    Status: { status: { name: statusName } },
+    Lembrete: { date: { start: lembrete } },
+  };
+  if (connaissance) {
+    properties.Connaissance = { select: { name: connaissance } };
+  }
+
+  const children = [];
+  let rest = body.slice(0, 8000);
+  while (rest.length) {
+    children.push({
+      object: "block",
+      type: "paragraph",
+      paragraph: {
+        rich_text: [{ type: "text", text: { content: rest.slice(0, 1900) } }],
+      },
+    });
+    rest = rest.slice(1900);
+  }
+
+  const parents = bibleCardsParentIds();
+  if (!parents.length) {
+    return { ok: false, error: "NOTION_BIBLECARDS_DB em falta", hasToken: true };
+  }
+
+  let lastError = "création Notion échouée";
+  for (const database_id of parents) {
+    const { ok, response, detail } = await notionFetch("https://api.notion.com/v1/pages", {
+      method: "POST",
+      headers: notionHeaders(token, { "Content-Type": "application/json" }),
+      body: JSON.stringify({
+        parent: { database_id },
+        properties,
+        children,
+      }),
+    });
+
+    if (!ok) {
+      lastError = humanizeCreateError(response?.status ?? 0, detail);
+      continue;
+    }
+
+    const page = await response.json();
+    const id = page.id;
+    const criadoEm = page.created_time ? dateKey(page.created_time) : dateKey(new Date());
+    return {
+      ok: true,
+      hasToken: true,
+      localId,
+      card: {
+        id: localId || `card-${String(id).replace(/-/g, "").slice(0, 16)}`,
+        frente: title,
+        verso: body,
+        categoria: input.categoria ?? null,
+        status: input.status || "estudo",
+        url: notionPageUrl(id),
+        lembrete,
+        cardCategory: "VERSECARD",
+        criadoEm,
+      },
+    };
+  }
+
+  return { ok: false, error: lastError, hasToken: true };
+}
+
+/** Archive une page VERSECARD (suppression manuelle dans Biblos). */
+export async function archiveVerseCard(token, urlOrId) {
+  if (!token) {
+    return { ok: false, error: "NOTION_TOKEN em falta", hasToken: false };
+  }
+  const id = pageIdFromNotionUrl(urlOrId);
+  if (!id) {
+    return { ok: false, error: "pageId invalide", hasToken: true };
+  }
+  const { ok, response, detail } = await notionFetch(`https://api.notion.com/v1/pages/${id}`, {
+    method: "PATCH",
+    headers: notionHeaders(token, { "Content-Type": "application/json" }),
+    body: JSON.stringify({ archived: true }),
+  });
+  if (!ok) {
+    return {
+      ok: false,
+      hasToken: true,
+      error: humanizeCreateError(response?.status ?? 0, detail),
+    };
+  }
+  return { ok: true, hasToken: true };
+}
