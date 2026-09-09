@@ -26,7 +26,6 @@ import {
 import {
   createPlanReadingSession,
   currentPlanStep,
-  expandPlanReadingWithVerses,
   isFirstPlanStep,
   isLastPlanStep,
   type PlanReadingSession,
@@ -196,15 +195,15 @@ export function App() {
     setMode("bible");
   }
 
-  function startPlanReading(jour: number, passage: string) {
+  function startPlanReading(jour: number, _passage: string) {
     if (!activePlan) return;
     const session = createPlanReadingSession({
       planId: activePlan.id,
-      jour,
-      passage,
+      startJour: jour,
+      days: activePlan.days,
     });
     if (!session) {
-      openPassageInBible(passage);
+      if (_passage.trim()) openPassageInBible(_passage);
       return;
     }
     setPlanReading(session);
@@ -227,9 +226,12 @@ export function App() {
 
   function planReadingAdvance() {
     if (!planReading) return;
+    const current = currentPlanStep(planReading);
     if (isLastPlanStep(planReading)) {
-      ensureDayCompleted(planReading.planId, planReading.jour);
-      setPlanProgressTick((value) => value + 1);
+      if (current) {
+        ensureDayCompleted(planReading.planId, current.jour);
+        setPlanProgressTick((value) => value + 1);
+      }
       setPlanReading(null);
       setMode("today");
       return;
@@ -238,25 +240,6 @@ export function App() {
     setPlanReading(next);
     const step = currentPlanStep(next);
     if (step) openPassageInBible(step.focusRef, { keepPlanReading: true });
-  }
-
-  function onPlanVersesAvailable(verses: number[]) {
-    setPlanReading((current) => {
-      if (!current) return current;
-      const expanded = expandPlanReadingWithVerses(current, verses);
-      if (
-        expanded.steps.length !== current.steps.length ||
-        expanded.steps[0]?.focusRef !== current.steps[0]?.focusRef
-      ) {
-        const step = currentPlanStep(expanded);
-        if (step) {
-          queueMicrotask(() => {
-            openPassageInBible(step.focusRef, { keepPlanReading: true });
-          });
-        }
-      }
-      return expanded;
-    });
   }
 
   function openCalendarCard(item: CalendarCardItem) {
@@ -484,12 +467,13 @@ export function App() {
                       planReading={
                         planReading
                           ? {
-                              label: currentPlanStep(planReading)?.label ?? planReading.passage,
+                              label: currentPlanStep(planReading)?.label ?? "",
                               isFirst: isFirstPlanStep(planReading),
                               isLast: isLastPlanStep(planReading),
+                              verseStart: currentPlanStep(planReading)?.verseStart ?? null,
+                              verseEnd: currentPlanStep(planReading)?.verseEnd ?? null,
                               onPrev: planReadingPrev,
                               onAdvance: planReadingAdvance,
-                              onVersesAvailable: onPlanVersesAvailable,
                             }
                           : null
                       }

@@ -33,14 +33,15 @@ type BibleReaderViewProps = {
   focusRef?: string | null;
   focusSeq?: number;
   onBack?: () => void;
-  /** Mode lecture de plan (YouVersion) : suivre les versets du jour. */
+  /** Mode lecture de plan : un pas = un chapitre, › = chapitre suivant. */
   planReading?: {
     label: string;
     isFirst: boolean;
     isLast: boolean;
+    verseStart?: number | null;
+    verseEnd?: number | null;
     onPrev: () => void;
     onAdvance: () => void;
-    onVersesAvailable?: (verses: number[]) => void;
   } | null;
   /** Après création d’une VERSECARD (catalogue local). */
   onFlashcardCreated?: (card: Flashcard) => void;
@@ -165,12 +166,6 @@ export function BibleReaderView({
     if (!highlightVerse || !highlightRef.current) return;
     highlightRef.current.scrollIntoView({ block: "center", behavior: "smooth" });
   }, [highlightVerse, passage?.id, loading]);
-
-  useEffect(() => {
-    if (!planReading?.onVersesAvailable || !passage?.verses?.length) return;
-    planReading.onVersesAvailable(passage.verses.map((item) => item.number));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [passage?.id]);
 
   async function loadChapter(
     nextBook: string,
@@ -471,8 +466,31 @@ export function BibleReaderView({
         {passage?.verses?.length ? (
           <div className="bible-verses">
             {passage.verses.map((verse) => {
-              const active = highlightVerse === verse.number;
-              const selected = selectedVerse === verse.number;
+              const inPlanRange = Boolean(
+                planReading &&
+                  (() => {
+                    const start = planReading.verseStart;
+                    const end = planReading.verseEnd;
+                    if (start == null || end == null) return true;
+                    const a = Math.min(start, end);
+                    const b = Math.max(start, end);
+                    return verse.number >= a && verse.number <= b;
+                  })(),
+              );
+              const rangeStart =
+                planReading?.verseStart != null
+                  ? Math.min(
+                      planReading.verseStart,
+                      planReading.verseEnd ?? planReading.verseStart,
+                    )
+                  : null;
+              const isRangeAnchor = planReading
+                ? rangeStart != null
+                  ? verse.number === rangeStart
+                  : verse.number === (passage.verses?.[0]?.number ?? 1)
+                : highlightVerse === verse.number;
+              const active = planReading ? inPlanRange : highlightVerse === verse.number;
+              const selected = planReading ? inPlanRange : selectedVerse === verse.number;
               const titleLike = isLikelyVerseTitle(verse.text, verse.number);
               return (
                 <button
@@ -482,6 +500,7 @@ export function BibleReaderView({
                     "bible-verse",
                     active ? "is-focus" : "",
                     selected ? "is-selected" : "",
+                    planReading && inPlanRange ? "is-plan-range" : "",
                     titleLike ? "is-title" : "",
                   ]
                     .filter(Boolean)
@@ -490,7 +509,7 @@ export function BibleReaderView({
                   aria-label={`Verset ${verse.number}`}
                   aria-pressed={selected}
                   ref={
-                    active
+                    isRangeAnchor
                       ? (el) => {
                           highlightRef.current = el;
                         }
@@ -539,7 +558,7 @@ export function BibleReaderView({
               className="bible-yv-dock-arrow"
               onClick={planReading.onPrev}
               disabled={planReading.isFirst}
-              aria-label="Verset précédent"
+              aria-label="Chapitre précédent"
             >
               ‹
             </button>
@@ -548,7 +567,7 @@ export function BibleReaderView({
               type="button"
               className={`bible-yv-dock-advance${planReading.isLast ? " is-complete" : ""}`}
               onClick={planReading.onAdvance}
-              aria-label={planReading.isLast ? "Conclure la lecture du jour" : "Verset suivant"}
+              aria-label={planReading.isLast ? "Conclure la lecture du jour" : "Chapitre suivant du jour"}
             >
               {planReading.isLast ? "✓" : "›"}
             </button>
