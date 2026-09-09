@@ -45,6 +45,16 @@ export function weekdayLabel(day: string): string {
   return new Intl.DateTimeFormat("fr-FR", { weekday: "long" }).format(new Date(`${day}T00:00:00`));
 }
 
+/** Agenda style Google Calendar : « jeu » + « 10 ». */
+export function scheduleDayParts(day: string): { weekday: string; dayNum: string } {
+  const date = new Date(`${day}T00:00:00`);
+  const weekday = new Intl.DateTimeFormat("fr-FR", { weekday: "short" })
+    .format(date)
+    .replace(/\./g, "")
+    .toLowerCase();
+  return { weekday, dayNum: String(date.getDate()) };
+}
+
 export function monthLabel(year: number, month: number): string {
   return new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric" }).format(new Date(year, month, 1));
 }

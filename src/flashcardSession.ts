@@ -6,6 +6,7 @@ import {
   saveOverride,
   syncFlashcard,
   applyCardMark,
+  archiveCardLearning,
   restartCardLearning,
   clearDirty,
   subscribeFlashcardRevision,
@@ -347,6 +348,19 @@ export function useFlashcardSession(
     );
   }
 
+  function archiveCard() {
+    const current = live.current;
+    if (!current?.card || current.card.status === "encerrado") return;
+    if (markingRef.current || current.sync === "saving") return;
+    const fromId = current.card.id;
+    const fromCard = queueRef.current.find((item) => item.id === fromId) ?? current.card;
+    markingRef.current = true;
+    setSessionMark(null);
+    setSync("saving");
+    live.current = { ...live.current, sync: "saving" };
+    void applyOverride(fromId, fromCard.url || "", archiveCardLearning(todayKey()), true);
+  }
+
   function restartLearning() {
     const current = live.current;
     if (!current?.card || current.card.status !== "encerrado") return;
@@ -425,22 +439,27 @@ export function useFlashcardSession(
         }
         return;
       }
-      if (live.current.flipped && (event.key === "1" || event.key === "d" || event.key === "D")) {
+      if (live.current.flipped && (event.key === "1" || event.key === "a" || event.key === "A")) {
+        event.preventDefault();
+        setMark("encore");
+        return;
+      }
+      if (live.current.flipped && (event.key === "2" || event.key === "d" || event.key === "D")) {
         event.preventDefault();
         setMark("dificil");
         return;
       }
-      if (live.current.flipped && (event.key === "2" || event.key === "m" || event.key === "M")) {
+      if (live.current.flipped && (event.key === "3" || event.key === "c" || event.key === "C")) {
         event.preventDefault();
         setMark("medio");
         return;
       }
-      if (live.current.flipped && (event.key === "3" || event.key === "f" || event.key === "F")) {
+      if (live.current.flipped && (event.key === "4" || event.key === "f" || event.key === "F")) {
         event.preventDefault();
         setMark("facil");
         return;
       }
-      // Anki: Space/Enter revela; com verso visível, Space = “Good” (Médio).
+      // Anki: Space/Enter révèle ; verso visible → Correct (Good).
       if (event.key === " " || event.key === "Enter") {
         event.preventDefault();
         if (live.current.flipped) {
@@ -481,6 +500,7 @@ export function useFlashcardSession(
     go,
     toggleFlip,
     setMark,
+    archiveCard,
     restartLearning,
     onSlidePointerDown,
     onSlidePointerMove,

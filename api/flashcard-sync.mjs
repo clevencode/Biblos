@@ -38,7 +38,7 @@ function humanizeNotionError(statusCode, detail) {
     return "Notion: opção de Status inválida (ex.: Encerrado)";
   }
   if (lower.includes("validation_error") && (lower.includes("categoria") || lower.includes("select") || lower.includes("connaissance"))) {
-    return "Notion: opção de Connaissance inválida";
+    return "Notion: opção de Repetition inválida";
   }
   if (statusCode === 404) return "Notion: página do cartão não encontrada";
   try {
@@ -127,8 +127,8 @@ async function patchNotion(token, body) {
 
   const properties = {};
   if (body.lembrete) properties.Lembrete = { date: { start: body.lembrete } };
-  if (categoria) properties.Connaissance = { select: { name: categoria } };
-  else if (body.categoria === null) properties.Connaissance = { select: null };
+  if (categoria) properties.Repetition = { select: { name: categoria } };
+  else if (body.categoria === null) properties.Repetition = { select: null };
   if (status) properties.Status = { status: { name: status } };
 
   if (!Object.keys(properties).length) return { ok: true };

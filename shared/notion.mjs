@@ -68,12 +68,19 @@ export function normalizeCategoria(value) {
     .replace(/\p{M}/gu, "")
     .toLowerCase()
     .trim();
-  // Connaissance (Biblos) + Catégorie legado StudyOS
-  if (key === "facil" || key === "conhecido" || key === "eleve" || key === "facile") return "facil";
-  if (key === "medio" || key === "moyen" || key === "moyenne") return "medio";
+  // Repetition Anki (Biblos) + Connaissance / Catégorie legado
+  if (key === "encore" || key === "again" || key === "de nouveau") return "encore";
+  if (key === "facil" || key === "facile" || key === "easy" || key === "connu" || key === "eleve") {
+    return "facil";
+  }
+  if (key === "medio" || key === "moyen" || key === "moyenne" || key === "correct" || key === "good") {
+    return "medio";
+  }
   if (
     key === "dificil" ||
+    key === "dificile" ||
     key === "difficile" ||
+    key === "hard" ||
     key === "desconhecido" ||
     key === "peu"
   ) {
@@ -96,13 +103,14 @@ export function normalizeStatus(value) {
 }
 
 /**
- * Connaissance no BIBLECARDS: Peu | Moyenne | Elevé
- * (Peu = pouco conhecimento → revisão cedo; Elevé → mais tarde / Terminé)
+ * Repetition (Anki) : Encore | Dificile | Correct | Facile
+ * (orthographe Notion « Dificile » conservée)
  */
 export function categoriaToNotion(categoria) {
-  if (categoria === "facil") return "Elevé";
-  if (categoria === "medio") return "Moyenne";
-  if (categoria === "dificil") return "Peu";
+  if (categoria === "encore") return "Encore";
+  if (categoria === "dificil") return "Dificile";
+  if (categoria === "medio") return "Correct";
+  if (categoria === "facil") return "Facile";
   return null;
 }
 
@@ -117,9 +125,16 @@ export function statusToNotion(status) {
   return null;
 }
 
-/** Propriedade select SRS: Connaissance (Biblos) com fallback Catégorie/Categoria. */
+/** Propriedade select SRS: Repetition (Anki) puis Connaissance / Catégorie. */
 export function categoriaPropFromPage(props) {
-  return props?.Connaissance ?? props?.Catégorie ?? props?.Categoria ?? null;
+  return (
+    props?.Repetition ??
+    props?.Répétition ??
+    props?.Connaissance ??
+    props?.Catégorie ??
+    props?.Categoria ??
+    null
+  );
 }
 
 /** Lembrete padrão: criação + 2 dias (intervalo "novo"). */
@@ -403,7 +418,7 @@ export async function createVerseCard(token, input = {}) {
     (input.lembrete && String(input.lembrete).slice(0, 10)) ||
     ensureLembrete({ status: "estudo", lembrete: null, criadoEm: dateKey(new Date()) });
   const statusName = statusToNotion(input.status) || "Em andamento";
-  const connaissance = categoriaToNotion(input.categoria);
+  const repetition = categoriaToNotion(input.categoria);
 
   const properties = {
     Nom: { title: [{ type: "text", text: { content: title.slice(0, 2000) } }] },
@@ -411,8 +426,8 @@ export async function createVerseCard(token, input = {}) {
     Status: { status: { name: statusName } },
     Lembrete: { date: { start: lembrete } },
   };
-  if (connaissance) {
-    properties.Connaissance = { select: { name: connaissance } };
+  if (repetition) {
+    properties.Repetition = { select: { name: repetition } };
   }
 
   const children = [];

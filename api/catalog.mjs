@@ -207,10 +207,8 @@ function mapCardPage(page, bodyText = "") {
   const id = page.id;
   const nom = titleFromProp(props.Nom) || "Carte";
   const category = props.Category?.select?.name ?? null;
-  const connaissance = props.Connaissance?.select?.name ?? null;
   const catProp = categoriaPropFromPage(props);
-  const categoria =
-    normalizeCategoria(connaissance) ?? normalizeCategoria(catProp?.select?.name);
+  const categoria = normalizeCategoria(catProp?.select?.name ?? catProp?.name);
   const status = normalizeStatus(props.Status?.status?.name) ?? "espera";
   const lembreteRaw = props.Lembrete?.date?.start ?? null;
   const criadoEm = props["Criado em"]?.created_time || page.created_time || null;

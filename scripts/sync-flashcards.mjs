@@ -237,8 +237,8 @@ async function pushFromSeed() {
       Lembrete: next.lembrete ? { date: { start: next.lembrete } } : { date: null },
     };
     const categoria = categoriaToNotion(next.categoria);
-    if (categoria) properties.Categoria = { select: { name: categoria } };
-    else properties.Categoria = { select: null };
+    if (categoria) properties.Repetition = { select: { name: categoria } };
+    else properties.Repetition = { select: null };
     const status = statusToNotion(next.status);
     if (status) properties.Status = { status: { name: status } };
 

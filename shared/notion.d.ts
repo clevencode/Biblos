@@ -9,12 +9,12 @@ export function dateKey(value: string | Date): string;
 
 export function normalizeCategoria(
   value: string | null | undefined,
-): "facil" | "medio" | "dificil" | null;
+): "encore" | "facil" | "medio" | "dificil" | null;
 export function normalizeStatus(
   value: string | null | undefined,
 ): "estudo" | "espera" | "encerrado" | null;
 export function categoriaToNotion(
-  categoria: "facil" | "medio" | "dificil" | null | undefined,
+  categoria: "encore" | "facil" | "medio" | "dificil" | null | undefined,
 ): string | null;
 export function statusToNotion(
   status: "estudo" | "espera" | "encerrado" | null | undefined,

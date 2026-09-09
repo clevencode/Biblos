@@ -30,6 +30,7 @@ export {
   applyRemoteOverride,
   mergeCard,
   applyCardMark,
+  archiveCardLearning,
   restartCardLearning,
   listOutbox,
   upsertOutbox,

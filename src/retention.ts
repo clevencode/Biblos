@@ -6,31 +6,50 @@ import {
 import { dateKey, todayKey } from "./calendar";
 import type { Flashcard, RetentionMark } from "./types";
 
-/** Intervalos alinhados às opções do Notion: Difícil, Médio, Fácil. */
-export const RETENTION_DAYS = {
-  dificil: 1,
+/**
+ * Intervalles Anki (jours) — cartes nouvelles.
+ * Review: Again=1 · Hard=×1.2 · Good=×2.5 · Easy=×2.5×1.3
+ */
+export const ANKI_NEW_DAYS = {
+  encore: 1,
+  dificil: 3,
   medio: 4,
-  facil: 10,
+  facil: 7,
+} as const;
+
+export const ANKI_EASE = 2.5;
+export const ANKI_HARD_FACTOR = 1.2;
+export const ANKI_EASY_BONUS = 1.3;
+
+/** @deprecated alias — intervales fixes hérités (évite casser imports). */
+export const RETENTION_DAYS = {
+  encore: ANKI_NEW_DAYS.encore,
+  dificil: ANKI_NEW_DAYS.dificil,
+  medio: ANKI_NEW_DAYS.medio,
+  facil: ANKI_NEW_DAYS.facil,
   novo: 2,
 } as const;
 
+/** Libellés UI / Notion Repetition (Dificile = orthographe Notion). */
 export const RETENTION_LABELS: Record<RetentionMark, string> = {
-  dificil: "Peu",
-  medio: "Moyenne",
-  facil: "Elevé",
+  encore: "Encore",
+  dificil: "Dificile",
+  medio: "Correct",
+  facil: "Facile",
 };
+
+export const RETENTION_MARKS: RetentionMark[] = ["encore", "dificil", "medio", "facil"];
 
 export function retentionLabel(categoria: RetentionMark): string {
   return RETENTION_LABELS[categoria];
 }
 
-/** Fonte única: shared/notion.mjs — wrapper tipado para RetentionMark. */
 export function categoriaToNotion(categoria: RetentionMark): string {
   return categoriaToNotionShared(categoria) ?? RETENTION_LABELS[categoria];
 }
 
 export function normalizeCategoria(
-  value: Flashcard["categoria"] | "conhecido" | "desconhecido" | string | null | undefined,
+  value: Flashcard["categoria"] | "connu" | "desconhecido" | string | null | undefined,
 ): Flashcard["categoria"] {
   return normalizeCategoriaShared(value);
 }
@@ -47,11 +66,43 @@ export function addDays(day: string, amount: number): string {
   return dateKey(date);
 }
 
-export function intervalDays(categoria: Flashcard["categoria"]): number {
-  if (categoria === "dificil") return RETENTION_DAYS.dificil;
-  if (categoria === "medio") return RETENTION_DAYS.medio;
-  if (categoria === "facil") return RETENTION_DAYS.facil;
-  return RETENTION_DAYS.novo;
+export function daysBetween(from: string, to: string): number {
+  const a = new Date(`${dateKey(from)}T00:00:00`).getTime();
+  const b = new Date(`${dateKey(to)}T00:00:00`).getTime();
+  return Math.round((b - a) / 86_400_000);
+}
+
+/** Intervalle planifié actuel (0 = carte neuve / jamais notée). */
+export function cardIntervalDays(
+  card: Pick<Flashcard, "revisadoEm" | "lembrete" | "categoria" | "criadoEm">,
+): number {
+  const last = lastReviewedOn(card);
+  if (!last || !card.lembrete) return 0;
+  const span = daysBetween(last, dateKey(card.lembrete));
+  return span > 0 ? span : 0;
+}
+
+/** Prochain intervalle Anki (jours) à partir de l’intervalle précédent. */
+export function ankiIntervalDays(mark: RetentionMark, previousInterval = 0): number {
+  const isNew = previousInterval <= 0;
+  if (mark === "encore") return ANKI_NEW_DAYS.encore;
+  if (isNew) return ANKI_NEW_DAYS[mark];
+  if (mark === "dificil") return Math.max(1, Math.round(previousInterval * ANKI_HARD_FACTOR));
+  if (mark === "medio") {
+    return Math.max(previousInterval + 1, Math.round(previousInterval * ANKI_EASE));
+  }
+  return Math.max(
+    previousInterval + 1,
+    Math.round(previousInterval * ANKI_EASE * ANKI_EASY_BONUS),
+  );
+}
+
+export function intervalDays(
+  categoria: Flashcard["categoria"],
+  previousInterval = 0,
+): number {
+  if (!categoria) return RETENTION_DAYS.novo;
+  return ankiIntervalDays(categoria, previousInterval);
 }
 
 export function isDue(lembrete: string | null | undefined, today = todayKey()): boolean {
@@ -69,7 +120,6 @@ export function inboxBucket(lembrete: string | null | undefined, today = todayKe
   return "today";
 }
 
-/** Ordem plana do inbox: atrasados → hoje → sem data (estável dentro de cada grupo). */
 export function inboxDisplayOrder<T extends { lembrete?: string | null }>(
   items: T[],
   today = todayKey(),
@@ -79,39 +129,40 @@ export function inboxDisplayOrder<T extends { lembrete?: string | null }>(
   return INBOX_BUCKET_ORDER.flatMap((key) => buckets[key]);
 }
 
-/**
- * Lembrete-card: o próximo lembrete parte sempre da data da revisão atual
- * (não da data antiga do lembrete vencido).
- */
-export function nextLembrete(categoria: Flashcard["categoria"], reviewedOn = todayKey()): string {
-  return addDays(reviewedOn, intervalDays(categoria));
+export function nextLembrete(
+  categoria: Flashcard["categoria"],
+  reviewedOn = todayKey(),
+  previousInterval = 0,
+): string {
+  if (!categoria) return addDays(reviewedOn, RETENTION_DAYS.novo);
+  return addDays(reviewedOn, ankiIntervalDays(categoria, previousInterval));
 }
 
-/**
- * Data da última revisão/repetição: valor guardado, ou estimativa a partir do
- * lembrete actual menos o intervalo da categoria, senão a criação.
- */
 export function lastReviewedOn(
   card: Pick<Flashcard, "revisadoEm" | "lembrete" | "categoria" | "criadoEm">,
 ): string | null {
   if (card.revisadoEm) return dateKey(card.revisadoEm);
   if (card.lembrete && card.categoria) {
-    return addDays(dateKey(card.lembrete), -intervalDays(card.categoria));
+    // Estimation legacy (intervalles fixes) — évite de remonter trop loin.
+    const fixed =
+      card.categoria === "encore"
+        ? ANKI_NEW_DAYS.encore
+        : card.categoria === "dificil"
+          ? ANKI_NEW_DAYS.dificil
+          : card.categoria === "medio"
+            ? ANKI_NEW_DAYS.medio
+            : ANKI_NEW_DAYS.facil;
+    return addDays(dateKey(card.lembrete), -fixed);
   }
   if (card.criadoEm) return dateKey(card.criadoEm);
   return null;
 }
 
-/**
- * Lembrete padrão para cartão novo / sem data:
- * data de criação + intervalo "novo" (2 dias), alinhado à criação no Notion.
- */
 export function defaultLembrete(criadoEm?: string | null, today = todayKey()): string {
   const base = criadoEm ? dateKey(criadoEm) : today;
   return addDays(base || today, RETENTION_DAYS.novo);
 }
 
-/** Garante lembrete em cartões activos (Estudo/Espera); Encerrado pode ficar sem. */
 export function ensureLembrete(
   card: Pick<Flashcard, "status" | "lembrete" | "categoria" | "criadoEm">,
   today = todayKey(),
@@ -121,7 +172,7 @@ export function ensureLembrete(
   return defaultLembrete(card.criadoEm, today);
 }
 
-/** Fácil consecutivos para graduar o cartão (status → encerrado). */
+/** Facile consécutifs pour graduer (Inbox → Encerrado). */
 export const FACIL_GRADUATION = 2;
 
 export type RetentionState = {
@@ -143,46 +194,52 @@ export function resolveFacilStreak(
 
 export function retentionFromMark(
   mark: RetentionMark,
-  previous: Pick<RetentionState, "facilStreak">,
+  previous: Pick<RetentionState, "facilStreak"> & { intervalDays?: number },
   reviewedOn = todayKey(),
   options?: { allowGraduation?: boolean },
 ): RetentionState {
   const allowGraduation = options?.allowGraduation !== false;
+  const prevInterval = previous.intervalDays ?? 0;
+
   if (mark === "facil") {
     const facilStreak = previous.facilStreak + 1;
     if (allowGraduation && facilStreak >= FACIL_GRADUATION) {
-      // Mantém o último lembrete (não limpa a data no Notion); o calendário/inbox já ignoram Encerrado.
       return {
         categoria: mark,
         status: "encerrado",
-        lembrete: nextLembrete(mark, reviewedOn),
+        lembrete: nextLembrete(mark, reviewedOn, prevInterval),
         facilStreak,
       };
     }
-    const scheduled = scheduleFromMark(mark, reviewedOn);
-    return { ...scheduled, lembrete: scheduled.lembrete, facilStreak: allowGraduation ? facilStreak : 0 };
+    const scheduled = scheduleFromMark(mark, reviewedOn, prevInterval);
+    return {
+      ...scheduled,
+      facilStreak: allowGraduation ? facilStreak : 0,
+    };
   }
 
-  const scheduled = scheduleFromMark(mark, reviewedOn);
-  return { ...scheduled, lembrete: scheduled.lembrete, facilStreak: 0 };
+  const scheduled = scheduleFromMark(mark, reviewedOn, prevInterval);
+  return { ...scheduled, facilStreak: 0 };
 }
 
 export function scheduleFromMark(
   mark: RetentionMark,
   reviewedOn = todayKey(),
+  previousInterval = 0,
 ): { categoria: RetentionMark; status: "estudo"; lembrete: string } {
   return {
     categoria: mark,
     status: "estudo",
-    lembrete: nextLembrete(mark, reviewedOn),
+    lembrete: nextLembrete(mark, reviewedOn, previousInterval),
   };
 }
 
 function markRank(categoria: Flashcard["categoria"]): number {
-  if (categoria === "dificil") return 0;
-  if (categoria == null) return 1;
-  if (categoria === "medio") return 2;
-  return 3;
+  if (categoria === "encore") return 0;
+  if (categoria === "dificil") return 1;
+  if (categoria == null) return 2;
+  if (categoria === "medio") return 3;
+  return 4;
 }
 
 export function compareStudyOrder(a: Flashcard, b: Flashcard, today = todayKey()): number {

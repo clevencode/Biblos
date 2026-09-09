@@ -411,10 +411,10 @@ export function BibleReaderView({
   const setReadingChrome = useEffectEvent((hidden: boolean) => {
     if (chromeHiddenRef.current === hidden) return;
     const now = performance.now();
-    if (now < chromeLockUntil.current) return;
+    // Only throttle re-hide right after a reveal — upward reveal stays snappy.
+    if (hidden && now < chromeLockUntil.current) return;
     chromeHiddenRef.current = hidden;
-    // Block flip-flop while the slide animation runs.
-    chromeLockUntil.current = now + 340;
+    chromeLockUntil.current = now + (hidden ? 220 : 140);
 
     // Apply both chrome classes in the same frame (avoids dock/tabs lag jitter).
     readerRef.current?.classList.toggle("is-chrome-hidden", hidden);
@@ -461,32 +461,33 @@ export function BibleReaderView({
           return;
         }
 
-        // Keep lastScrollTop fresh during lock so the unlock doesn't spike.
-        if (performance.now() < chromeLockUntil.current) {
-          scrollAcc.current = 0;
-          return;
-        }
-
         if (top <= 10) {
           scrollAcc.current = 0;
           setReadingChrome(false);
           return;
         }
 
-        if (Math.abs(delta) < 1) return;
-
-        // Soft direction change: decay instead of hard reset (less chatter).
-        if ((delta > 0 && scrollAcc.current < 0) || (delta < 0 && scrollAcc.current > 0)) {
-          scrollAcc.current *= 0.25;
-        }
-        scrollAcc.current += delta;
+        if (Math.abs(delta) < 0.5) return;
 
         const hidden = chromeHiddenRef.current;
-        // Wider hysteresis once hidden/shown to stop tremor near the threshold.
-        if (!hidden && scrollAcc.current > 40) {
+        const locked = performance.now() < chromeLockUntil.current;
+
+        // While locked after reveal, ignore downward noise; still accept upward.
+        if (locked && !hidden && delta >= 0) {
+          scrollAcc.current = 0;
+          return;
+        }
+
+        if ((delta > 0 && scrollAcc.current < 0) || (delta < 0 && scrollAcc.current > 0)) {
+          scrollAcc.current = 0;
+        }
+        // Weight upward flicks so chrome returns without reaching the top.
+        scrollAcc.current += hidden && delta < 0 ? delta * 1.6 : delta;
+
+        if (!hidden && scrollAcc.current > 36) {
           scrollAcc.current = 0;
           setReadingChrome(true);
-        } else if (hidden && scrollAcc.current < -18) {
+        } else if (hidden && scrollAcc.current < -6) {
           scrollAcc.current = 0;
           setReadingChrome(false);
         }

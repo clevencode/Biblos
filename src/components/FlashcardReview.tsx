@@ -1,11 +1,14 @@
-import { formatDay } from "../calendar";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { dateKey, formatDay, relativeDayLabel, scheduleDayParts, todayKey } from "../calendar";
 import { loadOverride } from "../flashcardSync";
 import {
   FACIL_GRADUATION,
-  RETENTION_DAYS,
   RETENTION_LABELS,
+  RETENTION_MARKS,
+  addDays,
+  ankiIntervalDays,
+  cardIntervalDays,
   lastReviewedOn,
-  nextLembrete,
   resolveFacilStreak,
 } from "../retention";
 import type { FlashcardSession } from "../flashcardSession";
@@ -33,9 +36,10 @@ type FlashcardReviewProps = {
 };
 
 const MARK_KEYS: Record<RetentionMark, string> = {
-  dificil: "1",
-  medio: "2",
-  facil: "3",
+  encore: "1",
+  dificil: "2",
+  medio: "3",
+  facil: "4",
 };
 
 function CardRepetitionMeta({ item }: { item: Flashcard }) {
@@ -59,8 +63,98 @@ function markHint(
       return { interval: "Terminé", when: "hors des rappels" };
     }
   }
-  const days = RETENTION_DAYS[level];
-  return { interval: `+${days}j`, when: formatDay(nextLembrete(level)) };
+  const prev = card ? cardIntervalDays(card) : 0;
+  const days = ankiIntervalDays(level, prev);
+  return { interval: `+${days}j`, when: formatDay(addDays(todayKey(), days)) };
+}
+
+function FlashCardMenu({
+  canArchive,
+  disabled,
+  onArchive,
+  onDelete,
+}: {
+  canArchive: boolean;
+  disabled?: boolean;
+  onArchive?: () => void;
+  onDelete?: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onPointerDown(event: PointerEvent) {
+      if (rootRef.current?.contains(event.target as Node)) return;
+      setOpen(false);
+    }
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+    window.addEventListener("pointerdown", onPointerDown);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("pointerdown", onPointerDown);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  if (!onArchive && !onDelete) return null;
+
+  return (
+    <div
+      className={`flash-card-menu${open ? " is-open" : ""}`}
+      ref={rootRef}
+      onPointerDown={(event) => event.stopPropagation()}
+      onClick={(event) => event.stopPropagation()}
+    >
+      <button
+        type="button"
+        className="flash-card-menu-trigger"
+        aria-label="Options de la carte"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        disabled={disabled}
+        onClick={() => setOpen((value) => !value)}
+      >
+        ⋮
+      </button>
+      {open ? (
+        <ul className="flash-card-menu-list" role="menu">
+          {onDelete ? (
+            <li role="none">
+              <button
+                type="button"
+                role="menuitem"
+                className="flash-card-menu-item is-danger"
+                onClick={() => {
+                  setOpen(false);
+                  onDelete();
+                }}
+              >
+                Supprimer la carte
+              </button>
+            </li>
+          ) : null}
+          {onArchive && canArchive ? (
+            <li role="none">
+              <button
+                type="button"
+                role="menuitem"
+                className="flash-card-menu-item"
+                onClick={() => {
+                  setOpen(false);
+                  onArchive();
+                }}
+              >
+                Archiver la carte
+              </button>
+            </li>
+          ) : null}
+        </ul>
+      ) : null}
+    </div>
+  );
 }
 
 export function FlashcardReview({
@@ -91,6 +185,7 @@ export function FlashcardReview({
     go,
     toggleFlip,
     setMark,
+    archiveCard,
     restartLearning,
     onSlidePointerDown,
     onSlidePointerMove,
@@ -216,6 +311,22 @@ export function FlashcardReview({
                       className="flash-stage"
                       style={item.color ? { ["--card-tint" as string]: item.color } : undefined}
                     >
+                      {item.color ? (
+                        <span
+                          className="flash-card-tint"
+                          style={{ background: item.color }}
+                          title="Couleur"
+                          aria-hidden="true"
+                        />
+                      ) : null}
+                      {activeSlide ? (
+                        <FlashCardMenu
+                          canArchive={item.status !== "encerrado"}
+                          disabled={sync === "saving"}
+                          onArchive={archiveCard}
+                          onDelete={onRemoveCard ? () => onRemoveCard(item) : undefined}
+                        />
+                      ) : null}
                       <div className={`flash-inner${slideFlipped ? " is-flipped" : ""}`}>
                         <div className="flash-face flash-front">
                           <span className="flash-kicker">Référence</span>
@@ -268,8 +379,8 @@ export function FlashcardReview({
             </button>
           </div>
         ) : (
-          <div className="flash-actions" role="group" aria-label="Classer la rétention">
-            {(["dificil", "medio", "facil"] as const).map((level: RetentionMark) => {
+          <div className="flash-actions" role="group" aria-label="Répétition espacée">
+            {RETENTION_MARKS.map((level: RetentionMark) => {
               const key = MARK_KEYS[level];
               const hint = markHint(level, card, allowGraduation);
               return (
@@ -283,7 +394,7 @@ export function FlashcardReview({
                   aria-keyshortcuts={level === "medio" ? `${key} Space` : key}
                   title={
                     level === "facil" && hint.interval === "Terminé"
-                      ? `Elevé (2e fois) — termine le rappel et synchronise Notion (${key})`
+                      ? `Facile (2e fois) — termine le rappel et synchronise Notion (${key})`
                       : `${RETENTION_LABELS[level]} — prochain rappel ${hint.when} (${key}${level === "medio" ? " ou Espace" : ""})`
                   }
                 >
@@ -301,23 +412,13 @@ export function FlashcardReview({
           </div>
         )}
         {sync === "saving" ? (
-          <p className="flash-sync">Enregistrement de la connaissance et du rappel…</p>
+          <p className="flash-sync">Enregistrement de la répétition et du rappel…</p>
         ) : null}
-        {sync === "saved" ? <p className="flash-sync">Connaissance et rappel enregistrés</p> : null}
+        {sync === "saved" ? <p className="flash-sync">Répétition et rappel enregistrés</p> : null}
         {sync === "error" ? (
           <p className="flash-sync is-error" role="alert">
             {syncError ?? "Échec de la synchronisation Notion"}
           </p>
-        ) : null}
-        {onRemoveCard ? (
-          <button
-            type="button"
-            className="flash-remove-btn"
-            onClick={() => onRemoveCard(card)}
-            disabled={sync === "saving"}
-          >
-            Supprimer
-          </button>
         ) : null}
       </div>
       {onBackToList ? (
@@ -335,62 +436,234 @@ type FlashDeckListProps = {
   onRemoveCard?: (card: Flashcard) => void;
 };
 
+type DeckProgressFilter = "revisando" | "concluidos";
+
+const DECK_FILTERS: { id: DeckProgressFilter; label: string }[] = [
+  { id: "revisando", label: "En révision" },
+  { id: "concluidos", label: "Terminés" },
+];
+
+function cardMatchesDeckFilter(card: Flashcard, filter: DeckProgressFilter): boolean {
+  if (filter === "concluidos") return card.status === "encerrado";
+  return card.status !== "encerrado";
+}
+
+function groupCardsBySchedule(cards: Flashcard[]): { day: string | null; items: Flashcard[] }[] {
+  const byDay = new Map<string, Flashcard[]>();
+  const nodate: Flashcard[] = [];
+  for (const card of cards) {
+    const day = card.lembrete ? dateKey(card.lembrete) : null;
+    if (!day) {
+      nodate.push(card);
+      continue;
+    }
+    const bucket = byDay.get(day) ?? [];
+    bucket.push(card);
+    byDay.set(day, bucket);
+  }
+  const groups = [...byDay.keys()]
+    .sort((a, b) => a.localeCompare(b))
+    .map((day) => ({ day, items: byDay.get(day)! }));
+  if (nodate.length) groups.push({ day: null, items: nodate });
+  return groups;
+}
+
 export function FlashDeckList({ session, onPick, onRemoveCard }: FlashDeckListProps) {
-  const { queue, index, listRef, goTo, total, dueCount } = session;
+  const { queue, index, listRef, goTo, total } = session;
+  const [filter, setFilter] = useState<DeckProgressFilter>("revisando");
+  const [filterOpen, setFilterOpen] = useState(false);
+  const filterRef = useRef<HTMLDivElement | null>(null);
+  const today = todayKey();
+
+  const revisandoCount = queue.filter((card) => cardMatchesDeckFilter(card, "revisando")).length;
+  const concluidosCount = queue.filter((card) => cardMatchesDeckFilter(card, "concluidos")).length;
+  const visible = queue.filter((card) => cardMatchesDeckFilter(card, filter));
+  const scheduleGroups = useMemo(() => groupCardsBySchedule(visible), [visible]);
+  const activeFilter = DECK_FILTERS.find((item) => item.id === filter) ?? DECK_FILTERS[0]!;
+
   const countLabel =
-    total === 0
-      ? "Aucune carte"
-      : dueCount
-        ? `${total} carte${total === 1 ? "" : "s"} · ${dueCount} à revoir`
-        : `${total} carte${total === 1 ? "" : "s"} · choisis pour réviser`;
+    visible.length === 0
+      ? filter === "concluidos"
+        ? "Aucune carte terminée"
+        : "Aucune carte en révision"
+      : filter === "concluidos"
+        ? `${visible.length} carte${visible.length === 1 ? "" : "s"} terminée${visible.length === 1 ? "" : "s"}`
+        : `${visible.length} carte${visible.length === 1 ? "" : "s"} en révision`;
+
+  useEffect(() => {
+    if (!filterOpen) return;
+    function onPointerDown(event: PointerEvent) {
+      if (filterRef.current?.contains(event.target as Node)) return;
+      setFilterOpen(false);
+    }
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") setFilterOpen(false);
+    }
+    window.addEventListener("pointerdown", onPointerDown);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("pointerdown", onPointerDown);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [filterOpen]);
+
+  useEffect(() => {
+    if (filter === "revisando" && revisandoCount === 0 && concluidosCount > 0) {
+      setFilter("concluidos");
+    } else if (filter === "concluidos" && concluidosCount === 0 && revisandoCount > 0) {
+      setFilter("revisando");
+    }
+  }, [filter, revisandoCount, concluidosCount]);
+
+  function pickCard(card: Flashcard) {
+    const queueIndex = queue.findIndex((item) => item.id === card.id);
+    if (queueIndex < 0) return;
+    if (onPick) onPick(queueIndex);
+    else goTo(queueIndex);
+  }
 
   return (
-    <nav className="flash-list flash-list--deck" ref={listRef} aria-label="Liste des cartes">
+    <nav className="flash-list flash-list--deck flash-list--plan" ref={listRef} aria-label="Planning des cartes">
       <header className="flash-list-head">
         <h2 className="flash-list-heading">Cartes</h2>
-        <p className="flash-list-meta-line">{countLabel}</p>
+        <div className={`flash-deck-filter${filterOpen ? " is-open" : ""}`} ref={filterRef}>
+          <button
+            type="button"
+            className="flash-deck-filter-trigger"
+            aria-haspopup="listbox"
+            aria-expanded={filterOpen}
+            aria-label="Filtrer par progression"
+            onClick={() => setFilterOpen((open) => !open)}
+          >
+            <span className="flash-deck-filter-value">
+              {activeFilter.label}
+              <span className="flash-deck-filter-caret" aria-hidden="true" />
+            </span>
+            <span className="flash-deck-filter-count">{countLabel}</span>
+          </button>
+          {filterOpen ? (
+            <ul className="flash-deck-filter-menu" role="listbox" aria-label="Progression">
+              {DECK_FILTERS.map((item) => {
+                const count = item.id === "concluidos" ? concluidosCount : revisandoCount;
+                const on = item.id === filter;
+                return (
+                  <li key={item.id} role="presentation">
+                    <button
+                      type="button"
+                      role="option"
+                      aria-selected={on}
+                      className={`flash-deck-filter-option${on ? " is-on" : ""}`}
+                      onClick={() => {
+                        setFilter(item.id);
+                        setFilterOpen(false);
+                      }}
+                    >
+                      <span>{item.label}</span>
+                      <span className="flash-deck-filter-option-count">{count}</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : null}
+        </div>
+        {!total ? <p className="flash-list-meta-line">Aucune carte</p> : null}
       </header>
-      <ol className="flash-list-scroller">
-        {queue.map((item, itemIndex) => {
-          const activeItem = itemIndex === index;
-          return (
-            <li key={item.id} className="flash-list-row">
-              <button
-                type="button"
-                className={`flash-list-item${activeItem ? " is-active" : ""}`}
-                style={item.color ? { ["--card-tint" as string]: item.color } : undefined}
-                onClick={() => (onPick ? onPick(itemIndex) : goTo(itemIndex))}
-                aria-current={activeItem ? "true" : undefined}
-                aria-label={`Réviser la carte: ${item.frente}`}
+      <div className="flash-plan-scroller">
+        {scheduleGroups.length === 0 ? (
+          <p className="flash-plan-empty muted">
+            {filter === "concluidos" ? "Aucune carte terminée." : "Aucune carte en révision."}
+          </p>
+        ) : (
+          scheduleGroups.map((group) => {
+            const day = group.day;
+            const parts = day ? scheduleDayParts(day) : null;
+            const relative = day ? relativeDayLabel(day, today) : null;
+            const isToday = day === today;
+            const overdue = Boolean(day && day < today && filter === "revisando");
+            return (
+              <section
+                key={day ?? "nodate"}
+                className={`flash-plan-day${isToday ? " is-today" : ""}${overdue ? " is-overdue" : ""}`}
+                aria-label={
+                  day
+                    ? relative
+                      ? `${relative} · ${formatDay(day)}`
+                      : formatDay(day)
+                    : "Sans date"
+                }
               >
-                <span className="flash-list-num">{itemIndex + 1}</span>
-                <span className="flash-list-body">
-                  <span className="flash-list-title">{item.frente}</span>
-                  {item.status === "encerrado" ? (
-                    <span className="flash-list-meta">
-                      <span className="flash-list-status is-closed">Terminé</span>
-                    </span>
-                  ) : null}
-                </span>
-                <span className="flash-list-action" aria-hidden="true">
-                  {item.status === "encerrado" ? "Voir" : "Réviser"}
-                </span>
-              </button>
-              {onRemoveCard ? (
-                <button
-                  type="button"
-                  className="flash-list-remove"
-                  aria-label={`Supprimer ${item.frente}`}
-                  title="Supprimer"
-                  onClick={() => onRemoveCard(item)}
-                >
-                  Supprimer
-                </button>
-              ) : null}
-            </li>
-          );
-        })}
-      </ol>
+                <div className="flash-plan-date" aria-hidden={false}>
+                  {parts ? (
+                    <>
+                      <span className="flash-plan-dow">{parts.weekday}</span>
+                      <span className={`flash-plan-num${isToday ? " is-today" : ""}`}>{parts.dayNum}</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="flash-plan-dow">—</span>
+                      <span className="flash-plan-num is-nodate">·</span>
+                    </>
+                  )}
+                </div>
+                <ul className="flash-plan-events">
+                  {group.items.map((item) => {
+                    const queueIndex = queue.findIndex((card) => card.id === item.id);
+                    const activeItem = queueIndex === index;
+                    const meta =
+                      item.status === "encerrado"
+                        ? "Terminé"
+                        : overdue
+                          ? "En retard"
+                          : relative
+                            ? relative
+                            : item.lembrete
+                              ? `Rappel · ${formatDay(item.lembrete)}`
+                              : "Sans rappel";
+                    return (
+                      <li key={item.id} className="flash-plan-row">
+                        <button
+                          type="button"
+                          className={`flash-plan-event${activeItem ? " is-active" : ""}${item.status === "encerrado" ? " is-closed" : ""}`}
+                          style={
+                            item.color
+                              ? {
+                                  ["--card-tint" as string]: item.color,
+                                  background: `color-mix(in srgb, ${item.color} 28%, var(--panel))`,
+                                }
+                              : undefined
+                          }
+                          onClick={() => pickCard(item)}
+                          aria-current={activeItem ? "true" : undefined}
+                          aria-label={
+                            item.status === "encerrado"
+                              ? `Voir la carte: ${item.frente}`
+                              : `Réviser la carte: ${item.frente}`
+                          }
+                        >
+                          <span className="flash-plan-event-title">{item.frente}</span>
+                          <span className="flash-plan-event-meta">{meta}</span>
+                        </button>
+                        {onRemoveCard ? (
+                          <button
+                            type="button"
+                            className="flash-list-remove"
+                            aria-label={`Supprimer ${item.frente}`}
+                            title="Supprimer"
+                            onClick={() => onRemoveCard(item)}
+                          >
+                            Supprimer
+                          </button>
+                        ) : null}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+            );
+          })
+        )}
+      </div>
     </nav>
   );
 }

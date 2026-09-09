@@ -1,4 +1,4 @@
-export type RetentionMark = "facil" | "medio" | "dificil";
+export type RetentionMark = "encore" | "facil" | "medio" | "dificil";
 export type CardCategory = "VERSECARD" | "ENSEIGNEMENT";
 
 export type Materia = {

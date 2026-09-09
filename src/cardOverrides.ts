@@ -14,6 +14,8 @@ import {
   ensureLembrete,
   addDays,
   RETENTION_DAYS,
+  FACIL_GRADUATION,
+  cardIntervalDays,
 } from "./retention";
 
 const STORAGE_KEY = "studyos-flashcard-reminders";
@@ -179,14 +181,20 @@ export function mergeCard(card: Flashcard): Flashcard {
 
 export function applyCardMark(
   mark: RetentionMark,
-  card: Pick<Flashcard, "categoria" | "status">,
+  card: Pick<Flashcard, "categoria" | "status" | "lembrete" | "revisadoEm" | "criadoEm">,
   stored?: Pick<CardOverride, "facilStreak" | "revisadoEm"> | null,
   reviewedOn = todayKey(),
   options?: { allowGraduation?: boolean },
 ): CardOverride {
   const next = retentionFromMark(
     mark,
-    { facilStreak: resolveFacilStreak(card, stored?.facilStreak) },
+    {
+      facilStreak: resolveFacilStreak(card, stored?.facilStreak),
+      intervalDays: cardIntervalDays({
+        ...card,
+        revisadoEm: stored?.revisadoEm ?? card.revisadoEm,
+      }),
+    },
     reviewedOn,
     options,
   );
@@ -195,6 +203,17 @@ export function applyCardMark(
     status: next.status,
     lembrete: next.lembrete,
     facilStreak: next.facilStreak,
+    revisadoEm: reviewedOn,
+  };
+}
+
+/** Classe la carte comme Terminé (hors rappels Inbox) sans passer par Facile×2. */
+export function archiveCardLearning(reviewedOn = todayKey()): CardOverride {
+  return {
+    categoria: null,
+    status: "encerrado",
+    lembrete: reviewedOn,
+    facilStreak: FACIL_GRADUATION,
     revisadoEm: reviewedOn,
   };
 }
