@@ -168,8 +168,10 @@ export function BibleReaderView({
   const lastScrollTop = useRef(0);
   const scrollAcc = useRef(0);
   const chromeHiddenRef = useRef(false);
+  const chromeLockUntil = useRef(0);
   const forceChromeRef = useRef(false);
   const scrollRaf = useRef(0);
+  const readerRef = useRef<HTMLElement | null>(null);
   const pendingVerseStep = useRef(false);
   const booted = useRef(false);
   const loadGen = useRef(0);
@@ -408,23 +410,38 @@ export function BibleReaderView({
 
   const setReadingChrome = useEffectEvent((hidden: boolean) => {
     if (chromeHiddenRef.current === hidden) return;
+    const now = performance.now();
+    if (now < chromeLockUntil.current) return;
     chromeHiddenRef.current = hidden;
+    // Block flip-flop while the slide animation runs.
+    chromeLockUntil.current = now + 340;
+
+    // Apply both chrome classes in the same frame (avoids dock/tabs lag jitter).
+    readerRef.current?.classList.toggle("is-chrome-hidden", hidden);
+    document.querySelector(".app.biblos-shell")?.classList.toggle("is-bible-chrome-hidden", hidden);
+
     setChromeHidden(hidden);
     onReadingChromeChange?.(hidden);
   });
 
   useEffect(() => {
-    if (forceChrome) setReadingChrome(false);
+    if (!forceChrome) return;
+    chromeLockUntil.current = 0;
+    setReadingChrome(false);
   }, [forceChrome, setReadingChrome]);
 
   useEffect(() => {
-    return () => onReadingChromeChange?.(false);
+    return () => {
+      document.querySelector(".app.biblos-shell")?.classList.remove("is-bible-chrome-hidden");
+      onReadingChromeChange?.(false);
+    };
   }, [onReadingChromeChange]);
 
   useEffect(() => {
     setReadingChrome(false);
     lastScrollTop.current = 0;
     scrollAcc.current = 0;
+    chromeLockUntil.current = 0;
   }, [bookId, chapterId, planReading?.label, setReadingChrome]);
 
   useEffect(() => {
@@ -435,32 +452,41 @@ export function BibleReaderView({
       if (scrollRaf.current) return;
       scrollRaf.current = window.requestAnimationFrame(() => {
         scrollRaf.current = 0;
-        if (forceChromeRef.current) {
-          scrollAcc.current = 0;
-          return;
-        }
         const top = root.scrollTop;
         const delta = top - lastScrollTop.current;
         lastScrollTop.current = top;
 
-        if (top <= 8) {
+        if (forceChromeRef.current) {
+          scrollAcc.current = 0;
+          return;
+        }
+
+        // Keep lastScrollTop fresh during lock so the unlock doesn't spike.
+        if (performance.now() < chromeLockUntil.current) {
+          scrollAcc.current = 0;
+          return;
+        }
+
+        if (top <= 10) {
           scrollAcc.current = 0;
           setReadingChrome(false);
           return;
         }
 
-        // Ignore sub-pixel noise; accumulate until hysteresis trips.
-        if (Math.abs(delta) < 0.5) return;
+        if (Math.abs(delta) < 1) return;
+
+        // Soft direction change: decay instead of hard reset (less chatter).
         if ((delta > 0 && scrollAcc.current < 0) || (delta < 0 && scrollAcc.current > 0)) {
-          scrollAcc.current = 0;
+          scrollAcc.current *= 0.25;
         }
         scrollAcc.current += delta;
 
-        // YouVersion-like: hide a bit later, reveal quickly on upward flick.
-        if (scrollAcc.current > 28) {
+        const hidden = chromeHiddenRef.current;
+        // Wider hysteresis once hidden/shown to stop tremor near the threshold.
+        if (!hidden && scrollAcc.current > 40) {
           scrollAcc.current = 0;
           setReadingChrome(true);
-        } else if (scrollAcc.current < -10) {
+        } else if (hidden && scrollAcc.current < -18) {
           scrollAcc.current = 0;
           setReadingChrome(false);
         }
@@ -479,6 +505,7 @@ export function BibleReaderView({
 
   return (
     <section
+      ref={readerRef}
       className={`bible-reader bible-reader--yv${hideChrome ? " is-chrome-hidden" : ""}`}
       style={{ ["--bible-font-size" as string]: `${fontSize}px` }}
       onKeyDown={(event) => {
