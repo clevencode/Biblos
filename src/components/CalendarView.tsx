@@ -24,7 +24,7 @@ function monthOf(day: string) {
 
 /**
  * Calendrier global — rappels de flashcards / thèmes divers.
- * Le cronograma du plan actif vit dans Thème.
+ * Le cronograma du plan actif vit dans Galerie → Plan.
  */
 export function CalendarView({
   cards,

@@ -1,16 +1,16 @@
 import {
   BookOpenIcon as BookOutline,
   CalendarDaysIcon as CalendarDaysOutline,
-  DocumentTextIcon as DocumentOutline,
   InboxIcon as InboxOutline,
   RectangleStackIcon as StackOutline,
+  Squares2X2Icon as SquaresOutline,
 } from "@heroicons/react/24/outline";
 import {
   BookOpenIcon as BookSolid,
   CalendarDaysIcon as CalendarDaysSolid,
-  DocumentTextIcon as DocumentSolid,
   InboxIcon as InboxSolid,
   RectangleStackIcon as StackSolid,
+  Squares2X2Icon as SquaresSolid,
 } from "@heroicons/react/24/solid";
 
 type ModeTabName = "today" | "bible" | "cards" | "inbox" | "calendar";
@@ -20,15 +20,15 @@ type ModeTabIconProps = {
   active?: boolean;
 };
 
-/** Thème ≈ Página StudyOS (DocumentText). */
+/** Galerie de plans. */
 const ICONS: Record<
   ModeTabName,
   {
-    Outline: typeof DocumentOutline;
-    Solid: typeof DocumentSolid;
+    Outline: typeof SquaresOutline;
+    Solid: typeof SquaresSolid;
   }
 > = {
-  today: { Outline: DocumentOutline, Solid: DocumentSolid },
+  today: { Outline: SquaresOutline, Solid: SquaresSolid },
   bible: { Outline: BookOutline, Solid: BookSolid },
   cards: { Outline: StackOutline, Solid: StackSolid },
   inbox: { Outline: InboxOutline, Solid: InboxSolid },

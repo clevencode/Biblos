@@ -88,7 +88,7 @@ export function TodayView({
     return (
       <div className="today-view panel-nota-content">
         <header className="page-session-head">
-          <p className="session-kicker">Thème</p>
+          <p className="session-kicker">Plan</p>
           <nav className="crumb page-crumb" aria-label="Local dans la galerie">
             <button type="button" onClick={() => onSelectGalerie?.()}>
               Galerie
@@ -202,7 +202,7 @@ export function TodayView({
   return (
     <div className="today-view panel-nota-content plan-yv">
       <header className="page-session-head">
-        <p className="session-kicker">Thème</p>
+        <p className="session-kicker">Plan</p>
         <nav className="crumb page-crumb" aria-label="Local dans la galerie">
           <button type="button" onClick={() => onSelectGalerie?.()}>
             Galerie

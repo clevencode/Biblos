@@ -4848,6 +4848,13 @@ a:focus-visible,
   grid-template-columns: minmax(0, 1fr);
 }
 
+.biblos-shell #panel-today > .caderno-gallery,
+.biblos-shell #panel-today > .panel-resumo {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+}
+
 .biblos-shell #panel-bible {
   background: var(--bg);
   padding: 0;

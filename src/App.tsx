@@ -39,7 +39,7 @@ const UI_KEY = "biblos-ui";
 const seedCatalog = hydrateCatalogFromCache(seed as Catalog);
 
 const modes: { id: CenterMode; label: string }[] = [
-  { id: "today", label: "Thème" },
+  { id: "today", label: "Galerie" },
   { id: "bible", label: "Lecture" },
   { id: "cards", label: "Cartes" },
   { id: "inbox", label: "Inbox" },
@@ -157,12 +157,7 @@ export function App() {
     function onKey(event: KeyboardEvent) {
       if (event.key !== "Escape") return;
       if (document.querySelector(".prop-select-menu")) return;
-      if (home) {
-        event.preventDefault();
-        leaveGalerie();
-        return;
-      }
-      if (mode === "today") {
+      if (mode === "today" && !home) {
         event.preventDefault();
         goHome();
       }
@@ -174,10 +169,6 @@ export function App() {
   function goHome() {
     setHome(true);
     setMode("today");
-  }
-
-  function leaveGalerie() {
-    setHome(false);
   }
 
   function pickPlan(plan: ReadingPlan) {
@@ -214,6 +205,7 @@ export function App() {
 
   function exitPlanReading() {
     setPlanReading(null);
+    setHome(false);
     setMode("today");
   }
 
@@ -234,6 +226,7 @@ export function App() {
         setPlanProgressTick((value) => value + 1);
       }
       setPlanReading(null);
+      setHome(false);
       setMode("today");
       return;
     }
@@ -282,7 +275,8 @@ export function App() {
     const items = modes.map((item) => item.id);
     const index = Math.max(0, items.indexOf(mode));
     const next = items[(index + (event.key === "ArrowRight" ? 1 : -1) + items.length) % items.length];
-    setHome(false);
+    if (next === "today") setHome(true);
+    else setHome(false);
     setMode(next);
     document.getElementById(`tab-${next}`)?.focus();
   }
@@ -303,7 +297,7 @@ export function App() {
   );
 
   return (
-    <div className={`app biblos-shell${home ? " is-home" : ""}${narrow ? " is-narrow" : ""}`}>
+    <div className={`app biblos-shell${narrow ? " is-narrow" : ""}`}>
       <a className="skip" href="#workspace">
         Aller au contenu
       </a>
@@ -322,173 +316,153 @@ export function App() {
 
       <main
         id="workspace"
-        className={`workspace${home ? " is-home" : ""}${!home && narrow ? " is-mobile-vista" : ""}`}
+        className={`workspace${narrow ? " is-mobile-vista" : ""}`}
       >
-        {home ? (
-          <div className="caderno-shell">
-            <div className="caderno-main" id="galerie-home" aria-label="Galerie de Plan">
-              {!narrow ? (
-                <PlanGallery
-                  plans={plans}
-                  selectedId={activePlan?.id ?? null}
-                  onPick={pickPlan}
-                  onClose={leaveGalerie}
-                />
-              ) : null}
+        <div className="note-shell">
+          <div className="note-shell-main">
+            <div className="mode-tabs">
+              <div
+                className="mode-tabs-nav"
+                role="tablist"
+                aria-label="Vues"
+                onKeyDown={onTabKey}
+              >
+                {modes.map((item) => {
+                  const on = mode === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      role="tab"
+                      id={`tab-${item.id}`}
+                      className={on ? "is-on" : ""}
+                      aria-selected={on}
+                      aria-controls={`panel-${item.id}`}
+                      aria-label={item.label}
+                      title={item.label}
+                      tabIndex={on ? 0 : -1}
+                      onClick={() => {
+                        if (item.id === "today") setHome(true);
+                        else setHome(false);
+                        setMode(item.id);
+                      }}
+                    >
+                      <ModeTabIcon name={item.id} active={on} />
+                      <span className="mode-tab-label">{item.label}</span>
+                      {item.id === "cards" && cards.length ? (
+                        <span className="mode-tab-badge">{cards.length}</span>
+                      ) : null}
+                      {item.id === "inbox" && inbox.length ? (
+                        <span className="mode-tab-badge">{inbox.length}</span>
+                      ) : null}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-            <aside className="search-filter-rail panel-nota" aria-label={narrow ? "Galerie" : "Thème"}>
-              <div className="search-filter-body panel-nota-body">
-                {narrow ? (
-                  <PlanGallery
-                    embedded
-                    plans={plans}
-                    selectedId={activePlan?.id ?? null}
-                    onPick={pickPlan}
-                    onClose={leaveGalerie}
-                  />
-                ) : (
-                  themePanel
-                )}
-              </div>
-            </aside>
-          </div>
-        ) : (
-          <div className="note-shell">
-            <div className="note-shell-main">
-              <div className="mode-tabs">
-                <div
-                  className="mode-tabs-nav"
-                  role="tablist"
-                  aria-label="Vues"
-                  onKeyDown={onTabKey}
-                >
-                  {modes.map((item) => {
-                    const on = mode === item.id;
-                    return (
-                      <button
-                        key={item.id}
-                        type="button"
-                        role="tab"
-                        id={`tab-${item.id}`}
-                        className={on ? "is-on" : ""}
-                        aria-selected={on}
-                        aria-controls={`panel-${item.id}`}
-                        aria-label={item.label}
-                        title={item.label}
-                        tabIndex={on ? 0 : -1}
-                        onClick={() => {
-                          setHome(false);
-                          setMode(item.id);
-                        }}
-                      >
-                        <ModeTabIcon name={item.id} active={on} />
-                        <span className="mode-tab-label">{item.label}</span>
-                        {item.id === "cards" && cards.length ? (
-                          <span className="mode-tab-badge">{cards.length}</span>
-                        ) : null}
-                        {item.id === "inbox" && inbox.length ? (
-                          <span className="mode-tab-badge">{inbox.length}</span>
-                        ) : null}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
 
-              <section className="graph-pane" aria-label="Contenu">
-                {narrow ? (
-                  <p className="tab-section-title" id="tab-section-title">
-                    {activeModeLabel}
-                  </p>
-                ) : null}
-                <div className="graph-pane-body">
-                  <div
-                    id="panel-today"
-                    role="tabpanel"
-                    aria-labelledby="tab-today"
-                    hidden={mode !== "today"}
-                    className="pane-body"
-                  >
-                    {themePanel}
-                  </div>
-                  <div
-                    id="panel-bible"
-                    role="tabpanel"
-                    aria-labelledby="tab-bible"
-                    hidden={mode !== "bible"}
-                    className="pane-body"
-                  >
-                    <BibleReaderView
-                      initialRef="Jean 3.16"
-                      focusRef={bibleFocusRef}
-                      focusSeq={bibleFocusSeq}
-                      onBack={planReading ? exitPlanReading : () => setMode("today")}
-                      planReading={
-                        planReading
-                          ? {
-                              label: currentPlanStep(planReading)?.label ?? "",
-                              isFirst: isFirstPlanStep(planReading),
-                              isLast: isLastPlanStep(planReading),
-                              verseStart: currentPlanStep(planReading)?.verseStart ?? null,
-                              verseEnd: currentPlanStep(planReading)?.verseEnd ?? null,
-                              onPrev: planReadingPrev,
-                              onAdvance: planReadingAdvance,
-                            }
-                          : null
-                      }
+            <section className="graph-pane" aria-label="Contenu">
+              {narrow ? (
+                <p className="tab-section-title" id="tab-section-title">
+                  {mode === "today" && !home ? "Plan" : activeModeLabel}
+                </p>
+              ) : null}
+              <div className="graph-pane-body">
+                <div
+                  id="panel-today"
+                  role="tabpanel"
+                  aria-labelledby="tab-today"
+                  hidden={mode !== "today"}
+                  className="pane-body"
+                >
+                  {home ? (
+                    <PlanGallery
+                      embedded={narrow}
+                      plans={plans}
+                      selectedId={activePlan?.id ?? null}
+                      onPick={pickPlan}
                     />
-                  </div>
-                  <div
-                    id="panel-cards"
-                    role="tabpanel"
-                    aria-labelledby="tab-cards"
-                    hidden={mode !== "cards"}
-                    className="pane-body"
-                  >
-                    <FlashcardDeck
-                      key={activePlan?.id ?? "none"}
-                      cards={cards}
-                      active={!home && mode === "cards"}
-                      selectedId={cardFocusId}
-                      focusSeq={cardFocusSeq}
-                      splitLayout={splitLayout}
-                      onRemoveCard={handleRemoveCard}
-                    />
-                  </div>
-                  <div
-                    id="panel-inbox"
-                    role="tabpanel"
-                    aria-labelledby="tab-inbox"
-                    hidden={mode !== "inbox"}
-                    className="pane-body"
-                  >
-                    <InboxView
-                      items={inbox}
-                      active={!home && mode === "inbox"}
-                      splitLayout={splitLayout}
-                      onOpenPassage={openInboxItem}
-                    />
-                  </div>
-                  <div
-                    id="panel-calendar"
-                    role="tabpanel"
-                    aria-labelledby="tab-calendar"
-                    hidden={mode !== "calendar"}
-                    className="pane-body"
-                  >
-                    <CalendarView
-                      cards={calendar.cards}
-                      cardCounts={calendar.cardCounts}
-                      onPickCard={openCalendarCard}
-                      active={!home && mode === "calendar"}
-                      splitLayout={splitLayout}
-                    />
-                  </div>
+                  ) : (
+                    themePanel
+                  )}
                 </div>
-              </section>
-            </div>
+                <div
+                  id="panel-bible"
+                  role="tabpanel"
+                  aria-labelledby="tab-bible"
+                  hidden={mode !== "bible"}
+                  className="pane-body"
+                >
+                  <BibleReaderView
+                    initialRef="Jean 3.16"
+                    focusRef={bibleFocusRef}
+                    focusSeq={bibleFocusSeq}
+                    onBack={planReading ? exitPlanReading : () => setMode("today")}
+                    planReading={
+                      planReading
+                        ? {
+                            label: currentPlanStep(planReading)?.label ?? "",
+                            isFirst: isFirstPlanStep(planReading),
+                            isLast: isLastPlanStep(planReading),
+                            verseStart: currentPlanStep(planReading)?.verseStart ?? null,
+                            verseEnd: currentPlanStep(planReading)?.verseEnd ?? null,
+                            onPrev: planReadingPrev,
+                            onAdvance: planReadingAdvance,
+                          }
+                        : null
+                    }
+                  />
+                </div>
+                <div
+                  id="panel-cards"
+                  role="tabpanel"
+                  aria-labelledby="tab-cards"
+                  hidden={mode !== "cards"}
+                  className="pane-body"
+                >
+                  <FlashcardDeck
+                    key={activePlan?.id ?? "none"}
+                    cards={cards}
+                    active={mode === "cards"}
+                    selectedId={cardFocusId}
+                    focusSeq={cardFocusSeq}
+                    splitLayout={splitLayout}
+                    onRemoveCard={handleRemoveCard}
+                  />
+                </div>
+                <div
+                  id="panel-inbox"
+                  role="tabpanel"
+                  aria-labelledby="tab-inbox"
+                  hidden={mode !== "inbox"}
+                  className="pane-body"
+                >
+                  <InboxView
+                    items={inbox}
+                    active={mode === "inbox"}
+                    splitLayout={splitLayout}
+                    onOpenPassage={openInboxItem}
+                  />
+                </div>
+                <div
+                  id="panel-calendar"
+                  role="tabpanel"
+                  aria-labelledby="tab-calendar"
+                  hidden={mode !== "calendar"}
+                  className="pane-body"
+                >
+                  <CalendarView
+                    cards={calendar.cards}
+                    cardCounts={calendar.cardCounts}
+                    onPickCard={openCalendarCard}
+                    active={mode === "calendar"}
+                    splitLayout={splitLayout}
+                  />
+                </div>
+              </div>
+            </section>
           </div>
-        )}
+        </div>
       </main>
     </div>
   );
