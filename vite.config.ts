@@ -16,7 +16,7 @@ export default defineConfig(({ mode }) => ({
         id: "/",
         name: "Biblos",
         short_name: "Biblos",
-        description: "Flashcards bibliques et plan de lecture",
+        description: "Plan de lecture biblique",
         theme_color: "#FFFFFF",
         background_color: "#FFFFFF",
         display: "standalone",

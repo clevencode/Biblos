@@ -79,36 +79,5 @@ export type DescriptionSyncResult = {
 
 export function fetchNotionResumo(token: string, urlOrId: string): Promise<ResumoSyncResult>;
 export function fetchNotionDescription(token: string, urlOrId: string): Promise<DescriptionSyncResult>;
-export function archiveVerseCard(
-  token: string,
-  urlOrId: string,
-): Promise<{ ok: boolean; error?: string; hasToken?: boolean }>;
-export function createVerseCard(
-  token: string,
-  input: {
-    frente: string;
-    verso: string;
-    localId?: string;
-    lembrete?: string | null;
-    status?: string;
-    categoria?: string | null;
-  },
-): Promise<{
-  ok: boolean;
-  error?: string;
-  hasToken?: boolean;
-  localId?: string | null;
-  card?: {
-    id: string;
-    frente: string;
-    verso: string;
-    categoria: string | null;
-    status: string;
-    url: string;
-    lembrete: string | null;
-    cardCategory: string;
-    criadoEm: string | null;
-  };
-}>;
 export function isStatusOptionValidationError(statusCode: number, detail: string): boolean;
 export function notesDatabaseId(): string;

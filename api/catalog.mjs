@@ -1,10 +1,8 @@
 /**
- * Índice leve BIBLECARDS + PLAN DE LECTURE BIBLIQUE.
+ * Índice leve PLAN DE LECTURE BIBLIQUE.
  * GET /api/catalog?mode=index|full
  */
 import {
-  BIBLECARDS_DB,
-  BIBLECARDS_PAGE_DB,
   PLAN_DB,
   PLAN_PAGE_DB,
   dateKey,
@@ -313,39 +311,14 @@ export function cardsToSeeds(cards) {
 }
 
 export async function buildCatalog(token, { full = false } = {}) {
-  const cardsDb = [
-    envSafe("NOTION_BIBLECARDS_DB"),
-    BIBLECARDS_DB,
-    BIBLECARDS_PAGE_DB,
-  ].filter(Boolean);
   const planDb = [envSafe("NOTION_PLAN_DB"), PLAN_DB, PLAN_PAGE_DB].filter(Boolean);
 
-  let cardPages = [];
   let planPages = [];
-  try {
-    cardPages = await queryAll(token, cardsDb);
-  } catch (err) {
-    console.warn("[catalog] BIBLECARDS:", err instanceof Error ? err.message : err);
-  }
   try {
     planPages = await queryAll(token, planDb);
   } catch (err) {
     console.warn("[catalog] PLAN:", err instanceof Error ? err.message : err);
   }
-
-  const cards = [];
-  for (const page of cardPages) {
-    let body = "";
-    if (full) {
-      body = await fetchBlocksPlain(token, page.id);
-      await sleep(80);
-    }
-    cards.push(mapCardPage(page, body));
-  }
-
-  const verseCards = cards.filter(
-    (card) => String(card.cardCategory || "").toUpperCase() === "VERSECARD",
-  );
 
   const plans = [];
   for (const page of planPages) {
@@ -367,9 +340,9 @@ export async function buildCatalog(token, { full = false } = {}) {
   }
 
   return {
-    notas: cardsToSeeds(verseCards),
+    notas: [],
     plans,
-    cardCount: verseCards.length,
+    cardCount: 0,
     planCount: plans.length,
   };
 }

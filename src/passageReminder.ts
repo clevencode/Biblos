@@ -3,8 +3,7 @@ import { isPassageRef } from "./youversion/usfm";
 
 export function isPassageReminder(
   title: string,
-  cardCategory?: string | null,
+  _cardCategory?: string | null,
 ): boolean {
-  if (String(cardCategory || "").toUpperCase() === "VERSECARD") return true;
   return isPassageRef(title);
 }

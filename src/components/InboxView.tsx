@@ -11,7 +11,7 @@ type InboxViewProps = {
   active: boolean;
   /** Expanded (≥1280): lista | cartão. Medium/compact: lista↔cartão. */
   splitLayout?: boolean;
-  /** Passage (VERSECARD) → Lecture Bible au lieu de la révision. */
+  /** Passage biblique → Lecture au lieu de la révision. */
   onOpenPassage?: (item: InboxCard) => void;
 };
 

@@ -2,7 +2,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { loadEnv, type Plugin } from "vite";
 import { runFlashcardSync, type SyncBody } from "./server/notionFlashcardSync.ts";
 import { handleYouVersion } from "./api/youversion.mjs";
-import { fetchNotionDescription, createVerseCard, archiveVerseCard } from "./shared/notion.mjs";
+import { fetchNotionDescription } from "./shared/notion.mjs";
 
 function readBody(req: IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -106,48 +106,6 @@ async function handleDescriptionSync(req: IncomingMessage, res: ServerResponse, 
   send(res, 200, result);
 }
 
-async function handleVerseCard(req: IncomingMessage, res: ServerResponse, token: string) {
-  if (req.method === "OPTIONS") {
-    res.statusCode = 204;
-    res.end();
-    return;
-  }
-  if (req.method !== "POST" && req.method !== "DELETE") {
-    send(res, 405, { ok: false, error: "méthode invalide" });
-    return;
-  }
-  let body: {
-    frente?: string;
-    verso?: string;
-    localId?: string;
-    lembrete?: string | null;
-    status?: string;
-    categoria?: string | null;
-    url?: string;
-    pageId?: string;
-  } = {};
-  try {
-    body = JSON.parse(await readBody(req)) as typeof body;
-  } catch {
-    send(res, 400, { ok: false, error: "JSON inválido" });
-    return;
-  }
-  if (req.method === "DELETE") {
-    const result = await archiveVerseCard(token, body.url || body.pageId || "");
-    send(res, result.ok ? 200 : 400, result);
-    return;
-  }
-  const result = await createVerseCard(token, {
-    frente: body.frente ?? "",
-    verso: body.verso ?? "",
-    localId: body.localId,
-    lembrete: body.lembrete,
-    status: body.status,
-    categoria: body.categoria,
-  });
-  send(res, result.ok ? 200 : 400, result);
-}
-
 export function notionFlashcardPlugin(mode: string): Plugin {
   const env = loadEnv(mode, process.cwd(), "");
   const token = env.NOTION_TOKEN || "";
@@ -174,9 +132,6 @@ export function notionFlashcardPlugin(mode: string): Plugin {
     });
     server.middlewares.use("/api/description-sync", (req, res) => {
       void handleDescriptionSync(req, res, token);
-    });
-    server.middlewares.use("/api/verse-card", (req, res) => {
-      void handleVerseCard(req, res, token);
     });
   };
   return {

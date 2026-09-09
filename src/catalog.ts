@@ -68,10 +68,9 @@ export function buildFlashcards(note: Seed): Flashcard[] {
     }));
 }
 
-/** Cartões usados no Biblos: VERSECARD (Bible) ou id local `verse-*`. */
-export function isBiblosFlashcard(card: Pick<Flashcard, "id" | "cardCategory">): boolean {
-  if (String(card.id || "").startsWith("verse-")) return true;
-  return String(card.cardCategory || "").toUpperCase() === "VERSECARD";
+/** Cartões de estudo no Biblos — VERSECARD foi removido. */
+export function isBiblosFlashcard(_card: Pick<Flashcard, "id" | "cardCategory">): boolean {
+  return false;
 }
 
 export function listAllFlashcards(notes: Seed[], cardIds?: string[] | null): Flashcard[] {

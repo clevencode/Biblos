@@ -1,23 +1,4 @@
 {
-  "notas": [
-    {
-      "nota": {
-        "id": "bucket-versecard",
-        "titulo": "VERSECARD",
-        "url": "",
-        "criadoEm": "2026-09-07T00:00:00.000Z",
-        "cartoes": 0
-      },
-      "materia": {
-        "id": "cat-versecard",
-        "nome": "VERSECARD"
-      },
-      "disciplina": {
-        "id": "disc-versecard",
-        "nome": "VERSECARD"
-      },
-      "flashcards": []
-    }
-  ],
+  "notas": [],
   "plans": []
 }

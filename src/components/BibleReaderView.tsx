@@ -11,9 +11,6 @@ import {
   type YouVersionBook,
   type YouVersionPassage,
 } from "../youversion/client";
-import { formatVerseCardFront } from "../youversion/usfm";
-import { createVerseFlashcard } from "../verseCard";
-import type { Flashcard } from "../types";
 
 const STORAGE_KEY = "biblos-bible-reader";
 const BOOKS_CACHE_KEY = "biblos-yv-books-lsg";
@@ -44,9 +41,12 @@ type BibleReaderViewProps = {
     onPrev: () => void;
     onAdvance: () => void;
   } | null;
-  /** Après création d’une VERSECARD (catalogue local). */
-  onFlashcardCreated?: (card: Flashcard) => void;
 };
+
+/** Ids USFM (JHN, 1SA) — ignore un livre fantôme type VERSECARD. */
+function isUsfmBookId(id: string): boolean {
+  return /^[1-3]?[A-Z]{2,3}$/i.test(String(id || "").trim());
+}
 
 function readPrefs(): ReaderPrefs {
   try {
@@ -119,12 +119,12 @@ export function BibleReaderView({
   focusSeq = 0,
   onBack,
   planReading = null,
-  onFlashcardCreated,
 }: BibleReaderViewProps) {
   const prefs = readPrefs();
+  const prefsBookOk = isUsfmBookId(prefs.bookId || "");
   const initialParts = parseUsfmParts(
-    prefs.bookId && prefs.chapterId
-      ? chapterUsfm(prefs.bookId, prefs.chapterId)
+    prefsBookOk && prefs.chapterId
+      ? chapterUsfm(prefs.bookId!, prefs.chapterId)
       : initialRef,
   );
 
@@ -149,8 +149,6 @@ export function BibleReaderView({
   });
   const [pickerOpen, setPickerOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
-  const [cardBusy, setCardBusy] = useState(false);
-  const [cardMsg, setCardMsg] = useState<string | null>(null);
   const statusId = useId();
   const highlightRef = useRef<HTMLElement | null>(null);
   const booted = useRef(false);
@@ -185,24 +183,33 @@ export function BibleReaderView({
   }, []);
 
   useEffect(() => {
-    writePrefs({ bookId, chapterId, fontSize });
+    if (isUsfmBookId(bookId)) {
+      writePrefs({ bookId, chapterId, fontSize });
+      return;
+    }
+    writePrefs({ fontSize });
   }, [bookId, chapterId, fontSize]);
+
+  useEffect(() => {
+    if (!books.length) return;
+    const known = books.some((b) => b.id.toUpperCase() === bookId.toUpperCase());
+    if (known) return;
+    const fallback = books[0]!;
+    void loadChapter(fallback.id, fallback.chapters?.[0]?.id ?? "1", null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [books, bookId]);
 
   useEffect(() => {
     if (booted.current) return;
     booted.current = true;
-    const parts = parseUsfmParts(
-      prefs.bookId && prefs.chapterId
-        ? chapterUsfm(prefs.bookId, prefs.chapterId)
-        : initialRef,
-    );
-    void loadChapter(parts.bookId, parts.chapterId, parts.verse ?? null);
+    void loadChapter(initialParts.bookId, initialParts.chapterId, initialParts.verse ?? null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     if (!focusSeq || !focusRef?.trim()) return;
     const parts = parseUsfmParts(focusRef);
+    if (!isUsfmBookId(parts.bookId)) return;
     void loadChapter(parts.bookId, parts.chapterId, parts.verse ?? null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusSeq, focusRef]);
@@ -222,7 +229,6 @@ export function BibleReaderView({
     setChapterId(nextChapter);
     setHighlightVerse(verse);
     setSelectedVerse(verse);
-    setCardMsg(null);
     setPickerOpen(false);
     setLoading(true);
     setError(null);
@@ -251,38 +257,10 @@ export function BibleReaderView({
   function selectVerse(number: number) {
     setSelectedVerse((current) => (current === number ? null : number));
     setHighlightVerse(number);
-    setCardMsg(null);
     setMoreOpen(false);
   }
 
-  async function makeFlashcard() {
-    if (!selectedVerse || !passage?.verses?.length || cardBusy) return;
-    const verse = passage.verses.find((item) => item.number === selectedVerse);
-    if (!verse?.text?.trim()) return;
-    const bookTitle = selectedBook?.title ?? bookId;
-    const frente = formatVerseCardFront(bookTitle, chapterId, selectedVerse);
-    const usfm = `${chapterUsfm(bookId, chapterId)}.${selectedVerse}`;
-    setCardBusy(true);
-    setCardMsg(null);
-    const result = createVerseFlashcard({
-      frente,
-      verso: verse.text.trim(),
-      usfm,
-    });
-    setCardBusy(false);
-    if (!result.ok) {
-      setCardMsg(result.error || "Échec de création");
-      return;
-    }
-    onFlashcardCreated?.(result.card);
-    setCardMsg(`Flashcard · ${frente}`);
-  }
-
   const selectedBook = books.find((b) => b.id.toUpperCase() === bookId.toUpperCase());
-  const selectedVerseText =
-    selectedVerse && passage?.verses
-      ? passage.verses.find((item) => item.number === selectedVerse)?.text?.trim() ?? ""
-      : "";
   const chapters =
     selectedBook?.chapters?.length
       ? selectedBook.chapters.map((c) => c.id)
@@ -535,23 +513,6 @@ export function BibleReaderView({
           <p className="bible-yv-muted">Choisis un livre et un chapitre pour lire.</p>
         ) : null}
       </article>
-
-      {selectedVerse && selectedVerseText && !planReading ? (
-        <div className="bible-verse-actions" role="region" aria-label="Flashcard du verset">
-          <p className="bible-verse-actions-ref">
-            {formatVerseCardFront(selectedBook?.title ?? bookId, chapterId, selectedVerse)}
-          </p>
-          <button
-            type="button"
-            className="bible-yv-chip is-primary bible-make-card"
-            disabled={cardBusy}
-            onClick={() => makeFlashcard()}
-          >
-            {cardBusy ? "Création…" : "Créer flashcard"}
-          </button>
-          {cardMsg ? <p className="bible-verse-actions-msg">{cardMsg}</p> : null}
-        </div>
-      ) : null}
 
       <footer
         className={`bible-yv-dock${planReading ? " is-plan" : ""}`}

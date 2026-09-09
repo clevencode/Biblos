@@ -5477,39 +5477,6 @@ a:focus-visible,
   white-space: pre-wrap;
 }
 
-.bible-reader--yv .bible-verse-actions {
-  position: sticky;
-  bottom: 78px;
-  z-index: 2;
-  margin: 0 12px 10px;
-  padding: 12px 14px;
-  border: 1px solid var(--yv-line);
-  border-radius: 14px;
-  background: var(--yv-dock);
-  display: grid;
-  gap: 10px;
-}
-
-.bible-reader--yv .bible-verse-actions-ref {
-  margin: 0;
-  font-size: 0.92rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: var(--yv-text);
-}
-
-.bible-reader--yv .bible-verse-actions-msg {
-  margin: 0;
-  font-size: 0.85rem;
-  color: var(--yv-muted);
-}
-
-.bible-reader--yv .bible-make-card {
-  justify-self: start;
-  min-height: 44px;
-}
-
 .bible-yv-dock {
   position: sticky;
   bottom: calc(10px + env(safe-area-inset-bottom, 0px));
@@ -5766,34 +5733,6 @@ a:focus-visible,
 
 .bible-verse-text {
   font: inherit;
-}
-
-.bible-verse-actions {
-  display: grid;
-  gap: 10px;
-  margin-top: 12px;
-  padding: 12px 14px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--surface);
-}
-
-.bible-verse-actions-ref {
-  margin: 0;
-  font-size: 0.95rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-}
-
-.bible-make-card {
-  justify-self: start;
-  min-height: 44px;
-}
-
-.bible-verse-actions-msg {
-  margin: 0;
-  font-size: 0.88rem;
 }
 
 .bible-text {

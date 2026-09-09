@@ -5,8 +5,14 @@ import { sanitizePlanDays } from "./plan";
 import { normalizeCategoria, normalizeStatus } from "./retention";
 
 const CATALOG_CACHE_KEY = "biblos-catalog-v1";
+const VERSE_CREATE_OUTBOX_KEY = "biblos-verse-create-outbox";
 
-/** Remove ENSEIGNEMENT / cartões Notion não usados — só VERSECARD + verse-*. */
+function isVerseBucketId(id: string): boolean {
+  const key = String(id || "").toLowerCase();
+  return key.includes("versecard") || key.includes("verse");
+}
+
+/** Drop VERSECARD / buckets vazios; conserva plans. */
 export function pruneCatalogToVerseCards(catalog: Catalog): Catalog {
   const notas = (catalog.notas ?? [])
     .map((note) => {
@@ -17,11 +23,7 @@ export function pruneCatalogToVerseCards(catalog: Catalog): Catalog {
         nota: { ...note.nota, cartoes: flashcards.length },
       };
     })
-    .filter((note) => {
-      const id = String(note.nota.id || "").toLowerCase();
-      if (id.includes("versecard") || id.includes("verse")) return true;
-      return note.flashcards.length > 0;
-    });
+    .filter((note) => !isVerseBucketId(note.nota.id) && note.flashcards.length > 0);
   const plans = (catalog.plans ?? []).map((plan) => ({
     ...plan,
     days: sanitizePlanDays(plan.days),
@@ -31,10 +33,23 @@ export function pruneCatalogToVerseCards(catalog: Catalog): Catalog {
 
 export function hydrateCatalogFromCache(catalog: Catalog): Catalog {
   try {
+    localStorage.removeItem(VERSE_CREATE_OUTBOX_KEY);
+  } catch {
+    /* private mode */
+  }
+  try {
     const raw = localStorage.getItem(CATALOG_CACHE_KEY);
-    if (!raw) return pruneCatalogToVerseCards(catalog);
+    if (!raw) {
+      const pruned = pruneCatalogToVerseCards(catalog);
+      persistCatalogCache(pruned);
+      return pruned;
+    }
     const cached = JSON.parse(raw) as Catalog;
-    if (!cached || !Array.isArray(cached.notas)) return pruneCatalogToVerseCards(catalog);
+    if (!cached || !Array.isArray(cached.notas)) {
+      const pruned = pruneCatalogToVerseCards(catalog);
+      persistCatalogCache(pruned);
+      return pruned;
+    }
     const merged = pruneCatalogToVerseCards(mergeCatalog(catalog, cached).catalog);
     persistCatalogCache(merged);
     return merged;
@@ -46,6 +61,7 @@ export function hydrateCatalogFromCache(catalog: Catalog): Catalog {
 export function persistCatalogCache(catalog: Catalog) {
   try {
     localStorage.setItem(CATALOG_CACHE_KEY, JSON.stringify(catalog));
+    localStorage.removeItem(VERSE_CREATE_OUTBOX_KEY);
   } catch {
     /* quota / private mode */
   }
@@ -77,7 +93,7 @@ function mergeFlashcards(prev: Seed[], incoming: Seed[]): { notes: Seed[]; chang
 
   for (const stub of incoming) {
     const verseCards = (stub.flashcards ?? []).filter(isBiblosFlashcard);
-    if (!verseCards.length && !String(stub.nota.id || "").toLowerCase().includes("verse")) {
+    if (!verseCards.length || isVerseBucketId(stub.nota.id)) {
       continue;
     }
     const filteredStub = {
@@ -167,7 +183,7 @@ function mergeFlashcards(prev: Seed[], incoming: Seed[]): { notes: Seed[]; chang
       changed = true;
     }
     const key = String(id).toLowerCase();
-    if (!flashcards.length && !key.includes("verse")) {
+    if (!flashcards.length || isVerseBucketId(key)) {
       byId.delete(id);
       changed = true;
     }
