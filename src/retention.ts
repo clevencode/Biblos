@@ -15,9 +15,9 @@ export const RETENTION_DAYS = {
 } as const;
 
 export const RETENTION_LABELS: Record<RetentionMark, string> = {
-  dificil: "Difficile",
-  medio: "Moyen",
-  facil: "Facile",
+  dificil: "Peu",
+  medio: "Moyenne",
+  facil: "Elevé",
 };
 
 export function retentionLabel(categoria: RetentionMark): string {

@@ -32,6 +32,15 @@ export function parsePlanDays(raw: string): PlanDay[] {
     const jour = Number(match[1]);
     if (jour < 1 || jour > 40) continue;
     const rest = match[2].trim();
+    const boldRef = rest.match(/^\*{0,2}([^*]+?)\*{0,2}\s*(.*)$/);
+    if (boldRef && /\d/.test(boldRef[1])) {
+      days.push({
+        jour,
+        texte: boldRef[1].trim(),
+        defi: boldRef[2].trim(),
+      });
+      continue;
+    }
     const split = rest.match(/^(.+?)([A-ZÀÂÄÉÈÊËÎÏÔÖÙÛÜÇ].+)$/);
     days.push({
       jour,

@@ -68,8 +68,17 @@ export function buildFlashcards(note: Seed): Flashcard[] {
     }));
 }
 
+/** Cartões usados no Biblos: VERSECARD (Bible) ou id local `verse-*`. */
+export function isBiblosFlashcard(card: Pick<Flashcard, "id" | "cardCategory">): boolean {
+  if (String(card.id || "").startsWith("verse-")) return true;
+  return String(card.cardCategory || "").toUpperCase() === "VERSECARD";
+}
+
 export function listAllFlashcards(notes: Seed[], cardIds?: string[] | null): Flashcard[] {
-  return filterByCardIds(notes.flatMap((note) => buildFlashcards(note)), cardIds);
+  return filterByCardIds(
+    notes.flatMap((note) => buildFlashcards(note)).filter(isBiblosFlashcard),
+    cardIds,
+  );
 }
 
 /** Cartões no âmbito do plano ativo (pull Notion → Biblos). */
@@ -105,7 +114,7 @@ export function buildInbox(notes: Seed[], cardIds?: string[] | null): InboxCard[
   const items = notes.flatMap((seed) =>
     buildFlashcards(seed)
       .map(mergeCard)
-      .filter((card) => card.status !== "encerrado" && isDue(card.lembrete))
+      .filter((card) => isBiblosFlashcard(card) && card.status !== "encerrado" && isDue(card.lembrete))
       .map((card) => ({
         ...card,
         noteId: seed.nota.id,

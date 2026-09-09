@@ -251,8 +251,8 @@ export async function patchNotion(token: string, body: SyncBody): Promise<PatchR
   if (body.lembrete) {
     properties.Lembrete = { date: { start: body.lembrete } };
   }
-  if (categoria) properties.Catégorie = { select: { name: categoria } };
-  else if (body.categoria === null) properties.Catégorie = { select: null };
+  if (categoria) properties.Connaissance = { select: { name: categoria } };
+  else if (body.categoria === null) properties.Connaissance = { select: null };
   if (status) properties.Status = { status: { name: status } };
 
   if (!Object.keys(properties).length) return { ok: true };

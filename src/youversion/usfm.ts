@@ -99,3 +99,11 @@ export function isPassageRef(text: string): boolean {
   return /^[A-Z0-9]{2,3}\.\d+/i.test(usfm);
 }
 
+/** Nom du flashcard VERSECARD : JEAN 3.16 */
+export function formatVerseCardFront(bookTitle: string, chapter: string | number, verse: number): string {
+  const book = String(bookTitle || "")
+    .trim()
+    .toUpperCase();
+  return `${book} ${chapter}.${verse}`;
+}
+

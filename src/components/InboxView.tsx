@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { formatDay } from "../calendar";
 import { useFlashcardSession } from "../flashcardSession";
-import { inboxBucket, inboxDisplayOrder, lastReviewedOn, type InboxBucket } from "../retention";
+import { inboxBucket, inboxDisplayOrder, type InboxBucket } from "../retention";
 import { isPassageReminder } from "../passageReminder";
 import type { InboxCard } from "../types";
 import { FlashcardReview } from "./FlashcardReview";
@@ -85,7 +85,6 @@ function InboxReviewList({
               {group.items.map((item) => {
                 const num = numberById.get(item.id) ?? 0;
                 const activeItem = item.id === activeId;
-                const last = lastReviewedOn(item);
                 const passage = isPassageReminder(item.frente, item.cardCategory);
                 return (
                   <li key={item.id}>
@@ -108,13 +107,6 @@ function InboxReviewList({
                       <span className="inbox-item-body">
                         <span className="inbox-item-title">{item.frente}</span>
                         <span className="inbox-item-meta">
-                          <span className="inbox-item-disciplina">{item.disciplinaNome}</span>
-                          <span className="inbox-item-materia">{item.materiaNome}</span>
-                          {last ? (
-                            <time className="inbox-item-reviewed" dateTime={last} title="Última revisão">
-                              Rev. {formatDay(last)}
-                            </time>
-                          ) : null}
                           {item.lembrete ? (
                             <time
                               className={group.key === "overdue" ? "is-late" : undefined}

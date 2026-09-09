@@ -171,7 +171,8 @@ function mapCardPage(page, bodyText = "") {
   const category = props.Category?.select?.name ?? null;
   const connaissance = props.Connaissance?.select?.name ?? null;
   const catProp = categoriaPropFromPage(props);
-  const categoria = normalizeCategoria(catProp?.select?.name);
+  const categoria =
+    normalizeCategoria(connaissance) ?? normalizeCategoria(catProp?.select?.name);
   const status = normalizeStatus(props.Status?.status?.name) ?? "espera";
   const lembreteRaw = props.Lembrete?.date?.start ?? null;
   const criadoEm = props["Criado em"]?.created_time || page.created_time || null;
@@ -179,7 +180,11 @@ function mapCardPage(page, bodyText = "") {
     lembreteRaw?.slice(0, 10) ?? ensureLembrete({ status, lembrete: null, criadoEm });
 
   const heading = bodyText.match(/^#{1,3}\s+(.+)$/m)?.[1]?.trim();
-  const frente = heading || (nom !== "CARDS" ? nom : category || "Carte");
+  const rawFrente = heading || (nom !== "CARDS" ? nom : category || "Carte");
+  const frente =
+    String(category || "").toUpperCase() === "VERSECARD"
+      ? String(rawFrente).trim().toUpperCase()
+      : rawFrente;
   const verso = bodyText.trim() || frente;
 
   return {
@@ -298,6 +303,10 @@ export async function buildCatalog(token, { full = false } = {}) {
     cards.push(mapCardPage(page, body));
   }
 
+  const verseCards = cards.filter(
+    (card) => String(card.cardCategory || "").toUpperCase() === "VERSECARD",
+  );
+
   const plans = [];
   for (const page of planPages) {
     let body = "";
@@ -318,9 +327,9 @@ export async function buildCatalog(token, { full = false } = {}) {
   }
 
   return {
-    notas: cardsToSeeds(cards),
+    notas: cardsToSeeds(verseCards),
     plans,
-    cardCount: cards.length,
+    cardCount: verseCards.length,
     planCount: plans.length,
   };
 }

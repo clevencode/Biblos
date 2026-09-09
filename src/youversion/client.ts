@@ -57,6 +57,8 @@ export async function fetchBooks() {
     bible?: YouVersionBible;
     books?: YouVersionBook[];
     usingFallback?: boolean;
+    preferredS21?: boolean;
+    fallbackReason?: string | null;
   }>({ action: "books" });
 }
 
@@ -64,6 +66,9 @@ export async function fetchPassage(reference: string, bibleId?: number) {
   const usfm = toUsfm(reference);
   return yvFetch<{
     bibleId?: number;
+    bible?: YouVersionBible;
+    preferredS21?: boolean;
+    usingFallback?: boolean;
     passage?: YouVersionPassage;
   }>({
     action: "passage",
@@ -71,6 +76,9 @@ export async function fetchPassage(reference: string, bibleId?: number) {
     bibleId: bibleId || undefined,
   });
 }
+
+/** Id YouVersion de la Segond 21. */
+export const S21_BIBLE_ID = 152;
 
 export function openOnBibleCom(reference: string, bibleId: number) {
   const url = bibleComUrl(reference, bibleId);

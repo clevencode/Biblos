@@ -7,7 +7,7 @@ import { ModeTabIcon } from "./components/ModeTabIcon";
 import { TodayView } from "./components/TodayView";
 import { PlanGallery } from "./components/PlanGallery";
 import { BibleReaderView } from "./components/BibleReaderView";
-import type { Catalog, CalendarCardItem, CenterMode, InboxCard, ReadingPlan } from "./types";
+import type { Catalog, CalendarCardItem, CenterMode, Flashcard, InboxCard, ReadingPlan, Seed } from "./types";
 import {
   buildCalendarEvents,
   buildInbox,
@@ -15,7 +15,7 @@ import {
   planCardIds,
 } from "./catalog";
 import { mergeCard } from "./cardOverrides";
-import { hydrateCatalogFromCache } from "./catalogSync";
+import { hydrateCatalogFromCache, persistCatalogCache } from "./catalogSync";
 import {
   ensurePlanStart,
   loadPlanProgress,
@@ -209,6 +209,62 @@ export function App() {
     setPlanProgressTick((value) => value + 1);
   }
 
+  function handleFlashcardCreated(card: Flashcard) {
+    setCatalog((current) => {
+      const notas = [...(current.notas ?? [])];
+      const bucketKey = String(card.cardCategory || "VERSECARD");
+      const bucketId = `bucket-${bucketKey.toLowerCase()}`;
+      let seed = notas.find((item) => item.nota.id === bucketId);
+      if (!seed) {
+        seed = {
+          nota: {
+            id: bucketId,
+            titulo: bucketKey,
+            url: "",
+            criadoEm: card.criadoEm || new Date().toISOString(),
+            cartoes: 0,
+          },
+          materia: { id: `cat-${bucketKey.toLowerCase()}`, nome: bucketKey },
+          disciplina: { id: `disc-${bucketKey.toLowerCase()}`, nome: bucketKey },
+          flashcards: [],
+        };
+        notas.push(seed);
+      }
+      const exists = seed.flashcards.some((item) => item.id === card.id || item.url === card.url);
+      const flashcards = exists
+        ? seed.flashcards.map((item) =>
+            item.id === card.id || item.url === card.url ? { ...item, ...card } : item,
+          )
+        : [card, ...seed.flashcards];
+      const nextSeed: Seed = {
+        ...seed,
+        flashcards,
+        nota: { ...seed.nota, cartoes: flashcards.length },
+      };
+      const nextNotas = notas.map((item) => (item.nota.id === nextSeed.nota.id ? nextSeed : item));
+
+      const plans = (current.plans ?? []).map((plan) => {
+        if (!activePlan || plan.id !== activePlan.id) return plan;
+        if (!plan.cardIds?.length) return plan;
+        if (plan.cardIds.includes(card.id)) return plan;
+        return { ...plan, cardIds: [card.id, ...plan.cardIds] };
+      });
+
+      const catalog = { ...current, notas: nextNotas, plans };
+      persistCatalogCache(catalog);
+      return catalog;
+    });
+    setRetentionTick((value) => value + 1);
+
+    void (async () => {
+      const { syncVerseCardToNotion, attachNotionUrlToCatalog } = await import("./verseCardSync");
+      const result = await syncVerseCardToNotion(card);
+      if (result.ok && result.url) {
+        setCatalog((prev) => attachNotionUrlToCatalog(prev, card.id, result.url!));
+      }
+    })();
+  }
+
   function onTabKey(event: ReactKeyboardEvent<HTMLDivElement>) {
     if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
     event.preventDefault();
@@ -221,40 +277,6 @@ export function App() {
   }
 
   const activeModeLabel = modes.find((item) => item.id === mode)?.label ?? "";
-
-  const planChrome = (
-    <div className="biblos-plan-chrome">
-      <div className="biblos-plan-chrome-brand">
-        <span className="biblos-plan-kicker">Biblos</span>
-        <span className="biblos-plan-chrome-sep" aria-hidden="true">
-          ·
-        </span>
-        <button type="button" className="biblos-plan-kicker biblos-plan-galerie-link" onClick={goHome}>
-          Galerie de Plan
-        </button>
-      </div>
-      {plans.length ? (
-        <label className="biblos-plan-picker">
-          <span className="sr-only">Nom du plan</span>
-          {plans.length === 1 ? (
-            <span className="biblos-plan-name" title={activePlan?.nome}>
-              {activePlan?.nome}
-            </span>
-          ) : (
-            <select value={activePlan?.id ?? ""} onChange={(event) => setPlanId(event.target.value)}>
-              {plans.map((plan) => (
-                <option key={plan.id} value={plan.id}>
-                  {plan.nome}
-                </option>
-              ))}
-            </select>
-          )}
-        </label>
-      ) : (
-        <p className="biblos-plan-empty muted">Aucun plan synchronisé</p>
-      )}
-    </div>
-  );
 
   const themePanel = (
     <TodayView plan={activePlan} onSelectGalerie={goHome} />
@@ -354,7 +376,6 @@ export function App() {
               </div>
 
               <section className="graph-pane" aria-label="Contenu">
-                {mode !== "bible" && mode !== "today" ? planChrome : null}
                 {narrow ? (
                   <p className="tab-section-title" id="tab-section-title">
                     {activeModeLabel}
@@ -381,6 +402,7 @@ export function App() {
                       initialRef="Jean 3.16"
                       focusRef={bibleFocusRef}
                       focusSeq={bibleFocusSeq}
+                      onFlashcardCreated={handleFlashcardCreated}
                     />
                   </div>
                   <div

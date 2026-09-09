@@ -2452,8 +2452,46 @@ a:focus-visible,
   min-height: 0;
   display: flex;
   flex-direction: column;
-  padding: 16px 20px 24px;
+  padding: 0;
   width: 100%;
+}
+
+.calendar-view--unified {
+  min-height: 0;
+}
+
+.calendar-unified-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 16px 20px 28px;
+  max-width: 28rem;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.calendar-day-strip {
+  display: grid;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.calendar-day-strip-date {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.calendar-day-strip-empty {
+  margin: 0;
+  font-size: 0.9rem;
 }
 
 .calendar-view--month .calendar-body {
@@ -2463,7 +2501,7 @@ a:focus-visible,
   margin: 0 auto;
 }
 
-/* Expanded (≥1280): master–detail — mês à esquerda, agenda do dia à direita */
+/* Expanded (≥1280): master–detail — legado StudyOS (Cartes/Inbox) */
 .calendar-view--split {
   display: grid;
   grid-template-columns: var(--split-cols);
@@ -2812,69 +2850,60 @@ a:focus-visible,
 
 .calendar-plan-day {
   display: grid;
-  gap: 12px;
-  margin: 0 0 16px;
-  padding: 0 0 16px;
-  border-bottom: 1px solid var(--line);
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  border: none;
 }
 
-.calendar-plan-day-title {
+.calendar-plan-ref {
   margin: 0;
   font-size: 0.92rem;
   font-weight: 600;
+  line-height: 1.35;
+  color: var(--text);
 }
 
-.calendar-plan-section {
+.calendar-plan-actions {
   display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: 8px;
+  align-items: stretch;
+}
+
+.calendar-plan-lu,
+.calendar-plan-lire {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   gap: 6px;
-}
-
-.calendar-plan-section-label {
-  margin: 0;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-.calendar-plan-section-body {
-  margin: 0;
-  line-height: 1.5;
-  white-space: pre-wrap;
-}
-
-.calendar-plan-defi {
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: var(--surface);
-}
-
-.calendar-plan-passage {
-  display: block;
+  min-height: 44px;
   width: 100%;
-  margin: 0;
-  padding: 10px 12px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: var(--surface);
-  color: var(--accent);
-  font: inherit;
+  white-space: nowrap;
+  padding: 10px 10px;
   font-weight: 600;
-  text-align: left;
-  cursor: pointer;
+  font-size: 0.88rem;
 }
 
-.calendar-plan-passage:hover {
-  border-color: var(--accent);
+.calendar-plan-lu-check {
+  font-size: 1rem;
+  line-height: 1;
 }
 
-.calendar-plan-mark.is-done {
-  opacity: 0.7;
+.calendar-plan-lu.is-done {
+  opacity: 0.75;
+  border-color: var(--accent, #2563eb);
+  color: var(--accent, #2563eb);
 }
 
-.calendar-plan-mark {
-  justify-self: start;
+.calendar-plan-lire:not(:disabled) {
+  background: var(--accent, #2563eb);
+  border-color: var(--accent, #2563eb);
+  color: #fff;
+}
+
+.calendar-plan-lire:not(:disabled):hover {
+  filter: brightness(0.96);
 }
 
 .calendar-agenda-label {
@@ -3928,6 +3957,14 @@ a:focus-visible,
   text-underline-offset: 2px;
 }
 
+.nota-resumo-p s {
+  text-decoration: line-through;
+}
+
+.nota-resumo-p u {
+  text-underline-offset: 2px;
+}
+
 @media (max-width: 860px) {
   :root {
     --mobile-gutter: 12px;
@@ -4751,105 +4788,15 @@ a:focus-visible,
   }
 }
 
-/* —— Biblos: shell StudyOS (note-shell + rail) ; chrome plan compacto —— */
+/* —— Biblos: shell StudyOS (note-shell + rail) —— */
 .biblos-shell .note-shell {
   grid-template-columns: minmax(0, 1fr);
 }
 
-.biblos-plan-chrome {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px 16px;
-  padding: 10px var(--panel-gutter, 18px) 8px;
-  border-bottom: 1px solid var(--line);
-  flex: none;
-}
-
-.biblos-plan-chrome-brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-
-.biblos-plan-chrome-sep {
-  color: var(--muted);
-}
-
-.biblos-plan-kicker {
-  margin: 0;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-button.biblos-plan-galerie-link {
-  appearance: none;
-  border: 0;
-  padding: 0;
-  background: transparent;
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-button.biblos-plan-galerie-link:hover {
-  color: var(--text);
-}
-
-.biblos-plan-picker {
-  display: grid;
-  gap: 0;
-  min-width: 0;
-  flex: 1 1 12rem;
-  max-width: 28rem;
-}
-
-.biblos-plan-picker select,
-.biblos-plan-name {
-  display: block;
-  width: 100%;
-  font: inherit;
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--text);
-  padding: 7px 12px;
-  border-radius: 10px;
-  border: 1px solid var(--line);
-  background: var(--panel);
-  min-width: 0;
-}
-
-.biblos-plan-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.biblos-plan-empty {
-  margin: 0;
-  font-size: 0.9rem;
-}
-
 .today-view {
-  max-width: 42rem;
-  margin: 0 auto;
-}
-
-.today-description {
-  margin: 0 0 20px;
-}
-
-.today-description-empty {
-  margin: 0 0 18px;
+  width: 100%;
+  max-width: none;
+  margin: 0;
 }
 
 .flash-btn--primary {
@@ -4919,6 +4866,17 @@ button.biblos-plan-galerie-link:hover {
   padding: 4px 8px;
   border-radius: 8px;
   border: 1px solid var(--line);
+}
+
+.bible-version.is-s21 {
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.bible-version.is-fallback {
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 35%, var(--line));
 }
 
 .bible-font {
@@ -4996,7 +4954,15 @@ button.biblos-plan-galerie-link:hover {
 }
 
 .bible-verse {
+  display: block;
+  width: 100%;
   margin: 0;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
   font-family: "Source Serif 4", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
   font-size: var(--bible-font-size, 18px);
   line-height: 1.75;
@@ -5005,9 +4971,11 @@ button.biblos-plan-galerie-link:hover {
 
 .bible-verse.is-focus {
   background: color-mix(in srgb, var(--accent) 14%, transparent);
-  border-radius: 8px;
-  padding: 4px 8px;
-  margin-inline: -8px;
+}
+
+.bible-verse.is-selected {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent);
 }
 
 .bible-verse-num {
@@ -5027,12 +4995,57 @@ button.biblos-plan-galerie-link:hover {
   font: inherit;
 }
 
+.bible-verse-actions {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.bible-verse-actions-ref {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.bible-make-card {
+  justify-self: start;
+  min-height: 44px;
+}
+
+.bible-verse-actions-msg {
+  margin: 0;
+  font-size: 0.88rem;
+}
+
 .bible-text {
   margin: 0;
   font-family: "Source Serif 4", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
   font-size: var(--bible-font-size, 18px);
   line-height: 1.75;
   white-space: pre-wrap;
+}
+
+.flash-front-ref {
+  margin: 0;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  font-size: 1.15em;
+  line-height: 1.35;
+}
+
+.flash-back-text {
+  margin: 0;
+  font-weight: 400;
+  text-transform: none;
+  font-size: 1em;
+  line-height: 1.55;
 }
 
 .bible-hint {

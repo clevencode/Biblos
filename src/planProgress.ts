@@ -54,13 +54,16 @@ export function markDayRead(planId: string, jour: number): PlanProgress {
   const store = readStore();
   const current = store[planId] ?? { startDate: todayKey(), completedDays: [] };
   const completedDays = current.completedDays.includes(jour)
-    ? current.completedDays
+    ? current.completedDays.filter((day) => day !== jour)
     : [...current.completedDays, jour].sort((a, b) => a - b);
   const next = { ...current, completedDays };
   store[planId] = next;
   writeStore(store);
   return next;
 }
+
+/** Alias : marque / démarque le jour comme lu. */
+export const toggleDayRead = markDayRead;
 
 export const markPlanDayRead = markDayRead;
 

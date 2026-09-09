@@ -1,4 +1,4 @@
-import { dateKey, formatDay } from "../calendar";
+import { formatDay } from "../calendar";
 import { loadOverride } from "../flashcardSync";
 import {
   FACIL_GRADUATION,
@@ -214,15 +214,15 @@ export function FlashcardReview({
                     <div className="flash-stage">
                       <div className={`flash-inner${slideFlipped ? " is-flipped" : ""}`}>
                         <div className="flash-face flash-front">
-                          <span className="flash-kicker">Question</span>
-                          <p>{item.frente}</p>
+                          <span className="flash-kicker">Référence</span>
+                          <p className="flash-front-ref">{item.frente}</p>
                           {showRepetitionMeta ? <CardRepetitionMeta item={item} /> : null}
                           <span className="flash-reveal flash-reveal-click">Clic ou Espace pour révéler</span>
                           <span className="flash-reveal flash-reveal-touch">Toucher pour révéler</span>
                         </div>
                         <div className="flash-face flash-back">
-                          <span className="flash-kicker is-answer">Réponse</span>
-                          <p>{item.verso}</p>
+                          <span className="flash-kicker is-answer">Texte</span>
+                          <p className="flash-back-text">{item.verso}</p>
                           {showRepetitionMeta ? <CardRepetitionMeta item={item} /> : null}
                         </div>
                       </div>
@@ -279,7 +279,7 @@ export function FlashcardReview({
                   aria-keyshortcuts={level === "medio" ? `${key} Space` : key}
                   title={
                     level === "facil" && hint.interval === "Terminé"
-                      ? `Facile (2e fois) — termine le rappel et synchronise Notion (${key})`
+                      ? `Elevé (2e fois) — termine le rappel et synchronise Notion (${key})`
                       : `${RETENTION_LABELS[level]} — prochain rappel ${hint.when} (${key}${level === "medio" ? " ou Espace" : ""})`
                   }
                 >
@@ -297,9 +297,9 @@ export function FlashcardReview({
           </div>
         )}
         {sync === "saving" ? (
-          <p className="flash-sync">Synchronisation de la catégorie et du rappel dans Notion…</p>
+          <p className="flash-sync">Enregistrement de la connaissance et du rappel…</p>
         ) : null}
-        {sync === "saved" ? <p className="flash-sync">Catégorie et rappel synchronisés</p> : null}
+        {sync === "saved" ? <p className="flash-sync">Connaissance et rappel enregistrés</p> : null}
         {sync === "error" ? (
           <p className="flash-sync is-error" role="alert">
             {syncError ?? "Échec de la synchronisation Notion"}
@@ -351,19 +351,11 @@ export function FlashDeckList({ session, onPick }: FlashDeckListProps) {
                 <span className="flash-list-num">{itemIndex + 1}</span>
                 <span className="flash-list-body">
                   <span className="flash-list-title">{item.frente}</span>
-                  <span className="flash-list-meta">
-                    {item.status === "encerrado" ? (
+                  {item.status === "encerrado" ? (
+                    <span className="flash-list-meta">
                       <span className="flash-list-status is-closed">Terminé</span>
-                    ) : null}
-                    {item.cardCategory ? (
-                      <span className="flash-list-materia">{item.cardCategory}</span>
-                    ) : item.materiaNome ? (
-                      <span className="flash-list-materia">{item.materiaNome}</span>
-                    ) : null}
-                    {item.criadoEm ? (
-                      <time dateTime={dateKey(item.criadoEm)}>{formatDay(dateKey(item.criadoEm))}</time>
-                    ) : null}
-                  </span>
+                    </span>
+                  ) : null}
                 </span>
                 <span className="flash-list-action" aria-hidden="true">
                   {item.status === "encerrado" ? "Voir" : "Réviser"}

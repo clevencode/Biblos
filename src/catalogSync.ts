@@ -1,22 +1,44 @@
 import type { Catalog, ReadingPlan, Seed } from "./types";
 import { applyRemoteOverride } from "./cardOverrides";
+import { isBiblosFlashcard } from "./catalog";
 import { normalizeCategoria, normalizeStatus } from "./retention";
 
 const CATALOG_CACHE_KEY = "biblos-catalog-v1";
 
+/** Remove ENSEIGNEMENT / cartões Notion não usados — só VERSECARD + verse-*. */
+export function pruneCatalogToVerseCards(catalog: Catalog): Catalog {
+  const notas = (catalog.notas ?? [])
+    .map((note) => {
+      const flashcards = (note.flashcards ?? []).filter(isBiblosFlashcard);
+      return {
+        ...note,
+        flashcards,
+        nota: { ...note.nota, cartoes: flashcards.length },
+      };
+    })
+    .filter((note) => {
+      const id = String(note.nota.id || "").toLowerCase();
+      if (id.includes("versecard") || id.includes("verse")) return true;
+      return note.flashcards.length > 0;
+    });
+  return { ...catalog, notas };
+}
+
 export function hydrateCatalogFromCache(catalog: Catalog): Catalog {
   try {
     const raw = localStorage.getItem(CATALOG_CACHE_KEY);
-    if (!raw) return catalog;
+    if (!raw) return pruneCatalogToVerseCards(catalog);
     const cached = JSON.parse(raw) as Catalog;
-    if (!cached || !Array.isArray(cached.notas)) return catalog;
-    return mergeCatalog(catalog, cached).catalog;
+    if (!cached || !Array.isArray(cached.notas)) return pruneCatalogToVerseCards(catalog);
+    const merged = pruneCatalogToVerseCards(mergeCatalog(catalog, cached).catalog);
+    persistCatalogCache(merged);
+    return merged;
   } catch {
-    return catalog;
+    return pruneCatalogToVerseCards(catalog);
   }
 }
 
-function persistCatalogCache(catalog: Catalog) {
+export function persistCatalogCache(catalog: Catalog) {
   try {
     localStorage.setItem(CATALOG_CACHE_KEY, JSON.stringify(catalog));
   } catch {
@@ -29,10 +51,19 @@ function mergeFlashcards(prev: Seed[], incoming: Seed[]): { notes: Seed[]; chang
   let changed = false;
 
   for (const stub of incoming) {
-    const existing = byId.get(stub.nota.id);
+    const verseCards = (stub.flashcards ?? []).filter(isBiblosFlashcard);
+    if (!verseCards.length && !String(stub.nota.id || "").toLowerCase().includes("verse")) {
+      continue;
+    }
+    const filteredStub = {
+      ...stub,
+      flashcards: verseCards,
+      nota: { ...stub.nota, cartoes: verseCards.length },
+    };
+    const existing = byId.get(filteredStub.nota.id);
     if (!existing) {
-      for (const card of stub.flashcards ?? []) {
-        if (!card.url || !card.id) continue;
+      for (const card of verseCards) {
+        if (!card.id) continue;
         applyRemoteOverride(
           card.id,
           {
@@ -43,69 +74,81 @@ function mergeFlashcards(prev: Seed[], incoming: Seed[]): { notes: Seed[]; chang
           false,
         );
       }
-      byId.set(stub.nota.id, stub);
+      byId.set(filteredStub.nota.id, filteredStub);
       changed = true;
       continue;
     }
 
-    const prevByUrl = new Map((existing.flashcards ?? []).map((card) => [card.url, card]));
-    const incomingCards = stub.flashcards ?? [];
-    let flashcards = existing.flashcards ?? [];
-
-    if (incomingCards.length) {
-      flashcards = incomingCards.map((card) => {
-        const old = prevByUrl.get(card.url);
-        if (!old) return card;
-        return {
-          ...old,
-          frente: card.frente || old.frente,
-          verso: card.verso || old.verso,
-          categoria: card.categoria ?? old.categoria,
-          status: card.status ?? old.status,
-          lembrete: card.lembrete ?? old.lembrete,
-          criadoEm: card.criadoEm ?? old.criadoEm,
-          cardCategory: card.cardCategory ?? old.cardCategory,
-          connaissance: card.connaissance ?? old.connaissance,
-          formationNome: card.formationNome ?? old.formationNome,
-        };
-      });
-      for (const old of existing.flashcards ?? []) {
-        if (!flashcards.some((card) => card.url === old.url)) flashcards.push(old);
+    // merge existing — continue with original logic but only verse cards
+    const existingCards = (existing.flashcards ?? []).filter(isBiblosFlashcard);
+    const byCard = new Map(existingCards.map((card) => [card.id, card]));
+    let cardsChanged = existingCards.length !== (existing.flashcards ?? []).length;
+    for (const card of verseCards) {
+      if (!card.id) continue;
+      const old = byCard.get(card.id);
+      if (!old) {
+        byCard.set(card.id, card);
+        cardsChanged = true;
+        if (card.url) {
+          applyRemoteOverride(
+            card.id,
+            {
+              categoria: normalizeCategoria(card.categoria),
+              status: normalizeStatus(card.status) ?? "estudo",
+              lembrete: card.lembrete ?? null,
+            },
+            false,
+          );
+        }
+        continue;
+      }
+      const merged = {
+        ...old,
+        ...card,
+        lembrete: card.lembrete ?? old.lembrete,
+        categoria: card.categoria ?? old.categoria,
+        status: card.status ?? old.status,
+      };
+      if (JSON.stringify(old) !== JSON.stringify(merged)) {
+        byCard.set(card.id, merged);
+        cardsChanged = true;
       }
     }
-
-    const merged: Seed = {
-      ...existing,
-      nota: {
-        ...existing.nota,
-        ...stub.nota,
-        cartoes: flashcards.length || stub.nota.cartoes || existing.nota.cartoes,
-      },
-      materia: stub.materia?.nome ? stub.materia : existing.materia,
-      disciplina: stub.disciplina?.nome ? stub.disciplina : existing.disciplina,
-      flashcards,
-    };
-
-    if (JSON.stringify(existing) !== JSON.stringify(merged)) {
+    if (cardsChanged) {
+      const flashcards = [...byCard.values()];
+      byId.set(filteredStub.nota.id, {
+        ...existing,
+        ...filteredStub,
+        flashcards,
+        nota: {
+          ...existing.nota,
+          ...filteredStub.nota,
+          cartoes: flashcards.length,
+        },
+      });
       changed = true;
-      byId.set(stub.nota.id, merged);
-      for (const card of flashcards) {
-        if (!card.url || !card.id) continue;
-        applyRemoteOverride(
-          card.id,
-          {
-            categoria: normalizeCategoria(card.categoria),
-            status: normalizeStatus(card.status) ?? "estudo",
-            lembrete: card.lembrete ?? null,
-          },
-          false,
-        );
-      }
     }
   }
 
-  const notes = [...byId.values()].sort((a, b) => b.nota.criadoEm.localeCompare(a.nota.criadoEm));
-  return { notes, changed };
+  // Strip leftover ENSEIGNEMENT buckets / cards from prev
+  for (const [id, note] of [...byId.entries()]) {
+    const flashcards = (note.flashcards ?? []).filter(isBiblosFlashcard);
+    if (flashcards.length !== (note.flashcards ?? []).length) {
+      byId.set(id, {
+        ...note,
+        flashcards,
+        nota: { ...note.nota, cartoes: flashcards.length },
+      });
+      changed = true;
+    }
+    const key = String(id).toLowerCase();
+    if (!flashcards.length && !key.includes("verse")) {
+      byId.delete(id);
+      changed = true;
+    }
+  }
+
+  return { notes: [...byId.values()], changed };
 }
 
 function mergePlans(prev: ReadingPlan[], incoming: ReadingPlan[]): { plans: ReadingPlan[]; changed: boolean } {
@@ -138,8 +181,14 @@ function mergePlans(prev: ReadingPlan[], incoming: ReadingPlan[]): { plans: Read
 export function mergeCatalog(base: Catalog, incoming: Catalog): { catalog: Catalog; changed: boolean } {
   const notesMerge = mergeFlashcards(base.notas ?? [], incoming.notas ?? []);
   const plansMerge = mergePlans(base.plans ?? [], incoming.plans ?? []);
-  const changed = notesMerge.changed || plansMerge.changed;
-  const catalog: Catalog = { notas: notesMerge.notes, plans: plansMerge.plans };
+  const catalog = pruneCatalogToVerseCards({
+    notas: notesMerge.notes,
+    plans: plansMerge.plans,
+  });
+  const changed =
+    notesMerge.changed ||
+    plansMerge.changed ||
+    JSON.stringify(catalog.notas) !== JSON.stringify(notesMerge.notes);
   if (changed) persistCatalogCache(catalog);
   return { catalog, changed };
 }

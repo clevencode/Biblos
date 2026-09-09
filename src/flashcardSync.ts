@@ -57,8 +57,12 @@ export async function syncFlashcard(input: {
   status: Flashcard["status"];
   /** Se definido, falhas entram na outbox durável. */
   id?: string;
-}): Promise<{ ok: boolean; queued?: boolean; error?: string }> {
-  if (!canSync(input.url)) return { ok: false, error: "sem página Notion" };
+}): Promise<{ ok: boolean; queued?: boolean; localOnly?: boolean; error?: string }> {
+  if (!canSync(input.url)) {
+    // Cartão local (Bible → app) — sem página Notion; override já está no aparelho.
+    if (input.id) removeOutbox(input.id);
+    return { ok: true, localOnly: true };
+  }
   try {
     const response = await fetch("/api/flashcard-sync", {
       method: "POST",
