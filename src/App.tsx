@@ -15,7 +15,7 @@ import {
   planCardIds,
 } from "./catalog";
 import { mergeCard } from "./cardOverrides";
-import { hydrateCatalogFromCache, persistCatalogCache } from "./catalogSync";
+import { hydrateCatalogFromCache, persistCatalogCache, removeCardFromCatalog } from "./catalogSync";
 import {
   ensurePlanStart,
   ensureDayCompleted,
@@ -325,6 +325,17 @@ export function App() {
     })();
   }
 
+  function handleRemoveCard(card: Flashcard) {
+    const label = card.frente?.trim() || "cette carte";
+    if (!window.confirm(`Supprimer « ${label} » ?`)) return;
+    setCatalog((current) => removeCardFromCatalog(current, card.id));
+    setRetentionTick((value) => value + 1);
+    void (async () => {
+      const { archiveRemoteVerseCard } = await import("./verseCardSync");
+      await archiveRemoteVerseCard(card);
+    })();
+  }
+
   function onTabKey(event: ReactKeyboardEvent<HTMLDivElement>) {
     if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
     event.preventDefault();
@@ -502,6 +513,7 @@ export function App() {
                       selectedId={cardFocusId}
                       focusSeq={cardFocusSeq}
                       splitLayout={splitLayout}
+                      onRemoveCard={handleRemoveCard}
                     />
                   </div>
                   <div

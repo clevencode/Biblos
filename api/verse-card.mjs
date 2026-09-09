@@ -1,7 +1,7 @@
 /**
  * POST /api/verse-card — crée une page VERSECARD dans Notion (push depuis l’app locale).
  */
-import { createVerseCard } from "../shared/notion.mjs";
+import { createVerseCard, archiveVerseCard } from "../shared/notion.mjs";
 
 export default async function handler(req, res) {
   try {
@@ -13,12 +13,17 @@ export default async function handler(req, res) {
       return;
     }
 
-    if (method !== "POST") {
+    if (method !== "POST" && method !== "DELETE") {
       res.status(405).json({ ok: false, error: "méthode invalide" });
       return;
     }
 
     const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body || {};
+    if (method === "DELETE") {
+      const result = await archiveVerseCard(token, body.url || body.pageId || "");
+      res.status(result.ok ? 200 : result.hasToken === false ? 200 : 400).json(result);
+      return;
+    }
     const result = await createVerseCard(token, {
       localId: body.localId,
       frente: body.frente,

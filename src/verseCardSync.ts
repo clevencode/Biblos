@@ -160,6 +160,33 @@ export function enqueuePendingVerseCreatesFromCatalog(catalog: Catalog) {
   }
 }
 
+/** Archive la page Notion d’une VERSECARD (si elle a déjà une URL). */
+export async function archiveRemoteVerseCard(card: Pick<Flashcard, "id" | "url">): Promise<{
+  ok: boolean;
+  error?: string;
+}> {
+  removeVerseCreateOutbox(card.id);
+  if (!card.url || !/notion\.(so|com|site)/i.test(card.url)) {
+    return { ok: true };
+  }
+  try {
+    const response = await fetch("/api/verse-card", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url: card.url }),
+    });
+    const contentType = response.headers.get("content-type") ?? "";
+    if (!contentType.includes("application/json")) {
+      return { ok: false, error: "API /api/verse-card indisponible" };
+    }
+    const payload = (await response.json()) as { ok?: boolean; error?: string };
+    if (!payload.ok) return { ok: false, error: payload.error || "Échec de suppression Notion" };
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Échec réseau" };
+  }
+}
+
 /** Enfile + tente un push immédiat (après création Bible). */
 export async function syncVerseCardToNotion(card: Flashcard): Promise<{
   ok: boolean;

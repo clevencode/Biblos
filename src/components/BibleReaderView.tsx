@@ -16,6 +16,7 @@ import { createVerseFlashcard } from "../verseCard";
 import type { Flashcard } from "../types";
 
 const STORAGE_KEY = "biblos-bible-reader";
+const BOOKS_CACHE_KEY = "biblos-yv-books-lsg";
 const FONT_MIN = 16;
 const FONT_MAX = 26;
 const FONT_DEFAULT = 19;
@@ -65,6 +66,47 @@ function writePrefs(prefs: ReaderPrefs) {
   }
 }
 
+function readBooksCache(): { bible: YouVersionBible; books: YouVersionBook[] } | null {
+  try {
+    const raw = localStorage.getItem(BOOKS_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { bible?: YouVersionBible; books?: YouVersionBook[]; at?: number };
+    if (!parsed?.books?.length) return null;
+    if (parsed.at && Date.now() - parsed.at > 7 * 86_400_000) return null;
+    return {
+      bible: parsed.bible ?? {
+        id: LSG_BIBLE_ID,
+        abbreviation: "LSG",
+        title: "Louis Segond 1910",
+        languageCode: "fr",
+      },
+      books: parsed.books,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function writeBooksCache(bible: YouVersionBible | null, books: YouVersionBook[]) {
+  try {
+    localStorage.setItem(
+      BOOKS_CACHE_KEY,
+      JSON.stringify({
+        at: Date.now(),
+        bible: bible ?? {
+          id: LSG_BIBLE_ID,
+          abbreviation: "LSG",
+          title: "Louis Segond 1910",
+          languageCode: "fr",
+        },
+        books,
+      }),
+    );
+  } catch {
+    /* private mode */
+  }
+}
+
 function isLikelyVerseTitle(text: string, number: number): boolean {
   if (number !== 1) return false;
   const t = text.trim();
@@ -86,11 +128,10 @@ export function BibleReaderView({
       : initialRef,
   );
 
-  const [query, setQuery] = useState(initialRef);
   const [passage, setPassage] = useState<YouVersionPassage | null>(null);
-  const [bible, setBible] = useState<YouVersionBible | null>(null);
+  const [bible, setBible] = useState<YouVersionBible | null>(() => readBooksCache()?.bible ?? null);
   const [bibleId, setBibleId] = useState<number | null>(LSG_BIBLE_ID);
-  const [books, setBooks] = useState<YouVersionBook[]>([]);
+  const [books, setBooks] = useState<YouVersionBook[]>(() => readBooksCache()?.books ?? []);
   const [bookId, setBookId] = useState(initialParts.bookId);
   const [chapterId, setChapterId] = useState(initialParts.chapterId);
   const [highlightVerse, setHighlightVerse] = useState<number | null>(
@@ -106,7 +147,6 @@ export function BibleReaderView({
     const n = Number(prefs.fontSize);
     return Number.isFinite(n) ? Math.min(FONT_MAX, Math.max(FONT_MIN, n)) : FONT_DEFAULT;
   });
-  const [searchOpen, setSearchOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [cardBusy, setCardBusy] = useState(false);
@@ -114,20 +154,28 @@ export function BibleReaderView({
   const statusId = useId();
   const highlightRef = useRef<HTMLElement | null>(null);
   const booted = useRef(false);
+  const loadGen = useRef(0);
 
   useEffect(() => {
     let cancelled = false;
     void (async () => {
+      const cached = readBooksCache();
+      if (cached && !cancelled) {
+        setBooks(cached.books);
+        setBible(cached.bible);
+        setBibleId(cached.bible.id);
+      }
       const result = await fetchBooks();
       if (cancelled) return;
       setHasKey(result.hasKey ?? null);
-      if (result.ok && result.books) {
+      if (result.ok && result.books?.length) {
         setBooks(result.books);
         if (result.bible) {
           setBible(result.bible);
           setBibleId(result.bible.id);
         }
-      } else if (result.error) {
+        writeBooksCache(result.bible ?? null, result.books);
+      } else if (result.error && !cached?.books.length) {
         setError(result.error);
       }
     })();
@@ -154,7 +202,6 @@ export function BibleReaderView({
 
   useEffect(() => {
     if (!focusSeq || !focusRef?.trim()) return;
-    setQuery(focusRef);
     const parts = parseUsfmParts(focusRef);
     void loadChapter(parts.bookId, parts.chapterId, parts.verse ?? null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -170,6 +217,7 @@ export function BibleReaderView({
     nextChapter: string,
     verse: number | null = null,
   ) {
+    const gen = ++loadGen.current;
     setBookId(nextBook);
     setChapterId(nextChapter);
     setHighlightVerse(verse);
@@ -179,24 +227,19 @@ export function BibleReaderView({
     setLoading(true);
     setError(null);
     const usfm = chapterUsfm(nextBook, nextChapter);
-    setQuery(verse ? `${usfm}.${verse}` : usfm);
     const result = await fetchPassage(usfm, LSG_BIBLE_ID);
+    if (gen !== loadGen.current) return;
     setHasKey(result.hasKey ?? null);
     setLoading(false);
     if (!result.ok || !result.passage) {
-      setPassage(null);
+      // Garde le texte précédent en cas de rate limit / erreur transitoire
       setError(result.error ?? "Passage introuvable");
       return;
     }
     setPassage(result.passage);
+    setError(null);
     if (result.bibleId) setBibleId(result.bibleId);
     if (result.bible) setBible(result.bible);
-  }
-
-  async function loadFromQuery(ref: string) {
-    const parts = parseUsfmParts(ref);
-    await loadChapter(parts.bookId, parts.chapterId, parts.verse ?? null);
-    setSearchOpen(false);
   }
 
   function goAdjacent(delta: -1 | 1) {
@@ -266,7 +309,6 @@ export function BibleReaderView({
             event.preventDefault();
             planReading.onAdvance();
           } else if (event.key === "Escape") {
-            setSearchOpen(false);
             setPickerOpen(false);
             setMoreOpen(false);
             onBack?.();
@@ -280,7 +322,6 @@ export function BibleReaderView({
           event.preventDefault();
           goAdjacent(1);
         } else if (event.key === "Escape") {
-          setSearchOpen(false);
           setPickerOpen(false);
           setMoreOpen(false);
         }
@@ -288,35 +329,14 @@ export function BibleReaderView({
       tabIndex={-1}
     >
       <header className="bible-yv-top" aria-label="Navigation biblique">
-        <button
-          type="button"
-          className="bible-yv-icon-btn"
-          onClick={() => onBack?.()}
-          aria-label="Retour"
-          disabled={!onBack}
-        >
-          ←
-        </button>
+        <p className="bible-yv-top-title">{locationLabel}</p>
         <div className="bible-yv-top-actions">
-          <button
-            type="button"
-            className={`bible-yv-icon-btn${searchOpen ? " is-on" : ""}`}
-            onClick={() => {
-              setSearchOpen((v) => !v);
-              setMoreOpen(false);
-              setPickerOpen(false);
-            }}
-            aria-expanded={searchOpen}
-            aria-label="Rechercher une référence"
-          >
-            ⌕
-          </button>
           <button
             type="button"
             className={`bible-yv-icon-btn${moreOpen ? " is-on" : ""}`}
             onClick={() => {
               setMoreOpen((v) => !v);
-              setSearchOpen(false);
+              setPickerOpen(false);
             }}
             aria-expanded={moreOpen}
             aria-label="Plus d’options"
@@ -365,27 +385,6 @@ export function BibleReaderView({
         </div>
       ) : null}
 
-      {searchOpen ? (
-        <form
-          className="bible-search bible-yv-search"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void loadFromQuery(query);
-          }}
-        >
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Jean 3.16 ou JHN.3"
-            aria-label="Référence biblique"
-            autoFocus
-          />
-          <button type="submit" className="bible-yv-chip is-primary" disabled={loading}>
-            Aller
-          </button>
-        </form>
-      ) : null}
-
       {pickerOpen ? (
         <div className="bible-yv-picker" role="dialog" aria-label="Choisir livre et chapitre">
           <label className="bible-field">
@@ -428,9 +427,17 @@ export function BibleReaderView({
       </div>
 
       {error ? (
-        <p className="bible-yv-error" role="alert">
-          {error}
-        </p>
+        <div className="bible-yv-error-bar" role="alert">
+          <p className="bible-yv-error">{error}</p>
+          <button
+            type="button"
+            className="bible-yv-chip"
+            onClick={() => void loadChapter(bookId, chapterId, highlightVerse)}
+            disabled={loading}
+          >
+            Réessayer
+          </button>
+        </div>
       ) : null}
 
       <article className="bible-passage" aria-busy={loading}>
@@ -587,7 +594,6 @@ export function BibleReaderView({
               className="bible-yv-dock-location"
               onClick={() => {
                 setPickerOpen((v) => !v);
-                setSearchOpen(false);
                 setMoreOpen(false);
               }}
               aria-expanded={pickerOpen}

@@ -11,13 +11,32 @@ const API_BASE = "https://api.youversion.com/v1";
 /** Segond 1910 (Louis Segond) — seule version FR du app. */
 const LSG = 93;
 
-/** Cache court pour éviter de marteler /bibles/{id} (rate limit). */
-let resolvedCache = null;
-let resolvedCacheAt = 0;
-const RESOLVE_CACHE_MS = 5 * 60_000;
+const LSG_META = {
+  id: LSG,
+  abbreviation: "LSG",
+  title: "Louis Segond 1910",
+  languageCode: "fr",
+};
+
+/** Caches mémoire pour réduire le rate limit YouVersion. */
+let booksCache = null;
+let booksCacheAt = 0;
+const BOOKS_CACHE_MS = 60 * 60_000; // 1 h
+
+const passageCache = new Map();
+const PASSAGE_CACHE_MS = 30 * 60_000; // 30 min
+const PASSAGE_CACHE_MAX = 80;
+
+let queue = Promise.resolve();
+let lastYvAt = 0;
+const MIN_GAP_MS = 350;
 
 function appKey() {
   return (process.env.YOUVERSION_APP_KEY || process.env.YVP_APP_KEY || "").trim();
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function stripHtml(input) {
@@ -37,7 +56,6 @@ function versesFromHtml(html) {
   const raw = String(html || "");
   if (!raw.includes("yv-v")) return null;
 
-  // Ne pas utiliser \b autour de yv-v (le tiret crée une fausse frontière de mot).
   const re =
     /<span\b[^>]*class=["'][^"']*yv-v[^"']*["'][^>]*\bv=["'](\d+)["'][^>]*>\s*<\/span>|<span\b[^>]*\bv=["'](\d+)["'][^>]*class=["'][^"']*yv-v[^"']*["'][^>]*>\s*<\/span>/gi;
   const matches = [...raw.matchAll(re)];
@@ -130,12 +148,12 @@ function parseBible(json) {
   const tag = root.language_tag ? String(root.language_tag) : null;
   return {
     id: Number(root.id),
-    abbreviation: String(root.abbreviation ?? root.localized_abbreviation ?? ""),
-    title: String(root.localized_title ?? root.title ?? root.name ?? ""),
+    abbreviation: String(root.abbreviation ?? root.localized_abbreviation ?? "LSG"),
+    title: String(root.localized_title ?? root.title ?? root.name ?? "Louis Segond 1910"),
     languageCode:
       language && typeof language === "object"
         ? String(language.iso_639_1 ?? language.iso_639_3 ?? "")
-        : tag?.split("-")[0] ?? null,
+        : tag?.split("-")[0] ?? "fr",
   };
 }
 
@@ -156,21 +174,48 @@ function parseBook(raw) {
   };
 }
 
-async function yvGet(path, key) {
-  const response = await fetch(`${API_BASE}${path}`, {
-    headers: {
-      "X-YVP-App-Key": key,
-      Accept: "application/json",
-    },
-  });
-  const text = await response.text();
-  let json = {};
-  try {
-    json = text ? JSON.parse(text) : {};
-  } catch {
-    json = { raw: text };
+function rememberPassage(usfm, payload) {
+  passageCache.set(usfm, { at: Date.now(), payload });
+  while (passageCache.size > PASSAGE_CACHE_MAX) {
+    const first = passageCache.keys().next().value;
+    passageCache.delete(first);
   }
-  if (!response.ok) {
+}
+
+async function yvGet(path, key, { retries = 4 } = {}) {
+  let lastErr = null;
+  for (let attempt = 0; attempt < retries; attempt += 1) {
+    const waitGap = Math.max(0, MIN_GAP_MS - (Date.now() - lastYvAt));
+    if (waitGap) await sleep(waitGap);
+    lastYvAt = Date.now();
+
+    const response = await fetch(`${API_BASE}${path}`, {
+      headers: {
+        "X-YVP-App-Key": key,
+        Accept: "application/json",
+      },
+    });
+    const text = await response.text();
+    let json = {};
+    try {
+      json = text ? JSON.parse(text) : {};
+    } catch {
+      json = { raw: text };
+    }
+
+    if (response.ok) return json;
+
+    const retryAfterRaw = response.headers.get("retry-after");
+    const retryAfter = retryAfterRaw ? Number(retryAfterRaw) * 1000 : NaN;
+    if (response.status === 429 && attempt < retries - 1) {
+      const backoff = Number.isFinite(retryAfter)
+        ? Math.min(Math.max(retryAfter, 800), 12_000)
+        : Math.min(800 * 2 ** attempt, 8_000);
+      await sleep(backoff);
+      lastErr = Object.assign(new Error("Rate limit YouVersion"), { statusCode: 429 });
+      continue;
+    }
+
     const err = new Error(
       response.status === 401
         ? "App Key YouVersion inválida"
@@ -179,40 +224,65 @@ async function yvGet(path, key) {
           : response.status === 404
             ? "Recurso não encontrado"
             : response.status === 429
-              ? "Rate limit YouVersion"
+              ? "Rate limit YouVersion — réessaie dans un instant"
               : `YouVersion HTTP ${response.status}`,
     );
     err.statusCode = response.status;
     throw err;
   }
-  return json;
+  throw lastErr || new Error("Rate limit YouVersion");
 }
 
-async function resolveBible(key, { force = false } = {}) {
-  const now = Date.now();
-  if (!force && resolvedCache && now - resolvedCacheAt < RESOLVE_CACHE_MS) {
-    return resolvedCache;
-  }
+/** Sérialise les appels YouVersion (évite rafales 429). */
+function enqueueYv(task) {
+  const run = queue.then(task, task);
+  queue = run.then(
+    () => undefined,
+    () => undefined,
+  );
+  return run;
+}
 
-  try {
-    const json = await yvGet(`/bibles/${LSG}`, key);
-    const bible = parseBible(json);
-    const resolved = {
-      bible,
-      usingFallback: false,
-      fallbackReason: null,
-    };
-    resolvedCache = resolved;
-    resolvedCacheAt = Date.now();
-    return resolved;
-  } catch (e) {
-    if (e.statusCode === 429) throw e;
-    throw e.statusCode === 404 || e.statusCode === 403
-      ? Object.assign(new Error("Segond 1910 (LSG 93) indisponible pour cette App Key"), {
-          statusCode: e.statusCode,
-        })
-      : e;
+async function fetchBooksCached(key) {
+  const now = Date.now();
+  if (booksCache && now - booksCacheAt < BOOKS_CACHE_MS) {
+    return booksCache;
   }
+  return enqueueYv(async () => {
+    if (booksCache && Date.now() - booksCacheAt < BOOKS_CACHE_MS) return booksCache;
+    const json = await yvGet(`/bibles/${LSG}/books`, key);
+    const list = Array.isArray(json.data) ? json.data : Array.isArray(json.books) ? json.books : [];
+    const payload = {
+      bible: LSG_META,
+      books: list.map(parseBook),
+    };
+    booksCache = payload;
+    booksCacheAt = Date.now();
+    return payload;
+  });
+}
+
+async function fetchPassageCached(key, usfm) {
+  const cached = passageCache.get(usfm);
+  if (cached && Date.now() - cached.at < PASSAGE_CACHE_MS) {
+    return cached.payload;
+  }
+  return enqueueYv(async () => {
+    const again = passageCache.get(usfm);
+    if (again && Date.now() - again.at < PASSAGE_CACHE_MS) return again.payload;
+    const json = await yvGet(
+      `/bibles/${LSG}/passages/${encodeURIComponent(usfm)}?format=html&include_headings=true`,
+      key,
+    );
+    const payload = {
+      bibleId: LSG,
+      bible: LSG_META,
+      usingFallback: false,
+      passage: parsePassage(json),
+    };
+    rememberPassage(usfm, payload);
+    return payload;
+  });
 }
 
 export async function handleYouVersion(req, res, tokenFromEnv) {
@@ -250,54 +320,42 @@ export async function handleYouVersion(req, res, tokenFromEnv) {
 
   try {
     if (action === "resolve" || action === "test") {
-      const resolved = await resolveBible(key);
       let sample = null;
       if (action === "test") {
-        const json = await yvGet(
-          `/bibles/${resolved.bible.id}/passages/JHN.3.16?format=html&include_headings=true`,
-          key,
-        );
-        sample = parsePassage(json);
+        const result = await fetchPassageCached(key, "JHN.3.16");
+        sample = result.passage;
       }
-      send(200, { ok: true, hasKey: true, ...resolved, sample });
-      return;
-    }
-
-    if (action === "books") {
-      const resolved = await resolveBible(key);
-      const json = await yvGet(`/bibles/${resolved.bible.id}/books`, key);
-      const list = Array.isArray(json.data) ? json.data : Array.isArray(json.books) ? json.books : [];
       send(200, {
         ok: true,
         hasKey: true,
-        bible: resolved.bible,
-        usingFallback: resolved.usingFallback,
-        books: list.map(parseBook),
+        bible: LSG_META,
+        usingFallback: false,
+        sample,
       });
       return;
     }
 
-    // passage — toujours Segond 1910 (LSG 93)
+    if (action === "books") {
+      const payload = await fetchBooksCached(key);
+      send(200, {
+        ok: true,
+        hasKey: true,
+        bible: payload.bible,
+        usingFallback: false,
+        books: payload.books,
+      });
+      return;
+    }
+
     const usfm = String(url.searchParams.get("usfm") || "JHN.3.16")
       .trim()
       .toUpperCase()
       .replace(/:/g, ".");
-    const resolved = await resolveBible(key);
-    const bibleId = LSG;
-    const meta = {
-      bible: resolved.bible,
-      usingFallback: false,
-    };
-    const json = await yvGet(
-      `/bibles/${bibleId}/passages/${encodeURIComponent(usfm)}?format=html&include_headings=true`,
-      key,
-    );
+    const payload = await fetchPassageCached(key, usfm);
     send(200, {
       ok: true,
       hasKey: true,
-      bibleId,
-      ...meta,
-      passage: parsePassage(json),
+      ...payload,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

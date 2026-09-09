@@ -1977,6 +1977,61 @@ a:focus-visible,
   border-color: var(--text);
 }
 
+.flash-list-row {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.flash-list-row .flash-list-item {
+  flex: 1;
+  min-width: 0;
+}
+
+.flash-list-remove {
+  flex: none;
+  align-self: center;
+  appearance: none;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+}
+
+.flash-list-remove:hover {
+  color: var(--text);
+  background: var(--hover);
+  border-color: var(--line);
+}
+
+.flash-remove-btn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  padding: 4px 0;
+  font: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.flash-remove-btn:hover:not(:disabled) {
+  color: var(--text);
+}
+
+.flash-remove-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
 .flash-list-pane .flash-list-body {
   flex: 1;
 }
@@ -5213,8 +5268,7 @@ a:focus-visible,
 }
 
 .bible-yv-more,
-.bible-yv-picker,
-.bible-yv-search {
+.bible-yv-picker {
   margin: 0 12px 8px;
   padding: 10px 12px;
   border-radius: 14px;
@@ -5272,25 +5326,27 @@ a:focus-visible,
   border-color: var(--line);
 }
 
-.bible-yv-search {
-  display: flex;
-  gap: 8px;
+.bible-yv-top-title {
+  margin: 0;
+  min-width: 0;
+  font-family: "Libre Baskerville", Georgia, serif;
+  font-size: 0.95rem;
+  font-weight: 400;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.bible-yv-search input {
-  flex: 1;
-  min-width: 0;
-  font: inherit;
-  font-size: 0.95rem;
-  padding: 8px 12px;
-  border-radius: 10px;
-  border: 1px solid var(--yv-line);
-  background: var(--surface);
-  color: var(--yv-text);
+.bible-yv-error-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 0 12px 8px;
 }
 
 .bible-yv-error {
-  margin: 0 12px 8px;
+  margin: 0;
   color: var(--danger, #b42318);
   font-size: 0.9rem;
 }

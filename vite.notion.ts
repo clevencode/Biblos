@@ -2,7 +2,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { loadEnv, type Plugin } from "vite";
 import { runFlashcardSync, type SyncBody } from "./server/notionFlashcardSync.ts";
 import { handleYouVersion } from "./api/youversion.mjs";
-import { fetchNotionDescription, createVerseCard } from "./shared/notion.mjs";
+import { fetchNotionDescription, createVerseCard, archiveVerseCard } from "./shared/notion.mjs";
 
 function readBody(req: IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -112,7 +112,7 @@ async function handleVerseCard(req: IncomingMessage, res: ServerResponse, token:
     res.end();
     return;
   }
-  if (req.method !== "POST") {
+  if (req.method !== "POST" && req.method !== "DELETE") {
     send(res, 405, { ok: false, error: "méthode invalide" });
     return;
   }
@@ -123,11 +123,18 @@ async function handleVerseCard(req: IncomingMessage, res: ServerResponse, token:
     lembrete?: string | null;
     status?: string;
     categoria?: string | null;
+    url?: string;
+    pageId?: string;
   } = {};
   try {
     body = JSON.parse(await readBody(req)) as typeof body;
   } catch {
     send(res, 400, { ok: false, error: "JSON inválido" });
+    return;
+  }
+  if (req.method === "DELETE") {
+    const result = await archiveVerseCard(token, body.url || body.pageId || "");
+    send(res, result.ok ? 200 : 400, result);
     return;
   }
   const result = await createVerseCard(token, {

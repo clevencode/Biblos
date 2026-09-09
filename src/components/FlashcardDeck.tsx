@@ -10,6 +10,7 @@ type FlashcardDeckProps = {
   focusSeq?: number;
   /** Expanded (≥1280): lista | cartão. Medium/compact: lista↔cartão. */
   splitLayout?: boolean;
+  onRemoveCard?: (card: Flashcard) => void;
 };
 
 export function FlashcardDeck({
@@ -18,6 +19,7 @@ export function FlashcardDeck({
   selectedId = null,
   focusSeq = 0,
   splitLayout = false,
+  onRemoveCard,
 }: FlashcardDeckProps) {
   const [reviewing, setReviewing] = useState(false);
   const session = useFlashcardSession(cards, {
@@ -59,9 +61,10 @@ export function FlashcardDeck({
           session={session}
           emptyMessage="Aucune carte à réviser."
           allowGraduation={false}
+          onRemoveCard={onRemoveCard}
         />
         <div className="flash-list-pane flash-list-pane--side">
-          <FlashDeckList session={session} onPick={(index) => session.goTo(index)} />
+          <FlashDeckList session={session} onPick={(index) => session.goTo(index)} onRemoveCard={onRemoveCard} />
         </div>
       </div>
     );
@@ -76,6 +79,7 @@ export function FlashcardDeck({
             session.goTo(index);
             setReviewing(true);
           }}
+          onRemoveCard={onRemoveCard}
         />
       </div>
     );
@@ -87,6 +91,7 @@ export function FlashcardDeck({
       emptyMessage="Aucune carte à réviser."
       allowGraduation={false}
       onBackToList={() => setReviewing(false)}
+      onRemoveCard={onRemoveCard}
     />
   );
 }

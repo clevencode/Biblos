@@ -29,6 +29,7 @@ type FlashcardReviewProps = {
     total: number;
     section?: string;
   };
+  onRemoveCard?: (card: Flashcard) => void;
 };
 
 const MARK_KEYS: Record<RetentionMark, string> = {
@@ -69,6 +70,7 @@ export function FlashcardReview({
   onBackToList,
   allowGraduation = true,
   numbering,
+  onRemoveCard,
 }: FlashcardReviewProps) {
   const {
     queue,
@@ -305,6 +307,16 @@ export function FlashcardReview({
             {syncError ?? "Échec de la synchronisation Notion"}
           </p>
         ) : null}
+        {onRemoveCard ? (
+          <button
+            type="button"
+            className="flash-remove-btn"
+            onClick={() => onRemoveCard(card)}
+            disabled={sync === "saving"}
+          >
+            Supprimer
+          </button>
+        ) : null}
       </div>
       {onBackToList ? (
         <button type="button" className="flash-list-back flash-review-back" onClick={onBackToList}>
@@ -318,9 +330,10 @@ export function FlashcardReview({
 type FlashDeckListProps = {
   session: FlashcardSession;
   onPick?: (index: number) => void;
+  onRemoveCard?: (card: Flashcard) => void;
 };
 
-export function FlashDeckList({ session, onPick }: FlashDeckListProps) {
+export function FlashDeckList({ session, onPick, onRemoveCard }: FlashDeckListProps) {
   const { queue, index, listRef, goTo, total, dueCount } = session;
   const countLabel =
     total === 0
@@ -340,7 +353,7 @@ export function FlashDeckList({ session, onPick }: FlashDeckListProps) {
         {queue.map((item, itemIndex) => {
           const activeItem = itemIndex === index;
           return (
-            <li key={item.id}>
+            <li key={item.id} className="flash-list-row">
               <button
                 type="button"
                 className={`flash-list-item${activeItem ? " is-active" : ""}`}
@@ -361,6 +374,17 @@ export function FlashDeckList({ session, onPick }: FlashDeckListProps) {
                   {item.status === "encerrado" ? "Voir" : "Réviser"}
                 </span>
               </button>
+              {onRemoveCard ? (
+                <button
+                  type="button"
+                  className="flash-list-remove"
+                  aria-label={`Supprimer ${item.frente}`}
+                  title="Supprimer"
+                  onClick={() => onRemoveCard(item)}
+                >
+                  Supprimer
+                </button>
+              ) : null}
             </li>
           );
         })}

@@ -51,6 +51,26 @@ export function persistCatalogCache(catalog: Catalog) {
   }
 }
 
+/** Enlève un flashcard du catalogue local (liste, inbox, calendrier). */
+export function removeCardFromCatalog(catalog: Catalog, cardId: string): Catalog {
+  const notas = (catalog.notas ?? []).map((note) => {
+    const flashcards = (note.flashcards ?? []).filter((card) => card.id !== cardId);
+    if (flashcards.length === (note.flashcards ?? []).length) return note;
+    return {
+      ...note,
+      flashcards,
+      nota: { ...note.nota, cartoes: flashcards.length },
+    };
+  });
+  const plans = (catalog.plans ?? []).map((plan) => {
+    if (!plan.cardIds?.includes(cardId)) return plan;
+    return { ...plan, cardIds: plan.cardIds.filter((id) => id !== cardId) };
+  });
+  const next = pruneCatalogToVerseCards({ ...catalog, notas, plans });
+  persistCatalogCache(next);
+  return next;
+}
+
 function mergeFlashcards(prev: Seed[], incoming: Seed[]): { notes: Seed[]; changed: boolean } {
   const byId = new Map(prev.map((note) => [note.nota.id, note]));
   let changed = false;

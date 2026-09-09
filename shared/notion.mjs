@@ -473,3 +473,27 @@ export async function createVerseCard(token, input = {}) {
 
   return { ok: false, error: lastError, hasToken: true };
 }
+
+/** Archive une page VERSECARD (suppression manuelle dans Biblos). */
+export async function archiveVerseCard(token, urlOrId) {
+  if (!token) {
+    return { ok: false, error: "NOTION_TOKEN em falta", hasToken: false };
+  }
+  const id = pageIdFromNotionUrl(urlOrId);
+  if (!id) {
+    return { ok: false, error: "pageId invalide", hasToken: true };
+  }
+  const { ok, response, detail } = await notionFetch(`https://api.notion.com/v1/pages/${id}`, {
+    method: "PATCH",
+    headers: notionHeaders(token, { "Content-Type": "application/json" }),
+    body: JSON.stringify({ archived: true }),
+  });
+  if (!ok) {
+    return {
+      ok: false,
+      hasToken: true,
+      error: humanizeCreateError(response?.status ?? 0, detail),
+    };
+  }
+  return { ok: true, hasToken: true };
+}

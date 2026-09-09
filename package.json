@@ -13,6 +13,7 @@
     "mobile:gradle": "cd android && gradlew.bat assembleDebug",
     "mobile:install": "powershell -ExecutionPolicy Bypass -File scripts/install-android.ps1",
     "mobile:live": "powershell -ExecutionPolicy Bypass -File scripts/install-android.ps1 -live",
+    "pwa:build": "npm run build",
     "preview": "vite preview",
     "seed": "node scripts/build-seed.mjs",
     "sync:cards": "node scripts/sync-flashcards.mjs --apply",

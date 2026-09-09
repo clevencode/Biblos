@@ -79,6 +79,10 @@ export type DescriptionSyncResult = {
 
 export function fetchNotionResumo(token: string, urlOrId: string): Promise<ResumoSyncResult>;
 export function fetchNotionDescription(token: string, urlOrId: string): Promise<DescriptionSyncResult>;
+export function archiveVerseCard(
+  token: string,
+  urlOrId: string,
+): Promise<{ ok: boolean; error?: string; hasToken?: boolean }>;
 export function createVerseCard(
   token: string,
   input: {
