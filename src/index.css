@@ -4832,6 +4832,7 @@ a:focus-visible,
 }
 
 .plan-yv-day {
+  position: relative;
   flex: 0 0 auto;
   width: 64px;
   min-height: 64px;
@@ -4856,7 +4857,24 @@ a:focus-visible,
 }
 
 .plan-yv-day.is-read {
-  opacity: 0.78;
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+}
+
+.plan-yv-day-check {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 16px;
+  height: 16px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .plan-yv-day-num {
@@ -5121,8 +5139,8 @@ a:focus-visible,
   --yv-text: var(--text);
   --yv-muted: var(--muted);
   --yv-line: var(--line);
-  --yv-highlight: color-mix(in srgb, var(--accent) 22%, var(--surface));
-  --yv-dock: var(--panel, var(--surface));
+  --yv-highlight: color-mix(in srgb, var(--accent) 18%, var(--surface));
+  --yv-dock: color-mix(in srgb, var(--surface) 92%, var(--bg));
   gap: 0;
   max-width: none;
   padding: 0;
@@ -5139,15 +5157,16 @@ a:focus-visible,
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 8px 12px;
-  background: color-mix(in srgb, var(--yv-bg) 92%, transparent);
-  backdrop-filter: blur(8px);
+  padding: 6px 14px;
+  background: color-mix(in srgb, var(--yv-bg) 88%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid color-mix(in srgb, var(--yv-line) 70%, transparent);
 }
 
 .bible-yv-top-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
 }
 
 .bible-yv-icon-btn {
@@ -5159,8 +5178,12 @@ a:focus-visible,
   border-radius: 999px;
   background: transparent;
   color: var(--yv-text);
-  font-size: 1.2rem;
+  font-size: 1.15rem;
   cursor: pointer;
+}
+
+.bible-yv-icon-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--yv-text) 6%, transparent);
 }
 
 .bible-yv-icon-btn:disabled {
@@ -5169,29 +5192,24 @@ a:focus-visible,
 }
 
 .bible-yv-icon-btn.is-on {
-  background: color-mix(in srgb, var(--yv-text) 12%, transparent);
+  background: color-mix(in srgb, var(--yv-text) 10%, transparent);
 }
 
 .bible-yv-version {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  min-height: 34px;
-  margin-left: 4px;
-  padding: 0 12px;
+  min-height: 30px;
+  margin-left: 6px;
+  padding: 0 11px;
   border: 1px solid var(--yv-line);
   border-radius: 999px;
   background: var(--yv-surface);
-  color: var(--yv-text);
-  font-size: 0.82rem;
-  font-weight: 650;
-  letter-spacing: 0.02em;
-  cursor: pointer;
-}
-
-.bible-yv-version.is-fallback {
-  border-color: color-mix(in srgb, var(--danger, #b42318) 40%, var(--line));
-  color: var(--danger, #b42318);
+  color: var(--yv-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  user-select: none;
 }
 
 .bible-yv-more,
@@ -5285,29 +5303,33 @@ a:focus-visible,
   flex: 1;
   min-height: 0;
   overflow: auto;
-  padding: 8px 22px 120px;
+  width: 100%;
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 12px 22px calc(108px + env(safe-area-inset-bottom, 0px));
   border: 0;
   border-radius: 0;
   background: transparent;
 }
 
 .bible-reader--yv .bible-passage-head {
-  margin: 18px 0 28px;
+  margin: 12px 0 22px;
   text-align: center;
 }
 
 .bible-book-name {
   margin: 0;
   font-family: "Libre Baskerville", "Source Serif 4", Georgia, serif;
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 400;
-  color: var(--yv-text);
+  letter-spacing: 0.01em;
+  color: var(--yv-muted);
 }
 
 .bible-chapter-num {
-  margin: 10px 0 0;
+  margin: 8px 0 0;
   font-family: "Libre Baskerville", "Source Serif 4", Georgia, serif;
-  font-size: clamp(3.4rem, 12vw, 4.6rem);
+  font-size: clamp(3rem, 11vw, 4.2rem);
   font-weight: 700;
   line-height: 1;
   letter-spacing: -0.03em;
@@ -5316,14 +5338,14 @@ a:focus-visible,
 
 .bible-reader--yv .bible-verses {
   display: grid;
-  gap: 0.35em;
+  gap: 0.2em;
 }
 
 .bible-reader--yv .bible-verse {
   display: block;
   width: 100%;
   margin: 0;
-  padding: 6px 10px;
+  padding: 5px 10px;
   border: 0;
   border-radius: 8px;
   background: transparent;
@@ -5331,26 +5353,42 @@ a:focus-visible,
   cursor: pointer;
   font-family: "Libre Baskerville", "Source Serif 4", Georgia, "Times New Roman", serif;
   font-size: var(--bible-font-size, 19px);
-  line-height: 1.7;
+  line-height: 1.72;
   color: var(--yv-text);
 }
 
 .bible-reader--yv .bible-verse.is-title .bible-verse-text {
   font-style: italic;
+  color: var(--yv-muted);
 }
 
-.bible-reader--yv .bible-verse.is-focus:not(.is-selected) {
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
+.bible-reader--yv .bible-verse.is-focus:not(.is-selected):not(.is-plan-range) {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.bible-reader--yv .bible-verse.is-selected:not(.is-plan-range) {
+  background: var(--yv-highlight);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 28%, transparent);
 }
 
 .bible-reader--yv .bible-verse.is-plan-range {
-  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  background: var(--yv-highlight);
+  border-radius: 0;
+  box-shadow: none;
 }
 
-.bible-reader--yv .bible-verse.is-plan-range.is-selected {
-  background: color-mix(in srgb, var(--accent) 22%, transparent);
-  box-shadow: none;
-  border-radius: 0;
+.bible-reader--yv .bible-verse.is-plan-range.is-range-start {
+  border-radius: 10px 10px 0 0;
+  padding-top: 8px;
+}
+
+.bible-reader--yv .bible-verse.is-plan-range.is-range-end {
+  border-radius: 0 0 10px 10px;
+  padding-bottom: 8px;
+}
+
+.bible-reader--yv .bible-verse.is-plan-range.is-range-start.is-range-end {
+  border-radius: 10px;
 }
 
 .bible-reader--yv .bible-verse.is-plan-range + .bible-verse.is-plan-range {
@@ -5362,7 +5400,7 @@ a:focus-visible,
   margin-right: 0.35em;
   min-width: 0;
   font-family: inherit;
-  font-size: 0.62em;
+  font-size: 0.58em;
   font-weight: 400;
   color: var(--yv-muted);
   vertical-align: super;
@@ -5418,16 +5456,17 @@ a:focus-visible,
 
 .bible-yv-dock {
   position: sticky;
-  bottom: 10px;
+  bottom: calc(10px + env(safe-area-inset-bottom, 0px));
   z-index: 3;
   display: flex;
   align-items: center;
-  margin: 0 12px 12px;
+  width: min(100% - 24px, 40rem);
+  margin: 0 auto 12px;
   padding: 6px 8px;
   border-radius: 999px;
   background: var(--yv-dock);
   border: 1px solid var(--yv-line);
-  box-shadow: 0 8px 24px color-mix(in srgb, var(--text) 10%, transparent);
+  box-shadow: 0 8px 28px color-mix(in srgb, var(--text) 12%, transparent);
 }
 
 .bible-yv-dock-nav {

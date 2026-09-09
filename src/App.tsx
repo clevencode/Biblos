@@ -22,6 +22,7 @@ import {
   loadPlanProgress,
   markDayRead,
   nextUnreadJour,
+  resetPlanProgress,
 } from "./planProgress";
 import {
   createPlanReadingSession,
@@ -262,6 +263,12 @@ export function App() {
     setPlanProgressTick((value) => value + 1);
   }
 
+  function handleRestartPlan() {
+    if (!activePlan) return;
+    resetPlanProgress(activePlan.id);
+    setPlanProgressTick((value) => value + 1);
+  }
+
   function handleFlashcardCreated(card: Flashcard) {
     setCatalog((current) => {
       const notas = [...(current.notas ?? [])];
@@ -340,6 +347,7 @@ export function App() {
       onMarkRead={handleMarkRead}
       onOpenPassage={openPassageInBible}
       onStartPlanReading={startPlanReading}
+      onRestartPlan={handleRestartPlan}
     />
   );
 

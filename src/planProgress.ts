@@ -76,6 +76,26 @@ export function ensureDayCompleted(planId: string, jour: number): PlanProgress {
   return next;
 }
 
+/** Remet le plan à zéro (nouvelle lecture). */
+export function resetPlanProgress(planId: string): PlanProgress {
+  const store = readStore();
+  const next = { startDate: todayKey(), completedDays: [] as number[] };
+  store[planId] = next;
+  writeStore(store);
+  return next;
+}
+
+/** True si tous les jours du plan sont marqués lus. */
+export function isPlanComplete(
+  plan: { days: { jour: number }[] } | null | undefined,
+  progress: PlanProgress | null | undefined,
+): boolean {
+  const days = plan?.days ?? [];
+  if (!days.length) return false;
+  const done = new Set(progress?.completedDays ?? []);
+  return days.every((day) => done.has(day.jour));
+}
+
 /** Alias : marque / démarque le jour comme lu. */
 export const toggleDayRead = markDayRead;
 

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { isPassageRef } from "../youversion/usfm";
 import { extractPassageRef, sanitizePlanDays } from "../plan";
-import { type PlanProgress } from "../planProgress";
+import { isPlanComplete, type PlanProgress } from "../planProgress";
 import type { PlanDay, ReadingPlan } from "../types";
 import { PlanDescription } from "./PlanDescription";
 
@@ -14,6 +14,8 @@ type TodayViewProps = {
   onOpenPassage?: (reference: string) => void;
   /** Démarre la lecture guidée du jour (versets → conclure). */
   onStartPlanReading?: (jour: number, passage: string) => void;
+  /** Remet le plan à zéro et relance la lecture. */
+  onRestartPlan?: () => void;
 };
 
 type PlanScreen = "timeline" | "devotional";
@@ -52,6 +54,7 @@ export function TodayView({
   onMarkRead,
   onOpenPassage,
   onStartPlanReading,
+  onRestartPlan,
 }: TodayViewProps) {
   const [screen, setScreen] = useState<PlanScreen>("timeline");
   const [selectedJour, setSelectedJour] = useState(planJour);
@@ -64,6 +67,7 @@ export function TodayView({
 
   const scheduleTotal = days.length;
   const scheduleDone = days.filter((day) => progress?.completedDays.includes(day.jour)).length;
+  const planComplete = isPlanComplete({ days }, progress);
 
   useEffect(() => {
     if (!days.length) return;
@@ -131,6 +135,14 @@ export function TodayView({
   }
 
   function startReading() {
+    if (planComplete) {
+      onRestartPlan?.();
+      setDevotionalDone(false);
+      if (plan) saveDevotionalDone(plan.id, false);
+      const first = days[0];
+      if (first) setSelectedJour(first.jour);
+      return;
+    }
     if (!devotionalDone) {
       openDevotional();
       return;
@@ -202,7 +214,9 @@ export function TodayView({
         <div className="page-session-meta theme-head-meta">
           {scheduleTotal ? (
             <span className="page-session-status">
-              {scheduleDone}/{scheduleTotal} jours
+              {planComplete
+                ? "Plan terminé"
+                : `${scheduleDone}/${scheduleTotal} jours`}
             </span>
           ) : null}
           {plan.url ? (
@@ -233,7 +247,17 @@ export function TodayView({
                   .filter(Boolean)
                   .join(" ")}
                 onClick={() => setSelectedJour(day.jour)}
+                aria-label={
+                  read
+                    ? `Jour ${day.jour}, terminé`
+                    : `Jour ${day.jour}${selected ? ", sélectionné" : ""}`
+                }
               >
+                {read ? (
+                  <span className="plan-yv-day-check" aria-hidden="true">
+                    ✓
+                  </span>
+                ) : null}
                 <span className="plan-yv-day-num">{day.jour}</span>
                 <span className="plan-yv-day-label">Jour</span>
               </button>
@@ -313,7 +337,7 @@ export function TodayView({
       </section>
 
       <button type="button" className="plan-yv-start" onClick={startReading}>
-        Commencer la lecture
+        {planComplete ? "Recommencer la lecture" : "Commencer la lecture"}
       </button>
     </div>
   );

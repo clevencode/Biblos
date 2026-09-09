@@ -8,9 +8,7 @@
  * Portado de Downloads/flashbible (Flutter YouVersionApiClient).
  */
 const API_BASE = "https://api.youversion.com/v1";
-/** Segond 21 — id YouVersion / bible.com */
-const S21 = 152;
-/** Segond 1910 — fallback FR si S21 non licenciée */
+/** Segond 1910 (Louis Segond) — seule version FR du app. */
 const LSG = 93;
 
 /** Cache court pour éviter de marteler /bibles/{id} (rate limit). */
@@ -196,32 +194,25 @@ async function resolveBible(key, { force = false } = {}) {
     return resolvedCache;
   }
 
-  let lastErr = null;
-  for (const id of [S21, LSG]) {
-    try {
-      const json = await yvGet(`/bibles/${id}`, key);
-      const bible = parseBible(json);
-      const resolved = {
-        bible,
-        preferredS21: id === S21,
-        usingFallback: id !== S21,
-        fallbackReason:
-          id === S21
-            ? null
-            : "S21 (152) indisponible pour cette App Key — fallback LSG (93).",
-      };
-      resolvedCache = resolved;
-      resolvedCacheAt = Date.now();
-      return resolved;
-    } catch (e) {
-      lastErr = e;
-      // 429: ne pas basculer silencieusement — le client doit réessayer
-      if (e.statusCode === 429) throw e;
-      if (e.statusCode === 404 || e.statusCode === 403) continue;
-      throw e;
-    }
+  try {
+    const json = await yvGet(`/bibles/${LSG}`, key);
+    const bible = parseBible(json);
+    const resolved = {
+      bible,
+      usingFallback: false,
+      fallbackReason: null,
+    };
+    resolvedCache = resolved;
+    resolvedCacheAt = Date.now();
+    return resolved;
+  } catch (e) {
+    if (e.statusCode === 429) throw e;
+    throw e.statusCode === 404 || e.statusCode === 403
+      ? Object.assign(new Error("Segond 1910 (LSG 93) indisponible pour cette App Key"), {
+          statusCode: e.statusCode,
+        })
+      : e;
   }
-  throw lastErr || new Error("Nenhuma Bíblia FR (S21/LSG) licenciada para esta App Key");
 }
 
 export async function handleYouVersion(req, res, tokenFromEnv) {
@@ -286,38 +277,17 @@ export async function handleYouVersion(req, res, tokenFromEnv) {
       return;
     }
 
-    // passage — défaut S21 (152); résolution auto si bibleId omis
+    // passage — toujours Segond 1910 (LSG 93)
     const usfm = String(url.searchParams.get("usfm") || "JHN.3.16")
       .trim()
       .toUpperCase()
       .replace(/:/g, ".");
-    const bibleIdParam = url.searchParams.get("bibleId");
-    let bibleId = bibleIdParam ? Number(bibleIdParam) : 0;
-    let meta = null;
-    if (!bibleId) {
-      const resolved = await resolveBible(key);
-      bibleId = resolved.bible.id;
-      meta = {
-        bible: resolved.bible,
-        preferredS21: resolved.preferredS21,
-        usingFallback: resolved.usingFallback,
-      };
-    } else if (bibleId === S21 || bibleId === LSG) {
-      try {
-        const resolved = await resolveBible(key);
-        meta = {
-          bible: resolved.bible,
-          preferredS21: resolved.preferredS21,
-          usingFallback: resolved.usingFallback,
-        };
-        // Si le client demande LSG mais S21 est dispo, préférer S21
-        if (bibleId === LSG && resolved.preferredS21) {
-          bibleId = S21;
-        }
-      } catch {
-        /* garder bibleId demandé */
-      }
-    }
+    const resolved = await resolveBible(key);
+    const bibleId = LSG;
+    const meta = {
+      bible: resolved.bible,
+      usingFallback: false,
+    };
     const json = await yvGet(
       `/bibles/${bibleId}/passages/${encodeURIComponent(usfm)}?format=html&include_headings=true`,
       key,
@@ -326,7 +296,7 @@ export async function handleYouVersion(req, res, tokenFromEnv) {
       ok: true,
       hasKey: true,
       bibleId,
-      ...(meta || {}),
+      ...meta,
       passage: parsePassage(json),
     });
   } catch (err) {

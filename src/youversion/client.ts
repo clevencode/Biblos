@@ -57,7 +57,6 @@ export async function fetchBooks() {
     bible?: YouVersionBible;
     books?: YouVersionBook[];
     usingFallback?: boolean;
-    preferredS21?: boolean;
     fallbackReason?: string | null;
   }>({ action: "books" });
 }
@@ -67,18 +66,19 @@ export async function fetchPassage(reference: string, bibleId?: number) {
   return yvFetch<{
     bibleId?: number;
     bible?: YouVersionBible;
-    preferredS21?: boolean;
     usingFallback?: boolean;
     passage?: YouVersionPassage;
   }>({
     action: "passage",
     usfm,
-    bibleId: bibleId || undefined,
+    bibleId: bibleId || LSG_BIBLE_ID,
   });
 }
 
-/** Id YouVersion de la Segond 21. */
-export const S21_BIBLE_ID = 152;
+/** Id YouVersion de la Segond 1910 (seule version du app). */
+export const LSG_BIBLE_ID = 93;
+/** @deprecated Utiliser LSG_BIBLE_ID — Segond 1910 uniquement. */
+export const S21_BIBLE_ID = LSG_BIBLE_ID;
 
 export function openOnBibleCom(reference: string, bibleId: number) {
   const url = bibleComUrl(reference, bibleId);

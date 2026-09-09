@@ -6,7 +6,7 @@ import {
   fetchPassage,
   openOnBibleCom,
   parseUsfmParts,
-  S21_BIBLE_ID,
+  LSG_BIBLE_ID,
   type YouVersionBible,
   type YouVersionBook,
   type YouVersionPassage,
@@ -89,8 +89,7 @@ export function BibleReaderView({
   const [query, setQuery] = useState(initialRef);
   const [passage, setPassage] = useState<YouVersionPassage | null>(null);
   const [bible, setBible] = useState<YouVersionBible | null>(null);
-  const [bibleId, setBibleId] = useState<number | null>(S21_BIBLE_ID);
-  const [usingFallback, setUsingFallback] = useState(false);
+  const [bibleId, setBibleId] = useState<number | null>(LSG_BIBLE_ID);
   const [books, setBooks] = useState<YouVersionBook[]>([]);
   const [bookId, setBookId] = useState(initialParts.bookId);
   const [chapterId, setChapterId] = useState(initialParts.chapterId);
@@ -128,7 +127,6 @@ export function BibleReaderView({
           setBible(result.bible);
           setBibleId(result.bible.id);
         }
-        setUsingFallback(Boolean(result.usingFallback));
       } else if (result.error) {
         setError(result.error);
       }
@@ -182,7 +180,7 @@ export function BibleReaderView({
     setError(null);
     const usfm = chapterUsfm(nextBook, nextChapter);
     setQuery(verse ? `${usfm}.${verse}` : usfm);
-    const result = await fetchPassage(usfm, bibleId ?? S21_BIBLE_ID);
+    const result = await fetchPassage(usfm, LSG_BIBLE_ID);
     setHasKey(result.hasKey ?? null);
     setLoading(false);
     if (!result.ok || !result.passage) {
@@ -193,7 +191,6 @@ export function BibleReaderView({
     setPassage(result.passage);
     if (result.bibleId) setBibleId(result.bibleId);
     if (result.bible) setBible(result.bible);
-    if (typeof result.usingFallback === "boolean") setUsingFallback(result.usingFallback);
   }
 
   async function loadFromQuery(ref: string) {
@@ -252,8 +249,6 @@ export function BibleReaderView({
   const canNext = Boolean(adjacentChapter(books, bookId, chapterId, 1));
   const bookTitle = selectedBook?.title ?? bookId;
   const locationLabel = `${bookTitle} ${chapterId}`;
-  const versionLabel =
-    bible?.abbreviation || (bibleId === S21_BIBLE_ID ? "S21" : usingFallback ? "LSG" : "…");
 
   return (
     <section
@@ -328,21 +323,9 @@ export function BibleReaderView({
           >
             ⋮
           </button>
-          <button
-            type="button"
-            className={`bible-yv-version${usingFallback ? " is-fallback" : ""}`}
-            title={
-              usingFallback
-                ? `${bible?.title ?? "LSG"} — fallback`
-                : bible?.title || "La Bible Segond 21"
-            }
-            onClick={() =>
-              openOnBibleCom(chapterUsfm(bookId, chapterId), bibleId ?? S21_BIBLE_ID)
-            }
-          >
-            <span aria-hidden="true">🌐</span>
-            {versionLabel}
-          </button>
+          <span className="bible-yv-version" title={bible?.title || "La Bible Segond 1910"}>
+            LSG
+          </span>
         </div>
       </header>
 
@@ -374,7 +357,7 @@ export function BibleReaderView({
             className="bible-yv-more-link"
             role="menuitem"
             onClick={() =>
-              openOnBibleCom(chapterUsfm(bookId, chapterId), bibleId ?? S21_BIBLE_ID)
+              openOnBibleCom(chapterUsfm(bookId, chapterId), bibleId ?? LSG_BIBLE_ID)
             }
           >
             Ouvrir sur bible.com
@@ -484,14 +467,29 @@ export function BibleReaderView({
                       planReading.verseEnd ?? planReading.verseStart,
                     )
                   : null;
+              const rangeEnd =
+                planReading?.verseEnd != null
+                  ? Math.max(
+                      planReading.verseStart ?? planReading.verseEnd,
+                      planReading.verseEnd,
+                    )
+                  : null;
               const isRangeAnchor = planReading
                 ? rangeStart != null
                   ? verse.number === rangeStart
                   : verse.number === (passage.verses?.[0]?.number ?? 1)
                 : highlightVerse === verse.number;
               const active = planReading ? inPlanRange : highlightVerse === verse.number;
-              const selected = planReading ? inPlanRange : selectedVerse === verse.number;
+              const selected = planReading ? false : selectedVerse === verse.number;
               const titleLike = isLikelyVerseTitle(verse.text, verse.number);
+              const rangeEdge =
+                planReading && inPlanRange
+                  ? verse.number === rangeStart
+                    ? "is-range-start"
+                    : verse.number === rangeEnd
+                      ? "is-range-end"
+                      : "is-range-mid"
+                  : "";
               return (
                 <button
                   key={verse.number}
@@ -501,13 +499,14 @@ export function BibleReaderView({
                     active ? "is-focus" : "",
                     selected ? "is-selected" : "",
                     planReading && inPlanRange ? "is-plan-range" : "",
+                    rangeEdge,
                     titleLike ? "is-title" : "",
                   ]
                     .filter(Boolean)
                     .join(" ")}
                   data-verse={verse.number}
                   aria-label={`Verset ${verse.number}`}
-                  aria-pressed={selected}
+                  aria-pressed={selected || (planReading ? inPlanRange : false)}
                   ref={
                     isRangeAnchor
                       ? (el) => {
@@ -530,7 +529,7 @@ export function BibleReaderView({
         ) : null}
       </article>
 
-      {selectedVerse && selectedVerseText ? (
+      {selectedVerse && selectedVerseText && !planReading ? (
         <div className="bible-verse-actions" role="region" aria-label="Flashcard du verset">
           <p className="bible-verse-actions-ref">
             {formatVerseCardFront(selectedBook?.title ?? bookId, chapterId, selectedVerse)}
