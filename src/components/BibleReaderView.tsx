@@ -1,10 +1,9 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useId, useRef, useState } from "react";
 import {
   adjacentChapter,
   chapterUsfm,
   fetchBooks,
   fetchPassage,
-  openOnBibleCom,
   parseUsfmParts,
   LSG_BIBLE_ID,
   type YouVersionBible,
@@ -13,6 +12,7 @@ import {
 } from "../youversion/client";
 import { formatVerseCardFront } from "../youversion/usfm";
 import { createVerseFlashcard } from "../verseCard";
+import { DEFAULT_VERSE_COLOR, VERSE_COLORS, normalizeVerseColor } from "../verseColors";
 import type { Flashcard } from "../types";
 
 const STORAGE_KEY = "biblos-bible-reader";
@@ -46,6 +46,8 @@ type BibleReaderViewProps = {
   } | null;
   /** Après création d’une VERSECARD (catalogue local). */
   onFlashcardCreated?: (card: Flashcard) => void;
+  /** Lecture immersive : chrome (tabs) masqué au scroll. */
+  onReadingChromeChange?: (hidden: boolean) => void;
 };
 
 /** Ids USFM (JHN, 1SA) — ignore un livre fantôme type VERSECARD. */
@@ -125,6 +127,7 @@ export function BibleReaderView({
   onBack,
   planReading = null,
   onFlashcardCreated,
+  onReadingChromeChange,
 }: BibleReaderViewProps) {
   const prefs = readPrefs();
   const prefsBookOk = isUsfmBookId(prefs.bookId || "");
@@ -154,12 +157,19 @@ export function BibleReaderView({
   });
   const [pickerOpen, setPickerOpen] = useState(false);
   const [passageStep, setPassageStep] = useState<"book" | "chapter" | "verse">("book");
-  const [moreOpen, setMoreOpen] = useState(false);
   const [cardBusy, setCardBusy] = useState(false);
   const [cardMsg, setCardMsg] = useState<string | null>(null);
+  const [cardColor, setCardColor] = useState(DEFAULT_VERSE_COLOR);
+  const [chromeHidden, setChromeHidden] = useState(false);
   const statusId = useId();
   const highlightRef = useRef<HTMLElement | null>(null);
   const dockLocationRef = useRef<HTMLButtonElement | null>(null);
+  const passageScrollRef = useRef<HTMLElement | null>(null);
+  const lastScrollTop = useRef(0);
+  const scrollAcc = useRef(0);
+  const chromeHiddenRef = useRef(false);
+  const forceChromeRef = useRef(false);
+  const scrollRaf = useRef(0);
   const pendingVerseStep = useRef(false);
   const booted = useRef(false);
   const loadGen = useRef(0);
@@ -224,11 +234,6 @@ export function BibleReaderView({
   }, [focusSeq, focusRef]);
 
   useEffect(() => {
-    if (!highlightVerse || !highlightRef.current) return;
-    highlightRef.current.scrollIntoView({ block: "center", behavior: "smooth" });
-  }, [highlightVerse, passage?.id, loading]);
-
-  useEffect(() => {
     if (!pickerOpen) return;
     const id = window.setTimeout(() => dockLocationRef.current?.focus(), 0);
     return () => window.clearTimeout(id);
@@ -288,19 +293,19 @@ export function BibleReaderView({
     setSelectedVerse((current) => {
       const next = current === number ? null : number;
       setHighlightVerse(next);
+      if (next != null) setCardColor(DEFAULT_VERSE_COLOR);
       return next;
     });
     setCardMsg(null);
     setPickerOpen(false);
-    setMoreOpen(false);
   }
 
   function jumpToVerse(number: number) {
     setSelectedVerse(number);
     setHighlightVerse(number);
+    setCardColor(DEFAULT_VERSE_COLOR);
     setCardMsg(null);
     setPickerOpen(false);
-    setMoreOpen(false);
   }
 
   function closePicker() {
@@ -318,7 +323,6 @@ export function BibleReaderView({
       }
       return next;
     });
-    setMoreOpen(false);
   }
 
   function pickBook(nextBook: string) {
@@ -341,6 +345,7 @@ export function BibleReaderView({
     setSelectedVerse(null);
     setHighlightVerse(null);
     setCardMsg(null);
+    setCardColor(DEFAULT_VERSE_COLOR);
   }
 
   async function makeFlashcard() {
@@ -357,6 +362,7 @@ export function BibleReaderView({
         frente,
         verso: verse.text.trim(),
         usfm,
+        color: cardColor,
       });
       if (!result.ok) {
         setCardMsg(result.error);
@@ -388,6 +394,9 @@ export function BibleReaderView({
       ? (passage.verses.find((item) => item.number === selectedVerse)?.text?.trim() ?? "")
       : "";
   const showCreateCard = Boolean(selectedVerse && selectedVerseText && !planReading && !pickerOpen);
+  const forceChrome = pickerOpen || showCreateCard;
+  const hideChrome = chromeHidden && !forceChrome;
+  forceChromeRef.current = forceChrome;
   const dockPickLabel =
     !pickerOpen
       ? locationLabel
@@ -397,9 +406,80 @@ export function BibleReaderView({
           ? bookTitle
           : `${bookTitle} ${chapterId}`;
 
+  const setReadingChrome = useEffectEvent((hidden: boolean) => {
+    if (chromeHiddenRef.current === hidden) return;
+    chromeHiddenRef.current = hidden;
+    setChromeHidden(hidden);
+    onReadingChromeChange?.(hidden);
+  });
+
+  useEffect(() => {
+    if (forceChrome) setReadingChrome(false);
+  }, [forceChrome, setReadingChrome]);
+
+  useEffect(() => {
+    return () => onReadingChromeChange?.(false);
+  }, [onReadingChromeChange]);
+
+  useEffect(() => {
+    setReadingChrome(false);
+    lastScrollTop.current = 0;
+    scrollAcc.current = 0;
+  }, [bookId, chapterId, planReading?.label, setReadingChrome]);
+
+  useEffect(() => {
+    const root = passageScrollRef.current;
+    if (!root) return;
+
+    const onScroll = () => {
+      if (scrollRaf.current) return;
+      scrollRaf.current = window.requestAnimationFrame(() => {
+        scrollRaf.current = 0;
+        if (forceChromeRef.current) {
+          scrollAcc.current = 0;
+          return;
+        }
+        const top = root.scrollTop;
+        const delta = top - lastScrollTop.current;
+        lastScrollTop.current = top;
+
+        if (top <= 8) {
+          scrollAcc.current = 0;
+          setReadingChrome(false);
+          return;
+        }
+
+        // Ignore sub-pixel noise; accumulate until hysteresis trips.
+        if (Math.abs(delta) < 0.5) return;
+        if ((delta > 0 && scrollAcc.current < 0) || (delta < 0 && scrollAcc.current > 0)) {
+          scrollAcc.current = 0;
+        }
+        scrollAcc.current += delta;
+
+        // YouVersion-like: hide a bit later, reveal quickly on upward flick.
+        if (scrollAcc.current > 28) {
+          scrollAcc.current = 0;
+          setReadingChrome(true);
+        } else if (scrollAcc.current < -10) {
+          scrollAcc.current = 0;
+          setReadingChrome(false);
+        }
+      });
+    };
+
+    root.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      root.removeEventListener("scroll", onScroll);
+      if (scrollRaf.current) {
+        window.cancelAnimationFrame(scrollRaf.current);
+        scrollRaf.current = 0;
+      }
+    };
+  }, [setReadingChrome]);
+
   return (
     <section
-      className="bible-reader bible-reader--yv"
+      className={`bible-reader bible-reader--yv${hideChrome ? " is-chrome-hidden" : ""}`}
       style={{ ["--bible-font-size" as string]: `${fontSize}px` }}
       onKeyDown={(event) => {
         if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement) {
@@ -415,16 +495,14 @@ export function BibleReaderView({
           } else if (event.key === "Escape") {
             setPickerOpen(false);
             setPassageStep("book");
-            setMoreOpen(false);
             onBack?.();
           }
           return;
         }
         if (event.key === "Escape") {
-          if (pickerOpen || moreOpen) {
+          if (pickerOpen) {
             event.preventDefault();
             closePicker();
-            setMoreOpen(false);
             return;
           }
         }
@@ -440,61 +518,32 @@ export function BibleReaderView({
       tabIndex={-1}
     >
       <header className="bible-yv-top" aria-label="Navigation biblique">
-        <p className="bible-yv-top-title">{locationLabel}</p>
-        <div className="bible-yv-top-actions">
+        <div className="bible-yv-font" role="group" aria-label="Taille du texte">
           <button
             type="button"
-            className={`bible-yv-icon-btn${moreOpen ? " is-on" : ""}`}
-            onClick={() => {
-              setMoreOpen((v) => !v);
-              setPickerOpen(false);
-            }}
-            aria-expanded={moreOpen}
-            aria-label="Plus d’options"
+            className="bible-yv-font-btn"
+            onClick={() => setFontSize((n) => Math.max(FONT_MIN, n - 1))}
+            disabled={fontSize <= FONT_MIN}
+            aria-label="Réduire la taille du texte"
           >
-            ⋮
+            A−
           </button>
+          <button
+            type="button"
+            className="bible-yv-font-btn"
+            onClick={() => setFontSize((n) => Math.min(FONT_MAX, n + 1))}
+            disabled={fontSize >= FONT_MAX}
+            aria-label="Augmenter la taille du texte"
+          >
+            A+
+          </button>
+        </div>
+        <div className="bible-yv-top-actions">
           <span className="bible-yv-version" title={bible?.title || "La Bible Segond 1910"}>
             LSG
           </span>
         </div>
       </header>
-
-      {moreOpen ? (
-        <div className="bible-yv-more" role="menu">
-          <div className="bible-yv-more-row" role="none">
-            <span>Taille</span>
-            <div className="bible-font" role="group" aria-label="Taille du texte">
-              <button
-                type="button"
-                className="bible-yv-chip"
-                onClick={() => setFontSize((n) => Math.max(FONT_MIN, n - 1))}
-                disabled={fontSize <= FONT_MIN}
-              >
-                A−
-              </button>
-              <button
-                type="button"
-                className="bible-yv-chip"
-                onClick={() => setFontSize((n) => Math.min(FONT_MAX, n + 1))}
-                disabled={fontSize >= FONT_MAX}
-              >
-                A+
-              </button>
-            </div>
-          </div>
-          <button
-            type="button"
-            className="bible-yv-more-link"
-            role="menuitem"
-            onClick={() =>
-              openOnBibleCom(chapterUsfm(bookId, chapterId), bibleId ?? LSG_BIBLE_ID)
-            }
-          >
-            Ouvrir sur midvash.com
-          </button>
-        </div>
-      ) : null}
 
       <div id={statusId} className="sr-only" aria-live="polite">
         {loading ? "Chargement du chapitre…" : error ? error : locationLabel}
@@ -515,10 +564,17 @@ export function BibleReaderView({
       ) : null}
 
       <article
+        ref={passageScrollRef}
         className="bible-passage"
         aria-busy={loading}
+        style={{ ["--verse-tint" as string]: cardColor }}
         onClick={() => {
-          if (pickerOpen) closePicker();
+          if (pickerOpen) {
+            closePicker();
+            return;
+          }
+          // Tap to reveal chrome (YouVersion).
+          if (chromeHiddenRef.current) setReadingChrome(false);
         }}
       >
         <header className="bible-passage-head">
@@ -531,7 +587,9 @@ export function BibleReaderView({
         ) : null}
 
         {passage?.verses?.length ? (
-          <div className="bible-verses">
+          <div
+            className={`bible-verses${selectedVerse != null && !planReading ? " is-dimming" : ""}`}
+          >
             {passage.verses.map((verse) => {
               const inPlanRange = Boolean(
                 planReading &&
@@ -614,7 +672,12 @@ export function BibleReaderView({
       </article>
 
       {showCreateCard ? (
-        <div className="bible-verse-actions" role="region" aria-label="Flashcard du verset">
+        <div
+          className="bible-verse-actions"
+          role="region"
+          aria-label="Flashcard du verset"
+          style={{ ["--verse-tint" as string]: cardColor }}
+        >
           <div className="bible-verse-actions-head">
             <p className="bible-verse-actions-ref">
               {formatVerseCardFront(bookTitle, chapterId, selectedVerse!)}
@@ -628,9 +691,26 @@ export function BibleReaderView({
               ×
             </button>
           </div>
+          <div className="bible-verse-colors" role="group" aria-label="Couleur du surligneur">
+            {VERSE_COLORS.map((swatch) => {
+              const on = normalizeVerseColor(cardColor) === swatch.hex;
+              return (
+                <button
+                  key={swatch.id}
+                  type="button"
+                  className={`bible-verse-color${on ? " is-on" : ""}`}
+                  style={{ ["--swatch" as string]: swatch.hex }}
+                  aria-label={swatch.label}
+                  aria-pressed={on}
+                  onClick={() => setCardColor(swatch.hex)}
+                />
+              );
+            })}
+          </div>
           <button
             type="button"
             className="bible-yv-chip is-primary bible-make-card"
+            style={{ background: cardColor, borderColor: cardColor }}
             disabled={cardBusy}
             onClick={() => void makeFlashcard()}
           >

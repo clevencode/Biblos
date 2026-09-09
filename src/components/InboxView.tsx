@@ -90,6 +90,7 @@ function InboxReviewList({
                     <button
                       type="button"
                       className={`inbox-item${activeItem ? " is-active" : ""}${passage ? " is-passage" : ""}`}
+                      style={item.color ? { ["--card-tint" as string]: item.color } : undefined}
                       onClick={() => {
                         if (passage && onOpenPassage) {
                           onOpenPassage(item);

@@ -15,6 +15,8 @@ export type Flashcard = {
   url: string;
   lembrete?: string | null;
   cardCategory?: CardCategory | string | null;
+  /** Surligneur YouVersion (hex), ex. #2563eb. */
+  color?: string | null;
   connaissance?: string | null;
   formationNome?: string | null;
   materiaNome?: string;

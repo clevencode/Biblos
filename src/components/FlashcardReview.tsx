@@ -212,7 +212,10 @@ export function FlashcardReview({
                     className={`flash-slide${activeSlide ? " is-active" : ""}`}
                     aria-hidden={!activeSlide}
                   >
-                    <div className="flash-stage">
+                    <div
+                      className="flash-stage"
+                      style={item.color ? { ["--card-tint" as string]: item.color } : undefined}
+                    >
                       <div className={`flash-inner${slideFlipped ? " is-flipped" : ""}`}>
                         <div className="flash-face flash-front">
                           <span className="flash-kicker">Référence</span>
@@ -355,6 +358,7 @@ export function FlashDeckList({ session, onPick, onRemoveCard }: FlashDeckListPr
               <button
                 type="button"
                 className={`flash-list-item${activeItem ? " is-active" : ""}`}
+                style={item.color ? { ["--card-tint" as string]: item.color } : undefined}
                 onClick={() => (onPick ? onPick(itemIndex) : goTo(itemIndex))}
                 aria-current={activeItem ? "true" : undefined}
                 aria-label={`Réviser la carte: ${item.frente}`}

@@ -105,6 +105,7 @@ export function App() {
   const [bibleFocusSeq, setBibleFocusSeq] = useState(0);
   const [planReading, setPlanReading] = useState<PlanReadingSession | null>(null);
   const [retentionTick, setRetentionTick] = useState(0);
+  const [bibleChromeHidden, setBibleChromeHidden] = useState(false);
 
   const activePlan = useMemo(
     () => plans.find((plan) => plan.id === planId) ?? plans[0] ?? null,
@@ -152,6 +153,10 @@ export function App() {
   useEffect(() => {
     writeUi({ home, mode, planId: activePlan?.id });
   }, [activePlan?.id, home, mode]);
+
+  useEffect(() => {
+    if (mode !== "bible") setBibleChromeHidden(false);
+  }, [mode]);
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
@@ -355,7 +360,9 @@ export function App() {
   );
 
   return (
-    <div className={`app biblos-shell${narrow ? " is-narrow" : ""}`}>
+    <div
+      className={`app biblos-shell${narrow ? " is-narrow" : ""}${mode === "bible" ? " is-bible-mode" : ""}${bibleChromeHidden ? " is-bible-chrome-hidden" : ""}`}
+    >
       <a className="skip" href="#workspace">
         Aller au contenu
       </a>
@@ -465,6 +472,7 @@ export function App() {
                         : null
                     }
                     onFlashcardCreated={handleFlashcardCreated}
+                    onReadingChromeChange={setBibleChromeHidden}
                   />
                 </div>
                 <div

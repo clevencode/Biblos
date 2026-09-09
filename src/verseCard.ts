@@ -6,6 +6,7 @@ import { todayKey } from "./calendar";
 import { applyRemoteOverride, notifyFlashcardRevision } from "./cardOverrides";
 import { ensureLembrete } from "./retention";
 import type { Flashcard } from "./types";
+import { DEFAULT_VERSE_COLOR, normalizeVerseColor } from "./verseColors";
 import { toUsfm } from "./youversion/usfm";
 
 export type CreateVerseCardResult =
@@ -30,6 +31,8 @@ export function createVerseFlashcard(input: {
   verso: string;
   /** USFM optionnel (ex. JHN.3.16) pour un id stable. */
   usfm?: string;
+  /** Surligneur (hex). Défaut: bleu. */
+  color?: string | null;
 }): CreateVerseCardResult {
   const frente = String(input.frente || "")
     .trim()
@@ -47,6 +50,7 @@ export function createVerseFlashcard(input: {
     criadoEm,
     categoria: null,
   });
+  const color = normalizeVerseColor(input.color ?? DEFAULT_VERSE_COLOR);
 
   const card: Flashcard = {
     id,
@@ -57,6 +61,7 @@ export function createVerseFlashcard(input: {
     url: "",
     lembrete,
     cardCategory: "VERSECARD",
+    color,
     criadoEm,
   };
 
