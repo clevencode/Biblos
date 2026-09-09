@@ -33,6 +33,15 @@ type BibleReaderViewProps = {
   focusRef?: string | null;
   focusSeq?: number;
   onBack?: () => void;
+  /** Mode lecture de plan (YouVersion) : suivre les versets du jour. */
+  planReading?: {
+    label: string;
+    isFirst: boolean;
+    isLast: boolean;
+    onPrev: () => void;
+    onAdvance: () => void;
+    onVersesAvailable?: (verses: number[]) => void;
+  } | null;
   /** Après création d’une VERSECARD (catalogue local). */
   onFlashcardCreated?: (card: Flashcard) => void;
 };
@@ -66,6 +75,7 @@ export function BibleReaderView({
   focusRef = null,
   focusSeq = 0,
   onBack,
+  planReading = null,
   onFlashcardCreated,
 }: BibleReaderViewProps) {
   const prefs = readPrefs();
@@ -155,6 +165,12 @@ export function BibleReaderView({
     if (!highlightVerse || !highlightRef.current) return;
     highlightRef.current.scrollIntoView({ block: "center", behavior: "smooth" });
   }, [highlightVerse, passage?.id, loading]);
+
+  useEffect(() => {
+    if (!planReading?.onVersesAvailable || !passage?.verses?.length) return;
+    planReading.onVersesAvailable(passage.verses.map((item) => item.number));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [passage?.id]);
 
   async function loadChapter(
     nextBook: string,
@@ -250,6 +266,21 @@ export function BibleReaderView({
       style={{ ["--bible-font-size" as string]: `${fontSize}px` }}
       onKeyDown={(event) => {
         if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement) {
+          return;
+        }
+        if (planReading) {
+          if (event.key === "ArrowLeft") {
+            event.preventDefault();
+            if (!planReading.isFirst) planReading.onPrev();
+          } else if (event.key === "ArrowRight" || event.key === "Enter") {
+            event.preventDefault();
+            planReading.onAdvance();
+          } else if (event.key === "Escape") {
+            setSearchOpen(false);
+            setPickerOpen(false);
+            setMoreOpen(false);
+            onBack?.();
+          }
           return;
         }
         if (event.key === "ArrowLeft") {
@@ -497,39 +528,65 @@ export function BibleReaderView({
         </div>
       ) : null}
 
-      <footer className="bible-yv-dock" aria-label="Chapitre">
-        <div className="bible-yv-dock-nav">
-          <button
-            type="button"
-            className="bible-yv-dock-arrow"
-            onClick={() => goAdjacent(-1)}
-            disabled={!canPrev || loading}
-            aria-label="Chapitre précédent"
-          >
-            ‹
-          </button>
-          <button
-            type="button"
-            className="bible-yv-dock-location"
-            onClick={() => {
-              setPickerOpen((v) => !v);
-              setSearchOpen(false);
-              setMoreOpen(false);
-            }}
-            aria-expanded={pickerOpen}
-          >
-            {locationLabel}
-          </button>
-          <button
-            type="button"
-            className="bible-yv-dock-arrow"
-            onClick={() => goAdjacent(1)}
-            disabled={!canNext || loading}
-            aria-label="Chapitre suivant"
-          >
-            ›
-          </button>
-        </div>
+      <footer
+        className={`bible-yv-dock${planReading ? " is-plan" : ""}`}
+        aria-label={planReading ? "Lecture du plan" : "Chapitre"}
+      >
+        {planReading ? (
+          <div className="bible-yv-dock-nav bible-yv-dock-nav--plan">
+            <button
+              type="button"
+              className="bible-yv-dock-arrow"
+              onClick={planReading.onPrev}
+              disabled={planReading.isFirst}
+              aria-label="Verset précédent"
+            >
+              ‹
+            </button>
+            <span className="bible-yv-dock-location is-static">{planReading.label}</span>
+            <button
+              type="button"
+              className={`bible-yv-dock-advance${planReading.isLast ? " is-complete" : ""}`}
+              onClick={planReading.onAdvance}
+              aria-label={planReading.isLast ? "Conclure la lecture du jour" : "Verset suivant"}
+            >
+              {planReading.isLast ? "✓" : "›"}
+            </button>
+          </div>
+        ) : (
+          <div className="bible-yv-dock-nav">
+            <button
+              type="button"
+              className="bible-yv-dock-arrow"
+              onClick={() => goAdjacent(-1)}
+              disabled={!canPrev || loading}
+              aria-label="Chapitre précédent"
+            >
+              ‹
+            </button>
+            <button
+              type="button"
+              className="bible-yv-dock-location"
+              onClick={() => {
+                setPickerOpen((v) => !v);
+                setSearchOpen(false);
+                setMoreOpen(false);
+              }}
+              aria-expanded={pickerOpen}
+            >
+              {locationLabel}
+            </button>
+            <button
+              type="button"
+              className="bible-yv-dock-arrow"
+              onClick={() => goAdjacent(1)}
+              disabled={!canNext || loading}
+              aria-label="Chapitre suivant"
+            >
+              ›
+            </button>
+          </div>
+        )}
       </footer>
     </section>
   );

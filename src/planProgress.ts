@@ -62,6 +62,20 @@ export function markDayRead(planId: string, jour: number): PlanProgress {
   return next;
 }
 
+/** Marque le jour comme lu (sans bascule). */
+export function ensureDayCompleted(planId: string, jour: number): PlanProgress {
+  const store = readStore();
+  const current = store[planId] ?? { startDate: todayKey(), completedDays: [] };
+  if (current.completedDays.includes(jour)) return current;
+  const next = {
+    ...current,
+    completedDays: [...current.completedDays, jour].sort((a, b) => a - b),
+  };
+  store[planId] = next;
+  writeStore(store);
+  return next;
+}
+
 /** Alias : marque / démarque le jour comme lu. */
 export const toggleDayRead = markDayRead;
 

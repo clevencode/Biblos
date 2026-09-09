@@ -18,10 +18,19 @@ import { mergeCard } from "./cardOverrides";
 import { hydrateCatalogFromCache, persistCatalogCache } from "./catalogSync";
 import {
   ensurePlanStart,
+  ensureDayCompleted,
   loadPlanProgress,
   markDayRead,
   nextUnreadJour,
 } from "./planProgress";
+import {
+  createPlanReadingSession,
+  currentPlanStep,
+  expandPlanReadingWithVerses,
+  isFirstPlanStep,
+  isLastPlanStep,
+  type PlanReadingSession,
+} from "./planReading";
 import { useNotionSync } from "./useNotionSync";
 import { useNarrow, useSplitLayout } from "./layout";
 import { isPassageReminder } from "./passageReminder";
@@ -94,6 +103,7 @@ export function App() {
   const [cardFocusSeq, setCardFocusSeq] = useState(0);
   const [bibleFocusRef, setBibleFocusRef] = useState<string | null>(null);
   const [bibleFocusSeq, setBibleFocusSeq] = useState(0);
+  const [planReading, setPlanReading] = useState<PlanReadingSession | null>(null);
   const [retentionTick, setRetentionTick] = useState(0);
 
   const activePlan = useMemo(
@@ -176,13 +186,77 @@ export function App() {
     setMode("today");
   }
 
-  function openPassageInBible(reference: string) {
+  function openPassageInBible(reference: string, opts?: { keepPlanReading?: boolean }) {
     const ref = reference.trim();
     if (!ref) return;
+    if (!opts?.keepPlanReading) setPlanReading(null);
     setHome(false);
     setBibleFocusRef(ref);
     setBibleFocusSeq((value) => value + 1);
     setMode("bible");
+  }
+
+  function startPlanReading(jour: number, passage: string) {
+    if (!activePlan) return;
+    const session = createPlanReadingSession({
+      planId: activePlan.id,
+      jour,
+      passage,
+    });
+    if (!session) {
+      openPassageInBible(passage);
+      return;
+    }
+    setPlanReading(session);
+    const step = currentPlanStep(session);
+    if (step) openPassageInBible(step.focusRef, { keepPlanReading: true });
+  }
+
+  function exitPlanReading() {
+    setPlanReading(null);
+    setMode("today");
+  }
+
+  function planReadingPrev() {
+    if (!planReading || isFirstPlanStep(planReading)) return;
+    const next = { ...planReading, index: planReading.index - 1 };
+    setPlanReading(next);
+    const step = currentPlanStep(next);
+    if (step) openPassageInBible(step.focusRef, { keepPlanReading: true });
+  }
+
+  function planReadingAdvance() {
+    if (!planReading) return;
+    if (isLastPlanStep(planReading)) {
+      ensureDayCompleted(planReading.planId, planReading.jour);
+      setPlanProgressTick((value) => value + 1);
+      setPlanReading(null);
+      setMode("today");
+      return;
+    }
+    const next = { ...planReading, index: planReading.index + 1 };
+    setPlanReading(next);
+    const step = currentPlanStep(next);
+    if (step) openPassageInBible(step.focusRef, { keepPlanReading: true });
+  }
+
+  function onPlanVersesAvailable(verses: number[]) {
+    setPlanReading((current) => {
+      if (!current) return current;
+      const expanded = expandPlanReadingWithVerses(current, verses);
+      if (
+        expanded.steps.length !== current.steps.length ||
+        expanded.steps[0]?.focusRef !== current.steps[0]?.focusRef
+      ) {
+        const step = currentPlanStep(expanded);
+        if (step) {
+          queueMicrotask(() => {
+            openPassageInBible(step.focusRef, { keepPlanReading: true });
+          });
+        }
+      }
+      return expanded;
+    });
   }
 
   function openCalendarCard(item: CalendarCardItem) {
@@ -282,6 +356,7 @@ export function App() {
       onSelectGalerie={goHome}
       onMarkRead={handleMarkRead}
       onOpenPassage={openPassageInBible}
+      onStartPlanReading={startPlanReading}
     />
   );
 
@@ -405,7 +480,19 @@ export function App() {
                       initialRef="Jean 3.16"
                       focusRef={bibleFocusRef}
                       focusSeq={bibleFocusSeq}
-                      onBack={() => setMode("today")}
+                      onBack={planReading ? exitPlanReading : () => setMode("today")}
+                      planReading={
+                        planReading
+                          ? {
+                              label: currentPlanStep(planReading)?.label ?? planReading.passage,
+                              isFirst: isFirstPlanStep(planReading),
+                              isLast: isLastPlanStep(planReading),
+                              onPrev: planReadingPrev,
+                              onAdvance: planReadingAdvance,
+                              onVersesAvailable: onPlanVersesAvailable,
+                            }
+                          : null
+                      }
                       onFlashcardCreated={handleFlashcardCreated}
                     />
                   </div>

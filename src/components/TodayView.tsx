@@ -12,6 +12,8 @@ type TodayViewProps = {
   onSelectGalerie?: () => void;
   onMarkRead?: (jour: number) => void;
   onOpenPassage?: (reference: string) => void;
+  /** Démarre la lecture guidée du jour (versets → conclure). */
+  onStartPlanReading?: (jour: number, passage: string) => void;
 };
 
 type PlanScreen = "timeline" | "devotional";
@@ -49,6 +51,7 @@ export function TodayView({
   onSelectGalerie,
   onMarkRead,
   onOpenPassage,
+  onStartPlanReading,
 }: TodayViewProps) {
   const [screen, setScreen] = useState<PlanScreen>("timeline");
   const [selectedJour, setSelectedJour] = useState(planJour);
@@ -102,8 +105,19 @@ export function TodayView({
   const passageRead = selectedDay
     ? (progress?.completedDays.includes(selectedDay.jour) ?? false)
     : false;
-  const canOpenPassage = Boolean(passage && onOpenPassage && isPassageRef(passage));
+  const canOpenPassage = Boolean(
+    passage && (onStartPlanReading || onOpenPassage) && isPassageRef(passage),
+  );
   const selectedIndex = selectedDay ? days.findIndex((day) => day.jour === selectedDay.jour) + 1 : 0;
+
+  function openPassage() {
+    if (!selectedDay || !passage || !isPassageRef(passage)) return;
+    if (onStartPlanReading) {
+      onStartPlanReading(selectedDay.jour, passage);
+      return;
+    }
+    onOpenPassage?.(passage);
+  }
 
   function openDevotional() {
     setScreen("devotional");
@@ -121,7 +135,7 @@ export function TodayView({
       openDevotional();
       return;
     }
-    if (canOpenPassage) onOpenPassage?.(passage);
+    openPassage();
   }
 
   if (screen === "devotional") {
@@ -151,8 +165,22 @@ export function TodayView({
             </span>
             {devotionalDone ? "Marqué comme lu" : "Marquer comme lu"}
           </button>
-          <button type="button" className="flash-btn flash-btn--primary" onClick={() => setScreen("timeline")}>
-            Retour au plan
+          <button
+            type="button"
+            className="flash-btn flash-btn--primary"
+            onClick={() => {
+              if (!devotionalDone) {
+                setDevotionalDone(true);
+                saveDevotionalDone(plan.id, true);
+              }
+              setScreen("timeline");
+              if (selectedDay && passage && isPassageRef(passage)) {
+                if (onStartPlanReading) onStartPlanReading(selectedDay.jour, passage);
+                else onOpenPassage?.(passage);
+              }
+            }}
+          >
+            Continuer la lecture
           </button>
         </div>
       </div>
@@ -265,7 +293,7 @@ export function TodayView({
                 className={`plan-yv-task plan-yv-task--grow${passageRead ? " is-done" : ""}`}
                 disabled={!canOpenPassage}
                 onClick={() => {
-                  if (canOpenPassage) onOpenPassage?.(passage);
+                  if (canOpenPassage) openPassage();
                 }}
               >
                 <span className="plan-yv-task-label">{passage}</span>

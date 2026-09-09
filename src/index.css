@@ -5449,15 +5449,47 @@ a:focus-visible,
   cursor: default;
 }
 
-.bible-yv-dock-location {
+.bible-yv-dock-location.is-static {
+  display: block;
   min-width: 0;
   padding: 8px 4px;
   font-family: "Libre Baskerville", Georgia, serif;
   font-size: 0.98rem;
   font-weight: 400;
+  text-align: center;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.bible-yv-dock-nav--plan {
+  grid-template-columns: 36px minmax(0, 1fr) 44px;
+}
+
+.bible-yv-dock-advance {
+  width: 40px;
+  height: 40px;
+  justify-self: end;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: var(--text);
+  color: var(--bg);
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--text) 18%, transparent);
+}
+
+.bible-yv-dock-advance.is-complete {
+  background: var(--accent);
+  color: #fff;
+}
+
+.bible-yv-dock.is-plan {
+  padding: 6px 8px 6px 10px;
 }
 
 .bible-toolbar {
