@@ -24,7 +24,7 @@ export function verseCardId(frenteOrUsfm: string): string {
 
 /**
  * Crée (ou met à jour) un flashcard local depuis un verset.
- * Frente MAJUSCULES · verso texte · statut En attente · lembrete = jour de création.
+ * Frente MAJUSCULES · verso texte · statut Nouveau · lembrete = jour de création.
  */
 export function createVerseFlashcard(input: {
   frente: string;

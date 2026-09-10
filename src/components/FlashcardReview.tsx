@@ -19,14 +19,14 @@ import type { Flashcard, RetentionMark } from "../types";
 type FlashcardReviewProps = {
   session: FlashcardSession;
   emptyMessage: string;
-  /** Affiche la méta de répétition (dernière révision) — typique Inbox. */
+  /** Affiche la méta de répétition (dernière révision) — typique Timeline. */
   showRepetitionMeta?: boolean;
   /** Retour à la liste (écran séparé ; garde la session). */
   onBackToList?: () => void;
-  /** Affiche le hint Terminé sur Facile (Inbox / graduation SRS). */
+  /** Affiche le hint Terminé sur Facile (graduation SRS). */
   allowGraduation?: boolean;
   /**
-   * Numérotation explicite (ex. : position dans En retard).
+   * Numérotation explicite (ex. : position dans un jour).
    * Sinon, index de la session.
    */
   numbering?: {
@@ -374,7 +374,7 @@ export function FlashcardReview({
 
         {closed ? (
           <div className="flash-actions flash-actions--closed">
-            <p className="flash-closed-copy">Hors des rappels de l’Inbox. Tu peux reprendre l’apprentissage.</p>
+            <p className="flash-closed-copy">Hors des rappels de la Timeline. Tu peux reprendre l’apprentissage.</p>
             <button
               type="button"
               className="flash-restart-btn"
@@ -398,7 +398,7 @@ export function FlashcardReview({
             aria-label={card.status === "espera" ? "Commencer la révision" : "Répétition espacée"}
           >
             {card.status === "espera" ? (
-              <p className="flash-attente-hint muted">
+              <p className="flash-nouveau-hint muted">
                 Nouveau — choisis une option pour passer en révision.
               </p>
             ) : null}
@@ -455,9 +455,9 @@ export function FlashcardReview({
 type FlashDeckListProps = {
   session: FlashcardSession;
   onPick?: (index: number) => void;
-  /** Titre du panneau (Cartes / Inbox). */
+  /** Titre du panneau (Cartes / Timeline). */
   title?: string;
-  /** Cronograma semanal (filtre par jour). */
+  /** Bandeau hebdomadaire (filtre par jour) — Timeline. */
   showWeekSchedule?: boolean;
   /** Raccourci Lecture pour les rappels de passage. */
   onOpenPassage?: (card: Flashcard) => void;
@@ -470,6 +470,12 @@ const DECK_FILTERS: { id: DeckProgressFilter; label: string }[] = [
   { id: "revisando", label: "En révision" },
   { id: "termines", label: "Terminé" },
 ];
+
+const STATUS_LABEL: Record<Flashcard["status"], string> = {
+  espera: "Nouveau",
+  estudo: "En révision",
+  encerrado: "Terminé",
+};
 
 function cardMatchesDeckFilter(card: Flashcard, filter: DeckProgressFilter): boolean {
   if (filter === "nouveau") return card.status === "espera";
@@ -617,13 +623,16 @@ export function FlashDeckList({
     const queueIndex = queue.findIndex((card) => card.id === item.id);
     const activeItem = queueIndex === index;
     const passage = Boolean(onOpenPassage && isPassageReminder(item.frente, item.cardCategory));
+    const overdue = Boolean(item.lembrete && dateKey(item.lembrete) < today && item.status !== "encerrado");
+    const statusLabel = STATUS_LABEL[item.status];
+    const chipLabel = overdue ? "En retard" : showWeekSchedule ? statusLabel : null;
     return (
       <li key={item.id} className="flash-plan-row">
         <button
           type="button"
           className={`flash-plan-event${activeItem ? " is-active" : ""}${
             item.status === "encerrado" ? " is-closed" : ""
-          }`}
+          }${overdue ? " is-overdue" : ""}`}
           style={
             item.color
               ? {
@@ -638,11 +647,22 @@ export function FlashDeckList({
             passage
               ? `Lire le passage: ${item.frente}`
               : item.status === "encerrado"
-                ? `Voir la carte: ${item.frente}`
-                : `Réviser la carte: ${item.frente}`
+                ? `Voir la carte terminée: ${item.frente}`
+                : overdue
+                  ? `Réviser (en retard): ${item.frente}`
+                  : `Réviser la carte: ${item.frente} · ${statusLabel}`
           }
         >
           <span className="flash-plan-event-title">{item.frente}</span>
+          {chipLabel ? (
+            <span
+              className={`flash-list-status${item.status === "encerrado" ? " is-closed" : ""}${
+                overdue ? " is-overdue" : ""
+              }${item.status === "espera" ? " is-nouveau" : ""}${item.status === "estudo" ? " is-estudo" : ""}`}
+            >
+              {chipLabel}
+            </span>
+          ) : null}
         </button>
       </li>
     );
@@ -652,10 +672,13 @@ export function FlashDeckList({
     <nav
       className={`flash-list flash-list--deck${showWeekSchedule ? " flash-list--plan" : ""}`}
       ref={listRef}
-      aria-label={showWeekSchedule ? "Planning Inbox" : title}
+      aria-label={showWeekSchedule ? "Planning Timeline" : title}
     >
       <header className="flash-list-head">
         <h2 className="flash-list-heading">{title}</h2>
+        {showWeekSchedule ? (
+          <p className="flash-list-meta-line">Rappels dus, par jour</p>
+        ) : null}
         {showFilters ? (
           <div
             className="flash-deck-segments"
@@ -779,7 +802,7 @@ export function FlashDeckList({
 
             {listCards.length === 0 ? (
               <div className="flash-plan-empty-block">
-                <p className="flash-plan-empty muted">Aucune carte pour ce jour.</p>
+                <p className="flash-plan-empty muted">Rien à revoir ce jour.</p>
                 {nextBusyLabel && nextBusyDay ? (
                   <button type="button" className="flash-plan-jump" onClick={() => selectDay(nextBusyDay)}>
                     {nextBusyLabel}

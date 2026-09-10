@@ -205,7 +205,7 @@ export function applyCardMark(
   };
 }
 
-/** Classe la carte comme Terminé (hors rappels Inbox) sans passer par Facile×2. */
+/** Classe la carte comme Terminé (hors rappels Timeline) sans passer par Facile×2. */
 export function archiveCardLearning(reviewedOn = todayKey()): CardOverride {
   return {
     categoria: null,
@@ -216,7 +216,7 @@ export function archiveCardLearning(reviewedOn = todayKey()): CardOverride {
   };
 }
 
-/** Volta a En attente no dia atual, sem opção de répétition. */
+/** Remet la carte en Nouveau (jour actuel), sans option de révision. */
 export function restartCardLearning(_card?: Pick<Flashcard, "criadoEm">, reviewedOn = todayKey()): CardOverride {
   return {
     categoria: null,

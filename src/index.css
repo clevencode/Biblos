@@ -2294,7 +2294,12 @@ a:focus-visible,
   opacity: 0.78;
 }
 
+.flash-plan-event.is-overdue {
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--danger) 75%, var(--card-tint, transparent));
+}
+
 .flash-plan-event-title {
+  flex: 1 1 auto;
   font-size: 0.98rem;
   font-weight: 700;
   letter-spacing: -0.01em;
@@ -2302,6 +2307,37 @@ a:focus-visible,
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.flash-list-status {
+  flex: 0 0 auto;
+  max-width: 42%;
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  color: var(--muted);
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.flash-list-status.is-nouveau {
+  color: color-mix(in srgb, var(--accent) 70%, var(--muted));
+}
+
+.flash-list-status.is-estudo {
+  color: color-mix(in srgb, var(--text) 55%, var(--muted));
+}
+
+.flash-list-status.is-closed {
+  color: color-mix(in srgb, #027a48 80%, var(--muted));
+  font-weight: 600;
+}
+
+.flash-list-status.is-overdue {
+  color: var(--danger);
+  font-weight: 700;
 }
 
 .flash-list-pane .flash-list-scroller {
@@ -3632,7 +3668,7 @@ a:focus-visible,
   align-items: stretch;
 }
 
-.flash-attente-hint {
+.flash-nouveau-hint {
   flex: 1 1 100%;
   margin: 0 0 2px;
   text-align: center;
@@ -3750,11 +3786,6 @@ a:focus-visible,
 .flash-restart-btn:disabled {
   opacity: 0.55;
   cursor: default;
-}
-
-.flash-list-status.is-closed {
-  color: color-mix(in srgb, #027a48 80%, var(--muted));
-  font-weight: 600;
 }
 
 .flash-mark {

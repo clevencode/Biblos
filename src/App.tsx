@@ -40,7 +40,7 @@ const modes: { id: CenterMode; label: string }[] = [
   { id: "today", label: "Galerie" },
   { id: "bible", label: "Lecture" },
   { id: "cards", label: "Cartes" },
-  { id: "inbox", label: "Inbox" },
+  { id: "inbox", label: "Timeline" },
 ];
 
 type UiSession = {
@@ -116,6 +116,10 @@ export function App() {
     [scopedCardIds, notes, retentionTick],
   );
   const inbox = useMemo(() => buildInbox(notes, scopedCardIds), [scopedCardIds, notes, retentionTick]);
+  const activeCardsCount = useMemo(
+    () => cards.filter((card) => card.status !== "encerrado").length,
+    [cards],
+  );
 
   const planProgress = useMemo(() => {
     if (!activePlan) return null;
@@ -390,7 +394,13 @@ export function App() {
                       className={on ? "is-on" : ""}
                       aria-selected={on}
                       aria-controls={`panel-${item.id}`}
-                      aria-label={item.label}
+                      aria-label={
+                        item.id === "cards" && activeCardsCount
+                          ? `${item.label}, ${activeCardsCount} carte${activeCardsCount === 1 ? "" : "s"} active${activeCardsCount === 1 ? "" : "s"}`
+                          : item.id === "inbox" && inbox.length
+                            ? `${item.label}, ${inbox.length} à revoir`
+                            : item.label
+                      }
                       title={item.label}
                       tabIndex={on ? 0 : -1}
                       onClick={() => {
@@ -401,11 +411,15 @@ export function App() {
                     >
                       <ModeTabIcon name={item.id} active={on} />
                       <span className="mode-tab-label">{item.label}</span>
-                      {item.id === "cards" && cards.length ? (
-                        <span className="mode-tab-badge">{cards.length}</span>
+                      {item.id === "cards" && activeCardsCount ? (
+                        <span className="mode-tab-badge" aria-hidden="true">
+                          {activeCardsCount}
+                        </span>
                       ) : null}
                       {item.id === "inbox" && inbox.length ? (
-                        <span className="mode-tab-badge">{inbox.length}</span>
+                        <span className="mode-tab-badge" aria-hidden="true">
+                          {inbox.length}
+                        </span>
                       ) : null}
                     </button>
                   );

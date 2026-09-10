@@ -32,8 +32,8 @@ export function InboxView({ items, active, splitLayout = false, onOpenPassage }:
   if (!session.total) {
     return (
       <div className="inbox-view inbox-empty">
-        <p className="inbox-empty-title">Inbox vazia</p>
-        <p className="muted">Não há cartões com lembrete vencido.</p>
+        <p className="inbox-empty-title">Timeline vide</p>
+        <p className="muted">Aucun rappel à revoir pour le moment.</p>
       </div>
     );
   }
@@ -52,12 +52,12 @@ export function InboxView({ items, active, splitLayout = false, onOpenPassage }:
           session={session}
           showRepetitionMeta
           allowGraduation={false}
-          emptyMessage="Inbox vazia — não há cartões com lembrete vencido."
+          emptyMessage="Timeline vide — aucun rappel à revoir."
         />
         <div className="flash-list-pane flash-list-pane--side">
           <FlashDeckList
             session={session}
-            title="Inbox"
+            title="Timeline"
             showWeekSchedule
             onPick={(index) => session.goTo(index)}
             onOpenPassage={openPassage}
@@ -72,7 +72,7 @@ export function InboxView({ items, active, splitLayout = false, onOpenPassage }:
       <div className="flash-list-pane">
         <FlashDeckList
           session={session}
-          title="Inbox"
+          title="Timeline"
           showWeekSchedule
           onOpenPassage={openPassage}
           onPick={(index) => {
@@ -89,7 +89,7 @@ export function InboxView({ items, active, splitLayout = false, onOpenPassage }:
       session={session}
       showRepetitionMeta
       allowGraduation={false}
-      emptyMessage="Inbox vazia — não há cartões com lembrete vencido."
+      emptyMessage="Timeline vide — aucun rappel à revoir."
       onBackToList={() => setReviewing(false)}
     />
   );

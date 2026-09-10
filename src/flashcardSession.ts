@@ -408,7 +408,9 @@ export function useFlashcardSession(
   }, [focusSeq, selectedId]);
 
   useEffect(() => {
-    const activeItem = listRef.current?.querySelector<HTMLElement>(".flash-list-item.is-active, .inbox-item.is-active");
+    const activeItem = listRef.current?.querySelector<HTMLElement>(
+      ".flash-plan-event.is-active, .flash-list-item.is-active, .inbox-item.is-active",
+    );
     activeItem?.scrollIntoView({ block: "nearest" });
   }, [index]);
 
@@ -417,7 +419,12 @@ export function useFlashcardSession(
     function onKey(event: KeyboardEvent) {
       const target = event.target;
       if (!(target instanceof HTMLElement)) return;
-      if (target.closest("input, textarea, a, .flash-mark, .flash-list, .inbox-scroller")) return;
+      if (
+        target.closest(
+          "input, textarea, a, .flash-mark, .flash-list, .flash-plan-scroller, .flash-list-scroller, .inbox-scroller",
+        )
+      )
+        return;
       // Setas: permitem navegar mesmo com foco no viewport / botões de nav.
       if (event.key === "ArrowLeft") {
         event.preventDefault();

@@ -1,12 +1,12 @@
 import {
   BookOpenIcon as BookOutline,
-  InboxIcon as InboxOutline,
+  QueueListIcon as TimelineOutline,
   RectangleStackIcon as StackOutline,
   Squares2X2Icon as SquaresOutline,
 } from "@heroicons/react/24/outline";
 import {
   BookOpenIcon as BookSolid,
-  InboxIcon as InboxSolid,
+  QueueListIcon as TimelineSolid,
   RectangleStackIcon as StackSolid,
   Squares2X2Icon as SquaresSolid,
 } from "@heroicons/react/24/solid";
@@ -29,7 +29,7 @@ const ICONS: Record<
   today: { Outline: SquaresOutline, Solid: SquaresSolid },
   bible: { Outline: BookOutline, Solid: BookSolid },
   cards: { Outline: StackOutline, Solid: StackSolid },
-  inbox: { Outline: InboxOutline, Solid: InboxSolid },
+  inbox: { Outline: TimelineOutline, Solid: TimelineSolid },
 };
 
 export function ModeTabIcon({ name, active = false }: ModeTabIconProps) {
