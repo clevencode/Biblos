@@ -496,8 +496,6 @@ export function FlashDeckList({
 }: FlashDeckListProps) {
   const { queue, index, listRef, goTo, total } = session;
   const [filter, setFilter] = useState<DeckProgressFilter>("nouveau");
-  const [filterOpen, setFilterOpen] = useState(false);
-  const filterRef = useRef<HTMLDivElement | null>(null);
   const swipeOrigin = useRef<{ x: number; y: number } | null>(null);
   const today = todayKey();
   const [weekAnchor, setWeekAnchor] = useState(today);
@@ -506,6 +504,11 @@ export function FlashDeckList({
   const nouveauCount = queue.filter((card) => cardMatchesDeckFilter(card, "nouveau")).length;
   const revisandoCount = queue.filter((card) => cardMatchesDeckFilter(card, "revisando")).length;
   const terminesCount = queue.filter((card) => cardMatchesDeckFilter(card, "termines")).length;
+  const filterCounts: Record<DeckProgressFilter, number> = {
+    nouveau: nouveauCount,
+    revisando: revisandoCount,
+    termines: terminesCount,
+  };
   const showFilters = !showWeekSchedule;
   const visible = showWeekSchedule
     ? queue.filter((card) => card.status !== "encerrado")
@@ -533,41 +536,9 @@ export function FlashDeckList({
     const count = dayCounts.get(nextBusyDay) ?? 0;
     return `Aller au ${parts.weekday} ${parts.dayNum} · ${count} carte${count === 1 ? "" : "s"}`;
   }, [nextBusyDay, selectedDay, dayCounts]);
-  const activeFilter = DECK_FILTERS.find((item) => item.id === filter) ?? DECK_FILTERS[0]!;
   const selectedRelative = relativeDayLabel(selectedDay, today);
   const selectedOverdue = selectedDay < today && dayCards.length > 0;
   const selectedCount = dayCounts.get(selectedDay) ?? 0;
-
-  useEffect(() => {
-    if (!filterOpen) return;
-    function onPointerDown(event: PointerEvent) {
-      if (filterRef.current?.contains(event.target as Node)) return;
-      setFilterOpen(false);
-    }
-    function onKey(event: KeyboardEvent) {
-      if (event.key === "Escape") setFilterOpen(false);
-    }
-    window.addEventListener("pointerdown", onPointerDown);
-    window.addEventListener("keydown", onKey);
-    return () => {
-      window.removeEventListener("pointerdown", onPointerDown);
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [filterOpen]);
-
-  useEffect(() => {
-    if (!showFilters) return;
-    const counts: Record<DeckProgressFilter, number> = {
-      nouveau: nouveauCount,
-      revisando: revisandoCount,
-      termines: terminesCount,
-    };
-    if (counts[filter] > 0) return;
-    const fallback = (DECK_FILTERS.map((item) => item.id) as DeckProgressFilter[]).find(
-      (id) => counts[id] > 0,
-    );
-    if (fallback) setFilter(fallback);
-  }, [showFilters, filter, nouveauCount, revisandoCount, terminesCount]);
 
   function pickCard(card: Flashcard) {
     if (onOpenPassage && isPassageReminder(card.frente, card.cardCategory)) {
@@ -686,50 +657,33 @@ export function FlashDeckList({
       <header className="flash-list-head">
         <h2 className="flash-list-heading">{title}</h2>
         {showFilters ? (
-          <div className={`flash-deck-filter${filterOpen ? " is-open" : ""}`} ref={filterRef}>
-            <button
-              type="button"
-              className="flash-deck-filter-trigger"
-              aria-haspopup="listbox"
-              aria-expanded={filterOpen}
-              aria-label="Filtrer par progression"
-              onClick={() => setFilterOpen((open) => !open)}
-            >
-              <span className="flash-deck-filter-value">
-                {activeFilter.label}
-                <span className="flash-deck-filter-caret" aria-hidden="true" />
-              </span>
-            </button>
-            {filterOpen ? (
-              <ul className="flash-deck-filter-menu" role="listbox" aria-label="Progression">
-                {DECK_FILTERS.map((item) => {
-                  const count =
-                    item.id === "nouveau"
-                      ? nouveauCount
-                      : item.id === "termines"
-                        ? terminesCount
-                        : revisandoCount;
-                  const on = item.id === filter;
-                  return (
-                    <li key={item.id} role="presentation">
-                      <button
-                        type="button"
-                        role="option"
-                        aria-selected={on}
-                        className={`flash-deck-filter-option${on ? " is-on" : ""}`}
-                        onClick={() => {
-                          setFilter(item.id);
-                          setFilterOpen(false);
-                        }}
-                      >
-                        <span>{item.label}</span>
-                        <span className="flash-deck-filter-option-count">{count}</span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            ) : null}
+          <div
+            className="flash-deck-segments"
+            role="group"
+            aria-label="Filtrer les cartes par progression"
+          >
+            {DECK_FILTERS.map((item) => {
+              const count = filterCounts[item.id];
+              const on = item.id === filter;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={`flash-deck-segment${on ? " is-on" : ""}${count === 0 ? " is-empty" : ""}`}
+                  aria-pressed={on}
+                  onClick={() => setFilter(item.id)}
+                >
+                  <span className="flash-deck-segment-label">{item.label}</span>
+                  <span className="flash-deck-segment-count" aria-hidden="true">
+                    {count}
+                  </span>
+                  <span className="sr-only">
+                    {`, ${count} carte${count === 1 ? "" : "s"}`}
+                    {on ? ", sélectionné" : ""}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         ) : null}
         {!total ? <p className="flash-list-meta-line">Aucune carte</p> : null}
@@ -844,13 +798,15 @@ export function FlashDeckList({
             ) : null}
           </section>
         ) : visible.length === 0 ? (
-          <p className="flash-plan-empty muted">
-            {filter === "nouveau"
-              ? "Aucune nouvelle carte."
-              : filter === "termines"
-                ? "Aucune carte terminée."
-                : "Aucune carte en révision."}
-          </p>
+          <div className="flash-plan-empty-block">
+            <p className="flash-plan-empty muted">
+              {filter === "nouveau"
+                ? "Aucune nouvelle carte."
+                : filter === "termines"
+                  ? "Aucune carte terminée."
+                  : "Aucune carte en révision."}
+            </p>
+          </div>
         ) : (
           <ul className="flash-plan-events flash-plan-events--cards">{visible.map(renderCardButton)}</ul>
         )}

@@ -1916,8 +1916,8 @@ a:focus-visible,
 .flash-list-head {
   flex-shrink: 0;
   display: grid;
-  gap: 4px;
-  margin: 0 0 6px;
+  gap: 10px;
+  margin: 0 0 10px;
 }
 
 .flash-list-heading {
@@ -1933,95 +1933,92 @@ a:focus-visible,
   font-size: 0.88rem;
 }
 
-.flash-deck-filter {
-  position: relative;
-  width: fit-content;
-  max-width: 100%;
-}
-
-.flash-deck-filter-trigger {
+.flash-deck-segments {
   display: grid;
-  gap: 0;
-  max-width: 100%;
-  margin: 0;
-  padding: 2px 0;
-  border: 0;
-  background: transparent;
-  color: var(--text);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.flash-deck-filter-value {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.92rem;
-  font-weight: 650;
-  letter-spacing: -0.01em;
-}
-
-.flash-deck-filter-caret {
-  width: 0.45em;
-  height: 0.45em;
-  margin-top: -0.12em;
-  border-right: 1.5px solid var(--muted);
-  border-bottom: 1.5px solid var(--muted);
-  transform: rotate(45deg);
-  transition: transform 0.16s ease;
-}
-
-.flash-deck-filter.is-open .flash-deck-filter-caret {
-  margin-top: 0.12em;
-  transform: rotate(225deg);
-}
-
-.flash-deck-filter-menu {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  z-index: 6;
-  min-width: min(100vw - 48px, 16rem);
-  margin: 0;
-  padding: 6px;
-  list-style: none;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  width: 100%;
+  max-width: 28rem;
+  padding: 4px;
   border: 1px solid var(--line);
   border-radius: 12px;
-  background: var(--panel);
-  box-shadow: 0 10px 28px color-mix(in srgb, var(--text) 12%, transparent);
-  display: grid;
-  gap: 2px;
+  background: color-mix(in srgb, var(--text) 4%, var(--panel));
 }
 
-.flash-deck-filter-option {
-  width: 100%;
-  display: flex;
+.flash-deck-segment {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 10px 12px;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  min-height: 44px;
+  margin: 0;
+  padding: 8px 10px;
   border: 0;
-  border-radius: 8px;
+  border-radius: 9px;
   background: transparent;
-  color: var(--text);
-  font: inherit;
-  font-size: 0.9rem;
-  font-weight: 600;
-  text-align: left;
-  cursor: pointer;
-}
-
-.flash-deck-filter-option:hover,
-.flash-deck-filter-option.is-on {
-  background: var(--hover);
-}
-
-.flash-deck-filter-option-count {
   color: var(--muted);
-  font-size: 0.8rem;
-  font-weight: 600;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  cursor: pointer;
+  transition:
+    background 0.14s ease,
+    color 0.14s ease,
+    box-shadow 0.14s ease;
+}
+
+.flash-deck-segment:hover {
+  color: var(--text);
+  background: color-mix(in srgb, var(--text) 5%, transparent);
+}
+
+.flash-deck-segment:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.flash-deck-segment.is-on {
+  background: var(--panel);
+  color: var(--text);
+  box-shadow:
+    0 1px 2px color-mix(in srgb, var(--text) 10%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+.flash-deck-segment.is-empty:not(.is-on) {
+  opacity: 0.72;
+}
+
+.flash-deck-segment-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.flash-deck-segment-count {
+  flex-shrink: 0;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 5px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+  color: inherit;
+  font-size: 0.68rem;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.flash-deck-segment.is-on .flash-deck-segment-count {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent);
 }
 
 .flash-list--plan {
