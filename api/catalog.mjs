@@ -129,7 +129,7 @@ export function parsePlanDays(raw) {
     let texte = texteMatch ? texteMatch[1].trim() : "";
     const defi = defiMatch ? defiMatch[1].trim() : "";
     if (!texte && title) texte = title;
-    const passage = extractPassageRefCatalog(`${texte} ${defi} ${title}`);
+    const passage = joinPassageRefsCatalog(`${texte} ${defi} ${title}`);
     if (!passage) continue;
     days.push({ jour, texte: passage, defi: "" });
   }
@@ -140,7 +140,7 @@ export function parsePlanDays(raw) {
   while ((match = compactRe.exec(text))) {
     const jour = Number(match[1]);
     if (jour < 1 || jour > 40) continue;
-    const passage = extractPassageRefCatalog(match[2] || "");
+    const passage = joinPassageRefsCatalog(match[2] || "");
     if (!passage) continue;
     days.push({ jour, texte: passage, defi: "" });
   }
@@ -151,7 +151,7 @@ export function parsePlanDays(raw) {
   while ((match = tableRe.exec(text))) {
     const jour = Number(match[1]);
     if (jour < 1 || jour > 40) continue;
-    const passage = extractPassageRefCatalog(match[2] || "");
+    const passage = joinPassageRefsCatalog(match[2] || "");
     if (!passage) continue;
     days.push({ jour, texte: passage, defi: "" });
   }
@@ -164,6 +164,36 @@ function uniqueDays(days) {
     if (!byJour.has(day.jour)) byJour.set(day.jour, day);
   }
   return [...byJour.values()].sort((a, b) => a.jour - b.jour);
+}
+
+const PASSAGE_SPLIT_CATALOG = /\s*(?:[;•·|]|\n|\/)\s*/;
+
+function joinPassageRefsCatalog(raw) {
+  const refs = extractPassageRefsCatalog(raw);
+  return refs.length ? refs.join(" ; ") : null;
+}
+
+function extractPassageRefsCatalog(raw) {
+  const cleaned = String(raw || "")
+    .replace(/\*\*/g, " ")
+    .replace(/<[^>]+>/g, " ")
+    .trim();
+  if (!cleaned) return [];
+  const chunks = cleaned
+    .split(PASSAGE_SPLIT_CATALOG)
+    .map((part) => part.replace(/\s+/g, " ").trim())
+    .filter(Boolean);
+  const out = [];
+  const seen = new Set();
+  for (const chunk of chunks.length ? chunks : [cleaned.replace(/\s+/g, " ").trim()]) {
+    const one = extractPassageRefCatalog(chunk);
+    if (!one) continue;
+    const key = one.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(one);
+  }
+  return out;
 }
 
 /** Référence biblique seulement — ignore Objectif / Jour N / longs textes. */

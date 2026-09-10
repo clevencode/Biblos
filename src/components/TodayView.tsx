@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { isPassageRef } from "../youversion/usfm";
-import { sanitizePlanDays } from "../plan";
+import { extractPassageRef, extractPassageRefs, sanitizePlanDays } from "../plan";
 import { isPlanComplete, type PlanProgress } from "../planProgress";
 import type { ReadingPlan } from "../types";
 import { PlanDescription } from "./PlanDescription";
@@ -103,21 +103,24 @@ export function TodayView({
   const planTitle = plan.theme?.trim() || plan.nome;
   const selectedDay = days.find((day) => day.jour === selectedJour) ?? days[0] ?? null;
   const passage = selectedDay?.texte ?? "";
+  const passageRefs = extractPassageRefs(passage);
+  const passageLabel = passageRefs.length > 1 ? passageRefs.join(" · ") : (passageRefs[0] ?? passage);
+  const firstPassage = passageRefs[0] ?? extractPassageRef(passage);
   const passageRead = selectedDay
     ? (progress?.completedDays.includes(selectedDay.jour) ?? false)
     : false;
   const canOpenPassage = Boolean(
-    passage && (onStartPlanReading || onOpenPassage) && isPassageRef(passage),
+    firstPassage && (onStartPlanReading || onOpenPassage) && isPassageRef(firstPassage),
   );
   const selectedIndex = selectedDay ? days.findIndex((day) => day.jour === selectedDay.jour) + 1 : 0;
 
   function openPassage() {
-    if (!selectedDay || !passage || !isPassageRef(passage)) return;
+    if (!selectedDay || !firstPassage || !isPassageRef(firstPassage)) return;
     if (onStartPlanReading) {
-      onStartPlanReading(selectedDay.jour, passage);
+      onStartPlanReading(selectedDay.jour, passage || firstPassage);
       return;
     }
-    onOpenPassage?.(passage);
+    onOpenPassage?.(firstPassage);
   }
 
   function openDevotional() {
@@ -317,7 +320,7 @@ export function TodayView({
                   if (canOpenPassage) openPassage();
                 }}
               >
-                <span className="plan-yv-task-label">{passage}</span>
+                <span className="plan-yv-task-label">{passageLabel}</span>
                 <span className="plan-yv-task-chevron" aria-hidden="true">
                   ›
                 </span>

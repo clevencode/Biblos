@@ -4,6 +4,7 @@ import { isPassageRef, toUsfm } from "./youversion/usfm";
 /**
  * Parse le corps / propriété Plan en jours (Texte + Défi).
  * Ne garde que les jours avec une vraie référence de verset.
+ * Plusieurs chapitres le même jour : « Ésaïe 6 ; Ésaïe 7 ; Ésaïe 8 ».
  */
 export function parsePlanDays(raw: string): PlanDay[] {
   const text = String(raw || "")
@@ -22,7 +23,7 @@ export function parsePlanDays(raw: string): PlanDay[] {
     let texte = texteMatch ? texteMatch[1].trim() : "";
     const defi = defiMatch ? defiMatch[1].trim() : "";
     if (!texte && title) texte = title;
-    const passage = extractPassageRef(`${texte} ${defi} ${title}`);
+    const passage = joinPassageRefs(`${texte} ${defi} ${title}`);
     if (!passage) continue;
     days.push({ jour, texte: passage, defi: "" });
   }
@@ -34,7 +35,7 @@ export function parsePlanDays(raw: string): PlanDay[] {
   while ((match = compactRe.exec(text))) {
     const jour = Number(match[1]);
     if (jour < 1 || jour > 40) continue;
-    const passage = extractPassageRef(match[2] || "");
+    const passage = joinPassageRefs(match[2] || "");
     if (!passage) continue;
     days.push({ jour, texte: passage, defi: "" });
   }
@@ -46,7 +47,7 @@ export function parsePlanDays(raw: string): PlanDay[] {
   while ((match = tableRe.exec(text))) {
     const jour = Number(match[1]);
     if (jour < 1 || jour > 40) continue;
-    const passage = extractPassageRef(match[2] || "");
+    const passage = joinPassageRefs(match[2] || "");
     if (!passage) continue;
     days.push({ jour, texte: passage, defi: "" });
   }
@@ -61,20 +62,55 @@ function uniqueByJour(days: PlanDay[]): PlanDay[] {
   return [...byJour.values()].sort((a, b) => a.jour - b.jour);
 }
 
-/** Ne garde que les jours avec une référence biblique valide. */
+/** Ne garde que les jours avec une référence biblique valide (multi-chapitres OK). */
 export function sanitizePlanDays(days: PlanDay[] | null | undefined): PlanDay[] {
   if (!days?.length) return [];
   const out: PlanDay[] = [];
   for (const day of days) {
-    const passage = extractPassageRef(day.texte) || extractPassageRef(day.defi);
+    const passage = joinPassageRefs(day.texte) || joinPassageRefs(day.defi);
     if (!passage) continue;
     out.push({ jour: day.jour, texte: passage, defi: "" });
   }
   return uniqueByJour(out);
 }
 
+const PASSAGE_SPLIT = /\s*(?:[;•·|]|\n|\/)\s*/;
+
+/** Toutes les références bibliques d’une ligne (Ésaïe 6 ; Ésaïe 7). */
+export function extractPassageRefs(raw: string): string[] {
+  const cleaned = String(raw || "")
+    .replace(/\*\*/g, " ")
+    .replace(/<[^>]+>/g, " ")
+    .trim();
+  if (!cleaned) return [];
+  const chunks = cleaned
+    .split(PASSAGE_SPLIT)
+    .map((part) => part.replace(/\s+/g, " ").trim())
+    .filter(Boolean);
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const chunk of chunks.length ? chunks : [cleaned.replace(/\s+/g, " ").trim()]) {
+    const one = extractOnePassage(chunk);
+    if (!one) continue;
+    const key = one.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(one);
+  }
+  return out;
+}
+
+function joinPassageRefs(raw: string): string | null {
+  const refs = extractPassageRefs(raw);
+  return refs.length ? refs.join(" ; ") : null;
+}
+
 /** Extrait une référence biblique courte (Ésaïe 6:1-8, Jean 3.16, …). */
 export function extractPassageRef(raw: string): string | null {
+  return extractPassageRefs(raw)[0] ?? null;
+}
+
+function extractOnePassage(raw: string): string | null {
   const cleaned = String(raw || "")
     .replace(/\*\*/g, " ")
     .replace(/<[^>]+>/g, " ")

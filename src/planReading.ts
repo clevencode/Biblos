@@ -112,7 +112,7 @@ export function createPlanReadingSession(input: {
     const raw = String(`${day.texte || ""}\n${day.defi || ""}`).trim();
     if (!raw) continue;
     const chunks = raw
-      .split(/\s*(?:;|\||\/|\n|,(?=\s*(?:[123]\s+)?[A-Za-zÀ-ÿ]))\s*/)
+      .split(/\s*(?:;|\||\/|•|·|\n|,(?=\s*(?:[123]\s+)?[A-Za-zÀ-ÿ]))\s*/)
       .map((part) => part.trim())
       .filter(Boolean);
     const refs = chunks.length ? chunks : [raw];
