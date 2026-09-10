@@ -70,3 +70,35 @@ export function buildMonthGrid(year: number, month: number): (string | null)[] {
   while (cells.length % 7 !== 0) cells.push(null);
   return cells;
 }
+
+/** Dimanche de la semaine contenant `day` (semaine dim → sam). */
+export function startOfWeekSunday(day: string): string {
+  const date = new Date(`${day}T00:00:00`);
+  date.setDate(date.getDate() - date.getDay());
+  return dateKey(date);
+}
+
+/** Sept jours dim → sam pour la semaine de `anchor`. */
+export function weekDaysSunday(anchor: string): string[] {
+  const start = startOfWeekSunday(anchor);
+  return Array.from({ length: 7 }, (_, i) => shiftDay(start, i));
+}
+
+/** Libellé court de semaine, ex. « 7 – 13 sept. ». */
+export function weekRangeLabel(anchor: string): string {
+  const days = weekDaysSunday(anchor);
+  const start = days[0]!;
+  const end = days[6]!;
+  const startDate = new Date(`${start}T00:00:00`);
+  const endDate = new Date(`${end}T00:00:00`);
+  const sameMonth = startDate.getMonth() === endDate.getMonth();
+  const startFmt = new Intl.DateTimeFormat("fr-FR", {
+    day: "numeric",
+    month: sameMonth ? undefined : "short",
+  }).format(startDate);
+  const endFmt = new Intl.DateTimeFormat("fr-FR", {
+    day: "numeric",
+    month: "short",
+  }).format(endDate);
+  return `${startFmt} – ${endFmt}`;
+}

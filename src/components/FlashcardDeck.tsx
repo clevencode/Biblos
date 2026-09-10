@@ -63,7 +63,7 @@ export function FlashcardDeck({
           onRemoveCard={onRemoveCard}
         />
         <div className="flash-list-pane flash-list-pane--side">
-          <FlashDeckList session={session} onPick={(index) => session.goTo(index)} onRemoveCard={onRemoveCard} />
+          <FlashDeckList session={session} onPick={(index) => session.goTo(index)} />
         </div>
       </div>
     );
@@ -78,7 +78,6 @@ export function FlashcardDeck({
             session.goTo(index);
             setReviewing(true);
           }}
-          onRemoveCard={onRemoveCard}
         />
       </div>
     );

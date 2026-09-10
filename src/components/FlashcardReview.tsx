@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { dateKey, formatDay, relativeDayLabel, scheduleDayParts, todayKey } from "../calendar";
+import { dateKey, formatDay, relativeDayLabel, scheduleDayParts, shiftDay, todayKey, weekDaysSunday, weekRangeLabel } from "../calendar";
 import { loadOverride } from "../flashcardSync";
 import {
   FACIL_GRADUATION,
@@ -433,7 +433,6 @@ export function FlashcardReview({
 type FlashDeckListProps = {
   session: FlashcardSession;
   onPick?: (index: number) => void;
-  onRemoveCard?: (card: Flashcard) => void;
 };
 
 type DeckProgressFilter = "revisando" | "concluidos";
@@ -448,47 +447,38 @@ function cardMatchesDeckFilter(card: Flashcard, filter: DeckProgressFilter): boo
   return card.status !== "encerrado";
 }
 
-function groupCardsBySchedule(cards: Flashcard[]): { day: string | null; items: Flashcard[] }[] {
-  const byDay = new Map<string, Flashcard[]>();
-  const nodate: Flashcard[] = [];
+function countsByDay(cards: Flashcard[]): Map<string, number> {
+  const counts = new Map<string, number>();
   for (const card of cards) {
-    const day = card.lembrete ? dateKey(card.lembrete) : null;
-    if (!day) {
-      nodate.push(card);
-      continue;
-    }
-    const bucket = byDay.get(day) ?? [];
-    bucket.push(card);
-    byDay.set(day, bucket);
+    if (!card.lembrete) continue;
+    const day = dateKey(card.lembrete);
+    counts.set(day, (counts.get(day) ?? 0) + 1);
   }
-  const groups = [...byDay.keys()]
-    .sort((a, b) => a.localeCompare(b))
-    .map((day) => ({ day, items: byDay.get(day)! }));
-  if (nodate.length) groups.push({ day: null, items: nodate });
-  return groups;
+  return counts;
 }
 
-export function FlashDeckList({ session, onPick, onRemoveCard }: FlashDeckListProps) {
+export function FlashDeckList({ session, onPick }: FlashDeckListProps) {
   const { queue, index, listRef, goTo, total } = session;
   const [filter, setFilter] = useState<DeckProgressFilter>("revisando");
   const [filterOpen, setFilterOpen] = useState(false);
   const filterRef = useRef<HTMLDivElement | null>(null);
   const today = todayKey();
+  const [weekAnchor, setWeekAnchor] = useState(today);
+  const [selectedDay, setSelectedDay] = useState(today);
 
   const revisandoCount = queue.filter((card) => cardMatchesDeckFilter(card, "revisando")).length;
   const concluidosCount = queue.filter((card) => cardMatchesDeckFilter(card, "concluidos")).length;
   const visible = queue.filter((card) => cardMatchesDeckFilter(card, filter));
-  const scheduleGroups = useMemo(() => groupCardsBySchedule(visible), [visible]);
+  const dayCounts = useMemo(() => countsByDay(visible), [visible]);
+  const weekDays = useMemo(() => weekDaysSunday(weekAnchor), [weekAnchor]);
+  const dayCards = useMemo(
+    () => visible.filter((card) => card.lembrete && dateKey(card.lembrete) === selectedDay),
+    [visible, selectedDay],
+  );
+  const nodateCards = useMemo(() => visible.filter((card) => !card.lembrete), [visible]);
   const activeFilter = DECK_FILTERS.find((item) => item.id === filter) ?? DECK_FILTERS[0]!;
-
-  const countLabel =
-    visible.length === 0
-      ? filter === "concluidos"
-        ? "Aucune carte terminée"
-        : "Aucune carte en révision"
-      : filter === "concluidos"
-        ? `${visible.length} carte${visible.length === 1 ? "" : "s"} terminée${visible.length === 1 ? "" : "s"}`
-        : `${visible.length} carte${visible.length === 1 ? "" : "s"} en révision`;
+  const selectedRelative = relativeDayLabel(selectedDay, today);
+  const selectedOverdue = selectedDay < today && filter === "revisando";
 
   useEffect(() => {
     if (!filterOpen) return;
@@ -522,6 +512,22 @@ export function FlashDeckList({ session, onPick, onRemoveCard }: FlashDeckListPr
     else goTo(queueIndex);
   }
 
+  function selectDay(day: string) {
+    setSelectedDay(day);
+    setWeekAnchor(day);
+  }
+
+  function shiftWeek(delta: number) {
+    const next = shiftDay(weekAnchor, delta * 7);
+    setWeekAnchor(next);
+    setSelectedDay(shiftDay(selectedDay, delta * 7));
+  }
+
+  function goThisWeek() {
+    setWeekAnchor(today);
+    setSelectedDay(today);
+  }
+
   return (
     <nav className="flash-list flash-list--deck flash-list--plan" ref={listRef} aria-label="Planning des cartes">
       <header className="flash-list-head">
@@ -539,7 +545,6 @@ export function FlashDeckList({ session, onPick, onRemoveCard }: FlashDeckListPr
               {activeFilter.label}
               <span className="flash-deck-filter-caret" aria-hidden="true" />
             </span>
-            <span className="flash-deck-filter-count">{countLabel}</span>
           </button>
           {filterOpen ? (
             <ul className="flash-deck-filter-menu" role="listbox" aria-label="Progression">
@@ -569,100 +574,148 @@ export function FlashDeckList({ session, onPick, onRemoveCard }: FlashDeckListPr
         </div>
         {!total ? <p className="flash-list-meta-line">Aucune carte</p> : null}
       </header>
+
+      <div className="flash-week-nav" aria-label="Semaine">
+        <button type="button" className="flash-btn" onClick={() => shiftWeek(-1)} aria-label="Semaine précédente">
+          ←
+        </button>
+        <strong className="flash-week-label">{weekRangeLabel(weekAnchor)}</strong>
+        <button type="button" className="flash-btn" onClick={() => shiftWeek(1)} aria-label="Semaine suivante">
+          →
+        </button>
+      </div>
+
+      <div className="flash-week" role="listbox" aria-label="Cronograma semanal">
+        {weekDays.map((day) => {
+          const parts = scheduleDayParts(day);
+          const count = dayCounts.get(day) ?? 0;
+          const isToday = day === today;
+          const selected = day === selectedDay;
+          const overdue = day < today && count > 0 && filter === "revisando";
+          const countLabel = count === 0 ? "Aucune carte" : `${count} carte${count === 1 ? "" : "s"}`;
+          return (
+            <button
+              key={day}
+              type="button"
+              role="option"
+              aria-selected={selected}
+              className={[
+                "flash-week-day",
+                isToday ? "is-today" : "",
+                selected ? "is-selected" : "",
+                count ? "has-cards" : "is-empty",
+                overdue ? "is-overdue" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              onClick={() => selectDay(day)}
+              aria-label={`${formatDay(day)}, ${countLabel}`}
+            >
+              <span className="flash-week-dow">{parts.weekday}</span>
+              <span className={`flash-week-num${isToday ? " is-today" : ""}`}>{parts.dayNum}</span>
+              <span className={`flash-week-count${count ? "" : " is-empty"}${overdue ? " is-overdue" : ""}`}>
+                {count ? (count > 9 ? "9+" : count) : "·"}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
       <div className="flash-plan-scroller">
-        {scheduleGroups.length === 0 ? (
-          <p className="flash-plan-empty muted">
-            {filter === "concluidos" ? "Aucune carte terminée." : "Aucune carte en révision."}
+        <section
+          className={`flash-day-cards${selectedOverdue ? " is-overdue" : ""}`}
+          aria-label={
+            selectedRelative
+              ? `${selectedRelative} · ${formatDay(selectedDay)}`
+              : formatDay(selectedDay)
+          }
+        >
+          <p className="flash-day-cards-head">
+            <time dateTime={selectedDay}>
+              {selectedRelative ? `${selectedRelative} · ${formatDay(selectedDay)}` : formatDay(selectedDay)}
+            </time>
+            {selectedDay !== today ? (
+              <button type="button" className="calendar-today" onClick={goThisWeek}>
+                Aujourd’hui
+              </button>
+            ) : null}
           </p>
-        ) : (
-          scheduleGroups.map((group) => {
-            const day = group.day;
-            const parts = day ? scheduleDayParts(day) : null;
-            const relative = day ? relativeDayLabel(day, today) : null;
-            const isToday = day === today;
-            const overdue = Boolean(day && day < today && filter === "revisando");
-            return (
-              <section
-                key={day ?? "nodate"}
-                className={`flash-plan-day${isToday ? " is-today" : ""}${overdue ? " is-overdue" : ""}`}
-                aria-label={
-                  day
-                    ? relative
-                      ? `${relative} · ${formatDay(day)}`
-                      : formatDay(day)
-                    : "Sans date"
-                }
-              >
-                <div className="flash-plan-date" aria-hidden={false}>
-                  {parts ? (
-                    <>
-                      <span className="flash-plan-dow">{parts.weekday}</span>
-                      <span className={`flash-plan-num${isToday ? " is-today" : ""}`}>{parts.dayNum}</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="flash-plan-dow">—</span>
-                      <span className="flash-plan-num is-nodate">·</span>
-                    </>
-                  )}
-                </div>
-                <ul className="flash-plan-events">
-                  {group.items.map((item) => {
-                    const queueIndex = queue.findIndex((card) => card.id === item.id);
-                    const activeItem = queueIndex === index;
-                    const meta =
-                      item.status === "encerrado"
-                        ? "Terminé"
-                        : overdue
-                          ? "En retard"
-                          : relative
-                            ? relative
-                            : item.lembrete
-                              ? `Rappel · ${formatDay(item.lembrete)}`
-                              : "Sans rappel";
-                    return (
-                      <li key={item.id} className="flash-plan-row">
-                        <button
-                          type="button"
-                          className={`flash-plan-event${activeItem ? " is-active" : ""}${item.status === "encerrado" ? " is-closed" : ""}`}
-                          style={
-                            item.color
-                              ? {
-                                  ["--card-tint" as string]: item.color,
-                                  background: `color-mix(in srgb, ${item.color} 28%, var(--panel))`,
-                                }
-                              : undefined
-                          }
-                          onClick={() => pickCard(item)}
-                          aria-current={activeItem ? "true" : undefined}
-                          aria-label={
-                            item.status === "encerrado"
-                              ? `Voir la carte: ${item.frente}`
-                              : `Réviser la carte: ${item.frente}`
-                          }
-                        >
-                          <span className="flash-plan-event-title">{item.frente}</span>
-                          <span className="flash-plan-event-meta">{meta}</span>
-                        </button>
-                        {onRemoveCard ? (
-                          <button
-                            type="button"
-                            className="flash-list-remove"
-                            aria-label={`Supprimer ${item.frente}`}
-                            title="Supprimer"
-                            onClick={() => onRemoveCard(item)}
-                          >
-                            Supprimer
-                          </button>
-                        ) : null}
-                      </li>
-                    );
-                  })}
-                </ul>
-              </section>
-            );
-          })
-        )}
+
+          {dayCards.length === 0 ? (
+            <p className="flash-plan-empty muted">
+              {filter === "concluidos" ? "Aucune carte terminée ce jour." : "Aucune carte à réviser ce jour."}
+            </p>
+          ) : (
+            <ul className="flash-plan-events flash-plan-events--cards">
+              {dayCards.map((item) => {
+                const queueIndex = queue.findIndex((card) => card.id === item.id);
+                const activeItem = queueIndex === index;
+                return (
+                  <li key={item.id} className="flash-plan-row">
+                    <button
+                      type="button"
+                      className={`flash-plan-event${activeItem ? " is-active" : ""}${
+                        item.status === "encerrado" ? " is-closed" : ""
+                      }`}
+                      style={
+                        item.color
+                          ? {
+                              ["--card-tint" as string]: item.color,
+                              background: `color-mix(in srgb, ${item.color} 28%, var(--panel))`,
+                            }
+                          : undefined
+                      }
+                      onClick={() => pickCard(item)}
+                      aria-current={activeItem ? "true" : undefined}
+                      aria-label={
+                        item.status === "encerrado"
+                          ? `Voir la carte: ${item.frente}`
+                          : `Réviser la carte: ${item.frente}`
+                      }
+                    >
+                      <span className="flash-plan-event-title">{item.frente}</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+
+          {nodateCards.length > 0 && selectedDay === today ? (
+            <div className="flash-nodate">
+              <p className="flash-nodate-label muted">Sans date</p>
+              <ul className="flash-plan-events flash-plan-events--cards">
+                {nodateCards.map((item) => {
+                  const queueIndex = queue.findIndex((card) => card.id === item.id);
+                  const activeItem = queueIndex === index;
+                  return (
+                    <li key={item.id} className="flash-plan-row">
+                      <button
+                        type="button"
+                        className={`flash-plan-event${activeItem ? " is-active" : ""}${
+                          item.status === "encerrado" ? " is-closed" : ""
+                        }`}
+                        style={
+                          item.color
+                            ? {
+                                ["--card-tint" as string]: item.color,
+                                background: `color-mix(in srgb, ${item.color} 28%, var(--panel))`,
+                              }
+                            : undefined
+                        }
+                        onClick={() => pickCard(item)}
+                        aria-current={activeItem ? "true" : undefined}
+                        aria-label={`Carte sans date: ${item.frente}`}
+                      >
+                        <span className="flash-plan-event-title">{item.frente}</span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ) : null}
+        </section>
       </div>
     </nav>
   );
