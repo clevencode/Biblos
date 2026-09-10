@@ -221,6 +221,76 @@ export function formatVerseCardFront(
   return end != null ? `${book} ${chapter}.${start}-${end}` : `${book} ${chapter}.${start}`;
 }
 
+type ParsedFrenteRef = {
+  book: string;
+  chapter: string;
+  versePart: string;
+};
+
+function parseFrenteRef(frente: string): ParsedFrenteRef | null {
+  const raw = String(frente || "").trim();
+  if (!raw) return null;
+  const match = raw.match(
+    /^((?:[123]\s+)?[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'’.\-]*(?:\s+[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'’.\-]*){0,5})\s+(\d+)[.:](.+)$/u,
+  );
+  if (!match) return null;
+  return {
+    book: match[1]!.trim(),
+    chapter: match[2]!,
+    versePart: match[3]!.trim(),
+  };
+}
+
+function titleCaseWords(value: string): string {
+  return value
+    .toLocaleLowerCase("fr")
+    .replace(/(^|[\s'-])(\p{L})/gu, (_, sep: string, letter: string) => sep + letter.toLocaleUpperCase("fr"));
+}
+
+function versePartIsPlural(versePart: string): boolean {
+  return /[-–—·,]|\d+\s+\d+/.test(versePart);
+}
+
+/**
+ * Affichage recto : « 1 SAMUEL CHAPITRE 3 LE VERSET 2 »
+ * (à partir d’une référence stockée type « 1 SAMUEL 3.2 »).
+ */
+export function formatVerseCardSpokenFront(frente: string): string {
+  const parsed = parseFrenteRef(frente);
+  if (!parsed) return String(frente || "").trim().toUpperCase();
+  const label = versePartIsPlural(parsed.versePart) ? "LES VERSETS" : "LE VERSET";
+  return `${parsed.book.toUpperCase()} CHAPITRE ${parsed.chapter} ${label} ${parsed.versePart}`.toUpperCase();
+}
+
+/** Parties structurées pour l’affichage hiérarchisé du recto. */
+export function parseVerseCardDisplay(frente: string): {
+  book: string;
+  chapter: string;
+  versePart: string;
+  verseLabel: string;
+  spoken: string;
+} | null {
+  const parsed = parseFrenteRef(frente);
+  if (!parsed) return null;
+  const plural = versePartIsPlural(parsed.versePart);
+  return {
+    book: titleCaseWords(parsed.book),
+    chapter: parsed.chapter,
+    versePart: parsed.versePart,
+    verseLabel: plural ? "Versets" : "Verset",
+    spoken: formatVerseCardSpokenFront(frente),
+  };
+}
+
+/**
+ * Affichage verso (kicker) : « 1 Samuel 3.2 » — casse normale.
+ */
+export function formatVerseCardPlainRef(frente: string): string {
+  const parsed = parseFrenteRef(frente);
+  if (!parsed) return titleCaseWords(String(frente || "").trim());
+  return `${titleCaseWords(parsed.book)} ${parsed.chapter}.${parsed.versePart}`;
+}
+
 /** Référence chapitre seule (ex. « JEAN 3.16 » → « JHN.3 ») pour Lecture. */
 export function chapterFocusFromRef(reference: string): string | null {
   if (!isPassageRef(reference)) return null;

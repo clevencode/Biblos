@@ -538,6 +538,33 @@ body,
   width: 100%;
 }
 
+.flash--session .flash-main {
+  gap: 16px;
+  justify-content: flex-start;
+}
+
+.flash--session .flash-head {
+  width: 100%;
+  max-width: 400px;
+}
+
+.flash--session .flash-nav-row {
+  flex: 1 1 auto;
+  min-height: 0;
+  align-items: stretch;
+}
+
+.flash--session .flash-viewport {
+  display: flex;
+  align-items: stretch;
+}
+
+.flash--session .flash-actions {
+  margin-top: auto;
+  width: 100%;
+  max-width: 400px;
+}
+
 /* Expanded (≥1280): master–detail — lista à esquerda, cartão à direita */
 .flash-split {
   flex: 1;
@@ -1258,9 +1285,9 @@ body,
 
 .flash-progress {
   width: 100%;
-  height: 4px;
+  height: 3px;
   border-radius: 999px;
-  background: var(--line);
+  background: color-mix(in srgb, var(--line) 80%, transparent);
   overflow: hidden;
 }
 
@@ -1269,14 +1296,14 @@ body,
   height: 100%;
   border-radius: inherit;
   background: var(--text);
-  opacity: 0.45;
+  opacity: 0.55;
   transition: width 0.32s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
 .flash-session-meta {
   display: grid;
   justify-items: center;
-  gap: 2px;
+  gap: 4px;
   text-align: center;
 }
 
@@ -1318,14 +1345,19 @@ body,
 }
 
 .flash-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
   border: 1px solid var(--line);
   background: var(--panel);
   color: var(--text);
   cursor: pointer;
-  font-size: 1rem;
+  font-size: 1.05rem;
+  display: grid;
+  place-items: center;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .flash-btn:hover:not(:disabled) {
@@ -1349,27 +1381,34 @@ body,
   display: flex;
   align-items: baseline;
   justify-content: center;
-  gap: 6px;
+  gap: 4px;
   color: var(--text);
   font-variant-numeric: tabular-nums;
-  font-size: 1.05rem;
-  font-weight: 600;
-  line-height: 1.2;
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.flash-session-current {
+  font-size: 1.35rem;
 }
 
 .flash-session-of {
   color: var(--muted);
-  font-size: 0.78rem;
+  font-size: 0.95rem;
   font-weight: 500;
+  margin-inline: 1px;
 }
 
 .flash-session-total {
   font-weight: 600;
+  color: color-mix(in srgb, var(--text) 72%, var(--muted));
 }
 
 .flash-session-hint {
   margin: 0;
-  font-size: 0.72rem;
+  font-size: 0.74rem;
   line-height: 1.35;
   color: var(--muted);
 }
@@ -1927,10 +1966,11 @@ body,
 .flash-stage {
   position: relative;
   width: 100%;
-  height: 280px;
+  height: min(320px, 48dvh);
+  min-height: 260px;
   box-sizing: border-box;
   /* Reserve corner chrome outside the card face. */
-  padding: 10px 40px 8px 8px;
+  padding: 8px 40px 4px 6px;
   border: 0;
   background: transparent;
   perspective: 1400px;
@@ -2046,12 +2086,14 @@ body,
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 12px;
-  padding: 22px 20px 18px;
-  border-radius: 14px;
-  border: 1px solid var(--line);
+  gap: 14px;
+  padding: 28px 24px 22px;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--line) 85%, transparent);
   background: var(--panel);
-  box-shadow: inset 3px 0 0 var(--card-tint, transparent);
+  box-shadow:
+    inset 3px 0 0 var(--card-tint, transparent),
+    0 10px 28px color-mix(in srgb, var(--text) 6%, transparent);
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   overflow-y: auto;
@@ -2069,6 +2111,14 @@ body,
   color: var(--muted);
 }
 
+.flash-kicker.is-passage-ref {
+  text-transform: none;
+  letter-spacing: 0.01em;
+  font-size: 0.88rem;
+  font-weight: 650;
+  color: var(--text);
+}
+
 .flash-face p {
   margin: 0;
   font-size: 1.22rem;
@@ -2076,10 +2126,13 @@ body,
   color: var(--text);
 }
 
+.flash-face p.flash-front-ref {
+  font-size: inherit;
+  line-height: inherit;
+}
+
 .flash-reveal {
-  margin-top: auto;
-  font-size: 0.75rem;
-  color: var(--muted);
+  display: none;
 }
 
 .flash-reveal-touch {
@@ -2088,32 +2141,33 @@ body,
 
 .flash-back {
   transform: rotateY(180deg);
-  background: var(--surface);
+  background: color-mix(in srgb, var(--surface) 70%, var(--panel));
 }
 
 .flash-actions {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 6px;
+  gap: 8px;
   width: min(100%, 480px);
   min-height: 0;
   align-items: stretch;
-  padding: 0 1px;
+  padding: 0;
   box-sizing: border-box;
 }
 
 .flash-nouveau-hint {
   grid-column: 1 / -1;
-  margin: 0 0 2px;
+  margin: 0 0 4px;
   text-align: center;
   font-size: 0.78rem;
-  line-height: 1.3;
+  line-height: 1.35;
   letter-spacing: 0.01em;
+  color: var(--muted);
 }
 
 .flash-actions--reveal {
   display: flex;
-  min-height: 48px;
+  min-height: 52px;
 }
 
 .flash-reveal-btn {
@@ -2122,33 +2176,41 @@ body,
   justify-content: center;
   gap: 10px;
   width: 100%;
-  max-width: 280px;
-  margin: 0 auto;
-  padding: 12px 18px;
-  border: 1px solid var(--line);
-  border-radius: 11px;
-  background: var(--panel);
-  color: var(--text);
+  margin: 0;
+  padding: 14px 20px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--text);
+  color: var(--bg);
   font: inherit;
-  font-weight: 600;
+  font-size: 1rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
   cursor: pointer;
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--text) 14%, transparent);
+  transition:
+    transform 0.15s ease,
+    opacity 0.15s ease;
 }
 
 .flash-reveal-btn:hover {
-  border-color: var(--muted);
-  background: var(--surface);
+  opacity: 0.92;
+}
+
+.flash-reveal-btn:active {
+  transform: translateY(1px);
 }
 
 .flash-reveal-btn kbd {
   font-size: 0.68rem;
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--muted);
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  padding: 2px 6px;
-  background: var(--surface);
+  color: color-mix(in srgb, var(--bg) 72%, transparent);
+  border: 1px solid color-mix(in srgb, var(--bg) 28%, transparent);
+  border-radius: 6px;
+  padding: 3px 7px;
+  background: color-mix(in srgb, var(--bg) 12%, transparent);
 }
 
 .flash.is-revealed .flash-actions {
@@ -2234,41 +2296,58 @@ body,
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 5px;
   border: 1px solid var(--line);
   background: var(--panel);
   color: var(--text);
-  border-radius: 12px;
-  padding: 12px 6px 10px;
+  border-radius: 14px;
+  padding: 14px 6px 12px;
   cursor: pointer;
   font: inherit;
   transition:
     border-color 0.15s ease,
     background 0.15s ease,
-    color 0.15s ease;
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.flash-mark--encore {
+  --mark-tint: #e11d48;
+}
+
+.flash-mark--dificil {
+  --mark-tint: #d97706;
+}
+
+.flash-mark--medio {
+  --mark-tint: var(--text);
+}
+
+.flash-mark--facil {
+  --mark-tint: #059669;
 }
 
 .flash-mark-key {
   position: absolute;
-  top: 6px;
-  right: 7px;
-  font-size: 0.6rem;
-  font-weight: 650;
+  top: 7px;
+  right: 8px;
+  font-size: 0.58rem;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--muted);
-  opacity: 0.75;
+  opacity: 0.7;
 }
 
 .flash-mark-label {
-  font-weight: 650;
-  font-size: 0.92rem;
-  line-height: 1.15;
-  letter-spacing: -0.01em;
+  font-weight: 700;
+  font-size: 0.9rem;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
 }
 
 .flash-mark small {
   display: block;
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   color: var(--muted);
   font-weight: 550;
   font-variant-numeric: tabular-nums;
@@ -2286,18 +2365,24 @@ body,
 }
 
 .flash-mark:hover:not(:disabled) {
-  background: var(--hover);
+  background: color-mix(in srgb, var(--mark-tint, var(--text)) 6%, var(--panel));
+  border-color: color-mix(in srgb, var(--mark-tint, var(--text)) 28%, var(--line));
 }
 
 .flash-mark.is-on {
-  font-weight: 650;
-  border-color: var(--text);
+  border-color: color-mix(in srgb, var(--mark-tint, var(--text)) 55%, var(--line));
   color: var(--text);
-  background: var(--hover);
+  background: color-mix(in srgb, var(--mark-tint, var(--text)) 10%, var(--panel));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mark-tint, var(--text)) 18%, transparent);
 }
 
 .flash-mark.is-default:not(:disabled):not(.is-on) {
-  border-color: color-mix(in srgb, var(--text) 22%, var(--line));
+  border-color: color-mix(in srgb, var(--text) 28%, var(--line));
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--text) 6%, transparent);
+}
+
+.flash-mark.is-default .flash-mark-label {
+  font-weight: 700;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -2935,8 +3020,16 @@ body,
     width: 100%;
     min-height: 0;
     justify-content: flex-start;
-    gap: 10px;
-    padding-bottom: 4px;
+    gap: 12px;
+    padding-bottom: 2px;
+  }
+
+  .flash--session .flash-main {
+    gap: 12px;
+  }
+
+  .flash--session .flash-actions {
+    max-width: none;
   }
 
   .flash-head {
@@ -2950,7 +3043,11 @@ body,
   }
 
   .flash-session-pos {
-    font-size: 0.98rem;
+    font-size: 1.12rem;
+  }
+
+  .flash-session-current {
+    font-size: 1.28rem;
   }
 
   .flash-session-hint {
@@ -2983,9 +3080,9 @@ body,
 
   .flash-stage {
     height: 100%;
-    min-height: min(240px, 42dvh);
-    max-height: min(420px, 52dvh);
-    padding: 8px 36px 6px 4px;
+    min-height: min(260px, 44dvh);
+    max-height: min(440px, 54dvh);
+    padding: 6px 36px 4px 2px;
   }
 
   .flash-card-menu {
@@ -2994,9 +3091,9 @@ body,
   }
 
   .flash-face {
-    padding: 18px 16px 14px;
-    gap: 10px;
-    border-radius: 14px;
+    padding: 24px 18px 18px;
+    gap: 12px;
+    border-radius: 16px;
   }
 
   .flash-face p {
@@ -3004,17 +3101,21 @@ body,
     line-height: 1.42;
   }
 
+  .flash-kicker.is-passage-ref {
+    font-size: 0.84rem;
+  }
+
   .flash-actions {
     width: 100%;
     min-height: 0;
     flex-shrink: 0;
-    gap: 5px;
+    gap: 6px;
     padding: 0;
   }
 
   .flash-nouveau-hint {
-    font-size: 0.74rem;
-    margin: 0 0 1px;
+    font-size: 0.72rem;
+    margin: 0 0 2px;
   }
 
   .flash-actions--reveal {
@@ -3025,9 +3126,9 @@ body,
   .flash-mark {
     min-width: 0;
     min-height: var(--mobile-touch);
-    padding: 10px 2px 8px;
-    border-radius: 12px;
-    gap: 3px;
+    padding: 11px 2px 9px;
+    border-radius: 13px;
+    gap: 4px;
   }
 
   .flash-mark-key {
@@ -3035,11 +3136,11 @@ body,
   }
 
   .flash-mark-label {
-    font-size: 0.86rem;
+    font-size: 0.84rem;
   }
 
   .flash-mark small {
-    font-size: 0.66rem;
+    font-size: 0.64rem;
   }
 
   .flash-mark-when {
@@ -3050,7 +3151,8 @@ body,
     max-width: none;
     width: 100%;
     min-height: var(--mobile-touch);
-    border-radius: 12px;
+    border-radius: 14px;
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--text) 12%, transparent);
   }
 
   .flash-reveal-btn kbd {
@@ -3128,14 +3230,6 @@ body,
   }
 
   
-
-  .flash-reveal-click {
-    display: none;
-  }
-
-  .flash-reveal-touch {
-    display: block;
-  }
 
   /* Só botões icónicos: não forçar largura fixa em labels (ex. Exportar). */
   
@@ -4745,19 +4839,78 @@ body,
 
 .flash-front-ref {
   margin: 0;
+  display: grid;
+  gap: 0.7rem;
+  font-weight: 400;
+  text-transform: none;
+  text-wrap: balance;
+}
+
+.flash-front-ref.is-plain {
+  font-family: "Libre Baskerville", "Source Serif 4", Georgia, serif;
+  font-size: clamp(1.2rem, 4.5vw, 1.55rem);
   font-weight: 700;
-  letter-spacing: 0.03em;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  color: var(--text);
+}
+
+.flash-ref-book {
+  font-family: "Libre Baskerville", "Source Serif 4", Georgia, serif;
+  font-size: clamp(1.45rem, 5.5vw, 1.9rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.12;
+  color: var(--text);
+}
+
+.flash-ref-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.45rem 0.75rem;
+}
+
+.flash-ref-pair {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.flash-ref-label {
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  font-size: 1.15em;
-  line-height: 1.35;
+  color: var(--muted);
+  line-height: 1;
+}
+
+.flash-ref-num {
+  font-family: "Libre Baskerville", "Source Serif 4", Georgia, serif;
+  font-size: clamp(1.05rem, 3.8vw, 1.28rem);
+  font-weight: 700;
+  font-variant-numeric: lining-nums;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--text);
+}
+
+.flash-ref-sep {
+  color: color-mix(in srgb, var(--muted) 70%, transparent);
+  font-size: 0.95rem;
+  line-height: 1;
+  user-select: none;
 }
 
 .flash-back-text {
   margin: 0;
+  font-family: "Libre Baskerville", "Source Serif 4", Georgia, serif;
   font-weight: 400;
   text-transform: none;
-  font-size: 1em;
-  line-height: 1.55;
+  font-size: 1.05em;
+  line-height: 1.6;
 }
 
 .bible-hint {

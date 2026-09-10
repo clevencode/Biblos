@@ -11,7 +11,7 @@ import {
 } from "../retention";
 import type { FlashcardSession } from "../flashcardSession";
 import type { Flashcard, RetentionMark } from "../types";
-import { chapterFocusFromRef } from "../youversion/usfm";
+import { chapterFocusFromRef, formatVerseCardPlainRef, formatVerseCardSpokenFront, parseVerseCardDisplay } from "../youversion/usfm";
 
 type FlashcardReviewProps = {
   session: FlashcardSession;
@@ -48,6 +48,31 @@ function CardRepetitionMeta({ item }: { item: Flashcard }) {
     <span className="flash-card-meta">
       <time dateTime={last}>Dernière révision · {formatDay(last)}</time>
     </span>
+  );
+}
+
+function VerseCardFrontRef({ frente }: { frente: string }) {
+  const parts = parseVerseCardDisplay(frente);
+  if (!parts) {
+    return <p className="flash-front-ref is-plain">{formatVerseCardSpokenFront(frente)}</p>;
+  }
+  return (
+    <p className="flash-front-ref" aria-label={parts.spoken}>
+      <span className="flash-ref-book">{parts.book}</span>
+      <span className="flash-ref-line">
+        <span className="flash-ref-pair">
+          <span className="flash-ref-label">Chapitre</span>
+          <span className="flash-ref-num">{parts.chapter}</span>
+        </span>
+        <span className="flash-ref-sep" aria-hidden="true">
+          ·
+        </span>
+        <span className="flash-ref-pair">
+          <span className="flash-ref-label">{parts.verseLabel}</span>
+          <span className="flash-ref-num">{parts.versePart}</span>
+        </span>
+      </span>
+    </p>
   );
 }
 
@@ -245,9 +270,9 @@ export function FlashcardReview({
     dayScoped && after > 0 && remainingDue > 0 ? `${remainingDue} à revoir` : null;
 
   return (
-    <div className={`flash flash--solo${flipped ? " is-revealed" : ""}${closed ? " is-closed" : ""}`}>
+    <div className={`flash flash--solo flash--session${flipped ? " is-revealed" : ""}${closed ? " is-closed" : ""}`}>
       <div className="flash-main">
-        <div className="flash-head" aria-live="polite">
+        <header className="flash-head" aria-live="polite">
           <div className="flash-session-meter">
             <div
               className="flash-progress"
@@ -266,7 +291,7 @@ export function FlashcardReview({
               ) : null}
               <p className="flash-session-pos" aria-label={positionLabel}>
                 <span className="flash-session-current">{displayPos}</span>
-                <span className="flash-session-of">sur</span>
+                <span className="flash-session-of">/</span>
                 <span className="flash-session-total">{displayTotal}</span>
               </p>
               <p className="flash-session-hint">
@@ -280,7 +305,7 @@ export function FlashcardReview({
               </p>
             </div>
           </div>
-        </div>
+        </header>
 
         {closed ? (
           <p className="flash-closed-banner" role="status">
@@ -350,14 +375,11 @@ export function FlashcardReview({
                       ) : null}
                       <div className={`flash-inner${slideFlipped ? " is-flipped" : ""}`}>
                         <div className="flash-face flash-front">
-                          <span className="flash-kicker">Référence</span>
-                          <p className="flash-front-ref">{item.frente}</p>
+                          <VerseCardFrontRef frente={item.frente} />
                           {showRepetitionMeta ? <CardRepetitionMeta item={item} /> : null}
-                          <span className="flash-reveal flash-reveal-click">Clic ou Espace pour révéler</span>
-                          <span className="flash-reveal flash-reveal-touch">Toucher pour révéler</span>
                         </div>
                         <div className="flash-face flash-back">
-                          <span className="flash-kicker is-answer">Texte</span>
+                          <span className="flash-kicker is-passage-ref">{formatVerseCardPlainRef(item.frente)}</span>
                           <p className="flash-back-text">{item.verso}</p>
                           {showRepetitionMeta ? <CardRepetitionMeta item={item} /> : null}
                         </div>
@@ -406,8 +428,8 @@ export function FlashcardReview({
             aria-label={card.status === "espera" ? "Commencer la révision" : "Répétition espacée"}
           >
             {card.status === "espera" ? (
-              <p className="flash-nouveau-hint muted">
-                Nouveau — choisis une option pour commencer.
+              <p className="flash-nouveau-hint">
+                Nouveau — note ta réponse pour démarrer.
               </p>
             ) : null}
             {RETENTION_MARKS.map((level: RetentionMark) => {
