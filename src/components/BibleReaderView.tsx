@@ -48,6 +48,10 @@ type BibleReaderViewProps = {
   onFlashcardCreated?: (card: Flashcard) => void;
   /** Ids des VERSECARD déjà enregistrées (ex. verse-HAG.2.10). */
   existingVerseCardIds?: ReadonlySet<string>;
+  /** Couleurs actuelles des VERSECARD (id → hex). */
+  existingVerseCardColors?: ReadonlyMap<string, string>;
+  /** Persiste une nouvelle couleur sur un flashcard existant. */
+  onUpdateVerseCardColor?: (cardId: string, color: string) => void;
   /** Ouvre Cartes sur la flashcard du verset. */
   onViewFlashcard?: (cardId: string) => void;
   /** Lecture immersive : chrome (tabs) masqué au scroll. */
@@ -132,6 +136,8 @@ export function BibleReaderView({
   planReading = null,
   onFlashcardCreated,
   existingVerseCardIds,
+  existingVerseCardColors,
+  onUpdateVerseCardColor,
   onViewFlashcard,
   onReadingChromeChange,
 }: BibleReaderViewProps) {
@@ -407,6 +413,21 @@ export function BibleReaderView({
   }, [bookId, chapterId, selectedVerse]);
   const existingVerseCard =
     Boolean(selectedVerseCardId && existingVerseCardIds?.has(selectedVerseCardId));
+
+  useEffect(() => {
+    if (!selectedVerseCardId) return;
+    const stored = existingVerseCardColors?.get(selectedVerseCardId);
+    setCardColor(stored ? normalizeVerseColor(stored) : DEFAULT_VERSE_COLOR);
+  }, [selectedVerseCardId, existingVerseCardColors]);
+
+  function pickVerseColor(hex: string) {
+    const next = normalizeVerseColor(hex);
+    setCardColor(next);
+    if (existingVerseCard && selectedVerseCardId && onUpdateVerseCardColor) {
+      onUpdateVerseCardColor(selectedVerseCardId, next);
+    }
+  }
+
   const showCreateCard = Boolean(selectedVerse && selectedVerseText && !planReading && !pickerOpen);
   const forceChrome = pickerOpen || showCreateCard;
   const hideChrome = chromeHidden && !forceChrome;
@@ -742,7 +763,7 @@ export function BibleReaderView({
                   style={{ ["--swatch" as string]: swatch.hex }}
                   aria-label={swatch.label}
                   aria-pressed={on}
-                  onClick={() => setCardColor(swatch.hex)}
+                  onClick={() => pickVerseColor(swatch.hex)}
                 />
               );
             })}

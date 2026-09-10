@@ -123,6 +123,14 @@ export function App() {
     }
     return ids;
   }, [notes, retentionTick]);
+  const verseCardColors = useMemo(() => {
+    const colors = new Map<string, string>();
+    for (const card of listAllFlashcards(notes, null)) {
+      if (!String(card.id || "").startsWith("verse-")) continue;
+      if (card.color) colors.set(card.id, card.color);
+    }
+    return colors;
+  }, [notes, retentionTick]);
 
   function openVerseFlashcard(cardId: string) {
     if (activePlan?.cardIds?.length && !activePlan.cardIds.includes(cardId)) {
@@ -271,6 +279,28 @@ export function App() {
     setPlanReading(next);
     const step = currentPlanStep(next);
     if (step) openPassageInBible(step.focusRef, { keepPlanReading: true });
+  }
+
+  function handleVerseCardColor(cardId: string, color: string) {
+    setCatalog((current) => {
+      let changed = false;
+      const notas = (current.notas ?? []).map((note) => {
+        let noteChanged = false;
+        const flashcards = (note.flashcards ?? []).map((card) => {
+          if (card.id !== cardId) return card;
+          if (card.color === color) return card;
+          noteChanged = true;
+          changed = true;
+          return { ...card, color };
+        });
+        return noteChanged ? { ...note, flashcards } : note;
+      });
+      if (!changed) return current;
+      const next = { ...current, notas };
+      persistCatalogCache(next);
+      return next;
+    });
+    setRetentionTick((value) => value + 1);
   }
 
   function handleMarkRead(jour: number) {
@@ -501,6 +531,8 @@ export function App() {
                     }
                     onFlashcardCreated={handleFlashcardCreated}
                     existingVerseCardIds={verseCardIds}
+                    existingVerseCardColors={verseCardColors}
+                    onUpdateVerseCardColor={handleVerseCardColor}
                     onViewFlashcard={openVerseFlashcard}
                     onReadingChromeChange={setBibleChromeHidden}
                   />

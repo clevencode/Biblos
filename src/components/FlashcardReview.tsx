@@ -193,7 +193,6 @@ export function FlashcardReview({
     slideQueue,
     slideIndex,
     total,
-    dueCount,
     index,
     card,
     flipped,
@@ -239,9 +238,8 @@ export function FlashcardReview({
   const displayPos =
     numbering?.position ?? (dayScoped ? slideIndex + 1 : dayPeers?.length ? dayPeers.findIndex((item) => item.id === card.id) + 1 : index + 1);
   const dayPos = dayScoped ? slideIndex + 1 : dayPeers ? dayPeers.findIndex((item) => item.id === card.id) + 1 : 0;
-  const done = Math.max(displayPos - 1, 0);
   const after = Math.max(displayTotal - displayPos, 0);
-  const progressPct = displayTotal > 0 ? (done / displayTotal) * 100 : 0;
+  const progressPct = displayTotal > 0 ? (displayPos / displayTotal) * 100 : 0;
   const grading = flipped && sync !== "saving" && card.status !== "encerrado";
   const closed = card.status === "encerrado";
   const positionLabel = numbering?.section
@@ -249,11 +247,13 @@ export function FlashcardReview({
     : dayPos > 0
       ? `Carte ${displayPos} sur ${displayTotal} ce jour`
       : `Carte ${displayPos} sur ${displayTotal}`;
-  const dayDueCount = dayScoped
-    ? slideQueue.filter((item) => isDue(item.lembrete)).length
-    : dayPeers && dayPos > 0
-      ? dayPeers.filter((item) => isDue(item.lembrete)).length
-      : dueCount;
+  const remainingDue = (
+    dayScoped
+      ? slideQueue.slice(slideIndex)
+      : dayPeers && dayPos > 0
+        ? dayPeers.slice(Math.max(dayPos - 1, 0))
+        : queue.slice(index)
+  ).filter((item) => isDue(item.lembrete)).length;
   const hintLabel =
     after === 0
       ? numbering?.section
@@ -264,6 +264,10 @@ export function FlashcardReview({
       : after === 1
         ? "1 à suivre"
         : `${after} à suivre`;
+  const dueHint =
+    !numbering && after > 0 && remainingDue > 0
+      ? `${remainingDue} à revoir`
+      : null;
 
   return (
     <div className={`flash flash--solo${flipped ? " is-revealed" : ""}${closed ? " is-closed" : ""}`}>
@@ -276,8 +280,8 @@ export function FlashcardReview({
               aria-label="Progression de la session"
               aria-valuemin={0}
               aria-valuemax={displayTotal}
-              aria-valuenow={done}
-              aria-valuetext={`${done} terminée${done === 1 ? "" : "s"} sur ${displayTotal}`}
+              aria-valuenow={displayPos}
+              aria-valuetext={`Carte ${displayPos} sur ${displayTotal}`}
             >
               <i style={{ width: `${progressPct}%` }} />
             </div>
@@ -292,10 +296,10 @@ export function FlashcardReview({
               </p>
               <p className="flash-session-hint">
                 {hintLabel}
-                {!numbering && dayDueCount ? (
+                {dueHint ? (
                   <span className="flash-due">
                     {" "}
-                    · {dayDueCount} à revoir
+                    · {dueHint}
                   </span>
                 ) : null}
               </p>
@@ -350,16 +354,12 @@ export function FlashcardReview({
                   >
                     <div
                       className="flash-stage"
-                      style={item.color ? { ["--card-tint" as string]: item.color } : undefined}
+                      style={
+                        item.color
+                          ? { ["--card-tint" as string]: item.color }
+                          : undefined
+                      }
                     >
-                      {item.color ? (
-                        <span
-                          className="flash-card-tint"
-                          style={{ background: item.color }}
-                          title="Couleur"
-                          aria-hidden="true"
-                        />
-                      ) : null}
                       {activeSlide ? (
                         <FlashCardMenu
                           canArchive={item.status !== "encerrado"}
@@ -432,7 +432,7 @@ export function FlashcardReview({
           >
             {card.status === "espera" ? (
               <p className="flash-nouveau-hint muted">
-                Nouveau — choisis une option pour passer en révision.
+                Nouveau — choisis une option pour commencer.
               </p>
             ) : null}
             {RETENTION_MARKS.map((level: RetentionMark) => {
@@ -710,43 +710,41 @@ export function FlashDeckList({
       ref={listRef}
       aria-label={showWeekSchedule ? "Planning Timeline" : title}
     >
-      <header className="flash-list-head">
-        <h2 className="flash-list-heading">{title}</h2>
-        {showWeekSchedule ? (
-          <p className="flash-list-meta-line">Rappels de la semaine</p>
-        ) : null}
-        {showFilters ? (
-          <div
-            className="flash-deck-segments"
-            role="group"
-            aria-label="Filtrer les cartes par progression"
-          >
-            {DECK_FILTERS.map((item) => {
-              const count = filterCounts[item.id];
-              const on = item.id === filter;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  className={`flash-deck-segment${on ? " is-on" : ""}${count === 0 ? " is-empty" : ""}`}
-                  aria-pressed={on}
-                  onClick={() => setFilter(item.id)}
-                >
-                  <span className="flash-deck-segment-label">{item.label}</span>
-                  <span className="flash-deck-segment-count" aria-hidden="true">
-                    {count}
-                  </span>
-                  <span className="sr-only">
-                    {`, ${count} carte${count === 1 ? "" : "s"}`}
-                    {on ? ", sélectionné" : ""}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        ) : null}
-        {!total ? <p className="flash-list-meta-line">Aucune carte</p> : null}
-      </header>
+      {showFilters || !total ? (
+        <header className="flash-list-head">
+          {showFilters ? (
+            <div
+              className="flash-deck-segments"
+              role="group"
+              aria-label="Filtrer les cartes par progression"
+            >
+              {DECK_FILTERS.map((item) => {
+                const count = filterCounts[item.id];
+                const on = item.id === filter;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className={`flash-deck-segment${on ? " is-on" : ""}${count === 0 ? " is-empty" : ""}`}
+                    aria-pressed={on}
+                    onClick={() => setFilter(item.id)}
+                  >
+                    <span className="flash-deck-segment-label">{item.label}</span>
+                    <span className="flash-deck-segment-count" aria-hidden="true">
+                      {count}
+                    </span>
+                    <span className="sr-only">
+                      {`, ${count} carte${count === 1 ? "" : "s"}`}
+                      {on ? ", sélectionné" : ""}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+          {!total ? <p className="flash-list-meta-line">Aucune carte</p> : null}
+        </header>
+      ) : null}
 
       {showWeekSchedule ? (
         <>

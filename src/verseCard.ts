@@ -81,3 +81,11 @@ export function createVerseFlashcard(input: {
 
   return { ok: true, card, created: true };
 }
+
+/** Met à jour la couleur d’un VERSECARD déjà créé (catalogue local). */
+export function withVerseCardColor(card: Flashcard, color: string | null | undefined): Flashcard {
+  return {
+    ...card,
+    color: normalizeVerseColor(color ?? card.color ?? DEFAULT_VERSE_COLOR),
+  };
+}

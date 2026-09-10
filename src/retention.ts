@@ -30,10 +30,10 @@ export const RETENTION_DAYS = {
   novo: 2,
 } as const;
 
-/** Libellés UI / Notion Repetition (Dificile = orthographe Notion). */
+/** Libellés UI (Notion garde « Dificile » via categoriaToNotion). */
 export const RETENTION_LABELS: Record<RetentionMark, string> = {
   encore: "Encore",
-  dificil: "Dificile",
+  dificil: "Difficile",
   medio: "Correct",
   facil: "Facile",
 };
