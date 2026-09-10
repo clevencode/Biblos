@@ -3830,6 +3830,50 @@ body,
   contain: layout style;
 }
 
+.bible-yv-top.is-plan {
+  justify-content: space-between;
+}
+
+.bible-yv-top-plan {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+  margin-right: 8px;
+}
+
+.bible-yv-plan-name {
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.86rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--yv-text);
+}
+
+.bible-yv-back {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--yv-text);
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.bible-yv-back:hover {
+  background: color-mix(in srgb, var(--yv-text) 6%, transparent);
+}
+
 .bible-yv-top-actions {
   display: flex;
   align-items: center;
@@ -3987,6 +4031,8 @@ body,
   max-width: 40rem;
   margin: 0 auto;
   padding: 52px 22px calc(96px + env(safe-area-inset-bottom, 0px));
+  scroll-padding-top: 56px;
+  scroll-padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
   border: 0;
   border-radius: 0;
   background: transparent;
@@ -3994,6 +4040,17 @@ body,
 
 .app.is-bible-mode.is-narrow .bible-reader--yv .bible-passage {
   padding-bottom: calc(148px + env(safe-area-inset-bottom, 0px));
+  scroll-padding-bottom: calc(148px + env(safe-area-inset-bottom, 0px));
+}
+
+.bible-reader--yv.has-verse-actions .bible-passage {
+  padding-bottom: calc(268px + env(safe-area-inset-bottom, 0px));
+  scroll-padding-bottom: calc(220px + env(safe-area-inset-bottom, 0px));
+}
+
+.app.is-bible-mode.is-narrow .bible-reader--yv.has-verse-actions .bible-passage {
+  padding-bottom: calc(324px + env(safe-area-inset-bottom, 0px));
+  scroll-padding-bottom: calc(276px + env(safe-area-inset-bottom, 0px));
 }
 
 .bible-reader--yv .bible-passage-head {
@@ -4473,6 +4530,11 @@ body,
 
 .bible-yv-dock-nav--plan {
   grid-template-columns: 36px minmax(0, 1fr) 44px;
+}
+
+.bible-yv-dock-nav--plan .bible-yv-dock-location {
+  pointer-events: auto;
+  cursor: pointer;
 }
 
 .bible-yv-dock-advance {

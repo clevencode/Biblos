@@ -516,10 +516,19 @@ export function App() {
                     initialRef="Jean 3.16"
                     focusRef={bibleFocusRef}
                     focusSeq={bibleFocusSeq}
+                    active={mode === "bible"}
                     onBack={planReading ? exitPlanReading : () => setMode("today")}
                     planReading={
-                      planReading
+                      planReading && activePlan
                         ? {
+                            planName: (() => {
+                              const theme = activePlan.theme?.trim() ?? "";
+                              const nome = activePlan.nome?.trim() ?? "";
+                              const generic = (value: string) => !value || /^plan$/i.test(value);
+                              if (!generic(theme)) return theme;
+                              if (!generic(nome)) return nome;
+                              return theme || nome || "Plan";
+                            })(),
                             label: currentPlanStep(planReading)?.label ?? "",
                             isFirst: isFirstPlanStep(planReading),
                             isLast: isLastPlanStep(planReading),

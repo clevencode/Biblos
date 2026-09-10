@@ -1,4 +1,12 @@
-import { useEffect, useEffectEvent, useId, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useEffectEvent,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   adjacentChapter,
   chapterUsfm,
@@ -49,9 +57,13 @@ type BibleReaderViewProps = {
   /** Navigation externe (rappel → Lecture). */
   focusRef?: string | null;
   focusSeq?: number;
+  /** Onglet Lecture visible (le panneau peut être `hidden` au montage). */
+  active?: boolean;
   onBack?: () => void;
   /** Mode lecture de plan : un pas = un chapitre, › = chapitre suivant. */
   planReading?: {
+    /** Nom affiché en haut (thème / titre du plan). */
+    planName: string;
     label: string;
     isFirst: boolean;
     isLast: boolean;
@@ -144,10 +156,67 @@ function isLikelyVerseTitle(text: string, number: number): boolean {
   return t.length > 0 && t.length < 48 && !/[.!?…]$/.test(t);
 }
 
+type VerseScrollMode = "start" | "nearest" | "top";
+type PendingVerseScroll = { number: number; mode: VerseScrollMode; seq: number };
+
+function overlayReserve(scroller: HTMLElement, reader: HTMLElement): { top: number; bottom: number } {
+  const sRect = scroller.getBoundingClientRect();
+  const chromeHidden = reader.classList.contains("is-chrome-hidden");
+  let top = 8;
+  if (!chromeHidden) {
+    const topBar = reader.querySelector(".bible-yv-top");
+    if (topBar) {
+      const t = topBar.getBoundingClientRect();
+      top = Math.max(top, t.bottom - sRect.top + 8);
+    }
+  }
+  let bottom = 16;
+  const selectors = [".bible-verse-actions", ".bible-yv-dock", ".bible-yv-pick-sheet"];
+  for (const sel of selectors) {
+    const el = reader.querySelector(sel);
+    if (!el || !(el instanceof HTMLElement)) continue;
+    if (sel === ".bible-yv-dock" && chromeHidden) continue;
+    const r = el.getBoundingClientRect();
+    if (r.bottom <= sRect.top || r.top >= sRect.bottom) continue;
+    bottom = Math.max(bottom, sRect.bottom - r.top + 12);
+  }
+  return { top, bottom };
+}
+
+function alignVerseInScroller(
+  scroller: HTMLElement,
+  reader: HTMLElement,
+  verseEl: HTMLElement | null,
+  mode: VerseScrollMode,
+) {
+  if (mode === "top" || !verseEl) {
+    scroller.scrollTop = 0;
+    return;
+  }
+  const reserve = overlayReserve(scroller, reader);
+  const sRect = scroller.getBoundingClientRect();
+  const vRect = verseEl.getBoundingClientRect();
+  const visibleTop = sRect.top + reserve.top;
+  const visibleBottom = sRect.bottom - reserve.bottom;
+  const visibleHeight = Math.max(64, visibleBottom - visibleTop);
+
+  let delta = 0;
+  if (mode === "start") {
+    delta = vRect.top - visibleTop;
+  } else if (vRect.top < visibleTop - 1) {
+    delta = vRect.top - visibleTop;
+  } else if (vRect.bottom > visibleBottom + 1) {
+    delta = vRect.height > visibleHeight ? vRect.top - visibleTop : vRect.bottom - visibleBottom;
+  }
+  if (Math.abs(delta) < 1) return;
+  scroller.scrollTop += delta;
+}
+
 export function BibleReaderView({
   initialRef = "Jean 3.16",
   focusRef = null,
   focusSeq = 0,
+  active = true,
   onBack,
   planReading = null,
   onFlashcardCreated,
@@ -203,6 +272,9 @@ export function BibleReaderView({
   const scrollRaf = useRef(0);
   const readerRef = useRef<HTMLElement | null>(null);
   const pendingVerseStep = useRef(false);
+  const pendingScrollVerse = useRef<PendingVerseScroll | null>(null);
+  const verseScrollSeq = useRef(0);
+  const lastAppliedVerseScroll = useRef("");
   const booted = useRef(false);
   const loadGen = useRef(0);
 
@@ -293,6 +365,10 @@ export function BibleReaderView({
     verse: number | null = null,
   ) {
     const gen = ++loadGen.current;
+    pendingScrollVerse.current =
+      verse != null
+        ? { number: verse, mode: "start", seq: ++verseScrollSeq.current }
+        : { number: 0, mode: "top", seq: ++verseScrollSeq.current };
     setBookId(nextBook);
     setChapterId(nextChapter);
     setHighlightVerse(verse);
@@ -324,6 +400,7 @@ export function BibleReaderView({
   function selectVerse(number: number) {
     setSelection((current) => {
       if (!current) {
+        pendingScrollVerse.current = { number, mode: "nearest", seq: ++verseScrollSeq.current };
         setHighlightVerse(number);
         setCardColor(DEFAULT_VERSE_COLOR);
         return { anchor: number, focus: number };
@@ -331,16 +408,20 @@ export function BibleReaderView({
       const { start, end } = selectionBounds(current);
       // Même verset seul → désélection
       if (start === end && start === number) {
+        pendingScrollVerse.current = null;
+        lastAppliedVerseScroll.current = "";
         setHighlightVerse(null);
         return null;
       }
       // Clic dans une plage déjà choisie → repartir sur ce verset seul
       if (start !== end && number >= start && number <= end) {
+        pendingScrollVerse.current = { number, mode: "nearest", seq: ++verseScrollSeq.current };
         setHighlightVerse(number);
         setCardColor(DEFAULT_VERSE_COLOR);
         return { anchor: number, focus: number };
       }
       // Étendre depuis l’ancre
+      pendingScrollVerse.current = { number, mode: "nearest", seq: ++verseScrollSeq.current };
       setHighlightVerse(Math.min(current.anchor, number));
       return { anchor: current.anchor, focus: number };
     });
@@ -349,6 +430,7 @@ export function BibleReaderView({
   }
 
   function jumpToVerse(number: number) {
+    pendingScrollVerse.current = { number, mode: "start", seq: ++verseScrollSeq.current };
     setSelection({ anchor: number, focus: number });
     setHighlightVerse(number);
     setCardColor(DEFAULT_VERSE_COLOR);
@@ -487,10 +569,30 @@ export function BibleReaderView({
     }
   }
 
-  const showCreateCard = Boolean(selection && selectedVerseText && !planReading && !pickerOpen);
+  const showCreateCard = Boolean(selection && selectedVerseText && !pickerOpen);
   const forceChrome = pickerOpen || showCreateCard;
   const hideChrome = chromeHidden && !forceChrome;
   forceChromeRef.current = forceChrome;
+
+  useLayoutEffect(() => {
+    if (loading || !active) return;
+    const pending = pendingScrollVerse.current;
+    if (!pending) return;
+    const root = passageScrollRef.current;
+    const reader = readerRef.current;
+    if (!root || !reader || root.clientHeight < 40) return;
+    const key = `${pending.seq}:${pending.mode}:${pending.number}:${passage?.id}:${showCreateCard}`;
+    if (lastAppliedVerseScroll.current === key) return;
+    const verseEl =
+      pending.mode === "top"
+        ? null
+        : (root.querySelector(`[data-verse="${pending.number}"]`) as HTMLElement | null);
+    if (pending.mode !== "top" && !verseEl) return;
+    alignVerseInScroller(root, reader, verseEl, pending.mode);
+    lastScrollTop.current = root.scrollTop;
+    lastAppliedVerseScroll.current = key;
+  }, [active, loading, passage?.id, highlightVerse, selection, showCreateCard, pickerOpen, planReading?.label]);
+
   const dockPickLabel =
     !pickerOpen
       ? locationLabel
@@ -531,7 +633,7 @@ export function BibleReaderView({
 
   useEffect(() => {
     setReadingChrome(false);
-    lastScrollTop.current = 0;
+    lastScrollTop.current = passageScrollRef.current?.scrollTop ?? 0;
     scrollAcc.current = 0;
     chromeLockUntil.current = 0;
   }, [bookId, chapterId, planReading?.label, setReadingChrome]);
@@ -599,23 +701,29 @@ export function BibleReaderView({
   return (
     <section
       ref={readerRef}
-      className={`bible-reader bible-reader--yv${hideChrome ? " is-chrome-hidden" : ""}`}
+      className={`bible-reader bible-reader--yv${hideChrome ? " is-chrome-hidden" : ""}${showCreateCard ? " has-verse-actions" : ""}`}
       style={{ ["--bible-font-size" as string]: `${fontSize}px` }}
       onKeyDown={(event) => {
         if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement) {
           return;
         }
         if (planReading) {
+          if (event.key === "Escape") {
+            event.preventDefault();
+            if (pickerOpen) {
+              closePicker();
+              return;
+            }
+            onBack?.();
+            return;
+          }
+          if (pickerOpen) return;
           if (event.key === "ArrowLeft") {
             event.preventDefault();
             if (!planReading.isFirst) planReading.onPrev();
           } else if (event.key === "ArrowRight" || event.key === "Enter") {
             event.preventDefault();
             planReading.onAdvance();
-          } else if (event.key === "Escape") {
-            setPickerOpen(false);
-            setPassageStep("book");
-            onBack?.();
           }
           return;
         }
@@ -637,32 +745,75 @@ export function BibleReaderView({
       }}
       tabIndex={-1}
     >
-      <header className="bible-yv-top" aria-label="Navigation biblique">
-        <div className="bible-yv-font" role="group" aria-label="Taille du texte">
-          <button
-            type="button"
-            className="bible-yv-font-btn"
-            onClick={() => setFontSize((n) => Math.max(FONT_MIN, n - 1))}
-            disabled={fontSize <= FONT_MIN}
-            aria-label="Réduire la taille du texte"
-          >
-            A−
-          </button>
-          <button
-            type="button"
-            className="bible-yv-font-btn"
-            onClick={() => setFontSize((n) => Math.min(FONT_MAX, n + 1))}
-            disabled={fontSize >= FONT_MAX}
-            aria-label="Augmenter la taille du texte"
-          >
-            A+
-          </button>
-        </div>
-        <div className="bible-yv-top-actions">
-          <span className="bible-yv-version" title={bible?.title || "La Bible Segond 1910"}>
-            LSG
-          </span>
-        </div>
+      <header
+        className={`bible-yv-top${planReading ? " is-plan" : ""}`}
+        aria-label="Navigation biblique"
+      >
+        {planReading ? (
+          <>
+            <div className="bible-yv-top-plan">
+              <button
+                type="button"
+                className="bible-yv-back"
+                onClick={() => onBack?.()}
+                aria-label="Quitter la lecture du plan"
+              >
+                ←
+              </button>
+              <p className="bible-yv-plan-name" title={planReading.planName}>
+                {planReading.planName}
+              </p>
+            </div>
+            <div className="bible-yv-font" role="group" aria-label="Taille du texte">
+              <button
+                type="button"
+                className="bible-yv-font-btn"
+                onClick={() => setFontSize((n) => Math.max(FONT_MIN, n - 1))}
+                disabled={fontSize <= FONT_MIN}
+                aria-label="Réduire la taille du texte"
+              >
+                A−
+              </button>
+              <button
+                type="button"
+                className="bible-yv-font-btn"
+                onClick={() => setFontSize((n) => Math.min(FONT_MAX, n + 1))}
+                disabled={fontSize >= FONT_MAX}
+                aria-label="Augmenter la taille du texte"
+              >
+                A+
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="bible-yv-font" role="group" aria-label="Taille du texte">
+              <button
+                type="button"
+                className="bible-yv-font-btn"
+                onClick={() => setFontSize((n) => Math.max(FONT_MIN, n - 1))}
+                disabled={fontSize <= FONT_MIN}
+                aria-label="Réduire la taille du texte"
+              >
+                A−
+              </button>
+              <button
+                type="button"
+                className="bible-yv-font-btn"
+                onClick={() => setFontSize((n) => Math.min(FONT_MAX, n + 1))}
+                disabled={fontSize >= FONT_MAX}
+                aria-label="Augmenter la taille du texte"
+              >
+                A+
+              </button>
+            </div>
+            <div className="bible-yv-top-actions">
+              <span className="bible-yv-version" title={bible?.title || "La Bible Segond 1910"}>
+                LSG
+              </span>
+            </div>
+          </>
+        )}
       </header>
 
       <div id={statusId} className="sr-only" aria-live="polite">
@@ -708,11 +859,12 @@ export function BibleReaderView({
 
         {passage?.verses?.length ? (
           <div
-            className={`bible-verses${selection != null && !planReading ? " is-dimming" : ""}`}
+            className={`bible-verses${selection != null ? " is-dimming" : ""}`}
           >
             {passage.verses.map((verse) => {
               const inPlanRange = Boolean(
                 planReading &&
+                  !selection &&
                   (() => {
                     const start = planReading.verseStart;
                     const end = planReading.verseEnd;
@@ -736,13 +888,19 @@ export function BibleReaderView({
                       planReading.verseEnd,
                     )
                   : null;
-              const isRangeAnchor = planReading
-                ? rangeStart != null
-                  ? verse.number === rangeStart
-                  : verse.number === (passage.verses?.[0]?.number ?? 1)
-                : highlightVerse === verse.number;
-              const active = planReading ? inPlanRange : highlightVerse === verse.number;
-              const selected = planReading ? false : verseInSelection(selection, verse.number);
+              const isRangeAnchor = selection
+                ? highlightVerse === verse.number
+                : planReading
+                  ? rangeStart != null
+                    ? verse.number === rangeStart
+                    : verse.number === (passage.verses?.[0]?.number ?? 1)
+                  : highlightVerse === verse.number;
+              const active = selection
+                ? highlightVerse === verse.number
+                : planReading
+                  ? inPlanRange
+                  : highlightVerse === verse.number;
+              const selected = verseInSelection(selection, verse.number);
               const selEdge =
                 selected && selectedStart != null && selectedEnd != null
                   ? selectedStart === selectedEnd
@@ -771,7 +929,7 @@ export function BibleReaderView({
                     active ? "is-focus" : "",
                     selected ? "is-selected" : "",
                     selEdge,
-                    planReading && inPlanRange ? "is-plan-range" : "",
+                    inPlanRange ? "is-plan-range" : "",
                     rangeEdge,
                     titleLike ? "is-title" : "",
                   ]
@@ -779,7 +937,7 @@ export function BibleReaderView({
                     .join(" ")}
                   data-verse={verse.number}
                   aria-label={`Verset ${verse.number}`}
-                  aria-pressed={selected || (planReading ? inPlanRange : false)}
+                  aria-pressed={selected || inPlanRange}
                   ref={
                     isRangeAnchor
                       ? (el) => {
@@ -872,7 +1030,7 @@ export function BibleReaderView({
         </div>
       ) : null}
 
-      {pickerOpen && !planReading ? (
+      {pickerOpen ? (
         <div
           className={`bible-yv-pick-sheet is-${passageStep}`}
           role="dialog"
@@ -980,18 +1138,43 @@ export function BibleReaderView({
         className={`bible-yv-dock${planReading ? " is-plan" : ""}${showCreateCard ? " has-verse-actions" : ""}`}
         aria-label={planReading ? "Lecture du plan" : pickerOpen ? "Choisir livre et passage" : "Chapitre"}
       >
-        {planReading ? (
-          <div className="bible-yv-dock-nav bible-yv-dock-nav--plan">
-            <button
-              type="button"
-              className="bible-yv-dock-arrow"
-              onClick={planReading.onPrev}
-              disabled={planReading.isFirst}
-              aria-label="Chapitre précédent"
-            >
-              ‹
-            </button>
-            <span className="bible-yv-dock-location is-static">{planReading.label}</span>
+        <div className={`bible-yv-dock-nav${planReading ? " bible-yv-dock-nav--plan" : ""}`}>
+          <button
+            type="button"
+            className="bible-yv-dock-arrow"
+            onClick={() => {
+              if (planReading) {
+                planReading.onPrev();
+                return;
+              }
+              if (pickerOpen) setPassageStep("chapter");
+              goAdjacent(-1);
+            }}
+            disabled={planReading ? planReading.isFirst : !canPrev || loading}
+            aria-label="Chapitre précédent"
+          >
+            ‹
+          </button>
+          <button
+            ref={dockLocationRef}
+            type="button"
+            className={`bible-yv-dock-location${pickerOpen ? " is-open" : ""}`}
+            onClick={togglePicker}
+            aria-expanded={pickerOpen}
+            aria-label={
+              pickerOpen
+                ? `Fermer le choix · ${locationLabel}`
+                : `Choisir un passage · ${planReading?.label || locationLabel}`
+            }
+          >
+            <span className="bible-yv-dock-location-text">
+              {pickerOpen ? dockPickLabel : planReading?.label || locationLabel}
+            </span>
+            <span className="bible-yv-dock-caret" aria-hidden="true">
+              ▾
+            </span>
+          </button>
+          {planReading ? (
             <button
               type="button"
               className={`bible-yv-dock-advance${planReading.isLast ? " is-complete" : ""}`}
@@ -1000,38 +1183,7 @@ export function BibleReaderView({
             >
               {planReading.isLast ? "✓" : "›"}
             </button>
-          </div>
-        ) : (
-          <div className="bible-yv-dock-nav">
-            <button
-              type="button"
-              className="bible-yv-dock-arrow"
-              onClick={() => {
-                if (pickerOpen) setPassageStep("chapter");
-                goAdjacent(-1);
-              }}
-              disabled={!canPrev || loading}
-              aria-label="Chapitre précédent"
-            >
-              ‹
-            </button>
-            <button
-              ref={dockLocationRef}
-              type="button"
-              className={`bible-yv-dock-location${pickerOpen ? " is-open" : ""}`}
-              onClick={togglePicker}
-              aria-expanded={pickerOpen}
-              aria-label={
-                pickerOpen
-                  ? `Fermer le choix · ${locationLabel}`
-                  : `Choisir un passage · ${locationLabel}`
-              }
-            >
-              <span className="bible-yv-dock-location-text">{dockPickLabel}</span>
-              <span className="bible-yv-dock-caret" aria-hidden="true">
-                ▾
-              </span>
-            </button>
+          ) : (
             <button
               type="button"
               className="bible-yv-dock-arrow"
@@ -1044,8 +1196,8 @@ export function BibleReaderView({
             >
               ›
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </footer>
     </section>
   );
