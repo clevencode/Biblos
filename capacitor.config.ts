@@ -5,8 +5,8 @@ const config: CapacitorConfig = {
   appName: "Biblos",
   webDir: "dist",
   server: {
-    // App native charge la PWA en production (URL Vercel Biblos).
-    url: "https://biblos.vercel.app",
+    // App native charge la PWA hébergée (évite localhost sur mobile).
+    url: "https://biblos-two.vercel.app",
     cleartext: false,
   },
   android: {

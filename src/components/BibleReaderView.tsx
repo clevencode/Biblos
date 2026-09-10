@@ -1,4 +1,4 @@
-import { useEffect, useEffectEvent, useId, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useId, useMemo, useRef, useState } from "react";
 import {
   adjacentChapter,
   chapterUsfm,
@@ -11,7 +11,7 @@ import {
   type YouVersionPassage,
 } from "../youversion/client";
 import { formatVerseCardFront } from "../youversion/usfm";
-import { createVerseFlashcard } from "../verseCard";
+import { createVerseFlashcard, verseCardId } from "../verseCard";
 import { DEFAULT_VERSE_COLOR, VERSE_COLORS, normalizeVerseColor } from "../verseColors";
 import type { Flashcard } from "../types";
 
@@ -46,6 +46,10 @@ type BibleReaderViewProps = {
   } | null;
   /** Après création d’une VERSECARD (catalogue local). */
   onFlashcardCreated?: (card: Flashcard) => void;
+  /** Ids des VERSECARD déjà enregistrées (ex. verse-HAG.2.10). */
+  existingVerseCardIds?: ReadonlySet<string>;
+  /** Ouvre Cartes sur la flashcard du verset. */
+  onViewFlashcard?: (cardId: string) => void;
   /** Lecture immersive : chrome (tabs) masqué au scroll. */
   onReadingChromeChange?: (hidden: boolean) => void;
 };
@@ -127,6 +131,8 @@ export function BibleReaderView({
   onBack,
   planReading = null,
   onFlashcardCreated,
+  existingVerseCardIds,
+  onViewFlashcard,
   onReadingChromeChange,
 }: BibleReaderViewProps) {
   const prefs = readPrefs();
@@ -395,6 +401,12 @@ export function BibleReaderView({
     selectedVerse && passage?.verses
       ? (passage.verses.find((item) => item.number === selectedVerse)?.text?.trim() ?? "")
       : "";
+  const selectedVerseCardId = useMemo(() => {
+    if (selectedVerse == null) return null;
+    return verseCardId(`${chapterUsfm(bookId, chapterId)}.${selectedVerse}`);
+  }, [bookId, chapterId, selectedVerse]);
+  const existingVerseCard =
+    Boolean(selectedVerseCardId && existingVerseCardIds?.has(selectedVerseCardId));
   const showCreateCard = Boolean(selectedVerse && selectedVerseText && !planReading && !pickerOpen);
   const forceChrome = pickerOpen || showCreateCard;
   const hideChrome = chromeHidden && !forceChrome;
@@ -740,9 +752,19 @@ export function BibleReaderView({
             className="bible-yv-chip is-primary bible-make-card"
             style={{ background: cardColor, borderColor: cardColor }}
             disabled={cardBusy}
-            onClick={() => void makeFlashcard()}
+            onClick={() => {
+              if (existingVerseCard && selectedVerseCardId && onViewFlashcard) {
+                onViewFlashcard(selectedVerseCardId);
+                return;
+              }
+              void makeFlashcard();
+            }}
           >
-            {cardBusy ? "Création…" : "Créer flashcard"}
+            {cardBusy
+              ? "Création…"
+              : existingVerseCard
+                ? "Visualiser flashcard"
+                : "Créer flashcard"}
           </button>
           {cardMsg ? <p className="bible-verse-actions-msg">{cardMsg}</p> : null}
         </div>

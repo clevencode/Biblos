@@ -11,6 +11,7 @@ type FlashcardDeckProps = {
   /** Expanded (≥1280): lista | cartão. Medium/compact: lista↔cartão. */
   splitLayout?: boolean;
   onRemoveCard?: (card: Flashcard) => void;
+  onReadChapter?: (card: Flashcard) => void;
 };
 
 export function FlashcardDeck({
@@ -20,6 +21,7 @@ export function FlashcardDeck({
   focusSeq = 0,
   splitLayout = false,
   onRemoveCard,
+  onReadChapter,
 }: FlashcardDeckProps) {
   const [reviewing, setReviewing] = useState(false);
   const session = useFlashcardSession(cards, {
@@ -60,6 +62,7 @@ export function FlashcardDeck({
           emptyMessage="Aucune carte à réviser."
           allowGraduation={false}
           onRemoveCard={onRemoveCard}
+          onReadChapter={onReadChapter}
         />
         <div className="flash-list-pane flash-list-pane--side">
           <FlashDeckList session={session} onPick={(index) => session.goTo(index)} />
@@ -89,6 +92,7 @@ export function FlashcardDeck({
       allowGraduation={false}
       onBackToList={() => setReviewing(false)}
       onRemoveCard={onRemoveCard}
+      onReadChapter={onReadChapter}
     />
   );
 }

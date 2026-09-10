@@ -13,8 +13,8 @@ import {
   resolveFacilStreak,
 } from "../retention";
 import type { FlashcardSession } from "../flashcardSession";
-import { isPassageReminder } from "../passageReminder";
 import type { Flashcard, RetentionMark } from "../types";
+import { chapterFocusFromRef } from "../youversion/usfm";
 
 type FlashcardReviewProps = {
   session: FlashcardSession;
@@ -35,6 +35,8 @@ type FlashcardReviewProps = {
     section?: string;
   };
   onRemoveCard?: (card: Flashcard) => void;
+  /** Ouvre Lecture sur le chapitre de la référence. */
+  onReadChapter?: (card: Flashcard) => void;
 };
 
 const MARK_KEYS: Record<RetentionMark, string> = {
@@ -75,22 +77,24 @@ function FlashCardMenu({
   disabled,
   onArchive,
   onDelete,
+  onReadChapter,
 }: {
   canArchive: boolean;
   disabled?: boolean;
   onArchive?: () => void;
   onDelete?: () => void;
+  onReadChapter?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!open) return;
-    function onPointerDown(event: PointerEvent) {
+    function onPointerDown(event: globalThis.PointerEvent) {
       if (rootRef.current?.contains(event.target as Node)) return;
       setOpen(false);
     }
-    function onKey(event: KeyboardEvent) {
+    function onKey(event: globalThis.KeyboardEvent) {
       if (event.key === "Escape") setOpen(false);
     }
     window.addEventListener("pointerdown", onPointerDown);
@@ -101,7 +105,7 @@ function FlashCardMenu({
     };
   }, [open]);
 
-  if (!onArchive && !onDelete) return null;
+  if (!onArchive && !onDelete && !onReadChapter) return null;
 
   return (
     <div
@@ -123,6 +127,21 @@ function FlashCardMenu({
       </button>
       {open ? (
         <ul className="flash-card-menu-list" role="menu">
+          {onReadChapter ? (
+            <li role="none">
+              <button
+                type="button"
+                role="menuitem"
+                className="flash-card-menu-item"
+                onClick={() => {
+                  setOpen(false);
+                  onReadChapter();
+                }}
+              >
+                Lire le chapitre
+              </button>
+            </li>
+          ) : null}
           {onDelete ? (
             <li role="none">
               <button
@@ -167,9 +186,12 @@ export function FlashcardReview({
   allowGraduation = true,
   numbering,
   onRemoveCard,
+  onReadChapter,
 }: FlashcardReviewProps) {
   const {
     queue,
+    slideQueue,
+    slideIndex,
     total,
     dueCount,
     index,
@@ -207,13 +229,16 @@ export function FlashcardReview({
     );
   }
 
+  const cardDay = card.lembrete ? dateKey(card.lembrete) : null;
   const dayPeers =
-    !numbering && card.lembrete
-      ? queue.filter((item) => item.lembrete && dateKey(item.lembrete) === dateKey(card.lembrete))
+    !numbering && cardDay
+      ? queue.filter((item) => item.lembrete && dateKey(item.lembrete) === cardDay)
       : null;
-  const dayPos = dayPeers ? dayPeers.findIndex((item) => item.id === card.id) + 1 : 0;
-  const displayTotal = numbering?.total ?? (dayPos > 0 ? dayPeers!.length : total);
-  const displayPos = numbering?.position ?? (dayPos > 0 ? dayPos : index + 1);
+  const dayScoped = !numbering && slideQueue !== queue;
+  const displayTotal = numbering?.total ?? (dayScoped ? slideQueue.length : dayPeers?.length || total);
+  const displayPos =
+    numbering?.position ?? (dayScoped ? slideIndex + 1 : dayPeers?.length ? dayPeers.findIndex((item) => item.id === card.id) + 1 : index + 1);
+  const dayPos = dayScoped ? slideIndex + 1 : dayPeers ? dayPeers.findIndex((item) => item.id === card.id) + 1 : 0;
   const done = Math.max(displayPos - 1, 0);
   const after = Math.max(displayTotal - displayPos, 0);
   const progressPct = displayTotal > 0 ? (done / displayTotal) * 100 : 0;
@@ -224,8 +249,11 @@ export function FlashcardReview({
     : dayPos > 0
       ? `Carte ${displayPos} sur ${displayTotal} ce jour`
       : `Carte ${displayPos} sur ${displayTotal}`;
-  const dayDueCount =
-    dayPeers && dayPos > 0 ? dayPeers.filter((item) => isDue(item.lembrete)).length : dueCount;
+  const dayDueCount = dayScoped
+    ? slideQueue.filter((item) => isDue(item.lembrete)).length
+    : dayPeers && dayPos > 0
+      ? dayPeers.filter((item) => isDue(item.lembrete)).length
+      : dueCount;
   const hintLabel =
     after === 0
       ? numbering?.section
@@ -309,10 +337,10 @@ export function FlashcardReview({
           >
             <div
               className={`flash-track${dragging ? " is-dragging" : ""}`}
-              style={{ transform: `translateX(calc(-${index * 100}% + ${dragX}px))` }}
+              style={{ transform: `translateX(calc(-${slideIndex * 100}% + ${dragX}px))` }}
             >
-              {queue.map((item, slideIndex) => {
-                const activeSlide = slideIndex === index;
+              {slideQueue.map((item) => {
+                const activeSlide = item.id === card.id;
                 const slideFlipped = flippedId === item.id;
                 return (
                   <div
@@ -338,6 +366,11 @@ export function FlashcardReview({
                           disabled={sync === "saving"}
                           onArchive={archiveCard}
                           onDelete={onRemoveCard ? () => onRemoveCard(item) : undefined}
+                          onReadChapter={
+                            onReadChapter && chapterFocusFromRef(item.frente)
+                              ? () => onReadChapter(item)
+                              : undefined
+                          }
                         />
                       ) : null}
                       <div className={`flash-inner${slideFlipped ? " is-flipped" : ""}`}>
@@ -457,8 +490,10 @@ type FlashDeckListProps = {
   onPick?: (index: number) => void;
   /** Titre du panneau (Cartes / Timeline). */
   title?: string;
-  /** Bandeau hebdomadaire (filtre par jour) — Timeline. */
+  /** Cronograma semanal (filtre par jour) — Timeline. */
   showWeekSchedule?: boolean;
+  /** Timeline: tout clic ouvre Lecture (pas la révision flashcard). */
+  openPassageOnPick?: boolean;
   /** Raccourci Lecture pour les rappels de passage. */
   onOpenPassage?: (card: Flashcard) => void;
 };
@@ -498,6 +533,7 @@ export function FlashDeckList({
   onPick,
   title = "Cartes",
   showWeekSchedule = false,
+  openPassageOnPick = false,
   onOpenPassage,
 }: FlashDeckListProps) {
   const { queue, index, listRef, goTo, total } = session;
@@ -547,7 +583,7 @@ export function FlashDeckList({
   const selectedCount = dayCounts.get(selectedDay) ?? 0;
 
   function pickCard(card: Flashcard) {
-    if (onOpenPassage && isPassageReminder(card.frente, card.cardCategory)) {
+    if (openPassageOnPick && onOpenPassage) {
       onOpenPassage(card);
       return;
     }
@@ -622,7 +658,7 @@ export function FlashDeckList({
   function renderCardButton(item: Flashcard) {
     const queueIndex = queue.findIndex((card) => card.id === item.id);
     const activeItem = queueIndex === index;
-    const passage = Boolean(onOpenPassage && isPassageReminder(item.frente, item.cardCategory));
+    const passage = Boolean(openPassageOnPick && onOpenPassage);
     const overdue = Boolean(item.lembrete && dateKey(item.lembrete) < today && item.status !== "encerrado");
     const statusLabel = STATUS_LABEL[item.status];
     const chipLabel = overdue ? "En retard" : showWeekSchedule ? statusLabel : null;
@@ -677,7 +713,7 @@ export function FlashDeckList({
       <header className="flash-list-head">
         <h2 className="flash-list-heading">{title}</h2>
         {showWeekSchedule ? (
-          <p className="flash-list-meta-line">Rappels dus, par jour</p>
+          <p className="flash-list-meta-line">Rappels de la semaine</p>
         ) : null}
         {showFilters ? (
           <div
@@ -802,7 +838,7 @@ export function FlashDeckList({
 
             {listCards.length === 0 ? (
               <div className="flash-plan-empty-block">
-                <p className="flash-plan-empty muted">Rien à revoir ce jour.</p>
+                <p className="flash-plan-empty muted">Aucune carte ce jour.</p>
                 {nextBusyLabel && nextBusyDay ? (
                   <button type="button" className="flash-plan-jump" onClick={() => selectDay(nextBusyDay)}>
                     {nextBusyLabel}

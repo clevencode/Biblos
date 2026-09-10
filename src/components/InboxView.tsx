@@ -8,16 +8,21 @@ type InboxViewProps = {
   active: boolean;
   /** Expanded (≥1280): lista | cartão. Medium/compact: lista↔cartão. */
   splitLayout?: boolean;
-  /** Passage biblique → Lecture au lieu de la révision. */
-  onOpenPassage?: (item: InboxCard) => void;
+  onReadChapter?: (card: InboxCard) => void;
 };
 
-export function InboxView({ items, active, splitLayout = false, onOpenPassage }: InboxViewProps) {
+/**
+ * Timeline: agenda hebdomadaire des rappels.
+ * Un clic ouvre la révision de la carte (pas Lecture).
+ */
+export function InboxView({ items, active, splitLayout = false, onReadChapter }: InboxViewProps) {
   const [reviewing, setReviewing] = useState(false);
   const session = useFlashcardSession(items, {
     active,
     enableKeys: active && (splitLayout || reviewing),
     preserveOrder: true,
+    dropAfterMark: false,
+    dayScope: true,
     allowGraduation: false,
   });
 
@@ -33,17 +38,10 @@ export function InboxView({ items, active, splitLayout = false, onOpenPassage }:
     return (
       <div className="inbox-view inbox-empty">
         <p className="inbox-empty-title">Timeline vide</p>
-        <p className="muted">Aucun rappel à revoir pour le moment.</p>
+        <p className="muted">Aucun rappel planifié pour le moment.</p>
       </div>
     );
   }
-
-  const openPassage = onOpenPassage
-    ? (card: { id: string }) => {
-        const item = items.find((entry) => entry.id === card.id);
-        if (item) onOpenPassage(item);
-      }
-    : undefined;
 
   if (splitLayout) {
     return (
@@ -52,7 +50,8 @@ export function InboxView({ items, active, splitLayout = false, onOpenPassage }:
           session={session}
           showRepetitionMeta
           allowGraduation={false}
-          emptyMessage="Timeline vide — aucun rappel à revoir."
+          emptyMessage="Timeline vide — aucun rappel planifié."
+          onReadChapter={onReadChapter}
         />
         <div className="flash-list-pane flash-list-pane--side">
           <FlashDeckList
@@ -60,7 +59,6 @@ export function InboxView({ items, active, splitLayout = false, onOpenPassage }:
             title="Timeline"
             showWeekSchedule
             onPick={(index) => session.goTo(index)}
-            onOpenPassage={openPassage}
           />
         </div>
       </div>
@@ -74,7 +72,6 @@ export function InboxView({ items, active, splitLayout = false, onOpenPassage }:
           session={session}
           title="Timeline"
           showWeekSchedule
-          onOpenPassage={openPassage}
           onPick={(index) => {
             session.goTo(index);
             setReviewing(true);
@@ -89,8 +86,9 @@ export function InboxView({ items, active, splitLayout = false, onOpenPassage }:
       session={session}
       showRepetitionMeta
       allowGraduation={false}
-      emptyMessage="Timeline vide — aucun rappel à revoir."
+      emptyMessage="Timeline vide — aucun rappel planifié."
       onBackToList={() => setReviewing(false)}
+      onReadChapter={onReadChapter}
     />
   );
 }

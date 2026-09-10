@@ -223,6 +223,15 @@ export function formatVerseCardFront(
   return `${book} ${chapter}.${verse}`;
 }
 
+/** Référence chapitre seule (ex. « JEAN 3.16 » → « JHN.3 ») pour Lecture. */
+export function chapterFocusFromRef(reference: string): string | null {
+  if (!isPassageRef(reference)) return null;
+  const usfm = toUsfm(reference);
+  const [book, chapter] = usfm.split(".");
+  if (!book || !chapter) return null;
+  return `${book}.${chapter}`;
+}
+
 /** True se o texto é uma referência de passagem com livro bíblico conhecido. */
 export function isPassageRef(text: string): boolean {
   const cleaned = text.replace(/\.+$/, "").trim();

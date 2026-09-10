@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { todayKey } from "./calendar";
+import { dateKey, todayKey } from "./calendar";
 import {
   loadOverride,
   mergeCard,
@@ -22,8 +22,13 @@ export type FlashcardSessionOptions = {
   enableKeys?: boolean;
   selectedId?: string | null;
   focusSeq?: number;
-  /** Mantém a ordem recebida em vez de reordenar com studyQueue (ex.: Inbox). */
+  /** Mantém a ordem recebida em vez de reordenar com studyQueue (ex.: Timeline). */
   preserveOrder?: boolean;
+  /**
+   * Après une note, retire la carte de la file figée (legacy Inbox due-only).
+   * Timeline: false — la carte reste à l’agenda (nouveau lembrete).
+   */
+  dropAfterMark?: boolean;
   /** Inclui cartões Encerrado na fila (sessão Cartões / disciplina). */
   includeEncerrado?: boolean;
   /**
@@ -31,6 +36,8 @@ export type FlashcardSessionOptions = {
    * Em Cartões fica false: classificar não encerra; reinício é explícito.
    */
   allowGraduation?: boolean;
+  /** Navigation / avance limitées au même jour de lembrete (Timeline). */
+  dayScope?: boolean;
 };
 
 function cardIndex(cards: Flashcard[], id: string | null | undefined): number {
@@ -72,8 +79,8 @@ function freezeStudyOrder(
 }
 
 /**
- * Inbox: congela a ordem de entrada e mantém snapshots para cartões que
- * saem do filtro due ao marcar — só removem no advanceAfterMark (como Cards).
+ * Timeline / ordre figé: conserve les ids reçus; snapshots si une carte
+ * disparaît du filtre parent (legacy due-only).
  */
 function freezeInboxOrder(
   merged: Flashcard[],
@@ -104,11 +111,14 @@ export function useFlashcardSession(
     selectedId = null,
     focusSeq = 0,
     preserveOrder = false,
+    dropAfterMark,
     includeEncerrado = false,
     allowGraduation = false,
+    dayScope = false,
   }: FlashcardSessionOptions,
 ) {
   const keysOn = enableKeys ?? active;
+  const removeAfterMark = dropAfterMark ?? preserveOrder;
   /**
    * O cartão activo é identificado por id, nunca por índice. O índice é derivado
    * no próprio render, para que uma reordenação da fila (pull do Notion) não
@@ -131,11 +141,15 @@ export function useFlashcardSession(
   const indexRef = useRef(0);
   const heldByIdRef = useRef<Map<string, Flashcard>>(new Map());
   const preserveOrderRef = useRef(preserveOrder);
+  const removeAfterMarkRef = useRef(removeAfterMark);
+  const dayScopeRef = useRef(dayScope);
   const allowGraduationRef = useRef(allowGraduation);
   /** Impede duplo toque (ex.: Fácil×2) antes do React actualizar `sync`. */
   const markingRef = useRef(false);
   const live = useRef({ flipped: false, sync: "idle" as SyncState, card: null as Flashcard | null, total: 0 });
   preserveOrderRef.current = preserveOrder;
+  removeAfterMarkRef.current = removeAfterMark;
+  dayScopeRef.current = dayScope;
   allowGraduationRef.current = allowGraduation;
 
   const mergedCards = useMemo(() => {
@@ -183,11 +197,28 @@ export function useFlashcardSession(
     const stored = local ?? loadOverride(source.id) ?? null;
     return stored ? { ...source, ...stored } : source;
   }, [local, source]);
+
+  const dayPeers = useMemo(() => {
+    if (!dayScope || !source) return null;
+    const day = source.lembrete ? dateKey(source.lembrete) : null;
+    if (!day) {
+      return queue.filter((item) => !item.lembrete);
+    }
+    return queue.filter((item) => item.lembrete && dateKey(item.lembrete) === day);
+  }, [dayScope, queue, source]);
+
+  const slideQueue = dayPeers ?? queue;
+  const slideIndex = useMemo(() => {
+    if (!source) return 0;
+    const at = slideQueue.findIndex((item) => item.id === source.id);
+    return at >= 0 ? at : 0;
+  }, [slideQueue, source]);
+
   const flipped = flippedId != null && flippedId === source?.id;
   const mark = sessionMark ?? card?.categoria ?? null;
-  const canNav = total > 1;
-  const canGoPrev = total > 1;
-  const canGoNext = total > 1;
+  const canNav = slideQueue.length > 1;
+  const canGoPrev = canNav;
+  const canGoNext = canNav;
 
   queueRef.current = queue;
   indexRef.current = index;
@@ -207,24 +238,54 @@ export function useFlashcardSession(
     if (next >= 0) goTo(next);
   }
 
-  /** Navegação livre (swipe / setas / botões): cicla o baralho. */
+  function peersFor(card: Flashcard | null | undefined, q: Flashcard[]): Flashcard[] {
+    if (!card) return q;
+    const day = card.lembrete ? dateKey(card.lembrete) : null;
+    if (!day) return q.filter((item) => !item.lembrete);
+    return q.filter((item) => item.lembrete && dateKey(item.lembrete) === day);
+  }
+
+  /** Navegação livre (swipe / setas / botões): cicla le jour (Timeline) ou le baralho. */
   function go(delta: number) {
-    if (queueRef.current.length <= 1) return;
+    const q = queueRef.current;
+    if (q.length <= 1) return;
+    if (dayScopeRef.current) {
+      const current = q[indexRef.current];
+      const peers = peersFor(current, q);
+      if (peers.length > 1) {
+        const at = peers.findIndex((item) => item.id === current?.id);
+        if (at >= 0) {
+          const next = peers[(at + delta + peers.length) % peers.length];
+          goToId(next.id);
+          return;
+        }
+      }
+      return;
+    }
     goTo(indexRef.current + delta);
   }
 
   /**
-   * Após classificar: avança para o próximo id da fila actual (sem wrap).
-   * Inbox (preserveOrder): remove o cartão da fila congelada no mesmo momento
-   * do avanço — igual ao Cards (mantém verso até ao timeout).
+   * Après classer: avance vers la carte suivante.
+   * dropAfterMark (Inbox): retire de la file figée.
+   * dayScope (Timeline): reste sur le même jour de lembrete.
    */
   function advanceAfterMark(fromId: string) {
     const q = queueRef.current;
     const from = q.findIndex((item) => item.id === fromId);
-    const nextId = from >= 0 && from + 1 < q.length ? q[from + 1].id : null;
+    const fromCard = from >= 0 ? q[from] : null;
+    let nextId: string | null = null;
+    if (dayScopeRef.current && fromCard) {
+      const peers = peersFor(fromCard, q);
+      const at = peers.findIndex((item) => item.id === fromId);
+      nextId = at >= 0 && at + 1 < peers.length ? peers[at + 1].id : null;
+    } else {
+      nextId = from >= 0 && from + 1 < q.length ? q[from + 1].id : null;
+    }
+
     window.clearTimeout(advanceTimer.current);
     advanceTimer.current = window.setTimeout(() => {
-      if (preserveOrderRef.current) {
+      if (preserveOrderRef.current && removeAfterMarkRef.current) {
         heldByIdRef.current.delete(fromId);
         setFrozenIds((ids) => {
           if (!ids) return ids;
@@ -241,8 +302,7 @@ export function useFlashcardSession(
         return;
       }
 
-      // Saiu da fila (deixou de estar due): o slot já mostra o cartão seguinte.
-      if (!queueRef.current.some((item) => item.id === fromId)) return;
+      if (!queueRef.current.some((item) => item.id === fromId) && !dayScopeRef.current) return;
       if (nextId && queueRef.current.some((item) => item.id === nextId)) {
         goToId(nextId);
         return;
@@ -487,6 +547,8 @@ export function useFlashcardSession(
 
   return {
     queue,
+    slideQueue,
+    slideIndex,
     total,
     dueCount,
     index,

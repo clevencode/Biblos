@@ -1,6 +1,6 @@
 import { dateKey } from "./calendar";
 import { mergeCard } from "./cardOverrides";
-import { compareStudyOrder, isDue } from "./retention";
+import { isDue } from "./retention";
 import type { CalendarCardItem, Flashcard, InboxCard, ReadingPlan, Seed } from "./types";
 
 export type Materia = { id: string; nome: string };
@@ -102,7 +102,7 @@ export function listInboxSyncCards(
 ): Array<{ id: string; url: string }> {
   const seen = new Set<string>();
   const out: Array<{ id: string; url: string }> = [];
-  for (const card of buildInbox(notes, cardIds)) {
+  for (const card of buildTimeline(notes, cardIds)) {
     if (!card.url || seen.has(card.id)) continue;
     seen.add(card.id);
     out.push({ id: card.id, url: card.url });
@@ -110,11 +110,20 @@ export function listInboxSyncCards(
   return out;
 }
 
+/** Cartes dues aujourd’hui / en retard (badge Timeline, sync legacy). */
 export function buildInbox(notes: Seed[], cardIds?: string[] | null): InboxCard[] {
+  return buildTimeline(notes, cardIds).filter((card) => isDue(card.lembrete));
+}
+
+/**
+ * Agenda Timeline: rappels actifs du plan (tous les jours), sans filtre isDue.
+ * Encerrado exclus — le calendrier hebdo filtre ensuite par lembrete.
+ */
+export function buildTimeline(notes: Seed[], cardIds?: string[] | null): InboxCard[] {
   const items = notes.flatMap((seed) =>
     buildFlashcards(seed)
       .map(mergeCard)
-      .filter((card) => isBiblosFlashcard(card) && card.status !== "encerrado" && isDue(card.lembrete))
+      .filter((card) => isBiblosFlashcard(card) && card.status !== "encerrado")
       .map((card) => ({
         ...card,
         noteId: seed.nota.id,
@@ -122,7 +131,13 @@ export function buildInbox(notes: Seed[], cardIds?: string[] | null): InboxCard[
         materiaNome: seed.materia.nome,
       })),
   );
-  return filterByCardIds(items, cardIds).sort(compareStudyOrder);
+  return filterByCardIds(items, cardIds).sort((a, b) => {
+    const byDay = (a.lembrete ?? "\uffff").localeCompare(b.lembrete ?? "\uffff");
+    if (byDay !== 0) return byDay;
+    const due = Number(isDue(b.lembrete)) - Number(isDue(a.lembrete));
+    if (due !== 0) return due;
+    return a.frente.localeCompare(b.frente, "fr");
+  });
 }
 
 export function buildCalendarEvents(

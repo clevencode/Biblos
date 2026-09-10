@@ -6,9 +6,10 @@ import { ModeTabIcon } from "./components/ModeTabIcon";
 import { TodayView } from "./components/TodayView";
 import { PlanGallery } from "./components/PlanGallery";
 import { BibleReaderView } from "./components/BibleReaderView";
-import type { Catalog, CenterMode, Flashcard, InboxCard, ReadingPlan, Seed } from "./types";
+import type { Catalog, CenterMode, Flashcard, ReadingPlan, Seed } from "./types";
 import {
   buildInbox,
+  buildTimeline,
   listAllFlashcards,
   planCardIds,
 } from "./catalog";
@@ -31,7 +32,7 @@ import {
 } from "./planReading";
 import { useNotionSync } from "./useNotionSync";
 import { useNarrow, useSplitLayout } from "./layout";
-import { isPassageReminder } from "./passageReminder";
+import { chapterFocusFromRef } from "./youversion/usfm";
 
 const UI_KEY = "biblos-ui";
 const seedCatalog = hydrateCatalogFromCache(seed as Catalog);
@@ -115,7 +116,35 @@ export function App() {
     () => listAllFlashcards(notes, scopedCardIds).map(mergeCard),
     [scopedCardIds, notes, retentionTick],
   );
-  const inbox = useMemo(() => buildInbox(notes, scopedCardIds), [scopedCardIds, notes, retentionTick]);
+  const verseCardIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const card of listAllFlashcards(notes, null)) {
+      if (String(card.id || "").startsWith("verse-")) ids.add(card.id);
+    }
+    return ids;
+  }, [notes, retentionTick]);
+
+  function openVerseFlashcard(cardId: string) {
+    if (activePlan?.cardIds?.length && !activePlan.cardIds.includes(cardId)) {
+      setCatalog((current) => {
+        const plans = (current.plans ?? []).map((plan) =>
+          plan.id === activePlan.id ? { ...plan, cardIds: [cardId, ...plan.cardIds] } : plan,
+        );
+        const next = { ...current, plans };
+        persistCatalogCache(next);
+        return next;
+      });
+    }
+    setHome(false);
+    setMode("cards");
+    setCardFocusId(cardId);
+    setCardFocusSeq((value) => value + 1);
+  }
+  const timeline = useMemo(
+    () => buildTimeline(notes, scopedCardIds),
+    [scopedCardIds, notes, retentionTick],
+  );
+  const inboxDue = useMemo(() => buildInbox(notes, scopedCardIds), [scopedCardIds, notes, retentionTick]);
   const activeCardsCount = useMemo(
     () => cards.filter((card) => card.status !== "encerrado").length,
     [cards],
@@ -190,6 +219,11 @@ export function App() {
     setMode("bible");
   }
 
+  function openCardChapter(card: Flashcard) {
+    const chapter = chapterFocusFromRef(card.frente);
+    if (chapter) openPassageInBible(chapter);
+  }
+
   function startPlanReading(jour: number, _passage: string) {
     if (!activePlan) return;
     const session = createPlanReadingSession({
@@ -237,13 +271,6 @@ export function App() {
     setPlanReading(next);
     const step = currentPlanStep(next);
     if (step) openPassageInBible(step.focusRef, { keepPlanReading: true });
-  }
-
-  function openInboxItem(item: InboxCard) {
-    if (isPassageReminder(item.frente, item.cardCategory)) {
-      openPassageInBible(item.frente);
-      return;
-    }
   }
 
   function handleMarkRead(jour: number) {
@@ -397,8 +424,8 @@ export function App() {
                       aria-label={
                         item.id === "cards" && activeCardsCount
                           ? `${item.label}, ${activeCardsCount} carte${activeCardsCount === 1 ? "" : "s"} active${activeCardsCount === 1 ? "" : "s"}`
-                          : item.id === "inbox" && inbox.length
-                            ? `${item.label}, ${inbox.length} à revoir`
+                          : item.id === "inbox" && inboxDue.length
+                            ? `${item.label}, ${inboxDue.length} à revoir`
                             : item.label
                       }
                       title={item.label}
@@ -416,9 +443,9 @@ export function App() {
                           {activeCardsCount}
                         </span>
                       ) : null}
-                      {item.id === "inbox" && inbox.length ? (
+                      {item.id === "inbox" && inboxDue.length ? (
                         <span className="mode-tab-badge" aria-hidden="true">
-                          {inbox.length}
+                          {inboxDue.length}
                         </span>
                       ) : null}
                     </button>
@@ -473,6 +500,8 @@ export function App() {
                         : null
                     }
                     onFlashcardCreated={handleFlashcardCreated}
+                    existingVerseCardIds={verseCardIds}
+                    onViewFlashcard={openVerseFlashcard}
                     onReadingChromeChange={setBibleChromeHidden}
                   />
                 </div>
@@ -491,6 +520,7 @@ export function App() {
                     focusSeq={cardFocusSeq}
                     splitLayout={splitLayout}
                     onRemoveCard={handleRemoveCard}
+                    onReadChapter={openCardChapter}
                   />
                 </div>
                 <div
@@ -501,10 +531,10 @@ export function App() {
                   className="pane-body"
                 >
                   <InboxView
-                    items={inbox}
+                    items={timeline}
                     active={mode === "inbox"}
                     splitLayout={splitLayout}
-                    onOpenPassage={openInboxItem}
+                    onReadChapter={openCardChapter}
                   />
                 </div>
               </div>
