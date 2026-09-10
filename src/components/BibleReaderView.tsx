@@ -21,6 +21,22 @@ const FONT_MIN = 16;
 const FONT_MAX = 26;
 const FONT_DEFAULT = 19;
 
+/** Sélection d’un ou plusieurs versets (plage inclusive via anchor → focus). */
+type VerseSelection = { anchor: number; focus: number };
+
+function selectionBounds(sel: VerseSelection): { start: number; end: number } {
+  return {
+    start: Math.min(sel.anchor, sel.focus),
+    end: Math.max(sel.anchor, sel.focus),
+  };
+}
+
+function verseInSelection(sel: VerseSelection | null, number: number): boolean {
+  if (!sel) return false;
+  const { start, end } = selectionBounds(sel);
+  return number >= start && number <= end;
+}
+
 type ReaderPrefs = {
   bookId?: string;
   chapterId?: string;
@@ -151,15 +167,17 @@ export function BibleReaderView({
 
   const [passage, setPassage] = useState<YouVersionPassage | null>(null);
   const [bible, setBible] = useState<YouVersionBible | null>(() => readBooksCache()?.bible ?? null);
-  const [bibleId, setBibleId] = useState<number | null>(LSG_BIBLE_ID);
+  const [, setBibleId] = useState<number | null>(LSG_BIBLE_ID);
   const [books, setBooks] = useState<YouVersionBook[]>(() => readBooksCache()?.books ?? []);
   const [bookId, setBookId] = useState(initialParts.bookId);
   const [chapterId, setChapterId] = useState(initialParts.chapterId);
   const [highlightVerse, setHighlightVerse] = useState<number | null>(
     initialParts.verse ?? null,
   );
-  const [selectedVerse, setSelectedVerse] = useState<number | null>(
-    initialParts.verse ?? null,
+  const [selection, setSelection] = useState<VerseSelection | null>(() =>
+    initialParts.verse != null
+      ? { anchor: initialParts.verse, focus: initialParts.verse }
+      : null,
   );
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -278,7 +296,7 @@ export function BibleReaderView({
     setBookId(nextBook);
     setChapterId(nextChapter);
     setHighlightVerse(verse);
-    setSelectedVerse(verse);
+    setSelection(verse != null ? { anchor: verse, focus: verse } : null);
     setCardMsg(null);
     setLoading(true);
     setError(null);
@@ -304,18 +322,34 @@ export function BibleReaderView({
   }
 
   function selectVerse(number: number) {
-    setSelectedVerse((current) => {
-      const next = current === number ? null : number;
-      setHighlightVerse(next);
-      if (next != null) setCardColor(DEFAULT_VERSE_COLOR);
-      return next;
+    setSelection((current) => {
+      if (!current) {
+        setHighlightVerse(number);
+        setCardColor(DEFAULT_VERSE_COLOR);
+        return { anchor: number, focus: number };
+      }
+      const { start, end } = selectionBounds(current);
+      // Même verset seul → désélection
+      if (start === end && start === number) {
+        setHighlightVerse(null);
+        return null;
+      }
+      // Clic dans une plage déjà choisie → repartir sur ce verset seul
+      if (start !== end && number >= start && number <= end) {
+        setHighlightVerse(number);
+        setCardColor(DEFAULT_VERSE_COLOR);
+        return { anchor: number, focus: number };
+      }
+      // Étendre depuis l’ancre
+      setHighlightVerse(Math.min(current.anchor, number));
+      return { anchor: current.anchor, focus: number };
     });
     setCardMsg(null);
     setPickerOpen(false);
   }
 
   function jumpToVerse(number: number) {
-    setSelectedVerse(number);
+    setSelection({ anchor: number, focus: number });
     setHighlightVerse(number);
     setCardColor(DEFAULT_VERSE_COLOR);
     setCardMsg(null);
@@ -356,25 +390,30 @@ export function BibleReaderView({
   }
 
   function closeCreateCard() {
-    setSelectedVerse(null);
+    setSelection(null);
     setHighlightVerse(null);
     setCardMsg(null);
     setCardColor(DEFAULT_VERSE_COLOR);
   }
 
   async function makeFlashcard() {
-    if (!selectedVerse || !passage?.verses?.length || cardBusy) return;
-    const verse = passage.verses.find((item) => item.number === selectedVerse);
-    if (!verse?.text?.trim()) return;
+    if (!selection || !passage?.verses?.length || cardBusy) return;
+    const { start, end } = selectionBounds(selection);
+    const verses = passage.verses.filter((item) => item.number >= start && item.number <= end);
+    if (!verses.length || verses.some((item) => !item.text?.trim())) return;
     const title = selectedBook?.title ?? bookId;
-    const frente = formatVerseCardFront(title, chapterId, selectedVerse);
-    const usfm = `${chapterUsfm(bookId, chapterId)}.${selectedVerse}`;
+    const frente = formatVerseCardFront(title, chapterId, start, end);
+    const usfm =
+      start === end
+        ? `${chapterUsfm(bookId, chapterId)}.${start}`
+        : `${chapterUsfm(bookId, chapterId)}.${start}-${end}`;
+    const verso = verses.map((item) => item.text.trim()).join(" ");
     setCardBusy(true);
     setCardMsg(null);
     try {
       const result = createVerseFlashcard({
         frente,
-        verso: verse.text.trim(),
+        verso,
         usfm,
         color: cardColor,
       });
@@ -398,19 +437,39 @@ export function BibleReaderView({
   const canPrev = Boolean(adjacentChapter(books, bookId, chapterId, -1));
   const canNext = Boolean(adjacentChapter(books, bookId, chapterId, 1));
   const bookTitle = selectedBook?.title ?? bookId;
-  const locationLabel =
-    selectedVerse != null ? `${bookTitle} ${chapterId}.${selectedVerse}` : `${bookTitle} ${chapterId}`;
+  const locationLabel = selection
+    ? (() => {
+        const { start, end } = selectionBounds(selection);
+        return start === end
+          ? `${bookTitle} ${chapterId}.${start}`
+          : `${bookTitle} ${chapterId}.${start}–${end}`;
+      })()
+    : `${bookTitle} ${chapterId}`;
   const verseOptions =
     passage?.verses?.map((verse) => verse.number) ??
-    (selectedVerse != null ? [selectedVerse] : []);
+    (selection ? [selectionBounds(selection).start] : []);
+  const selectedBounds = selection ? selectionBounds(selection) : null;
   const selectedVerseText =
-    selectedVerse && passage?.verses
-      ? (passage.verses.find((item) => item.number === selectedVerse)?.text?.trim() ?? "")
+    selectedBounds && passage?.verses
+      ? passage.verses
+          .filter(
+            (item) => item.number >= selectedBounds.start && item.number <= selectedBounds.end,
+          )
+          .map((item) => item.text.trim())
+          .filter(Boolean)
+          .join(" ")
       : "";
+  const selectedStart = selectedBounds?.start ?? null;
+  const selectedEnd = selectedBounds?.end ?? null;
   const selectedVerseCardId = useMemo(() => {
-    if (selectedVerse == null) return null;
-    return verseCardId(`${chapterUsfm(bookId, chapterId)}.${selectedVerse}`);
-  }, [bookId, chapterId, selectedVerse]);
+    if (selectedStart == null || selectedEnd == null) return null;
+    const base = chapterUsfm(bookId, chapterId);
+    const usfm =
+      selectedStart === selectedEnd
+        ? `${base}.${selectedStart}`
+        : `${base}.${selectedStart}-${selectedEnd}`;
+    return verseCardId(usfm);
+  }, [bookId, chapterId, selectedStart, selectedEnd]);
   const existingVerseCard =
     Boolean(selectedVerseCardId && existingVerseCardIds?.has(selectedVerseCardId));
 
@@ -428,7 +487,7 @@ export function BibleReaderView({
     }
   }
 
-  const showCreateCard = Boolean(selectedVerse && selectedVerseText && !planReading && !pickerOpen);
+  const showCreateCard = Boolean(selection && selectedVerseText && !planReading && !pickerOpen);
   const forceChrome = pickerOpen || showCreateCard;
   const hideChrome = chromeHidden && !forceChrome;
   forceChromeRef.current = forceChrome;
@@ -649,7 +708,7 @@ export function BibleReaderView({
 
         {passage?.verses?.length ? (
           <div
-            className={`bible-verses${selectedVerse != null && !planReading ? " is-dimming" : ""}`}
+            className={`bible-verses${selection != null && !planReading ? " is-dimming" : ""}`}
           >
             {passage.verses.map((verse) => {
               const inPlanRange = Boolean(
@@ -683,7 +742,17 @@ export function BibleReaderView({
                   : verse.number === (passage.verses?.[0]?.number ?? 1)
                 : highlightVerse === verse.number;
               const active = planReading ? inPlanRange : highlightVerse === verse.number;
-              const selected = planReading ? false : selectedVerse === verse.number;
+              const selected = planReading ? false : verseInSelection(selection, verse.number);
+              const selEdge =
+                selected && selectedStart != null && selectedEnd != null
+                  ? selectedStart === selectedEnd
+                    ? "is-sel-single"
+                    : verse.number === selectedStart
+                      ? "is-sel-start"
+                      : verse.number === selectedEnd
+                        ? "is-sel-end"
+                        : "is-sel-mid"
+                  : "";
               const titleLike = isLikelyVerseTitle(verse.text, verse.number);
               const rangeEdge =
                 planReading && inPlanRange
@@ -701,6 +770,7 @@ export function BibleReaderView({
                     "bible-verse",
                     active ? "is-focus" : "",
                     selected ? "is-selected" : "",
+                    selEdge,
                     planReading && inPlanRange ? "is-plan-range" : "",
                     rangeEdge,
                     titleLike ? "is-title" : "",
@@ -736,12 +806,14 @@ export function BibleReaderView({
         <div
           className="bible-verse-actions"
           role="region"
-          aria-label="Flashcard du verset"
+          aria-label="Flashcard du passage"
           style={{ ["--verse-tint" as string]: cardColor }}
         >
           <div className="bible-verse-actions-head">
             <p className="bible-verse-actions-ref">
-              {formatVerseCardFront(bookTitle, chapterId, selectedVerse!)}
+              {selectedStart != null && selectedEnd != null
+                ? formatVerseCardFront(bookTitle, chapterId, selectedStart, selectedEnd)
+                : ""}
             </p>
             <button
               type="button"
@@ -752,6 +824,15 @@ export function BibleReaderView({
               ×
             </button>
           </div>
+          {selectedStart != null && selectedEnd != null && selectedStart !== selectedEnd ? (
+            <p className="bible-verse-actions-hint muted">
+              {selectedEnd - selectedStart + 1} versets · tape un autre verset pour ajuster
+            </p>
+          ) : (
+            <p className="bible-verse-actions-hint muted">
+              Tape un autre verset pour étendre la sélection
+            </p>
+          )}
           <div className="bible-verse-colors" role="group" aria-label="Couleur du surligneur">
             {VERSE_COLORS.map((swatch) => {
               const on = normalizeVerseColor(cardColor) === swatch.hex;
@@ -784,7 +865,7 @@ export function BibleReaderView({
             {cardBusy
               ? "Création…"
               : existingVerseCard
-                ? "Visualiser flashcard"
+                ? "Voir la carte"
                 : "Créer flashcard"}
           </button>
           {cardMsg ? <p className="bible-verse-actions-msg">{cardMsg}</p> : null}
@@ -863,7 +944,11 @@ export function BibleReaderView({
                     );
                   })
                 : verseOptions.map((n) => {
-                    const on = n === selectedVerse;
+                    const on =
+                      selectedStart != null &&
+                      selectedEnd != null &&
+                      n >= selectedStart &&
+                      n <= selectedEnd;
                     return (
                       <button
                         key={n}

@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import { dateKey, formatDay, relativeDayLabel, scheduleDayParts, shiftDay, todayKey, weekDaysSunday, weekdayLabel } from "../calendar";
-import { loadOverride } from "../flashcardSync";
 import {
-  FACIL_GRADUATION,
   RETENTION_LABELS,
   RETENTION_MARKS,
   addDays,
@@ -10,7 +8,6 @@ import {
   cardIntervalDays,
   isDue,
   lastReviewedOn,
-  resolveFacilStreak,
 } from "../retention";
 import type { FlashcardSession } from "../flashcardSession";
 import type { Flashcard, RetentionMark } from "../types";
@@ -23,8 +20,6 @@ type FlashcardReviewProps = {
   showRepetitionMeta?: boolean;
   /** Retour à la liste (écran séparé ; garde la session). */
   onBackToList?: () => void;
-  /** Affiche le hint Terminé sur Facile (graduation SRS). */
-  allowGraduation?: boolean;
   /**
    * Numérotation explicite (ex. : position dans un jour).
    * Sinon, index de la session.
@@ -59,14 +54,7 @@ function CardRepetitionMeta({ item }: { item: Flashcard }) {
 function markHint(
   level: RetentionMark,
   card: Flashcard | null,
-  allowGraduation: boolean,
 ): { interval: string; when: string } {
-  if (allowGraduation && level === "facil" && card) {
-    const streak = resolveFacilStreak(card, loadOverride(card.id)?.facilStreak);
-    if (streak + 1 >= FACIL_GRADUATION) {
-      return { interval: "Terminé", when: "hors des rappels" };
-    }
-  }
   const prev = card ? cardIntervalDays(card) : 0;
   const days = ankiIntervalDays(level, prev);
   return { interval: `+${days}j`, when: formatDay(addDays(todayKey(), days)) };
@@ -183,15 +171,14 @@ export function FlashcardReview({
   emptyMessage,
   showRepetitionMeta = false,
   onBackToList,
-  allowGraduation = true,
   numbering,
   onRemoveCard,
   onReadChapter,
 }: FlashcardReviewProps) {
   const {
-    queue,
     slideQueue,
     slideIndex,
+    dayScope,
     total,
     index,
     card,
@@ -228,46 +215,34 @@ export function FlashcardReview({
     );
   }
 
-  const cardDay = card.lembrete ? dateKey(card.lembrete) : null;
-  const dayPeers =
-    !numbering && cardDay
-      ? queue.filter((item) => item.lembrete && dateKey(item.lembrete) === cardDay)
-      : null;
-  const dayScoped = !numbering && slideQueue !== queue;
-  const displayTotal = numbering?.total ?? (dayScoped ? slideQueue.length : dayPeers?.length || total);
+  const dayScoped = Boolean(dayScope) && !numbering;
+  const displayTotal = numbering?.total ?? (dayScoped ? slideQueue.length : total);
   const displayPos =
-    numbering?.position ?? (dayScoped ? slideIndex + 1 : dayPeers?.length ? dayPeers.findIndex((item) => item.id === card.id) + 1 : index + 1);
-  const dayPos = dayScoped ? slideIndex + 1 : dayPeers ? dayPeers.findIndex((item) => item.id === card.id) + 1 : 0;
+    numbering?.position ?? (dayScoped ? slideIndex + 1 : index + 1);
   const after = Math.max(displayTotal - displayPos, 0);
   const progressPct = displayTotal > 0 ? (displayPos / displayTotal) * 100 : 0;
   const grading = flipped && sync !== "saving" && card.status !== "encerrado";
   const closed = card.status === "encerrado";
   const positionLabel = numbering?.section
     ? `${numbering.section}: carte ${displayPos} sur ${displayTotal}`
-    : dayPos > 0
+    : dayScoped
       ? `Carte ${displayPos} sur ${displayTotal} ce jour`
       : `Carte ${displayPos} sur ${displayTotal}`;
-  const remainingDue = (
-    dayScoped
-      ? slideQueue.slice(slideIndex)
-      : dayPeers && dayPos > 0
-        ? dayPeers.slice(Math.max(dayPos - 1, 0))
-        : queue.slice(index)
-  ).filter((item) => isDue(item.lembrete)).length;
+  const remainingDue = dayScoped
+    ? slideQueue.slice(slideIndex).filter((item) => isDue(item.lembrete)).length
+    : 0;
   const hintLabel =
     after === 0
       ? numbering?.section
         ? "Dernière de cette section"
-        : dayPos > 0
+        : dayScoped
           ? "Dernière carte du jour"
           : "Dernière carte"
       : after === 1
         ? "1 à suivre"
         : `${after} à suivre`;
   const dueHint =
-    !numbering && after > 0 && remainingDue > 0
-      ? `${remainingDue} à revoir`
-      : null;
+    dayScoped && after > 0 && remainingDue > 0 ? `${remainingDue} à revoir` : null;
 
   return (
     <div className={`flash flash--solo${flipped ? " is-revealed" : ""}${closed ? " is-closed" : ""}`}>
@@ -407,7 +382,7 @@ export function FlashcardReview({
 
         {closed ? (
           <div className="flash-actions flash-actions--closed">
-            <p className="flash-closed-copy">Hors des rappels de la Timeline. Tu peux reprendre l’apprentissage.</p>
+            <p className="flash-closed-copy">Hors des rappels. Tu peux reprendre l’apprentissage.</p>
             <button
               type="button"
               className="flash-restart-btn"
@@ -437,7 +412,7 @@ export function FlashcardReview({
             ) : null}
             {RETENTION_MARKS.map((level: RetentionMark) => {
               const key = MARK_KEYS[level];
-              const hint = markHint(level, card, allowGraduation);
+              const hint = markHint(level, card);
               return (
                 <button
                   key={level}
@@ -447,11 +422,7 @@ export function FlashcardReview({
                   disabled={!grading}
                   aria-pressed={mark === level}
                   aria-keyshortcuts={level === "medio" ? `${key} Space` : key}
-                  title={
-                    level === "facil" && hint.interval === "Terminé"
-                      ? `Facile (2e fois) — termine le rappel et synchronise Notion (${key})`
-                      : `${RETENTION_LABELS[level]} — prochain rappel ${hint.when} (${key}${level === "medio" ? " ou Espace" : ""})`
-                  }
+                  title={`${RETENTION_LABELS[level]} — prochain rappel ${hint.when} (${key}${level === "medio" ? " ou Espace" : ""})`}
                 >
                   <span className="flash-mark-key" aria-hidden="true">
                     {key}
@@ -488,14 +459,13 @@ export function FlashcardReview({
 type FlashDeckListProps = {
   session: FlashcardSession;
   onPick?: (index: number) => void;
-  /** Titre du panneau (Cartes / Timeline). */
+  /** Titre accessible du panneau (Cartes / Timeline). */
   title?: string;
-  /** Cronograma semanal (filtre par jour) — Timeline. */
+  /** Bandeau hebdomadaire (filtre par jour) — Timeline. */
   showWeekSchedule?: boolean;
-  /** Timeline: tout clic ouvre Lecture (pas la révision flashcard). */
-  openPassageOnPick?: boolean;
-  /** Raccourci Lecture pour les rappels de passage. */
-  onOpenPassage?: (card: Flashcard) => void;
+  /** Aligne le filtre Nouveau/En révision/Terminé sur une carte (Visualiser). */
+  focusCardId?: string | null;
+  focusSeq?: number;
 };
 
 type DeckProgressFilter = "nouveau" | "revisando" | "termines";
@@ -511,6 +481,12 @@ const STATUS_LABEL: Record<Flashcard["status"], string> = {
   estudo: "En révision",
   encerrado: "Terminé",
 };
+
+function filterForStatus(status: Flashcard["status"]): DeckProgressFilter {
+  if (status === "espera") return "nouveau";
+  if (status === "encerrado") return "termines";
+  return "revisando";
+}
 
 function cardMatchesDeckFilter(card: Flashcard, filter: DeckProgressFilter): boolean {
   if (filter === "nouveau") return card.status === "espera";
@@ -533,8 +509,8 @@ export function FlashDeckList({
   onPick,
   title = "Cartes",
   showWeekSchedule = false,
-  openPassageOnPick = false,
-  onOpenPassage,
+  focusCardId = null,
+  focusSeq = 0,
 }: FlashDeckListProps) {
   const { queue, index, listRef, goTo, total } = session;
   const [filter, setFilter] = useState<DeckProgressFilter>("nouveau");
@@ -542,6 +518,12 @@ export function FlashDeckList({
   const today = todayKey();
   const [weekAnchor, setWeekAnchor] = useState(today);
   const [selectedDay, setSelectedDay] = useState(today);
+
+  useEffect(() => {
+    if (!focusCardId || focusSeq <= 0) return;
+    const focused = queue.find((card) => card.id === focusCardId);
+    if (focused) setFilter(filterForStatus(focused.status));
+  }, [focusCardId, focusSeq, queue]);
 
   const nouveauCount = queue.filter((card) => cardMatchesDeckFilter(card, "nouveau")).length;
   const revisandoCount = queue.filter((card) => cardMatchesDeckFilter(card, "revisando")).length;
@@ -583,10 +565,6 @@ export function FlashDeckList({
   const selectedCount = dayCounts.get(selectedDay) ?? 0;
 
   function pickCard(card: Flashcard) {
-    if (openPassageOnPick && onOpenPassage) {
-      onOpenPassage(card);
-      return;
-    }
     const queueIndex = queue.findIndex((item) => item.id === card.id);
     if (queueIndex < 0) return;
     if (onPick) onPick(queueIndex);
@@ -658,7 +636,6 @@ export function FlashDeckList({
   function renderCardButton(item: Flashcard) {
     const queueIndex = queue.findIndex((card) => card.id === item.id);
     const activeItem = queueIndex === index;
-    const passage = Boolean(openPassageOnPick && onOpenPassage);
     const overdue = Boolean(item.lembrete && dateKey(item.lembrete) < today && item.status !== "encerrado");
     const statusLabel = STATUS_LABEL[item.status];
     const chipLabel = overdue ? "En retard" : showWeekSchedule ? statusLabel : null;
@@ -680,13 +657,11 @@ export function FlashDeckList({
           onClick={() => pickCard(item)}
           aria-current={activeItem ? "true" : undefined}
           aria-label={
-            passage
-              ? `Lire le passage: ${item.frente}`
-              : item.status === "encerrado"
-                ? `Voir la carte terminée: ${item.frente}`
-                : overdue
-                  ? `Réviser (en retard): ${item.frente}`
-                  : `Réviser la carte: ${item.frente} · ${statusLabel}`
+            item.status === "encerrado"
+              ? `Voir la carte terminée: ${item.frente}`
+              : overdue
+                ? `Réviser (en retard): ${item.frente}`
+                : `Réviser la carte: ${item.frente} · ${statusLabel}`
           }
         >
           <span className="flash-plan-event-title">{item.frente}</span>
@@ -708,7 +683,7 @@ export function FlashDeckList({
     <nav
       className={`flash-list flash-list--deck${showWeekSchedule ? " flash-list--plan" : ""}`}
       ref={listRef}
-      aria-label={showWeekSchedule ? "Planning Timeline" : title}
+      aria-label={showWeekSchedule ? "Planning des rappels" : title}
     >
       {showFilters || !total ? (
         <header className="flash-list-head">

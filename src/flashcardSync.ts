@@ -36,8 +36,6 @@ export {
   upsertOutbox,
   removeOutbox,
 } from "./cardOverrides";
-export { retentionFromMark, scheduleFromMark } from "./retention";
-
 export type SyncState = "idle" | "saving" | "saved" | "error";
 
 function canSync(url: string): boolean {

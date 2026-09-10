@@ -65,7 +65,7 @@ export function createVerseFlashcard(input: {
     criadoEm,
   };
 
-  // Overlay local (sans dirty Notion) — lembrete / status pour Inbox & Cartes
+  // Overlay local (sans dirty Notion) — lembrete / status pour Timeline & Cartes
   applyRemoteOverride(
     id,
     {
@@ -80,12 +80,4 @@ export function createVerseFlashcard(input: {
   notifyFlashcardRevision();
 
   return { ok: true, card, created: true };
-}
-
-/** Met à jour la couleur d’un VERSECARD déjà créé (catalogue local). */
-export function withVerseCardColor(card: Flashcard, color: string | null | undefined): Flashcard {
-  return {
-    ...card,
-    color: normalizeVerseColor(color ?? card.color ?? DEFAULT_VERSE_COLOR),
-  };
 }

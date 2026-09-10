@@ -1,5 +1,5 @@
 import { todayKey } from "./calendar";
-import type { PlanDay, ReadingPlan } from "./types";
+import type { ReadingPlan } from "./types";
 
 const KEY = "biblos-plan-progress";
 
@@ -29,12 +29,6 @@ function writeStore(store: Store) {
   }
 }
 
-export function getPlanProgress(planId: string): PlanProgress {
-  const existing = readStore()[planId];
-  if (existing?.startDate) return existing;
-  return { startDate: todayKey(), completedDays: [] };
-}
-
 export function loadPlanProgress(planId: string): PlanProgress | null {
   return readStore()[planId] ?? null;
 }
@@ -47,8 +41,6 @@ export function ensurePlanStart(planId: string): PlanProgress {
   writeStore(store);
   return next;
 }
-
-export const ensurePlanStarted = ensurePlanStart;
 
 export function markDayRead(planId: string, jour: number): PlanProgress {
   const store = readStore();
@@ -96,15 +88,6 @@ export function isPlanComplete(
   return days.every((day) => done.has(day.jour));
 }
 
-/** Alias : marque / démarque le jour comme lu. */
-export const toggleDayRead = markDayRead;
-
-export const markPlanDayRead = markDayRead;
-
-export function isPlanDayRead(planId: string, jour: number): boolean {
-  return getPlanProgress(planId).completedDays.includes(jour);
-}
-
 export function progressCounts(
   plan: { days: unknown[] } | null | undefined,
   progress: PlanProgress | null | undefined,
@@ -112,10 +95,6 @@ export function progressCounts(
   const total = plan?.days?.length ?? 0;
   const done = progress?.completedDays?.length ?? 0;
   return { done, total };
-}
-
-export function dayEntry(plan: ReadingPlan, jour: number): PlanDay | null {
-  return plan.days.find((day) => day.jour === jour) ?? null;
 }
 
 /** Jour calendaire depuis la date de début (1-indexé). */
@@ -134,33 +113,4 @@ export function nextUnreadJour(plan: ReadingPlan, progress: PlanProgress | null)
   const unread = plan.days.find((day) => !p.completedDays.includes(day.jour));
   if (unread && unread.jour <= cal) return unread.jour;
   return cal;
-}
-
-/** Date ISO du jour N du plan (1-indexé) depuis startDate. */
-export function dateForPlanJour(startDate: string, jour: number): string {
-  return addDaysKey(startDate, Math.max(0, jour - 1));
-}
-
-/** Jour du plan pour une date calendaire, ou null hors plage. */
-export function planJourForDate(
-  startDate: string,
-  day: string,
-  totalDays: number,
-): number | null {
-  if (!startDate || !day || !totalDays) return null;
-  const start = new Date(`${startDate}T00:00:00`);
-  const selected = new Date(`${day}T00:00:00`);
-  const diff = Math.floor((selected.getTime() - start.getTime()) / 86_400_000);
-  const jour = diff + 1;
-  if (jour < 1 || jour > totalDays) return null;
-  return jour;
-}
-
-function addDaysKey(iso: string, days: number): string {
-  const date = new Date(`${iso}T00:00:00`);
-  date.setDate(date.getDate() + days);
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
 }

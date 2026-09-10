@@ -25,17 +25,12 @@ export type FlashcardSessionOptions = {
   /** Mantém a ordem recebida em vez de reordenar com studyQueue (ex.: Timeline). */
   preserveOrder?: boolean;
   /**
-   * Après une note, retire la carte de la file figée (legacy Inbox due-only).
-   * Timeline: false — la carte reste à l’agenda (nouveau lembrete).
+   * Après une note, retire la carte de la file figée (legacy due-only).
+   * Défaut false — Timeline / Cartes gardent la carte à l’agenda.
    */
   dropAfterMark?: boolean;
   /** Inclui cartões Encerrado na fila (sessão Cartões / disciplina). */
   includeEncerrado?: boolean;
-  /**
-   * 2× Fácil → Encerrado. Só no Inbox (revisão SRS).
-   * Em Cartões fica false: classificar não encerra; reinício é explícito.
-   */
-  allowGraduation?: boolean;
   /** Navigation / avance limitées au même jour de lembrete (Timeline). */
   dayScope?: boolean;
 };
@@ -113,12 +108,11 @@ export function useFlashcardSession(
     preserveOrder = false,
     dropAfterMark,
     includeEncerrado = false,
-    allowGraduation = false,
     dayScope = false,
   }: FlashcardSessionOptions,
 ) {
   const keysOn = enableKeys ?? active;
-  const removeAfterMark = dropAfterMark ?? preserveOrder;
+  const removeAfterMark = dropAfterMark ?? false;
   /**
    * O cartão activo é identificado por id, nunca por índice. O índice é derivado
    * no próprio render, para que uma reordenação da fila (pull do Notion) não
@@ -143,14 +137,12 @@ export function useFlashcardSession(
   const preserveOrderRef = useRef(preserveOrder);
   const removeAfterMarkRef = useRef(removeAfterMark);
   const dayScopeRef = useRef(dayScope);
-  const allowGraduationRef = useRef(allowGraduation);
   /** Impede duplo toque (ex.: Fácil×2) antes do React actualizar `sync`. */
   const markingRef = useRef(false);
   const live = useRef({ flipped: false, sync: "idle" as SyncState, card: null as Flashcard | null, total: 0 });
   preserveOrderRef.current = preserveOrder;
   removeAfterMarkRef.current = removeAfterMark;
   dayScopeRef.current = dayScope;
-  allowGraduationRef.current = allowGraduation;
 
   const mergedCards = useMemo(() => {
     const merged = cards.map(mergeCard);
@@ -386,13 +378,11 @@ export function useFlashcardSession(
   function setMark(value: RetentionMark) {
     const current = live.current;
     // Uma classificação por verso (evita contagem dupla no mesmo toque).
-    // Dois Fácil em revisões distintas (Inbox) continuam a graduação → Encerrado.
     if (!current?.card || !current.flipped) return;
     if (current.card.status === "encerrado") return;
     if (markingRef.current || current.sync === "saving" || current.sync === "saved") return;
     const fromId = current.card.id;
     const fromCard = queueRef.current.find((item) => item.id === fromId) ?? current.card;
-    if (!fromCard.url) return;
     const stored = loadOverride(fromId);
     markingRef.current = true;
     setSessionMark(value);
@@ -400,10 +390,8 @@ export function useFlashcardSession(
     live.current = { ...live.current, sync: "saving" };
     void applyOverride(
       fromId,
-      fromCard.url,
-      applyCardMark(value, current.card, stored, todayKey(), {
-        allowGraduation: allowGraduationRef.current,
-      }),
+      fromCard.url || "",
+      applyCardMark(value, current.card, stored, todayKey()),
       true,
     );
   }
@@ -427,12 +415,11 @@ export function useFlashcardSession(
     if (markingRef.current || current.sync === "saving") return;
     const fromId = current.card.id;
     const fromCard = queueRef.current.find((item) => item.id === fromId) ?? current.card;
-    if (!fromCard.url) return;
     markingRef.current = true;
     setSessionMark(null);
     setSync("saving");
     live.current = { ...live.current, sync: "saving" };
-    void applyOverride(fromId, fromCard.url, restartCardLearning(fromCard, todayKey()), false);
+    void applyOverride(fromId, fromCard.url || "", restartCardLearning(fromCard, todayKey()), false);
   }
 
   // Único ponto de reset: mudar de cartão limpa flip, marca, sync e override local.
@@ -469,7 +456,7 @@ export function useFlashcardSession(
 
   useEffect(() => {
     const activeItem = listRef.current?.querySelector<HTMLElement>(
-      ".flash-plan-event.is-active, .flash-list-item.is-active, .inbox-item.is-active",
+      ".flash-plan-event.is-active",
     );
     activeItem?.scrollIntoView({ block: "nearest" });
   }, [index]);
@@ -549,6 +536,7 @@ export function useFlashcardSession(
     queue,
     slideQueue,
     slideIndex,
+    dayScope,
     total,
     dueCount,
     index,

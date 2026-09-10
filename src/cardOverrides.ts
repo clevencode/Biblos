@@ -182,7 +182,6 @@ export function applyCardMark(
   card: Pick<Flashcard, "categoria" | "status" | "lembrete" | "revisadoEm" | "criadoEm">,
   stored?: Pick<CardOverride, "facilStreak" | "revisadoEm"> | null,
   reviewedOn = todayKey(),
-  options?: { allowGraduation?: boolean },
 ): CardOverride {
   const next = retentionFromMark(
     mark,
@@ -194,7 +193,6 @@ export function applyCardMark(
       }),
     },
     reviewedOn,
-    options,
   );
   return {
     categoria: next.categoria,

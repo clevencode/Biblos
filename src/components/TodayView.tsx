@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { isPassageRef } from "../youversion/usfm";
-import { extractPassageRef, sanitizePlanDays } from "../plan";
+import { sanitizePlanDays } from "../plan";
 import { isPlanComplete, type PlanProgress } from "../planProgress";
-import type { PlanDay, ReadingPlan } from "../types";
+import type { ReadingPlan } from "../types";
 import { PlanDescription } from "./PlanDescription";
 
 type TodayViewProps = {
@@ -19,11 +19,6 @@ type TodayViewProps = {
 };
 
 type PlanScreen = "timeline" | "devotional";
-
-/** Référence biblique du jour — ignore Objectif / textes longs. */
-export function resolvePlanPassageRef(day: PlanDay): string | null {
-  return extractPassageRef(day.texte) || extractPassageRef(day.defi);
-}
 
 function devotionalKey(planId: string) {
   return `biblos-devotional-done:${planId}`;

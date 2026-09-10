@@ -1,7 +1,6 @@
 import {
   normalizeCategoria as normalizeCategoriaShared,
   normalizeStatus as normalizeStatusShared,
-  categoriaToNotion as categoriaToNotionShared,
 } from "../shared/notion.mjs";
 import { dateKey, todayKey } from "./calendar";
 import type { Flashcard, RetentionMark } from "./types";
@@ -30,7 +29,7 @@ export const RETENTION_DAYS = {
   novo: 2,
 } as const;
 
-/** Libellés UI (Notion garde « Dificile » via categoriaToNotion). */
+/** Libellés UI (Notion garde « Dificile » via shared/notion). */
 export const RETENTION_LABELS: Record<RetentionMark, string> = {
   encore: "Encore",
   dificil: "Difficile",
@@ -39,14 +38,6 @@ export const RETENTION_LABELS: Record<RetentionMark, string> = {
 };
 
 export const RETENTION_MARKS: RetentionMark[] = ["encore", "dificil", "medio", "facil"];
-
-export function retentionLabel(categoria: RetentionMark): string {
-  return RETENTION_LABELS[categoria];
-}
-
-export function categoriaToNotion(categoria: RetentionMark): string {
-  return categoriaToNotionShared(categoria) ?? RETENTION_LABELS[categoria];
-}
 
 export function normalizeCategoria(
   value: Flashcard["categoria"] | "connu" | "desconhecido" | string | null | undefined,
@@ -97,36 +88,9 @@ export function ankiIntervalDays(mark: RetentionMark, previousInterval = 0): num
   );
 }
 
-export function intervalDays(
-  categoria: Flashcard["categoria"],
-  previousInterval = 0,
-): number {
-  if (!categoria) return RETENTION_DAYS.novo;
-  return ankiIntervalDays(categoria, previousInterval);
-}
-
 export function isDue(lembrete: string | null | undefined, today = todayKey()): boolean {
   if (!lembrete) return true;
   return lembrete <= today;
-}
-
-export type InboxBucket = "overdue" | "today" | "nodate";
-
-const INBOX_BUCKET_ORDER: InboxBucket[] = ["overdue", "today", "nodate"];
-
-export function inboxBucket(lembrete: string | null | undefined, today = todayKey()): InboxBucket {
-  if (!lembrete) return "nodate";
-  if (lembrete < today) return "overdue";
-  return "today";
-}
-
-export function inboxDisplayOrder<T extends { lembrete?: string | null }>(
-  items: T[],
-  today = todayKey(),
-): T[] {
-  const buckets: Record<InboxBucket, T[]> = { overdue: [], today: [], nodate: [] };
-  for (const item of items) buckets[inboxBucket(item.lembrete, today)].push(item);
-  return INBOX_BUCKET_ORDER.flatMap((key) => buckets[key]);
 }
 
 export function nextLembrete(
@@ -199,28 +163,9 @@ export function retentionFromMark(
   mark: RetentionMark,
   previous: Pick<RetentionState, "facilStreak"> & { intervalDays?: number },
   reviewedOn = todayKey(),
-  options?: { allowGraduation?: boolean },
 ): RetentionState {
-  const allowGraduation = options?.allowGraduation !== false;
+  // Archiver est explicite — Facile ne termine plus la carte.
   const prevInterval = previous.intervalDays ?? 0;
-
-  if (mark === "facil") {
-    const facilStreak = previous.facilStreak + 1;
-    if (allowGraduation && facilStreak >= FACIL_GRADUATION) {
-      return {
-        categoria: mark,
-        status: "encerrado",
-        lembrete: nextLembrete(mark, reviewedOn, prevInterval),
-        facilStreak,
-      };
-    }
-    const scheduled = scheduleFromMark(mark, reviewedOn, prevInterval);
-    return {
-      ...scheduled,
-      facilStreak: allowGraduation ? facilStreak : 0,
-    };
-  }
-
   const scheduled = scheduleFromMark(mark, reviewedOn, prevInterval);
   return { ...scheduled, facilStreak: 0 };
 }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useFlashcardSession } from "../flashcardSession";
-import type { InboxCard } from "../types";
+import type { Flashcard, InboxCard } from "../types";
 import { FlashcardReview, FlashDeckList } from "./FlashcardReview";
 
 type InboxViewProps = {
@@ -8,7 +8,7 @@ type InboxViewProps = {
   active: boolean;
   /** Expanded (≥1280): lista | cartão. Medium/compact: lista↔cartão. */
   splitLayout?: boolean;
-  onReadChapter?: (card: InboxCard) => void;
+  onReadChapter?: (card: Flashcard) => void;
 };
 
 /**
@@ -23,7 +23,6 @@ export function InboxView({ items, active, splitLayout = false, onReadChapter }:
     preserveOrder: true,
     dropAfterMark: false,
     dayScope: true,
-    allowGraduation: false,
   });
 
   useEffect(() => {
@@ -37,7 +36,7 @@ export function InboxView({ items, active, splitLayout = false, onReadChapter }:
   if (!session.total) {
     return (
       <div className="inbox-view inbox-empty">
-        <p className="inbox-empty-title">Timeline vide</p>
+        <p className="inbox-empty-title">Aucun rappel</p>
         <p className="muted">Aucun rappel planifié pour le moment.</p>
       </div>
     );
@@ -49,14 +48,13 @@ export function InboxView({ items, active, splitLayout = false, onReadChapter }:
         <FlashcardReview
           session={session}
           showRepetitionMeta
-          allowGraduation={false}
-          emptyMessage="Timeline vide — aucun rappel planifié."
+          emptyMessage="Aucun rappel planifié."
           onReadChapter={onReadChapter}
         />
         <div className="flash-list-pane flash-list-pane--side">
           <FlashDeckList
             session={session}
-            title="Timeline"
+            title="Rappel"
             showWeekSchedule
             onPick={(index) => session.goTo(index)}
           />
@@ -70,7 +68,7 @@ export function InboxView({ items, active, splitLayout = false, onReadChapter }:
       <div className="flash-list-pane">
         <FlashDeckList
           session={session}
-          title="Timeline"
+          title="Rappel"
           showWeekSchedule
           onPick={(index) => {
             session.goTo(index);
@@ -85,8 +83,7 @@ export function InboxView({ items, active, splitLayout = false, onReadChapter }:
     <FlashcardReview
       session={session}
       showRepetitionMeta
-      allowGraduation={false}
-      emptyMessage="Timeline vide — aucun rappel planifié."
+      emptyMessage="Aucun rappel planifié."
       onBackToList={() => setReviewing(false)}
       onReadChapter={onReadChapter}
     />

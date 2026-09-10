@@ -1,4 +1,4 @@
-import { bibleComUrl, toUsfm } from "./usfm";
+import { toUsfm } from "./usfm";
 
 export type YouVersionVerse = {
   number: number;
@@ -76,12 +76,6 @@ export async function fetchPassage(reference: string, _bibleId?: number) {
 
 /** Identifiant local LSG (plus l’id YouVersion 93). */
 export const LSG_BIBLE_ID = 0;
-/** @deprecated Utiliser LSG_BIBLE_ID — Segond 1910 uniquement. */
-export const S21_BIBLE_ID = LSG_BIBLE_ID;
-
-export function openOnBibleCom(reference: string, _bibleId?: number) {
-  window.open(bibleComUrl(reference), "_blank", "noopener,noreferrer");
-}
 
 /** Chapitre précédent / suivant avec passage de livre (fin Matthieu → Marc 1). */
 export function adjacentChapter(

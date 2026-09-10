@@ -206,21 +206,19 @@ export function toUsfm(reference: string): string {
   return `${book}.${chapter}.${verse}`;
 }
 
-/** Lecteur public LSG (midvash / bible-data). */
-export function bibleComUrl(_usfm?: string, _bibleId?: number): string {
-  return "https://midvash.com/lsg";
-}
-
-/** Frente VERSECARD : « JEAN 3.16 » (majuscules, point verset). */
+/** Frente VERSECARD : « JEAN 3.16 » ou « JEAN 3.16-18 » (majuscules). */
 export function formatVerseCardFront(
   bookTitle: string,
   chapter: string | number,
   verse: number,
+  verseEnd?: number | null,
 ): string {
   const book = String(bookTitle || "")
     .trim()
     .toUpperCase();
-  return `${book} ${chapter}.${verse}`;
+  const start = verse;
+  const end = verseEnd != null && verseEnd !== verse ? verseEnd : null;
+  return end != null ? `${book} ${chapter}.${start}-${end}` : `${book} ${chapter}.${start}`;
 }
 
 /** Référence chapitre seule (ex. « JEAN 3.16 » → « JHN.3 ») pour Lecture. */

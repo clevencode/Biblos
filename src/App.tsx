@@ -41,7 +41,7 @@ const modes: { id: CenterMode; label: string }[] = [
   { id: "today", label: "Galerie" },
   { id: "bible", label: "Lecture" },
   { id: "cards", label: "Cartes" },
-  { id: "inbox", label: "Timeline" },
+  { id: "inbox", label: "Rappel" },
 ];
 
 type UiSession = {
@@ -136,7 +136,9 @@ export function App() {
     if (activePlan?.cardIds?.length && !activePlan.cardIds.includes(cardId)) {
       setCatalog((current) => {
         const plans = (current.plans ?? []).map((plan) =>
-          plan.id === activePlan.id ? { ...plan, cardIds: [cardId, ...plan.cardIds] } : plan,
+          plan.id === activePlan.id
+            ? { ...plan, cardIds: [cardId, ...(plan.cardIds ?? [])] }
+            : plan,
         );
         const next = { ...current, plans };
         persistCatalogCache(next);
@@ -196,7 +198,6 @@ export function App() {
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
       if (event.key !== "Escape") return;
-      if (document.querySelector(".prop-select-menu")) return;
       if (mode === "today" && !home) {
         event.preventDefault();
         goHome();

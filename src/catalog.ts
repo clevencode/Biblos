@@ -1,9 +1,6 @@
-import { dateKey } from "./calendar";
 import { mergeCard } from "./cardOverrides";
 import { isDue } from "./retention";
-import type { CalendarCardItem, Flashcard, InboxCard, ReadingPlan, Seed } from "./types";
-
-export type Materia = { id: string; nome: string };
+import type { Flashcard, InboxCard, ReadingPlan, Seed } from "./types";
 
 /** Scope do plano ativo: se `cardIds` existir, filtra; senão mostra tudo (MVP). */
 export function planCardIds(plan: ReadingPlan | null | undefined): string[] | null {
@@ -16,47 +13,6 @@ function filterByCardIds<T extends { id: string }>(items: T[], cardIds?: string[
   if (!cardIds?.length) return items;
   const set = new Set(cardIds);
   return items.filter((item) => set.has(item.id));
-}
-
-export function listMaterias(notes: Seed[]): Materia[] {
-  const map = new Map<string, Materia>();
-  for (const note of notes) map.set(note.materia.id, note.materia);
-  return [...map.values()].sort((a, b) => a.nome.localeCompare(b.nome, "fr"));
-}
-
-export function findNote(notes: Seed[], preferId = ""): Seed | null {
-  if (!notes.length) return null;
-  if (preferId) {
-    const hit = notes.find((note) => note.nota.id === preferId);
-    if (hit) return hit;
-  }
-  return notes[0];
-}
-
-export function latestNote(notes: Seed[]): Seed | null {
-  if (!notes.length) return null;
-  return notes.reduce((best, note) => (note.nota.criadoEm > best.nota.criadoEm ? note : best));
-}
-
-function noteSearchText(note: Seed): string {
-  return [
-    note.materia.nome,
-    note.disciplina.nome,
-    note.nota.titulo,
-    ...(note.flashcards ?? []).flatMap((card) => [
-      card.frente,
-      card.verso,
-      card.cardCategory ?? "",
-      card.connaissance ?? "",
-      card.formationNome ?? "",
-    ]),
-  ].join(" ");
-}
-
-export function searchNotes(notes: Seed[], query: string): Seed[] {
-  const q = query.trim().toLowerCase();
-  if (!q) return notes;
-  return notes.filter((note) => noteSearchText(note).toLowerCase().includes(q));
 }
 
 export function buildFlashcards(note: Seed): Flashcard[] {
@@ -110,7 +66,7 @@ export function listInboxSyncCards(
   return out;
 }
 
-/** Cartes dues aujourd’hui / en retard (badge Timeline, sync legacy). */
+/** Cartes dues aujourd’hui / en retard (badge Timeline). */
 export function buildInbox(notes: Seed[], cardIds?: string[] | null): InboxCard[] {
   return buildTimeline(notes, cardIds).filter((card) => isDue(card.lembrete));
 }
@@ -138,51 +94,4 @@ export function buildTimeline(notes: Seed[], cardIds?: string[] | null): InboxCa
     if (due !== 0) return due;
     return a.frente.localeCompare(b.frente, "fr");
   });
-}
-
-export function buildCalendarEvents(
-  notes: Seed[],
-  cardIds?: string[] | null,
-): {
-  cards: CalendarCardItem[];
-  cardCounts: Map<string, number>;
-} {
-  const cardItems: CalendarCardItem[] = [];
-  const cardCounts = new Map<string, number>();
-
-  for (const seed of notes) {
-    for (const card of filterByCardIds(buildFlashcards(seed).map(mergeCard), cardIds)) {
-      if (card.status === "encerrado" || !card.lembrete) continue;
-      cardItems.push({
-        id: card.id,
-        noteId: seed.nota.id,
-        day: card.lembrete,
-        title: card.frente,
-        disciplinaNome: seed.disciplina.nome,
-        materiaNome: seed.materia.nome,
-        lembrete: card.lembrete,
-        url: card.url,
-        cardCategory: card.cardCategory ?? null,
-      });
-      cardCounts.set(card.lembrete, (cardCounts.get(card.lembrete) ?? 0) + 1);
-    }
-  }
-
-  cardItems.sort((a, b) => a.day.localeCompare(b.day) || a.title.localeCompare(b.title, "fr"));
-
-  return { cards: cardItems, cardCounts };
-}
-
-export function linkedCardCount(note: Seed): number {
-  const stored = (note.flashcards ?? []).filter((card) => card.frente && card.verso).length;
-  return Math.max(stored, note.nota.cartoes ?? 0);
-}
-
-export function noteDayCounts(notes: Seed[]): Map<string, number> {
-  const map = new Map<string, number>();
-  for (const note of notes) {
-    const day = dateKey(note.nota.criadoEm);
-    map.set(day, (map.get(day) ?? 0) + 1);
-  }
-  return map;
 }

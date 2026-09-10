@@ -29,8 +29,7 @@ export function FlashcardDeck({
     enableKeys: active && (splitLayout || reviewing),
     selectedId,
     focusSeq,
-        includeEncerrado: true,
-        allowGraduation: false,
+    includeEncerrado: true,
   });
 
   useEffect(() => {
@@ -49,7 +48,7 @@ export function FlashcardDeck({
     return (
       <div className="flash-empty-state">
         <p className="flash-empty-title">Aucune carte</p>
-        <p className="muted">Lance npm run seed ou synchronise Notion.</p>
+        <p className="muted">Crée une flashcard depuis Lecture.</p>
       </div>
     );
   }
@@ -59,13 +58,17 @@ export function FlashcardDeck({
       <div className="flash-split">
         <FlashcardReview
           session={session}
-          emptyMessage="Aucune carte à réviser."
-          allowGraduation={false}
+          emptyMessage="Aucune carte dans ce filtre."
           onRemoveCard={onRemoveCard}
           onReadChapter={onReadChapter}
         />
         <div className="flash-list-pane flash-list-pane--side">
-          <FlashDeckList session={session} onPick={(index) => session.goTo(index)} />
+          <FlashDeckList
+            session={session}
+            focusCardId={selectedId}
+            focusSeq={focusSeq}
+            onPick={(index) => session.goTo(index)}
+          />
         </div>
       </div>
     );
@@ -76,6 +79,8 @@ export function FlashcardDeck({
       <div className="flash-list-pane">
         <FlashDeckList
           session={session}
+          focusCardId={selectedId}
+          focusSeq={focusSeq}
           onPick={(index) => {
             session.goTo(index);
             setReviewing(true);
@@ -88,8 +93,7 @@ export function FlashcardDeck({
   return (
     <FlashcardReview
       session={session}
-      emptyMessage="Aucune carte à réviser."
-      allowGraduation={false}
+      emptyMessage="Aucune carte dans ce filtre."
       onBackToList={() => setReviewing(false)}
       onRemoveCard={onRemoveCard}
       onReadChapter={onReadChapter}

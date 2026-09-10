@@ -47,17 +47,6 @@ export type Seed = {
 
 export type Catalog = { notas: Seed[]; plans: ReadingPlan[] };
 export type CenterMode = "today" | "bible" | "cards" | "inbox";
-export type CalendarCardItem = {
-  id: string;
-  noteId: string;
-  day: string;
-  title: string;
-  disciplinaNome: string;
-  materiaNome: string;
-  lembrete: string;
-  url: string;
-  cardCategory?: CardCategory | string | null;
-};
 export type InboxCard = Flashcard & {
   noteId: string;
   disciplinaNome: string;

@@ -131,7 +131,7 @@ export function PlanGallery({
         {onClose ? (
           <button
             type="button"
-            className="search-gallery-close"
+            className="plan-discover-close"
             onClick={onClose}
             aria-label="Fermer la galerie"
           >
