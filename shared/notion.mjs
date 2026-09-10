@@ -137,11 +137,12 @@ export function categoriaPropFromPage(props) {
   );
 }
 
-/** Lembrete padrão: criação + 2 dias (intervalo "novo"). */
+/** Lembrete padrão: espera = dia de criação; estudo = criação + 2 dias. */
 export function ensureLembrete({ status, lembrete, criadoEm }, today = dateKey(new Date())) {
   if (status === "encerrado") return lembrete ? String(lembrete).slice(0, 10) : null;
   if (lembrete) return String(lembrete).slice(0, 10);
   const base = criadoEm ? dateKey(criadoEm) : today;
+  if (status === "espera") return base || today;
   const date = new Date(`${base || today}T00:00:00`);
   date.setDate(date.getDate() + 2);
   return dateKey(date);
@@ -416,8 +417,12 @@ export async function createVerseCard(token, input = {}) {
 
   const lembrete =
     (input.lembrete && String(input.lembrete).slice(0, 10)) ||
-    ensureLembrete({ status: "estudo", lembrete: null, criadoEm: dateKey(new Date()) });
-  const statusName = statusToNotion(input.status) || "Em andamento";
+    ensureLembrete({
+      status: input.status || "espera",
+      lembrete: null,
+      criadoEm: dateKey(new Date()),
+    });
+  const statusName = statusToNotion(input.status || "espera") || "Não iniciada";
   const repetition = categoriaToNotion(input.categoria);
 
   const properties = {
@@ -477,7 +482,7 @@ export async function createVerseCard(token, input = {}) {
         frente: title,
         verso: body,
         categoria: input.categoria ?? null,
-        status: input.status || "estudo",
+        status: input.status || "espera",
         url: notionPageUrl(id),
         lembrete,
         cardCategory: "VERSECARD",

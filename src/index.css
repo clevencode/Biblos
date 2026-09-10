@@ -2031,22 +2031,17 @@ a:focus-visible,
   height: 100%;
 }
 
-.flash-week-nav {
-  flex-shrink: 0;
+.flash-list--deck {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin: 0 0 6px;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
 }
 
-.flash-week-label {
+.flash-list--deck > .flash-list-scroller {
   flex: 1;
-  text-align: center;
-  font-size: 0.92rem;
-  font-weight: 650;
-  letter-spacing: -0.01em;
-  text-transform: capitalize;
+  gap: 6px;
+  padding-bottom: 8px;
 }
 
 .flash-week {
@@ -2055,18 +2050,21 @@ a:focus-visible,
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 2px;
   margin: 0 0 10px;
-  padding: 2px 0 8px;
+  padding: 2px 0 10px;
   border-bottom: 1px solid var(--line);
+  touch-action: pan-y;
+  user-select: none;
 }
 
 .flash-week-day {
   display: grid;
   justify-items: center;
-  align-content: start;
-  gap: 4px;
+  align-content: center;
+  gap: 3px;
   min-width: 0;
+  min-height: 52px;
   margin: 0;
-  padding: 6px 2px 4px;
+  padding: 6px 2px;
   border: 0;
   border-radius: 12px;
   background: transparent;
@@ -2079,9 +2077,13 @@ a:focus-visible,
   background: var(--hover);
 }
 
+.flash-week-day:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
 .flash-week-day.is-selected {
-  background: color-mix(in srgb, var(--text) 7%, var(--panel));
-  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--text) 28%, transparent);
+  background: color-mix(in srgb, var(--text) 6%, var(--panel));
 }
 
 .flash-week-dow {
@@ -2093,9 +2095,13 @@ a:focus-visible,
   color: var(--muted);
 }
 
+.flash-week-day.is-selected .flash-week-dow {
+  color: var(--text);
+}
+
 .flash-week-num {
-  min-width: 1.85rem;
-  min-height: 1.85rem;
+  min-width: 2rem;
+  min-height: 2rem;
   display: grid;
   place-items: center;
   border-radius: 999px;
@@ -2104,15 +2110,25 @@ a:focus-visible,
   line-height: 1;
   color: var(--text);
   font-variant-numeric: tabular-nums;
+  box-shadow: inset 0 0 0 0 transparent;
 }
 
-.flash-week-num.is-today {
+/* Aujourd’hui = anneau ; sélection = remplissage (distincts). */
+.flash-week-day.is-today .flash-week-num {
+  box-shadow: inset 0 0 0 2px var(--accent);
+  color: var(--accent);
+}
+
+.flash-week-day.is-selected .flash-week-num {
   background: var(--accent);
   color: #fff;
+  box-shadow: none;
 }
 
-.flash-week-day.is-selected .flash-week-num:not(.is-today) {
-  background: color-mix(in srgb, var(--text) 10%, transparent);
+.flash-week-markers {
+  display: grid;
+  place-items: center;
+  min-height: 1.05rem;
 }
 
 .flash-week-count {
@@ -2131,20 +2147,35 @@ a:focus-visible,
   line-height: 1;
 }
 
-.flash-week-count.is-empty {
-  background: transparent;
-  color: color-mix(in srgb, var(--muted) 70%, transparent);
-  font-weight: 600;
-}
-
 .flash-week-count.is-overdue {
   background: color-mix(in srgb, var(--danger) 18%, transparent);
   color: var(--danger);
 }
 
+.flash-week-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--muted) 35%, transparent);
+}
+
+.flash-week-day.has-cards .flash-week-dot {
+  display: none;
+}
+
 .flash-week-day.is-overdue .flash-week-dow,
-.flash-week-day.is-overdue .flash-week-num:not(.is-today) {
+.flash-week-day.is-overdue .flash-week-num {
   color: var(--danger);
+}
+
+.flash-week-day.is-overdue.is-today .flash-week-num {
+  box-shadow: inset 0 0 0 2px var(--danger);
+}
+
+.flash-week-day.is-overdue.is-selected .flash-week-num {
+  background: var(--danger);
+  color: #fff;
+  box-shadow: none;
 }
 
 .flash-list--plan .flash-plan-scroller {
@@ -2163,6 +2194,29 @@ a:focus-visible,
 .flash-plan-empty {
   margin: 12px 4px;
   font-size: 0.92rem;
+}
+
+.flash-plan-empty-block {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+}
+
+.flash-plan-jump {
+  margin: 0 4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 650;
+  cursor: pointer;
+  text-align: left;
+}
+
+.flash-plan-jump:hover {
+  text-decoration: underline;
 }
 
 .flash-day-cards {
@@ -3579,6 +3633,14 @@ a:focus-visible,
   width: min(100%, 480px);
   min-height: 64px;
   align-items: stretch;
+}
+
+.flash-attente-hint {
+  flex: 1 1 100%;
+  margin: 0 0 2px;
+  text-align: center;
+  font-size: 0.84rem;
+  line-height: 1.35;
 }
 
 .flash-actions--reveal {

@@ -105,7 +105,7 @@ export function useFlashcardSession(
     focusSeq = 0,
     preserveOrder = false,
     includeEncerrado = false,
-    allowGraduation = true,
+    allowGraduation = false,
   }: FlashcardSessionOptions,
 ) {
   const keysOn = enableKeys ?? active;

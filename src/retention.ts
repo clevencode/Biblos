@@ -169,6 +169,9 @@ export function ensureLembrete(
 ): string | null {
   if (card.status === "encerrado") return card.lembrete ?? null;
   if (card.lembrete) return card.lembrete;
+  if (card.status === "espera") {
+    return card.criadoEm ? dateKey(card.criadoEm) : today;
+  }
   return defaultLembrete(card.criadoEm, today);
 }
 

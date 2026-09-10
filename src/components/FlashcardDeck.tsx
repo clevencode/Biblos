@@ -27,7 +27,6 @@ export function FlashcardDeck({
     enableKeys: active && (splitLayout || reviewing),
     selectedId,
     focusSeq,
-        // Cartes du plan : voir Terminé + reprendre ; graduation SRS seulement Inbox.
         includeEncerrado: true,
         allowGraduation: false,
   });

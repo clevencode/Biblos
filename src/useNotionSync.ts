@@ -21,7 +21,7 @@ const CATALOG_PULL_MS = 45_000;
 const HEALTH_PULL_MS = 60_000;
 const INBOX_RECONCILE_MS = 25_000;
 
-const FLASHCARD_SYNC_MODES: CenterMode[] = ["cards", "inbox", "calendar"];
+const FLASHCARD_SYNC_MODES: CenterMode[] = ["cards", "inbox"];
 
 /**
  * Polling Notion + révisions locales.
@@ -201,7 +201,7 @@ export function useNotionSync(options: {
     if (!notionPullActive || !scopedSyncCards.length) return;
     let cancelled = false;
     let busy = false;
-    const persistSeed = mode === "calendar" || mode === "inbox";
+    const persistSeed = mode === "inbox";
     const cards = scopedSyncCards;
 
     async function pullFromNotion() {

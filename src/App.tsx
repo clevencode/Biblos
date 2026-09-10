@@ -1,15 +1,13 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import seed from "./data/seed.json";
-import { CalendarView } from "./components/CalendarView";
 import { FlashcardDeck } from "./components/FlashcardDeck";
 import { InboxView } from "./components/InboxView";
 import { ModeTabIcon } from "./components/ModeTabIcon";
 import { TodayView } from "./components/TodayView";
 import { PlanGallery } from "./components/PlanGallery";
 import { BibleReaderView } from "./components/BibleReaderView";
-import type { Catalog, CalendarCardItem, CenterMode, Flashcard, InboxCard, ReadingPlan, Seed } from "./types";
+import type { Catalog, CenterMode, Flashcard, InboxCard, ReadingPlan, Seed } from "./types";
 import {
-  buildCalendarEvents,
   buildInbox,
   listAllFlashcards,
   planCardIds,
@@ -43,7 +41,6 @@ const modes: { id: CenterMode; label: string }[] = [
   { id: "bible", label: "Lecture" },
   { id: "cards", label: "Cartes" },
   { id: "inbox", label: "Inbox" },
-  { id: "calendar", label: "Calendrier" },
 ];
 
 type UiSession = {
@@ -88,7 +85,8 @@ export function App() {
   const notes = catalog.notas;
   const plans = catalog.plans;
   const [mode, setMode] = useState<CenterMode>(() => {
-    const value = initialUi.mode;
+    const value = initialUi.mode as string | undefined;
+    if (value === "calendar") return "cards";
     return isMode(value) ? value : "today";
   });
   const [home, setHome] = useState(() => initialUi.home ?? !initialUi.planId);
@@ -118,10 +116,6 @@ export function App() {
     [scopedCardIds, notes, retentionTick],
   );
   const inbox = useMemo(() => buildInbox(notes, scopedCardIds), [scopedCardIds, notes, retentionTick]);
-  const calendar = useMemo(
-    () => buildCalendarEvents(notes, null),
-    [notes, retentionTick],
-  );
 
   const planProgress = useMemo(() => {
     if (!activePlan) return null;
@@ -239,13 +233,6 @@ export function App() {
     setPlanReading(next);
     const step = currentPlanStep(next);
     if (step) openPassageInBible(step.focusRef, { keepPlanReading: true });
-  }
-
-  function openCalendarCard(item: CalendarCardItem) {
-    setHome(false);
-    setCardFocusId(item.id);
-    setCardFocusSeq((value) => value + 1);
-    setMode("cards");
   }
 
   function openInboxItem(item: InboxCard) {
@@ -504,21 +491,6 @@ export function App() {
                     active={mode === "inbox"}
                     splitLayout={splitLayout}
                     onOpenPassage={openInboxItem}
-                  />
-                </div>
-                <div
-                  id="panel-calendar"
-                  role="tabpanel"
-                  aria-labelledby="tab-calendar"
-                  hidden={mode !== "calendar"}
-                  className="pane-body"
-                >
-                  <CalendarView
-                    cards={calendar.cards}
-                    cardCounts={calendar.cardCounts}
-                    onPickCard={openCalendarCard}
-                    active={mode === "calendar"}
-                    splitLayout={splitLayout}
                   />
                 </div>
               </div>

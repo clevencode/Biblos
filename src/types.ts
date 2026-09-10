@@ -46,7 +46,7 @@ export type Seed = {
 };
 
 export type Catalog = { notas: Seed[]; plans: ReadingPlan[] };
-export type CenterMode = "today" | "bible" | "cards" | "inbox" | "calendar";
+export type CenterMode = "today" | "bible" | "cards" | "inbox";
 export type CalendarCardItem = {
   id: string;
   noteId: string;

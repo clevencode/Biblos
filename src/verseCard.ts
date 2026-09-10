@@ -24,7 +24,7 @@ export function verseCardId(frenteOrUsfm: string): string {
 
 /**
  * Crée (ou met à jour) un flashcard local depuis un verset.
- * Frente MAJUSCULES · verso texte · lembrete auto (+2 j).
+ * Frente MAJUSCULES · verso texte · statut En attente · lembrete = jour de création.
  */
 export function createVerseFlashcard(input: {
   frente: string;
@@ -45,7 +45,7 @@ export function createVerseFlashcard(input: {
   const id = verseCardId(input.usfm?.trim() || frente);
   const criadoEm = todayKey();
   const lembrete = ensureLembrete({
-    status: "estudo",
+    status: "espera",
     lembrete: null,
     criadoEm,
     categoria: null,
@@ -57,7 +57,7 @@ export function createVerseFlashcard(input: {
     frente,
     verso,
     categoria: null,
-    status: "estudo",
+    status: "espera",
     url: "",
     lembrete,
     cardCategory: "VERSECARD",
@@ -70,7 +70,7 @@ export function createVerseFlashcard(input: {
     id,
     {
       categoria: null,
-      status: "estudo",
+      status: "espera",
       lembrete,
       facilStreak: 0,
       revisadoEm: null,

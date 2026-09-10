@@ -12,8 +12,6 @@ import {
   resolveFacilStreak,
   retentionFromMark,
   ensureLembrete,
-  addDays,
-  RETENTION_DAYS,
   FACIL_GRADUATION,
   cardIntervalDays,
 } from "./retention";
@@ -218,12 +216,12 @@ export function archiveCardLearning(reviewedOn = todayKey()): CardOverride {
   };
 }
 
-/** Volta a Estudo com lembrete novo (+2d a partir de hoje) e limpa a sequência Fácil. */
+/** Volta a En attente no dia atual, sem opção de répétition. */
 export function restartCardLearning(_card?: Pick<Flashcard, "criadoEm">, reviewedOn = todayKey()): CardOverride {
   return {
     categoria: null,
-    status: "estudo",
-    lembrete: addDays(reviewedOn, RETENTION_DAYS.novo),
+    status: "espera",
+    lembrete: reviewedOn,
     facilStreak: 0,
     revisadoEm: null,
   };
