@@ -20,6 +20,12 @@ import {
   type YouVersionBook,
   type YouVersionPassage,
 } from "../youversion/client";
+import {
+  fetchBibleAudioCatalog,
+  loadAudioPositions,
+  saveAudioPosition,
+  type BibleAudioEpisode,
+} from "../youversion/audio";
 import { createVerseFlashcard, verseCardId } from "../verseCard";
 import {
   VERSE_COLORS,
@@ -346,10 +352,15 @@ export function BibleReaderView({
   const [cardMsg, setCardMsg] = useState<string | null>(null);
   const [cardColor, setCardColor] = useState(() => loadPreferredVerseColor());
   const [chromeHidden, setChromeHidden] = useState(false);
+  const [audioByUsfm, setAudioByUsfm] = useState<Record<string, BibleAudioEpisode>>({});
+  const [audioPlaying, setAudioPlaying] = useState(false);
+  const [audioBusy, setAudioBusy] = useState(false);
   const statusId = useId();
   const highlightRef = useRef<HTMLElement | null>(null);
   const dockLocationRef = useRef<HTMLButtonElement | null>(null);
   const passageScrollRef = useRef<HTMLElement | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioBookRef = useRef<string>("");
   const lastScrollTop = useRef(0);
   const scrollAcc = useRef(0);
   const chromeHiddenRef = useRef(false);
@@ -363,6 +374,71 @@ export function BibleReaderView({
   const lastAppliedVerseScroll = useRef("");
   const booted = useRef(false);
   const loadGen = useRef(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const result = await fetchBibleAudioCatalog();
+      if (cancelled || !result.ok || !result.books) return;
+      setAudioByUsfm(result.books);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    const audio = audioRef.current ?? new Audio();
+    audioRef.current = audio;
+    audio.preload = "none";
+
+    const onPlay = () => setAudioPlaying(true);
+    const onPause = () => {
+      setAudioPlaying(false);
+      if (audioBookRef.current && Number.isFinite(audio.currentTime)) {
+        saveAudioPosition(audioBookRef.current, audio.currentTime);
+      }
+    };
+    const onEnded = () => {
+      setAudioPlaying(false);
+      if (audioBookRef.current) saveAudioPosition(audioBookRef.current, 0);
+    };
+    const onWaiting = () => setAudioBusy(true);
+    const onCanPlay = () => setAudioBusy(false);
+
+    audio.addEventListener("play", onPlay);
+    audio.addEventListener("pause", onPause);
+    audio.addEventListener("ended", onEnded);
+    audio.addEventListener("waiting", onWaiting);
+    audio.addEventListener("canplay", onCanPlay);
+
+    return () => {
+      audio.pause();
+      audio.removeEventListener("play", onPlay);
+      audio.removeEventListener("pause", onPause);
+      audio.removeEventListener("ended", onEnded);
+      audio.removeEventListener("waiting", onWaiting);
+      audio.removeEventListener("canplay", onCanPlay);
+      if (audioBookRef.current && Number.isFinite(audio.currentTime)) {
+        saveAudioPosition(audioBookRef.current, audio.currentTime);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const usfm = bookId.toUpperCase();
+    if (audioBookRef.current === usfm) return;
+    if (!audio.paused) {
+      audio.pause();
+    }
+    audio.removeAttribute("src");
+    audio.load();
+    audioBookRef.current = "";
+    setAudioPlaying(false);
+    setAudioBusy(false);
+  }, [bookId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -722,6 +798,50 @@ export function BibleReaderView({
         : passageStep === "chapter"
           ? bookTitle
           : `${bookTitle} ${chapterId}`;
+
+  const bookAudio = audioByUsfm[bookId.toUpperCase()] ?? null;
+  const canPlayBookAudio = Boolean(bookAudio?.audioUrl);
+
+  const toggleBookAudio = useEffectEvent(async () => {
+    const episode = audioByUsfm[bookId.toUpperCase()];
+    const audio = audioRef.current;
+    if (!episode?.audioUrl || !audio) return;
+
+    if (audioBookRef.current === bookId.toUpperCase() && !audio.paused) {
+      audio.pause();
+      return;
+    }
+
+    try {
+      setAudioBusy(true);
+      const usfm = bookId.toUpperCase();
+      if (audioBookRef.current !== usfm || audio.src !== episode.audioUrl) {
+        audio.src = episode.audioUrl;
+        audioBookRef.current = usfm;
+        const resume = loadAudioPositions()[usfm];
+        if (resume && resume > 2) {
+          const onMeta = () => {
+            audio.currentTime = Math.min(resume, Math.max(0, (audio.duration || resume) - 1));
+            audio.removeEventListener("loadedmetadata", onMeta);
+          };
+          audio.addEventListener("loadedmetadata", onMeta);
+        }
+      }
+      if ("mediaSession" in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: episode.title,
+          artist: "Bible | Podcast.s21",
+          album: "Segond 21",
+        });
+      }
+      await audio.play();
+    } catch {
+      setAudioPlaying(false);
+      setError("Audio indisponible pour le moment.");
+    } finally {
+      setAudioBusy(false);
+    }
+  });
 
   const setReadingChrome = useEffectEvent((hidden: boolean, force = false) => {
     if (chromeHiddenRef.current === hidden) return;
@@ -1307,11 +1427,34 @@ export function BibleReaderView({
       ) : null}
 
       <footer
-        className={`bible-yv-dock${planReading ? " is-plan" : ""}${showCreateCard ? " has-verse-actions" : ""}`}
+        className={`bible-yv-dock${planReading ? " is-plan" : ""}${showCreateCard ? " has-verse-actions" : ""}${audioPlaying ? " is-playing" : ""}`}
         aria-hidden={hideChrome || undefined}
         inert={hideChrome || undefined}
         aria-label={planReading ? "Lecture du plan" : pickerOpen ? "Choisir livre et passage" : "Chapitre"}
       >
+        <button
+          type="button"
+          className={`bible-yv-dock-play${audioPlaying ? " is-playing" : ""}${audioBusy ? " is-busy" : ""}`}
+          onClick={() => void toggleBookAudio()}
+          disabled={!canPlayBookAudio || audioBusy}
+          aria-pressed={audioPlaying}
+          aria-label={
+            !canPlayBookAudio
+              ? `Audio indisponible pour ${bookTitle}`
+              : audioPlaying
+                ? `Pause · ${bookTitle}`
+                : `Écouter ${bookTitle}`
+          }
+          title={
+            !canPlayBookAudio
+              ? "Audio du livre bientôt disponible"
+              : audioPlaying
+                ? "Pause"
+                : "Écouter le livre"
+          }
+        >
+          <span aria-hidden="true">{audioPlaying ? "❚❚" : "▶"}</span>
+        </button>
         <div className={`bible-yv-dock-nav${planReading ? " bible-yv-dock-nav--plan" : ""}`}>
           <button
             type="button"

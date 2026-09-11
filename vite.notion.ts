@@ -2,6 +2,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { loadEnv, type Plugin } from "vite";
 import { runFlashcardSync, type SyncBody } from "./server/notionFlashcardSync.ts";
 import { handleYouVersion } from "./api/youversion.mjs";
+import { handleBibleAudio } from "./api/bible-audio.mjs";
 import { fetchNotionDescription, createVerseCard, archiveVerseCard, fetchPlanDayNote, upsertPlanDayNote } from "./shared/notion.mjs";
 
 function readBody(req: IncomingMessage): Promise<string> {
@@ -214,6 +215,9 @@ export function notionFlashcardPlugin(mode: string): Plugin {
     });
     server.middlewares.use("/api/youversion", (req, res) => {
       void handleYouVersion(req, res);
+    });
+    server.middlewares.use("/api/bible-audio", (req, res) => {
+      void handleBibleAudio(req, res);
     });
     server.middlewares.use("/api/description-sync", (req, res) => {
       void handleDescriptionSync(req, res, token);
