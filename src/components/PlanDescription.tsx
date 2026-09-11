@@ -11,10 +11,10 @@ type PlanDescriptionProps = {
   showTitle?: boolean;
 };
 
-/** Propriedade Notion Devotional — mesma formatação do Resumo StudyOS. */
+/** Propriedade Notion Description — intro do plano (só ao iniciar). */
 export function PlanDescription({
   description,
-  title = "Devotional",
+  title = "Description",
   showTitle = true,
 }: PlanDescriptionProps) {
   const paragraphs = useMemo(
@@ -25,10 +25,10 @@ export function PlanDescription({
   if (!paragraphs.length) {
     return (
       <div className="plan-yv-devo-empty" role="status">
-        <p className="plan-yv-devo-empty-title">Pas encore de Devotional</p>
+        <p className="plan-yv-devo-empty-title">Pas encore de description</p>
         <p className="plan-yv-devo-empty-copy">
-          Ajoute le texte dans la propriété <strong>Devotional</strong> de ce plan sur Notion
-          pour l’afficher ici.
+          Ajoute le texte dans la propriété <strong>Description</strong> de ce plan sur Notion
+          pour l’afficher au démarrage.
         </p>
       </div>
     );

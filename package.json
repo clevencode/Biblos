@@ -10,7 +10,7 @@
     "mobile:sync": "npm run build:mobile && npx cap sync android",
     "mobile:open": "npx cap open android",
     "mobile:apk": "npm run mobile:sync && npm run mobile:gradle",
-    "mobile:gradle": "cd android && gradlew.bat assembleDebug",
+    "mobile:gradle": "powershell -ExecutionPolicy Bypass -File scripts/gradle-android.ps1 assembleDebug --no-daemon",
     "mobile:install": "powershell -ExecutionPolicy Bypass -File scripts/install-android.ps1",
     "mobile:live": "powershell -ExecutionPolicy Bypass -File scripts/install-android.ps1 -live",
     "pwa:build": "npm run build",

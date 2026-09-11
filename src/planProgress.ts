@@ -88,6 +88,7 @@ export function clearPlanLocalState(planId: string): void {
   }
   try {
     localStorage.removeItem(`biblos-devotional-done:${planId}`);
+    localStorage.removeItem(`biblos-plan-intro-seen:${planId}`);
   } catch {
     /* private mode */
   }

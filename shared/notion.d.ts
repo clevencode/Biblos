@@ -54,7 +54,7 @@ export function propRichTextFull(
   props: Record<string, unknown>,
   propName: string,
 ): Promise<string>;
-/** Devotional (ex-Description) do PLAN — rich_text paginado. */
+/** Description do PLAN — rich_text paginado (intro). */
 export function propDescriptionFull(
   token: string,
   pageId: string,
@@ -83,6 +83,17 @@ export function isStatusOptionValidationError(statusCode: number, detail: string
 export function notesDatabaseId(): string;
 
 export function planDayNoteTitle(jour: number | string): string;
+export function parseNotePropertyByDay(fullText: string): Map<number, string>;
+export function mergeDayIntoNoteProperty(
+  fullText: string,
+  jour: number,
+  body: string,
+): string;
+export function propNoteFull(
+  token: string,
+  pageId: string,
+  props: Record<string, unknown>,
+): Promise<string>;
 
 export function upsertPlanDayNote(
   token: string,

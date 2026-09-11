@@ -323,7 +323,7 @@ export function BibleReaderView({
   );
 
   const [passage, setPassage] = useState<YouVersionPassage | null>(null);
-  const [bible, setBible] = useState<YouVersionBible | null>(() => readBooksCache()?.bible ?? null);
+  const [, setBible] = useState<YouVersionBible | null>(() => readBooksCache()?.bible ?? null);
   const [, setBibleId] = useState<number | null>(LSG_BIBLE_ID);
   const [books, setBooks] = useState<YouVersionBook[]>(() => readBooksCache()?.books ?? []);
   const [bookId, setBookId] = useState(initialParts.bookId);

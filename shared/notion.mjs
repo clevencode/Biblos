@@ -289,7 +289,7 @@ export async function propRichTextFull(token, pageId, props, propName) {
   }
 }
 
-/** Resolve le nom réel de la propriété Notion (Devotional prioritaire). */
+/** Resolve le nom réel de la propriété Notion. */
 function resolveRichTextPropName(props, ...candidates) {
   const keys = Object.keys(props ?? {});
   for (const name of candidates) {
@@ -305,9 +305,16 @@ function resolveRichTextPropName(props, ...candidates) {
   return candidates[0] || null;
 }
 
-/** Devotional (ex-Description) du PLAN DE LECTURE. */
+/** Description du PLAN DE LECTURE (intro) — pas Note. */
 export async function propDescriptionFull(token, pageId, props) {
-  const name = resolveRichTextPropName(props, "Devotional", "Description");
+  const name = resolveRichTextPropName(props, "Description", "Devotional");
+  if (!name || !props?.[name]) return "";
+  return propRichTextFull(token, pageId, props, name);
+}
+
+/** Propriété Note du plan (notes quotidiennes fusionnées). */
+export async function propNoteFull(token, pageId, props) {
+  const name = resolveRichTextPropName(props, "Note", "Notes", "Nota");
   if (!name || !props?.[name]) return "";
   return propRichTextFull(token, pageId, props, name);
 }
@@ -332,7 +339,7 @@ export async function fetchNotionResumo(token, urlOrId) {
   }
 }
 
-/** Sync da propriedade Devotional (PLAN DE LECTURE) — equivalente a Resumo no StudyOS. */
+/** Sync da propriedade Description (PLAN DE LECTURE) — intro do plano. */
 export async function fetchNotionDescription(token, urlOrId) {
   if (!token) {
     return { ok: false, error: "NOTION_TOKEN em falta", hasToken: false, description: "" };
@@ -525,123 +532,61 @@ export async function archiveVerseCard(token, urlOrId) {
   return { ok: true, hasToken: true };
 }
 
-/** Titre stable des notes quotidiennes (pages enfants du plan). */
+/** Marqueur de section dans la propriété Note (un bloc par jour). */
 export function planDayNoteTitle(jour) {
   const n = Number(jour);
-  return `Note · Jour ${Number.isFinite(n) ? n : jour}`;
+  return `<<Jour ${Number.isFinite(n) ? n : jour}>>`;
 }
 
-function textToParagraphBlocks(text) {
-  const raw = String(text || "").trim();
-  if (!raw) {
-    return [
-      {
-        object: "block",
-        type: "paragraph",
-        paragraph: { rich_text: [] },
-      },
-    ];
-  }
-  const children = [];
-  for (const paragraph of raw.split(/\n{2,}/)) {
-    let rest = paragraph.replace(/\n/g, " ").trim().slice(0, 8000);
-    if (!rest) continue;
-    while (rest.length) {
-      children.push({
-        object: "block",
-        type: "paragraph",
-        paragraph: {
-          rich_text: [{ type: "text", text: { content: rest.slice(0, 1900) } }],
-        },
-      });
-      rest = rest.slice(1900);
-    }
-  }
-  return children.length
-    ? children
-    : [
-        {
-          object: "block",
-          type: "paragraph",
-          paragraph: { rich_text: [] },
-        },
-      ];
-}
-
-function plainFromBlock(block) {
-  if (!block || typeof block !== "object") return "";
-  const type = block.type;
-  const payload = block[type];
-  if (!payload) return "";
-  if (Array.isArray(payload.rich_text)) {
-    return richTextToMarkdown(payload.rich_text).trim();
-  }
-  if (type === "child_page") return String(payload.title || "").trim();
-  return "";
-}
-
-async function listBlockChildren(token, blockId) {
-  const results = [];
-  let cursor = null;
-  do {
-    const q = new URLSearchParams({ page_size: "100" });
-    if (cursor) q.set("start_cursor", cursor);
-    const data = await notionGet(token, `/blocks/${blockId}/children?${q}`);
-    results.push(...(data.results ?? []));
-    cursor = data.has_more ? data.next_cursor : null;
-  } while (cursor);
-  return results;
-}
-
-async function readPagePlainText(token, pageId) {
-  const blocks = await listBlockChildren(token, pageId);
-  return blocks
-    .map(plainFromBlock)
-    .filter(Boolean)
-    .join("\n\n")
-    .trim();
-}
-
-async function clearBlockChildren(token, pageId) {
-  const blocks = await listBlockChildren(token, pageId);
-  for (const block of blocks) {
-    if (!block?.id) continue;
-    await notionFetch(`https://api.notion.com/v1/blocks/${block.id}`, {
-      method: "DELETE",
-      headers: notionHeaders(token),
+function textToRichTextArray(text) {
+  const raw = String(text ?? "");
+  if (!raw) return [];
+  const chunks = [];
+  let rest = raw;
+  while (rest.length) {
+    chunks.push({
+      type: "text",
+      text: { content: rest.slice(0, 2000) },
     });
-    await sleep(60);
+    rest = rest.slice(2000);
   }
+  return chunks;
 }
 
-async function appendParagraphs(token, pageId, text) {
-  const children = textToParagraphBlocks(text);
-  const { ok, response, detail } = await notionFetch(
-    `https://api.notion.com/v1/blocks/${pageId}/children`,
-    {
-      method: "PATCH",
-      headers: notionHeaders(token, { "Content-Type": "application/json" }),
-      body: JSON.stringify({ children }),
-    },
-  );
-  if (!ok) {
-    throw new Error(humanizeCreateError(response?.status ?? 0, detail));
+/** Parse la propriété Note → Map jour → texte. */
+export function parseNotePropertyByDay(fullText) {
+  const map = new Map();
+  const raw = String(fullText || "").trim();
+  if (!raw) return map;
+  const parts = raw.split(/(?=^<<Jour\s+\d+>>)/m);
+  for (const part of parts) {
+    const match = part.match(/^<<Jour\s+(\d+)>>\s*\n?([\s\S]*)$/i);
+    if (!match) {
+      if (part.trim() && !map.has(0)) map.set(0, part.trim());
+      continue;
+    }
+    const jour = Number(match[1]);
+    const body = String(match[2] || "").trim();
+    if (Number.isFinite(jour) && jour > 0) map.set(jour, body);
   }
+  return map;
 }
 
-async function findPlanDayNotePageId(token, planPageId, jour) {
-  const title = planDayNoteTitle(jour);
-  const blocks = await listBlockChildren(token, planPageId);
-  for (const block of blocks) {
-    if (block.type !== "child_page") continue;
-    const childTitle = String(block.child_page?.title || "").trim();
-    if (childTitle === title) return block.id;
-  }
-  return null;
+export function mergeDayIntoNoteProperty(fullText, jour, body) {
+  const map = parseNotePropertyByDay(fullText);
+  const n = Number(jour);
+  const text = String(body ?? "").trim();
+  if (text) map.set(n, text);
+  else map.delete(n);
+  map.delete(0);
+  return [...map.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([day, content]) => `${planDayNoteTitle(day)}\n${content}`)
+    .join("\n\n");
 }
 
 /**
- * Crée ou met à jour la note quotidienne (page enfant sous le plan Notion).
+ * Crée ou met à jour la note du jour dans la propriété Notion « Note » du plan.
  */
 export async function upsertPlanDayNote(token, input = {}) {
   if (!token) {
@@ -656,38 +601,27 @@ export async function upsertPlanDayNote(token, input = {}) {
     return { ok: false, error: "jour invalide", hasToken: true };
   }
   const body = String(input.body ?? "");
-  let noteId = pageIdFromNotionUrl(input.pageId || input.noteUrl || "") || null;
 
   try {
-    if (!noteId) {
-      noteId = await findPlanDayNotePageId(token, planPageId, jour);
-    }
-
-    if (noteId) {
-      await clearBlockChildren(token, noteId);
-      await appendParagraphs(token, noteId, body);
+    const page = await notionGet(token, `/pages/${planPageId}`);
+    const props = page.properties ?? {};
+    const propName = resolveRichTextPropName(props, "Note", "Notes", "Nota");
+    if (!propName || !props[propName]) {
       return {
-        ok: true,
+        ok: false,
         hasToken: true,
-        jour,
-        pageId: noteId,
-        url: notionPageUrl(noteId),
-        body,
+        error: "Propriété Notion « Note » introuvable sur ce plan",
       };
     }
-
-    const title = planDayNoteTitle(jour);
-    const { ok, response, detail } = await notionFetch("https://api.notion.com/v1/pages", {
-      method: "POST",
+    const current = await propRichTextFull(token, planPageId, props, propName);
+    const next = mergeDayIntoNoteProperty(current, jour, body);
+    const { ok, response, detail } = await notionFetch(`https://api.notion.com/v1/pages/${planPageId}`, {
+      method: "PATCH",
       headers: notionHeaders(token, { "Content-Type": "application/json" }),
       body: JSON.stringify({
-        parent: { page_id: planPageId },
         properties: {
-          title: {
-            title: [{ type: "text", text: { content: title.slice(0, 2000) } }],
-          },
+          [propName]: { rich_text: textToRichTextArray(next) },
         },
-        children: textToParagraphBlocks(body),
       }),
     });
     if (!ok) {
@@ -697,14 +631,12 @@ export async function upsertPlanDayNote(token, input = {}) {
         error: humanizeCreateError(response?.status ?? 0, detail),
       };
     }
-    const page = await response.json();
-    const id = page.id;
     return {
       ok: true,
       hasToken: true,
       jour,
-      pageId: id,
-      url: notionPageUrl(id),
+      pageId: planPageId,
+      url: notionPageUrl(planPageId),
       body,
     };
   } catch (err) {
@@ -713,33 +645,40 @@ export async function upsertPlanDayNote(token, input = {}) {
   }
 }
 
-/** Lit la note quotidienne depuis Notion (page enfant ou pageId connu). */
+/** Lit la note du jour depuis la propriété Notion « Note ». */
 export async function fetchPlanDayNote(token, input = {}) {
   if (!token) {
     return { ok: false, error: "NOTION_TOKEN em falta", hasToken: false, body: "" };
   }
   const planPageId = pageIdFromNotionUrl(input.planUrl || input.planPageId || "");
   const jour = Number(input.jour);
-  let noteId = pageIdFromNotionUrl(input.pageId || input.noteUrl || "") || null;
+  if (!planPageId || !Number.isFinite(jour) || jour < 1) {
+    return { ok: false, error: "plan ou jour invalide", hasToken: true, body: "" };
+  }
 
   try {
-    if (!noteId) {
-      if (!planPageId || !Number.isFinite(jour) || jour < 1) {
-        return { ok: false, error: "plan ou jour invalide", hasToken: true, body: "" };
-      }
-      noteId = await findPlanDayNotePageId(token, planPageId, jour);
+    const page = await notionGet(token, `/pages/${planPageId}`);
+    const props = page.properties ?? {};
+    const propName = resolveRichTextPropName(props, "Note", "Notes", "Nota");
+    if (!propName || !props[propName]) {
+      return {
+        ok: true,
+        hasToken: true,
+        body: "",
+        jour,
+        pageId: planPageId,
+        url: notionPageUrl(planPageId),
+      };
     }
-    if (!noteId) {
-      return { ok: true, hasToken: true, body: "", jour, pageId: null, url: null };
-    }
-    const body = await readPagePlainText(token, noteId);
+    const full = await propRichTextFull(token, planPageId, props, propName);
+    const map = parseNotePropertyByDay(full);
     return {
       ok: true,
       hasToken: true,
       jour,
-      pageId: noteId,
-      url: notionPageUrl(noteId),
-      body,
+      pageId: planPageId,
+      url: notionPageUrl(planPageId),
+      body: map.get(jour) || "",
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

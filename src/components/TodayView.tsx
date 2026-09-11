@@ -9,6 +9,7 @@ import {
 } from "../planDayNote";
 import { isPlanComplete, type PlanProgress } from "../planProgress";
 import type { ReadingPlan } from "../types";
+import { PlanDescription } from "./PlanDescription";
 
 type TodayViewProps = {
   plan: ReadingPlan | null;
@@ -27,7 +28,28 @@ type TodayViewProps = {
   onRestartPlan?: () => void;
 };
 
-type PlanScreen = "timeline" | "dayNote";
+type PlanScreen = "timeline" | "intro" | "dayNote";
+
+function introKey(planId: string) {
+  return `biblos-plan-intro-seen:${planId}`;
+}
+
+function loadIntroSeen(planId: string): boolean {
+  try {
+    return localStorage.getItem(introKey(planId)) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function saveIntroSeen(planId: string, seen: boolean) {
+  try {
+    if (seen) localStorage.setItem(introKey(planId), "1");
+    else localStorage.removeItem(introKey(planId));
+  } catch {
+    /* private mode */
+  }
+}
 
 export function TodayView({
   plan,
@@ -43,6 +65,7 @@ export function TodayView({
 }: TodayViewProps) {
   const [screen, setScreen] = useState<PlanScreen>("timeline");
   const [selectedJour, setSelectedJour] = useState(planJour);
+  const [introSeen, setIntroSeen] = useState(false);
   const [noteText, setNoteText] = useState("");
   const [noteBusy, setNoteBusy] = useState(false);
   const [noteMsg, setNoteMsg] = useState<string | null>(null);
@@ -57,6 +80,7 @@ export function TodayView({
   const scheduleTotal = days.length;
   const scheduleDone = days.filter((day) => progress?.completedDays.includes(day.jour)).length;
   const planComplete = isPlanComplete({ days }, progress);
+  const hasDescription = Boolean(plan?.description?.trim());
 
   useEffect(() => {
     if (!days.length) return;
@@ -65,6 +89,11 @@ export function TodayView({
   }, [plan?.id, planJour, days]);
 
   useEffect(() => {
+    if (!plan?.id) {
+      setIntroSeen(false);
+      return;
+    }
+    setIntroSeen(loadIntroSeen(plan.id));
     setScreen("timeline");
     setNoteMsg(null);
   }, [plan?.id]);
@@ -159,11 +188,27 @@ export function TodayView({
     setScreen("dayNote");
   }
 
+  function markIntroSeen() {
+    setIntroSeen(true);
+    saveIntroSeen(plan.id, true);
+  }
+
   function startReading() {
     if (planComplete) {
       onRestartPlan?.();
+      setIntroSeen(false);
+      saveIntroSeen(plan.id, false);
       const first = days[0];
       if (first) setSelectedJour(first.jour);
+      if (hasDescription) {
+        setScreen("intro");
+        return;
+      }
+      return;
+    }
+    // Description une seule fois au démarrage du plan — pas chaque jour.
+    if (hasDescription && !introSeen) {
+      setScreen("intro");
       return;
     }
     openPassage();
@@ -183,8 +228,55 @@ export function TodayView({
       return;
     }
     setNoteSaved(true);
-    setNoteMsg("Enregistré dans Notion");
+    setNoteMsg("Enregistré dans Notion (Note)");
     if (andClose) setScreen("timeline");
+  }
+
+  if (screen === "intro") {
+    return (
+      <div className="today-view panel-nota-content plan-yv plan-yv-devo">
+        <header className="plan-yv-devo-head">
+          <button
+            type="button"
+            className="flash-list-back"
+            onClick={() => setScreen("timeline")}
+            aria-label="Retour au plan"
+          >
+            ← Retour
+          </button>
+          <p className="plan-yv-devo-eyebrow">Description · Au démarrage</p>
+          <h2 className="plan-yv-devo-title">{planTitle}</h2>
+        </header>
+
+        <div className="plan-yv-devo-scroll">
+          <PlanDescription description={plan.description} title="Description" showTitle={false} />
+          {canOpenPassage && passageLabel ? (
+            <aside className="plan-yv-devo-next" aria-label="Lecture du jour">
+              <p className="plan-yv-devo-next-kicker">Ensuite</p>
+              <p className="plan-yv-devo-next-ref">{passageLabel}</p>
+            </aside>
+          ) : null}
+        </div>
+
+        <footer className="plan-yv-devo-actions">
+          <button
+            type="button"
+            className="plan-yv-devo-continue"
+            style={{ gridColumn: "1 / -1" }}
+            onClick={() => {
+              markIntroSeen();
+              if (canOpenPassage) {
+                openPassage();
+                return;
+              }
+              setScreen("timeline");
+            }}
+          >
+            {canOpenPassage ? "Commencer la lecture" : "Retour au plan"}
+          </button>
+        </footer>
+      </div>
+    );
   }
 
   if (screen === "dayNote") {
@@ -214,7 +306,7 @@ export function TodayView({
 
         <div className="plan-yv-devo-scroll">
           <label className="plan-yv-day-note-label" htmlFor="plan-day-note">
-            Ta réflexion après la lecture
+            Ta réflexion — enregistrée dans Notion (Note)
           </label>
           <textarea
             id="plan-day-note"
@@ -411,7 +503,7 @@ export function TodayView({
               <span className="plan-yv-task-stack">
                 <span className="plan-yv-task-label">Note du jour</span>
                 <span className="plan-yv-task-meta">
-                  {dayNoteDone || noteSaved ? "Écrite · fin de lecture" : "Après la lecture"}
+                  {dayNoteDone || noteSaved ? "Écrite · Notion Note" : "Fin de lecture → Note"}
                 </span>
               </span>
               <span className="plan-yv-task-chevron" aria-hidden="true">

@@ -4,30 +4,25 @@
 #   npm run mobile:install -- -rebuild  # rebuild completo + abre
 #   npm run mobile:install -- -live     # Vite local + adb reverse + abre (teste rápido UX)
 #
-# Pré-requisitos: USB debugging activo, JDK 21, ANDROID_HOME.
+# Pré-requisitos: USB debugging activo, JDK 21 (não Java 17), ANDROID_HOME.
 
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
 
+. (Join-Path $PSScriptRoot "resolve-jdk21.ps1")
+
 $sdk = $env:ANDROID_HOME
 if (-not $sdk) { $sdk = "$env:LOCALAPPDATA\Android\Sdk" }
 $env:ANDROID_HOME = $sdk
 $env:ANDROID_SDK_ROOT = $sdk
-
-$jdk21 = Get-ChildItem "C:\Program Files\Eclipse Adoptium" -Directory -ErrorAction SilentlyContinue |
-  Where-Object { $_.Name -like "jdk-21*" } |
-  Select-Object -First 1
-if ($jdk21) { $env:JAVA_HOME = $jdk21.FullName }
-
-$env:Path = "$env:JAVA_HOME\bin;$sdk\platform-tools;$env:Path"
+$env:Path = "$sdk\platform-tools;$env:Path"
 
 $pkg = "app.biblos.mobile"
 $activity = ".MainActivity"
 $live = $args -contains "-live"
 $rebuild = $args -contains "-rebuild" -or $live
 
-Write-Host "JAVA_HOME=$env:JAVA_HOME"
 Write-Host "ANDROID_HOME=$env:ANDROID_HOME"
 
 $devices = adb devices | Select-String "`tdevice$"
@@ -113,10 +108,18 @@ export default config;
     Write-Host "A gerar APK…"
     $env:CAPACITOR = "1"
     npm run build:mobile
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     npx cap sync android
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    # Reaplica JDK 21 (npm/cap podem herdar JAVA_HOME=17 do sistema).
+    . (Join-Path $PSScriptRoot "resolve-jdk21.ps1")
     Push-Location (Join-Path $root "android")
-    .\gradlew.bat assembleDebug --no-daemon
-    Pop-Location
+    try {
+      .\gradlew.bat assembleDebug --no-daemon
+      if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    } finally {
+      Pop-Location
+    }
   }
 
   if (-not (Test-Path $apk)) {
