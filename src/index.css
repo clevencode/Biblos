@@ -538,31 +538,277 @@ body,
   width: 100%;
 }
 
-.flash--session .flash-main {
-  gap: 16px;
-  justify-content: flex-start;
+/* —— Session de cartes (protótipo) —— */
+.flash--session {
+  --card-tint: transparent;
+  gap: 0;
+  padding: 0 0 12px;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--card-tint) 22%, var(--bg)) 0%,
+      color-mix(in srgb, var(--card-tint) 8%, var(--bg)) 28%,
+      var(--bg) 52%
+    );
 }
 
-.flash--session .flash-head {
+.flash-session-top {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 8px 10px 10px;
+  box-sizing: border-box;
+  background: color-mix(in srgb, var(--card-tint) 16%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--card-tint) 22%, var(--line));
+}
+
+.flash-session-back,
+.flash-session-top-slot {
+  flex: none;
+  width: 40px;
+  height: 40px;
+}
+
+.flash-session-top-center {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.flash-session-back {
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, #fff 55%, transparent);
+  color: var(--text);
+  font: inherit;
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.flash-session-back:hover {
+  background: color-mix(in srgb, #fff 82%, transparent);
+}
+
+.flash-session-top .flash-card-menu {
+  position: relative;
+  top: auto;
+  right: auto;
+}
+
+.flash-session-top .flash-card-menu-trigger {
+  background: color-mix(in srgb, #fff 55%, transparent);
+  border-radius: 999px;
+}
+
+.flash--session .flash-main {
+  gap: 14px;
+  justify-content: flex-start;
   max-width: 400px;
+  margin: 0 auto;
+  padding: 12px 16px 8px;
+  box-sizing: border-box;
+}
+
+.flash--session .flash-session-meter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+}
+
+.flash--session .flash-session-count {
+  margin: 0;
+  flex: none;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 1px;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.95rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  line-height: 1;
+}
+
+.flash--session .flash-session-current {
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.flash--session .flash-session-of,
+.flash--session .flash-session-total {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+/* Respiro: a barra ocupa o espaço flexível entre contador e Data */
+.flash--session .flash-session-meter-respiro {
+  flex: 1 1 auto;
+  min-width: 40px;
+  display: flex;
+  align-items: center;
+}
+
+.flash--session .flash-progress {
+  width: 100%;
+  height: 6px;
+  margin: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--line) 88%, transparent);
+  overflow: hidden;
+}
+
+.flash--session .flash-progress i {
+  display: block;
+  height: 100%;
+  min-width: 0;
+  border-radius: inherit;
+  background: color-mix(in srgb, var(--card-tint) 55%, var(--text));
+  opacity: 1;
+  transition: width 0.32s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.flash--session .flash-session-rappel {
+  flex: none;
+  margin: 0;
+  max-width: 42%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  color: var(--muted);
+  text-align: center;
+}
+
+.flash--session .flash-session-rappel.is-set {
+  color: var(--text);
+  background: color-mix(in srgb, var(--card-tint) 12%, #fff);
+  border-color: color-mix(in srgb, var(--card-tint) 28%, var(--line));
 }
 
 .flash--session .flash-nav-row {
   flex: 1 1 auto;
   min-height: 0;
   align-items: stretch;
+  width: 100%;
 }
 
 .flash--session .flash-viewport {
   display: flex;
   align-items: stretch;
+  width: 100%;
+}
+
+.flash--session .flash-stage {
+  padding: 4px 2px;
+}
+
+.flash--session .flash-face {
+  /* Outline em gradiente a partir da cor herdada (--card-tint) */
+  --card-outline: var(--card-tint, var(--accent));
+  border: 10px solid transparent;
+  border-radius: 22px;
+  background:
+    linear-gradient(#fff, #fff) padding-box,
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--card-outline) 92%, #fff) 0%,
+      color-mix(in srgb, var(--card-outline) 28%, #fff) 48%,
+      color-mix(in srgb, var(--card-outline) 78%, #e5e7eb) 100%
+    )
+      border-box;
+  box-shadow:
+    0 1px 2px color-mix(in srgb, var(--text) 5%, transparent),
+    0 10px 28px color-mix(in srgb, var(--card-outline) 14%, transparent),
+    0 14px 36px color-mix(in srgb, var(--text) 7%, transparent);
+}
+
+.flash--session .flash-back {
+  background:
+    linear-gradient(#fff, #fff) padding-box,
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--card-outline) 92%, #fff) 0%,
+      color-mix(in srgb, var(--card-outline) 28%, #fff) 48%,
+      color-mix(in srgb, var(--card-outline) 78%, #e5e7eb) 100%
+    )
+      border-box;
 }
 
 .flash--session .flash-actions {
   margin-top: auto;
   width: 100%;
-  max-width: 400px;
+  max-width: none;
+  gap: 10px;
+}
+
+.flash--session .flash-mark {
+  border-radius: 999px;
+  min-height: 48px;
+  padding: 12px 18px;
+  gap: 0;
+  background: #fff;
+  color: var(--text);
+  border: 1px solid color-mix(in srgb, var(--line) 92%, #fff);
+  box-shadow: none;
+}
+
+.flash--session .flash-mark-label {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: inherit;
+}
+
+.flash--session .flash-mark small {
+  display: none;
+}
+
+.flash--session .flash-mark-when {
+  display: none;
+}
+
+.flash--session .flash-mark:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--text) 3%, #fff);
+  border-color: color-mix(in srgb, var(--line) 78%, var(--text));
+  box-shadow: none;
+}
+
+.flash--session .flash-mark.is-on,
+.flash--session .flash-mark:disabled.is-on {
+  background: color-mix(in srgb, var(--text) 7%, #f3f4f6);
+  border-color: color-mix(in srgb, var(--text) 16%, var(--line));
+  box-shadow: none;
+  color: var(--text);
+}
+
+.flash--session .flash-mark.is-default:not(:disabled):not(.is-on) {
+  border-color: color-mix(in srgb, var(--line) 92%, #fff);
+  box-shadow: none;
+}
+
+.flash--session .flash-sync {
+  text-align: center;
+  margin: 2px 0 0;
+  font-size: 0.78rem;
+  color: var(--muted);
 }
 
 /* Expanded (≥1280): master–detail — lista à esquerda, cartão à direita */
@@ -2146,9 +2392,9 @@ body,
 
 .flash-actions {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
-  width: min(100%, 480px);
+  width: min(100%, 420px);
   min-height: 0;
   align-items: stretch;
   padding: 0;
@@ -2177,20 +2423,21 @@ body,
   gap: 10px;
   width: 100%;
   margin: 0;
-  padding: 14px 20px;
+  padding: 15px 24px;
   border: 0;
-  border-radius: 14px;
+  border-radius: 999px;
   background: var(--text);
-  color: var(--bg);
+  color: #fff;
   font: inherit;
   font-size: 1rem;
-  font-weight: 650;
-  letter-spacing: -0.01em;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   cursor: pointer;
-  box-shadow: 0 6px 18px color-mix(in srgb, var(--text) 14%, transparent);
+  box-shadow: none;
   transition:
     transform 0.15s ease,
-    opacity 0.15s ease;
+    opacity 0.15s ease,
+    background 0.15s ease;
 }
 
 .flash-reveal-btn:hover {
@@ -2206,11 +2453,11 @@ body,
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: color-mix(in srgb, var(--bg) 72%, transparent);
-  border: 1px solid color-mix(in srgb, var(--bg) 28%, transparent);
-  border-radius: 6px;
-  padding: 3px 7px;
-  background: color-mix(in srgb, var(--bg) 12%, transparent);
+  color: color-mix(in srgb, #fff 72%, transparent);
+  border: 1px solid color-mix(in srgb, #fff 28%, transparent);
+  border-radius: 999px;
+  padding: 3px 8px;
+  background: color-mix(in srgb, #fff 12%, transparent);
 }
 
 .flash.is-revealed .flash-actions {
@@ -2269,13 +2516,14 @@ body,
 
 .flash-restart-btn {
   appearance: none;
-  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line));
-  background: var(--panel);
+  border: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
+  background: #fff;
   color: var(--text);
-  border-radius: 10px;
-  padding: 12px 16px;
+  border-radius: 999px;
+  padding: 12px 18px;
   font: inherit;
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   cursor: pointer;
 }
 
@@ -3030,34 +3278,30 @@ body,
     padding-bottom: 2px;
   }
 
+  .flash--session {
+    padding-bottom: max(8px, env(safe-area-inset-bottom, 0px));
+  }
+
   .flash--session .flash-main {
     gap: 12px;
+    max-width: none;
+    width: 100%;
+    padding-inline: var(--mobile-gutter, 12px);
   }
 
   .flash--session .flash-actions {
     max-width: none;
   }
 
-  .flash-head {
+  .flash-session-top {
+    max-width: none;
     width: 100%;
-    gap: 6px;
-    flex-shrink: 0;
+    padding-inline: max(10px, env(safe-area-inset-left, 0px))
+      max(10px, env(safe-area-inset-right, 0px));
   }
 
   .flash-session-meter {
-    gap: 6px;
-  }
-
-  .flash-session-pos {
-    font-size: 1.12rem;
-  }
-
-  .flash-session-current {
-    font-size: 1.28rem;
-  }
-
-  .flash-session-hint {
-    font-size: 0.7rem;
+    gap: 8px;
   }
 
   .flash-nav-row {
@@ -3091,6 +3335,11 @@ body,
     padding: 6px 36px 4px 2px;
   }
 
+  .flash--session .flash-stage {
+    padding: 4px 2px;
+    max-height: min(480px, 56dvh);
+  }
+
   .flash-card-menu {
     top: 2px;
     right: 0;
@@ -3100,6 +3349,10 @@ body,
     padding: 24px 18px 18px;
     gap: 12px;
     border-radius: 16px;
+  }
+
+  .flash--session .flash-face {
+    border-radius: 22px;
   }
 
   .flash-face p {
@@ -3157,8 +3410,8 @@ body,
     max-width: none;
     width: 100%;
     min-height: var(--mobile-touch);
-    border-radius: 14px;
-    box-shadow: 0 4px 14px color-mix(in srgb, var(--text) 12%, transparent);
+    border-radius: 999px;
+    box-shadow: none;
   }
 
   .flash-reveal-btn kbd {

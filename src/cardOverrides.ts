@@ -182,15 +182,18 @@ export function applyCardMark(
   card: Pick<Flashcard, "categoria" | "status" | "lembrete" | "revisadoEm" | "criadoEm">,
   stored?: Pick<CardOverride, "facilStreak" | "revisadoEm"> | null,
   reviewedOn = todayKey(),
+  options?: { intervalDays?: number },
 ): CardOverride {
   const next = retentionFromMark(
     mark,
     {
       facilStreak: resolveFacilStreak(card, stored?.facilStreak),
-      intervalDays: cardIntervalDays({
-        ...card,
-        revisadoEm: stored?.revisadoEm ?? card.revisadoEm,
-      }),
+      intervalDays:
+        options?.intervalDays ??
+        cardIntervalDays({
+          ...card,
+          revisadoEm: stored?.revisadoEm ?? card.revisadoEm,
+        }),
     },
     reviewedOn,
   );

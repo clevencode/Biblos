@@ -13,7 +13,7 @@ import {
   type CardOverride,
   type SyncState,
 } from "./flashcardSync";
-import { isDue, studyQueue } from "./retention";
+import { isDue, studyQueue, cardIntervalDays } from "./retention";
 import type { Flashcard, RetentionMark } from "./types";
 
 export type FlashcardSessionOptions = {
@@ -137,8 +137,11 @@ export function useFlashcardSession(
   const preserveOrderRef = useRef(preserveOrder);
   const removeAfterMarkRef = useRef(removeAfterMark);
   const dayScopeRef = useRef(dayScope);
-  /** Impede duplo toque (ex.: Fácil×2) antes do React actualizar `sync`. */
+  /** Impede duplo toque antes do React actualizar `sync`. */
   const markingRef = useRef(false);
+  /** Intervalle de base figé pour cette face — permet de changer Peu/Moyenne/Facile. */
+  const gradeBaseIntervalRef = useRef<number | null>(null);
+  const sessionMarkRef = useRef<RetentionMark | null>(null);
   const live = useRef({ flipped: false, sync: "idle" as SyncState, card: null as Flashcard | null, total: 0 });
   preserveOrderRef.current = preserveOrder;
   removeAfterMarkRef.current = removeAfterMark;
@@ -300,7 +303,7 @@ export function useFlashcardSession(
         return;
       }
       setFlippedId(null);
-    }, 280);
+    }, 1100);
   }
 
   function toggleFlip() {
@@ -377,21 +380,32 @@ export function useFlashcardSession(
 
   function setMark(value: RetentionMark) {
     const current = live.current;
-    // Uma classificação por verso (evita contagem dupla no mesmo toque).
+    // Permet de changer Peu → Moyenne → Facile tant que la carte est ouverte.
     if (!current?.card || !current.flipped) return;
     if (current.card.status === "encerrado") return;
-    if (markingRef.current || current.sync === "saving" || current.sync === "saved") return;
+    if (markingRef.current || current.sync === "saving") return;
+    if (sessionMarkRef.current === value && current.sync === "saved") return;
+
     const fromId = current.card.id;
     const fromCard = queueRef.current.find((item) => item.id === fromId) ?? current.card;
     const stored = loadOverride(fromId);
+    if (gradeBaseIntervalRef.current == null) {
+      gradeBaseIntervalRef.current = cardIntervalDays({
+        ...fromCard,
+        revisadoEm: stored?.revisadoEm ?? fromCard.revisadoEm,
+      });
+    }
     markingRef.current = true;
+    sessionMarkRef.current = value;
     setSessionMark(value);
     setSync("saving");
     live.current = { ...live.current, sync: "saving" };
     void applyOverride(
       fromId,
       fromCard.url || "",
-      applyCardMark(value, current.card, stored, todayKey()),
+      applyCardMark(value, current.card, stored, todayKey(), {
+        intervalDays: gradeBaseIntervalRef.current,
+      }),
       true,
     );
   }
@@ -425,6 +439,8 @@ export function useFlashcardSession(
   // Único ponto de reset: mudar de cartão limpa flip, marca, sync e override local.
   useEffect(() => {
     markingRef.current = false;
+    gradeBaseIntervalRef.current = null;
+    sessionMarkRef.current = null;
     setFlippedId(null);
     setSessionMark(null);
     setSync("idle");
@@ -493,27 +509,22 @@ export function useFlashcardSession(
         }
         return;
       }
-      if (live.current.flipped && (event.key === "1" || event.key === "a" || event.key === "A")) {
+      if (live.current.flipped && (event.key === "1" || event.key === "p" || event.key === "P")) {
         event.preventDefault();
         setMark("encore");
         return;
       }
-      if (live.current.flipped && (event.key === "2" || event.key === "d" || event.key === "D")) {
-        event.preventDefault();
-        setMark("dificil");
-        return;
-      }
-      if (live.current.flipped && (event.key === "3" || event.key === "c" || event.key === "C")) {
+      if (live.current.flipped && (event.key === "2" || event.key === "m" || event.key === "M")) {
         event.preventDefault();
         setMark("medio");
         return;
       }
-      if (live.current.flipped && (event.key === "4" || event.key === "f" || event.key === "F")) {
+      if (live.current.flipped && (event.key === "3" || event.key === "f" || event.key === "F")) {
         event.preventDefault();
         setMark("facil");
         return;
       }
-      // Anki: Space/Enter révèle ; verso visible → Correct (Good).
+      // Espace/Enter révèle ; verso visible → Moyenne.
       if (event.key === " " || event.key === "Enter") {
         event.preventDefault();
         if (live.current.flipped) {

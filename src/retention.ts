@@ -6,13 +6,13 @@ import { dateKey, todayKey } from "./calendar";
 import type { Flashcard, RetentionMark } from "./types";
 
 /**
- * Intervalles Anki (jours) — cartes nouvelles.
- * Review: Again=1 · Hard=×1.2 · Good=×2.5 · Easy=×2.5×1.3
+ * Intervalles (jours) — cartes nouvelles, 3 notes : Peu · Moyenne · Facile.
+ * Review: Peu=1 · Moyenne=×2.5 · Facile=×2.5×1.3
  */
 export const ANKI_NEW_DAYS = {
   encore: 1,
-  dificil: 3,
-  medio: 4,
+  dificil: 3, // legacy (Notion) — non exposé dans l’UI
+  medio: 3,
   facil: 7,
 } as const;
 
@@ -29,15 +29,16 @@ export const RETENTION_DAYS = {
   novo: 2,
 } as const;
 
-/** Libellés UI (Notion garde « Dificile » via shared/notion). */
+/** Libellés UI — 3 notes (clés internes Anki / Notion inchangées). */
 export const RETENTION_LABELS: Record<RetentionMark, string> = {
-  encore: "Encore",
-  dificil: "Difficile",
-  medio: "Correct",
+  encore: "Peu",
+  dificil: "Peu", // legacy → même libellé
+  medio: "Moyenne",
   facil: "Facile",
 };
 
-export const RETENTION_MARKS: RetentionMark[] = ["encore", "dificil", "medio", "facil"];
+/** Notes exposées dans la session (Peu · Moyenne · Facile). */
+export const RETENTION_MARKS: RetentionMark[] = ["encore", "medio", "facil"];
 
 export function normalizeCategoria(
   value: Flashcard["categoria"] | "connu" | "desconhecido" | string | null | undefined,
@@ -183,11 +184,10 @@ export function scheduleFromMark(
 }
 
 function markRank(categoria: Flashcard["categoria"]): number {
-  if (categoria === "encore") return 0;
-  if (categoria === "dificil") return 1;
-  if (categoria == null) return 2;
-  if (categoria === "medio") return 3;
-  return 4;
+  if (categoria === "encore" || categoria === "dificil") return 0;
+  if (categoria == null) return 1;
+  if (categoria === "medio") return 2;
+  return 3;
 }
 
 export function compareStudyOrder(a: Flashcard, b: Flashcard, today = todayKey()): number {

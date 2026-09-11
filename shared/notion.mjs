@@ -69,7 +69,15 @@ export function normalizeCategoria(value) {
     .toLowerCase()
     .trim();
   // Repetition Anki (Biblos) + Connaissance / Catégorie legado
-  if (key === "encore" || key === "again" || key === "de nouveau") return "encore";
+  // UI : Peu · Moyenne · Facile (clés internes encore · medio · facil)
+  if (
+    key === "encore" ||
+    key === "again" ||
+    key === "de nouveau" ||
+    key === "peu"
+  ) {
+    return "encore";
+  }
   if (key === "facil" || key === "facile" || key === "easy" || key === "connu" || key === "eleve") {
     return "facil";
   }
@@ -81,8 +89,7 @@ export function normalizeCategoria(value) {
     key === "dificile" ||
     key === "difficile" ||
     key === "hard" ||
-    key === "desconhecido" ||
-    key === "peu"
+    key === "desconhecido"
   ) {
     return "dificil";
   }
@@ -103,8 +110,8 @@ export function normalizeStatus(value) {
 }
 
 /**
- * Repetition (Anki) : Encore | Dificile | Correct | Facile
- * (orthographe Notion « Dificile » conservée)
+ * Repetition : Peu | Moyenne | Facile (UI).
+ * Notion conserve Encore | Correct | Facile (+ Dificile legacy).
  */
 export function categoriaToNotion(categoria) {
   if (categoria === "encore") return "Encore";

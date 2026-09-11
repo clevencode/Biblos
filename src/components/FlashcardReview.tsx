@@ -6,7 +6,6 @@ import {
   addDays,
   ankiIntervalDays,
   cardIntervalDays,
-  isDue,
   lastReviewedOn,
 } from "../retention";
 import type { FlashcardSession } from "../flashcardSession";
@@ -36,9 +35,9 @@ type FlashcardReviewProps = {
 
 const MARK_KEYS: Record<RetentionMark, string> = {
   encore: "1",
-  dificil: "2",
-  medio: "3",
-  facil: "4",
+  dificil: "1",
+  medio: "2",
+  facil: "3",
 };
 
 function CardRepetitionMeta({ item }: { item: Flashcard }) {
@@ -244,68 +243,86 @@ export function FlashcardReview({
   const displayTotal = numbering?.total ?? (dayScoped ? slideQueue.length : total);
   const displayPos =
     numbering?.position ?? (dayScoped ? slideIndex + 1 : index + 1);
-  const after = Math.max(displayTotal - displayPos, 0);
-  const progressPct = displayTotal > 0 ? (displayPos / displayTotal) * 100 : 0;
+  const safeTotal = Math.max(displayTotal, displayPos, 1);
+  const progressPct = Math.min(100, (displayPos / safeTotal) * 100);
   const grading = flipped && sync !== "saving" && card.status !== "encerrado";
   const closed = card.status === "encerrado";
   const positionLabel = numbering?.section
-    ? `${numbering.section}: carte ${displayPos} sur ${displayTotal}`
+    ? `${numbering.section}: carte ${displayPos} sur ${safeTotal}`
     : dayScoped
-      ? `Carte ${displayPos} sur ${displayTotal} ce jour`
-      : `Carte ${displayPos} sur ${displayTotal}`;
-  const remainingDue = dayScoped
-    ? slideQueue.slice(slideIndex).filter((item) => isDue(item.lembrete)).length
-    : 0;
-  const hintLabel =
-    after === 0
-      ? numbering?.section
-        ? "Dernière de cette section"
-        : dayScoped
-          ? "Dernière carte du jour"
-          : "Dernière carte"
-      : after === 1
-        ? "1 à suivre"
-        : `${after} à suivre`;
-  const dueHint =
-    dayScoped && after > 0 && remainingDue > 0 ? `${remainingDue} à revoir` : null;
+      ? `Carte ${displayPos} sur ${safeTotal} ce jour`
+      : `Carte ${displayPos} sur ${safeTotal}`;
+  const cardTint = card.color || undefined;
+  const gradedThisTurn = sync === "saving" || sync === "saved";
+  const rappelDay = card.lembrete ? dateKey(card.lembrete) : null;
+  const rappelLabel = rappelDay
+    ? relativeDayLabel(rappelDay) ?? formatDay(rappelDay)
+    : "Sans date";
 
   return (
-    <div className={`flash flash--solo flash--session${flipped ? " is-revealed" : ""}${closed ? " is-closed" : ""}`}>
+    <div
+      className={`flash flash--solo flash--session${flipped ? " is-revealed" : ""}${closed ? " is-closed" : ""}${gradedThisTurn ? " is-graded" : ""}`}
+      style={cardTint ? { ["--card-tint" as string]: cardTint } : undefined}
+    >
+      <header className="flash-session-top">
+        {onBackToList ? (
+          <button
+            type="button"
+            className="flash-session-back"
+            onClick={onBackToList}
+            aria-label="Retour à la liste"
+          >
+            ←
+          </button>
+        ) : (
+          <span className="flash-session-top-slot" aria-hidden="true" />
+        )}
+        <span className="flash-session-top-center" aria-hidden="true" />
+        <FlashCardMenu
+          canArchive={card.status !== "encerrado"}
+          disabled={sync === "saving"}
+          onArchive={archiveCard}
+          onDelete={onRemoveCard ? () => onRemoveCard(card) : undefined}
+          onReadChapter={
+            onReadChapter && chapterFocusFromRef(card.frente)
+              ? () => onReadChapter(card)
+              : undefined
+          }
+        />
+      </header>
+
       <div className="flash-main">
-        <header className="flash-head" aria-live="polite">
-          <div className="flash-session-meter">
+        <div className="flash-session-meter" aria-live="polite">
+          <p className="flash-session-count" aria-label={positionLabel}>
+            <span className="flash-session-current">{displayPos}</span>
+            <span className="flash-session-of">/</span>
+            <span className="flash-session-total">{safeTotal}</span>
+          </p>
+          <div className="flash-session-meter-respiro" aria-hidden="true">
             <div
               className="flash-progress"
               role="progressbar"
               aria-label="Progression de la session"
               aria-valuemin={0}
-              aria-valuemax={displayTotal}
+              aria-valuemax={safeTotal}
               aria-valuenow={displayPos}
-              aria-valuetext={`Carte ${displayPos} sur ${displayTotal}`}
+              aria-valuetext={`Carte ${displayPos} sur ${safeTotal}`}
             >
               <i style={{ width: `${progressPct}%` }} />
             </div>
-            <div className="flash-session-meta">
-              {numbering?.section ? (
-                <span className="flash-session-context">{numbering.section}</span>
-              ) : null}
-              <p className="flash-session-pos" aria-label={positionLabel}>
-                <span className="flash-session-current">{displayPos}</span>
-                <span className="flash-session-of">/</span>
-                <span className="flash-session-total">{displayTotal}</span>
-              </p>
-              <p className="flash-session-hint">
-                {hintLabel}
-                {dueHint ? (
-                  <span className="flash-due">
-                    {" "}
-                    · {dueHint}
-                  </span>
-                ) : null}
-              </p>
-            </div>
           </div>
-        </header>
+          <p
+            className={`flash-session-rappel${rappelDay ? " is-set" : ""}`}
+            aria-label={rappelDay ? `Date de rappel · ${rappelLabel}` : "Sans date de rappel"}
+            title={
+              gradedThisTurn && mark
+                ? `${RETENTION_LABELS[mark]} · ${rappelLabel}`
+                : `Date de rappel · ${rappelLabel}`
+            }
+          >
+            {rappelLabel}
+          </p>
+        </div>
 
         {closed ? (
           <p className="flash-closed-banner" role="status">
@@ -360,26 +377,15 @@ export function FlashcardReview({
                           : undefined
                       }
                     >
-                      {activeSlide ? (
-                        <FlashCardMenu
-                          canArchive={item.status !== "encerrado"}
-                          disabled={sync === "saving"}
-                          onArchive={archiveCard}
-                          onDelete={onRemoveCard ? () => onRemoveCard(item) : undefined}
-                          onReadChapter={
-                            onReadChapter && chapterFocusFromRef(item.frente)
-                              ? () => onReadChapter(item)
-                              : undefined
-                          }
-                        />
-                      ) : null}
                       <div className={`flash-inner${slideFlipped ? " is-flipped" : ""}`}>
                         <div className="flash-face flash-front">
                           <VerseCardFrontRef frente={item.frente} />
                           {showRepetitionMeta ? <CardRepetitionMeta item={item} /> : null}
                         </div>
                         <div className="flash-face flash-back">
-                          <span className="flash-kicker is-passage-ref">{formatVerseCardPlainRef(item.frente)}</span>
+                          <span className="flash-kicker is-passage-ref">
+                            {formatVerseCardPlainRef(item.frente)}
+                          </span>
                           <p className="flash-back-text">{item.verso}</p>
                           {showRepetitionMeta ? <CardRepetitionMeta item={item} /> : null}
                         </div>
@@ -428,9 +434,7 @@ export function FlashcardReview({
             aria-label={card.status === "espera" ? "Commencer la révision" : "Répétition espacée"}
           >
             {card.status === "espera" ? (
-              <p className="flash-nouveau-hint">
-                Nouveau — note ta réponse pour démarrer.
-              </p>
+              <p className="flash-nouveau-hint">Nouveau — note ta réponse pour démarrer.</p>
             ) : null}
             {RETENTION_MARKS.map((level: RetentionMark) => {
               const key = MARK_KEYS[level];
@@ -446,34 +450,18 @@ export function FlashcardReview({
                   aria-keyshortcuts={level === "medio" ? `${key} Space` : key}
                   title={`${RETENTION_LABELS[level]} — prochain rappel ${hint.when} (${key}${level === "medio" ? " ou Espace" : ""})`}
                 >
-                  <span className="flash-mark-key" aria-hidden="true">
-                    {key}
-                  </span>
                   <span className="flash-mark-label">{RETENTION_LABELS[level]}</span>
-                  <small>
-                    <span className="flash-mark-interval">{hint.interval}</span>
-                    <span className="flash-mark-when"> · {hint.when}</span>
-                  </small>
                 </button>
               );
             })}
           </div>
         )}
-        {sync === "saving" ? (
-          <p className="flash-sync">Enregistrement de la répétition et du rappel…</p>
-        ) : null}
-        {sync === "saved" ? <p className="flash-sync">Répétition et rappel enregistrés</p> : null}
         {sync === "error" ? (
           <p className="flash-sync is-error" role="alert">
             {syncError ?? "Échec de la synchronisation Notion"}
           </p>
         ) : null}
       </div>
-      {onBackToList ? (
-        <button type="button" className="flash-list-back flash-review-back" onClick={onBackToList}>
-          ← Retour
-        </button>
-      ) : null}
     </div>
   );
 }
