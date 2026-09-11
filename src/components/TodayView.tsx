@@ -8,6 +8,8 @@ import {
   saveDayNoteLocal,
 } from "../planDayNote";
 import { isPlanComplete, type PlanProgress } from "../planProgress";
+import { buildDailyReadingReminder } from "../readingReminder";
+import { scheduleReadingReminderTest } from "../readingReminderNotify";
 import type { ReadingPlan } from "../types";
 import { PlanDescription } from "./PlanDescription";
 
@@ -70,6 +72,8 @@ export function TodayView({
   const [noteBusy, setNoteBusy] = useState(false);
   const [noteMsg, setNoteMsg] = useState<string | null>(null);
   const [noteSaved, setNoteSaved] = useState(false);
+  const [reminderBusy, setReminderBusy] = useState(false);
+  const [reminderMsg, setReminderMsg] = useState<string | null>(null);
   const daysStripRef = useRef<HTMLDivElement>(null);
 
   const days = useMemo(() => {
@@ -232,6 +236,28 @@ export function TodayView({
     setNoteSaved(true);
     setNoteMsg("Enregistré dans Notion (Note)");
     if (andClose) setScreen("timeline");
+  }
+
+  async function testReadingReminder() {
+    if (!plan) return;
+    const reminder = buildDailyReadingReminder(plan, progress);
+    if (!reminder) {
+      setReminderMsg("Aucune lecture à rappeler pour ce plan.");
+      return;
+    }
+    setReminderBusy(true);
+    setReminderMsg(null);
+    const result = await scheduleReadingReminderTest(reminder, 15);
+    setReminderBusy(false);
+    if (!result.ok) {
+      setReminderMsg(result.error || "Échec du rappel de test");
+      return;
+    }
+    setReminderMsg(
+      result.mode === "native"
+        ? `Rappel test dans ~15 s : ${reminder.passageLabel}`
+        : `Rappel navigateur dans ~15 s : ${reminder.passageLabel}`,
+    );
   }
 
   if (screen === "intro") {
@@ -519,6 +545,18 @@ export function TodayView({
       <button type="button" className="plan-yv-start" onClick={startReading}>
         {planComplete ? "Recommencer la lecture" : "Commencer la lecture"}
       </button>
+
+      <button
+        type="button"
+        className="plan-yv-reminder-test"
+        disabled={reminderBusy}
+        onClick={() => {
+          void testReadingReminder();
+        }}
+      >
+        {reminderBusy ? "Programmation…" : "Tester le rappel (15 s)"}
+      </button>
+      {reminderMsg ? <p className="plan-yv-reminder-msg muted">{reminderMsg}</p> : null}
     </div>
   );
 }

@@ -16,6 +16,7 @@
     "pwa:build": "npm run build",
     "preview": "vite preview",
     "seed": "node scripts/build-seed.mjs",
+    "test:reminder": "npx --yes tsx scripts/test-reading-reminder.ts",
     "sync:cards": "node scripts/sync-flashcards.mjs --apply",
     "sync:cards:dry": "node scripts/sync-flashcards.mjs --dry-run"
   },
@@ -23,6 +24,7 @@
     "@capacitor/android": "^8.5.1",
     "@capacitor/cli": "^8.5.1",
     "@capacitor/core": "^8.5.1",
+    "@capacitor/local-notifications": "^8.3.1",
     "@capacitor/status-bar": "^8.0.3",
     "@heroicons/react": "^2.2.0",
     "react": "^19.2.0",
