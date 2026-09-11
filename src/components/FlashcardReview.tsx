@@ -85,15 +85,17 @@ function markHint(
 }
 
 function FlashCardMenu({
-  canArchive,
+  archived = false,
   disabled,
   onArchive,
+  onUnarchive,
   onDelete,
   onReadChapter,
 }: {
-  canArchive: boolean;
+  archived?: boolean;
   disabled?: boolean;
   onArchive?: () => void;
+  onUnarchive?: () => void;
   onDelete?: () => void;
   onReadChapter?: () => void;
 }) {
@@ -117,7 +119,9 @@ function FlashCardMenu({
     };
   }, [open]);
 
-  if (!onArchive && !onDelete && !onReadChapter) return null;
+  const showArchive = Boolean(onArchive) && !archived;
+  const showUnarchive = Boolean(onUnarchive) && archived;
+  if (!showArchive && !showUnarchive && !onDelete && !onReadChapter) return null;
 
   return (
     <div
@@ -154,6 +158,36 @@ function FlashCardMenu({
               </button>
             </li>
           ) : null}
+          {showArchive ? (
+            <li role="none">
+              <button
+                type="button"
+                role="menuitem"
+                className="flash-card-menu-item"
+                onClick={() => {
+                  setOpen(false);
+                  onArchive?.();
+                }}
+              >
+                Archiver la carte
+              </button>
+            </li>
+          ) : null}
+          {showUnarchive ? (
+            <li role="none">
+              <button
+                type="button"
+                role="menuitem"
+                className="flash-card-menu-item"
+                onClick={() => {
+                  setOpen(false);
+                  onUnarchive?.();
+                }}
+              >
+                Désarchiver
+              </button>
+            </li>
+          ) : null}
           {onDelete ? (
             <li role="none">
               <button
@@ -166,21 +200,6 @@ function FlashCardMenu({
                 }}
               >
                 Supprimer la carte
-              </button>
-            </li>
-          ) : null}
-          {onArchive && canArchive ? (
-            <li role="none">
-              <button
-                type="button"
-                role="menuitem"
-                className="flash-card-menu-item"
-                onClick={() => {
-                  setOpen(false);
-                  onArchive();
-                }}
-              >
-                Archiver la carte
               </button>
             </li>
           ) : null}
@@ -279,9 +298,10 @@ export function FlashcardReview({
         )}
         <span className="flash-session-top-center" aria-hidden="true" />
         <FlashCardMenu
-          canArchive={card.status !== "encerrado"}
+          archived={closed}
           disabled={sync === "saving"}
           onArchive={archiveCard}
+          onUnarchive={restartLearning}
           onDelete={onRemoveCard ? () => onRemoveCard(card) : undefined}
           onReadChapter={
             onReadChapter && chapterFocusFromRef(card.frente)
@@ -324,12 +344,6 @@ export function FlashcardReview({
           </p>
         </div>
 
-        {closed ? (
-          <p className="flash-closed-banner" role="status">
-            Cette carte est terminée
-          </p>
-        ) : null}
-
         <div className="flash-nav-row">
           <button
             type="button"
@@ -358,7 +372,11 @@ export function FlashcardReview({
           >
             <div
               className={`flash-track${dragging ? " is-dragging" : ""}`}
-              style={{ transform: `translateX(calc(-${slideIndex * 100}% + ${dragX}px))` }}
+              style={{
+                transform: canNav
+                  ? `translate3d(calc(var(--flash-peek) - ${slideIndex} * (100cqw - 2 * var(--flash-peek) + var(--flash-peek-gap)) + ${dragX}px), 0, 0)`
+                  : `translate3d(${dragX}px, 0, 0)`,
+              }}
             >
               {slideQueue.map((item) => {
                 const activeSlide = item.id === card.id;
@@ -410,15 +428,9 @@ export function FlashcardReview({
 
         {closed ? (
           <div className="flash-actions flash-actions--closed">
-            <p className="flash-closed-copy">Hors des rappels. Tu peux reprendre l’apprentissage.</p>
-            <button
-              type="button"
-              className="flash-restart-btn"
-              onClick={() => restartLearning()}
-              disabled={sync === "saving"}
-            >
-              Reprendre l’apprentissage
-            </button>
+            <p className="flash-closed-status" role="status">
+              Cette carte est terminée
+            </p>
           </div>
         ) : !flipped ? (
           <div className="flash-actions flash-actions--reveal">
@@ -433,9 +445,6 @@ export function FlashcardReview({
             role="group"
             aria-label={card.status === "espera" ? "Commencer la révision" : "Répétition espacée"}
           >
-            {card.status === "espera" ? (
-              <p className="flash-nouveau-hint">Nouveau — note ta réponse pour démarrer.</p>
-            ) : null}
             {RETENTION_MARKS.map((level: RetentionMark) => {
               const key = MARK_KEYS[level];
               const hint = markHint(level, card);
