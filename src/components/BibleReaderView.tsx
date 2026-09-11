@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { flushSync } from "react-dom";
 import {
   adjacentChapter,
   chapterUsfm,
@@ -27,7 +28,33 @@ const BOOKS_CACHE_KEY = "biblos-bible-books-lsg";
 const FONT_MIN = 16;
 const FONT_MAX = 26;
 const FONT_DEFAULT = 19;
+/** Distância de scroll (px) para o título do capítulo colapsar no topo. */
+const BIBLE_HEAD_COLLAPSE_PX = 88;
+
+/**
+ * Hide-on-scroll anti-tremedeira (chrome: topo + dock + tabs).
+ * Uma só fonte de verdade; decisão estável via acumulador + histerese + locks.
+ * Animação: só transform/opacity (CSS).
+ */
+const CHROME_NOISE_PX = 1;
+const CHROME_HIDE_ACCUM_PX = 24;
+const CHROME_SHOW_ACCUM_PX = 10;
+const CHROME_HIDE_LOCK_MS = 200;
+const CHROME_SHOW_LOCK_MS = 120;
+const CHROME_TOP_SAFE_PX = 12;
+const CHROME_NEAR_END_PX = 72;
+const CHROME_MIN_SCROLLABLE_PX = 140;
+const CHROME_PROGRAMMATIC_LOCK_MS = 320;
+
 const EMPTY_VERSES: number[] = [];
+
+/** UI atom: `--bible-head-progress` 0 (hero) → 1 (compacto no topo). */
+function applyBibleHeadProgress(reader: HTMLElement | null, scrollTop: number) {
+  if (!reader) return;
+  const progress = Math.min(1, Math.max(0, scrollTop / BIBLE_HEAD_COLLAPSE_PX));
+  reader.style.setProperty("--bible-head-progress", String(Math.round(progress * 1000) / 1000));
+  reader.classList.toggle("is-head-compact", progress >= 0.55);
+}
 
 /** Sélection multi-versets (toggle, pas forcément contigus). */
 type VerseSelection = number[];
@@ -668,6 +695,9 @@ export function BibleReaderView({
     if (pending.mode !== "top" && !verseEl) return;
     alignVerseInScroller(root, reader, verseEl, pending.mode);
     lastScrollTop.current = root.scrollTop;
+    scrollAcc.current = 0;
+    chromeLockUntil.current = performance.now() + CHROME_PROGRAMMATIC_LOCK_MS;
+    applyBibleHeadProgress(reader, root.scrollTop);
     lastAppliedVerseScroll.current = key;
   }, [active, loading, passage?.id, highlightVerse, selection, showCreateCard, pickerOpen, planReading?.label]);
 
@@ -680,86 +710,118 @@ export function BibleReaderView({
           ? bookTitle
           : `${bookTitle} ${chapterId}`;
 
-  const setReadingChrome = useEffectEvent((hidden: boolean) => {
+  const setReadingChrome = useEffectEvent((hidden: boolean, force = false) => {
     if (chromeHiddenRef.current === hidden) return;
     const now = performance.now();
-    // Only throttle re-hide right after a reveal — upward reveal stays snappy.
-    if (hidden && now < chromeLockUntil.current) return;
+    // Lock após toggle: não aceitar o sentido contrário imediatamente.
+    if (!force && now < chromeLockUntil.current) return;
     chromeHiddenRef.current = hidden;
-    chromeLockUntil.current = now + (hidden ? 220 : 140);
+    chromeLockUntil.current = now + (hidden ? CHROME_HIDE_LOCK_MS : CHROME_SHOW_LOCK_MS);
 
-    // Apply both chrome classes in the same frame (avoids dock/tabs lag jitter).
-    readerRef.current?.classList.toggle("is-chrome-hidden", hidden);
-    document.querySelector(".app.biblos-shell")?.classList.toggle("is-bible-chrome-hidden", hidden);
-
-    setChromeHidden(hidden);
-    onReadingChromeChange?.(hidden);
+    // flushSync: leitor + shell (dock/tabs) no mesmo paint — evita race classList vs className.
+    flushSync(() => {
+      setChromeHidden(hidden);
+      onReadingChromeChange?.(hidden);
+    });
   });
 
   useEffect(() => {
     if (!forceChrome) return;
     chromeLockUntil.current = 0;
-    setReadingChrome(false);
+    setReadingChrome(false, true);
   }, [forceChrome, setReadingChrome]);
 
   useEffect(() => {
     return () => {
-      document.querySelector(".app.biblos-shell")?.classList.remove("is-bible-chrome-hidden");
       onReadingChromeChange?.(false);
     };
   }, [onReadingChromeChange]);
 
   useEffect(() => {
-    setReadingChrome(false);
+    setReadingChrome(false, true);
     lastScrollTop.current = passageScrollRef.current?.scrollTop ?? 0;
     scrollAcc.current = 0;
-    chromeLockUntil.current = 0;
+    chromeLockUntil.current = performance.now() + CHROME_PROGRAMMATIC_LOCK_MS;
+    applyBibleHeadProgress(readerRef.current, passageScrollRef.current?.scrollTop ?? 0);
   }, [bookId, chapterId, planReading?.label, setReadingChrome]);
 
   useEffect(() => {
+    if (!active) {
+      scrollAcc.current = 0;
+      setReadingChrome(false, true);
+      return;
+    }
+
     const root = passageScrollRef.current;
     if (!root) return;
+
+    // Sync baseline so a restored/programmatic offset doesn't look like a huge down-scroll.
+    lastScrollTop.current = root.scrollTop;
+    scrollAcc.current = 0;
+    applyBibleHeadProgress(readerRef.current, root.scrollTop);
 
     const onScroll = () => {
       if (scrollRaf.current) return;
       scrollRaf.current = window.requestAnimationFrame(() => {
         scrollRaf.current = 0;
-        const top = root.scrollTop;
+        const maxScroll = Math.max(0, root.scrollHeight - root.clientHeight);
+        const rawTop = root.scrollTop;
+        // Overscroll / rubber-band: deltas fora do range não dirigem o chrome.
+        if (rawTop < 0 || rawTop > maxScroll) {
+          scrollAcc.current = 0;
+          lastScrollTop.current = Math.min(maxScroll, Math.max(0, rawTop));
+          return;
+        }
+
+        const top = rawTop;
         const delta = top - lastScrollTop.current;
         lastScrollTop.current = top;
+        applyBibleHeadProgress(readerRef.current, top);
 
         if (forceChromeRef.current) {
           scrollAcc.current = 0;
+          if (chromeHiddenRef.current) setReadingChrome(false, true);
           return;
         }
 
-        if (top <= 10) {
+        // Capítulos curtos: sem scroll útil → chrome sempre visível.
+        if (maxScroll < CHROME_MIN_SCROLLABLE_PX) {
           scrollAcc.current = 0;
-          setReadingChrome(false);
+          if (chromeHiddenRef.current) setReadingChrome(false, true);
           return;
         }
 
-        if (Math.abs(delta) < 0.5) return;
+        const nearTop = top <= CHROME_TOP_SAFE_PX;
+        const nearEnd = maxScroll - top <= CHROME_NEAR_END_PX;
 
-        const hidden = chromeHiddenRef.current;
-        const locked = performance.now() < chromeLockUntil.current;
+        // Zonas seguras: estado fixo (visível).
+        if (nearTop || nearEnd) {
+          scrollAcc.current = 0;
+          setReadingChrome(false, true);
+          return;
+        }
 
-        // While locked after reveal, ignore downward noise; still accept upward.
-        if (locked && !hidden && delta >= 0) {
+        // Dead zone / ruído.
+        if (Math.abs(delta) < CHROME_NOISE_PX) return;
+
+        // Lock pós-toggle ou programático: não decidir show/hide.
+        if (performance.now() < chromeLockUntil.current) {
           scrollAcc.current = 0;
           return;
         }
 
+        // Mudança de direção → zerar acumulador.
         if ((delta > 0 && scrollAcc.current < 0) || (delta < 0 && scrollAcc.current > 0)) {
           scrollAcc.current = 0;
         }
-        // Weight upward flicks so chrome returns without reaching the top.
-        scrollAcc.current += hidden && delta < 0 ? delta * 1.6 : delta;
 
-        if (!hidden && scrollAcc.current > 36) {
+        scrollAcc.current += delta;
+
+        // Histerese: limiares diferentes para esconder vs mostrar.
+        if (!chromeHiddenRef.current && scrollAcc.current >= CHROME_HIDE_ACCUM_PX) {
           scrollAcc.current = 0;
           setReadingChrome(true);
-        } else if (hidden && scrollAcc.current < -6) {
+        } else if (chromeHiddenRef.current && scrollAcc.current <= -CHROME_SHOW_ACCUM_PX) {
           scrollAcc.current = 0;
           setReadingChrome(false);
         }
@@ -774,7 +836,7 @@ export function BibleReaderView({
         scrollRaf.current = 0;
       }
     };
-  }, [setReadingChrome]);
+  }, [active, setReadingChrome, bookId, chapterId]);
 
   return (
     <section
@@ -824,7 +886,7 @@ export function BibleReaderView({
       tabIndex={-1}
     >
       <header
-        className={`bible-yv-top${planReading ? " is-plan" : ""}`}
+        className={`bible-yv-top${planReading ? " is-plan" : " is-free"}`}
         aria-label="Navigation biblique"
       >
         {planReading ? (
@@ -871,6 +933,10 @@ export function BibleReaderView({
           </>
         ) : (
           <>
+            <p className="bible-yv-compact-ref" aria-hidden="true">
+              <span className="bible-yv-compact-book">{bookTitle}</span>
+              <span className="bible-yv-compact-num">{chapterId}</span>
+            </p>
             <div className="bible-yv-font" role="group" aria-label="Taille du texte">
               <button
                 type="button"
@@ -890,11 +956,6 @@ export function BibleReaderView({
               >
                 A+
               </button>
-            </div>
-            <div className="bible-yv-top-actions">
-              <span className="bible-yv-version" title={bible?.title || "La Bible Segond 1910"}>
-                LSG
-              </span>
             </div>
           </>
         )}
@@ -929,7 +990,7 @@ export function BibleReaderView({
             return;
           }
           // Tap to reveal chrome (YouVersion).
-          if (chromeHiddenRef.current) setReadingChrome(false);
+          if (chromeHiddenRef.current) setReadingChrome(false, true);
         }}
       >
         <header className="bible-passage-head">
@@ -1207,6 +1268,8 @@ export function BibleReaderView({
 
       <footer
         className={`bible-yv-dock${planReading ? " is-plan" : ""}${showCreateCard ? " has-verse-actions" : ""}`}
+        aria-hidden={hideChrome || undefined}
+        inert={hideChrome || undefined}
         aria-label={planReading ? "Lecture du plan" : pickerOpen ? "Choisir livre et passage" : "Chapitre"}
       >
         <div className={`bible-yv-dock-nav${planReading ? " bible-yv-dock-nav--plan" : ""}`}>

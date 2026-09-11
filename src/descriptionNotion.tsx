@@ -109,7 +109,10 @@ export function renderDescriptionInline(text: string): ReactNode[] {
 
 export function renderDescriptionParagraph(text: string, index: number): ReactNode {
   return (
-    <p key={index} className="nota-resumo-p">
+    <p
+      key={index}
+      className={index === 0 ? "nota-resumo-p nota-resumo-p--lead" : "nota-resumo-p"}
+    >
       {renderDescriptionInline(text)}
     </p>
   );
