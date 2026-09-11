@@ -74,7 +74,7 @@ export async function fetchPassage(reference: string, _bibleId?: number) {
   });
 }
 
-/** Identifiant local LSG (plus l’id YouVersion 93). */
+/** Identifiant local S21. */
 export const LSG_BIBLE_ID = 0;
 
 /** Chapitre précédent / suivant avec passage de livre (fin Matthieu → Marc 1). */

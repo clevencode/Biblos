@@ -1,4 +1,12 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type PointerEvent,
+} from "react";
 import { dateKey, formatDay, relativeDayLabel, scheduleDayParts, shiftDay, todayKey, weekDaysSunday, weekdayLabel } from "../calendar";
 import {
   RETENTION_LABELS,
@@ -47,6 +55,56 @@ function CardRepetitionMeta({ item }: { item: Flashcard }) {
     <span className="flash-card-meta">
       <time dateTime={last}>Dernière révision · {formatDay(last)}</time>
     </span>
+  );
+}
+
+/** Reduz o font-size até o texto caber no slot (sem scroll). */
+function FlashFitText({
+  text,
+  className,
+  minPx = 13,
+  maxPx = 22,
+}: {
+  text: string;
+  className?: string;
+  minPx?: number;
+  maxPx?: number;
+}) {
+  const ref = useRef<HTMLParagraphElement | null>(null);
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    const slot = el?.parentElement;
+    if (!el || !slot) return;
+
+    const fit = () => {
+      const available = slot.clientHeight;
+      if (available <= 0) return;
+
+      let lo = minPx;
+      let hi = maxPx;
+      el.style.fontSize = `${hi}px`;
+      if (el.scrollHeight <= available) return;
+
+      while (hi - lo > 0.25) {
+        const mid = (lo + hi) / 2;
+        el.style.fontSize = `${mid}px`;
+        if (el.scrollHeight <= available) lo = mid;
+        else hi = mid;
+      }
+      el.style.fontSize = `${lo}px`;
+    };
+
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(slot);
+    return () => ro.disconnect();
+  }, [text, minPx, maxPx]);
+
+  return (
+    <p ref={ref} className={className}>
+      {text}
+    </p>
   );
 }
 
@@ -399,14 +457,18 @@ export function FlashcardReview({
                     >
                       <div className={`flash-inner${slideFlipped ? " is-flipped" : ""}`}>
                         <div className="flash-face flash-front">
-                          <VerseCardFrontRef frente={item.frente} />
+                          <div className="flash-fit-slot">
+                            <VerseCardFrontRef frente={item.frente} />
+                          </div>
                           {showRepetitionMeta ? <CardRepetitionMeta item={item} /> : null}
                         </div>
                         <div className="flash-face flash-back">
                           <span className="flash-kicker is-passage-ref">
                             {formatVerseCardPlainRef(item.frente)}
                           </span>
-                          <p className="flash-back-text">{item.verso}</p>
+                          <div className="flash-fit-slot">
+                            <FlashFitText className="flash-back-text" text={item.verso} />
+                          </div>
                           {showRepetitionMeta ? <CardRepetitionMeta item={item} /> : null}
                         </div>
                       </div>

@@ -1,0 +1,1098 @@
+{
+  "version": "s21",
+  "book": "2Cor",
+  "usfm": "2CO",
+  "bookId": 47,
+  "title": "2 Corinthiens",
+  "chapters": [
+    {
+      "chapter": 1,
+      "verses": [
+        {
+          "number": 1,
+          "text": "De la part de Paul, apôtre de Jésus-Christ par la volonté de Dieu, et du frère Timothée à l'Eglise de Dieu qui est à Corinthe et à tous les saints qui sont dans toute l'Achaïe:"
+        },
+        {
+          "number": 2,
+          "text": "que la grâce et la paix vous soient données de la part de Dieu notre Père et du Seigneur Jésus-Christ!"
+        },
+        {
+          "number": 3,
+          "text": "Béni soit Dieu, le Père de notre Seigneur Jésus-Christ, le Père plein de compassion et le Dieu de tout réconfort!"
+        },
+        {
+          "number": 4,
+          "text": "Il nous réconforte dans toutes nos détresses afin que nous puissions réconforter ceux qui se trouvent dans la détresse, grâce à l’encouragement que nous recevons nous-mêmes de la part de Dieu."
+        },
+        {
+          "number": 5,
+          "text": "En effet, de même que les souffrances de Christ abondent pour nous, de même aussi, c’est par Christ que notre réconfort abonde."
+        },
+        {
+          "number": 6,
+          "text": "Si nous sommes dans la détresse, c'est pour votre réconfort et pour votre salut; si nous sommes encouragés, c'est pour votre encouragement, pour vous permettre de supporter les mêmes souffrances que celles que nous endurons."
+        },
+        {
+          "number": 7,
+          "text": "Et notre espérance à votre sujet est ferme, parce que nous savons que si vous avez part aux souffrances, vous avez part aussi au réconfort."
+        },
+        {
+          "number": 8,
+          "text": "En ce qui concerne la détresse que nous avons connue en Asie, nous ne voulons en effet pas vous laisser ignorer, frères et sœurs, que nous avons été accablés à l'extrême, au-delà de nos forces, au point que nous désespérions même de rester en vie."
+        },
+        {
+          "number": 9,
+          "text": "Nous avions intérieurement accepté notre arrêt de mort afin de ne pas placer notre confiance en nous-mêmes mais en Dieu qui ressuscite les morts."
+        },
+        {
+          "number": 10,
+          "text": "C'est lui qui nous a délivrés d'une telle mort et qui nous en délivre encore. Oui, nous avons en lui cette espérance qu'il nous en délivrera encore,"
+        },
+        {
+          "number": 11,
+          "text": "et vous y contribuerez vous-mêmes par la prière. Ainsi, la grâce obtenue pour nous par beaucoup de personnes sera pour beaucoup une occasion de remercier Dieu à notre sujet."
+        },
+        {
+          "number": 12,
+          "text": "En effet, voici notre sujet de fierté et le témoignage de notre conscience: nous nous sommes conduits dans le monde, et plus particulièrement vis-à-vis de vous, avec la sincérité et la pureté qui viennent de Dieu, non pas avec une sagesse humaine, mais avec la grâce de Dieu."
+        },
+        {
+          "number": 13,
+          "text": "Nous ne vous écrivons rien d'autre que ce que vous lisez et comprenez. Et j'espère que vous comprendrez complètement,"
+        },
+        {
+          "number": 14,
+          "text": "puisque vous l’avez déjà compris en partie, que nous sommes votre sujet de fierté, de même que vous serez aussi le nôtre, le jour du Seigneur Jésus."
+        },
+        {
+          "number": 15,
+          "text": "C'est avec cette assurance que je voulais d'abord aller chez vous, afin que vous puissiez avoir une double grâce."
+        },
+        {
+          "number": 16,
+          "text": "Je voulais passer chez vous en me rendant en Macédoine, puis revenir de la Macédoine chez vous, avec l'espoir d’être soutenu par vous pour mon voyage en Judée."
+        },
+        {
+          "number": 17,
+          "text": "En formant ce projet, ai-je donc fait preuve de légèreté? Ou bien mes décisions sont-elles purement humaines, de sorte qu'il y aurait en moi à la fois le «oui» et le «non»?"
+        },
+        {
+          "number": 18,
+          "text": "Aussi vrai que Dieu est fidèle, la parole que nous vous avons adressée n'a pas été «oui» et «non»."
+        },
+        {
+          "number": 19,
+          "text": "En effet, le Fils de Dieu, Jésus-Christ, que nous avons prêché au milieu de vous, Silvain, Timothée et moi, n'a pas été «oui» et «non». Au contraire, en lui il n'y a que le «oui»."
+        },
+        {
+          "number": 20,
+          "text": "En effet, pour toutes les promesses de Dieu, c’est en lui que se trouve le «oui», et c’est [donc] aussi par lui que nous disons «amen» à Dieu, pour sa gloire."
+        },
+        {
+          "number": 21,
+          "text": "Or, celui qui nous affermit avec vous en Christ et qui nous a consacrés par son onction, c'est Dieu;"
+        },
+        {
+          "number": 22,
+          "text": "il nous a aussi marqués de son empreinte et a mis l'Esprit comme un gage dans notre cœur."
+        },
+        {
+          "number": 23,
+          "text": "Quant à moi, j'en prends Dieu à témoin sur ma vie, c'est pour vous ménager que je ne suis pas revenu à Corinthe."
+        },
+        {
+          "number": 24,
+          "text": "Ce n’est pas que nous voulions dominer sur votre foi, mais plutôt que nous contribuons à votre joie, car vous êtes fermes dans la foi."
+        }
+      ]
+    },
+    {
+      "chapter": 2,
+      "verses": [
+        {
+          "number": 1,
+          "text": "J'ai donc décidé en moi-même de ne pas retourner chez vous dans la tristesse."
+        },
+        {
+          "number": 2,
+          "text": "En effet, si je vous attriste, qui peut me réjouir, sinon celui que j'ai attristé?"
+        },
+        {
+          "number": 3,
+          "text": "J'ai écrit comme je l'ai fait pour ne pas être attristé, à mon arrivée, par ceux qui devaient me donner de la joie; car en ce qui vous concerne, je suis convaincu que ma joie est aussi la vôtre, à vous tous."
+        },
+        {
+          "number": 4,
+          "text": "C'est dans une grande souffrance, le cœur angoissé et avec beaucoup de larmes que je vous ai écrit, non pas afin de vous attrister, mais afin que vous sachiez quel amour débordant j'ai pour vous."
+        },
+        {
+          "number": 5,
+          "text": "Si quelqu'un a été une cause de tristesse, ce n'est pas moi qu'il a attristé, c'est vous tous, du moins dans une certaine mesure, pour ne rien exagérer."
+        },
+        {
+          "number": 6,
+          "text": "Le blâme qui lui a été infligé par la majorité d’entre vous est suffisant pour cet homme."
+        },
+        {
+          "number": 7,
+          "text": "Maintenant, au contraire, vous devez plutôt lui pardonner et l'encourager, de peur qu'il ne soit accablé par une tristesse excessive."
+        },
+        {
+          "number": 8,
+          "text": "Je vous engage donc à faire preuve d'amour envers lui,"
+        },
+        {
+          "number": 9,
+          "text": "car je vous ai aussi écrit dans le but de savoir, en vous mettant à l'épreuve, si vous êtes obéissants à tout point de vue."
+        },
+        {
+          "number": 10,
+          "text": "Or à qui vous pardonnez, je pardonne aussi; et si j'ai pardonné quelque chose à quelqu’un, je l'ai fait à cause de vous, en présence de Christ,"
+        },
+        {
+          "number": 11,
+          "text": "afin de ne pas laisser à Satan l'avantage sur nous, car nous n'ignorons pas ses intentions."
+        },
+        {
+          "number": 12,
+          "text": "Quand je suis arrivé à Troas pour annoncer l'Evangile de Christ, bien que le Seigneur m'y ait ouvert une porte, je n'avais pas l'esprit en repos parce que je n'avais pas trouvé mon frère Tite."
+        },
+        {
+          "number": 13,
+          "text": "C'est pourquoi j'ai pris congé d'eux et je suis parti pour la Macédoine."
+        },
+        {
+          "number": 14,
+          "text": "Que Dieu soit remercié, lui qui nous fait toujours triompher en Christ et qui propage partout, à travers nous, le parfum de sa connaissance!"
+        },
+        {
+          "number": 15,
+          "text": "Nous sommes en effet pour Dieu la bonne odeur de Christ parmi ceux qui sont sauvés et parmi ceux qui périssent:"
+        },
+        {
+          "number": 16,
+          "text": "pour les uns, un parfum de mort qui donne la mort, pour les autres, un parfum de vie qui donne la vie. – Et pour cette mission, qui donc est qualifié? –"
+        },
+        {
+          "number": 17,
+          "text": "En effet, nous ne falsifions pas la parole de Dieu, comme le font les autres, mais c'est avec pureté, c'est de la part de Dieu, en Christ et devant Dieu que nous parlons."
+        }
+      ]
+    },
+    {
+      "chapter": 3,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Commençons-nous de nouveau à nous recommander nous-mêmes? Ou avons-nous besoin, comme certains, de lettres de recommandation pour vous, ou alors de votre part?"
+        },
+        {
+          "number": 2,
+          "text": "C'est vous qui êtes notre lettre, écrite dans notre cœur, connue et lue de tous les hommes."
+        },
+        {
+          "number": 3,
+          "text": "Il est clair que vous êtes une lettre de Christ écrite par notre ministère, non avec de l'encre mais avec l'Esprit du Dieu vivant, non sur des tables de pierre mais sur des tables de chair, sur les cœurs."
+        },
+        {
+          "number": 4,
+          "text": "Telle est l'assurance que nous avons par Christ auprès de Dieu."
+        },
+        {
+          "number": 5,
+          "text": "Je ne dis pas que nous soyons capables, par nous-mêmes, de concevoir quelque chose comme si cela venait de nous. Notre capacité, au contraire, vient de Dieu."
+        },
+        {
+          "number": 6,
+          "text": "Il nous a aussi rendus capables d'être serviteurs d'une nouvelle alliance, non de la lettre, mais de l'Esprit; car la lettre tue, mais l'Esprit fait vivre."
+        },
+        {
+          "number": 7,
+          "text": "Or, si le ministère de la mort, gravé avec des lettres sur des pierres, a été glorieux au point que les Israélites ne pouvaient pas fixer les regards sur le visage de Moïse à cause de la gloire dont il rayonnait et qui, pourtant, était passagère,"
+        },
+        {
+          "number": 8,
+          "text": "combien le ministère de l'Esprit sera plus glorieux!"
+        },
+        {
+          "number": 9,
+          "text": "En effet, si le ministère de la condamnation a été glorieux, le ministère de la justice est bien plus glorieux encore."
+        },
+        {
+          "number": 10,
+          "text": "Et même, de ce point de vue, ce qui était glorieux a perdu son éclat à cause de la gloire qui lui est supérieure."
+        },
+        {
+          "number": 11,
+          "text": "En effet, si ce qui était passager a été marqué par la gloire, ce qui est permanent sera bien plus glorieux."
+        },
+        {
+          "number": 12,
+          "text": "Puisque nous avons une telle espérance, nous faisons preuve d’une grande assurance."
+        },
+        {
+          "number": 13,
+          "text": "Nous ne faisons pas comme Moïse, qui mettait un voile sur son visage pour que les Israélites ne fixent pas les regards sur la fin d’une réalité passagère."
+        },
+        {
+          "number": 14,
+          "text": "Mais leur intelligence s'est obscurcie. Jusqu'à aujourd’hui en effet, le même voile reste lorsqu’ils font la lecture de l'Ancien Testament, et il ne se lève pas parce que c'est en Christ qu'il disparaît."
+        },
+        {
+          "number": 15,
+          "text": "Jusqu'à aujourd’hui, quand les écrits de Moïse sont lus, un voile recouvre leur cœur;"
+        },
+        {
+          "number": 16,
+          "text": "mais lorsque quelqu'un se convertit au Seigneur, le voile est enlevé."
+        },
+        {
+          "number": 17,
+          "text": "Or le Seigneur, c'est l'Esprit, et là où est l'Esprit du Seigneur, là est la liberté."
+        },
+        {
+          "number": 18,
+          "text": "Nous tous qui, sans voile sur le visage, contemplons comme dans un miroir la gloire du Seigneur, nous sommes transformés à son image, de gloire en gloire, par l'Esprit du Seigneur."
+        }
+      ]
+    },
+    {
+      "chapter": 4,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Ainsi donc, puisque par la bonté de Dieu nous avons ce ministère, nous ne perdons pas courage."
+        },
+        {
+          "number": 2,
+          "text": "Nous rejetons les actions honteuses qui se font en secret, nous ne nous conduisons pas avec ruse et nous ne falsifions pas la parole de Dieu. Au contraire, en faisant connaître clairement la vérité, nous nous recommandons à toute conscience d'homme devant Dieu."
+        },
+        {
+          "number": 3,
+          "text": "Si notre Evangile est encore voilé, il l’est pour ceux qui périssent,"
+        },
+        {
+          "number": 4,
+          "text": "pour les incrédules dont le dieu de ce monde a aveuglé l'intelligence afin qu'ils ne voient pas briller l’éclat que projette l'Evangile de la gloire de Christ, qui est l'image de Dieu."
+        },
+        {
+          "number": 5,
+          "text": "Nous ne nous prêchons pas nous-mêmes: c'est Jésus-Christ le Seigneur que nous prêchons, et nous nous déclarons vos serviteurs à cause de Jésus."
+        },
+        {
+          "number": 6,
+          "text": "En effet, le Dieu qui a ordonné que la lumière brille du sein des ténèbres a aussi fait briller sa lumière dans notre cœur pour faire resplendir la connaissance de la gloire de Dieu dans la personne de [Jésus-]Christ."
+        },
+        {
+          "number": 7,
+          "text": "Nous portons ce trésor dans des vases de terre afin que cette puissance extraordinaire soit attribuée à Dieu, et non à nous."
+        },
+        {
+          "number": 8,
+          "text": "Nous sommes pressés de toutes parts, mais non écrasés; inquiets, mais non désespérés;"
+        },
+        {
+          "number": 9,
+          "text": "persécutés, mais non abandonnés; abattus, mais non anéantis."
+        },
+        {
+          "number": 10,
+          "text": "Nous portons toujours avec nous dans notre corps l’agonie du [Seigneur] Jésus afin que la vie de Jésus soit aussi manifestée dans notre corps."
+        },
+        {
+          "number": 11,
+          "text": "En effet, nous qui vivons, nous sommes sans cesse livrés à la mort à cause de Jésus afin que la vie de Jésus soit elle aussi révélée dans notre corps mortel."
+        },
+        {
+          "number": 12,
+          "text": "Ainsi la mort est à l’œuvre en nous, et la vie en vous."
+        },
+        {
+          "number": 13,
+          "text": "Et comme nous avons le même esprit de foi que celui exprimé dans cette parole de l'Ecriture: J'ai cru, c'est pourquoi j'ai parlé, nous aussi nous croyons, et c'est pour cela que nous parlons."
+        },
+        {
+          "number": 14,
+          "text": "Nous savons en effet que celui qui a ressuscité le Seigneur Jésus nous ressuscitera aussi par Jésus et nous fera paraître avec vous dans sa présence."
+        },
+        {
+          "number": 15,
+          "text": "Oui, tout cela arrive à cause de vous afin que la grâce, en se multipliant, fasse abonder la reconnaissance d'un plus grand nombre, à la gloire de Dieu."
+        },
+        {
+          "number": 16,
+          "text": "Voilà pourquoi nous ne perdons pas courage. Et même si notre être extérieur se détruit, notre être intérieur se renouvelle de jour en jour."
+        },
+        {
+          "number": 17,
+          "text": "En effet, nos légères difficultés du moment présent produisent pour nous, au-delà de toute mesure, un poids éternel de gloire."
+        },
+        {
+          "number": 18,
+          "text": "Ainsi nous regardons non pas à ce qui est visible, mais à ce qui est invisible, car les réalités visibles sont passagères et les invisibles sont éternelles."
+        }
+      ]
+    },
+    {
+      "chapter": 5,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Nous savons, en effet, que si notre habitation terrestre, qui n'est qu'une tente, est détruite, nous avons dans le ciel un édifice qui est l'œuvre de Dieu, une habitation éternelle qui n'est pas faite par la main de l'homme."
+        },
+        {
+          "number": 2,
+          "text": "Et nous gémissons dans cette tente, avec l'ardent désir de revêtir notre domicile céleste,"
+        },
+        {
+          "number": 3,
+          "text": "puisque, après avoir été ainsi revêtus, nous ne serons pas trouvés nus."
+        },
+        {
+          "number": 4,
+          "text": "En effet, nous qui sommes dans cette tente, nous gémissons, accablés, parce que nous voulons non pas nous dévêtir, mais au contraire nous revêtir, afin que ce qui est mortel soit englouti par la vie."
+        },
+        {
+          "number": 5,
+          "text": "Et celui qui nous a préparés pour cela, c'est Dieu, qui nous a donné le gage de l'Esprit."
+        },
+        {
+          "number": 6,
+          "text": "Nous sommes donc toujours pleins de confiance et nous savons que, tant que nous habitons dans ce corps, nous sommes loin de notre patrie, loin du Seigneur,"
+        },
+        {
+          "number": 7,
+          "text": "car nous marchons par la foi et non par la vue."
+        },
+        {
+          "number": 8,
+          "text": "Oui, nous sommes pleins de confiance et nous aimerions mieux quitter ce corps pour aller vivre auprès du Seigneur."
+        },
+        {
+          "number": 9,
+          "text": "C'est aussi pour cela que nous nous efforçons de lui être agréables, soit que nous vivions dans ce corps, soit que nous le quittions."
+        },
+        {
+          "number": 10,
+          "text": "En effet, il nous faudra tous comparaître devant le tribunal de Christ afin que chacun reçoive le salaire de ce qu’il aura fait, bien ou mal, alors qu’il était dans son corps."
+        },
+        {
+          "number": 11,
+          "text": "Ainsi donc, puisque nous savons ce qu’est la crainte du Seigneur, nous cherchons à convaincre les hommes. Quant à Dieu, il nous connaît, et j'espère que dans votre conscience vous nous connaissez aussi."
+        },
+        {
+          "number": 12,
+          "text": "Nous n’allons pas de nouveau nous recommander nous-mêmes auprès de vous, mais nous voulons vous donner l'occasion de vous montrer fiers à notre sujet, afin que vous puissiez répondre à ceux qui mettent leur fierté dans les apparences et non dans ce qui relève du cœur."
+        },
+        {
+          "number": 13,
+          "text": "En effet, si nous avons fait preuve de folie, c'était pour Dieu; si nous sommes raisonnables, c'est pour vous."
+        },
+        {
+          "number": 14,
+          "text": "C’est que l'amour de Christ nous presse, parce que nous sommes convaincus que si un seul est mort pour tous, tous donc sont morts."
+        },
+        {
+          "number": 15,
+          "text": "Et s’il est mort pour tous, c’était afin que ceux qui vivent ne vivent plus pour eux-mêmes, mais pour celui qui est mort et ressuscité pour eux."
+        },
+        {
+          "number": 16,
+          "text": "Ainsi, désormais, nous ne percevons plus personne de manière humaine; et si nous avons connu Christ de manière purement humaine, maintenant nous ne le connaissons plus ainsi."
+        },
+        {
+          "number": 17,
+          "text": "Si quelqu'un est en Christ, il est une nouvelle créature. Les choses anciennes sont passées; voici, toutes choses sont devenues nouvelles."
+        },
+        {
+          "number": 18,
+          "text": "Et tout cela vient de Dieu qui nous a réconciliés avec lui par [Jésus-]Christ et qui nous a donné le ministère de la réconciliation."
+        },
+        {
+          "number": 19,
+          "text": "En effet, Dieu était en Christ: il réconciliait le monde avec lui-même en ne chargeant pas les hommes de leurs fautes, et il a mis en nous la parole de la réconciliation."
+        },
+        {
+          "number": 20,
+          "text": "Nous sommes donc des ambassadeurs pour Christ, comme si Dieu adressait par nous son appel. Nous supplions au nom de Christ: «Soyez réconciliés avec Dieu!"
+        },
+        {
+          "number": 21,
+          "text": "[En effet,] celui qui n'a pas connu le péché, il l'a fait devenir péché pour nous afin qu’en lui nous devenions justice de Dieu.»"
+        }
+      ]
+    },
+    {
+      "chapter": 6,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Puisque nous travaillons avec Dieu, nous vous encourageons vivement à ne pas accueillir la grâce de Dieu sans résultat."
+        },
+        {
+          "number": 2,
+          "text": "En effet, il dit: Au moment favorable je t'ai exaucé, le jour du salut je t'ai secouru. Voici maintenant le moment favorable, voici maintenant le jour du salut."
+        },
+        {
+          "number": 3,
+          "text": "En rien et pour personne nous ne voulons représenter un obstacle, afin que notre service soit sans reproche."
+        },
+        {
+          "number": 4,
+          "text": "Au contraire, nous nous recommandons nous-mêmes à tout point de vue comme serviteurs de Dieu par une grande persévérance dans les souffrances, les détresses, les angoisses,"
+        },
+        {
+          "number": 5,
+          "text": "sous les coups, dans les prisons, les émeutes, les travaux pénibles, les privations de sommeil et de nourriture."
+        },
+        {
+          "number": 6,
+          "text": "Nous nous recommandons aussi par la pureté, la connaissance, la patience, la bonté, par l'Esprit saint, par un amour sincère,"
+        },
+        {
+          "number": 7,
+          "text": "par la parole de vérité, par la puissance de Dieu, par les armes offensives et défensives de la justice,"
+        },
+        {
+          "number": 8,
+          "text": "que ce soit au milieu de la gloire ou du déshonneur, au milieu d'une mauvaise ou d'une bonne réputation. Nous sommes considérés comme des imposteurs, quoique disant la vérité;"
+        },
+        {
+          "number": 9,
+          "text": "comme des inconnus, quoique bien connus; comme des mourants, et pourtant nous vivons. Nous sommes comme condamnés, et pourtant pas mis à mort;"
+        },
+        {
+          "number": 10,
+          "text": "comme attristés, et pourtant nous sommes toujours joyeux; comme pauvres, et pourtant nous en enrichissons beaucoup; comme n'ayant rien, alors que nous possédons tout."
+        },
+        {
+          "number": 11,
+          "text": "Nous vous avons parlé ouvertement, Corinthiens, nous vous avons largement ouvert notre cœur."
+        },
+        {
+          "number": 12,
+          "text": "Vous n'y êtes pas à l'étroit, mais c'est votre cœur qui s'est rétréci."
+        },
+        {
+          "number": 13,
+          "text": "Rendez-nous la pareille – je vous parle comme à mes enfants – ouvrez-nous, vous aussi, votre cœur!"
+        },
+        {
+          "number": 14,
+          "text": "Ne formez pas un attelage disparate avec des incroyants. En effet, quelle relation y a-t-il entre la justice et le mal? Ou qu'y a-t-il de commun entre la lumière et les ténèbres?"
+        },
+        {
+          "number": 15,
+          "text": "Quel accord y a-t-il entre Christ et le diable? Ou quelle part le croyant a-t-il avec l'incroyant?"
+        },
+        {
+          "number": 16,
+          "text": "Quel rapport peut-il y avoir entre le temple de Dieu et les idoles? En effet, vous êtes le temple du Dieu vivant, comme Dieu l'a dit: J'habiterai et je marcherai au milieu d'eux; je serai leur Dieu et ils seront mon peuple."
+        },
+        {
+          "number": 17,
+          "text": "C'est pourquoi, sortez du milieu d'eux et séparez-vous, dit le Seigneur; ne touchez pas à ce qui est impur et je vous accueillerai."
+        },
+        {
+          "number": 18,
+          "text": "Je serai pour vous un père et vous serez pour moi des fils et des filles, dit le Seigneur tout-puissant."
+        }
+      ]
+    },
+    {
+      "chapter": 7,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Puisque nous avons de telles promesses, bien-aimés, purifions-nous de tout ce qui souille notre corps et notre esprit et poursuivons jusqu’au bout la sainteté dans la crainte de Dieu."
+        },
+        {
+          "number": 2,
+          "text": "Faites-nous une place dans votre cœur! Nous n'avons fait de tort à personne, nous n'avons ruiné personne, nous n'avons exploité personne."
+        },
+        {
+          "number": 3,
+          "text": "Ce n'est pas pour vous condamner que je parle ainsi, car j'ai déjà dit que vous êtes dans notre cœur à la vie et à la mort."
+        },
+        {
+          "number": 4,
+          "text": "J'ai une grande confiance en vous, j'ai toute raison d'être fier de vous; je suis pleinement réconforté, débordant de joie au milieu de toutes nos difficultés."
+        },
+        {
+          "number": 5,
+          "text": "Depuis notre arrivée en Macédoine en effet, nous n'avons connu aucun repos; nous étions au contraire pressés de toutes parts: luttes au-dehors, craintes au-dedans."
+        },
+        {
+          "number": 6,
+          "text": "Mais Dieu, qui réconforte ceux qui sont abattus, nous a encouragés par l'arrivée de Tite,"
+        },
+        {
+          "number": 7,
+          "text": "et non seulement par son arrivée, mais encore par le réconfort qu'il avait reçu de vous. Il nous a raconté votre vive affection, vos larmes, votre zèle pour moi, de sorte que ma joie a été d'autant plus grande."
+        },
+        {
+          "number": 8,
+          "text": "Même si je vous ai attristés par ma lettre, je ne le regrette pas. Et si je l'ai regretté – car je vois que cette lettre vous a momentanément attristés –"
+        },
+        {
+          "number": 9,
+          "text": "je me réjouis maintenant, non pas de ce que vous avez été attristés, mais de ce que votre tristesse vous a amenés à changer d’attitude, car vous avez été attristés selon Dieu, si bien que vous n’avez subi aucun dommage de notre part."
+        },
+        {
+          "number": 10,
+          "text": "En effet, la tristesse selon Dieu produit une repentance qui conduit au salut et que l'on ne regrette jamais, tandis que la tristesse du monde produit la mort."
+        },
+        {
+          "number": 11,
+          "text": "Cette même tristesse selon Dieu, voyez quel empressement elle a produit en vous! Quelles excuses, quelle indignation, quelle crainte, quel désir ardent, quel zèle, quelle punition! Vous avez démontré à tout point de vue que vous étiez purs dans cette affaire."
+        },
+        {
+          "number": 12,
+          "text": "Si donc je vous ai écrit, ce n'était ni à cause de celui qui a commis le tort, ni à cause de celui qui l'a subi; c'était afin de rendre évident à votre esprit, devant Dieu, votre empressement pour nous."
+        },
+        {
+          "number": 13,
+          "text": "Voilà ce qui nous a réconfortés. Mais nous n’avons pas seulement été réconfortés: nous avons été beaucoup plus encore réjouis de constater la joie de Tite, qui a eu l'esprit tranquillisé par vous tous."
+        },
+        {
+          "number": 14,
+          "text": "Si je me suis quelque peu vanté à votre sujet devant lui, je n'ai pas eu à en rougir; mais, comme nous vous avons toujours dit la vérité, ce dont nous nous sommes montrés fiers auprès de Tite s'est aussi trouvé être la vérité."
+        },
+        {
+          "number": 15,
+          "text": "Et son affection pour vous est d'autant plus grande quand il se souvient de votre obéissance à tous et de l'accueil que vous lui avez réservé avec crainte et profond respect."
+        },
+        {
+          "number": 16,
+          "text": "Je me réjouis de pouvoir entièrement compter sur vous."
+        }
+      ]
+    },
+    {
+      "chapter": 8,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Par ailleurs, frères et sœurs, nous vous faisons connaître la grâce que Dieu a accordée aux Eglises de la Macédoine:"
+        },
+        {
+          "number": 2,
+          "text": "au milieu même de la grande épreuve de leur souffrance, leur joie débordante et leur pauvreté profonde les ont conduits à faire preuve d’une très grande générosité."
+        },
+        {
+          "number": 3,
+          "text": "Je l'atteste, ils ont donné volontairement selon leurs moyens, et même au-delà de leurs moyens,"
+        },
+        {
+          "number": 4,
+          "text": "et c’est avec beaucoup d'insistance qu’ils nous ont demandé la grâce de prendre part à ce service en faveur des saints."
+        },
+        {
+          "number": 5,
+          "text": "Ils ont fait plus que ce que nous espérions, car ils se sont d'abord donnés eux-mêmes au Seigneur, puis à nous, par la volonté de Dieu."
+        },
+        {
+          "number": 6,
+          "text": "Nous avons donc encouragé Tite à parachever, chez vous aussi, ce geste de générosité, comme il l'avait d’ailleurs commencé."
+        },
+        {
+          "number": 7,
+          "text": "De votre côté, vous avez tout en abondance: la foi, la parole, la connaissance, le zèle à tout point de vue et l’amour pour nous. Faites en sorte que la même abondance se manifeste dans cet acte de grâce."
+        },
+        {
+          "number": 8,
+          "text": "Je ne dis pas cela pour donner un ordre, mais pour éprouver la sincérité de votre amour par l’exemple du zèle des autres."
+        },
+        {
+          "number": 9,
+          "text": "En effet, vous connaissez la grâce de notre Seigneur Jésus-Christ: pour vous il s'est fait pauvre alors qu'il était riche, afin que par sa pauvreté vous soyez enrichis."
+        },
+        {
+          "number": 10,
+          "text": "C'est un avis que je donne à ce sujet et c'est ce qui vous convient, puisque dès l'année dernière vous avez été les premiers non seulement à faire une collecte, mais aussi à la vouloir."
+        },
+        {
+          "number": 11,
+          "text": "Menez-la donc maintenant à bien afin que sa réalisation corresponde, en fonction de vos moyens, à l'empressement que vous avez mis à la vouloir."
+        },
+        {
+          "number": 12,
+          "text": "Quand la bonne volonté existe, on est bien accueilli en fonction de ce que l'on a, et non de ce que l'on n'a pas."
+        },
+        {
+          "number": 13,
+          "text": "En effet, il ne s'agit pas de vous exposer à la détresse pour en soulager d'autres, mais de suivre un principe d’égalité:"
+        },
+        {
+          "number": 14,
+          "text": "dans les circonstances actuelles votre abondance pourvoira à leurs besoins, afin que leur abondance aussi pourvoie à vos besoins. C'est ainsi qu'il y aura égalité,"
+        },
+        {
+          "number": 15,
+          "text": "conformément à ce qui est écrit: Celui qui avait ramassé beaucoup n'avait rien de trop et celui qui avait ramassé peu ne manquait de rien."
+        },
+        {
+          "number": 16,
+          "text": "Que Dieu soit remercié, lui qui a mis dans le cœur de Tite le même zèle pour vous!"
+        },
+        {
+          "number": 17,
+          "text": "En effet, il a accepté notre demande et c'est même avec un nouveau zèle et de son plein gré qu'il part chez vous."
+        },
+        {
+          "number": 18,
+          "text": "Nous envoyons avec lui le frère dont toutes les Eglises font l’éloge pour son annonce de l'Evangile."
+        },
+        {
+          "number": 19,
+          "text": "Il a de plus été choisi par les Eglises pour être notre compagnon de voyage dans ce geste de générosité que nous accomplissons à la gloire du Seigneur [lui-même] et en témoignage de notre bonne volonté."
+        },
+        {
+          "number": 20,
+          "text": "Nous voulons en effet éviter qu'on nous critique au sujet de la forte somme dont nous avons la charge,"
+        },
+        {
+          "number": 21,
+          "text": "car nous recherchons ce qui est bien non seulement devant le Seigneur, mais aussi devant les hommes."
+        },
+        {
+          "number": 22,
+          "text": "Avec eux nous envoyons notre frère, dont nous avons souvent, à bien des occasions, pu apprécier le zèle, et il en montre plus encore cette fois à cause de sa grande confiance en vous."
+        },
+        {
+          "number": 23,
+          "text": "En ce qui concerne Tite, il est mon associé et mon collaborateur auprès de vous; quant à nos frères, ils sont les envoyés des Eglises, la gloire de Christ."
+        },
+        {
+          "number": 24,
+          "text": "A la vue des Eglises, donnez-leur donc la preuve de votre amour et montrez-leur que nous avons raison d'être fiers de vous."
+        }
+      ]
+    },
+    {
+      "chapter": 9,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Il est superflu que je vous écrive au sujet de ce service en faveur des saints."
+        },
+        {
+          "number": 2,
+          "text": "Je connais, en effet, votre bonne volonté: je m’en montre fier pour vous auprès des Macédoniens en affirmant que l'Achaïe est prête depuis l'année dernière, et votre zèle a stimulé la plupart d’entre eux."
+        },
+        {
+          "number": 3,
+          "text": "J'envoie cependant les frères afin que l'éloge que nous avons fait de vous ne soit pas démenti sur ce point et que vous soyez prêts, comme je l'ai affirmé."
+        },
+        {
+          "number": 4,
+          "text": "Je ne voudrais pas, si les Macédoniens m'accompagnent et ne vous trouvent pas prêts, que cette belle assurance tourne à notre honte, pour ne pas dire à la vôtre."
+        },
+        {
+          "number": 5,
+          "text": "J'ai donc jugé nécessaire d'encourager les frères à se rendre chez vous avant moi pour s'occuper de l’offrande que vous aviez promise. Ainsi, elle sera prête comme une vraie bénédiction, et non comme une manifestation de votre soif de posséder."
+        },
+        {
+          "number": 6,
+          "text": "Sachez-le, celui qui sème peu moissonnera peu et celui qui sème abondamment moissonnera abondamment."
+        },
+        {
+          "number": 7,
+          "text": "Que chacun donne comme il l'a décidé dans son cœur, sans regret ni contrainte, car Dieu aime celui qui donne avec joie."
+        },
+        {
+          "number": 8,
+          "text": "Dieu peut vous combler de toutes ses grâces afin que vous possédiez toujours à tout point de vue de quoi satisfaire à tous vos besoins et que vous ayez encore en abondance pour toute œuvre bonne,"
+        },
+        {
+          "number": 9,
+          "text": "comme il est écrit: Il a distribué ses bienfaits, il a donné aux pauvres; sa justice subsiste à toujours."
+        },
+        {
+          "number": 10,
+          "text": "Que celui qui fournit de la semence au semeur et du pain pour sa nourriture vous fournisse et vous multiplie la semence, et qu'il augmente les fruits de votre justice."
+        },
+        {
+          "number": 11,
+          "text": "Ainsi vous serez enrichis à tout point de vue pour toutes sortes d’actes de générosité qui, par notre intermédiaire, feront monter des prières de reconnaissance vers Dieu."
+        },
+        {
+          "number": 12,
+          "text": "En effet, le service de cette collecte ne pourvoit pas seulement aux besoins des saints, il fait aussi abonder les prières de reconnaissance envers Dieu."
+        },
+        {
+          "number": 13,
+          "text": "A travers l’expérience qu’ils font de ce service, ils célèbrent la gloire de Dieu à cause de l’obéissance dont vous faites preuve dans votre adhésion à l'Evangile de Christ et de votre générosité dans la solidarité avec eux et avec tous."
+        },
+        {
+          "number": 14,
+          "text": "Et ils prient pour vous parce qu'ils ont une vive affection pour vous, à cause de la grâce surabondante que Dieu vous a faite."
+        },
+        {
+          "number": 15,
+          "text": "Que Dieu soit remercié pour son don incomparable!"
+        }
+      ]
+    },
+    {
+      "chapter": 10,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Moi Paul, je vous adresse un appel par la douceur et la bonté de Christ, moi qui suis humble quand je suis parmi vous mais plein de hardiesse envers vous quand je suis loin:"
+        },
+        {
+          "number": 2,
+          "text": "je vous en prie, ne me forcez pas, lorsque je serai présent, à recourir avec hardiesse à l’assurance dont je compte faire preuve contre quelques-uns, contre ceux qui estiment que nous nous conduisons de façon purement humaine."
+        },
+        {
+          "number": 3,
+          "text": "Si en effet nous vivons dans la réalité humaine, nous ne combattons pas de façon purement humaine."
+        },
+        {
+          "number": 4,
+          "text": "En effet, les armes avec lesquelles nous combattons ne sont pas humaines, mais elles sont puissantes, grâce à Dieu, pour renverser des forteresses."
+        },
+        {
+          "number": 5,
+          "text": "Nous renversons les raisonnements et tout obstacle qui s'élève avec orgueil contre la connaissance de Dieu, et nous faisons toute pensée prisonnière pour qu'elle obéisse à Christ."
+        },
+        {
+          "number": 6,
+          "text": "Nous sommes aussi prêts à punir toute désobéissance dès que votre obéissance sera entière."
+        },
+        {
+          "number": 7,
+          "text": "Regardez les choses en face! Si quelqu'un est convaincu d'appartenir à Christ, qu'il se dise bien en lui-même que, tout comme il est de Christ, nous le sommes aussi."
+        },
+        {
+          "number": 8,
+          "text": "Et même si je me montre un peu trop fier de l'autorité que le Seigneur nous a donnée, pour votre édification et non pour votre ruine, je n'en aurai pas honte."
+        },
+        {
+          "number": 9,
+          "text": "De fait, je ne veux pas avoir l'air de vous intimider par mes lettres."
+        },
+        {
+          "number": 10,
+          "text": "En effet, «ses lettres sont sévères et fortes – dit-on – mais quand il est présent, il est faible et sa parole est méprisable.»"
+        },
+        {
+          "number": 11,
+          "text": "Que celui qui parle ainsi s’en rende bien compte: nous sommes dans nos actes, une fois présents, exactement tels que nous sommes en paroles dans nos lettres quand nous sommes absents."
+        },
+        {
+          "number": 12,
+          "text": "Nous n'oserions pas nous déclarer égaux ou nous comparer à quelques-uns de ceux qui se recommandent eux-mêmes. Mais en fait, en se mesurant à leur propre mesure et en se comparant à eux-mêmes, ils manquent d'intelligence."
+        },
+        {
+          "number": 13,
+          "text": "Quant à nous, nous ne voulons pas nous montrer excessivement fiers, mais seulement dans la limite du champ d'action que Dieu nous a attribué en nous faisant parvenir jusqu'à vous."
+        },
+        {
+          "number": 14,
+          "text": "Nous ne dépassons pas nos limites, comme si nous n'étions pas venus jusqu'à vous; car c'est bien jusqu'à vous que nous sommes arrivés avec l'Evangile de Christ."
+        },
+        {
+          "number": 15,
+          "text": "Ainsi nous ne nous vantons pas des travaux d'autrui qui sont en dehors de nos limites. Mais nous avons l'espérance, si votre foi augmente, de voir notre œuvre grandir encore parmi vous, dans notre propre champ d'action."
+        },
+        {
+          "number": 16,
+          "text": "Nous pourrons alors évangéliser les régions situées au-delà de chez vous sans nous vanter du travail déjà fait par d'autres dans leur propre champ d'action."
+        },
+        {
+          "number": 17,
+          "text": "Que celui qui veut éprouver de la fierté mette sa fierté dans le Seigneur."
+        },
+        {
+          "number": 18,
+          "text": "En effet, ce n'est pas celui qui se recommande lui-même qui est approuvé, c'est celui que le Seigneur recommande."
+        }
+      ]
+    },
+    {
+      "chapter": 11,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Si seulement vous pouviez supporter de ma part un peu de folie! Mais oui, supportez-moi!"
+        },
+        {
+          "number": 2,
+          "text": "En effet, je suis jaloux de vous, de la jalousie de Dieu, parce que je vous ai fiancés à un seul époux pour vous présenter à Christ comme une vierge pure."
+        },
+        {
+          "number": 3,
+          "text": "Cependant, de même que le serpent a trompé Eve par sa ruse, j’ai peur que vos pensées ne se corrompent et ne se détournent de la simplicité [et de la pureté] vis-à-vis de Christ."
+        },
+        {
+          "number": 4,
+          "text": "En effet, si quelqu'un vient vous prêcher un autre Jésus que celui que nous avons prêché, ou si vous recevez un autre esprit que celui que vous avez reçu ou un autre évangile que celui que vous avez accepté, vous le supportez très bien."
+        },
+        {
+          "number": 5,
+          "text": "Or j'estime n’avoir été en rien inférieur à ces super-apôtres."
+        },
+        {
+          "number": 6,
+          "text": "Si je suis incompétent du point de vue de l’éloquence, je ne le suis pas pour ce qui est de la connaissance, et nous l'avons clairement démontré parmi vous à tout point de vue et en toute occasion."
+        },
+        {
+          "number": 7,
+          "text": "Ou bien ai-je commis un péché en m'abaissant moi-même pour que vous soyez élevés quand je vous ai annoncé gratuitement l'Evangile de Dieu?"
+        },
+        {
+          "number": 8,
+          "text": "J'ai dépouillé d'autres Eglises en recevant d'elles un salaire pour vous servir."
+        },
+        {
+          "number": 9,
+          "text": "Et lorsque j'étais chez vous et que je me suis trouvé dans le besoin, je n'ai été à la charge de personne, car les frères venus de Macédoine ont pourvu à ce qui me manquait. En tout, je me suis bien gardé d'être à votre charge, et je m'en garderai encore."
+        },
+        {
+          "number": 10,
+          "text": "Par la vérité de Christ qui est en moi, j’affirme que personne ne m’enlèvera ce sujet de fierté dans les régions de l'Achaïe."
+        },
+        {
+          "number": 11,
+          "text": "Pourquoi? Parce que je ne vous aime pas? Dieu le sait!"
+        },
+        {
+          "number": 12,
+          "text": "Mais j'agis ainsi, et je le ferai encore, pour enlever toute occasion à ceux qui en cherchent une de se montrer nos égaux sur un point dont ils se vantent."
+        },
+        {
+          "number": 13,
+          "text": "Ces hommes-là sont de prétendus apôtres, des ouvriers trompeurs déguisés en apôtres de Christ."
+        },
+        {
+          "number": 14,
+          "text": "Et ce n'est pas étonnant, puisque Satan lui-même se déguise en ange de lumière."
+        },
+        {
+          "number": 15,
+          "text": "Il n'est donc pas étrange que ses serviteurs aussi se déguisent en serviteurs de la justice. Leur fin sera conforme à leurs actes."
+        },
+        {
+          "number": 16,
+          "text": "Je le répète, que personne ne me prenne pour un homme dépourvu de bon sens. Ou alors, acceptez-moi comme fou afin que moi aussi, je puisse me vanter un peu."
+        },
+        {
+          "number": 17,
+          "text": "Ce que je vais dire, je ne le dirai pas selon le Seigneur, mais comme par folie, avec l'assurance d'avoir des raisons de me vanter."
+        },
+        {
+          "number": 18,
+          "text": "Puisque beaucoup se vantent selon des critères purement humains, je me vanterai aussi."
+        },
+        {
+          "number": 19,
+          "text": "En effet, vous supportez volontiers les hommes dépourvus de bon sens, vous qui êtes raisonnables:"
+        },
+        {
+          "number": 20,
+          "text": "vous supportez qu'on fasse de vous des esclaves, qu'on vous exploite, qu'on vous dépouille, qu'on vous traite avec arrogance, qu'on vous frappe au visage."
+        },
+        {
+          "number": 21,
+          "text": "J'ai honte de le dire, nous avons montré de la faiblesse pour cela. Cependant, tout ce qu'on peut oser dire – je parle comme un fou – moi aussi, j'ose le dire!"
+        },
+        {
+          "number": 22,
+          "text": "Sont-ils hébreux? Moi aussi. Sont-ils israélites? Moi aussi. Ils sont de la descendance d'Abraham? Moi aussi."
+        },
+        {
+          "number": 23,
+          "text": "Ils sont serviteurs de Christ? – Je parle comme un fou. – Je le suis plus encore: j’ai bien plus connu les travaux pénibles, infiniment plus les coups, bien plus encore les emprisonnements, et j’ai souvent été en danger de mort."
+        },
+        {
+          "number": 24,
+          "text": "Cinq fois j'ai reçu des Juifs les quarante coups moins un,"
+        },
+        {
+          "number": 25,
+          "text": "trois fois j'ai été fouetté, une fois j'ai été lapidé, trois fois j'ai fait naufrage, j'ai passé un jour et une nuit dans la mer."
+        },
+        {
+          "number": 26,
+          "text": "Fréquemment en voyage, j'ai été en danger sur les fleuves, en danger de la part des brigands, en danger de la part de mes compatriotes, en danger de la part des non-Juifs, en danger dans les villes, en danger dans les déserts, en danger sur la mer, en danger parmi les prétendus frères."
+        },
+        {
+          "number": 27,
+          "text": "J'ai connu le travail et la peine, j’ai été exposé à de nombreuses privations de sommeil, à la faim et à la soif, à de nombreux jeûnes, au froid et au dénuement."
+        },
+        {
+          "number": 28,
+          "text": "Et, sans parler du reste, je suis assailli chaque jour par le souci que j’ai de toutes les Eglises."
+        },
+        {
+          "number": 29,
+          "text": "Qui est faible sans que je sois faible? Qui vient à tomber sans que je brûle?"
+        },
+        {
+          "number": 30,
+          "text": "S'il faut se vanter, c'est de ma faiblesse que je me vanterai!"
+        },
+        {
+          "number": 31,
+          "text": "Dieu, qui est le Père du Seigneur Jésus[-Christ] et qui est béni éternellement, sait que je ne mens pas."
+        },
+        {
+          "number": 32,
+          "text": "A Damas, le gouverneur du roi Arétas faisait garder la ville des Damascéniens parce qu’il voulait m'arrêter."
+        },
+        {
+          "number": 33,
+          "text": "Cependant, on m'a fait descendre par une fenêtre dans une corbeille le long de la muraille et je lui ai échappé."
+        }
+      ]
+    },
+    {
+      "chapter": 12,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Faut-il se vanter? Cela ne [m’]est pas utile. J'en viendrai cependant à des visions et à des révélations du Seigneur."
+        },
+        {
+          "number": 2,
+          "text": "Je connais un homme en Christ qui, il y a 14 ans, a été enlevé jusqu'au troisième ciel. Etait-ce dans son corps ou à l’extérieur de son corps, je l’ignore, mais Dieu le sait."
+        },
+        {
+          "number": 3,
+          "text": "Et je sais que cet homme – était-ce dans son corps ou à l’extérieur de son corps, je l’ignore, mais Dieu le sait –"
+        },
+        {
+          "number": 4,
+          "text": "a été enlevé au paradis et a entendu des paroles inexprimables qu'il n'est pas permis à un homme de redire."
+        },
+        {
+          "number": 5,
+          "text": "Je me vanterai d'un tel homme, mais de moi-même je ne me vanterai pas, sinon de mes faiblesses."
+        },
+        {
+          "number": 6,
+          "text": "Si je voulais me vanter, je ne serais pas déraisonnable, car je dirais la vérité, mais je m'en abstiens afin que personne n'ait à mon sujet une opinion supérieure à ce qu'il voit en moi ou à ce qu'il entend de moi."
+        },
+        {
+          "number": 7,
+          "text": "Et pour que je ne sois pas rempli d'orgueil à cause de ces révélations extraordinaires, j’ai reçu une écharde dans le corps, un ange de Satan pour me frapper et m'empêcher de m'enorgueillir."
+        },
+        {
+          "number": 8,
+          "text": "Trois fois j'ai supplié le Seigneur de l'éloigner de moi,"
+        },
+        {
+          "number": 9,
+          "text": "et il m'a dit: «Ma grâce te suffit, car ma puissance s'accomplit dans la faiblesse.» Aussi, je me montrerai bien plus volontiers fier de mes faiblesses afin que la puissance de Christ repose sur moi."
+        },
+        {
+          "number": 10,
+          "text": "C'est pourquoi je me plais dans les faiblesses, dans les insultes, dans les détresses, dans les persécutions, dans les angoisses pour Christ, car quand je suis faible, c'est alors que je suis fort."
+        },
+        {
+          "number": 11,
+          "text": "J'ai été fou [en me vantant ainsi], mais vous m'y avez contraint. C'est par vous que j'aurais dû être recommandé, car je n'ai en rien été inférieur à ces super-apôtres, bien que je ne sois rien."
+        },
+        {
+          "number": 12,
+          "text": "Les marques de mon ministère d’apôtre ont été produites au milieu de vous par une persévérance à toute épreuve, par des signes, des prodiges et des miracles."
+        },
+        {
+          "number": 13,
+          "text": "En quoi avez-vous été moins bien traités que les autres Eglises, sinon en ce que je n'ai pas été à votre charge? Pardonnez-moi cette injustice!"
+        },
+        {
+          "number": 14,
+          "text": "Voici que pour la troisième fois je suis prêt à aller chez vous, et je ne serai pas à votre charge, car ce ne sont pas vos biens que je recherche, c'est vous-mêmes. En effet, ce n'est pas aux enfants de faire des réserves pour leurs parents, mais aux parents pour leurs enfants."
+        },
+        {
+          "number": 15,
+          "text": "Quant à moi, je ferai très volontiers des dépenses et je me dépenserai moi-même pour vous même si plus je vous aime, moins je suis aimé de vous."
+        },
+        {
+          "number": 16,
+          "text": "Soit! Je n'ai pas été à votre charge, mais, fourbe comme je suis, je vous aurais pris par ruse!"
+        },
+        {
+          "number": 17,
+          "text": "Vous ai-je exploités par l'un de ceux que je vous ai envoyés?"
+        },
+        {
+          "number": 18,
+          "text": "J'ai encouragé Tite à aller chez vous et avec lui j'ai envoyé le frère: est-ce que Tite a exigé quelque chose de vous? N'avons-nous pas marché dans le même esprit, sur les mêmes traces?"
+        },
+        {
+          "number": 19,
+          "text": "Vous vous imaginez depuis longtemps que nous cherchons à nous justifier devant vous. C'est devant Dieu, en Christ, que nous parlons, et tout cela, bien-aimés, pour votre édification."
+        },
+        {
+          "number": 20,
+          "text": "J’ai peur, en effet, qu’à mon arrivée je ne vous trouve pas tels que je le voudrais et que vous ne me trouviez pas tel que vous le voudriez. J’ai peur de trouver des querelles, de la jalousie, de la colère, des rivalités, des médisances, des calomnies, de l'orgueil, des troubles."
+        },
+        {
+          "number": 21,
+          "text": "J’ai peur qu'à mon arrivée mon Dieu ne m'humilie de nouveau à votre sujet et que je n'aie à pleurer sur plusieurs de ceux qui ont péché précédemment et qui ne se sont pas détournés de l'impureté, l’immoralité sexuelle et la débauche auxquelles ils se sont livrés."
+        }
+      ]
+    },
+    {
+      "chapter": 13,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Je vais venir chez vous pour la troisième fois. Toute affaire se réglera sur la déclaration de deux ou de trois témoins."
+        },
+        {
+          "number": 2,
+          "text": "Je l’ai déjà dit et je le répète, comme je l’ai fait lors de ma deuxième visite, et aujourd'hui que je suis absent [je l'écris encore] à ceux qui ont péché précédemment et à tous les autres: si je reviens chez vous, je ne ménagerai personne,"
+        },
+        {
+          "number": 3,
+          "text": "puisque vous cherchez une preuve que Christ parle en moi. En effet, lui n'est pas faible envers vous, mais il est puissant parmi vous."
+        },
+        {
+          "number": 4,
+          "text": "Oui, Christ a été crucifié à cause de sa faiblesse, mais il vit par la puissance de Dieu. Nous aussi, nous sommes faibles en lui, mais nous vivrons avec lui par la puissance de Dieu pour agir envers vous."
+        },
+        {
+          "number": 5,
+          "text": "Examinez-vous vous-mêmes pour savoir si vous êtes dans la foi; mettez-vous vous-mêmes à l’épreuve. Ne reconnaissez-vous pas que Jésus-Christ est en vous? A moins peut-être que vous ne soyez disqualifiés."
+        },
+        {
+          "number": 6,
+          "text": "Mais j'espère bien que vous reconnaîtrez que nous, nous ne sommes pas disqualifiés."
+        },
+        {
+          "number": 7,
+          "text": "Cependant, je prie Dieu que vous ne fassiez rien de mal, non pour que nous paraissions nous-mêmes avoir réussi, mais afin que vous, vous pratiquiez le bien même si nous, nous semblons disqualifiés."
+        },
+        {
+          "number": 8,
+          "text": "En effet, nous n'avons pas de puissance contre la vérité, nous n'en avons que pour la vérité."
+        },
+        {
+          "number": 9,
+          "text": "Nous nous réjouissons chaque fois que nous sommes faibles alors que vous êtes forts. Ce que nous demandons dans nos prières, c'est votre perfectionnement."
+        },
+        {
+          "number": 10,
+          "text": "Voilà pourquoi j'écris cela étant absent: afin que, une fois présent, je n'aie pas à faire preuve de sévérité, conformément à l'autorité que le Seigneur m'a donnée pour construire et non pour démolir."
+        },
+        {
+          "number": 11,
+          "text": "Pour le reste, frères et sœurs, soyez dans la joie, travaillez à vous perfectionner, encouragez-vous, vivez en plein accord, dans la paix, et le Dieu d'amour et de paix sera avec vous."
+        },
+        {
+          "number": 12,
+          "text": "Saluez-vous les uns les autres par un saint baiser. Tous les saints vous saluent."
+        },
+        {
+          "number": 13,
+          "text": "Que la grâce du Seigneur Jésus-Christ, l'amour de Dieu et la communion du Saint-Esprit soient avec vous tous!"
+        }
+      ]
+    }
+  ]
+}

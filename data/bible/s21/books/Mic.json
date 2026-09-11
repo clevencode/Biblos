@@ -1,0 +1,464 @@
+{
+  "version": "s21",
+  "book": "Mic",
+  "usfm": "MIC",
+  "bookId": 33,
+  "title": "Michée",
+  "chapters": [
+    {
+      "chapter": 1,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Parole de l'Eternel adressée à Michée de Morésheth durant les règnes de Jotham, Achaz et Ezéchias sur Juda, vision qu’il a eue sur Samarie et Jérusalem."
+        },
+        {
+          "number": 2,
+          "text": "Ecoutez, vous, tous les peuples! Sois attentive, terre, avec ce que tu contiens! Que le Seigneur, l'Eternel, soit témoin contre vous, le Seigneur qui est dans le palais de sa sainteté!"
+        },
+        {
+          "number": 3,
+          "text": "En effet, voici que l'Eternel sort de sa résidence. Il descend, il marche sur les hauteurs de la terre."
+        },
+        {
+          "number": 4,
+          "text": "Sous ses pas les montagnes s'effondrent, les vallées s'entrouvrent, comme la cire qui fond au feu, comme l'eau qui coule sur une pente."
+        },
+        {
+          "number": 5,
+          "text": "Et tout cela à cause de la révolte de Jacob, à cause des péchés de la communauté d'Israël. Quelle est la révolte de Jacob? N'est-ce pas Samarie? Quels sont les hauts lieux de Juda? N'est-ce pas Jérusalem?"
+        },
+        {
+          "number": 6,
+          "text": "Je ferai de Samarie un tas de ruines dans les champs, un terrain pour planter de la vigne; je ferai rouler ses pierres dans la vallée, je mettrai à nu ses fondations."
+        },
+        {
+          "number": 7,
+          "text": "Toutes ses sculptures sacrées seront brisées, tous ses salaires impurs seront livrés aux flammes, et je briserai toutes ses idoles: rassemblées grâce au salaire de la prostitution, elles deviendront un salaire de prostitution."
+        },
+        {
+          "number": 8,
+          "text": "C'est pourquoi je pleurerai, je me lamenterai, je marcherai déchaussé et nu, je pousserai des cris comme le chacal, et des gémissements comme l'autruche."
+        },
+        {
+          "number": 9,
+          "text": "En effet, sa plaie est douloureuse; elle s'étend même à Juda, elle pénètre jusqu'à la porte de mon peuple, jusqu'à Jérusalem."
+        },
+        {
+          "number": 10,
+          "text": "Ne l'annoncez pas dans Gath, ne pleurez surtout pas! Roulez-vous dans la poussière à Beth-Leaphra!"
+        },
+        {
+          "number": 11,
+          "text": "Passe, habitante de Shaphir, dans la nudité et la honte! L'habitante de Tsaanan n'ose pas sortir, le deuil de Beth-Haëtsel vous prive de son abri."
+        },
+        {
+          "number": 12,
+          "text": "L'habitante de Maroth tremble pour son bien-être, car le malheur est venu de la part de l'Eternel jusqu'à la porte de Jérusalem."
+        },
+        {
+          "number": 13,
+          "text": "Attelle les coursiers à ton char, habitante de Lakis! Tu as été pour la fille de Sion une première cause de péché, car en toi on a trouvé les transgressions d'Israël."
+        },
+        {
+          "number": 14,
+          "text": "C'est pourquoi tu renonceras à Morésheth-Gath; les maisons d'Aczib seront une source trompeuse pour les rois d'Israël."
+        },
+        {
+          "number": 15,
+          "text": "Je t'amènerai un nouveau maître, habitante de Marésha; la gloire d'Israël s'en ira jusqu'à Adullam."
+        },
+        {
+          "number": 16,
+          "text": "Rase-toi, coupe ta chevelure à cause de tes enfants chéris! Rends-toi chauve comme le vautour, car ils s'en vont en exil loin de toi."
+        }
+      ]
+    },
+    {
+      "chapter": 2,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Malheur à ceux qui projettent l’injustice et qui forgent le mal dans leur lit! Au point du jour ils le réalisent, quand ils ont le pouvoir en main."
+        },
+        {
+          "number": 2,
+          "text": "Ils convoitent des champs, et ils s'en emparent, des maisons, et ils les prennent; ils traitent avec violence le maître et sa maison, l'homme et son héritage."
+        },
+        {
+          "number": 3,
+          "text": "C'est pourquoi, voici ce que dit l'Eternel: Je prépare contre ce peuple un malheur dont vous ne dégagerez pas votre cou, et vous ne marcherez pas la tête haute, car ces temps seront mauvais."
+        },
+        {
+          "number": 4,
+          "text": "Ce jour-là, on fera de vous le sujet d’un proverbe, on chantera une complainte, on dira: «Nous sommes entièrement dévastés, il donne à d'autres la part de mon peuple. Comment! Il me l'enlève, il distribue nos champs à l'ennemi.»"
+        },
+        {
+          "number": 5,
+          "text": "C'est pourquoi tu n'auras personne pour te mesurer une part du pays dans l'assemblée de l'Eternel."
+        },
+        {
+          "number": 6,
+          "text": "«Ne discourez pas, discourent-ils. On ne discourra pas de telles choses!» La honte n’en finit pas."
+        },
+        {
+          "number": 7,
+          "text": "Qu’est-il dit, famille de Jacob? L'Eternel serait-il impatient? Est-ce sa manière d'agir? Mes paroles ne sont-elles pas favorables à celui qui marche avec droiture?"
+        },
+        {
+          "number": 8,
+          "text": "Depuis longtemps mon peuple se dresse comme un ennemi: vous enlevez leur tenue à ceux qui passent en toute confiance en revenant de la guerre."
+        },
+        {
+          "number": 9,
+          "text": "Vous chassez des maisons qu’elles aiment les femmes de mon peuple, vous enlevez pour toujours ma gloire à leurs enfants."
+        },
+        {
+          "number": 10,
+          "text": "Levez-vous, marchez, car ce n'est pas ici un lieu de repos; à cause de vos souillures, il y aura des douleurs, des douleurs violentes."
+        },
+        {
+          "number": 11,
+          "text": "Si un homme court après le vent et débite des mensonges: «Je vais te prophétiser sur le vin, sur les boissons fortes», il sera pour ce peuple un prophète."
+        },
+        {
+          "number": 12,
+          "text": "Je te rassemblerai tout entier, Jacob, je rassemblerai les restes d'Israël, je les réunirai comme les brebis d'une bergerie, comme le troupeau dans son pâturage. Il y aura une foule bruyante."
+        },
+        {
+          "number": 13,
+          "text": "Celui qui fait la brèche montera devant eux; ils feront la brèche, franchiront la porte et sortiront par là. Leur roi marchera devant eux, l'Eternel sera à leur tête."
+        }
+      ]
+    },
+    {
+      "chapter": 3,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Je dis: «Ecoutez, chefs de Jacob et princes de la communauté d'Israël! N'est-ce pas à vous de connaître le droit?"
+        },
+        {
+          "number": 2,
+          "text": "Vous détestez le bien et vous aimez le mal; vous arrachez leur peau et la chair qui couvre leurs os.»"
+        },
+        {
+          "number": 3,
+          "text": "Ils mangent la chair de mon peuple, lui arrachent la peau et lui brisent les os. Ils le mettent en pièces comme ce qu'on cuit dans un pot, comme de la viande dans une marmite."
+        },
+        {
+          "number": 4,
+          "text": "Alors ils crieront vers l'Eternel, mais il ne leur répondra pas; il se cachera à eux à ce moment-là, parce qu’ils ont perverti leurs agissements."
+        },
+        {
+          "number": 5,
+          "text": "Voici ce que dit l'Eternel à propos des prophètes qui égarent mon peuple, qui annoncent la paix si leurs dents trouvent quelque chose à mordre et qui proclament la guerre si l’on ne met rien dans leur bouche:"
+        },
+        {
+          "number": 6,
+          "text": "A cause de cela, la nuit tombera sur vous, et finies les visions! Ce seront les ténèbres, et finis les oracles! Le soleil se couchera sur ces prophètes, le jour s'obscurcira sur eux."
+        },
+        {
+          "number": 7,
+          "text": "Les voyants seront dans la honte, les devins rougiront, ils se couvriront tous la barbe, car Dieu ne répondra pas."
+        },
+        {
+          "number": 8,
+          "text": "Mais moi, je suis rempli de force, grâce à l'Esprit de l'Eternel, je suis rempli de justice et de courage pour faire connaître à Jacob sa révolte et à Israël son péché."
+        },
+        {
+          "number": 9,
+          "text": "Ecoutez donc ceci, chefs de la famille de Jacob et princes de la communauté d'Israël, vous qui avez en horreur la justice et qui tordez tout ce qui est droit,"
+        },
+        {
+          "number": 10,
+          "text": "vous qui construisez Sion avec le sang et Jérusalem avec le crime!"
+        },
+        {
+          "number": 11,
+          "text": "Ses chefs jugent pour des cadeaux, ses prêtres enseignent pour un salaire, ses prophètes prédisent l'avenir pour de l'argent, et ils osent s'appuyer sur l'Eternel en disant: «L'Eternel n'est-il pas au milieu de nous? Le malheur ne nous atteindra pas.»"
+        },
+        {
+          "number": 12,
+          "text": "C'est pourquoi, à cause de vous, Sion sera labourée comme un champ, Jérusalem deviendra un tas de ruines, et le mont du temple une hauteur couverte de buissons."
+        }
+      ]
+    },
+    {
+      "chapter": 4,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Il arrivera, dans l’avenir, que la montagne de la maison de l'Eternel sera fondée au sommet des montagnes. Elle s'élèvera au-dessus des collines et des peuples y afflueront."
+        },
+        {
+          "number": 2,
+          "text": "Des nations s'y rendront en foule et diront: «Venez, montons à la montagne de l'Eternel, à la maison du Dieu de Jacob! Il nous enseignera ses voies et nous marcherons dans ses sentiers.» En effet, c’est de Sion que sortira la loi, et de Jérusalem la parole de l'Eternel."
+        },
+        {
+          "number": 3,
+          "text": "Il sera le juge d'un grand nombre de peuples, l'arbitre de nations puissantes, lointaines. Celles-ci mettront en pièces leurs épées pour en faire des socs de charrue, et leurs lances pour en faire des serpes: aucune nation ne prendra plus les armes contre une autre et l'on n’apprendra plus à faire la guerre."
+        },
+        {
+          "number": 4,
+          "text": "Ils habiteront chacun au milieu de ses vignes et de ses figuiers, et il n'y aura personne pour les troubler, car la bouche de l'Eternel, le maître de l’univers, a parlé."
+        },
+        {
+          "number": 5,
+          "text": "Tous les peuples marchent, chacun au nom de son dieu, mais nous, nous marcherons au nom de l'Eternel, notre Dieu, pour toujours et à perpétuité."
+        },
+        {
+          "number": 6,
+          "text": "Ce jour-là, déclare l'Eternel, je rassemblerai les boiteux, je réunirai ceux qui étaient chassés, ceux que j'avais maltraités."
+        },
+        {
+          "number": 7,
+          "text": "Des boiteux je ferai un reste, de ceux qui étaient chassés une nation puissante. L'Eternel régnera sur eux depuis le mont Sion, dès ce moment et pour toujours."
+        },
+        {
+          "number": 8,
+          "text": "Et toi, tour du troupeau, citadelle de Sion, à toi reviendra l'ancienne domination, la royauté qui appartenait à Jérusalem."
+        },
+        {
+          "number": 9,
+          "text": "Pourquoi maintenant pousses-tu des cris? N'as-tu pas de roi, plus de conseiller, pour que la douleur s’empare de toi comme d’une femme qui accouche?"
+        },
+        {
+          "number": 10,
+          "text": "Fille de Sion, souffre et gémis comme une femme qui accouche, car maintenant tu sortiras de la ville, tu habiteras dans les champs et tu iras jusqu'à Babylone! Là tu seras délivrée, c'est là que l'Eternel te libérera du pouvoir de tes ennemis."
+        },
+        {
+          "number": 11,
+          "text": "Maintenant de nombreuses nations se sont rassemblées contre toi. «Qu'elle soit souillée, disent-elles, et que nos yeux contemplent la ruine de Sion!»"
+        },
+        {
+          "number": 12,
+          "text": "Mais elles ne connaissent pas les pensées de l'Eternel, elles ne comprennent pas son intention, elles ignorent qu'il les a rassemblées comme des gerbes dans l'aire de battage."
+        },
+        {
+          "number": 13,
+          "text": "Fille de Sion, lève-toi et foule le grain! Je te ferai une corne de fer et des sabots de bronze, et tu écraseras des peuples nombreux. Tu consacreras leurs biens à l'Eternel, leurs richesses au Seigneur de toute la terre."
+        },
+        {
+          "number": 14,
+          "text": "Maintenant, ville de troupes, rassemble tes troupes! On nous assiège, à coups de bâton on frappe sur la joue le juge d'Israël."
+        }
+      ]
+    },
+    {
+      "chapter": 5,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Et toi, Bethléhem Ephrata, qui es petite parmi les villes de Juda, de toi sortira pour moi celui qui dominera sur Israël et dont l'origine remonte loin dans le passé, à l'éternité."
+        },
+        {
+          "number": 2,
+          "text": "C'est pourquoi il livrera son peuple jusqu'au moment où accouchera celle qui doit accoucher, et le reste de ses frères reviendra auprès des Israélites."
+        },
+        {
+          "number": 3,
+          "text": "Il se présentera et les conduira avec la force de l'Eternel, avec la majesté du nom de l'Eternel, son Dieu, et ils auront une habitation assurée, car sa grandeur sera reconnue jusqu'aux extrémités de la terre."
+        },
+        {
+          "number": 4,
+          "text": "C'est lui qui ramènera la paix. Lorsque l'Assyrien viendra dans notre pays et qu'il pénétrera dans nos palais, nous enverrons contre lui sept bergers et huit princes du peuple."
+        },
+        {
+          "number": 5,
+          "text": "Ils conduiront avec l'épée le pays d'Assyrie et le pays de Nimrod à l'intérieur de ses portes. Il nous délivrera ainsi de l'Assyrien, lorsqu'il viendra dans notre pays et qu'il pénétrera sur notre territoire."
+        },
+        {
+          "number": 6,
+          "text": "Le reste de Jacob sera, au milieu des peuples nombreux, pareil à une rosée qui vient de l'Eternel, pareil à des gouttes d'eau sur l'herbe: elles ne comptent pas sur l'homme, elles ne dépendent pas des humains."
+        },
+        {
+          "number": 7,
+          "text": "Le reste de Jacob sera parmi les nations, au milieu des peuples nombreux, pareil à un lion parmi les bêtes de la forêt, pareil à un lionceau parmi les troupeaux de brebis: lorsqu'il passe, il piétine et déchire sans personne pour délivrer ses victimes."
+        },
+        {
+          "number": 8,
+          "text": "Que ta main se lève sur tes adversaires, et que tous tes ennemis soient supprimés!"
+        },
+        {
+          "number": 9,
+          "text": "Ce jour-là, déclare l'Eternel, je supprimerai du milieu de toi tes chevaux et je détruirai tes chars."
+        },
+        {
+          "number": 10,
+          "text": "Je supprimerai les villes de ton pays et je renverserai toutes tes forteresses."
+        },
+        {
+          "number": 11,
+          "text": "Je supprimerai de chez toi la magie et tu n'auras plus de devins;"
+        },
+        {
+          "number": 12,
+          "text": "je supprimerai du milieu de toi tes idoles et tes statues, et tu ne te prosterneras plus devant ce que tes mains ont fabriqué."
+        },
+        {
+          "number": 13,
+          "text": "J'arracherai du milieu de toi tes poteaux sacrés et je détruirai tes villes."
+        },
+        {
+          "number": 14,
+          "text": "J'exercerai ma vengeance avec colère, avec fureur, contre les nations qui n'ont pas écouté."
+        }
+      ]
+    },
+    {
+      "chapter": 6,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Ecoutez donc ce que dit l'Eternel: «Lève-toi, plaide devant les montagnes et que les collines entendent ta voix!»"
+        },
+        {
+          "number": 2,
+          "text": "Ecoutez le procès de l'Eternel, montagnes, et vous, solides fondations de la terre! En effet, l'Eternel a un procès avec son peuple, il veut plaider contre Israël:"
+        },
+        {
+          "number": 3,
+          "text": "«Mon peuple, que t'ai-je fait? En quoi t'ai-je fatigué? Réponds-moi!"
+        },
+        {
+          "number": 4,
+          "text": "En effet, je t'ai fait sortir d'Egypte, je t'ai délivré de la maison d'esclavage, et j'ai envoyé devant toi Moïse, Aaron et Miriam."
+        },
+        {
+          "number": 5,
+          "text": "Mon peuple, rappelle-toi ce que projetait Balak, roi de Moab, et ce que lui a répondu Balaam, fils de Beor, rappelle-toi le chemin de Sittim à Guilgal, afin de reconnaître les bienfaits de l'Eternel.»"
+        },
+        {
+          "number": 6,
+          "text": "«Avec quoi me présenterai-je devant l'Eternel pour m'humilier devant le Dieu très-haut? Me présenterai-je avec des holocaustes, avec des veaux d'un an?"
+        },
+        {
+          "number": 7,
+          "text": "L'Eternel acceptera-t-il des milliers de béliers, des quantités de torrents d'huile? Donnerai-je mon fils aîné pour ma révolte, mon enfant pour mon propre péché?»"
+        },
+        {
+          "number": 8,
+          "text": "On t'a fait connaître, homme, ce qui est bien et ce que l'Eternel demande de toi: c'est que tu mettes en pratique le droit, que tu aimes la bonté et que tu marches humblement avec ton Dieu."
+        },
+        {
+          "number": 9,
+          "text": "L'Eternel interpelle la ville, et celui qui est sage craindra ton nom. Ecoutez la menace et celui qui l'envoie!"
+        },
+        {
+          "number": 10,
+          "text": "«Y a-t-il encore dans la maison du méchant des trésors mal acquis et une mesure trop petite et maudite?"
+        },
+        {
+          "number": 11,
+          "text": "Est-on pur avec des balances fausses et avec de faux poids dans le sac?"
+        },
+        {
+          "number": 12,
+          "text": "Ses riches sont pleins de violence, ses habitants profèrent le mensonge, et leur langue n'est que tromperie dans leur bouche."
+        },
+        {
+          "number": 13,
+          "text": "»C'est pourquoi je te frapperai par la souffrance, je te dévasterai à cause de tes péchés."
+        },
+        {
+          "number": 14,
+          "text": "Tu mangeras sans te rassasier, et la faim régnera chez toi; tu feras des réserves mais tu ne les sauveras pas, et ce que tu sauveras, je le livrerai à l'épée."
+        },
+        {
+          "number": 15,
+          "text": "Tu sèmeras mais tu ne moissonneras pas, tu presseras l'olive mais tu ne te parfumeras pas d'huile, tu feras couler le jus de raisin mais tu ne boiras pas de vin."
+        },
+        {
+          "number": 16,
+          "text": "On respecte les coutumes d'Omri et toute la manière d'agir de la famille d'Achab, vous marchez d'après leurs conseils. C'est pourquoi je te livrerai à la destruction, je ferai de tes habitants un sujet de moquerie, et vous supporterez le déshonneur de mon peuple.»"
+        }
+      ]
+    },
+    {
+      "chapter": 7,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Malheur à moi, car je suis comme à la récolte des fruits, comme au grappillage après la vendange: il n'y a pas de grappes à manger, pas une de ces figues précoces que je désire."
+        },
+        {
+          "number": 2,
+          "text": "L'homme de bien a disparu du pays, et il n'y a plus de juste parmi les hommes. Ils sont tous en embuscade pour verser le sang, chacun tend un piège à son frère."
+        },
+        {
+          "number": 3,
+          "text": "Leurs mains sont habiles à faire le mal. Le prince a des exigences, le juge réclame un salaire, le grand exprime ses désirs, et ils font ainsi cause commune."
+        },
+        {
+          "number": 4,
+          "text": "Le meilleur parmi eux est pareil à une ronce, le plus droit est pire qu'un buisson d'épines. Le jour annoncé par tes prophètes, le jour de ta punition approche. C'est alors qu'ils seront consternés."
+        },
+        {
+          "number": 5,
+          "text": "Ne crois pas un ami, ne te fie pas à un intime; devant celle qui repose sur ta poitrine, garde-toi bien d'ouvrir la bouche,"
+        },
+        {
+          "number": 6,
+          "text": "car le fils méprise le père, la fille se soulève contre sa mère, la belle-fille contre sa belle-mère; chacun a pour ennemis les membres de sa famille."
+        },
+        {
+          "number": 7,
+          "text": "Mais moi, je regarderai vers l'Eternel, je mettrai mon espérance dans le Dieu de mon salut, mon Dieu m'exaucera."
+        },
+        {
+          "number": 8,
+          "text": "Ne te réjouis pas à mon sujet, mon ennemie, car si je suis tombée, je me relèverai; si je suis assise dans les ténèbres, l'Eternel sera ma lumière."
+        },
+        {
+          "number": 9,
+          "text": "Je supporterai la colère de l'Eternel, puisque j'ai péché contre lui, jusqu'à ce qu'il défende ma cause et me fasse droit. Il me conduira à la lumière, et je contemplerai sa justice."
+        },
+        {
+          "number": 10,
+          "text": "Mon ennemie le verra et sera couverte de honte, elle qui me disait: «Où est l'Eternel, ton Dieu?» Mes yeux se réjouiront à sa vue; alors elle sera piétinée comme la boue des rues."
+        },
+        {
+          "number": 11,
+          "text": "Le jour où l'on reconstruira tes murs, ce jour-là tes limites seront reculées."
+        },
+        {
+          "number": 12,
+          "text": "Ce jour-là, on viendra vers toi de l'Assyrie et des villes d'Egypte, de l'Egypte jusqu'au fleuve, d'une mer à l'autre et d'une montagne à l'autre."
+        },
+        {
+          "number": 13,
+          "text": "Le pays sera dévasté à cause de ses habitants, à cause du fruit de leurs agissements."
+        },
+        {
+          "number": 14,
+          "text": "Conduis ton peuple avec ta houlette, le troupeau de ton héritage qui habite solitaire dans la forêt au milieu du Carmel; qu'ils broutent sur le Basan et en Galaad, comme autrefois!"
+        },
+        {
+          "number": 15,
+          "text": "Comme à l’époque où tu es sorti de l'Egypte, je te ferai voir des prodiges."
+        },
+        {
+          "number": 16,
+          "text": "Les nations le verront et seront couvertes de honte, avec toute leur puissance; elles mettront la main sur la bouche, leurs oreilles seront assourdies."
+        },
+        {
+          "number": 17,
+          "text": "Elles lécheront la poussière, comme le serpent, comme les reptiles de la terre; elles sortiront effrayées de leurs forteresses, elles trembleront devant l'Eternel, notre Dieu, elles te craindront."
+        },
+        {
+          "number": 18,
+          "text": "Quel Dieu est semblable à toi? Tu pardonnes la faute, tu oublies la révolte du reste de ton héritage. Il ne garde pas sa colère à toujours, car il prend plaisir à la bonté."
+        },
+        {
+          "number": 19,
+          "text": "Il aura encore compassion de nous, il piétinera nos fautes. Tu jetteras au fond de la mer tous leurs péchés."
+        },
+        {
+          "number": 20,
+          "text": "Tu témoigneras de la fidélité à Jacob, de la bonté à Abraham, comme tu l'as juré à nos ancêtres autrefois."
+        }
+      ]
+    }
+  ]
+}

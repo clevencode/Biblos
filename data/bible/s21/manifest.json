@@ -1,0 +1,545 @@
+{
+  "abbreviation": "S21",
+  "title": "Bible Segond 21",
+  "languageCode": "fr",
+  "publisher": "2007 Société Biblique de Genève.\nTous droits réservés.",
+  "versionDate": "20130907000000",
+  "guid": "YifIs3pOjkCNRDJgFahinQ",
+  "books": [
+    {
+      "usfm": "GEN",
+      "osis": "Gen",
+      "title": "Genèse",
+      "bookId": 1,
+      "chapters": 50,
+      "verses": 1533
+    },
+    {
+      "usfm": "EXO",
+      "osis": "Exod",
+      "title": "Exode",
+      "bookId": 2,
+      "chapters": 40,
+      "verses": 1213
+    },
+    {
+      "usfm": "LEV",
+      "osis": "Lev",
+      "title": "Lévitique",
+      "bookId": 3,
+      "chapters": 27,
+      "verses": 859
+    },
+    {
+      "usfm": "NUM",
+      "osis": "Num",
+      "title": "Nombres",
+      "bookId": 4,
+      "chapters": 36,
+      "verses": 1288
+    },
+    {
+      "usfm": "DEU",
+      "osis": "Deut",
+      "title": "Deutéronome",
+      "bookId": 5,
+      "chapters": 34,
+      "verses": 959
+    },
+    {
+      "usfm": "JOS",
+      "osis": "Josh",
+      "title": "Josué",
+      "bookId": 6,
+      "chapters": 24,
+      "verses": 658
+    },
+    {
+      "usfm": "JDG",
+      "osis": "Judg",
+      "title": "Juges",
+      "bookId": 7,
+      "chapters": 21,
+      "verses": 618
+    },
+    {
+      "usfm": "RUT",
+      "osis": "Ruth",
+      "title": "Ruth",
+      "bookId": 8,
+      "chapters": 4,
+      "verses": 85
+    },
+    {
+      "usfm": "1SA",
+      "osis": "1Sam",
+      "title": "1 Samuel",
+      "bookId": 9,
+      "chapters": 31,
+      "verses": 811
+    },
+    {
+      "usfm": "2SA",
+      "osis": "2Sam",
+      "title": "2 Samuel",
+      "bookId": 10,
+      "chapters": 24,
+      "verses": 695
+    },
+    {
+      "usfm": "1KI",
+      "osis": "1Kgs",
+      "title": "1 Rois",
+      "bookId": 11,
+      "chapters": 22,
+      "verses": 817
+    },
+    {
+      "usfm": "2KI",
+      "osis": "2Kgs",
+      "title": "2 Rois",
+      "bookId": 12,
+      "chapters": 25,
+      "verses": 719
+    },
+    {
+      "usfm": "1CH",
+      "osis": "1Chr",
+      "title": "1 Chroniques",
+      "bookId": 13,
+      "chapters": 29,
+      "verses": 943
+    },
+    {
+      "usfm": "2CH",
+      "osis": "2Chr",
+      "title": "2 Chroniques",
+      "bookId": 14,
+      "chapters": 36,
+      "verses": 822
+    },
+    {
+      "usfm": "EZR",
+      "osis": "Ezra",
+      "title": "Esdras",
+      "bookId": 15,
+      "chapters": 10,
+      "verses": 280
+    },
+    {
+      "usfm": "NEH",
+      "osis": "Neh",
+      "title": "Néhémie",
+      "bookId": 16,
+      "chapters": 13,
+      "verses": 405
+    },
+    {
+      "usfm": "EST",
+      "osis": "Esth",
+      "title": "Esther",
+      "bookId": 17,
+      "chapters": 10,
+      "verses": 167
+    },
+    {
+      "usfm": "JOB",
+      "osis": "Job",
+      "title": "Job",
+      "bookId": 18,
+      "chapters": 42,
+      "verses": 1070
+    },
+    {
+      "usfm": "PSA",
+      "osis": "Ps",
+      "title": "Psaumes",
+      "bookId": 19,
+      "chapters": 150,
+      "verses": 2527
+    },
+    {
+      "usfm": "PRO",
+      "osis": "Prov",
+      "title": "Proverbes",
+      "bookId": 20,
+      "chapters": 31,
+      "verses": 915
+    },
+    {
+      "usfm": "ECC",
+      "osis": "Eccl",
+      "title": "Ecclésiaste",
+      "bookId": 21,
+      "chapters": 12,
+      "verses": 222
+    },
+    {
+      "usfm": "SNG",
+      "osis": "Song",
+      "title": "Cantique des cantiques",
+      "bookId": 22,
+      "chapters": 8,
+      "verses": 117
+    },
+    {
+      "usfm": "ISA",
+      "osis": "Isa",
+      "title": "Ésaïe",
+      "bookId": 23,
+      "chapters": 66,
+      "verses": 1291
+    },
+    {
+      "usfm": "JER",
+      "osis": "Jer",
+      "title": "Jérémie",
+      "bookId": 24,
+      "chapters": 52,
+      "verses": 1363
+    },
+    {
+      "usfm": "LAM",
+      "osis": "Lam",
+      "title": "Lamentations",
+      "bookId": 25,
+      "chapters": 5,
+      "verses": 154
+    },
+    {
+      "usfm": "EZK",
+      "osis": "Ezek",
+      "title": "Ézéchiel",
+      "bookId": 26,
+      "chapters": 48,
+      "verses": 1273
+    },
+    {
+      "usfm": "DAN",
+      "osis": "Dan",
+      "title": "Daniel",
+      "bookId": 27,
+      "chapters": 12,
+      "verses": 357
+    },
+    {
+      "usfm": "HOS",
+      "osis": "Hos",
+      "title": "Osée",
+      "bookId": 28,
+      "chapters": 14,
+      "verses": 197
+    },
+    {
+      "usfm": "JOL",
+      "osis": "Joel",
+      "title": "Joël",
+      "bookId": 29,
+      "chapters": 4,
+      "verses": 73
+    },
+    {
+      "usfm": "AMO",
+      "osis": "Amos",
+      "title": "Amos",
+      "bookId": 30,
+      "chapters": 9,
+      "verses": 146
+    },
+    {
+      "usfm": "OBA",
+      "osis": "Obad",
+      "title": "Abdias",
+      "bookId": 31,
+      "chapters": 1,
+      "verses": 21
+    },
+    {
+      "usfm": "JON",
+      "osis": "Jonah",
+      "title": "Jonas",
+      "bookId": 32,
+      "chapters": 4,
+      "verses": 48
+    },
+    {
+      "usfm": "MIC",
+      "osis": "Mic",
+      "title": "Michée",
+      "bookId": 33,
+      "chapters": 7,
+      "verses": 105
+    },
+    {
+      "usfm": "NAM",
+      "osis": "Nah",
+      "title": "Nahum",
+      "bookId": 34,
+      "chapters": 3,
+      "verses": 47
+    },
+    {
+      "usfm": "HAB",
+      "osis": "Hab",
+      "title": "Habacuc",
+      "bookId": 35,
+      "chapters": 3,
+      "verses": 56
+    },
+    {
+      "usfm": "ZEP",
+      "osis": "Zeph",
+      "title": "Sophonie",
+      "bookId": 36,
+      "chapters": 3,
+      "verses": 53
+    },
+    {
+      "usfm": "HAG",
+      "osis": "Hag",
+      "title": "Aggée",
+      "bookId": 37,
+      "chapters": 2,
+      "verses": 38
+    },
+    {
+      "usfm": "ZEC",
+      "osis": "Zech",
+      "title": "Zacharie",
+      "bookId": 38,
+      "chapters": 14,
+      "verses": 211
+    },
+    {
+      "usfm": "MAL",
+      "osis": "Mal",
+      "title": "Malachie",
+      "bookId": 39,
+      "chapters": 3,
+      "verses": 55
+    },
+    {
+      "usfm": "MAT",
+      "osis": "Matt",
+      "title": "Matthieu",
+      "bookId": 40,
+      "chapters": 28,
+      "verses": 1071
+    },
+    {
+      "usfm": "MRK",
+      "osis": "Mark",
+      "title": "Marc",
+      "bookId": 41,
+      "chapters": 16,
+      "verses": 678
+    },
+    {
+      "usfm": "LUK",
+      "osis": "Luke",
+      "title": "Luc",
+      "bookId": 42,
+      "chapters": 24,
+      "verses": 1151
+    },
+    {
+      "usfm": "JHN",
+      "osis": "John",
+      "title": "Jean",
+      "bookId": 43,
+      "chapters": 21,
+      "verses": 879
+    },
+    {
+      "usfm": "ACT",
+      "osis": "Acts",
+      "title": "Actes",
+      "bookId": 44,
+      "chapters": 28,
+      "verses": 1006
+    },
+    {
+      "usfm": "ROM",
+      "osis": "Rom",
+      "title": "Romains",
+      "bookId": 45,
+      "chapters": 16,
+      "verses": 433
+    },
+    {
+      "usfm": "1CO",
+      "osis": "1Cor",
+      "title": "1 Corinthiens",
+      "bookId": 46,
+      "chapters": 16,
+      "verses": 437
+    },
+    {
+      "usfm": "2CO",
+      "osis": "2Cor",
+      "title": "2 Corinthiens",
+      "bookId": 47,
+      "chapters": 13,
+      "verses": 256
+    },
+    {
+      "usfm": "GAL",
+      "osis": "Gal",
+      "title": "Galates",
+      "bookId": 48,
+      "chapters": 6,
+      "verses": 149
+    },
+    {
+      "usfm": "EPH",
+      "osis": "Eph",
+      "title": "Éphésiens",
+      "bookId": 49,
+      "chapters": 6,
+      "verses": 155
+    },
+    {
+      "usfm": "PHP",
+      "osis": "Phil",
+      "title": "Philippiens",
+      "bookId": 50,
+      "chapters": 4,
+      "verses": 104
+    },
+    {
+      "usfm": "COL",
+      "osis": "Col",
+      "title": "Colossiens",
+      "bookId": 51,
+      "chapters": 4,
+      "verses": 95
+    },
+    {
+      "usfm": "1TH",
+      "osis": "1Thess",
+      "title": "1 Thessaloniciens",
+      "bookId": 52,
+      "chapters": 5,
+      "verses": 89
+    },
+    {
+      "usfm": "2TH",
+      "osis": "2Thess",
+      "title": "2 Thessaloniciens",
+      "bookId": 53,
+      "chapters": 3,
+      "verses": 47
+    },
+    {
+      "usfm": "1TI",
+      "osis": "1Tim",
+      "title": "1 Timothée",
+      "bookId": 54,
+      "chapters": 6,
+      "verses": 113
+    },
+    {
+      "usfm": "2TI",
+      "osis": "2Tim",
+      "title": "2 Timothée",
+      "bookId": 55,
+      "chapters": 4,
+      "verses": 83
+    },
+    {
+      "usfm": "TIT",
+      "osis": "Titus",
+      "title": "Tite",
+      "bookId": 56,
+      "chapters": 3,
+      "verses": 46
+    },
+    {
+      "usfm": "PHM",
+      "osis": "Phlm",
+      "title": "Philémon",
+      "bookId": 57,
+      "chapters": 1,
+      "verses": 25
+    },
+    {
+      "usfm": "HEB",
+      "osis": "Heb",
+      "title": "Hébreux",
+      "bookId": 58,
+      "chapters": 13,
+      "verses": 303
+    },
+    {
+      "usfm": "JAS",
+      "osis": "Jas",
+      "title": "Jacques",
+      "bookId": 59,
+      "chapters": 5,
+      "verses": 108
+    },
+    {
+      "usfm": "1PE",
+      "osis": "1Pet",
+      "title": "1 Pierre",
+      "bookId": 60,
+      "chapters": 5,
+      "verses": 105
+    },
+    {
+      "usfm": "2PE",
+      "osis": "2Pet",
+      "title": "2 Pierre",
+      "bookId": 61,
+      "chapters": 3,
+      "verses": 61
+    },
+    {
+      "usfm": "1JN",
+      "osis": "1John",
+      "title": "1 Jean",
+      "bookId": 62,
+      "chapters": 5,
+      "verses": 105
+    },
+    {
+      "usfm": "2JN",
+      "osis": "2John",
+      "title": "2 Jean",
+      "bookId": 63,
+      "chapters": 1,
+      "verses": 13
+    },
+    {
+      "usfm": "3JN",
+      "osis": "3John",
+      "title": "3 Jean",
+      "bookId": 64,
+      "chapters": 1,
+      "verses": 15
+    },
+    {
+      "usfm": "JUD",
+      "osis": "Jude",
+      "title": "Jude",
+      "bookId": 65,
+      "chapters": 1,
+      "verses": 25
+    },
+    {
+      "usfm": "REV",
+      "osis": "Rev",
+      "title": "Apocalypse",
+      "bookId": 66,
+      "chapters": 22,
+      "verses": 405
+    }
+  ],
+  "totals": {
+    "books": 66,
+    "chapters": 1189,
+    "verses": 31168
+  },
+  "convertedAt": "2026-09-11T21:00:17.275Z",
+  "sourceNote": "MySword S21 export → convert-s21.mjs"
+}

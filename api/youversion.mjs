@@ -1,23 +1,26 @@
 /**
- * Texte biblique LSG depuis midvash/bible-data (domaine public).
+ * Texte biblique Segond 21 (S21) local.
  * GET /api/youversion?action=books
  * GET /api/youversion?action=passage&usfm=JHN.3
  *
- * Source: https://github.com/midvash/bible-data  (versions/fr/lsg)
+ * Données : data/bible/s21/books/{OSIS}.json
+ * Régénérer : node scripts/convert-s21.mjs
  */
-const DATA_BASES = [
-  "https://cdn.jsdelivr.net/gh/midvash/bible-data@main/versions/fr/lsg/books",
-  "https://raw.githubusercontent.com/midvash/bible-data/main/versions/fr/lsg/books",
-];
+import { readFile } from "node:fs/promises";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const LSG_META = {
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
+const S21_BOOKS_DIR = join(ROOT, "data", "bible", "s21", "books");
+
+const BIBLE_META = {
   id: 0,
-  abbreviation: "LSG",
-  title: "Louis Segond 1910",
+  abbreviation: "S21",
+  title: "Segond 21",
   languageCode: "fr",
 };
 
-/** Canon protestant : USFM (app) ↔ OSIS (bible-data) + titres FR + nb de chapitres. */
+/** Canon protestant : USFM (app) ↔ OSIS (fichiers) + titres FR + nb de chapitres (numérotation S21). */
 const CANON = [
   ["GEN", "Gen", "Genèse", 50],
   ["EXO", "Exod", "Exode", 40],
@@ -47,7 +50,7 @@ const CANON = [
   ["EZK", "Ezek", "Ézéchiel", 48],
   ["DAN", "Dan", "Daniel", 12],
   ["HOS", "Hos", "Osée", 14],
-  ["JOL", "Joel", "Joël", 3],
+  ["JOL", "Joel", "Joël", 4],
   ["AMO", "Amos", "Amos", 9],
   ["OBA", "Obad", "Abdias", 1],
   ["JON", "Jonah", "Jonas", 4],
@@ -57,7 +60,7 @@ const CANON = [
   ["ZEP", "Zeph", "Sophonie", 3],
   ["HAG", "Hag", "Aggée", 2],
   ["ZEC", "Zech", "Zacharie", 14],
-  ["MAL", "Mal", "Malachie", 4],
+  ["MAL", "Mal", "Malachie", 3],
   ["MAT", "Matt", "Matthieu", 28],
   ["MRK", "Mark", "Marc", 16],
   ["LUK", "Luke", "Luc", 24],
@@ -135,38 +138,29 @@ function parseUsfmRef(usfm) {
   };
 }
 
-async function fetchJson(url) {
-  const response = await fetch(url, {
-    headers: { Accept: "application/json" },
-  });
-  if (!response.ok) {
-    const err = new Error(
-      response.status === 404 ? "Livre introuvable dans bible-data" : `bible-data HTTP ${response.status}`,
-    );
-    err.statusCode = response.status;
-    throw err;
-  }
-  return response.json();
-}
-
 async function loadBook(osis) {
   const cached = bookJsonCache.get(osis);
   if (cached && Date.now() - cached.at < BOOK_CACHE_MS) return cached.json;
 
-  let lastErr = null;
-  for (const base of DATA_BASES) {
-    try {
-      const json = await fetchJson(`${base}/${osis}.json`);
-      if (!json || !Array.isArray(json.chapters)) {
-        throw new Error("JSON bible-data invalide");
-      }
-      bookJsonCache.set(osis, { at: Date.now(), json });
-      return json;
-    } catch (err) {
-      lastErr = err;
+  const file = join(S21_BOOKS_DIR, `${osis}.json`);
+  try {
+    const raw = await readFile(file, "utf8");
+    const json = JSON.parse(raw);
+    if (!json || !Array.isArray(json.chapters)) {
+      throw new Error("JSON S21 invalide");
     }
+    bookJsonCache.set(osis, { at: Date.now(), json });
+    return json;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    const wrapped = new Error(
+      message.includes("ENOENT") || message.includes("no such file")
+        ? `Livre S21 introuvable : ${osis}`
+        : message,
+    );
+    wrapped.statusCode = message.includes("ENOENT") ? 404 : 500;
+    throw wrapped;
   }
-  throw lastErr || new Error("bible-data indisponible");
 }
 
 function chapterFromBook(bookJson, chapter, verseStart, verseEnd) {
@@ -202,8 +196,8 @@ async function fetchPassagePayload(usfm) {
       ? `${title} ${ref.chapter}.${ref.verseStart}${ref.verseEnd && ref.verseEnd !== ref.verseStart ? `-${ref.verseEnd}` : ""}`
       : `${title} ${ref.chapter}`;
   return {
-    bibleId: LSG_META.id,
-    bible: LSG_META,
+    bibleId: BIBLE_META.id,
+    bible: BIBLE_META,
     usingFallback: false,
     passage: {
       id: `${ref.book}.${ref.chapter}`,
@@ -247,7 +241,7 @@ export async function handleYouVersion(req, res) {
       send(200, {
         ok: true,
         hasKey: true,
-        bible: LSG_META,
+        bible: BIBLE_META,
         usingFallback: false,
         sample,
       });
@@ -258,7 +252,7 @@ export async function handleYouVersion(req, res) {
       send(200, {
         ok: true,
         hasKey: true,
-        bible: LSG_META,
+        bible: BIBLE_META,
         usingFallback: false,
         books: listBooks(),
       });

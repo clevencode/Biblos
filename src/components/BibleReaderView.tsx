@@ -32,7 +32,7 @@ import {
 import type { Flashcard } from "../types";
 
 const STORAGE_KEY = "biblos-bible-reader";
-const BOOKS_CACHE_KEY = "biblos-bible-books-lsg";
+const BOOKS_CACHE_KEY = "biblos-bible-books-s21";
 const FONT_MIN = 16;
 const FONT_MAX = 26;
 const FONT_DEFAULT = 19;
@@ -207,8 +207,8 @@ function readBooksCache(): { bible: YouVersionBible; books: YouVersionBook[] } |
     return {
       bible: parsed.bible ?? {
         id: LSG_BIBLE_ID,
-        abbreviation: "LSG",
-        title: "Louis Segond 1910",
+        abbreviation: "S21",
+        title: "Segond 21",
         languageCode: "fr",
       },
       books: parsed.books,
@@ -226,8 +226,8 @@ function writeBooksCache(bible: YouVersionBible | null, books: YouVersionBook[])
         at: Date.now(),
         bible: bible ?? {
           id: LSG_BIBLE_ID,
-          abbreviation: "LSG",
-          title: "Louis Segond 1910",
+          abbreviation: "S21",
+          title: "Segond 21",
           languageCode: "fr",
         },
         books,

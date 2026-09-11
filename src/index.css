@@ -541,10 +541,11 @@ body,
 /* —— Session de cartes (protótipo) —— */
 .flash--session {
   --card-tint: transparent;
-  --flash-peek: 28px;
-  --flash-peek-gap: 8px;
+  /* Peek: affordance de swipe (~7–9% por lado). Fallback fixo; slidable usa cqw. */
+  --flash-peek: 32px;
+  --flash-peek-gap: 10px;
   --flash-peek-radius: 24px;
-  --flash-peek-inset: 8px;
+  --flash-peek-inset: 10px;
   gap: 0;
   padding: 0 0 12px;
   background:
@@ -743,6 +744,12 @@ body,
   container-name: flash-peek;
 }
 
+/* Peek relativo ao container: legível em telas estreitas, sem roubar foco do card ativo */
+.flash--session .flash-viewport.is-slidable {
+  --flash-peek: clamp(22px, 8cqw, 40px);
+  --flash-peek-gap: clamp(8px, 2.5cqw, 12px);
+}
+
 .flash--session .flash-track {
   display: flex;
   width: max-content;
@@ -787,8 +794,9 @@ body,
 }
 
 .flash--session .flash-slide:not(.is-active) .flash-stage {
-  opacity: 0.78;
-  transform: scale(0.99);
+  /* Hierarquia leve: vizinho reconhecível, card ativo dominante */
+  opacity: 0.72;
+  transform: scale(0.985);
   transform-origin: center center;
   pointer-events: none;
 }
@@ -824,8 +832,7 @@ body,
     )
       border-box;
   box-shadow: none;
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow: hidden;
 }
 
 .flash--session .flash-back {
@@ -2577,7 +2584,8 @@ body,
 
 .flash-card-meta {
   display: block;
-  margin-top: 4px;
+  flex: none;
+  margin-top: auto;
   font-size: 0.75rem;
   color: var(--muted);
 }
@@ -2591,8 +2599,8 @@ body,
   inset: 0;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  gap: 14px;
+  justify-content: flex-start;
+  gap: 12px;
   padding: 28px 24px 22px;
   border-radius: 16px;
   border: 1px solid color-mix(in srgb, var(--line) 85%, transparent);
@@ -2602,12 +2610,25 @@ body,
     0 10px 28px color-mix(in srgb, var(--text) 6%, transparent);
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+.flash-fit-slot {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.flash-fit-slot > .flash-back-text {
+  overflow: hidden;
 }
 
 .flash-kicker {
+  flex: none;
   font-size: 0.7rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -3566,6 +3587,10 @@ body,
   }
 
   .flash--session {
+    /* Mobile: peek só no carrossel; card único fica full-bleed (abaixo) */
+    --flash-peek-radius: 20px;
+    --flash-peek-inset: 10px;
+    padding-inline: 0;
     padding-bottom: max(8px, env(safe-area-inset-bottom, 0px));
   }
 
@@ -3573,11 +3598,39 @@ body,
     gap: 12px;
     max-width: none;
     width: 100%;
+    /* Cartão full-bleed; meter/ações mantêm gutter abaixo */
+    padding-inline: 0;
+  }
+
+  .flash--session .flash-session-meter,
+  .flash--session .flash-actions {
     padding-inline: var(--mobile-gutter, 12px);
+    box-sizing: border-box;
   }
 
   .flash--session .flash-actions {
     max-width: none;
+  }
+
+  /* Card único: sem peek, cantos retos (full-bleed) */
+  .flash--session .flash-viewport:not(.is-slidable) {
+    --flash-peek: 0;
+    --flash-peek-gap: 0;
+    --flash-peek-radius: 0;
+    --flash-peek-inset: 0;
+    border-radius: 0;
+  }
+
+  .flash--session .flash-viewport:not(.is-slidable) .flash-face {
+    border-radius: 0;
+  }
+
+  /* Várias cartas: peek ~5–7% — affordance de swipe sem setas */
+  .flash--session .flash-viewport.is-slidable {
+    --flash-peek: clamp(18px, 6.5cqw, 28px);
+    --flash-peek-gap: 8px;
+    --flash-peek-radius: 20px;
+    border-radius: var(--flash-peek-radius);
   }
 
   .flash-session-top {
@@ -6107,8 +6160,9 @@ body,
   font-family: "Libre Baskerville", "Source Serif 4", Georgia, serif;
   font-weight: 400;
   text-transform: none;
-  font-size: 1.05em;
-  line-height: 1.6;
+  /* Tamanho base; FlashFitText ajusta via inline style para caber no card */
+  font-size: 1.22rem;
+  line-height: 1.55;
 }
 
 .bible-hint {

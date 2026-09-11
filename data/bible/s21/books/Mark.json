@@ -1,0 +1,2801 @@
+{
+  "version": "s21",
+  "book": "Mark",
+  "usfm": "MRK",
+  "bookId": 41,
+  "title": "Marc",
+  "chapters": [
+    {
+      "chapter": 1,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Voici le commencement de l'Evangile de Jésus-Christ, Fils de Dieu,"
+        },
+        {
+          "number": 2,
+          "text": "conformément à ce qui est écrit dans les prophètes: Voici, j'envoie mon messager devant toi pour te préparer le chemin."
+        },
+        {
+          "number": 3,
+          "text": "C'est la voix de celui qui crie dans le désert: ‘Préparez le chemin du Seigneur, rendez ses sentiers droits.’"
+        },
+        {
+          "number": 4,
+          "text": "Jean parut; il baptisait dans le désert et prêchait le baptême de repentance pour le pardon des péchés."
+        },
+        {
+          "number": 5,
+          "text": "Toute la région de Judée et tous les habitants de Jérusalem se rendaient vers lui. Reconnaissant publiquement leurs péchés, ils se faisaient baptiser par lui dans l’eau du Jourdain."
+        },
+        {
+          "number": 6,
+          "text": "Jean portait un vêtement en poil de chameau et une ceinture de cuir autour de la taille. Il se nourrissait de sauterelles et de miel sauvage."
+        },
+        {
+          "number": 7,
+          "text": "Il proclamait: «Après moi vient celui qui est plus puissant que moi, et je ne suis pas digne de me baisser pour détacher la courroie de ses sandales."
+        },
+        {
+          "number": 8,
+          "text": "Moi, je vous ai baptisés d'eau; lui, il vous baptisera du Saint-Esprit.»"
+        },
+        {
+          "number": 9,
+          "text": "A cette époque-là, Jésus vint de Nazareth en Galilée, et il fut baptisé par Jean dans le Jourdain."
+        },
+        {
+          "number": 10,
+          "text": "Au moment où il sortait de l'eau, il vit le ciel s'ouvrir et l'Esprit descendre sur lui comme une colombe,"
+        },
+        {
+          "number": 11,
+          "text": "et une voix se fit entendre du ciel: «Tu es mon Fils bien-aimé, tu as toute mon approbation.»"
+        },
+        {
+          "number": 12,
+          "text": "Aussitôt, l'Esprit poussa Jésus dans le désert"
+        },
+        {
+          "number": 13,
+          "text": "où il passa 40 jours, tenté par Satan. Il était avec les bêtes sauvages et les anges le servaient."
+        },
+        {
+          "number": 14,
+          "text": "Après que Jean eut été arrêté, Jésus alla en Galilée. Il proclamait la bonne nouvelle [du royaume] de Dieu"
+        },
+        {
+          "number": 15,
+          "text": "et disait: «Le moment est arrivé et le royaume de Dieu est proche. Changez d’attitude et croyez à la bonne nouvelle!»"
+        },
+        {
+          "number": 16,
+          "text": "Comme il marchait le long du lac de Galilée, il vit Simon et André, frère de Simon, qui jetaient un filet dans le lac; c’étaient en effet des pêcheurs."
+        },
+        {
+          "number": 17,
+          "text": "Jésus leur dit: «Suivez-moi, et je ferai de vous des pêcheurs d'hommes.»"
+        },
+        {
+          "number": 18,
+          "text": "Aussitôt, ils laissèrent leurs filets et le suivirent."
+        },
+        {
+          "number": 19,
+          "text": "Il alla un peu plus loin et vit Jacques, fils de Zébédée, et son frère Jean, qui étaient eux aussi dans une barque et réparaient les filets."
+        },
+        {
+          "number": 20,
+          "text": "Aussitôt, il les appela; ils laissèrent leur père Zébédée dans la barque avec les ouvriers et le suivirent."
+        },
+        {
+          "number": 21,
+          "text": "Ils se rendirent à Capernaüm. Dès le jour du sabbat, Jésus entra dans la synagogue et se mit à enseigner."
+        },
+        {
+          "number": 22,
+          "text": "On était frappé par son enseignement, car il enseignait avec autorité, et non pas comme les spécialistes de la loi."
+        },
+        {
+          "number": 23,
+          "text": "Il y avait dans leur synagogue un homme qui avait un esprit impur. Il s'écria:"
+        },
+        {
+          "number": 24,
+          "text": "«[Ah!] Que nous veux-tu, Jésus de Nazareth? Es-tu venu pour nous perdre? Je sais qui tu es: le Saint de Dieu.»"
+        },
+        {
+          "number": 25,
+          "text": "Jésus le menaça en disant: «Tais-toi et sors de cet homme.»"
+        },
+        {
+          "number": 26,
+          "text": "L'esprit impur sortit de cet homme en le secouant violemment et en poussant un grand cri."
+        },
+        {
+          "number": 27,
+          "text": "Tous furent si effrayés qu'ils se demandaient les uns aux autres: «Qu'est-ce que ceci? Quel est ce nouvel enseignement? Il commande avec autorité même aux esprits impurs, et ils lui obéissent!»"
+        },
+        {
+          "number": 28,
+          "text": "Et sa réputation gagna aussitôt toute la région de la Galilée."
+        },
+        {
+          "number": 29,
+          "text": "En sortant de la synagogue, ils se rendirent avec Jacques et Jean à la maison de Simon et d'André."
+        },
+        {
+          "number": 30,
+          "text": "La belle-mère de Simon était couchée avec de la fièvre; aussitôt on parla d'elle à Jésus."
+        },
+        {
+          "number": 31,
+          "text": "Il s'approcha, la fit lever en lui prenant la main, et [à l'instant] la fièvre la quitta. Puis elle se mit à les servir."
+        },
+        {
+          "number": 32,
+          "text": "Le soir, après le coucher du soleil, on lui amena tous les malades et les démoniaques."
+        },
+        {
+          "number": 33,
+          "text": "Toute la ville était rassemblée devant la porte."
+        },
+        {
+          "number": 34,
+          "text": "Il guérit beaucoup de personnes qui souffraient de diverses maladies; il chassa aussi beaucoup de démons, et il ne leur permettait pas de parler, parce qu'ils le connaissaient."
+        },
+        {
+          "number": 35,
+          "text": "Vers le matin, alors qu'il faisait encore très sombre, il se leva et sortit pour aller dans un endroit désert où il pria."
+        },
+        {
+          "number": 36,
+          "text": "Simon et ceux qui étaient avec lui se mirent à sa recherche;"
+        },
+        {
+          "number": 37,
+          "text": "quand ils l'eurent trouvé, ils lui dirent: «Tout le monde te cherche.»"
+        },
+        {
+          "number": 38,
+          "text": "Il leur répondit: «Allons [ailleurs,] dans les villages voisins, afin que j'y prêche aussi, car c'est pour cela que je suis sorti.»"
+        },
+        {
+          "number": 39,
+          "text": "Et il prêchait dans leurs synagogues par toute la Galilée et chassait les démons."
+        },
+        {
+          "number": 40,
+          "text": "Un lépreux vint à lui et, se jetant à genoux, lui dit en suppliant: «Si tu le veux, tu peux me rendre pur.»"
+        },
+        {
+          "number": 41,
+          "text": "Rempli de compassion, Jésus tendit la main, le toucha et dit: «Je le veux, sois pur.»"
+        },
+        {
+          "number": 42,
+          "text": "Aussitôt la lèpre le quitta et il fut purifié."
+        },
+        {
+          "number": 43,
+          "text": "Jésus le renvoya sur-le-champ avec de sévères recommandations;"
+        },
+        {
+          "number": 44,
+          "text": "il lui dit: «Fais bien attention de ne [rien] dire à personne, mais va te montrer au prêtre et présente pour ta purification ce que Moïse a prescrit, afin que cela leur serve de témoignage.»"
+        },
+        {
+          "number": 45,
+          "text": "Cependant cet homme, une fois parti, se mit à proclamer partout la nouvelle et à la propager, de sorte que Jésus ne pouvait plus entrer publiquement dans une ville. Il se tenait dehors, dans des lieux déserts, et l'on venait à lui de partout."
+        }
+      ]
+    },
+    {
+      "chapter": 2,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Quelques jours après, Jésus revint à Capernaüm. On apprit qu'il était à la maison,"
+        },
+        {
+          "number": 2,
+          "text": "et un si grand nombre de personnes se rassemblèrent qu'il n'y avait plus de place, pas même devant la porte. Il leur annonçait la parole."
+        },
+        {
+          "number": 3,
+          "text": "On vint lui amener un paralysé porté par quatre hommes."
+        },
+        {
+          "number": 4,
+          "text": "Comme ils ne pouvaient pas l'aborder à cause de la foule, ils découvrirent le toit au-dessus de l’endroit où il se tenait et descendirent par cette ouverture le brancard sur lequel le paralysé était couché."
+        },
+        {
+          "number": 5,
+          "text": "Voyant leur foi, Jésus dit au paralysé: «Mon enfant, tes péchés te sont pardonnés.»"
+        },
+        {
+          "number": 6,
+          "text": "Il y avait là quelques spécialistes de la loi qui étaient assis et qui se disaient en eux-mêmes:"
+        },
+        {
+          "number": 7,
+          "text": "«Pourquoi cet homme parle-t-il ainsi? Il blasphème. Qui peut pardonner les péchés, si ce n'est Dieu seul?»"
+        },
+        {
+          "number": 8,
+          "text": "Jésus sut aussitôt dans son esprit qu’ils raisonnaient ainsi en eux-mêmes, et il leur dit: «Pourquoi raisonnez-vous ainsi dans vos cœurs?"
+        },
+        {
+          "number": 9,
+          "text": "Qu'est-ce qui est le plus facile à dire au paralysé: ‘Tes péchés sont pardonnés’, ou: ‘Lève-toi, prends ton brancard et marche’?"
+        },
+        {
+          "number": 10,
+          "text": "Afin que vous sachiez que le Fils de l'homme a sur la terre le pouvoir de pardonner les péchés,"
+        },
+        {
+          "number": 11,
+          "text": "je te l'ordonne – dit-il au paralysé –, lève-toi, prends ton brancard et retourne chez toi.»"
+        },
+        {
+          "number": 12,
+          "text": "Aussitôt il se leva, prit son brancard et sortit devant tout le monde, de sorte qu'ils étaient tous très étonnés et célébraient la gloire de Dieu en disant: «Nous n'avons jamais rien vu de pareil.»"
+        },
+        {
+          "number": 13,
+          "text": "Jésus sortit de nouveau du côté du lac. Toute la foule venait à lui et il l'enseignait."
+        },
+        {
+          "number": 14,
+          "text": "En passant, il vit Lévi, fils d'Alphée, assis au bureau des taxes. Il lui dit: «Suis-moi.» Lévi se leva et le suivit."
+        },
+        {
+          "number": 15,
+          "text": "Comme Jésus était à table dans la maison de Lévi, beaucoup de collecteurs d’impôts et de pécheurs se mirent aussi à table avec lui et avec ses disciples, car ils étaient nombreux à le suivre."
+        },
+        {
+          "number": 16,
+          "text": "Le voyant manger avec les collecteurs d’impôts et les pécheurs, les spécialistes de la loi et les pharisiens dirent à ses disciples: «Pourquoi mange-t-il avec les collecteurs d’impôts et les pécheurs?»"
+        },
+        {
+          "number": 17,
+          "text": "Jésus, qui avait entendu, leur dit: «Ce ne sont pas les bien portants qui ont besoin de médecin, mais les malades. Je ne suis pas venu appeler des justes, mais des pécheurs, [à changer d’attitude].»"
+        },
+        {
+          "number": 18,
+          "text": "Les disciples de Jean et les pharisiens jeûnaient. Ils vinrent dire à Jésus: «Pourquoi les disciples de Jean et ceux des pharisiens jeûnent-ils, tandis que tes disciples ne jeûnent pas?»"
+        },
+        {
+          "number": 19,
+          "text": "Jésus leur répondit: «Les invités à la noce peuvent-ils jeûner pendant que le marié est avec eux? Aussi longtemps que le marié est avec eux, ils ne peuvent pas jeûner."
+        },
+        {
+          "number": 20,
+          "text": "Les jours viendront où le marié leur sera enlevé, et alors ils jeûneront durant ces jours-là."
+        },
+        {
+          "number": 21,
+          "text": "Personne ne coud un morceau de tissu neuf sur un vieil habit, sinon la pièce neuve ajoutée arrache une partie du vieux, et la déchirure devient pire."
+        },
+        {
+          "number": 22,
+          "text": "Et personne ne met du vin nouveau dans de vieilles outres, sinon les outres éclatent, le vin coule et les outres sont perdues; mais [il faut mettre] le vin nouveau dans des outres neuves.»"
+        },
+        {
+          "number": 23,
+          "text": "Un jour de sabbat, Jésus traversait des champs de blé. Tout en marchant, ses disciples se mirent à arracher des épis."
+        },
+        {
+          "number": 24,
+          "text": "Les pharisiens lui dirent: «Regarde! Pourquoi font-ils ce qui n'est pas permis pendant le sabbat?»"
+        },
+        {
+          "number": 25,
+          "text": "Jésus leur répondit: «N'avez-vous jamais lu ce qu’a fait David, lorsqu'il a été dans le besoin et qu'il a eu faim, lui et ses compagnons?"
+        },
+        {
+          "number": 26,
+          "text": "Il est entré dans la maison de Dieu, à l’époque du grand-prêtre Abiathar, a mangé les pains consacrés qu'il n'est permis qu'aux prêtres de manger et en a même donné à ses compagnons!»"
+        },
+        {
+          "number": 27,
+          "text": "Puis il leur dit: «Le sabbat a été fait pour l'homme, et non l'homme pour le sabbat,"
+        },
+        {
+          "number": 28,
+          "text": "de sorte que le Fils de l'homme est le Seigneur même du sabbat.»"
+        }
+      ]
+    },
+    {
+      "chapter": 3,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Jésus entra de nouveau dans la synagogue. Il s'y trouvait un homme qui avait la main paralysée."
+        },
+        {
+          "number": 2,
+          "text": "Ils observaient Jésus pour voir s'il le guérirait le jour du sabbat: c'était afin de pouvoir l'accuser."
+        },
+        {
+          "number": 3,
+          "text": "Jésus dit à l'homme qui avait la main paralysée: «Lève-toi, là au milieu.»"
+        },
+        {
+          "number": 4,
+          "text": "Puis il leur dit: «Est-il permis, le jour du sabbat, de faire du bien ou de faire du mal, de sauver une personne ou de la tuer?» Mais ils gardèrent le silence."
+        },
+        {
+          "number": 5,
+          "text": "Alors il promena sur eux un regard de colère et, peiné de l'endurcissement de leur cœur, il dit à l'homme: «Tends ta main.» Il la tendit, et sa main fut guérie."
+        },
+        {
+          "number": 6,
+          "text": "Les pharisiens sortirent et tinrent aussitôt conseil avec les hérodiens sur les moyens de le faire mourir."
+        },
+        {
+          "number": 7,
+          "text": "Jésus se retira au bord du lac avec ses disciples. Une foule nombreuse le suivit, venue de la Galilée, de la Judée,"
+        },
+        {
+          "number": 8,
+          "text": "de Jérusalem, de l'Idumée, de l’autre côté du Jourdain et des environs de Tyr et de Sidon; cette foule vint à lui car elle avait appris tout ce qu’il faisait."
+        },
+        {
+          "number": 9,
+          "text": "Il dit à ses disciples de tenir toujours à sa disposition une petite barque afin de ne pas être écrasé par la foule."
+        },
+        {
+          "number": 10,
+          "text": "En effet, comme il guérissait beaucoup de gens, tous ceux qui avaient des maladies se jetaient sur lui pour le toucher."
+        },
+        {
+          "number": 11,
+          "text": "Les esprits impurs, quand ils le voyaient, se prosternaient devant lui et s'écriaient: «Tu es le Fils de Dieu.»"
+        },
+        {
+          "number": 12,
+          "text": "Mais il leur recommandait très sévèrement de ne pas le faire connaître."
+        },
+        {
+          "number": 13,
+          "text": "Il monta ensuite sur la montagne; il appela ceux qu'il voulait, et ils vinrent vers lui."
+        },
+        {
+          "number": 14,
+          "text": "Il en établit douze [auxquels il donna le nom d’apôtres,] pour qu’ils soient avec lui, et pour les envoyer prêcher"
+        },
+        {
+          "number": 15,
+          "text": "avec le pouvoir [de guérir les maladies et] de chasser les démons."
+        },
+        {
+          "number": 16,
+          "text": "[Voici les douze qu'il établit:] Simon, qu'il appela Pierre;"
+        },
+        {
+          "number": 17,
+          "text": "Jacques, fils de Zébédée, et Jean, frère de Jacques, auxquels il donna le nom de Boanergès, qui signifie «fils du tonnerre»;"
+        },
+        {
+          "number": 18,
+          "text": "André; Philippe; Barthélémy; Matthieu; Thomas; Jacques, fils d'Alphée; Thaddée; Simon le Cananite;"
+        },
+        {
+          "number": 19,
+          "text": "et Judas l’Iscariot, celui qui trahit Jésus."
+        },
+        {
+          "number": 20,
+          "text": "Ils se rendirent à la maison, et la foule se rassembla de nouveau, de sorte qu'ils ne pouvaient même pas prendre leur repas."
+        },
+        {
+          "number": 21,
+          "text": "Lorsqu'ils l’apprirent, les membres de la famille de Jésus vinrent pour s’emparer de lui, car ils disaient: «Il a perdu la raison.»"
+        },
+        {
+          "number": 22,
+          "text": "Les spécialistes de la loi qui étaient descendus de Jérusalem disaient: «Il a en lui Béelzébul; c'est par le prince des démons qu'il chasse les démons.»"
+        },
+        {
+          "number": 23,
+          "text": "Jésus les appela et leur dit sous forme de paraboles: «Comment Satan peut-il chasser Satan?"
+        },
+        {
+          "number": 24,
+          "text": "Si un royaume est confronté à des luttes internes, ce royaume ne peut pas subsister,"
+        },
+        {
+          "number": 25,
+          "text": "et si une famille est confrontée à des luttes internes, cette famille ne peut pas subsister."
+        },
+        {
+          "number": 26,
+          "text": "Si donc Satan se dresse contre lui-même, s’il est divisé, il ne peut pas subsister, c'en est fini de lui."
+        },
+        {
+          "number": 27,
+          "text": "Personne ne peut entrer dans la maison d'un homme fort et piller ses biens sans avoir d'abord attaché cet homme fort; alors seulement il pillera sa maison."
+        },
+        {
+          "number": 28,
+          "text": "Je vous le dis en vérité, tous les péchés seront pardonnés aux hommes, ainsi que les blasphèmes qu'ils auront proférés,"
+        },
+        {
+          "number": 29,
+          "text": "mais celui qui blasphémera contre le Saint-Esprit n'obtiendra jamais de pardon: il mérite une condamnation éternelle.»"
+        },
+        {
+          "number": 30,
+          "text": "Jésus parla de cette manière parce qu'ils disaient: «Il a un esprit impur.»"
+        },
+        {
+          "number": 31,
+          "text": "Sa mère et ses frères arrivèrent donc. Ils se tenaient dehors et l'envoyèrent appeler."
+        },
+        {
+          "number": 32,
+          "text": "La foule était assise autour de lui, et on lui dit: «Voici, ta mère et tes frères [et sœurs] sont dehors et te cherchent.»"
+        },
+        {
+          "number": 33,
+          "text": "Il répondit: «Qui est ma mère, et qui sont mes frères?»"
+        },
+        {
+          "number": 34,
+          "text": "Puis il promena le regard sur ceux qui étaient assis tout autour de lui et dit: «Voici ma mère et mes frères."
+        },
+        {
+          "number": 35,
+          "text": "En effet, celui qui fait la volonté de Dieu, celui-là est mon frère, ma sœur, ma mère.»"
+        }
+      ]
+    },
+    {
+      "chapter": 4,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Jésus se mit de nouveau à enseigner au bord du lac. La foule se rassembla autour de lui, si nombreuse qu'il monta dans une barque où il s'assit, sur le lac. Toute la foule était à terre sur le rivage."
+        },
+        {
+          "number": 2,
+          "text": "Il leur enseignait beaucoup de choses en paraboles. Il leur disait dans son enseignement:"
+        },
+        {
+          "number": 3,
+          "text": "«Ecoutez! Un semeur sortit pour semer."
+        },
+        {
+          "number": 4,
+          "text": "Comme il semait, une partie de la semence tomba le long du chemin; les oiseaux vinrent et la mangèrent."
+        },
+        {
+          "number": 5,
+          "text": "Une autre partie tomba dans un sol pierreux, où elle n'avait pas beaucoup de terre; elle leva aussitôt, parce qu'elle ne trouva pas un terrain profond,"
+        },
+        {
+          "number": 6,
+          "text": "mais quand le soleil parut, elle fut brûlée et sécha, faute de racines."
+        },
+        {
+          "number": 7,
+          "text": "Une autre partie tomba parmi les ronces; les ronces poussèrent et l'étouffèrent, et elle ne donna pas de fruit."
+        },
+        {
+          "number": 8,
+          "text": "Une autre partie tomba dans la bonne terre; elle donna du fruit qui montait et se développait, avec un rapport de 30, 60 ou 100 pour 1.»"
+        },
+        {
+          "number": 9,
+          "text": "Puis il dit: «Que celui qui a des oreilles pour entendre entende.»"
+        },
+        {
+          "number": 10,
+          "text": "Lorsqu'il fut seul avec eux, ceux qui l'entouraient avec les douze l'interrogèrent sur cette parabole."
+        },
+        {
+          "number": 11,
+          "text": "Il leur dit: «C'est à vous qu'il a été donné de connaître le mystère du royaume de Dieu, mais pour ceux qui sont à l’extérieur tout est présenté en paraboles,"
+        },
+        {
+          "number": 12,
+          "text": "afin qu'en regardant ils regardent et ne voient pas, et qu'en entendant ils entendent et ne comprennent pas, de peur qu'ils ne se convertissent et que leurs péchés ne soient pardonnés.»"
+        },
+        {
+          "number": 13,
+          "text": "Il leur dit encore: «Vous ne comprenez pas cette parabole? Comment donc comprendrez-vous toutes les autres?"
+        },
+        {
+          "number": 14,
+          "text": "Le semeur sème la parole."
+        },
+        {
+          "number": 15,
+          "text": "Certains sont le long du chemin où la parole est semée: dès qu'ils l'ont entendue, Satan vient et enlève la parole qui a été semée en eux."
+        },
+        {
+          "number": 16,
+          "text": "De même, d’autres reçoivent la semence dans un sol pierreux: quand ils entendent la parole, ils l’acceptent aussitôt avec joie,"
+        },
+        {
+          "number": 17,
+          "text": "mais ils n'ont pas de racines en eux-mêmes, ils sont les hommes d’un moment et, dès que surviennent les difficultés ou la persécution à cause de la parole, ils trébuchent."
+        },
+        {
+          "number": 18,
+          "text": "D'autres encore reçoivent la semence parmi les ronces: ils entendent la parole,"
+        },
+        {
+          "number": 19,
+          "text": "mais les préoccupations de ce monde, l’attrait trompeur des richesses et les passions en tout genre pénètrent en eux, étouffent la parole et la rendent infructueuse."
+        },
+        {
+          "number": 20,
+          "text": "D'autres enfin reçoivent la semence dans la bonne terre: ce sont ceux qui entendent la parole, l’accueillent et portent du fruit, avec un rapport de 30, 60 ou 100 pour 1.»"
+        },
+        {
+          "number": 21,
+          "text": "Il leur dit encore: «Apporte-t-on la lampe pour la mettre sous un seau ou sous le lit? N'est-ce pas pour la mettre sur son support?"
+        },
+        {
+          "number": 22,
+          "text": "Il n'y a en effet rien de caché qui ne doive être mis en lumière, rien de secret qui ne doive être mis au jour."
+        },
+        {
+          "number": 23,
+          "text": "Si quelqu'un a des oreilles pour entendre, qu'il entende.»"
+        },
+        {
+          "number": 24,
+          "text": "Il leur dit encore: «Prêtez bien attention à ce que vous entendez. On utilisera pour vous la même mesure que celle dont vous vous serez servis, et on y ajoutera pour vous [qui écoutez]."
+        },
+        {
+          "number": 25,
+          "text": "En effet, on donnera à celui qui a, mais à celui qui n'a pas on enlèvera même ce qu'il a.»"
+        },
+        {
+          "number": 26,
+          "text": "Il dit encore: «Voici à quoi ressemble le royaume de Dieu. Il est semblable à un homme qui jette de la semence en terre;"
+        },
+        {
+          "number": 27,
+          "text": "qu'il dorme ou qu'il reste éveillé, nuit et jour la semence germe et pousse sans qu'il sache comment."
+        },
+        {
+          "number": 28,
+          "text": "[En effet,] d’elle-même la terre produit d'abord l'herbe, puis l'épi, enfin le grain tout formé dans l'épi,"
+        },
+        {
+          "number": 29,
+          "text": "et, dès que le fruit est mûr, on y met la faucille, car c’est le moment de la moisson.»"
+        },
+        {
+          "number": 30,
+          "text": "Il dit encore: «A quoi comparerons-nous le royaume de Dieu ou par quelle parabole le représenterons-nous?"
+        },
+        {
+          "number": 31,
+          "text": "Il est comme une graine de moutarde: lorsqu'on la sème en terre, c'est la plus petite de toutes les semences qui sont sur la terre."
+        },
+        {
+          "number": 32,
+          "text": "Mais lorsqu'elle a été semée, elle monte, devient plus grande que tous les légumes et développe de grandes branches, de sorte que les oiseaux du ciel peuvent habiter sous son ombre.»"
+        },
+        {
+          "number": 33,
+          "text": "C'est par beaucoup de paraboles de ce genre qu'il leur annonçait la parole, dans la mesure où ils étaient capables de l'entendre."
+        },
+        {
+          "number": 34,
+          "text": "Il ne leur parlait pas sans parabole, mais en privé il expliquait tout à ses disciples."
+        },
+        {
+          "number": 35,
+          "text": "Ce jour-là, le soir venu, Jésus leur dit: «Passons sur l'autre rive.»"
+        },
+        {
+          "number": 36,
+          "text": "Après avoir renvoyé la foule, ils l'emmenèrent dans la barque où il se trouvait; il y avait aussi d'autres barques avec lui."
+        },
+        {
+          "number": 37,
+          "text": "Un vent violent s'éleva et les vagues se jetaient sur la barque, au point qu'elle se remplissait déjà."
+        },
+        {
+          "number": 38,
+          "text": "Et lui, il dormait à l'arrière sur le coussin. Ils le réveillèrent et lui dirent: «Maître, cela ne te fait rien que nous soyons en train de mourir?»"
+        },
+        {
+          "number": 39,
+          "text": "Il se réveilla, menaça le vent et dit à la mer: «Silence! Tais-toi!» Le vent tomba et il y eut un grand calme."
+        },
+        {
+          "number": 40,
+          "text": "Puis il leur dit: «Pourquoi êtes-vous si craintifs? Comment se fait-il que vous n’ayez pas de foi?»"
+        },
+        {
+          "number": 41,
+          "text": "Ils furent saisis d'une grande frayeur et ils se disaient les uns aux autres: «Qui est donc cet homme? Même le vent et la mer lui obéissent!»"
+        }
+      ]
+    },
+    {
+      "chapter": 5,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Ils arrivèrent sur l'autre rive du lac, dans le pays des Gadaréniens."
+        },
+        {
+          "number": 2,
+          "text": "Dès que Jésus fut hors de la barque, un homme vint à sa rencontre; il sortait des tombeaux et il était animé par un esprit impur."
+        },
+        {
+          "number": 3,
+          "text": "Cet homme habitait dans les tombeaux, et personne ne pouvait plus l'attacher, même avec une chaîne."
+        },
+        {
+          "number": 4,
+          "text": "En effet, souvent on l’avait attaché avec des fers aux pieds et des chaînes, mais il avait cassé les chaînes et brisé les fers, et personne n'avait la force de le maîtriser."
+        },
+        {
+          "number": 5,
+          "text": "Il était sans cesse, nuit et jour, dans les tombeaux et sur les montagnes; il criait et se blessait lui-même avec des pierres."
+        },
+        {
+          "number": 6,
+          "text": "Il vit Jésus de loin, accourut, se prosterna devant lui"
+        },
+        {
+          "number": 7,
+          "text": "et s'écria d'une voix forte: «Que me veux-tu, Jésus, Fils du Dieu très-haut? Je t'en supplie au nom de Dieu, ne me tourmente pas.»"
+        },
+        {
+          "number": 8,
+          "text": "En effet, Jésus lui disait: «Sors de cet homme, esprit impur!»"
+        },
+        {
+          "number": 9,
+          "text": "Il lui demanda: «Quel est ton nom?» «Mon nom est légion, car nous sommes nombreux», répondit-il."
+        },
+        {
+          "number": 10,
+          "text": "Et il le suppliait avec insistance de ne pas les envoyer hors du pays."
+        },
+        {
+          "number": 11,
+          "text": "Il y avait là, vers la montagne, un grand troupeau de porcs en train de chercher à manger."
+        },
+        {
+          "number": 12,
+          "text": "Tous les démons le supplièrent: «Envoie-nous dans ces porcs afin que nous entrions en eux.»"
+        },
+        {
+          "number": 13,
+          "text": "Il le leur permit [aussitôt]. Les esprits impurs sortirent de l'homme, entrèrent dans les porcs, et le troupeau se précipita du haut de la falaise dans le lac; il y avait environ 2000 porcs, et ils se noyèrent dans le lac."
+        },
+        {
+          "number": 14,
+          "text": "Les gardiens du troupeau s'enfuirent et allèrent le raconter dans la ville et dans les campagnes. Les gens allèrent voir ce qui était arrivé."
+        },
+        {
+          "number": 15,
+          "text": "Ils vinrent vers Jésus et virent le démoniaque, celui qui avait eu la légion de démons, assis, habillé et dans son bon sens; et ils furent saisis de frayeur."
+        },
+        {
+          "number": 16,
+          "text": "Ceux qui avaient été témoins de la scène leur racontèrent ce qui était arrivé au démoniaque et aux porcs."
+        },
+        {
+          "number": 17,
+          "text": "Alors ils se mirent à supplier Jésus de quitter leur territoire."
+        },
+        {
+          "number": 18,
+          "text": "Comme il montait dans la barque, celui qui avait été démoniaque le suppliait, demandant à l’accompagner."
+        },
+        {
+          "number": 19,
+          "text": "Jésus ne le lui permit pas mais lui dit: «Va dans ta maison, vers les tiens, et raconte-leur tout ce que le Seigneur a fait pour toi, comment il a eu pitié de toi.»"
+        },
+        {
+          "number": 20,
+          "text": "Il s'en alla et se mit à proclamer dans la Décapole tout ce que Jésus avait fait pour lui. Et tous étaient dans l'étonnement."
+        },
+        {
+          "number": 21,
+          "text": "Jésus regagna en barque l'autre rive, où une grande foule se rassembla autour de lui. Il était au bord du lac."
+        },
+        {
+          "number": 22,
+          "text": "Alors vint un des chefs de la synagogue, du nom de Jaïrus. Lorsqu'il aperçut Jésus, il se jeta à ses pieds"
+        },
+        {
+          "number": 23,
+          "text": "et le supplia avec insistance: «Ma petite fille est sur le point de mourir. Viens, pose les mains sur elle afin qu'elle soit sauvée, et elle vivra.»"
+        },
+        {
+          "number": 24,
+          "text": "Jésus s'en alla avec lui. Une grande foule le suivait et le pressait de tous côtés."
+        },
+        {
+          "number": 25,
+          "text": "Or, il y avait une femme atteinte d'hémorragies depuis 12 ans."
+        },
+        {
+          "number": 26,
+          "text": "Elle avait beaucoup souffert entre les mains de nombreux médecins. Elle avait dépensé tout ce qu'elle possédait, mais cela n’avait servi à rien; au contraire, son état avait plutôt empiré."
+        },
+        {
+          "number": 27,
+          "text": "Elle entendit parler de Jésus, vint dans la foule par-derrière et toucha son vêtement,"
+        },
+        {
+          "number": 28,
+          "text": "car elle se disait: «Même si je ne touche que ses vêtements, je serai guérie.»"
+        },
+        {
+          "number": 29,
+          "text": "A l'instant même, son hémorragie s'arrêta, et elle sentit dans son corps qu'elle était guérie de son mal."
+        },
+        {
+          "number": 30,
+          "text": "Jésus se rendit aussitôt compte qu'une force était sortie de lui; il se retourna au milieu de la foule et dit: «Qui a touché mes vêtements?»"
+        },
+        {
+          "number": 31,
+          "text": "Ses disciples lui dirent: «Tu vois la foule qui te presse et tu dis: ‘Qui m'a touché?’»"
+        },
+        {
+          "number": 32,
+          "text": "Jésus regardait autour de lui pour voir celle qui avait fait cela."
+        },
+        {
+          "number": 33,
+          "text": "La femme, effrayée et tremblante, sachant ce qui lui était arrivé, vint se jeter à ses pieds et lui dit toute la vérité."
+        },
+        {
+          "number": 34,
+          "text": "Alors il lui dit: «Ma fille, ta foi t'a sauvée. Pars dans la paix et sois guérie de ton mal.»"
+        },
+        {
+          "number": 35,
+          "text": "Il parlait encore quand des gens arrivèrent de chez le chef de la synagogue et lui dirent: «Ta fille est morte. Pourquoi déranger encore le maître?»"
+        },
+        {
+          "number": 36,
+          "text": "Dès qu’il entendit cette parole, Jésus dit au chef de la synagogue: «N’aie pas peur, crois seulement.»"
+        },
+        {
+          "number": 37,
+          "text": "Et il ne laissa personne l'accompagner, sauf Pierre, Jacques et Jean, le frère de Jacques."
+        },
+        {
+          "number": 38,
+          "text": "Ils arrivèrent à la maison du chef de la synagogue où Jésus vit du tumulte, des gens qui pleuraient et poussaient de grands cris."
+        },
+        {
+          "number": 39,
+          "text": "Il entra et leur dit: «Pourquoi faites-vous ce tumulte et pourquoi pleurez-vous? L'enfant n'est pas morte, mais elle dort.»"
+        },
+        {
+          "number": 40,
+          "text": "Ils se moquaient de lui. Alors il les fit tous sortir, prit avec lui le père et la mère de l'enfant et ceux qui l'avaient accompagné, et il entra là où l'enfant était [couchée]."
+        },
+        {
+          "number": 41,
+          "text": "Il la prit par la main et lui dit: «Talitha koumi», ce qui signifie: «Jeune fille, lève-toi, je te le dis»."
+        },
+        {
+          "number": 42,
+          "text": "Aussitôt la jeune fille se leva et se mit à marcher, car elle avait 12 ans. Ils furent [aussitôt] remplis d'un grand étonnement."
+        },
+        {
+          "number": 43,
+          "text": "Jésus leur adressa de fortes recommandations pour que personne ne le sache et demanda qu’on donne à manger à la jeune fille."
+        }
+      ]
+    },
+    {
+      "chapter": 6,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Jésus partit de là et se rendit dans sa patrie. Ses disciples le suivirent."
+        },
+        {
+          "number": 2,
+          "text": "Le jour du sabbat, il se mit à enseigner dans la synagogue. Beaucoup de gens l'entendirent; ils étaient étonnés et disaient: «D'où cela lui vient-il? Quelle est cette sagesse qui lui a été donnée? Et comment de tels miracles se font-ils par son intermédiaire?"
+        },
+        {
+          "number": 3,
+          "text": "N'est-il pas le charpentier, le fils de Marie, le frère de Jacques, de Joses, de Jude et de Simon? Et ses sœurs ne sont-elles pas ici parmi nous?» Et il représentait un obstacle pour eux."
+        },
+        {
+          "number": 4,
+          "text": "Mais Jésus leur dit: «Un prophète n'est méprisé que dans sa patrie, parmi ses parents et dans sa famille.»"
+        },
+        {
+          "number": 5,
+          "text": "Il ne put faire là aucun miracle, si ce n'est qu'il guérit quelques malades en posant les mains sur eux."
+        },
+        {
+          "number": 6,
+          "text": "Et il s'étonnait de leur incrédulité. Jésus parcourait les villages des environs en enseignant."
+        },
+        {
+          "number": 7,
+          "text": "Alors il appela les douze et commença à les envoyer deux à deux, et il leur donna autorité sur les esprits impurs."
+        },
+        {
+          "number": 8,
+          "text": "Il leur recommanda de ne rien prendre pour le voyage, sauf un bâton, de n'avoir ni pain, ni sac, ni argent dans la ceinture,"
+        },
+        {
+          "number": 9,
+          "text": "de chausser des sandales et de ne pas mettre deux chemises."
+        },
+        {
+          "number": 10,
+          "text": "Puis il leur dit: «Si quelque part vous entrez dans une maison, restez-y jusqu'à votre départ."
+        },
+        {
+          "number": 11,
+          "text": "Et si, dans une ville, les gens ne vous accueillent pas et ne vous écoutent pas, retirez-vous de là et secouez la poussière de vos pieds en témoignage contre eux. [Je vous le dis en vérité, le jour du jugement, Sodome et Gomorrhe seront traitées moins sévèrement que cette ville-là.]»"
+        },
+        {
+          "number": 12,
+          "text": "Ils partirent et prêchèrent en appelant chacun à changer d’attitude."
+        },
+        {
+          "number": 13,
+          "text": "Ils chassaient beaucoup de démons, appliquaient de l'huile à beaucoup de malades et les guérissaient."
+        },
+        {
+          "number": 14,
+          "text": "Le roi Hérode entendit parler de Jésus, car son nom était devenu célèbre. Il disait: «Jean-Baptiste est ressuscité, et c'est pour cela qu'il a le pouvoir de faire des miracles.»"
+        },
+        {
+          "number": 15,
+          "text": "D'autres disaient: «C'est Elie.» Et d'autres disaient: «C'est un prophète comme l'un de nos prophètes.»"
+        },
+        {
+          "number": 16,
+          "text": "Mais Hérode, en apprenant cela, disait: «Ce Jean que j'ai fait décapiter, c'est lui, il est ressuscité.»"
+        },
+        {
+          "number": 17,
+          "text": "En effet, Hérode lui-même avait fait arrêter Jean et l'avait fait enchaîner en prison à cause d'Hérodiade, la femme de son frère Philippe, qu'il avait épousée,"
+        },
+        {
+          "number": 18,
+          "text": "car Jean lui disait: «Il ne t'est pas permis d'avoir pour femme l'épouse de ton frère.»"
+        },
+        {
+          "number": 19,
+          "text": "Furieuse contre Jean, Hérodiade voulait le faire mourir, mais elle ne le pouvait pas,"
+        },
+        {
+          "number": 20,
+          "text": "car Hérode redoutait Jean, sachant que c'était un homme juste et saint, et il le protégeait. Après l'avoir entendu, il était souvent perplexe, et c'était avec plaisir qu'il l'écoutait."
+        },
+        {
+          "number": 21,
+          "text": "Cependant, un jour propice arriva lorsque Hérode, pour son anniversaire, donna un festin à ses grands, aux chefs militaires et aux personnalités de la Galilée."
+        },
+        {
+          "number": 22,
+          "text": "La fille d'Hérodiade entra dans la salle, elle dansa et plut à Hérode et à ses invités. Le roi dit à la jeune fille: «Demande-moi ce que tu veux, et je te le donnerai.»"
+        },
+        {
+          "number": 23,
+          "text": "Il ajouta avec serment: «Ce que tu me demanderas, je te le donnerai, même si c'était la moitié de mon royaume.»"
+        },
+        {
+          "number": 24,
+          "text": "Elle sortit et dit à sa mère: «Que demanderai-je?» Sa mère répondit: «La tête de Jean-Baptiste.»"
+        },
+        {
+          "number": 25,
+          "text": "Elle s'empressa aussitôt de rentrer vers le roi et lui fit cette demande: «Je veux que tu me donnes à l'instant, sur un plat, la tête de Jean-Baptiste.»"
+        },
+        {
+          "number": 26,
+          "text": "Le roi fut attristé, mais, à cause de ses serments et des invités, il ne voulut pas refuser."
+        },
+        {
+          "number": 27,
+          "text": "Il envoya sur-le-champ un garde, avec ordre d'apporter la tête de Jean-Baptiste. Le garde alla décapiter Jean dans la prison"
+        },
+        {
+          "number": 28,
+          "text": "et apporta la tête sur un plat. Il la donna à la jeune fille et la jeune fille la donna à sa mère."
+        },
+        {
+          "number": 29,
+          "text": "Quand les disciples de Jean apprirent cette nouvelle, ils vinrent prendre son corps et le mirent dans un tombeau."
+        },
+        {
+          "number": 30,
+          "text": "Les apôtres se rassemblèrent autour de Jésus et lui racontèrent tout ce qu'ils avaient fait et tout ce qu'ils avaient enseigné."
+        },
+        {
+          "number": 31,
+          "text": "Jésus leur dit: «Venez à l'écart dans un endroit désert et reposez-vous un peu.» En effet, il y avait beaucoup de monde qui allait et venait, et ils n'avaient même pas le temps de manger."
+        },
+        {
+          "number": 32,
+          "text": "Ils partirent donc dans une barque pour aller à l'écart dans un endroit désert."
+        },
+        {
+          "number": 33,
+          "text": "Beaucoup de gens les virent s'en aller et le reconnurent, et de toutes les villes on accourut à pied et on les devança à l'endroit où ils se rendaient."
+        },
+        {
+          "number": 34,
+          "text": "Quand il sortit de la barque, Jésus vit une grande foule et fut rempli de compassion pour eux, parce qu'ils étaient comme des brebis qui n'ont pas de berger, et il se mit à leur enseigner beaucoup de choses."
+        },
+        {
+          "number": 35,
+          "text": "Comme l’heure était déjà bien tardive, ses disciples s'approchèrent de lui et dirent: «Cet endroit est désert, et il est déjà tard."
+        },
+        {
+          "number": 36,
+          "text": "Renvoie-les afin qu'ils aillent dans les campagnes et dans les villages des environs pour s'acheter du pain, car ils n'ont rien à manger.»"
+        },
+        {
+          "number": 37,
+          "text": "Jésus leur répondit: «Donnez-leur vous-mêmes à manger!» Mais ils lui dirent: «Faut-il aller acheter des pains pour 200 pièces d’argent et leur donner à manger?»"
+        },
+        {
+          "number": 38,
+          "text": "Il leur dit: «Combien de pains avez-vous? Allez voir.» Ils s'en assurèrent et répondirent: «Cinq, et deux poissons.»"
+        },
+        {
+          "number": 39,
+          "text": "Alors il leur ordonna de les faire tous asseoir par groupes sur l'herbe verte;"
+        },
+        {
+          "number": 40,
+          "text": "ils s'assirent par rangées de 100 et de 50."
+        },
+        {
+          "number": 41,
+          "text": "Il prit les cinq pains et les deux poissons, leva les yeux vers le ciel et prononça la prière de bénédiction. Puis il rompit les pains et les donna aux disciples afin qu'ils les distribuent à la foule. Il partagea aussi les deux poissons entre tous."
+        },
+        {
+          "number": 42,
+          "text": "Tous mangèrent et furent rassasiés,"
+        },
+        {
+          "number": 43,
+          "text": "et l'on emporta douze paniers pleins de morceaux de pain et de ce qui restait des poissons."
+        },
+        {
+          "number": 44,
+          "text": "Ceux qui avaient mangé les pains étaient au nombre de 5000 hommes."
+        },
+        {
+          "number": 45,
+          "text": "Aussitôt après, il obligea ses disciples à monter dans la barque et à le précéder sur l'autre rive, vers Bethsaïda, pendant que lui-même renverrait la foule."
+        },
+        {
+          "number": 46,
+          "text": "Quand il l'eut renvoyée, il s'en alla sur la montagne pour prier."
+        },
+        {
+          "number": 47,
+          "text": "Le soir venu, la barque était au milieu du lac et Jésus était seul à terre."
+        },
+        {
+          "number": 48,
+          "text": "Il vit qu'ils avaient beaucoup de peine à ramer, car le vent leur était contraire. Vers la fin de la nuit, il alla vers eux en marchant sur le lac, et il voulait les dépasser."
+        },
+        {
+          "number": 49,
+          "text": "Quand ils le virent marcher sur le lac, ils crurent que c'était un fantôme et ils poussèrent des cris,"
+        },
+        {
+          "number": 50,
+          "text": "car ils le voyaient tous et ils étaient affolés. Jésus leur parla aussitôt et leur dit: «Rassurez-vous, c'est moi. N'ayez pas peur!»"
+        },
+        {
+          "number": 51,
+          "text": "Puis il monta près d'eux dans la barque, et le vent tomba. Ils étaient en eux-mêmes extrêmement stupéfaits [et étonnés]"
+        },
+        {
+          "number": 52,
+          "text": "car ils n'avaient pas compris le miracle des pains, parce que leur cœur était endurci."
+        },
+        {
+          "number": 53,
+          "text": "Après avoir traversé le lac, ils arrivèrent dans la région de Génésareth et y abordèrent."
+        },
+        {
+          "number": 54,
+          "text": "Dès qu'ils furent sortis de la barque, les gens reconnurent Jésus"
+        },
+        {
+          "number": 55,
+          "text": "et parcoururent tous les environs; ils se mirent à apporter les malades sur des brancards là où ils apprenaient sa présence."
+        },
+        {
+          "number": 56,
+          "text": "Partout où il arrivait, dans les villages, dans les villes ou dans les campagnes, on mettait les malades sur les places publiques et on le suppliait de leur permettre seulement de toucher le bord de son vêtement. Tous ceux qui le touchaient étaient guéris."
+        }
+      ]
+    },
+    {
+      "chapter": 7,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Les pharisiens et quelques spécialistes de la loi, venus de Jérusalem, se rassemblèrent auprès de Jésus."
+        },
+        {
+          "number": 2,
+          "text": "Ils virent quelques-uns de ses disciples prendre leur repas avec des mains impures, c'est-à-dire non lavées."
+        },
+        {
+          "number": 3,
+          "text": "– Or, les pharisiens et tous les Juifs ne mangent pas sans s'être lavé soigneusement les mains, conformément à la tradition des anciens."
+        },
+        {
+          "number": 4,
+          "text": "Et quand ils reviennent de la place publique, ils ne mangent pas avant de s'être purifiés. Ils tiennent encore à beaucoup d'autres traditions comme le lavage des coupes, des cruches et des vases de bronze. –"
+        },
+        {
+          "number": 5,
+          "text": "Alors les pharisiens et les spécialistes de la loi lui demandèrent: «Pourquoi tes disciples ne suivent-ils pas la tradition des anciens mais prennent-ils au contraire leur repas avec des mains non lavées?»"
+        },
+        {
+          "number": 6,
+          "text": "Jésus leur répondit: «Hypocrites, Esaïe a bien prophétisé sur vous, comme il est écrit: Ce peuple m'honore des lèvres, mais son cœur est éloigné de moi."
+        },
+        {
+          "number": 7,
+          "text": "C'est faussement qu'ils m'honorent en donnant des enseignements qui sont des commandements humains."
+        },
+        {
+          "number": 8,
+          "text": "Vous abandonnez le commandement de Dieu et vous gardez la tradition des hommes [car vous lavez les pots et les coupes et vous faites beaucoup d'autres choses semblables].»"
+        },
+        {
+          "number": 9,
+          "text": "Il leur dit encore: «Vous rejetez très bien le commandement de Dieu pour garder votre tradition."
+        },
+        {
+          "number": 10,
+          "text": "En effet, Moïse a dit: Honore ton père et ta mère et: Celui qui maudira son père ou sa mère sera puni de mort."
+        },
+        {
+          "number": 11,
+          "text": "Mais d’après vous, si un homme dit à son père ou à sa mère: ‘Ce dont j'aurais pu t'assister est corban, c'est-à-dire une offrande à Dieu’,"
+        },
+        {
+          "number": 12,
+          "text": "alors il peut ne plus rien faire pour son père ou pour sa mère."
+        },
+        {
+          "number": 13,
+          "text": "Vous annulez ainsi la parole de Dieu par la tradition que vous avez établie et vous faites beaucoup d'autres choses semblables.»"
+        },
+        {
+          "number": 14,
+          "text": "Ensuite, Jésus appela toute la foule et lui dit: «Ecoutez-moi tous et comprenez."
+        },
+        {
+          "number": 15,
+          "text": "Il n'y a rien d'extérieur à l'homme qui puisse le rendre impur en pénétrant en lui, mais c'est ce qui sort de l'homme qui le rend impur."
+        },
+        {
+          "number": 16,
+          "text": "[Si quelqu'un a des oreilles pour entendre, qu'il entende.]»"
+        },
+        {
+          "number": 17,
+          "text": "Lorsqu'il fut entré dans la maison, loin de la foule, ses disciples l'interrogèrent sur cette parabole."
+        },
+        {
+          "number": 18,
+          "text": "Il leur dit: «Vous aussi, vous êtes donc sans intelligence? Ne comprenez-vous pas que rien de ce qui, de l’extérieur, entre dans l'homme ne peut le rendre impur?"
+        },
+        {
+          "number": 19,
+          "text": "En effet, cela n'entre pas dans son cœur, mais dans son ventre, puis est évacué dans les toilettes.» Il déclarait ainsi que tous les aliments sont purs."
+        },
+        {
+          "number": 20,
+          "text": "Il dit encore: «C'est ce qui sort de l'homme qui le rend impur."
+        },
+        {
+          "number": 21,
+          "text": "En effet, c'est de l’intérieur, c'est du cœur des hommes que sortent les mauvaises pensées, les adultères, l'immoralité sexuelle, les meurtres,"
+        },
+        {
+          "number": 22,
+          "text": "les vols, la soif de posséder, les méchancetés, la fraude, la débauche, le regard envieux, la calomnie, l'orgueil, la folie."
+        },
+        {
+          "number": 23,
+          "text": "Toutes ces choses mauvaises sortent du dedans et rendent l'homme impur.»"
+        },
+        {
+          "number": 24,
+          "text": "Jésus partit de là et s'en alla dans le territoire de Tyr et de Sidon. Il entra dans une maison, désirant que personne ne le sache, mais il ne put rester caché,"
+        },
+        {
+          "number": 25,
+          "text": "car une femme dont la fillette avait un esprit impur entendit parler de lui et vint se jeter à ses pieds."
+        },
+        {
+          "number": 26,
+          "text": "Cette femme était une non-Juive d'origine syro-phénicienne. Elle le pria de chasser le démon hors de sa fille. Jésus lui dit:"
+        },
+        {
+          "number": 27,
+          "text": "«Laisse d'abord les enfants se rassasier, car il n'est pas bien de prendre le pain des enfants et de le jeter aux petits chiens.»"
+        },
+        {
+          "number": 28,
+          "text": "«Oui, Seigneur, lui répondit-elle, mais les petits chiens, sous la table, mangent les miettes des enfants.»"
+        },
+        {
+          "number": 29,
+          "text": "Alors il lui dit: «A cause de cette parole, tu peux t’en aller: le démon est sorti de ta fille.»"
+        },
+        {
+          "number": 30,
+          "text": "Et quand elle rentra chez elle, elle trouva l'enfant couchée sur le lit: le démon était sorti."
+        },
+        {
+          "number": 31,
+          "text": "Jésus quitta le territoire de Tyr et revint par Sidon vers le lac de Galilée en traversant la région de la Décapole."
+        },
+        {
+          "number": 32,
+          "text": "On lui amena un sourd qui avait de la difficulté à parler et on le supplia de poser la main sur lui."
+        },
+        {
+          "number": 33,
+          "text": "Il le prit à part loin de la foule, lui mit les doigts dans les oreilles et lui toucha la langue avec sa propre salive."
+        },
+        {
+          "number": 34,
+          "text": "Puis il leva les yeux au ciel, soupira et dit: «Ephphatha» – c'est-à-dire «Ouvre-toi»."
+        },
+        {
+          "number": 35,
+          "text": "Aussitôt ses oreilles s'ouvrirent, sa langue se délia et il se mit à parler correctement."
+        },
+        {
+          "number": 36,
+          "text": "Jésus leur recommanda de n'en parler à personne, mais plus il le leur recommandait, plus ils le proclamaient."
+        },
+        {
+          "number": 37,
+          "text": "Remplis d'étonnement, ils disaient: «Il fait tout à merveille; il fait même entendre les sourds et parler les muets.»"
+        }
+      ]
+    },
+    {
+      "chapter": 8,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Ces jours-là, une foule [très] nombreuse s'était [de nouveau] réunie et n'avait pas de quoi manger. Jésus appela ses disciples et leur dit:"
+        },
+        {
+          "number": 2,
+          "text": "«Je suis rempli de compassion pour cette foule, car voilà trois jours qu’ils sont près de moi, et ils n'ont rien à manger."
+        },
+        {
+          "number": 3,
+          "text": "Si je les renvoie chez eux à jeun, les forces leur manqueront en chemin, car quelques-uns d'entre eux sont venus de loin.»"
+        },
+        {
+          "number": 4,
+          "text": "Ses disciples lui répondirent: «Comment pourrait-on leur donner assez de pains à manger, ici, dans un endroit désert?»"
+        },
+        {
+          "number": 5,
+          "text": "Jésus leur demanda: «Combien avez-vous de pains?» «Sept», répondirent-ils."
+        },
+        {
+          "number": 6,
+          "text": "Alors il fit asseoir la foule par terre, prit les sept pains et, après avoir remercié Dieu, il les rompit et les donna à ses disciples pour les distribuer; et ils les distribuèrent à la foule."
+        },
+        {
+          "number": 7,
+          "text": "Ils avaient encore quelques petits poissons; Jésus [les] bénit et les fit aussi distribuer."
+        },
+        {
+          "number": 8,
+          "text": "Ils mangèrent et furent rassasiés, et l'on emporta sept corbeilles pleines des morceaux qui restaient."
+        },
+        {
+          "number": 9,
+          "text": "Ceux qui mangèrent étaient environ 4000. Ensuite Jésus les renvoya."
+        },
+        {
+          "number": 10,
+          "text": "Aussitôt il monta dans la barque avec ses disciples et se rendit dans la région de Dalmanutha."
+        },
+        {
+          "number": 11,
+          "text": "Les pharisiens arrivèrent, se mirent à discuter avec Jésus et, pour le mettre à l'épreuve, lui demandèrent un signe venant du ciel."
+        },
+        {
+          "number": 12,
+          "text": "Jésus soupira profondément dans son esprit et dit: «Pourquoi cette génération demande-t-elle un signe? Je vous le dis en vérité, il ne sera pas donné de signe à cette génération.»"
+        },
+        {
+          "number": 13,
+          "text": "Puis il les quitta et remonta [dans la barque] pour passer sur l'autre rive."
+        },
+        {
+          "number": 14,
+          "text": "Les disciples avaient oublié de prendre des pains; ils n'en avaient qu'un seul avec eux dans la barque."
+        },
+        {
+          "number": 15,
+          "text": "Jésus leur fit cette recommandation: «Attention, méfiez-vous du levain des pharisiens et du levain d'Hérode.»"
+        },
+        {
+          "number": 16,
+          "text": "Les disciples raisonnaient entre eux [et disaient]: «C'est parce que nous n'avons pas de pains.»"
+        },
+        {
+          "number": 17,
+          "text": "Jésus, le sachant, leur dit: «Pourquoi raisonnez-vous sur le fait que vous n'avez pas de pains? Ne comprenez-vous pas et ne saisissez-vous pas encore?"
+        },
+        {
+          "number": 18,
+          "text": "Avez-vous [encore] le cœur endurci? Vous avez des yeux et vous ne voyez pas? Vous avez des oreilles et vous n'entendez pas? Ne vous rappelez-vous pas?"
+        },
+        {
+          "number": 19,
+          "text": "Quand j'ai rompu les cinq pains pour les 5000 hommes, combien de paniers pleins de morceaux avez-vous emportés?» «Douze», lui répondirent-ils."
+        },
+        {
+          "number": 20,
+          "text": "«Et quand j'ai rompu les sept [pains] pour les 4000 hommes, combien de corbeilles pleines de morceaux avez-vous emportées?» «Sept», répondirent-ils."
+        },
+        {
+          "number": 21,
+          "text": "Et il leur dit: «[Comment] se fait-il que vous ne compreniez pas [encore]?»"
+        },
+        {
+          "number": 22,
+          "text": "Ils se rendirent à Bethsaïda; on amena un aveugle vers Jésus et on le supplia de le toucher."
+        },
+        {
+          "number": 23,
+          "text": "Il prit l'aveugle par la main et le conduisit à l’extérieur du village; puis il lui mit de la salive sur les yeux, posa les mains sur lui et lui demanda s'il voyait quelque chose."
+        },
+        {
+          "number": 24,
+          "text": "Il regarda et dit: «J'aperçois les gens, je les vois comme des arbres, et ils marchent.»"
+        },
+        {
+          "number": 25,
+          "text": "Jésus lui mit de nouveau les mains sur les yeux et, quand l'aveugle regarda fixement, il fut guéri et vit tout distinctement."
+        },
+        {
+          "number": 26,
+          "text": "Alors Jésus le renvoya chez lui en disant: «N'entre pas dans le village [et n'en parle à personne].»"
+        },
+        {
+          "number": 27,
+          "text": "Jésus s'en alla avec ses disciples dans les villages voisins de Césarée de Philippe. Il leur posa en chemin cette question: «Qui suis-je, d’après les hommes?»"
+        },
+        {
+          "number": 28,
+          "text": "Ils répondirent: «Jean-Baptiste; d’après certains, Elie; d’après d'autres, l'un des prophètes.»"
+        },
+        {
+          "number": 29,
+          "text": "«Et d’après vous, qui suis-je?» leur demanda-t-il. Pierre lui répondit: «Tu es le Messie.»"
+        },
+        {
+          "number": 30,
+          "text": "Jésus leur recommanda sévèrement de n'en parler à personne."
+        },
+        {
+          "number": 31,
+          "text": "Alors il commença à leur enseigner qu'il fallait que le Fils de l'homme souffre beaucoup, qu'il soit rejeté par les anciens, par les chefs des prêtres et par les spécialistes de la loi, qu'il soit mis à mort et qu'il ressuscite trois jours après."
+        },
+        {
+          "number": 32,
+          "text": "Il leur disait cela ouvertement. Alors Pierre le prit à part et se mit à le reprendre,"
+        },
+        {
+          "number": 33,
+          "text": "mais Jésus se retourna, regarda ses disciples et réprimanda Pierre en disant: «Arrière, Satan, car tes pensées ne sont pas les pensées de Dieu, mais celles des hommes.»"
+        },
+        {
+          "number": 34,
+          "text": "Puis il appela la foule avec ses disciples et il leur dit: «Si quelqu'un veut être mon disciple, qu'il renonce à lui-même, qu'il se charge de sa croix et qu'il me suive!"
+        },
+        {
+          "number": 35,
+          "text": "En effet, celui qui voudra sauver sa vie la perdra, mais celui qui la perdra à cause de moi et de la bonne nouvelle la sauvera."
+        },
+        {
+          "number": 36,
+          "text": "Et que servira-t-il à un homme de gagner le monde entier, s'il perd son âme?"
+        },
+        {
+          "number": 37,
+          "text": "Que donnera un homme en échange de son âme?"
+        },
+        {
+          "number": 38,
+          "text": "En effet, celui qui aura honte de moi et de mes paroles au milieu de cette génération adultère et pécheresse, le Fils de l'homme aura aussi honte de lui quand il viendra dans la gloire de son Père avec les saints anges.»"
+        }
+      ]
+    },
+    {
+      "chapter": 9,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Il leur dit encore: «Je vous le dis en vérité, quelques-uns de ceux qui sont ici ne mourront pas avant d'avoir vu le royaume de Dieu venir avec puissance.»"
+        },
+        {
+          "number": 2,
+          "text": "Six jours après, Jésus prit avec lui Pierre, Jacques et Jean, et il les conduisit seuls à l'écart sur une haute montagne. Il fut transfiguré devant eux;"
+        },
+        {
+          "number": 3,
+          "text": "ses vêtements devinrent resplendissants et d'une telle blancheur que personne sur la terre ne peut blanchir ainsi."
+        },
+        {
+          "number": 4,
+          "text": "Elie et Moïse leur apparurent; ils s'entretenaient avec Jésus."
+        },
+        {
+          "number": 5,
+          "text": "Pierre prit la parole et dit à Jésus: «Maître, il est bon que nous soyons ici. Faisons trois abris: un pour toi, un pour Moïse et un pour Elie.»"
+        },
+        {
+          "number": 6,
+          "text": "Il ne savait que dire, car ils étaient effrayés."
+        },
+        {
+          "number": 7,
+          "text": "Une nuée vint les couvrir, et de la nuée sortit une voix: «Celui-ci est mon Fils bien-aimé: écoutez-le!»"
+        },
+        {
+          "number": 8,
+          "text": "Aussitôt les disciples regardèrent tout autour et ils ne virent plus que Jésus seul avec eux."
+        },
+        {
+          "number": 9,
+          "text": "Comme ils descendaient de la montagne, Jésus leur recommanda de ne dire ce qu'ils avaient vu à personne jusqu'à ce que le Fils de l'homme soit ressuscité."
+        },
+        {
+          "number": 10,
+          "text": "Ils retinrent cette parole, se demandant entre eux ce que signifiait ressusciter."
+        },
+        {
+          "number": 11,
+          "text": "Puis ils lui posèrent cette question: «Pourquoi les spécialistes de la loi disent-ils qu'Elie doit venir d'abord?»"
+        },
+        {
+          "number": 12,
+          "text": "Il leur répondit: «Elie doit venir d'abord pour rétablir toutes choses. Et pourquoi est-il écrit, à propos du Fils de l'homme, qu'il doit souffrir beaucoup et être méprisé?"
+        },
+        {
+          "number": 13,
+          "text": "Mais je vous le dis: Elie est déjà venu et ils l'ont traité comme ils ont voulu, conformément à ce qui est écrit à son sujet.»"
+        },
+        {
+          "number": 14,
+          "text": "Lorsqu'ils revinrent vers les disciples, ils virent autour d'eux une grande foule et des spécialistes de la loi qui discutaient avec eux."
+        },
+        {
+          "number": 15,
+          "text": "Dès que les gens virent Jésus, ils furent surpris et accoururent pour le saluer."
+        },
+        {
+          "number": 16,
+          "text": "Il leur demanda: «De quoi discutez-vous avec eux?»"
+        },
+        {
+          "number": 17,
+          "text": "Un homme de la foule lui répondit: «Maître, je t'ai amené mon fils qui a un esprit muet."
+        },
+        {
+          "number": 18,
+          "text": "Partout où l'esprit s’empare de lui, il le jette par terre; l'enfant écume, grince des dents et devient tout raide. J'ai prié tes disciples de chasser l'esprit et ils n'ont pas pu.»"
+        },
+        {
+          "number": 19,
+          "text": "«Génération incrédule, leur dit Jésus, jusqu'à quand serai-je avec vous? Jusqu'à quand devrai-je vous supporter? Amenez-le-moi.» On le lui amena."
+        },
+        {
+          "number": 20,
+          "text": "Dès que l'enfant vit Jésus, l'esprit l'agita avec violence; il tomba, et il se roulait par terre en écumant."
+        },
+        {
+          "number": 21,
+          "text": "Jésus demanda au père: «Depuis combien de temps cela lui arrive-t-il?» «Depuis son enfance, répondit-il,"
+        },
+        {
+          "number": 22,
+          "text": "et souvent l'esprit l'a jeté dans le feu et dans l'eau pour le faire mourir. Mais si tu peux faire quelque chose, viens à notre secours, aie compassion de nous.»"
+        },
+        {
+          "number": 23,
+          "text": "Jésus lui dit: «Si tu peux! Tout est possible à celui qui croit.»"
+        },
+        {
+          "number": 24,
+          "text": "Aussitôt le père de l'enfant, [en larmes,] s'écria: «Je crois, [Seigneur,] viens au secours de mon incrédulité!»"
+        },
+        {
+          "number": 25,
+          "text": "Voyant accourir la foule, Jésus menaça l'esprit impur en lui disant: «Esprit muet et sourd, je te l'ordonne, sors de cet enfant et n'y rentre plus.»"
+        },
+        {
+          "number": 26,
+          "text": "L'esprit sortit de l'enfant en poussant des cris et en le secouant très violemment. L'enfant devint comme mort, de sorte que beaucoup disaient qu'il était mort,"
+        },
+        {
+          "number": 27,
+          "text": "mais Jésus le prit par la main, le fit lever, et il se tint debout."
+        },
+        {
+          "number": 28,
+          "text": "Quand Jésus entra dans la maison, ses disciples lui demandèrent en privé: «Pourquoi n'avons-nous pas pu chasser cet esprit?»"
+        },
+        {
+          "number": 29,
+          "text": "Il leur dit: «Cette espèce-là ne peut sortir que par la prière [et par le jeûne].»"
+        },
+        {
+          "number": 30,
+          "text": "Ils partirent de là et traversèrent la Galilée. Jésus ne voulait pas qu'on le sache,"
+        },
+        {
+          "number": 31,
+          "text": "car il enseignait ses disciples et il leur disait: «Le Fils de l'homme sera livré entre les mains des hommes; ils le feront mourir et, trois jours après avoir été mis à mort, il ressuscitera.»"
+        },
+        {
+          "number": 32,
+          "text": "Cependant, les disciples ne comprenaient pas cette parole et ils avaient peur de l'interroger."
+        },
+        {
+          "number": 33,
+          "text": "Ils arrivèrent à Capernaüm. Lorsqu'il fut dans la maison, Jésus leur demanda: «De quoi discutiez-vous en chemin?»"
+        },
+        {
+          "number": 34,
+          "text": "Mais ils gardèrent le silence, car en chemin ils avaient discuté entre eux pour savoir qui était le plus grand."
+        },
+        {
+          "number": 35,
+          "text": "Alors il s'assit, appela les douze et leur dit: «Si quelqu'un veut être le premier, il sera le dernier de tous et le serviteur de tous.»"
+        },
+        {
+          "number": 36,
+          "text": "Il prit un petit enfant, le plaça au milieu d'eux et, après l'avoir pris dans ses bras, il leur dit:"
+        },
+        {
+          "number": 37,
+          "text": "«Celui qui accueille en mon nom un de ces petits enfants, c’est moi-même qu’il accueille, et celui qui m’accueille, ce n’est pas moi qu’il accueille, mais celui qui m'a envoyé.»"
+        },
+        {
+          "number": 38,
+          "text": "Jean lui dit: «Maître, nous avons vu quelqu'un chasser des démons en ton nom, et nous l'en avons empêché parce qu'il ne nous suit pas.»"
+        },
+        {
+          "number": 39,
+          "text": "«Ne l'en empêchez pas, répondit Jésus, car personne ne peut faire un miracle en mon nom et aussitôt après dire du mal de moi."
+        },
+        {
+          "number": 40,
+          "text": "En effet, qui n'est pas contre nous est pour nous."
+        },
+        {
+          "number": 41,
+          "text": "Et celui qui vous donnera à boire un verre d'eau en mon nom, parce que vous appartenez à Christ, je vous le dis en vérité, il ne perdra pas sa récompense."
+        },
+        {
+          "number": 42,
+          "text": "Mais si quelqu'un fait trébucher un seul de ces petits qui croient en moi, il vaudrait mieux pour lui qu'on attache à son cou une grosse meule de moulin et qu'on le jette à la mer."
+        },
+        {
+          "number": 43,
+          "text": "»Si ta main te pousse à mal agir, coupe-la. Mieux vaut pour toi entrer manchot dans la vie que d'avoir les deux mains et d'aller en enfer, dans le feu qui ne s'éteint pas,"
+        },
+        {
+          "number": 44,
+          "text": "[là où le ver ne meurt pas et où le feu ne s'éteint pas]."
+        },
+        {
+          "number": 45,
+          "text": "Si ton pied te pousse à mal agir, coupe-le. Mieux vaut pour toi entrer boiteux dans la vie que d'avoir les deux pieds et d'être jeté en enfer, [dans le feu qui ne s'éteint pas,"
+        },
+        {
+          "number": 46,
+          "text": "là où le ver ne meurt pas et où le feu ne s'éteint pas]."
+        },
+        {
+          "number": 47,
+          "text": "Et si ton œil te pousse à mal agir, arrache-le. Mieux vaut pour toi entrer dans le royaume de Dieu avec un seul œil que d'avoir deux yeux et d'être jeté dans l’enfer [de feu],"
+        },
+        {
+          "number": 48,
+          "text": "là où le ver ne meurt pas et où le feu ne s'éteint pas."
+        },
+        {
+          "number": 49,
+          "text": "En effet, tout homme sera salé de feu [et tout sacrifice sera salé de sel]."
+        },
+        {
+          "number": 50,
+          "text": "Le sel est une bonne chose, mais s'il perd sa saveur, avec quoi la lui rendrez-vous? Ayez du sel en vous-mêmes et soyez en paix les uns avec les autres.»"
+        }
+      ]
+    },
+    {
+      "chapter": 10,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Jésus partit de là et se rendit dans le territoire de la Judée, de l'autre côté du Jourdain. La foule se rassembla de nouveau près de lui et, conformément à son habitude, il se mit encore à l'enseigner."
+        },
+        {
+          "number": 2,
+          "text": "Les pharisiens l'abordèrent et, pour lui tendre un piège, ils lui demandèrent s'il est permis à un homme de divorcer de sa femme."
+        },
+        {
+          "number": 3,
+          "text": "Il leur répondit: «Que vous a prescrit Moïse?»"
+        },
+        {
+          "number": 4,
+          "text": "«Moïse, dirent-ils, nous a permis d'écrire une lettre de divorce et de renvoyer notre femme.»"
+        },
+        {
+          "number": 5,
+          "text": "Jésus leur dit: «C'est à cause de la dureté de votre cœur que Moïse vous a donné cette règle."
+        },
+        {
+          "number": 6,
+          "text": "Mais au commencement de la création, Dieu a fait l'homme et la femme;"
+        },
+        {
+          "number": 7,
+          "text": "c'est pourquoi l'homme quittera son père et sa mère [et s'attachera à sa femme],"
+        },
+        {
+          "number": 8,
+          "text": "et les deux ne feront qu’un. Ainsi, ils ne sont plus deux mais ne font qu’un."
+        },
+        {
+          "number": 9,
+          "text": "Que l'homme ne sépare donc pas ce que Dieu a uni.»"
+        },
+        {
+          "number": 10,
+          "text": "Lorsqu'ils furent dans la maison, les disciples l'interrogèrent encore là-dessus."
+        },
+        {
+          "number": 11,
+          "text": "Il leur dit: «Celui qui renvoie sa femme et qui en épouse une autre commet un adultère envers elle,"
+        },
+        {
+          "number": 12,
+          "text": "et si une femme divorce de son mari et en épouse un autre, elle commet un adultère.»"
+        },
+        {
+          "number": 13,
+          "text": "Des gens lui amenaient des petits enfants afin qu'il les touche, mais les disciples leur firent des reproches."
+        },
+        {
+          "number": 14,
+          "text": "Voyant cela, Jésus fut indigné et leur dit: «Laissez les petits enfants venir à moi et ne les en empêchez pas, car le royaume de Dieu est pour ceux qui leur ressemblent."
+        },
+        {
+          "number": 15,
+          "text": "Je vous le dis en vérité: celui qui n’accueille pas le royaume de Dieu comme un petit enfant n'y entrera pas.»"
+        },
+        {
+          "number": 16,
+          "text": "Puis il les prit dans ses bras et les bénit en posant les mains sur eux."
+        },
+        {
+          "number": 17,
+          "text": "Comme Jésus se mettait en chemin, un homme accourut et se jeta à genoux devant lui: «Bon maître, lui demanda-t-il, que dois-je faire pour hériter de la vie éternelle?»"
+        },
+        {
+          "number": 18,
+          "text": "Jésus lui dit: «Pourquoi m'appelles-tu bon? Personne n'est bon, si ce n'est Dieu seul."
+        },
+        {
+          "number": 19,
+          "text": "Tu connais les commandements: Tu ne commettras pas d'adultère; tu ne commettras pas de meurtre; tu ne commettras pas de vol; tu ne porteras pas de faux témoignage; tu ne feras de tort à personne; honore ton père et ta mère.»"
+        },
+        {
+          "number": 20,
+          "text": "Il lui répondit: «Maître, j'ai respecté tous ces commandements dès ma jeunesse.»"
+        },
+        {
+          "number": 21,
+          "text": "L'ayant regardé, Jésus l'aima, et il lui dit: «Il te manque une chose: va vendre tout ce que tu as, donne-le aux pauvres, et tu auras un trésor dans le ciel. Puis viens, [charge-toi de la croix] et suis-moi.»"
+        },
+        {
+          "number": 22,
+          "text": "Mais l’homme s'assombrit à cette parole et s'en alla tout triste, car il avait de grands biens."
+        },
+        {
+          "number": 23,
+          "text": "Regardant autour de lui, Jésus dit à ses disciples: «Qu'il est difficile à ceux qui ont des richesses d'entrer dans le royaume de Dieu!»"
+        },
+        {
+          "number": 24,
+          "text": "Les disciples furent effrayés de ce que Jésus parlait ainsi. Il reprit: «Mes enfants, qu'il est difficile [à ceux qui se confient dans les richesses] d'entrer dans le royaume de Dieu!"
+        },
+        {
+          "number": 25,
+          "text": "Il est plus facile à un chameau de passer par un trou d'aiguille qu'à un riche d'entrer dans le royaume de Dieu.»"
+        },
+        {
+          "number": 26,
+          "text": "Les disciples furent encore plus étonnés et se dirent les uns aux autres: «Qui donc peut être sauvé?»"
+        },
+        {
+          "number": 27,
+          "text": "Jésus les regarda et dit: «Aux hommes cela est impossible, mais non à Dieu, car tout est possible à Dieu.»"
+        },
+        {
+          "number": 28,
+          "text": "Alors Pierre lui dit: «Nous avons tout quitté et nous t'avons suivi.»"
+        },
+        {
+          "number": 29,
+          "text": "Jésus répondit: «Je vous le dis en vérité, personne n'aura quitté à cause de moi et à cause de la bonne nouvelle sa maison ou ses frères, ses sœurs, sa mère, son père, [sa femme,] ses enfants ou ses terres,"
+        },
+        {
+          "number": 30,
+          "text": "sans recevoir au centuple, dans le temps présent, des maisons, des frères, des sœurs, des mères, des enfants et des terres, avec des persécutions et, dans le monde à venir, la vie éternelle."
+        },
+        {
+          "number": 31,
+          "text": "Bien des premiers seront les derniers et bien des derniers seront les premiers.»"
+        },
+        {
+          "number": 32,
+          "text": "Ils étaient en chemin pour monter à Jérusalem et Jésus allait devant eux. Les disciples étaient effrayés et ceux qui le suivaient étaient dans la crainte. Jésus prit de nouveau les douze avec lui et commença à leur dire ce qui devait lui arriver:"
+        },
+        {
+          "number": 33,
+          "text": "«Nous montons à Jérusalem et le Fils de l'homme sera livré aux chefs des prêtres et aux spécialistes de la loi. Ils le condamneront à mort et le livreront aux non-Juifs."
+        },
+        {
+          "number": 34,
+          "text": "Ils se moqueront de lui, cracheront sur lui, le fouetteront et le feront mourir, et trois jours après il ressuscitera.»"
+        },
+        {
+          "number": 35,
+          "text": "Jacques et Jean, les fils de Zébédée, s'approchèrent de Jésus et lui dirent: «Maître, nous voudrions que tu fasses pour nous ce que nous te demanderons.»"
+        },
+        {
+          "number": 36,
+          "text": "Il leur dit: «Que voulez-vous que je fasse pour vous?»"
+        },
+        {
+          "number": 37,
+          "text": "«Accorde-nous, lui dirent-ils, d'être assis l'un à ta droite et l'autre à ta gauche, quand tu seras dans ta gloire.»"
+        },
+        {
+          "number": 38,
+          "text": "Jésus leur répondit: «Vous ne savez pas ce que vous demandez. Pouvez-vous boire la coupe que je vais boire ou être baptisés du baptême dont je vais être baptisé?» «Nous le pouvons», dirent-ils."
+        },
+        {
+          "number": 39,
+          "text": "Jésus leur répondit: «Vous boirez en effet la coupe que je vais boire et vous serez baptisés du baptême dont je vais être baptisé."
+        },
+        {
+          "number": 40,
+          "text": "Mais quant à être assis à ma droite ou à ma gauche, cela ne dépend pas de moi et ne sera donné qu'à ceux pour qui cela est préparé.»"
+        },
+        {
+          "number": 41,
+          "text": "Après avoir entendu cela, les dix autres commencèrent à s'indigner contre Jacques et Jean."
+        },
+        {
+          "number": 42,
+          "text": "Jésus les appela et leur dit: «Vous savez que ceux que l'on considère comme les chefs des nations dominent sur elles et que leurs grands les tiennent sous leur pouvoir."
+        },
+        {
+          "number": 43,
+          "text": "Ce n’est pas le cas au milieu de vous, mais si quelqu'un veut être grand parmi vous, il sera votre serviteur;"
+        },
+        {
+          "number": 44,
+          "text": "et si quelqu'un veut être le premier parmi vous, qu'il soit l'esclave de tous."
+        },
+        {
+          "number": 45,
+          "text": "En effet, le Fils de l'homme est venu non pour être servi, mais pour servir et donner sa vie en rançon pour beaucoup.»"
+        },
+        {
+          "number": 46,
+          "text": "Ils arrivèrent à Jéricho. Lorsque Jésus sortit de la ville avec ses disciples et une assez grande foule, Bartimée, le fils aveugle de Timée, était assis en train de mendier au bord du chemin."
+        },
+        {
+          "number": 47,
+          "text": "Il entendit que c'était Jésus de Nazareth et se mit à crier: «Fils de David, Jésus, aie pitié de moi!»"
+        },
+        {
+          "number": 48,
+          "text": "Beaucoup le reprenaient pour le faire taire, mais il criait beaucoup plus fort: «Fils de David, aie pitié de moi!»"
+        },
+        {
+          "number": 49,
+          "text": "Jésus s'arrêta et dit: «Appelez-le.» Ils appelèrent l'aveugle en lui disant: «Prends courage, lève-toi, il t'appelle.»"
+        },
+        {
+          "number": 50,
+          "text": "L'aveugle jeta son manteau et, se levant d'un bond, vint vers Jésus."
+        },
+        {
+          "number": 51,
+          "text": "Jésus prit la parole et lui dit: «Que veux-tu que je fasse pour toi?» «Mon maître, lui répondit l'aveugle, que je retrouve la vue.»"
+        },
+        {
+          "number": 52,
+          "text": "Jésus lui dit: «Vas-y, ta foi t'a sauvé.» Aussitôt il retrouva la vue et il suivit Jésus sur le chemin."
+        }
+      ]
+    },
+    {
+      "chapter": 11,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Lorsqu'ils approchèrent de Jérusalem, près de Bethphagé et de Béthanie, vers le mont des Oliviers, Jésus envoya deux de ses disciples"
+        },
+        {
+          "number": 2,
+          "text": "en leur disant: «Allez au village qui est devant vous. Dès que vous y serez entrés, vous trouverez un ânon attaché, sur lequel personne n'est encore monté. Détachez-le et amenez-le."
+        },
+        {
+          "number": 3,
+          "text": "Si quelqu'un vous demande: ‘Pourquoi faites-vous cela?’ répondez: ‘Le Seigneur en a besoin’, et à l'instant il le laissera venir ici.»"
+        },
+        {
+          "number": 4,
+          "text": "Les disciples partirent; ils trouvèrent l'ânon attaché dehors près d'une porte, dans la rue, et ils le détachèrent."
+        },
+        {
+          "number": 5,
+          "text": "Quelques-uns de ceux qui étaient là leur dirent: «Que faites-vous? Pourquoi détachez-vous cet ânon?»"
+        },
+        {
+          "number": 6,
+          "text": "Ils répondirent comme Jésus le leur avait dit, et on les laissa faire."
+        },
+        {
+          "number": 7,
+          "text": "Ils amenèrent l'ânon à Jésus, jetèrent leurs vêtements sur lui, et Jésus s'assit dessus."
+        },
+        {
+          "number": 8,
+          "text": "Beaucoup de gens étendirent leurs vêtements sur le chemin, et d'autres des branches qu'ils coupèrent dans les champs."
+        },
+        {
+          "number": 9,
+          "text": "Ceux qui précédaient et ceux qui suivaient Jésus criaient: «Hosanna! Béni soit celui qui vient au nom du Seigneur!"
+        },
+        {
+          "number": 10,
+          "text": "Béni soit le règne qui vient [au nom du Seigneur], le règne de David, notre père! Hosanna dans les lieux très hauts!»"
+        },
+        {
+          "number": 11,
+          "text": "Jésus entra à Jérusalem et se rendit au temple. Après avoir tout regardé autour de lui, comme il était déjà tard, il sortit pour aller à Béthanie avec les douze."
+        },
+        {
+          "number": 12,
+          "text": "Le lendemain, comme ils quittaient Béthanie, Jésus eut faim."
+        },
+        {
+          "number": 13,
+          "text": "Il aperçut de loin un figuier qui avait des feuilles et alla voir s'il y trouverait quelque chose, mais quand il se fut approché, il ne trouva que des feuilles, car ce n'était pas la saison des figues."
+        },
+        {
+          "number": 14,
+          "text": "Alors Jésus prit la parole et lui dit: «Que plus jamais personne ne mange de ton fruit!» Et ses disciples l'entendirent."
+        },
+        {
+          "number": 15,
+          "text": "Ils arrivèrent à Jérusalem, et Jésus entra dans le temple. Il se mit à chasser ceux qui vendaient et qui achetaient dans le temple, et il renversa les tables des changeurs de monnaie et les sièges des vendeurs de pigeons."
+        },
+        {
+          "number": 16,
+          "text": "Il ne laissait personne transporter un objet à travers le temple"
+        },
+        {
+          "number": 17,
+          "text": "et il les enseignait en disant: «N'est-il pas écrit: Mon temple sera appelé une maison de prière pour toutes les nations? Mais vous, vous en avez fait une caverne de voleurs.»"
+        },
+        {
+          "number": 18,
+          "text": "Les chefs des prêtres et les spécialistes de la loi l'entendirent, et ils cherchaient les moyens de le faire mourir; ils le redoutaient en effet, parce que toute la foule était frappée par son enseignement."
+        },
+        {
+          "number": 19,
+          "text": "Le soir venu, Jésus sortit de la ville."
+        },
+        {
+          "number": 20,
+          "text": "Le lendemain matin, en passant, les disciples virent le figuier: il était desséché jusqu'aux racines."
+        },
+        {
+          "number": 21,
+          "text": "Se rappelant ce qui s'était passé, Pierre dit à Jésus: «Maître, regarde, le figuier que tu as maudit est desséché.»"
+        },
+        {
+          "number": 22,
+          "text": "Jésus leur dit alors: «Ayez foi en Dieu."
+        },
+        {
+          "number": 23,
+          "text": "Je vous le dis en vérité, si quelqu'un dit à cette montagne: ‘Retire-toi de là et jette-toi dans la mer’, et s'il ne doute pas dans son cœur mais croit que ce qu'il dit arrive, il le verra s'accomplir."
+        },
+        {
+          "number": 24,
+          "text": "C'est pourquoi je vous le dis: tout ce que vous demanderez en priant, croyez que vous l'avez reçu et cela vous sera accordé."
+        },
+        {
+          "number": 25,
+          "text": "Et lorsque vous êtes debout pour prier, si vous avez quelque chose contre quelqu'un, pardonnez-lui afin que votre Père céleste vous pardonne aussi vos fautes."
+        },
+        {
+          "number": 26,
+          "text": "[Mais si vous ne pardonnez pas, votre Père céleste ne vous pardonnera pas non plus vos fautes.]»"
+        },
+        {
+          "number": 27,
+          "text": "Ils se rendirent de nouveau à Jérusalem et, pendant que Jésus se promenait dans le temple, les chefs des prêtres, les spécialistes de la loi et les anciens vinrent vers lui"
+        },
+        {
+          "number": 28,
+          "text": "et lui dirent: «Par quelle autorité fais-tu ces choses et qui t'a donné l'autorité de les faire?»"
+        },
+        {
+          "number": 29,
+          "text": "Jésus leur répondit: «Je vous poserai [moi aussi] une question; répondez-moi, et je vous dirai par quelle autorité je fais ces choses."
+        },
+        {
+          "number": 30,
+          "text": "Le baptême de Jean venait-il du ciel ou des hommes? Répondez-moi.»"
+        },
+        {
+          "number": 31,
+          "text": "Mais ils raisonnèrent ainsi entre eux: «Si nous répondons: ‘Du ciel’, il dira: ‘Pourquoi donc n'avez-vous pas cru en lui?’"
+        },
+        {
+          "number": 32,
+          "text": "Et si nous répondons: ‘Des hommes…’» Ils redoutaient les réactions du peuple, car tous considéraient réellement Jean comme un prophète."
+        },
+        {
+          "number": 33,
+          "text": "Alors ils répondirent à Jésus: «Nous ne savons pas.» Jésus leur répondit: «Moi non plus, je ne vous dirai pas par quelle autorité je fais ces choses.»"
+        }
+      ]
+    },
+    {
+      "chapter": 12,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Jésus se mit ensuite à leur parler en paraboles: «Un homme planta une vigne. Il l'entoura d'une haie, creusa un pressoir et construisit une tour. Puis il la loua à des vignerons et quitta le pays."
+        },
+        {
+          "number": 2,
+          "text": "Le moment venu, il envoya un serviteur vers les vignerons pour recevoir d'eux une part de récolte de la vigne."
+        },
+        {
+          "number": 3,
+          "text": "Ils s’emparèrent de lui, le battirent et le renvoyèrent les mains vides."
+        },
+        {
+          "number": 4,
+          "text": "Il envoya de nouveau vers eux un autre serviteur; ils [lui jetèrent des pierres,] le frappèrent à la tête et l'insultèrent."
+        },
+        {
+          "number": 5,
+          "text": "Il en envoya un troisième et ils le tuèrent, puis beaucoup d’autres qu'ils battirent ou tuèrent."
+        },
+        {
+          "number": 6,
+          "text": "Il avait encore un fils bien-aimé; il l'envoya vers eux en dernier, disant: ‘Ils auront du respect pour mon fils.’"
+        },
+        {
+          "number": 7,
+          "text": "Mais ces vignerons dirent entre eux: ‘Voilà l'héritier. Venez, tuons-le et l'héritage sera à nous.’"
+        },
+        {
+          "number": 8,
+          "text": "Et ils s’emparèrent de lui, le tuèrent et le jetèrent hors de la vigne."
+        },
+        {
+          "number": 9,
+          "text": "Que fera donc le maître de la vigne? Il viendra, fera mourir les vignerons et donnera la vigne à d'autres."
+        },
+        {
+          "number": 10,
+          "text": "»N'avez-vous pas lu cette parole de l'Ecriture: La pierre qu'ont rejetée ceux qui construisaient est devenue la pierre angulaire;"
+        },
+        {
+          "number": 11,
+          "text": "c'est l’œuvre du Seigneur, et c'est un prodige à nos yeux?»"
+        },
+        {
+          "number": 12,
+          "text": "Ils cherchaient à l'arrêter, mais ils redoutaient les réactions de la foule. Ils avaient compris que c'était pour eux que Jésus avait dit cette parabole. Ils le laissèrent alors et s'en allèrent."
+        },
+        {
+          "number": 13,
+          "text": "Ils envoyèrent auprès de Jésus quelques pharisiens et des hérodiens, afin de le prendre au piège de ses propres paroles."
+        },
+        {
+          "number": 14,
+          "text": "Ils vinrent lui dire: «Maître, nous savons que tes paroles sont vraies et que tu ne te laisses influencer par personne, car tu ne regardes pas à l'apparence des gens et tu enseignes le chemin de Dieu en toute vérité. Est-il permis, ou non, de payer l'impôt à l'empereur? Devons-nous payer ou ne pas payer?»"
+        },
+        {
+          "number": 15,
+          "text": "Mais Jésus, connaissant leur hypocrisie, leur répondit: «Pourquoi me tendez-vous un piège? Apportez-moi une pièce de monnaie afin que je la voie.»"
+        },
+        {
+          "number": 16,
+          "text": "Ils en apportèrent une. Jésus leur demanda: «De qui porte-t-elle l'effigie et l'inscription?» «De l'empereur», lui répondirent-ils."
+        },
+        {
+          "number": 17,
+          "text": "Alors il leur dit: «Rendez à l'empereur ce qui est à l'empereur et à Dieu ce qui est à Dieu.» Et ils furent dans l'étonnement à son sujet."
+        },
+        {
+          "number": 18,
+          "text": "Les sadducéens, qui disent qu'il n'y a pas de résurrection, vinrent auprès de Jésus et lui posèrent cette question:"
+        },
+        {
+          "number": 19,
+          "text": "«Maître, voici ce que Moïse nous a prescrit: Si un homme meurt et laisse une femme sans avoir d'enfants, son frère épousera la veuve et donnera une descendance à son frère."
+        },
+        {
+          "number": 20,
+          "text": "Or, il y avait sept frères. Le premier s’est marié et est mort sans laisser de descendance."
+        },
+        {
+          "number": 21,
+          "text": "Le deuxième a pris la veuve pour femme et est mort sans laisser de descendance. Il en est allé de même pour le troisième,"
+        },
+        {
+          "number": 22,
+          "text": "et aucun des sept n’a laissé de descendance. Après eux tous, la femme est morte aussi."
+        },
+        {
+          "number": 23,
+          "text": "A la résurrection, duquel d'entre eux sera-t-elle la femme? En effet, les sept l'ont eue pour épouse.»"
+        },
+        {
+          "number": 24,
+          "text": "Jésus leur répondit: «N'êtes-vous pas dans l'erreur parce que vous ne connaissez ni les Ecritures ni la puissance de Dieu?"
+        },
+        {
+          "number": 25,
+          "text": "En effet, à la résurrection, les hommes et les femmes ne se marieront pas, mais ils seront comme les anges dans le ciel."
+        },
+        {
+          "number": 26,
+          "text": "En ce qui concerne la résurrection des morts, n'avez-vous pas lu dans le livre de Moïse ce que Dieu lui a dit, dans l'épisode du buisson: Je suis le Dieu d'Abraham, le Dieu d'Isaac et le Dieu de Jacob?"
+        },
+        {
+          "number": 27,
+          "text": "Dieu n'est pas le Dieu des morts, mais des vivants. Vous êtes complètement dans l'erreur.»"
+        },
+        {
+          "number": 28,
+          "text": "Un des spécialistes de la loi, qui les avait entendus discuter, vit que Jésus avait bien répondu aux sadducéens. Il s'approcha et lui demanda: «Quel est le premier de tous les commandements?»"
+        },
+        {
+          "number": 29,
+          "text": "Jésus répondit: «Voici le premier: Ecoute, Israël, le Seigneur, notre Dieu, est l'unique Seigneur"
+        },
+        {
+          "number": 30,
+          "text": "et tu aimeras le Seigneur, ton Dieu, de tout ton cœur, de toute ton âme, de toute ta pensée et de toute ta force."
+        },
+        {
+          "number": 31,
+          "text": "Voici le deuxième: Tu aimeras ton prochain comme toi-même. Il n'y a pas d'autre commandement plus grand que ceux-là.»"
+        },
+        {
+          "number": 32,
+          "text": "Le spécialiste de la loi lui dit: «Bien, maître. Tu as dit avec vérité que Dieu est unique, qu'il n'y en a pas d'autre que lui"
+        },
+        {
+          "number": 33,
+          "text": "et que l'aimer de tout son cœur, de toute son intelligence, [de toute son âme] et de toute sa force, et aimer son prochain comme soi-même, c'est plus que tous les holocaustes et tous les sacrifices.»"
+        },
+        {
+          "number": 34,
+          "text": "Voyant qu'il avait répondu avec intelligence, Jésus lui dit: «Tu n'es pas loin du royaume de Dieu.» Personne n'osa plus lui poser de questions."
+        },
+        {
+          "number": 35,
+          "text": "Jésus continuait à enseigner dans le temple; il dit: «Comment les spécialistes de la loi peuvent-ils dire que le Messie est le fils de David?"
+        },
+        {
+          "number": 36,
+          "text": "[En effet,] David lui-même, animé par l'Esprit saint, a dit: Le Seigneur a dit à mon Seigneur: ‘Assieds-toi à ma droite jusqu'à ce que j'aie fait de tes ennemis ton marchepied.’"
+        },
+        {
+          "number": 37,
+          "text": "David lui-même l'appelle Seigneur. Comment peut-il donc être son fils?» Et une grande foule l'écoutait avec plaisir."
+        },
+        {
+          "number": 38,
+          "text": "Il leur disait dans son enseignement: «Attention aux spécialistes de la loi qui aiment se promener en longues robes et être salués sur les places publiques!"
+        },
+        {
+          "number": 39,
+          "text": "Ils recherchent les sièges d'honneur dans les synagogues et les meilleures places dans les festins;"
+        },
+        {
+          "number": 40,
+          "text": "ils dépouillent les veuves de leurs biens tout en faisant pour l'apparence de longues prières. Ils seront jugés plus sévèrement.»"
+        },
+        {
+          "number": 41,
+          "text": "Jésus était assis vis-à-vis du tronc et regardait comment la foule y mettait de l'argent. De nombreux riches mettaient beaucoup."
+        },
+        {
+          "number": 42,
+          "text": "Une pauvre veuve vint aussi; elle y mit deux petites pièces, une toute petite somme."
+        },
+        {
+          "number": 43,
+          "text": "Alors Jésus appela ses disciples et leur dit: «Je vous le dis en vérité, cette pauvre veuve a donné plus que tous ceux qui ont mis dans le tronc,"
+        },
+        {
+          "number": 44,
+          "text": "car tous ont pris de leur superflu pour mettre dans le tronc, tandis qu’elle, elle a mis de son nécessaire, tout ce qu'elle possédait, tout ce qu'elle avait pour vivre.»"
+        }
+      ]
+    },
+    {
+      "chapter": 13,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Lorsque Jésus sortit du temple, un de ses disciples lui dit: «Maître, regarde: quelles pierres et quelles constructions!»"
+        },
+        {
+          "number": 2,
+          "text": "Jésus lui répondit: «Vois-tu ces grandes constructions? Il ne restera pas pierre sur pierre, tout sera détruit.»"
+        },
+        {
+          "number": 3,
+          "text": "Puis il s'assit sur le mont des Oliviers, en face du temple. Pierre, Jacques, Jean et André lui posèrent en privé cette question:"
+        },
+        {
+          "number": 4,
+          "text": "«Dis-nous: quand cela arrivera-t-il et à quel signe reconnaîtra-t-on que tous ces événements vont s'accomplir?»"
+        },
+        {
+          "number": 5,
+          "text": "Jésus se mit alors à leur dire: «Faites bien attention que personne ne vous égare."
+        },
+        {
+          "number": 6,
+          "text": "En effet, beaucoup viendront sous mon nom et diront: ‘C'est moi.’ Et ils tromperont beaucoup de gens."
+        },
+        {
+          "number": 7,
+          "text": "Quand vous entendrez parler de guerres et de menaces de guerres, ne vous laissez pas effrayer, car il faut que ces choses arrivent. Cependant, ce ne sera pas encore la fin."
+        },
+        {
+          "number": 8,
+          "text": "Une nation se dressera contre une nation et un royaume contre un royaume; en divers endroits il y aura des tremblements de terre, il y aura des famines [et des troubles]. Ce sera le commencement des douleurs."
+        },
+        {
+          "number": 9,
+          "text": "Faites attention à vous-mêmes. On vous livrera aux tribunaux et vous serez battus dans les synagogues; vous comparaîtrez devant des gouverneurs et devant des rois à cause de moi pour leur apporter votre témoignage."
+        },
+        {
+          "number": 10,
+          "text": "Il faut d'abord que la bonne nouvelle soit proclamée à toutes les nations."
+        },
+        {
+          "number": 11,
+          "text": "Quand on vous emmènera pour vous faire arrêter, ne vous inquiétez pas d'avance de ce que vous direz, mais dites ce qui vous sera donné au moment même. En effet, ce n'est pas vous qui parlerez, mais l'Esprit saint."
+        },
+        {
+          "number": 12,
+          "text": "Le frère livrera son frère à la mort, et le père son enfant; les enfants se soulèveront contre leurs parents et les feront mourir."
+        },
+        {
+          "number": 13,
+          "text": "Vous serez détestés de tous à cause de mon nom, mais celui qui persévérera jusqu'à la fin sera sauvé."
+        },
+        {
+          "number": 14,
+          "text": "»Lorsque vous verrez l'abominable dévastation [dont a parlé le prophète Daniel] établie là où elle ne doit pas être – que celui qui lit fasse attention – alors, que ceux qui seront en Judée s'enfuient dans les montagnes,"
+        },
+        {
+          "number": 15,
+          "text": "que celui qui sera sur le toit ne descende pas et n'entre pas dans sa maison pour prendre quelque chose,"
+        },
+        {
+          "number": 16,
+          "text": "et que celui qui sera dans les champs ne retourne pas en arrière pour prendre son manteau."
+        },
+        {
+          "number": 17,
+          "text": "Malheur aux femmes qui seront enceintes et à celles qui allaiteront durant ces jours-là!"
+        },
+        {
+          "number": 18,
+          "text": "Priez pour que cela n'arrive pas en hiver,"
+        },
+        {
+          "number": 19,
+          "text": "car ces jours-là, la détresse sera telle qu'il n'y en a pas eu de pareille depuis le commencement du monde que Dieu a créé jusqu'à présent et qu'il n'y en aura jamais plus."
+        },
+        {
+          "number": 20,
+          "text": "Et si le Seigneur n'avait pas abrégé ces jours, personne ne serait sauvé; mais il les a abrégés à cause des élus, de ceux qu'il a choisis."
+        },
+        {
+          "number": 21,
+          "text": "Si quelqu'un vous dit alors: ‘Le Messie est ici’ ou: ‘Il est là’, ne le croyez pas,"
+        },
+        {
+          "number": 22,
+          "text": "car de prétendus messies et de prétendus prophètes surgiront; ils feront des prodiges et des signes miraculeux pour tromper, si c'était possible, [même] ceux qui ont été choisis."
+        },
+        {
+          "number": 23,
+          "text": "Soyez sur vos gardes: je vous ai tout annoncé d'avance."
+        },
+        {
+          "number": 24,
+          "text": "Mais ces jours-là, après ce temps de détresse, le soleil s'obscurcira, la lune ne donnera plus sa lumière,"
+        },
+        {
+          "number": 25,
+          "text": "les étoiles tomberont du ciel et les puissances célestes seront ébranlées."
+        },
+        {
+          "number": 26,
+          "text": "Alors on verra le Fils de l'homme venir sur les nuées avec beaucoup de puissance et de gloire."
+        },
+        {
+          "number": 27,
+          "text": "Il enverra ses anges et rassemblera ceux qu’il a choisis des quatre coins du monde, de l'extrémité de la terre jusqu'à l'extrémité du ciel."
+        },
+        {
+          "number": 28,
+          "text": "Tirez instruction de la parabole du figuier: dès que ses branches deviennent tendres et que les feuilles poussent, vous savez que l'été est proche."
+        },
+        {
+          "number": 29,
+          "text": "De même, quand vous verrez ces choses arriver, sachez que le Fils de l'homme est proche, qu’il est à la porte."
+        },
+        {
+          "number": 30,
+          "text": "Je vous le dis en vérité, cette génération ne passera pas avant que tout cela n'arrive."
+        },
+        {
+          "number": 31,
+          "text": "Le ciel et la terre disparaîtront, mais mes paroles ne disparaîtront pas."
+        },
+        {
+          "number": 32,
+          "text": "»Quant au jour et à l'heure, personne ne les connaît, pas même les anges dans le ciel ni le Fils: le Père seul les connaît."
+        },
+        {
+          "number": 33,
+          "text": "Faites bien attention, restez en éveil et priez, car vous ignorez quand ce temps viendra."
+        },
+        {
+          "number": 34,
+          "text": "Cela se passera comme pour un homme qui part en voyage: il laisse sa maison, remet l'autorité à ses serviteurs, indique à chacun son travail et ordonne au portier de rester éveillé."
+        },
+        {
+          "number": 35,
+          "text": "Restez donc vigilants, car vous ne savez pas quand viendra le maître de la maison: le soir, ou au milieu de la nuit, ou au chant du coq, ou le matin."
+        },
+        {
+          "number": 36,
+          "text": "Qu'il ne vous trouve pas endormis quand il arrivera tout à coup!"
+        },
+        {
+          "number": 37,
+          "text": "Ce que je vous dis, je le dis à tous: Restez vigilants.»"
+        }
+      ]
+    },
+    {
+      "chapter": 14,
+      "verses": [
+        {
+          "number": 1,
+          "text": "La fête de la Pâque et des pains sans levain devait avoir lieu deux jours après. Les chefs des prêtres et les spécialistes de la loi cherchaient les moyens d'arrêter Jésus par ruse et de le faire mourir."
+        },
+        {
+          "number": 2,
+          "text": "Ils se disaient en effet: «Que ce ne soit pas pendant la fête, afin qu'il n'y ait pas d’agitation parmi le peuple.»"
+        },
+        {
+          "number": 3,
+          "text": "Comme Jésus était à Béthanie, dans la maison de Simon le lépreux, une femme entra pendant qu'il se trouvait à table. Elle tenait un vase qui contenait un parfum de nard pur très cher. Elle brisa le vase et versa le parfum sur la tête de Jésus."
+        },
+        {
+          "number": 4,
+          "text": "Quelques-uns exprimèrent leur indignation entre eux: «A quoi bon gaspiller ce parfum?"
+        },
+        {
+          "number": 5,
+          "text": "On aurait pu le vendre plus de 300 pièces d’argent et les donner aux pauvres» et ils s'irritaient contre cette femme."
+        },
+        {
+          "number": 6,
+          "text": "Mais Jésus dit: «Laissez-la. Pourquoi lui faites-vous de la peine? Elle a fait une bonne action envers moi."
+        },
+        {
+          "number": 7,
+          "text": "En effet, vous avez toujours les pauvres avec vous et vous pouvez leur faire du bien quand vous le voulez, mais vous ne m'aurez pas toujours."
+        },
+        {
+          "number": 8,
+          "text": "Elle a fait ce qu'elle a pu, elle a d'avance parfumé mon corps pour l'ensevelissement."
+        },
+        {
+          "number": 9,
+          "text": "Je vous le dis en vérité, partout où cette bonne nouvelle sera proclamée, dans le monde entier, on racontera aussi en souvenir de cette femme ce qu'elle a fait.»"
+        },
+        {
+          "number": 10,
+          "text": "Judas l'Iscariot, l'un des douze, alla vers les chefs des prêtres afin de leur livrer Jésus."
+        },
+        {
+          "number": 11,
+          "text": "Ils se réjouirent en l’entendant et promirent de lui donner de l'argent. Quant à Judas, il se mit à chercher une occasion favorable pour le trahir."
+        },
+        {
+          "number": 12,
+          "text": "Le premier jour des pains sans levain, où l'on sacrifiait l'agneau pascal, les disciples de Jésus lui dirent: «Où veux-tu que nous allions te préparer le repas de la Pâque?»"
+        },
+        {
+          "number": 13,
+          "text": "Il envoya deux de ses disciples et leur dit: «Allez à la ville. Vous rencontrerez un homme qui porte une cruche d'eau: suivez-le."
+        },
+        {
+          "number": 14,
+          "text": "Là où il entrera, dites au propriétaire de la maison: ‘Le maître dit: Où est la salle où je mangerai la Pâque avec mes disciples?’"
+        },
+        {
+          "number": 15,
+          "text": "Alors il vous montrera une grande chambre à l'étage, aménagée et toute prête: c'est là que vous nous préparerez la Pâque.»"
+        },
+        {
+          "number": 16,
+          "text": "Ses disciples partirent, arrivèrent à la ville et trouvèrent tout comme il le leur avait dit, et ils préparèrent la Pâque."
+        },
+        {
+          "number": 17,
+          "text": "Le soir venu, il s’y rendit avec les douze."
+        },
+        {
+          "number": 18,
+          "text": "Pendant qu'ils étaient à table et qu'ils mangeaient, Jésus dit: «Je vous le dis en vérité, l'un de vous, qui mange avec moi, me trahira.»"
+        },
+        {
+          "number": 19,
+          "text": "Ils devinrent tout tristes et lui dirent l'un après l'autre: «Est-ce moi?»"
+        },
+        {
+          "number": 20,
+          "text": "Il leur répondit: «C'est l'un des douze, celui qui met la main dans le plat avec moi."
+        },
+        {
+          "number": 21,
+          "text": "Le Fils de l'homme s'en va conformément à ce qui est écrit à son sujet, mais malheur à l'homme par qui le Fils de l'homme est trahi! Mieux vaudrait pour cet homme qu'il ne soit pas né.»"
+        },
+        {
+          "number": 22,
+          "text": "Pendant qu'ils mangeaient, Jésus prit du pain et, après avoir prononcé la prière de bénédiction, il le rompit et le leur donna en disant: «Prenez, [mangez,] ceci est mon corps.»"
+        },
+        {
+          "number": 23,
+          "text": "Il prit ensuite une coupe et, après avoir remercié Dieu, il la leur donna et ils en burent tous."
+        },
+        {
+          "number": 24,
+          "text": "Il leur dit: «Ceci est mon sang, le sang de la [nouvelle] alliance, qui est versé pour beaucoup."
+        },
+        {
+          "number": 25,
+          "text": "Je vous le dis en vérité, je ne boirai plus jamais du fruit de la vigne, jusqu'au jour où je le boirai nouveau dans le royaume de Dieu.»"
+        },
+        {
+          "number": 26,
+          "text": "Après avoir chanté les psaumes, ils se rendirent au mont des Oliviers."
+        },
+        {
+          "number": 27,
+          "text": "Jésus leur dit: «Vous trébucherez tous, [cette nuit, à cause de moi,] car il est écrit: Je frapperai le berger, et les brebis seront dispersées."
+        },
+        {
+          "number": 28,
+          "text": "Mais, après ma résurrection, je vous précéderai en Galilée.»"
+        },
+        {
+          "number": 29,
+          "text": "Pierre lui dit: «Même si tous trébuchent, ce ne sera pas mon cas.»"
+        },
+        {
+          "number": 30,
+          "text": "Jésus lui dit: «Je te le dis en vérité, aujourd'hui, cette nuit même, avant que le coq chante [deux fois], toi, tu me renieras trois fois.»"
+        },
+        {
+          "number": 31,
+          "text": "Mais Pierre reprit plus fortement: «Même s'il me faut mourir avec toi, je ne te renierai pas.» Et tous dirent la même chose."
+        },
+        {
+          "number": 32,
+          "text": "Ils se rendirent ensuite dans un endroit appelé Gethsémané, et Jésus dit à ses disciples: «Asseyez-vous ici pendant que je prierai.»"
+        },
+        {
+          "number": 33,
+          "text": "Il prit avec lui Pierre, Jacques et Jean, et il commença à être saisi de frayeur et d’angoisse."
+        },
+        {
+          "number": 34,
+          "text": "Il leur dit: «Mon âme est triste à en mourir; restez ici, éveillés.»"
+        },
+        {
+          "number": 35,
+          "text": "Puis il avança de quelques pas, se jeta contre terre et pria que, si cela était possible, cette heure s'éloigne de lui."
+        },
+        {
+          "number": 36,
+          "text": "Il disait: «Abba, Père, tout t'est possible. Eloigne de moi cette coupe! Toutefois, non pas ce que je veux, mais ce que tu veux.»"
+        },
+        {
+          "number": 37,
+          "text": "Il vint vers les disciples, qu'il trouva endormis, et il dit à Pierre: «Simon, tu dors! Tu n'as pas pu rester éveillé une seule heure!"
+        },
+        {
+          "number": 38,
+          "text": "Restez vigilants et priez pour ne pas céder à la tentation. L'esprit est bien disposé, mais par nature l’homme est faible.»"
+        },
+        {
+          "number": 39,
+          "text": "Il s'éloigna de nouveau et fit la même prière."
+        },
+        {
+          "number": 40,
+          "text": "Il revint et les trouva encore endormis, car ils avaient les paupières lourdes. Ils ne surent que lui répondre."
+        },
+        {
+          "number": 41,
+          "text": "Il revint pour la troisième fois et leur dit: «Vous dormez maintenant et vous vous reposez! C'est assez! L'heure est venue; voici que le Fils de l'homme est livré entre les mains des pécheurs."
+        },
+        {
+          "number": 42,
+          "text": "Levez-vous, allons-y! Celui qui me trahit s'approche.»"
+        },
+        {
+          "number": 43,
+          "text": "Il parlait encore quand soudain arriva Judas, l'un des douze, avec une foule armée d'épées et de bâtons envoyée par les chefs des prêtres, par les spécialistes de la loi et par les anciens."
+        },
+        {
+          "number": 44,
+          "text": "Celui qui le trahissait leur avait donné ce signe: «L’homme auquel je donnerai un baiser, c'est lui. Arrêtez-le et emmenez-le sous bonne garde!»"
+        },
+        {
+          "number": 45,
+          "text": "Dès qu'il fut arrivé, il s'approcha de Jésus en disant: «Maître!» et il l'embrassa."
+        },
+        {
+          "number": 46,
+          "text": "Alors ces gens mirent la main sur Jésus et l'arrêtèrent."
+        },
+        {
+          "number": 47,
+          "text": "Un de ceux qui étaient là tira l'épée, frappa le serviteur du grand-prêtre et lui emporta l'oreille."
+        },
+        {
+          "number": 48,
+          "text": "Jésus prit la parole et leur dit: «Vous êtes venus vous emparer de moi avec des épées et des bâtons, comme pour un brigand."
+        },
+        {
+          "number": 49,
+          "text": "J'étais tous les jours parmi vous, enseignant dans le temple, et vous ne m'avez pas arrêté. Mais c'est afin que les Ecritures soient accomplies.»"
+        },
+        {
+          "number": 50,
+          "text": "Alors tous l'abandonnèrent et prirent la fuite."
+        },
+        {
+          "number": 51,
+          "text": "Un jeune homme le suivait, habillé d’un simple drap. On l'attrapa,"
+        },
+        {
+          "number": 52,
+          "text": "mais il lâcha le drap et se sauva tout nu."
+        },
+        {
+          "number": 53,
+          "text": "Ils emmenèrent Jésus chez le grand-prêtre, où se rassemblèrent tous les chefs des prêtres, les anciens et les spécialistes de la loi."
+        },
+        {
+          "number": 54,
+          "text": "Pierre le suivit de loin jusqu'à l'intérieur de la cour du grand-prêtre; il s'assit avec les serviteurs et il se chauffait près du feu."
+        },
+        {
+          "number": 55,
+          "text": "Les chefs des prêtres et tout le sanhédrin cherchaient un témoignage contre Jésus pour le faire mourir, et ils n'en trouvaient pas."
+        },
+        {
+          "number": 56,
+          "text": "Beaucoup rendaient en effet de faux témoignages contre lui, mais les témoignages n’étaient pas concordants."
+        },
+        {
+          "number": 57,
+          "text": "Quelques-uns se levèrent et portèrent un faux témoignage contre lui en disant:"
+        },
+        {
+          "number": 58,
+          "text": "«Nous l'avons entendu dire: ‘Je détruirai ce temple fait par la main de l'homme, et en trois jours j'en construirai un autre qui ne sera pas fait de main d'homme.’»"
+        },
+        {
+          "number": 59,
+          "text": "Même sur ce point-là, leurs témoignages ne concordaient pas."
+        },
+        {
+          "number": 60,
+          "text": "Alors le grand-prêtre se leva au milieu de l'assemblée et interrogea Jésus en disant: «Ne réponds-tu rien? Pourquoi ces gens témoignent-ils contre toi?»"
+        },
+        {
+          "number": 61,
+          "text": "Mais Jésus gardait le silence et ne répondit rien. Le grand-prêtre l'interrogea de nouveau et lui dit: «Es-tu le Messie, le Fils du Dieu béni?»"
+        },
+        {
+          "number": 62,
+          "text": "Jésus répondit: «Je le suis. Et vous verrez le Fils de l'homme assis à la droite du Tout-Puissant et venant sur les nuées du ciel.»"
+        },
+        {
+          "number": 63,
+          "text": "Alors le grand-prêtre déchira ses vêtements et dit: «Qu'avons-nous encore besoin de témoins?"
+        },
+        {
+          "number": 64,
+          "text": "Vous avez entendu le blasphème. Qu'en pensez-vous?» Tous le condamnèrent, déclarant qu’il méritait la mort."
+        },
+        {
+          "number": 65,
+          "text": "Quelques-uns se mirent à cracher sur lui, à lui mettre un voile sur le visage et à le frapper à coups de poing en lui disant: «Devine!» Même les serviteurs le frappaient en lui donnant des gifles."
+        },
+        {
+          "number": 66,
+          "text": "Pendant que Pierre était en bas dans la cour, une des servantes du grand-prêtre arriva."
+        },
+        {
+          "number": 67,
+          "text": "Elle vit Pierre qui se chauffait, le regarda et lui dit: «Toi aussi, tu étais avec Jésus de Nazareth.»"
+        },
+        {
+          "number": 68,
+          "text": "Il le nia en disant: «Je ne sais ni ne comprends ce que tu veux dire.» Puis il sortit pour aller dans le vestibule. [Alors un coq chanta.]"
+        },
+        {
+          "number": 69,
+          "text": "La servante le vit et se mit à dire de nouveau à ceux qui étaient présents: «Il fait partie de ces gens-là.» Il le nia de nouveau."
+        },
+        {
+          "number": 70,
+          "text": "Peu après, ceux qui étaient présents dirent encore à Pierre: «Certainement, tu fais partie de ces gens-là, car tu es galiléen, [tu as le même langage].»"
+        },
+        {
+          "number": 71,
+          "text": "Alors il se mit à jurer en lançant des malédictions: «Je ne connais pas cet homme dont vous parlez.»"
+        },
+        {
+          "number": 72,
+          "text": "[Aussitôt,] pour la seconde fois, un coq chanta. Pierre se souvint alors de ce que Jésus lui avait dit: «Avant que le coq chante deux fois, tu me renieras trois fois.» Et en y réfléchissant, il pleurait."
+        }
+      ]
+    },
+    {
+      "chapter": 15,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Dès le matin, les chefs des prêtres tinrent conseil avec les anciens, les spécialistes de la loi et tout le sanhédrin. Après avoir attaché Jésus, ils l'emmenèrent et le livrèrent à Pilate."
+        },
+        {
+          "number": 2,
+          "text": "Pilate l'interrogea: «Es-tu le roi des Juifs?» Jésus lui répondit: «Tu le dis.»"
+        },
+        {
+          "number": 3,
+          "text": "Les chefs des prêtres portaient contre lui beaucoup d'accusations."
+        },
+        {
+          "number": 4,
+          "text": "Pilate l'interrogea de nouveau: «Ne réponds-tu rien? Vois tous les témoignages qu'ils portent contre toi.»"
+        },
+        {
+          "number": 5,
+          "text": "Mais Jésus ne répondit plus rien, ce qui étonna Pilate."
+        },
+        {
+          "number": 6,
+          "text": "A chaque fête, il relâchait un prisonnier, celui que le peuple réclamait."
+        },
+        {
+          "number": 7,
+          "text": "Il y avait en prison le dénommé Barabbas avec ses complices, pour un meurtre qu'ils avaient commis lors d'une émeute."
+        },
+        {
+          "number": 8,
+          "text": "La foule se mit à demander à grands cris ce qu'il avait l’habitude de leur accorder."
+        },
+        {
+          "number": 9,
+          "text": "Pilate leur répondit: «Voulez-vous que je vous relâche le roi des Juifs?»"
+        },
+        {
+          "number": 10,
+          "text": "En effet, il savait que c'était par jalousie que les chefs des prêtres avaient fait arrêter Jésus."
+        },
+        {
+          "number": 11,
+          "text": "Cependant, les chefs des prêtres excitèrent la foule afin que Pilate leur relâche plutôt Barabbas."
+        },
+        {
+          "number": 12,
+          "text": "Pilate reprit la parole et leur dit: «Que voulez-vous donc que je fasse de celui que vous appelez le roi des Juifs?»"
+        },
+        {
+          "number": 13,
+          "text": "Ils crièrent de nouveau: «Crucifie-le!»"
+        },
+        {
+          "number": 14,
+          "text": "«Quel mal a-t-il fait?» leur dit Pilate. Ils crièrent encore plus fort: «Crucifie-le!»"
+        },
+        {
+          "number": 15,
+          "text": "Voulant satisfaire la foule, Pilate leur relâcha Barabbas et, après avoir fait fouetter Jésus, il le livra à la crucifixion."
+        },
+        {
+          "number": 16,
+          "text": "Les soldats conduisirent Jésus à l'intérieur de la cour, c'est-à-dire dans le prétoire, et ils rassemblèrent toute la troupe."
+        },
+        {
+          "number": 17,
+          "text": "Ils lui mirent un habit pourpre et posèrent sur sa tête une couronne d'épines qu'ils avaient tressée."
+        },
+        {
+          "number": 18,
+          "text": "Puis ils se mirent à le saluer: «Salut, roi des Juifs!»"
+        },
+        {
+          "number": 19,
+          "text": "Ils lui frappaient la tête avec un roseau, crachaient sur lui et se mettaient à genoux pour se prosterner devant lui."
+        },
+        {
+          "number": 20,
+          "text": "Après s'être ainsi moqués de lui, ils lui enlevèrent l’habit pourpre, lui remirent ses vêtements et l'emmenèrent pour le crucifier."
+        },
+        {
+          "number": 21,
+          "text": "Ils forcèrent un passant qui revenait des champs à porter la croix de Jésus. C’était Simon de Cyrène, le père d'Alexandre et de Rufus."
+        },
+        {
+          "number": 22,
+          "text": "Ils conduisirent Jésus à l'endroit appelé Golgotha, ce qui signifie «lieu du crâne»."
+        },
+        {
+          "number": 23,
+          "text": "Ils lui donnèrent [à boire] du vin mêlé de myrrhe, mais il ne le prit pas."
+        },
+        {
+          "number": 24,
+          "text": "Ils le crucifièrent, puis ils se partagèrent ses vêtements en tirant au sort pour savoir ce que chacun aurait."
+        },
+        {
+          "number": 25,
+          "text": "C'était neuf heures du matin quand ils le crucifièrent."
+        },
+        {
+          "number": 26,
+          "text": "L'inscription indiquant le motif de sa condamnation portait ces mots: «Le roi des Juifs»."
+        },
+        {
+          "number": 27,
+          "text": "Ils crucifièrent avec lui deux brigands, l'un à sa droite et l'autre à sa gauche."
+        },
+        {
+          "number": 28,
+          "text": "[Ainsi fut accompli ce que dit l'Ecriture: Il a été compté parmi les criminels.]"
+        },
+        {
+          "number": 29,
+          "text": "Les passants l'insultaient et secouaient la tête en disant: «Hé! toi qui détruis le temple et qui le reconstruis en trois jours,"
+        },
+        {
+          "number": 30,
+          "text": "sauve-toi toi-même, descends de la croix!»"
+        },
+        {
+          "number": 31,
+          "text": "Les chefs des prêtres, avec les spécialistes de la loi, se moquaient aussi entre eux et disaient: «Il en a sauvé d'autres et il ne peut pas se sauver lui-même!"
+        },
+        {
+          "number": 32,
+          "text": "Que le Messie, le roi d'Israël, descende maintenant de la croix, afin que nous voyions et que nous croyions!» Ceux qui étaient crucifiés avec lui l'insultaient aussi."
+        },
+        {
+          "number": 33,
+          "text": "A midi, il y eut des ténèbres sur tout le pays, jusqu'à trois heures de l'après-midi."
+        },
+        {
+          "number": 34,
+          "text": "Et à trois heures de l'après-midi, Jésus s'écria d'une voix forte: «Eloï, Eloï, lama sabachthani?» – ce qui signifie: Mon Dieu, mon Dieu, pourquoi m'as-tu abandonné?"
+        },
+        {
+          "number": 35,
+          "text": "Quelques-uns de ceux qui étaient là, après l'avoir entendu, disaient: «Voici qu'il appelle Elie.»"
+        },
+        {
+          "number": 36,
+          "text": "Et l'un d'eux courut remplir une éponge de vinaigre; il la fixa à un roseau et lui donna à boire en disant: «Laissez donc, voyons si Elie viendra le descendre de là.»"
+        },
+        {
+          "number": 37,
+          "text": "Cependant, Jésus poussa un grand cri et expira."
+        },
+        {
+          "number": 38,
+          "text": "Le voile du temple se déchira en deux, depuis le haut jusqu'en bas."
+        },
+        {
+          "number": 39,
+          "text": "Quand l’officier romain qui se tenait en face de Jésus [entendit son cri et] le vit expirer de cette manière, il dit: «Cet homme était vraiment le Fils de Dieu.»"
+        },
+        {
+          "number": 40,
+          "text": "Il y avait aussi des femmes qui regardaient de loin. Parmi elles étaient Marie de Magdala, Marie, mère de Jacques le jeune et de Joses, ainsi que Salomé,"
+        },
+        {
+          "number": 41,
+          "text": "qui le suivaient et le servaient lorsqu'il était en Galilée, et beaucoup d’autres femmes qui étaient aussi montées avec lui à Jérusalem."
+        },
+        {
+          "number": 42,
+          "text": "Le soir venu, comme c'était le jour de la préparation, c'est-à-dire la veille du sabbat,"
+        },
+        {
+          "number": 43,
+          "text": "Joseph d'Arimathée arriva. C’était un membre éminent du conseil, qui attendait lui aussi le royaume de Dieu. Il osa se rendre vers Pilate pour demander le corps de Jésus."
+        },
+        {
+          "number": 44,
+          "text": "Pilate s'étonna qu'il soit déjà mort; il fit venir l’officier et lui demanda si Jésus était mort depuis longtemps."
+        },
+        {
+          "number": 45,
+          "text": "Une fois renseigné par l’officier, il fit remettre le corps à Joseph."
+        },
+        {
+          "number": 46,
+          "text": "Joseph acheta un drap de lin, descendit Jésus de la croix, l'enveloppa dans le drap de lin et le déposa dans un tombeau taillé dans la roche. Puis il roula une pierre à l'entrée du tombeau."
+        },
+        {
+          "number": 47,
+          "text": "Marie de Magdala et Marie la mère de Joses regardaient où l’on déposait Jésus."
+        }
+      ]
+    },
+    {
+      "chapter": 16,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Lorsque le sabbat fut passé, Marie de Magdala, Marie la mère de Jacques et Salomé achetèrent des aromates afin d'aller embaumer Jésus."
+        },
+        {
+          "number": 2,
+          "text": "Le dimanche, elles se rendirent au tombeau de grand matin, au lever du soleil."
+        },
+        {
+          "number": 3,
+          "text": "Elles se disaient entre elles: «Qui nous roulera la pierre qui ferme l’entrée du tombeau?»"
+        },
+        {
+          "number": 4,
+          "text": "Mais quand elles levèrent les yeux, elles s'aperçurent que la pierre, qui était très grande, avait été roulée."
+        },
+        {
+          "number": 5,
+          "text": "Elles pénétrèrent dans le tombeau, virent un jeune homme assis à droite, habillé d'une robe blanche, et elles furent épouvantées."
+        },
+        {
+          "number": 6,
+          "text": "Il leur dit: «N'ayez pas peur. Vous cherchez Jésus de Nazareth, celui qui a été crucifié. Il est ressuscité, il n'est pas ici! Voici l'endroit où on l'avait déposé."
+        },
+        {
+          "number": 7,
+          "text": "Mais allez dire à ses disciples et à Pierre qu'il vous précède en Galilée: c'est là que vous le verrez, comme il vous l'a dit.»"
+        },
+        {
+          "number": 8,
+          "text": "Elles sortirent du tombeau et s'enfuirent, toutes tremblantes et bouleversées, et elles ne dirent rien à personne car elles étaient effrayées."
+        },
+        {
+          "number": 9,
+          "text": "[Ressuscité le dimanche matin, Jésus apparut d'abord à Marie de Magdala, dont il avait chassé sept démons."
+        },
+        {
+          "number": 10,
+          "text": "Elle partit l’annoncer à ceux qui avaient été avec lui et qui étaient tristes et pleuraient,"
+        },
+        {
+          "number": 11,
+          "text": "mais quand ils entendirent qu'il était vivant et qu'elle l'avait vu, ils ne la crurent pas."
+        },
+        {
+          "number": 12,
+          "text": "Après cela, il apparut sous une autre forme à deux d'entre eux qui se rendaient à la campagne."
+        },
+        {
+          "number": 13,
+          "text": "Eux aussi revinrent l'annoncer aux autres, qui ne les crurent pas non plus."
+        },
+        {
+          "number": 14,
+          "text": "Enfin, il apparut aux onze pendant qu'ils étaient à table, et il leur reprocha leur incrédulité et la dureté de leur cœur, parce qu'ils n'avaient pas cru ceux qui l'avaient vu ressuscité."
+        },
+        {
+          "number": 15,
+          "text": "Puis il leur dit: «Allez dans le monde entier proclamer la bonne nouvelle à toute la création."
+        },
+        {
+          "number": 16,
+          "text": "Celui qui croira et qui sera baptisé sera sauvé, mais celui qui ne croira pas sera condamné."
+        },
+        {
+          "number": 17,
+          "text": "Voici les signes qui accompagneront ceux qui auront cru: en mon nom, ils pourront chasser des démons, parler de nouvelles langues,"
+        },
+        {
+          "number": 18,
+          "text": "attraper des serpents, et s'ils boivent un breuvage mortel, celui-ci ne leur fera aucun mal; ils poseront les mains sur les malades et ceux-ci seront guéris.»"
+        },
+        {
+          "number": 19,
+          "text": "Après leur avoir parlé, le Seigneur fut enlevé au ciel, et il s'assit à la droite de Dieu."
+        },
+        {
+          "number": 20,
+          "text": "Quant à eux, ils s'en allèrent prêcher partout. Le Seigneur travaillait avec eux et confirmait la parole par les signes qui l'accompagnaient.]"
+        }
+      ]
+    }
+  ]
+}

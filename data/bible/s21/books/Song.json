@@ -1,0 +1,517 @@
+{
+  "version": "s21",
+  "book": "Song",
+  "usfm": "SNG",
+  "bookId": 22,
+  "title": "Cantique des cantiques",
+  "chapters": [
+    {
+      "chapter": 1,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Cantique des cantiques de Salomon."
+        },
+        {
+          "number": 2,
+          "text": "Qu'il m'embrasse des baisers de sa bouche! Oui, ton amour est meilleur que le vin,"
+        },
+        {
+          "number": 3,
+          "text": "tes parfums ont une odeur agréable. Ton nom même est un parfum qui se diffuse. Voilà pourquoi les jeunes filles t'aiment."
+        },
+        {
+          "number": 4,
+          "text": "Entraîne-moi derrière toi! Courons! Le roi m'a introduite dans ses appartements. Réjouissons-nous, soyons dans l’allégresse à cause de toi! Célébrons ton amour plus que le vin! C'est avec raison que l’on t'aime."
+        },
+        {
+          "number": 5,
+          "text": "Je suis noire, mais je suis charmante, filles de Jérusalem, autant que les tentes de Kédar, que les pavillons de Salomon."
+        },
+        {
+          "number": 6,
+          "text": "Ne prêtez pas attention à mon teint noir: c'est le soleil qui m'a brûlée. Les fils de ma mère se sont irrités contre moi et ils ont fait de moi la gardienne des vignes, mais ma vigne à moi, je ne l'ai pas gardée."
+        },
+        {
+          "number": 7,
+          "text": "Toi que mon cœur aime, révèle-moi où tu conduis ton troupeau, où tu le fais se reposer à midi! Pourquoi, en effet, serais-je comme une femme voilée près des troupeaux de tes compagnons?"
+        },
+        {
+          "number": 8,
+          "text": "Si tu ne le sais pas, toi la plus belle des femmes, sors sur les traces du petit bétail et conduis tes chevreaux près des abris des bergers!"
+        },
+        {
+          "number": 9,
+          "text": "C’est à une jument attelée aux chars du pharaon que je te compare, mon amie."
+        },
+        {
+          "number": 10,
+          "text": "Tes joues sont charmantes avec des bijoux, ton cou est charmant avec des colliers."
+        },
+        {
+          "number": 11,
+          "text": "Nous te ferons des bijoux en or avec des points en argent."
+        },
+        {
+          "number": 12,
+          "text": "Tandis que le roi est dans son entourage, mon nard diffuse son parfum."
+        },
+        {
+          "number": 13,
+          "text": "Mon bien-aimé est pour moi un bouquet de myrrhe. Il passera la nuit entre mes seins."
+        },
+        {
+          "number": 14,
+          "text": "Mon bien-aimé est pour moi une grappe de henné des vignes d'En-Guédi."
+        },
+        {
+          "number": 15,
+          "text": "Que tu es belle, mon amie, que tu es belle! Tes yeux sont des colombes."
+        },
+        {
+          "number": 16,
+          "text": "Que tu es beau, mon bien-aimé, que tu es agréable! Notre lit, c'est la verdure."
+        },
+        {
+          "number": 17,
+          "text": "Les solives de nos maisons sont des cèdres, nos lambris sont des cyprès."
+        }
+      ]
+    },
+    {
+      "chapter": 2,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Je suis un narcisse du Saron, un lis des vallées."
+        },
+        {
+          "number": 2,
+          "text": "Pareille à un lis au milieu des ronces, telle est mon amie parmi les filles."
+        },
+        {
+          "number": 3,
+          "text": "Pareil à un pommier au milieu des arbres de la forêt, tel est mon bien-aimé parmi les jeunes hommes. J’aime m'asseoir à son ombre, et son fruit est doux à mon goût."
+        },
+        {
+          "number": 4,
+          "text": "Il m'a fait entrer dans la maison du vin, et l’étendard qu’il déploie au-dessus de moi, c'est l'amour."
+        },
+        {
+          "number": 5,
+          "text": "Soutenez-moi avec des gâteaux de raisins, fortifiez-moi avec des pommes, car je suis malade d'amour!"
+        },
+        {
+          "number": 6,
+          "text": "Que sa main gauche soutienne ma tête et que de sa main droite il m’enlace!"
+        },
+        {
+          "number": 7,
+          "text": "Je vous en supplie, filles de Jérusalem, par les gazelles et les biches des champs, ne réveillez pas, ne réveillez pas l'amour avant qu'elle ne le veuille!"
+        },
+        {
+          "number": 8,
+          "text": "C'est la voix de mon bien-aimé! Le voici qui arrive, sautant sur les montagnes, bondissant sur les collines."
+        },
+        {
+          "number": 9,
+          "text": "Mon bien-aimé est pareil à la gazelle ou au jeune cerf. Le voici: il se tient derrière notre mur, observant par la fenêtre, regardant par le treillis."
+        },
+        {
+          "number": 10,
+          "text": "Mon bien-aimé parle et me dit: «Lève-toi, mon amie, ma belle, et viens!"
+        },
+        {
+          "number": 11,
+          "text": "En effet, l'hiver est passé, la pluie a cessé, elle s'en est allée."
+        },
+        {
+          "number": 12,
+          "text": "Les fleurs apparaissent dans le pays, le temps de chanter est arrivé et l’on entend le roucoulement de la tourterelle dans notre pays."
+        },
+        {
+          "number": 13,
+          "text": "Le figuier embaume par ses fruits et les vignes en fleur répandent leur parfum. Lève-toi, mon amie, ma belle, et viens!"
+        },
+        {
+          "number": 14,
+          "text": "Ma colombe, toi qui te tiens dans les fentes du rocher, qui te caches dans les parois escarpées, fais-moi voir ta figure, fais-moi entendre ta voix, car ta voix est douce et ta figure est charmante!»"
+        },
+        {
+          "number": 15,
+          "text": "Attrapez pour nous les renards, les petits renards qui dévastent les vignes, car nos vignes sont en fleur!"
+        },
+        {
+          "number": 16,
+          "text": "Mon bien-aimé est à moi, et moi je suis à lui. Il conduit son troupeau parmi les lis."
+        },
+        {
+          "number": 17,
+          "text": "Avant que la brise du jour ne souffle et que les ombres ne fuient, tourne-toi! Montre-toi pareil, mon bien-aimé, à la gazelle ou au jeune cerf, sur les montagnes rocailleuses!"
+        }
+      ]
+    },
+    {
+      "chapter": 3,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Sur mon lit, pendant les nuits, j'ai cherché celui que mon cœur aime. Je l'ai cherché, mais je ne l'ai pas trouvé."
+        },
+        {
+          "number": 2,
+          "text": "«Je veux me lever pour faire le tour de la ville, dans les rues et sur les places: je veux chercher celui que mon cœur aime.» Je l'ai cherché, mais je ne l'ai pas trouvé."
+        },
+        {
+          "number": 3,
+          "text": "Ce sont les gardes qui font la ronde dans la ville qui m'ont trouvée: «Avez-vous vu celui que mon cœur aime?»"
+        },
+        {
+          "number": 4,
+          "text": "A peine les avais-je dépassés que j'ai trouvé celui que mon cœur aime. Je l'ai attrapé et je ne l'ai pas lâché jusqu'à ce que je l'aie amené dans la maison de ma mère, dans la chambre de celle qui m'a donné naissance."
+        },
+        {
+          "number": 5,
+          "text": "Je vous en supplie, filles de Jérusalem, par les gazelles et les biches des champs, ne réveillez pas, ne réveillez pas l'amour avant qu'elle ne le veuille!"
+        },
+        {
+          "number": 6,
+          "text": "Qui donc monte du désert comme des colonnes de fumée, au milieu des vapeurs de myrrhe et d'encens et de tous les aromates des marchands?"
+        },
+        {
+          "number": 7,
+          "text": "Voici la litière de Salomon, et autour d'elle 60 hommes vaillants, parmi les plus vaillants d'Israël."
+        },
+        {
+          "number": 8,
+          "text": "Tous sont armés de l'épée, tous sont formés au combat. Chacun porte l'épée à sa hanche en vue des alertes nocturnes."
+        },
+        {
+          "number": 9,
+          "text": "Le roi Salomon s'est fait une litière en bois du Liban."
+        },
+        {
+          "number": 10,
+          "text": "Il a fait ses colonnes en argent, son dossier en or, son siège en pourpre. L’intérieur est tout brodé, travail fait avec amour par les filles de Jérusalem."
+        },
+        {
+          "number": 11,
+          "text": "Sortez, filles de Sion! Regardez le roi Salomon avec sa couronne, celle dont sa mère l'a couronné le jour de son mariage, le jour où son cœur est rempli de joie!"
+        }
+      ]
+    },
+    {
+      "chapter": 4,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Que tu es belle, mon amie, que tu es belle! Tes yeux sont des colombes derrière ton voile. Tes cheveux sont pareils à un troupeau de chèvres bondissant sur les montagnes de Galaad."
+        },
+        {
+          "number": 2,
+          "text": "Tes dents sont comme un troupeau de brebis tondues qui remontent du lavoir: chacune a sa jumelle, aucune d'elles n'est seule."
+        },
+        {
+          "number": 3,
+          "text": "Tes lèvres sont comme un liseré cramoisi et ta bouche est charmante. Derrière ton voile, ta joue est comme une moitié de grenade."
+        },
+        {
+          "number": 4,
+          "text": "Ton cou est pareil à la tour de David, construite pour être un arsenal: mille boucliers y sont suspendus, tous les boucliers des héros."
+        },
+        {
+          "number": 5,
+          "text": "Tes deux seins sont comme deux faons, comme les jumeaux d'une gazelle qui broutent au milieu des lis."
+        },
+        {
+          "number": 6,
+          "text": "Avant que la brise du jour ne souffle et que les ombres ne fuient, j'irai à la montagne de la myrrhe et à la colline de l'encens."
+        },
+        {
+          "number": 7,
+          "text": "Tu es toute belle, mon amie, il n'y a aucun défaut en toi."
+        },
+        {
+          "number": 8,
+          "text": "Viens avec moi du Liban, ma chérie, viens avec moi du Liban! Regarde du sommet de l'Amana, du sommet du Senir et de l'Hermon, des tanières des lions, des montagnes des léopards!"
+        },
+        {
+          "number": 9,
+          "text": "Tu as volé mon cœur, ma sœur, ma chérie! Tu as volé mon cœur grâce à un seul de tes regards, grâce à un seul des colliers de ton cou."
+        },
+        {
+          "number": 10,
+          "text": "Comme ton amour est beau, ma sœur, ma chérie! Ton amour est bien meilleur que le vin, le parfum de tes huiles que tous les aromates!"
+        },
+        {
+          "number": 11,
+          "text": "Tes lèvres distillent le miel, ma chérie. Il y a sous ta langue du miel et du lait, et l'odeur de tes habits est pareille à celle du Liban."
+        },
+        {
+          "number": 12,
+          "text": "Tu es un jardin privé, ma sœur, ma chérie, une fontaine fermée, une source réservée."
+        },
+        {
+          "number": 13,
+          "text": "Tes pousses sont un jardin de grenadiers aux fruits les meilleurs. On y trouve réunis du henné et du nard,"
+        },
+        {
+          "number": 14,
+          "text": "nard et safran, roseau aromatique et cinnamome, toutes sortes d’arbres à encens, myrrhe et aloès, tous les principaux aromates."
+        },
+        {
+          "number": 15,
+          "text": "Tu es la source des jardins, un puits d'eau vive qui coule du Liban!"
+        },
+        {
+          "number": 16,
+          "text": "Lève-toi, vent du nord! Viens, vent du sud! Soufflez sur mon jardin et que ses aromates se diffusent! Que mon bien-aimé entre dans son jardin afin qu'il mange de ses fruits les meilleurs!"
+        }
+      ]
+    },
+    {
+      "chapter": 5,
+      "verses": [
+        {
+          "number": 1,
+          "text": "J'entre dans mon jardin, ma sœur, ma chérie. Je cueille ma myrrhe et mes aromates, je mange mon rayon de miel avec mon miel, je bois mon vin avec mon lait. Mangez, amis, buvez, enivrez-vous d'amour!"
+        },
+        {
+          "number": 2,
+          "text": "J'étais endormie, mais mon cœur veillait. C'est la voix de mon bien-aimé! Il frappe: «Ouvre-moi, ma sœur, mon amie, ma colombe, ma parfaite, car ma tête est couverte de rosée, mes boucles sont pleines des gouttelettes de la nuit.»"
+        },
+        {
+          "number": 3,
+          "text": "J'ai enlevé mon habit. Comment pourrais-je le remettre? J'ai lavé mes pieds. Comment pourrais-je les salir?"
+        },
+        {
+          "number": 4,
+          "text": "Mon bien-aimé a passé la main par la fenêtre et j’ai été bouleversée à cause de lui."
+        },
+        {
+          "number": 5,
+          "text": "J’ai commencé à ouvrir à mon bien-aimé, et de mes mains a perlé la myrrhe, de mes doigts la myrrhe a coulé sur la poignée du verrou."
+        },
+        {
+          "number": 6,
+          "text": "J'ai ouvert à mon bien-aimé, mais mon bien-aimé s'était retiré, il avait disparu. Je perdais tous mes moyens pendant qu’il parlait! Je l'ai cherché, mais je ne l'ai pas trouvé. Je l'ai appelé, mais il ne m'a pas répondu."
+        },
+        {
+          "number": 7,
+          "text": "Ce sont les gardes qui font la ronde dans la ville qui m'ont trouvée. Ils m'ont frappée, ils m'ont blessée, ils m'ont enlevé mon châle, les gardes des murailles."
+        },
+        {
+          "number": 8,
+          "text": "Je vous en supplie, filles de Jérusalem, si vous trouvez mon bien-aimé, que lui direz-vous? Que je suis malade d'amour."
+        },
+        {
+          "number": 9,
+          "text": "Qu’a-t-il de plus qu'un autre, ton bien-aimé, toi la plus belle des femmes? Qu’a-t-il de plus qu'un autre, ton bien-aimé, pour que tu nous supplies de cette manière?"
+        },
+        {
+          "number": 10,
+          "text": "Mon bien-aimé est blanc et vermeil, on le remarque au milieu de dizaines de milliers."
+        },
+        {
+          "number": 11,
+          "text": "Sa tête est d’or pur. Ses boucles sont flottantes, noires comme le corbeau."
+        },
+        {
+          "number": 12,
+          "text": "Ses yeux sont pareils à des colombes au bord des ruisseaux: ils baignent dans le lait, ils reposent au sein de l'abondance."
+        },
+        {
+          "number": 13,
+          "text": "Ses joues sont comme un parterre d'aromates, ce sont des amas d’épices. Ses lèvres sont des lis d'où coule la myrrhe."
+        },
+        {
+          "number": 14,
+          "text": "Ses mains sont des anneaux d'or garnis de chrysolithes. Son ventre est d’ivoire poli, couvert de saphirs."
+        },
+        {
+          "number": 15,
+          "text": "Ses jambes sont des colonnes de marbre blanc posées sur des bases en or pur. Son aspect est aussi majestueux que le Liban, aussi distingué que ses cèdres."
+        },
+        {
+          "number": 16,
+          "text": "Son palais n'est que douceur et toute sa personne est désirable. Tel est mon bien-aimé, tel est mon ami, filles de Jérusalem!"
+        }
+      ]
+    },
+    {
+      "chapter": 6,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Où est allé ton bien-aimé, toi la plus belle des femmes? De quel côté ton bien-aimé s'est-il dirigé? Nous le chercherons avec toi."
+        },
+        {
+          "number": 2,
+          "text": "Mon bien-aimé est descendu à son jardin, au parterre d'aromates, pour prendre soin de son troupeau dans les jardins et pour cueillir des lis."
+        },
+        {
+          "number": 3,
+          "text": "Je suis à mon bien-aimé, et mon bien-aimé est à moi. Il a conduit son troupeau parmi les lis."
+        },
+        {
+          "number": 4,
+          "text": "Tu es aussi belle que Thirtsa, mon amie, aussi charmante que Jérusalem, aussi majestueuse que des troupes sous leurs étendards."
+        },
+        {
+          "number": 5,
+          "text": "Détourne ton regard de moi, car il me trouble! Tes cheveux sont pareils à un troupeau de chèvres bondissant sur les montagnes de Galaad."
+        },
+        {
+          "number": 6,
+          "text": "Tes dents sont comme un troupeau de brebis qui remontent du lavoir: chacune a sa jumelle, aucune d'elles n'est seule."
+        },
+        {
+          "number": 7,
+          "text": "Ta joue est comme une moitié de grenade derrière ton voile."
+        },
+        {
+          "number": 8,
+          "text": "Il peut y avoir 60 reines, 80 concubines et des jeunes filles en quantité incalculable,"
+        },
+        {
+          "number": 9,
+          "text": "ma colombe, ma parfaite, est unique. Elle est unique pour sa mère, elle est la préférée de celle qui lui a donné le jour. Les filles la voient et la disent heureuse, les reines et les concubines aussi, et elles font son éloge."
+        },
+        {
+          "number": 10,
+          "text": "Qui est celle qui apparaît, pareille à l'aurore, aussi belle que la lune, aussi pure que le soleil, aussi majestueuse que des troupes sous leurs étendards?"
+        },
+        {
+          "number": 11,
+          "text": "Je suis descendu au jardin des noyers pour voir la verdure au fond du vallon, pour voir si la vigne pousse, si les grenadiers fleurissent."
+        },
+        {
+          "number": 12,
+          "text": "J’ignore comment, mais mon désir m'a poussé vers les chars de mon noble peuple."
+        }
+      ]
+    },
+    {
+      "chapter": 7,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Reviens, reviens, Sulamite! Reviens, reviens afin que nous puissions te regarder! Qu'avez-vous à regarder la Sulamite comme la danse de deux camps?"
+        },
+        {
+          "number": 2,
+          "text": "Que tes pieds sont beaux dans tes sandales, fille de prince! Les contours de tes hanches sont comme des ornements, œuvre des mains d'un artiste."
+        },
+        {
+          "number": 3,
+          "text": "Ton bassin est une coupe arrondie où le vin parfumé ne manque pas. Ton ventre est un tas de blé entouré de lis."
+        },
+        {
+          "number": 4,
+          "text": "Tes deux seins sont comme deux faons, comme les jumeaux d'une gazelle."
+        },
+        {
+          "number": 5,
+          "text": "Ton cou est comme une tour d'ivoire. Tes yeux sont comme les étangs de Hesbon, près de la porte de Bath-Rabbim. Ton nez est comme la tour du Liban qui monte la garde face à Damas."
+        },
+        {
+          "number": 6,
+          "text": "Ta tête se dresse aussi fièrement que le Carmel et les cheveux de ta tête sont comme la pourpre. Un roi est prisonnier de boucles!"
+        },
+        {
+          "number": 7,
+          "text": "Que tu es belle, que tu es agréable, mon amour, au milieu des délices!"
+        },
+        {
+          "number": 8,
+          "text": "Ta taille ressemble au palmier, et tes seins à des grappes."
+        },
+        {
+          "number": 9,
+          "text": "Je me dis: «Je veux monter sur le palmier pour attraper ses grappes!» Que tes seins soient comme les grappes de la vigne, le parfum de ton souffle comme celui des pommes"
+        },
+        {
+          "number": 10,
+          "text": "et ton palais comme un vin excellent! Il coule aisément pour mon bien-aimé et glisse sur les lèvres de ceux qui s'endorment!"
+        },
+        {
+          "number": 11,
+          "text": "Je suis à mon bien-aimé et son désir se porte vers moi."
+        },
+        {
+          "number": 12,
+          "text": "Viens, mon bien-aimé, sortons dans la campagne pour passer la nuit au village!"
+        },
+        {
+          "number": 13,
+          "text": "Dès le matin nous irons aux vignes pour voir si la vigne pousse, si la fleur s'ouvre, si les grenadiers fleurissent. Là je te donnerai mon amour."
+        },
+        {
+          "number": 14,
+          "text": "Les mandragores diffusent leur parfum, à nos portes se trouvent tous les meilleurs fruits, nouveaux et anciens. Mon bien-aimé, je les ai gardés pour toi."
+        }
+      ]
+    },
+    {
+      "chapter": 8,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Si seulement tu étais comme mon frère, si seulement tu avais été allaité par ma mère! Je te rencontrerais dehors, je t'embrasserais et l'on ne me mépriserait même pas."
+        },
+        {
+          "number": 2,
+          "text": "Je te conduirais, je t’amènerais chez ma mère, tu m’instruirais et je te ferais boire du vin parfumé, du jus de mes grenades."
+        },
+        {
+          "number": 3,
+          "text": "Que sa main gauche soutienne ma tête et que de sa main droite il m’enlace!"
+        },
+        {
+          "number": 4,
+          "text": "Je vous en supplie, filles de Jérusalem, ne réveillez pas, ne réveillez pas l'amour avant qu'elle ne le veuille!"
+        },
+        {
+          "number": 5,
+          "text": "Qui est celle qui monte du désert, appuyée sur son bien-aimé? Je t'ai réveillé sous le pommier. C’est là que ta mère est tombée enceinte de toi, c'est là qu'elle est tombée enceinte et t’a donné le jour."
+        },
+        {
+          "number": 6,
+          "text": "Fais de moi comme une empreinte sur ton cœur, comme une empreinte sur ton bras, car l'amour est aussi fort que la mort, la passion est aussi inflexible que le séjour des morts. Ses ardeurs sont des ardeurs de feu, une flamme de l'Eternel."
+        },
+        {
+          "number": 7,
+          "text": "Les grandes eaux ne pourront pas éteindre l'amour, ni les fleuves le submerger. Même si un homme offrait tous les biens de sa maison contre l'amour, il ne s'attirerait que le mépris."
+        },
+        {
+          "number": 8,
+          "text": "Nous avons une petite sœur qui n'a pas encore de poitrine. Que ferons-nous de notre sœur, le jour où on la réclamera?"
+        },
+        {
+          "number": 9,
+          "text": "Si elle est un rempart, nous construirons sur elle des créneaux en argent; si elle est une porte, nous la fermerons avec une planche de cèdre."
+        },
+        {
+          "number": 10,
+          "text": "Je suis un rempart et mes seins sont comme des tours. A ses yeux, j’ai été pareille à celle qui trouve la paix."
+        },
+        {
+          "number": 11,
+          "text": "Salomon avait une vigne à Baal-Hamon. Il a confié la vigne à des gardiens: chacun apportait 1000 pièces d'argent pour récolter son fruit."
+        },
+        {
+          "number": 12,
+          "text": "Ma vigne à moi, je la garde. A toi, Salomon, les 1000 pièces, et 200 à ceux qui gardent son fruit!"
+        },
+        {
+          "number": 13,
+          "text": "Habitante des jardins, des compagnons prêtent attention à ta voix. Fais-la-moi entendre!"
+        },
+        {
+          "number": 14,
+          "text": "Prends la fuite, mon bien-aimé! Montre-toi pareil à la gazelle ou au jeune cerf sur les montagnes aux aromates!"
+        }
+      ]
+    }
+  ]
+}

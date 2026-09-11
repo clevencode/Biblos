@@ -16,6 +16,7 @@
     "pwa:build": "npm run build",
     "preview": "vite preview",
     "seed": "node scripts/build-seed.mjs",
+    "bible:s21": "node scripts/convert-s21.mjs",
     "test:reminder": "npx --yes tsx scripts/test-reading-reminder.ts",
     "sync:cards": "node scripts/sync-flashcards.mjs --apply",
     "sync:cards:dry": "node scripts/sync-flashcards.mjs --dry-run"

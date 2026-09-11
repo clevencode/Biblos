@@ -1,0 +1,369 @@
+{
+  "version": "s21",
+  "book": "Ruth",
+  "usfm": "RUT",
+  "bookId": 8,
+  "title": "Ruth",
+  "chapters": [
+    {
+      "chapter": 1,
+      "verses": [
+        {
+          "number": 1,
+          "text": "A l’époque des juges, il y eut une famine dans le pays. Un homme de Bethléhem de Juda partit avec sa femme et ses deux fils s’installer dans le pays de Moab."
+        },
+        {
+          "number": 2,
+          "text": "Le nom de cet homme était Elimélec, celui de sa femme Naomi, et ses deux fils s'appelaient Machlon et Kiljon; ils étaient éphratiens, de Bethléhem en Juda. Arrivés au pays de Moab, ils s'y établirent."
+        },
+        {
+          "number": 3,
+          "text": "Elimélec, le mari de Naomi, mourut et elle resta avec ses deux fils."
+        },
+        {
+          "number": 4,
+          "text": "Ils prirent des femmes moabites – l'une s’appelait Orpa et l'autre Ruth – et ils habitèrent là environ 10 ans."
+        },
+        {
+          "number": 5,
+          "text": "Machlon et Kiljon moururent aussi tous les deux et Naomi resta privée de ses deux fils et de son mari."
+        },
+        {
+          "number": 6,
+          "text": "Alors elle se leva, elle et ses belles-filles, afin de quitter le pays de Moab. En effet, elle y avait appris que l'Eternel était intervenu en faveur de son peuple et lui avait donné du pain."
+        },
+        {
+          "number": 7,
+          "text": "Elle partit de l'endroit où elle habitait, accompagnée de ses deux belles-filles, et elle se mit en route pour retourner dans le pays de Juda."
+        },
+        {
+          "number": 8,
+          "text": "Naomi dit à ses deux belles-filles: «Allez-y, retournez chacune dans la famille de votre mère! Que l'Eternel agisse avec bonté envers vous, comme vous l'avez fait envers ceux qui sont morts et envers moi!"
+        },
+        {
+          "number": 9,
+          "text": "Que l'Eternel fasse trouver à chacune du repos dans la maison d'un mari!» Puis elle les embrassa. Elles se mirent à pleurer tout haut"
+        },
+        {
+          "number": 10,
+          "text": "et lui dirent: «Non, nous irons avec toi vers ton peuple.»"
+        },
+        {
+          "number": 11,
+          "text": "Naomi dit: «Retournez chez vous, mes filles! Pourquoi viendriez-vous avec moi? Suis-je encore en état d'avoir des fils qui puissent devenir vos maris?"
+        },
+        {
+          "number": 12,
+          "text": "Retournez chez vous, mes filles, allez-y! Je suis trop vieille pour me remarier. Et même si je disais: ‘J'ai de l'espérance’, même si cette nuit j'étais avec un homme et que je mette au monde des fils,"
+        },
+        {
+          "number": 13,
+          "text": "attendriez-vous pour cela qu'ils aient grandi, refuseriez-vous pour cela de vous marier? Non, mes filles, car à cause de vous je suis dans une grande amertume parce que l'Eternel est intervenu contre moi.»"
+        },
+        {
+          "number": 14,
+          "text": "Elles se remirent à pleurer tout haut. Orpa embrassa sa belle-mère, mais Ruth lui resta attachée."
+        },
+        {
+          "number": 15,
+          "text": "Naomi dit à Ruth: «Tu vois, ta belle-sœur est retournée vers son peuple et vers ses dieux; retourne chez toi comme elle!»"
+        },
+        {
+          "number": 16,
+          "text": "Ruth répondit: «Ne me pousse pas à te laisser, à repartir loin de toi! Où tu iras j'irai, où tu habiteras j'habiterai; ton peuple sera mon peuple et ton Dieu sera mon Dieu;"
+        },
+        {
+          "number": 17,
+          "text": "où tu mourras je mourrai et j'y serai enterrée. Que l'Eternel me traite avec la plus grande sévérité si autre chose que la mort me sépare de toi!»"
+        },
+        {
+          "number": 18,
+          "text": "La voyant décidée à l’accompagner, Naomi cessa d'insister auprès d'elle."
+        },
+        {
+          "number": 19,
+          "text": "Elles firent ensemble le voyage jusqu'à leur arrivée à Bethléhem. Lorsqu'elles entrèrent dans Bethléhem, toute la ville fut dans l’agitation à cause d'elles. Les femmes disaient: «Est-ce bien Naomi?»"
+        },
+        {
+          "number": 20,
+          "text": "Elle leur dit: «Ne m'appelez pas Naomi, appelez-moi Mara, car le Tout-Puissant m'a remplie d'amertume."
+        },
+        {
+          "number": 21,
+          "text": "J'étais dans l'abondance à mon départ et l'Eternel me ramène les mains vides. Pourquoi m'appelleriez-vous Naomi, après que l'Eternel s'est prononcé contre moi, après que le Tout-Puissant a provoqué mon malheur?»"
+        },
+        {
+          "number": 22,
+          "text": "C’est ainsi que Naomi et sa belle-fille, Ruth la Moabite, revinrent du pays de Moab. Elles arrivèrent à Bethléhem au début de la moisson de l’orge."
+        }
+      ]
+    },
+    {
+      "chapter": 2,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Naomi avait un parent de son mari. C'était un homme puissant et riche du clan d'Elimélec qui s’appelait Boaz."
+        },
+        {
+          "number": 2,
+          "text": "Ruth la Moabite dit à Naomi: «Laisse-moi aller ramasser des épis abandonnés dans un champ, derrière celui aux yeux duquel je trouverai grâce.» Elle lui répondit: «Vas-y, ma fille.»"
+        },
+        {
+          "number": 3,
+          "text": "Ruth alla ramasser des épis dans un champ, derrière les moissonneurs. Il se trouva que la parcelle de terre appartenait à Boaz, du clan d'Elimélec."
+        },
+        {
+          "number": 4,
+          "text": "Or, Boaz vint de Bethléhem. Il dit aux moissonneurs: «Que l'Eternel soit avec vous!» Ils lui répondirent: «Que l'Eternel te bénisse!»"
+        },
+        {
+          "number": 5,
+          "text": "Boaz dit à son serviteur chargé de surveiller les moissonneurs: «A qui est cette jeune femme?»"
+        },
+        {
+          "number": 6,
+          "text": "Le serviteur chargé de surveiller les moissonneurs répondit: «C'est une jeune femme moabite qui est revenue avec Naomi du pays de Moab."
+        },
+        {
+          "number": 7,
+          "text": "Elle a dit: ‘Permettez-moi donc de glaner, de ramasser des épis entre les gerbes derrière les moissonneurs’ et, depuis son arrivée ce matin jusqu'à présent, elle est restée debout et ne s'est reposée qu'un moment dans la maison.»"
+        },
+        {
+          "number": 8,
+          "text": "Boaz dit à Ruth: «Ecoute, ma fille, ne va pas ramasser des épis dans un autre champ; ne t'éloigne pas d'ici, reste avec mes servantes."
+        },
+        {
+          "number": 9,
+          "text": "Regarde où l'on moissonne dans le champ et va après elles. J'ai défendu à mes serviteurs de te toucher. Quand tu auras soif, tu iras aux vases et tu boiras de ce que les serviteurs auront puisé.»"
+        },
+        {
+          "number": 10,
+          "text": "Alors elle tomba le visage contre terre, se prosterna et lui dit: «Comment ai-je trouvé grâce à tes yeux pour que tu t'intéresses à moi, une étrangère?»"
+        },
+        {
+          "number": 11,
+          "text": "Boaz lui répondit: «On m'a rapporté tout ce que tu as fait pour ta belle-mère depuis la mort de ton mari et comment tu as quitté ton père et ta mère et le pays de ta naissance pour aller vers un peuple que tu ne connaissais pas auparavant."
+        },
+        {
+          "number": 12,
+          "text": "Que l'Eternel te rende ce que tu as fait et que ta récompense soit entière de la part de l'Eternel, le Dieu d'Israël, sous les ailes duquel tu es venue te réfugier!»"
+        },
+        {
+          "number": 13,
+          "text": "Elle dit: «Oh! Que je trouve grâce à tes yeux, mon seigneur, car tu m'as consolée et tu as parlé au cœur de ta servante. Pourtant je ne suis pas, moi, comme l'une de tes servantes.»"
+        },
+        {
+          "number": 14,
+          "text": "Au moment du repas, Boaz dit à Ruth: «Approche-toi, mange du pain, trempe ton morceau dans la vinaigrette.» Elle s'assit à côté des moissonneurs. On lui donna du grain rôti; elle mangea à satiété et garda le reste."
+        },
+        {
+          "number": 15,
+          "text": "Puis elle se leva pour ramasser des épis. Boaz donna cet ordre à ses serviteurs: «Qu'elle ramasse aussi des épis entre les gerbes et ne lui faites aucun mal."
+        },
+        {
+          "number": 16,
+          "text": "Vous retirerez même pour elle des gerbes quelques épis que vous la laisserez ramasser sans lui faire de reproches.»"
+        },
+        {
+          "number": 17,
+          "text": "Elle ramassa des épis dans le champ jusqu'au soir, puis elle battit ce qu'elle avait récolté. Il y eut environ 22 litres d'orge."
+        },
+        {
+          "number": 18,
+          "text": "Elle l'emporta et rentra dans la ville, et sa belle-mère vit ce qu'elle avait ramassé. Elle sortit aussi les restes de son repas et les lui donna."
+        },
+        {
+          "number": 19,
+          "text": "Sa belle-mère lui dit: «Où as-tu ramassé des épis aujourd'hui? Où as-tu travaillé? Béni soit celui qui s'est intéressé à toi!» Ruth raconta à sa belle-mère chez qui elle avait travaillé: «L'homme chez qui j'ai travaillé aujourd'hui s'appelle Boaz», dit-elle."
+        },
+        {
+          "number": 20,
+          "text": "Naomi dit à sa belle-fille: «Qu'il soit béni de l'Eternel, qui garde sa bonté pour les vivants comme pour les morts! Cet homme nous est proche – lui dit encore Naomi – il est un de ceux qui ont droit de rachat sur nous.»"
+        },
+        {
+          "number": 21,
+          "text": "Ruth la Moabite ajouta: «Il m'a dit aussi: ‘Reste avec mes serviteurs jusqu'à ce qu'ils aient terminé toute ma moisson.’»"
+        },
+        {
+          "number": 22,
+          "text": "Naomi dit à sa belle-fille Ruth: «Il est bon que tu sortes avec ses servantes, ma fille, et qu'on ne te rencontre pas dans un autre champ.»"
+        },
+        {
+          "number": 23,
+          "text": "Ruth resta donc avec les servantes de Boaz pour ramasser des épis jusqu'à la fin de la moisson de l’orge et de la moisson du blé. Elle habitait avec sa belle-mère."
+        }
+      ]
+    },
+    {
+      "chapter": 3,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Sa belle-mère Naomi lui dit: «Ma fille, je voudrais assurer ton repos afin que tu sois heureuse."
+        },
+        {
+          "number": 2,
+          "text": "Eh bien! Boaz, l’homme dont tu as accompagné les servantes, n'est-il pas notre parent? Or, il doit procéder cette nuit au tri de l’orge qui est dans l'aire de battage."
+        },
+        {
+          "number": 3,
+          "text": "Lave-toi et parfume-toi, puis remets tes habits et descends à l'aire. Tu ne te feras pas connaître à lui jusqu'à ce qu'il ait fini de manger et de boire."
+        },
+        {
+          "number": 4,
+          "text": "Quand il ira se coucher, observe l'endroit où il se couche. Ensuite va découvrir ses pieds et te coucher. Il te dira lui-même ce que tu as à faire.»"
+        },
+        {
+          "number": 5,
+          "text": "Ruth lui répondit: «Je ferai tout ce que tu as dit.»"
+        },
+        {
+          "number": 6,
+          "text": "Elle descendit à l'aire de battage et fit tout ce qu'avait ordonné sa belle-mère."
+        },
+        {
+          "number": 7,
+          "text": "Boaz mangea et but, et son cœur était joyeux. Il alla se coucher au bout du tas de gerbes. Ruth vint alors tout doucement, découvrit ses pieds et se coucha."
+        },
+        {
+          "number": 8,
+          "text": "Au milieu de la nuit, Boaz eut un frisson; il se pencha et vit une femme couchée à ses pieds."
+        },
+        {
+          "number": 9,
+          "text": "Il dit: «Qui es-tu?» Elle répondit: «Je suis Ruth, ta servante. Etends le pan de ton manteau sur ta servante, car tu as droit de rachat.»"
+        },
+        {
+          "number": 10,
+          "text": "Il dit: «Sois bénie de l'Eternel, ma fille! Ce dernier trait témoigne encore plus en ta faveur que le premier, car tu n'as pas recherché des jeunes gens, pauvres ou riches."
+        },
+        {
+          "number": 11,
+          "text": "Maintenant, ma fille, n’aie pas peur! Je ferai pour toi tout ce que tu diras, car tout le monde chez nous sait que tu es une femme de valeur."
+        },
+        {
+          "number": 12,
+          "text": "Il est bien vrai que j'ai droit de rachat, mais il existe un autre parent, plus proche que moi, qui a ce droit."
+        },
+        {
+          "number": 13,
+          "text": "Passe la nuit ici. Demain, s'il veut exercer envers toi son droit de rachat, c’est bien, qu'il le fasse; mais s'il ne lui plaît pas de l'exercer envers toi, je le ferai, moi, l'Eternel est vivant! Reste couchée jusqu'au matin.»"
+        },
+        {
+          "number": 14,
+          "text": "Elle resta couchée à ses pieds jusqu'au matin et se leva avant qu'on puisse se reconnaître l'un l'autre. Boaz dit: «Qu'on ne sache pas que cette femme est entrée dans l'aire de battage.»"
+        },
+        {
+          "number": 15,
+          "text": "Et il ajouta: «Donne le manteau qui est sur toi, tiens-le.» Elle le tint et il compta 6 mesures d'orge qu'il chargea sur elle. Puis il entra dans la ville."
+        },
+        {
+          "number": 16,
+          "text": "Ruth revint chez sa belle-mère et Naomi dit: «Est-ce toi, ma fille?» Ruth lui raconta tout ce que cet homme avait fait pour elle."
+        },
+        {
+          "number": 17,
+          "text": "Elle dit: «Il m'a donné ces 6 mesures d'orge en disant: ‘Tu ne retourneras pas les mains vides vers ta belle-mère.’»"
+        },
+        {
+          "number": 18,
+          "text": "Naomi dit: «Ma fille, reste tranquille jusqu'à ce que tu saches comment finira l’affaire, car cet homme ne se donnera pas de repos avant de l’avoir réglée aujourd'hui.»"
+        }
+      ]
+    },
+    {
+      "chapter": 4,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Boaz monta à la porte de la ville et s'y arrêta. Or, celui qui avait droit de rachat et dont Boaz avait parlé vint à passer. Boaz lui dit: «Approche-toi, assieds-toi ici, toi un tel.» Il s'approcha et s’assit."
+        },
+        {
+          "number": 2,
+          "text": "Boaz prit alors dix hommes parmi les anciens de la ville et dit: «Asseyez-vous ici.» Ils s'assirent."
+        },
+        {
+          "number": 3,
+          "text": "Puis il dit à celui qui avait le droit de rachat: «Naomi est revenue du pays de Moab, et elle vend la parcelle de terre qui appartenait à notre frère Elimélec."
+        },
+        {
+          "number": 4,
+          "text": "J'ai cru devoir t'en informer et te dire: ‘Fais-en l’acquisition devant les habitants de la ville et les anciens de mon peuple.’ Si tu veux la racheter, rachète-la, mais si tu ne veux pas, déclare-le-moi afin que je le sache. En effet, il n'y a personne avant toi qui ait le droit de rachat et je l'ai après toi.» Il répondit: «Je la rachèterai.»"
+        },
+        {
+          "number": 5,
+          "text": "Boaz dit: «Le jour où tu achèteras le champ à Naomi, tu l’acquerras aussi de Ruth la Moabite, la femme du défunt, et tu devras maintenir le nom du défunt sur son héritage.»"
+        },
+        {
+          "number": 6,
+          "text": "Celui qui avait le droit de rachat répondit: «Je ne peux pas exercer ce droit de rachat pour mon compte, sinon je détruirai mon héritage. Prends pour toi mon droit de rachat, car je ne peux pas l’exercer.»"
+        },
+        {
+          "number": 7,
+          "text": "Autrefois en Israël, pour valider toute affaire relative à un rachat ou à un échange, on retirait sa sandale et on la donnait à l'autre: c’était ce geste qui servait d’attestation en Israël."
+        },
+        {
+          "number": 8,
+          "text": "Celui qui avait le droit de rachat dit donc à Boaz: «Fais-en l’acquisition pour ton compte» et retira sa sandale."
+        },
+        {
+          "number": 9,
+          "text": "Alors Boaz dit aux anciens et à tout le peuple: «Vous êtes témoins aujourd'hui que j'ai acquis de la main de Naomi tout ce qui appartenait à Elimélec, à Kiljon et à Machlon,"
+        },
+        {
+          "number": 10,
+          "text": "et que j’ai également acquis pour femme Ruth la Moabite, femme de Machlon, pour maintenir le nom du défunt sur son héritage afin qu’il ne disparaisse pas parmi ses frères ni à la porte de sa ville. Vous en êtes témoins aujourd'hui!»"
+        },
+        {
+          "number": 11,
+          "text": "Tout le peuple qui était à la porte et les anciens dirent: «Nous en sommes témoins! Que l'Eternel rende la femme qui entre dans ta famille semblable à Rachel et à Léa, qui ont toutes les deux donné naissance à la communauté d'Israël! Montre ta force dans Ephrata et fais-toi un nom dans Bethléhem!"
+        },
+        {
+          "number": 12,
+          "text": "Puisse la descendance que l'Eternel te donnera par cette jeune femme faire ressembler ta famille à celle de Pérets, que Tamar a donné à Juda!»"
+        },
+        {
+          "number": 13,
+          "text": "Boaz épousa Ruth; elle devint sa femme et il s’unit à elle. L'Eternel permit à Ruth de devenir enceinte et elle mit au monde un fils."
+        },
+        {
+          "number": 14,
+          "text": "Les femmes dirent à Naomi: «Béni soit l'Eternel qui ne t'a pas laissée manquer aujourd'hui d’une personne ayant le droit de rachat! Que son nom soit célébré en Israël!"
+        },
+        {
+          "number": 15,
+          "text": "Cet enfant sera ton réconfort et le soutien de ta vieillesse, car ta belle-fille qui t'aime l'a mis au monde, elle qui vaut mieux pour toi que sept fils.»"
+        },
+        {
+          "number": 16,
+          "text": "Naomi prit l'enfant, le serra sur sa poitrine et l’éleva."
+        },
+        {
+          "number": 17,
+          "text": "Les voisines lui donnèrent un nom en disant: «Un fils est né à Naomi», et elles l'appelèrent Obed. Ce fut le père d'Isaï, père de David."
+        },
+        {
+          "number": 18,
+          "text": "Voici la lignée de Pérets."
+        },
+        {
+          "number": 19,
+          "text": "Pérets eut pour fils Hetsron, Hetsron eut Ram, Ram eut Amminadab,"
+        },
+        {
+          "number": 20,
+          "text": "Amminadab eut pour fils Nachshon, Nachshon eut Salmon,"
+        },
+        {
+          "number": 21,
+          "text": "Salmon eut pour fils Boaz, Boaz eut Obed,"
+        },
+        {
+          "number": 22,
+          "text": "Obed eut pour fils Isaï et Isaï eut David."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,3408 @@
+{
+  "version": "s21",
+  "book": "1Sam",
+  "usfm": "1SA",
+  "bookId": 9,
+  "title": "1 Samuel",
+  "chapters": [
+    {
+      "chapter": 1,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Il y avait un homme de Ramathaïm-Tsophim, de la région montagneuse d'Ephraïm, du nom d'Elkana. Il était le fils de Jeroham, fils d'Elihu, petit-fils de Thohu et arrière-petit-fils de Tsuph, et était éphraïmite."
+        },
+        {
+          "number": 2,
+          "text": "Il avait deux femmes. L'une s'appelait Anne, l'autre Peninna; Peninna avait des enfants, tandis qu’Anne n'en avait pas."
+        },
+        {
+          "number": 3,
+          "text": "Chaque année, cet homme montait de sa ville jusqu’à Silo pour adorer l'Eternel, le maître de l’univers, et lui offrir des sacrifices. Là se trouvaient les deux fils d'Eli, Hophni et Phinées, qui étaient prêtres de l'Eternel."
+        },
+        {
+          "number": 4,
+          "text": "Le jour où Elkana offrait son sacrifice, il donnait des portions à sa femme Peninna et à tous les fils et à toutes les filles qu'il avait d'elle."
+        },
+        {
+          "number": 5,
+          "text": "Mais à Anne, il donnait une portion double, car il l’aimait, même si l'Eternel l’avait rendue stérile."
+        },
+        {
+          "number": 6,
+          "text": "Sa rivale la provoquait pour la pousser à s'irriter de ce que l'Eternel l'avait rendue stérile."
+        },
+        {
+          "number": 7,
+          "text": "Et toutes les années il en allait de même: chaque fois qu'Anne montait à la maison de l'Eternel, Peninna la provoquait de la même manière. Alors elle pleurait et ne mangeait pas."
+        },
+        {
+          "number": 8,
+          "text": "Son mari Elkana lui disait: «Anne, pourquoi pleures-tu et ne manges-tu pas? Pourquoi ton cœur est-il attristé? Est-ce que je ne vaux pas pour toi mieux que dix fils?»"
+        },
+        {
+          "number": 9,
+          "text": "Anne se leva, après que l'on eut mangé et bu à Silo. Le prêtre Eli était assis sur son siège, près de la porte du temple de l'Eternel."
+        },
+        {
+          "number": 10,
+          "text": "L'amertume dans l'âme, elle pria l'Eternel et pleura abondamment."
+        },
+        {
+          "number": 11,
+          "text": "Elle fit le vœu suivant: «Eternel, maître de l’univers, si tu consens à regarder la détresse de ta servante, si tu te souviens de moi, si tu n'oublies pas ta servante et lui donnes un fils, je le consacrerai à l'Eternel pour toute la durée de sa vie et le rasoir ne passera pas sur sa tête.»"
+        },
+        {
+          "number": 12,
+          "text": "Comme elle restait longtemps en prière devant l'Eternel, Eli observa sa bouche."
+        },
+        {
+          "number": 13,
+          "text": "Anne parlait dans son cœur et ne faisait que remuer les lèvres, on n'entendait pas sa voix. Eli pensa qu'elle était ivre,"
+        },
+        {
+          "number": 14,
+          "text": "et il lui dit: «Jusqu'à quand seras-tu ivre? Va cuver ton vin.»"
+        },
+        {
+          "number": 15,
+          "text": "Anne répondit: «Ce n’est pas cela, mon seigneur. Je suis une femme à l’esprit abattu, je n'ai bu ni vin ni boisson enivrante, mais j'épanchais mon cœur devant l'Eternel."
+        },
+        {
+          "number": 16,
+          "text": "Ne prends pas ta servante pour une femme légère, car c'est le trop-plein de ma douleur et de mon chagrin qui m'a fait parler jusqu'à présent.»"
+        },
+        {
+          "number": 17,
+          "text": "Eli reprit la parole et dit: «Pars en paix et que le Dieu d'Israël exauce la prière que tu lui as adressée!»"
+        },
+        {
+          "number": 18,
+          "text": "Elle répondit: «Que ta servante trouve grâce à tes yeux!» Cette femme s'en alla. Elle se remit à manger et son visage ne fut plus le même."
+        },
+        {
+          "number": 19,
+          "text": "Ils se levèrent de bon matin et, après avoir adoré l'Eternel, ils partirent et retournèrent chez eux à Rama. Elkana eut des relations conjugales avec Anne, sa femme, et l'Eternel se souvint d'elle."
+        },
+        {
+          "number": 20,
+          "text": "Dans le cours de l'année, Anne devint enceinte et elle mit au monde un fils qu'elle appela Samuel, car, dit-elle, «je l'ai demandé à l'Eternel»."
+        },
+        {
+          "number": 21,
+          "text": "Son mari Elkana monta ensuite avec toute sa famille offrir à l'Eternel le sacrifice annuel et accomplir son vœu."
+        },
+        {
+          "number": 22,
+          "text": "Mais Anne ne monta pas à Silo. Elle dit à son mari: «Lorsque l'enfant sera sevré, je l’y conduirai afin qu'il soit présenté devant l'Eternel et qu'il reste là pour toujours.»"
+        },
+        {
+          "number": 23,
+          "text": "Son mari Elkana lui dit: «Fais ce qui te semblera bon, attends de l'avoir sevré. Seulement, que l’Eternel accomplisse sa parole!» La femme resta donc là et elle allaita son fils jusqu'au moment de son sevrage."
+        },
+        {
+          "number": 24,
+          "text": "Quand elle l'eut sevré, elle le fit monter avec elle à Silo. Elle prit 3 taureaux, 22 litres de farine et une outre de vin. Elle conduisit l’enfant à la maison de l'Eternel à Silo alors qu’il était encore tout jeune."
+        },
+        {
+          "number": 25,
+          "text": "Ils égorgèrent les taureaux et conduisirent l'enfant à Eli."
+        },
+        {
+          "number": 26,
+          "text": "Anne dit: «Mon seigneur, pardon, aussi vrai que ton âme vit, mon seigneur, c’est moi qui me tenais ici près de toi pour prier l'Eternel."
+        },
+        {
+          "number": 27,
+          "text": "C'était pour cet enfant que je priais, et l'Eternel a exaucé la prière que je lui adressais."
+        },
+        {
+          "number": 28,
+          "text": "Aussi, je veux le prêter à l'Eternel; il sera toute sa vie prêté à l'Eternel.» Et ils se prosternèrent là devant l'Eternel."
+        }
+      ]
+    },
+    {
+      "chapter": 2,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Anne fit cette prière: «Mon cœur se réjouit en l'Eternel, ma force a été relevée par l'Eternel. Ma bouche s'est ouverte contre mes ennemis, car je me réjouis de ton secours."
+        },
+        {
+          "number": 2,
+          "text": "Personne n'est saint comme l'Eternel. Il n'y a pas d'autre Dieu que toi, il n'y a pas de rocher pareil à notre Dieu."
+        },
+        {
+          "number": 3,
+          "text": "»Ne prononcez plus de paroles hautaines! Que l'arrogance ne sorte plus de votre bouche, car l'Eternel est un Dieu qui sait tout et qui pèse la valeur de toutes les actions."
+        },
+        {
+          "number": 4,
+          "text": "»L'arc des puissants est brisé, et les faibles ont la force pour ceinture."
+        },
+        {
+          "number": 5,
+          "text": "Ceux qui étaient rassasiés se louent pour du pain, et ceux qui étaient affamés se reposent. Même la stérile accouche sept fois, et celle qui avait beaucoup d'enfants devient flétrie."
+        },
+        {
+          "number": 6,
+          "text": "»L'Eternel fait mourir et il fait vivre, il fait descendre au séjour des morts et il en fait remonter."
+        },
+        {
+          "number": 7,
+          "text": "L'Eternel appauvrit et il enrichit, il abaisse et il élève."
+        },
+        {
+          "number": 8,
+          "text": "De la poussière il retire le pauvre, du fumier il relève le faible, pour les faire asseoir avec les grands, et il leur donne en possession un trône de gloire. »Oui, c’est à l'Eternel qu’appartiennent les fondements de la terre, et c'est sur eux qu'il a établi le monde."
+        },
+        {
+          "number": 9,
+          "text": "Il gardera les pas de ses bien-aimés, tandis que les méchants seront réduits au silence dans les ténèbres. En effet, l'homme ne triomphera pas par la force."
+        },
+        {
+          "number": 10,
+          "text": "»Les ennemis de l'Eternel trembleront. Du haut du ciel il fera gronder son tonnerre contre eux. L'Eternel jugera les extrémités de la terre. Il donnera la puissance à son roi et il relèvera la force de celui qu’il a désigné par onction.»"
+        },
+        {
+          "number": 11,
+          "text": "Elkana repartit chez lui à Rama et l'enfant resta au service de l'Eternel devant le prêtre Eli."
+        },
+        {
+          "number": 12,
+          "text": "Les fils d'Eli étaient des vauriens qui ne connaissaient pas l'Eternel."
+        },
+        {
+          "number": 13,
+          "text": "Voici quelle était la manière d'agir de ces prêtres envers le peuple: lorsque quelqu'un offrait un sacrifice, le serviteur du prêtre arrivait au moment où l'on faisait cuire la viande; tenant à la main une fourchette à trois dents,"
+        },
+        {
+          "number": 14,
+          "text": "il piquait dans le récipient, dans le chaudron, dans la marmite ou dans le pot, et tout ce que la fourchette ramenait, le prêtre le prenait pour lui. Voilà comment ils agissaient vis-à-vis de tous les Israélites qui venaient à Silo."
+        },
+        {
+          "number": 15,
+          "text": "Avant même qu'on ne fasse brûler la graisse, le serviteur du prêtre arrivait et disait à celui qui offrait le sacrifice: «Donne de la viande à rôtir pour le prêtre; il n’acceptera de ta part aucune viande cuite, c'est de la viande crue qu'il veut.»"
+        },
+        {
+          "number": 16,
+          "text": "Si l'homme lui disait: «Quand on aura brûlé la graisse, tu prendras ce qui te plaira», le serviteur répondait: «Non! Donne-la maintenant, sinon je la prends de force.»"
+        },
+        {
+          "number": 17,
+          "text": "Ces jeunes gens se rendaient coupables d'un très grand péché devant l'Eternel, parce qu'ils traitaient avec mépris les offrandes faites à l'Eternel."
+        },
+        {
+          "number": 18,
+          "text": "Samuel faisait le service devant l'Eternel et cet enfant était habillé d'un éphod en lin."
+        },
+        {
+          "number": 19,
+          "text": "Sa mère lui faisait chaque année une petite robe et la lui apportait lorsqu’elle montait à Silo avec son mari pour offrir le sacrifice annuel."
+        },
+        {
+          "number": 20,
+          "text": "Eli bénit Elkana et sa femme en disant: «Que l'Eternel te fasse avoir des enfants de cette femme pour remplacer celui qu'elle a prêté à l'Eternel!» Et ils repartirent chez eux."
+        },
+        {
+          "number": 21,
+          "text": "Lorsque l'Eternel fut intervenu pour Anne, elle devint enceinte et elle eut trois fils et deux filles. Quant au jeune Samuel, il grandissait devant l'Eternel."
+        },
+        {
+          "number": 22,
+          "text": "Eli était très âgé lorsqu’il apprit comment ses fils agissaient vis-à-vis de tout Israël. Il apprit aussi qu'ils couchaient avec les femmes qui se rassemblaient à l'entrée de la tente de la rencontre."
+        },
+        {
+          "number": 23,
+          "text": "Il leur dit: «Pourquoi faites-vous de telles choses? En effet, tout le peuple me parle de vos mauvaises actions."
+        },
+        {
+          "number": 24,
+          "text": "Non, mes enfants, ce que j'entends dire n'est pas bon, vous faites pécher le peuple de l'Eternel."
+        },
+        {
+          "number": 25,
+          "text": "Si un homme pèche contre un autre homme, Dieu le jugera, mais s'il pèche contre l'Eternel, qui pourra intercéder en sa faveur?» Mais ils n'écoutèrent pas leur père, car l'Eternel voulait les faire mourir."
+        },
+        {
+          "number": 26,
+          "text": "Le jeune Samuel continuait à grandir, et il était agréable aussi bien à l'Eternel qu’aux hommes."
+        },
+        {
+          "number": 27,
+          "text": "Un homme de Dieu se rendit vers Eli et lui dit: «Voici ce que dit l'Eternel: Ne me suis-je pas révélé aux membres de ta famille, lorsqu'ils étaient en Egypte et étaient esclaves du pharaon?"
+        },
+        {
+          "number": 28,
+          "text": "Je les ai choisis parmi toutes les tribus d'Israël pour être à mon service en tant que prêtres, pour monter à mon autel, pour brûler le parfum, pour porter l'éphod devant moi, et j'ai donné à la famille de ton père tous les sacrifices passés par le feu qu’offrent les Israélites."
+        },
+        {
+          "number": 29,
+          "text": "Pourquoi traitez-vous avec mépris mes sacrifices et mes offrandes, ceux que j'ai ordonné de faire dans ma demeure? Et comment se fait-il que tu accordes plus d’importance à tes fils qu’à moi? C’en est au point où vous vous engraissez des meilleures parts de toutes les offrandes d'Israël, mon peuple."
+        },
+        {
+          "number": 30,
+          "text": "C'est pourquoi, l'Eternel, le Dieu d'Israël, déclare: J'avais certes dit que ta famille et celle de ton ancêtre marcheraient devant moi pour toujours, mais maintenant, l'Eternel le déclare, loin de moi cette intention! En effet, j'honorerai celui qui m'honore, mais ceux qui me méprisent seront méprisés."
+        },
+        {
+          "number": 31,
+          "text": "Voici que viennent les jours où je vais briser ta force et celle de ta famille, de sorte qu'il n'y aura plus de vieillard chez toi."
+        },
+        {
+          "number": 32,
+          "text": "Tu verras un adversaire dans ma demeure, tandis qu'Israël sera comblé de biens par l'Eternel, et il n'y aura plus jamais de vieillard dans ta famille."
+        },
+        {
+          "number": 33,
+          "text": "Je laisserai subsister l'un des tiens près de mon autel afin d'épuiser tes yeux et d'attrister ton âme, mais tous les membres de ta famille mourront dans la force de l'âge."
+        },
+        {
+          "number": 34,
+          "text": "Tu auras pour signe ce qui arrivera à tes deux fils Hophni et Phinées: ils mourront tous les deux le même jour."
+        },
+        {
+          "number": 35,
+          "text": "Je ferai surgir pour moi un prêtre fidèle, qui agira selon mon cœur et selon mon désir. Je lui construirai une maison stable et il marchera toujours devant celui que j’aurai désigné par onction."
+        },
+        {
+          "number": 36,
+          "text": "Tous les membres restants de ta famille viendront se prosterner devant lui pour avoir une pièce d'argent et un morceau de pain; ils diront: ‘Je t’en prie, rattache-moi à l'une des fonctions de prêtre, afin que j'aie un morceau de pain à manger.’»"
+        }
+      ]
+    },
+    {
+      "chapter": 3,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Le jeune Samuel était au service de l'Eternel devant Eli. La parole de l'Eternel était rare à cette époque, les visions n'étaient pas fréquentes."
+        },
+        {
+          "number": 2,
+          "text": "Un jour, Eli, dont la vue commençait à faiblir et qui ne pouvait plus bien voir, était couché à sa place habituelle."
+        },
+        {
+          "number": 3,
+          "text": "La lampe de Dieu n'était pas encore éteinte et Samuel était couché dans le temple de l'Eternel, où se trouvait l'arche de Dieu."
+        },
+        {
+          "number": 4,
+          "text": "Alors l'Eternel appela Samuel. Il répondit: «Me voici»,"
+        },
+        {
+          "number": 5,
+          "text": "courut vers Eli et dit: «Me voici, car tu m'as appelé.» Eli répondit: «Je n'ai pas appelé, retourne te coucher.» Et Samuel alla se coucher."
+        },
+        {
+          "number": 6,
+          "text": "L'Eternel appela de nouveau Samuel. Samuel se leva, alla vers Eli et dit: «Me voici, car tu m'as appelé.» Eli répondit: «Je n'ai pas appelé, mon fils, retourne te coucher.»"
+        },
+        {
+          "number": 7,
+          "text": "Samuel ne connaissait pas encore l'Eternel, la parole de l'Eternel ne lui avait pas encore été révélée."
+        },
+        {
+          "number": 8,
+          "text": "L'Eternel appela de nouveau Samuel, pour la troisième fois. Samuel se leva, alla vers Eli et dit: «Me voici, car tu m'as appelé.» Eli comprit alors que c'était l'Eternel qui appelait l'enfant,"
+        },
+        {
+          "number": 9,
+          "text": "et il dit à Samuel: «Va te coucher et, si l'on t'appelle, dis: ‘Parle, Eternel, car ton serviteur écoute.’» Et Samuel alla se coucher à sa place."
+        },
+        {
+          "number": 10,
+          "text": "L'Eternel vint se tenir près de lui et appela comme les autres fois: «Samuel, Samuel!» Samuel répondit: «Parle, car ton serviteur écoute.»"
+        },
+        {
+          "number": 11,
+          "text": "Alors l'Eternel dit à Samuel: «Je vais faire en Israël une chose telle que toute personne qui l'apprendra en restera abasourdie."
+        },
+        {
+          "number": 12,
+          "text": "Ce jour-là j'accomplirai vis-à-vis d’Eli tout ce que j'ai prononcé contre sa famille; je le commencerai et je le finirai."
+        },
+        {
+          "number": 13,
+          "text": "Je le lui ai déclaré, je veux punir sa famille pour toujours. En effet, il avait connaissance du crime par lequel ses fils se sont maudits et il ne leur a pas fait de reproches."
+        },
+        {
+          "number": 14,
+          "text": "C'est pourquoi je jure à la famille d'Eli que jamais son crime ne sera expié, ni par des sacrifices ni par des offrandes.»"
+        },
+        {
+          "number": 15,
+          "text": "Samuel resta couché jusqu'au matin, puis il ouvrit les portes de la maison de l'Eternel. Il avait peur de raconter la vision à Eli,"
+        },
+        {
+          "number": 16,
+          "text": "mais Eli l’appela et dit: «Samuel, mon fils!» Il répondit: «Me voici!»"
+        },
+        {
+          "number": 17,
+          "text": "Eli dit: «Quelle est la parole que l'Eternel t'a adressée? Ne m’en cache rien. Que Dieu te traite avec la plus grande sévérité, si tu me caches quoi que ce soit de tout ce qu'il t'a dit!»"
+        },
+        {
+          "number": 18,
+          "text": "Samuel lui raconta tout, sans rien lui cacher, et Eli dit: «C'est l'Eternel, qu'il fasse ce qui lui semblera bon!»"
+        },
+        {
+          "number": 19,
+          "text": "Samuel grandissait. L'Eternel était avec lui et ne laissa aucune de ses paroles rester sans effet."
+        },
+        {
+          "number": 20,
+          "text": "Tout Israël, depuis Dan jusqu'à Beer-Shéba, reconnut que Samuel était établi prophète de l'Eternel."
+        },
+        {
+          "number": 21,
+          "text": "L'Eternel continuait à apparaître à Silo; en effet l'Eternel se révélait à Samuel à Silo en lui adressant la parole."
+        }
+      ]
+    },
+    {
+      "chapter": 4,
+      "verses": [
+        {
+          "number": 1,
+          "text": "La parole de Samuel s'adressait à tout Israël. Les Israélites sortirent à la rencontre des Philistins pour les combattre. Ils installèrent leur camp près d'Eben-Ezer, tandis que les Philistins campaient à Aphek."
+        },
+        {
+          "number": 2,
+          "text": "Les Philistins se rangèrent en ordre de bataille contre Israël et le combat s'engagea. Israël fut battu par les Philistins, qui tuèrent environ 4000 hommes sur le champ de bataille."
+        },
+        {
+          "number": 3,
+          "text": "Le peuple rentra au camp et les anciens d'Israël dirent: «Pourquoi l'Eternel a-t-il laissé aujourd'hui les Philistins nous battre? Allons chercher l'arche de l'alliance de l'Eternel à Silo. Qu'elle vienne au milieu de nous et nous délivre de la domination de nos ennemis.»"
+        },
+        {
+          "number": 4,
+          "text": "Le peuple envoya des messagers à Silo et l'on apporta de là-bas l'arche de l'alliance de l'Eternel, le maître de l’univers, qui siège entre les chérubins. Les deux fils d'Eli, Hophni et Phinées, étaient là, avec l'arche de l'alliance de Dieu."
+        },
+        {
+          "number": 5,
+          "text": "Lorsque l'arche de l'alliance de l'Eternel entra dans le camp, tout Israël poussa de grands cris de joie, et la terre en fut ébranlée."
+        },
+        {
+          "number": 6,
+          "text": "Les Philistins entendirent le vacarme de ces cris et dirent: «Que signifient ces grands cris qui retentissent dans le camp des Hébreux?» Lorsqu’ils apprirent que l'arche de l'Eternel était arrivée au camp,"
+        },
+        {
+          "number": 7,
+          "text": "les Philistins eurent peur, parce qu'ils crurent que Dieu était désormais dans le camp des Hébreux. «Malheur à nous, disaient-ils, car ce n'était pas le cas jusqu'à présent."
+        },
+        {
+          "number": 8,
+          "text": "Malheur à nous! Qui nous délivrera du pouvoir de ces dieux puissants? Ce sont eux qui ont frappé les Egyptiens de toutes sortes de fléaux dans le désert."
+        },
+        {
+          "number": 9,
+          "text": "Fortifiez-vous et soyez des hommes, Philistins, sinon vous serez esclaves des Hébreux comme ils ont été les vôtres. Soyez des hommes et combattez!»"
+        },
+        {
+          "number": 10,
+          "text": "Les Philistins livrèrent bataille et Israël fut battu. Chacun s'enfuit dans sa tente. La défaite fut très grande et 30'000 fantassins israélites furent tués."
+        },
+        {
+          "number": 11,
+          "text": "L'arche de Dieu fut prise et les deux fils d'Eli, Hophni et Phinées, moururent."
+        },
+        {
+          "number": 12,
+          "text": "Un Benjaminite accourut du champ de bataille et vint à Silo le même jour, les vêtements déchirés et la tête couverte de terre."
+        },
+        {
+          "number": 13,
+          "text": "Lorsqu'il arriva, Eli était dans l'attente, assis sur un siège près du chemin, car son cœur était inquiet pour l'arche de Dieu. Cet homme entra dans la ville et donna la nouvelle, et toute la ville poussa des cris."
+        },
+        {
+          "number": 14,
+          "text": "Eli entendit ces cris et demanda: «Que signifie ce vacarme?» Aussitôt l'homme vint lui annoncer la nouvelle."
+        },
+        {
+          "number": 15,
+          "text": "Or Eli était âgé de 98 ans, il avait les yeux fixes et ne pouvait plus voir."
+        },
+        {
+          "number": 16,
+          "text": "L'homme dit à Eli: «J'arrive du champ de bataille et c'est du champ de bataille que je me suis enfui aujourd'hui.» Eli demanda: «Que s'est-il passé, mon fils?»"
+        },
+        {
+          "number": 17,
+          "text": "Celui qui apportait la nouvelle répondit: «Israël a pris la fuite devant les Philistins et le peuple a subi une grande défaite. Même tes deux fils, Hophni et Phinées, sont morts et l'arche de Dieu a été prise.»"
+        },
+        {
+          "number": 18,
+          "text": "Il avait à peine fait mention de l'arche de Dieu qu'Eli tomba à la renverse de son siège, à côté de la porte; il se brisa la nuque et mourut. C'était en effet un homme âgé et lourd. Il avait été juge en Israël pendant 40 ans."
+        },
+        {
+          "number": 19,
+          "text": "Sa belle-fille, la femme de Phinées, était enceinte et sur le point d'accoucher. Lorsqu'elle entendit la nouvelle de la prise de l'arche de Dieu ainsi que de la mort de son beau-père et de son mari, elle se courba et accoucha, car les douleurs la surprirent."
+        },
+        {
+          "number": 20,
+          "text": "Comme elle allait mourir, les femmes qui étaient avec elle lui dirent: «N’aie pas peur, car tu as mis au monde un fils!» Mais elle ne répondit pas et n'y fit pas attention."
+        },
+        {
+          "number": 21,
+          "text": "Elle appela l'enfant I-Kabod, en disant: «La gloire est bannie d'Israël!» C'était à cause de la prise de l'arche de Dieu et à cause de son beau-père et de son mari."
+        },
+        {
+          "number": 22,
+          "text": "Elle dit: «La gloire est bannie d'Israël, car l'arche de Dieu est prise!»"
+        }
+      ]
+    },
+    {
+      "chapter": 5,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Les Philistins prirent l'arche de Dieu et la transportèrent d'Eben-Ezer à Asdod."
+        },
+        {
+          "number": 2,
+          "text": "Après s'être emparés de l'arche de Dieu, les Philistins la firent entrer dans le temple de Dagon et la placèrent à côté de Dagon."
+        },
+        {
+          "number": 3,
+          "text": "Le lendemain, les Asdodiens se levèrent de bon matin et trouvèrent Dagon étendu le visage contre terre devant l'arche de l'Eternel. Ils prirent Dagon et le remirent à sa place."
+        },
+        {
+          "number": 4,
+          "text": "Le surlendemain, ils se levèrent de bon matin et trouvèrent de nouveau Dagon étendu le visage contre terre devant l'arche de l'Eternel. La tête de Dagon et ses deux mains étaient abattues sur le seuil, et il ne lui restait que le tronc."
+        },
+        {
+          "number": 5,
+          "text": "C'est pourquoi, jusqu'à aujourd’hui, les prêtres de Dagon et tous ceux qui viennent dans le temple de Dagon à Asdod ne marchent pas sur le seuil."
+        },
+        {
+          "number": 6,
+          "text": "La main de l'Eternel pesa plus lourdement encore sur les Asdodiens et il fit des ravages parmi eux. Il les frappa de tumeurs à Asdod et dans le territoire qui en dépend."
+        },
+        {
+          "number": 7,
+          "text": "Quand ils virent cela, les habitants d'Asdod dirent: «L'arche du Dieu d'Israël ne restera pas chez nous, car il fait peser lourdement sa main sur nous et sur Dagon, notre dieu.»"
+        },
+        {
+          "number": 8,
+          "text": "Ils firent venir tous les princes des Philistins, les rassemblèrent chez eux et demandèrent: «Que pouvons-nous faire de l'arche du Dieu d'Israël?» Les princes répondirent: «Qu'on la transporte à Gath.» Et l'on transporta là-bas l'arche du Dieu d'Israël."
+        },
+        {
+          "number": 9,
+          "text": "Mais une fois qu'on l'y eut transportée, la main de l'Eternel fut contre la ville et il y eut une très grande terreur. Il frappa les habitants de la ville, depuis le petit jusqu'au grand, et ils eurent une éruption de tumeurs."
+        },
+        {
+          "number": 10,
+          "text": "Alors ils envoyèrent l'arche de Dieu à Ekron. Lorsque l'arche de Dieu entra dans Ekron, les Ekroniens poussèrent des cris en disant: «On a transporté l'arche du Dieu d'Israël chez nous pour nous faire mourir, nous et notre peuple!»"
+        },
+        {
+          "number": 11,
+          "text": "Ils firent venir tous les princes des Philistins, les rassemblèrent et dirent: «Renvoyez l'arche du Dieu d'Israël! Qu'elle retourne chez elle et qu'elle ne nous fasse pas mourir, nous et notre peuple.» En effet, dans toute la ville régnait une terreur mortelle; la main de Dieu y pesait très lourdement."
+        },
+        {
+          "number": 12,
+          "text": "Ceux qui ne mouraient pas étaient frappés de tumeurs et les cris de la ville montaient jusqu'au ciel."
+        }
+      ]
+    },
+    {
+      "chapter": 6,
+      "verses": [
+        {
+          "number": 1,
+          "text": "L'arche de l'Eternel resta sept mois dans le pays des Philistins."
+        },
+        {
+          "number": 2,
+          "text": "Les Philistins appelèrent les prêtres et les devins et dirent: «Que pouvons-nous faire de l'arche de l'Eternel? Faites-nous connaître de quelle manière nous devons la renvoyer chez elle.»"
+        },
+        {
+          "number": 3,
+          "text": "Les hommes consultés répondirent: «Si vous renvoyez l'arche du Dieu d'Israël, ne la renvoyez pas sans rien, mais faites à Dieu un sacrifice de culpabilité. Alors vous guérirez et vous saurez pourquoi sa main ne s'est pas retirée de vous.»"
+        },
+        {
+          "number": 4,
+          "text": "Les Philistins dirent: «Quelle offrande lui ferons-nous?» Ils répondirent: «Nous offrirons 5 tumeurs en or et 5 souris en or, d'après le nombre des princes des Philistins, car le même fléau vous a tous atteints, vous et vos princes."
+        },
+        {
+          "number": 5,
+          "text": "Faites des représentations de vos tumeurs, ainsi que des souris qui ravagent le pays, et rendez gloire au Dieu d'Israël. Peut-être cessera-t-il de faire lourdement peser sa main contre vous, contre vos dieux et contre votre pays."
+        },
+        {
+          "number": 6,
+          "text": "Pourquoi rendriez-vous votre cœur insensible comme les Egyptiens et le pharaon l’ont fait? Dieu est intervenu contre eux et ils ont alors dû laisser partir les Israélites."
+        },
+        {
+          "number": 7,
+          "text": "Maintenant, fabriquez un char tout neuf et prenez deux vaches qui allaitent et n'ont jamais porté de joug. Attelez ces vaches au char et ramenez leurs petits à l’étable afin qu’ils ne soient plus derrière elles."
+        },
+        {
+          "number": 8,
+          "text": "Vous prendrez l'arche de l'Eternel et vous la mettrez sur le char. Vous placerez à côté d'elle, dans un coffre, les objets d'or que vous donnez à l'Eternel en sacrifice de culpabilité, puis vous la renverrez et elle partira."
+        },
+        {
+          "number": 9,
+          "text": "Suivez-la du regard: si elle monte par le chemin de sa frontière vers Beth-Shémesh, cela signifie que c'est l'Eternel qui nous a fait ce grand mal; sinon, nous saurons que ce n'est pas sa main qui nous a frappés, mais que cela nous est arrivé par hasard.»"
+        },
+        {
+          "number": 10,
+          "text": "C’est ce que firent ces hommes. Ils prirent deux vaches qui allaitaient et les attelèrent au char, et ils enfermèrent les petits dans l’étable."
+        },
+        {
+          "number": 11,
+          "text": "Ils mirent sur le char l'arche de l'Eternel ainsi que le coffre avec les souris en or et les représentations de leurs tumeurs."
+        },
+        {
+          "number": 12,
+          "text": "Les vaches prirent directement le chemin de Beth-Shémesh; elles suivirent toujours la même route en mugissant, sans s’écarter à droite ou à gauche. Les princes des Philistins les suivirent jusqu'à la frontière de Beth-Shémesh."
+        },
+        {
+          "number": 13,
+          "text": "Les habitants de Beth-Shémesh moissonnaient les blés dans la vallée; ils levèrent les yeux, aperçurent l'arche et se réjouirent en la voyant."
+        },
+        {
+          "number": 14,
+          "text": "Le char arriva dans le champ de Josué, un habitant de Beth-Shémesh, et s'y arrêta. Il y avait là une grande pierre. On fendit le bois du char et l'on offrit les vaches en holocauste à l'Eternel."
+        },
+        {
+          "number": 15,
+          "text": "Les Lévites descendirent l'arche de l'Eternel ainsi que le coffre qui se trouvait à côté d'elle et qui contenait les objets en or, et ils posèrent le tout sur la grande pierre. Les habitants de Beth-Shémesh offrirent ce jour-là des holocaustes et des sacrifices à l'Eternel."
+        },
+        {
+          "number": 16,
+          "text": "Après avoir vu cela, les cinq princes des Philistins retournèrent à Ekron le jour même."
+        },
+        {
+          "number": 17,
+          "text": "Voici les tumeurs en or que les Philistins donnèrent à l'Eternel en sacrifice de culpabilité: une pour Asdod, une pour Gaza, une pour Askalon, une pour Gath, une pour Ekron."
+        },
+        {
+          "number": 18,
+          "text": "Il y avait aussi le nombre de souris en or correspondant au nombre de villes philistines qui appartenaient aux cinq chefs, aussi bien des villes fortifiées que des villages sans murailles. C'est ce qu'atteste la grande pierre sur laquelle on déposa l'arche de l'Eternel et qui se trouve aujourd'hui encore dans le champ de Josué de Beth-Shémesh."
+        },
+        {
+          "number": 19,
+          "text": "L'Eternel frappa les habitants de Beth-Shémesh, lorsqu'ils regardèrent l'arche de l'Eternel. Il frappa 50'070 hommes parmi le peuple, et le peuple fut dans le deuil parce que l'Eternel l'avait frappé d'un grand fléau."
+        },
+        {
+          "number": 20,
+          "text": "Les habitants de Beth-Shémesh dirent: «Qui peut se tenir en présence de l'Eternel, de ce Dieu saint? Et vers qui l'arche doit-elle monter en s'éloignant de nous?»"
+        },
+        {
+          "number": 21,
+          "text": "Ils envoyèrent des messagers aux habitants de Kirjath-Jearim pour leur dire: «Les Philistins ont ramené l'arche de l'Eternel. Descendez donc et faites-la monter vers vous.»"
+        }
+      ]
+    },
+    {
+      "chapter": 7,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Les habitants de Kirjath-Jearim vinrent et firent monter l'arche de l'Eternel chez eux. Ils la conduisirent dans la maison d'Abinadab, sur la colline, et ils consacrèrent son fils Eléazar pour la garder."
+        },
+        {
+          "number": 2,
+          "text": "Il s'était passé bien du temps depuis le jour où l'arche avait été déposée à Kirjath-Jearim. Vingt années avaient passé. Alors toute la communauté d'Israël poussa des gémissements vers l'Eternel."
+        },
+        {
+          "number": 3,
+          "text": "Samuel dit à toute la communauté d'Israël: «Si c'est de tout votre cœur que vous revenez à l'Eternel, enlevez du milieu de vous les dieux étrangers et les Astartés, dirigez votre cœur vers l'Eternel et servez-le lui seul. Il vous délivrera alors de l’oppression des Philistins.»"
+        },
+        {
+          "number": 4,
+          "text": "Les Israélites enlevèrent du milieu d'eux les Baals et les Astartés, et ils servirent l'Eternel seul."
+        },
+        {
+          "number": 5,
+          "text": "Samuel dit: «Rassemblez tout Israël à Mitspa et je prierai l'Eternel pour vous.» Et ils se rassemblèrent à Mitspa."
+        },
+        {
+          "number": 6,
+          "text": "Ils puisèrent de l'eau et la versèrent devant l'Eternel, et ils jeûnèrent ce jour-là en disant: «Nous avons péché contre l'Eternel!» Samuel jugea les Israélites à Mitspa."
+        },
+        {
+          "number": 7,
+          "text": "Les Philistins apprirent que les Israélites s'étaient rassemblés à Mitspa, et les princes des Philistins montèrent pour attaquer Israël. A cette nouvelle, les Israélites eurent peur des Philistins,"
+        },
+        {
+          "number": 8,
+          "text": "et ils dirent à Samuel: «N'arrête pas de crier pour nous à l'Eternel, notre Dieu, afin qu'il nous sauve de la domination des Philistins.»"
+        },
+        {
+          "number": 9,
+          "text": "Samuel prit un tout jeune agneau et l'offrit tout entier en holocauste à l'Eternel. Il cria à l'Eternel pour Israël et l'Eternel l'exauça."
+        },
+        {
+          "number": 10,
+          "text": "Pendant que Samuel offrait l'holocauste, les Philistins s'approchèrent pour attaquer Israël. L'Eternel fit gronder ce jour-là son tonnerre sur les Philistins et les mit en déroute. Ils furent battus devant Israël."
+        },
+        {
+          "number": 11,
+          "text": "Les hommes d'Israël sortirent de Mitspa, poursuivirent les Philistins et les battirent jusqu'au-dessous de Beth-Car."
+        },
+        {
+          "number": 12,
+          "text": "Samuel prit une pierre qu'il plaça entre Mitspa et Shen, et il l'appela Eben-Ezer en disant: «Jusqu'ici l'Eternel nous a secourus.»"
+        },
+        {
+          "number": 13,
+          "text": "Ainsi, les Philistins furent humiliés et ils ne vinrent plus sur le territoire d'Israël. La main de l'Eternel fut contre les Philistins pendant toute la vie de Samuel."
+        },
+        {
+          "number": 14,
+          "text": "Les villes que les Philistins avaient prises à Israël retournèrent à Israël, depuis Ekron jusqu'à Gath, avec leur territoire; Israël les arracha à la domination des Philistins. Il y eut aussi paix entre Israël et les Amoréens."
+        },
+        {
+          "number": 15,
+          "text": "Samuel fut juge en Israël pendant toute sa vie."
+        },
+        {
+          "number": 16,
+          "text": "Il allait chaque année faire le tour de Béthel, de Guilgal et de Mitspa, et il jugeait Israël dans toutes ces villes."
+        },
+        {
+          "number": 17,
+          "text": "Puis il revenait à Rama, où se trouvait sa maison. Il y jugeait Israël et il construisit là un autel en l’honneur de l'Eternel."
+        }
+      ]
+    },
+    {
+      "chapter": 8,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Lorsque Samuel devint vieux, il établit ses fils juges sur Israël."
+        },
+        {
+          "number": 2,
+          "text": "Son fils aîné se nommait Joël, et le second Abija. Ils étaient juges à Beer-Shéba."
+        },
+        {
+          "number": 3,
+          "text": "Les fils de Samuel ne marchèrent pas sur ses traces; ils se livraient à des profits malhonnêtes, acceptaient des cadeaux et tordaient le droit."
+        },
+        {
+          "number": 4,
+          "text": "Tous les anciens d'Israël se rassemblèrent et allèrent trouver Samuel à Rama."
+        },
+        {
+          "number": 5,
+          "text": "Ils lui dirent: «Te voilà vieux et tes fils ne marchent pas sur tes traces. Maintenant, établis sur nous un roi pour nous juger, comme on en trouve dans toutes les nations.»"
+        },
+        {
+          "number": 6,
+          "text": "Cela déplut à Samuel qu'ils disent: «Donne-nous un roi pour nous juger», et il pria l'Eternel."
+        },
+        {
+          "number": 7,
+          "text": "L'Eternel dit à Samuel: «Ecoute le peuple dans tout ce qu'il te dira, car ce n'est pas toi qu'ils rejettent, c'est moi, afin que je ne règne plus sur eux."
+        },
+        {
+          "number": 8,
+          "text": "Ils agissent envers toi comme ils l’ont toujours fait depuis que je les ai fait sortir d'Egypte jusqu'à aujourd’hui: ils m'ont abandonné pour servir d'autres dieux."
+        },
+        {
+          "number": 9,
+          "text": "Ecoute-les donc, mais donne-leur des avertissements, fais-leur connaître les droits du roi qui régnera sur eux.»"
+        },
+        {
+          "number": 10,
+          "text": "Samuel rapporta toutes les paroles de l'Eternel au peuple qui lui demandait un roi."
+        },
+        {
+          "number": 11,
+          "text": "Il dit: «Voici quels seront les droits du roi qui régnera sur vous. Il prendra vos fils et les mettra sur ses chars ou parmi ses cavaliers, ou encore ils devront courir devant son char."
+        },
+        {
+          "number": 12,
+          "text": "Il fera d'eux des chefs de milliers et des chefs de cinquantaines. Il les emploiera à labourer ses terres, à récolter ses moissons, à fabriquer ses armes de guerre et l’équipement de ses chars."
+        },
+        {
+          "number": 13,
+          "text": "Il prendra vos filles pour faire d’elles des parfumeuses, des cuisinières et des boulangères."
+        },
+        {
+          "number": 14,
+          "text": "Il prendra la meilleure partie de vos champs, de vos vignes et de vos oliviers et la donnera à ses serviteurs."
+        },
+        {
+          "number": 15,
+          "text": "Il prendra la dîme du produit de vos champs et de vos vignes et la donnera à ses serviteurs."
+        },
+        {
+          "number": 16,
+          "text": "Il prendra vos esclaves et vos servantes, vos meilleurs bœufs et vos ânes et se servira d’eux pour ses travaux."
+        },
+        {
+          "number": 17,
+          "text": "Il prendra la dîme de vos troupeaux et vous serez vous-mêmes ses esclaves."
+        },
+        {
+          "number": 18,
+          "text": "Alors vous crierez contre votre roi, celui que vous vous serez choisi, mais l'Eternel ne vous exaucera pas.»"
+        },
+        {
+          "number": 19,
+          "text": "Le peuple refusa d'écouter Samuel. «Cela ne fait rien, dirent-ils, il y aura quand même un roi sur nous,"
+        },
+        {
+          "number": 20,
+          "text": "et nous aussi nous serons pareils à toutes les nations: notre roi nous jugera, il marchera à notre tête et conduira nos guerres.»"
+        },
+        {
+          "number": 21,
+          "text": "Après avoir entendu toutes les paroles du peuple, Samuel les répéta à l'Eternel,"
+        },
+        {
+          "number": 22,
+          "text": "et l'Eternel lui dit: «Ecoute-les et établis un roi sur eux.» Samuel dit aux hommes d'Israël: «Que chacun retourne dans sa ville.»"
+        }
+      ]
+    },
+    {
+      "chapter": 9,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Il y avait un homme de Benjamin, appelé Kis. Il était fils d'Abiel, petit-fils de Tseror, descendant de Becorath, d'Aphiach, lui-même fils d'un Benjaminite. C'était un vaillant guerrier."
+        },
+        {
+          "number": 2,
+          "text": "Il avait un fils du nom de Saül, qui était jeune et beau, plus beau que tous les Israélites, et qui les dépassait tous d’une tête."
+        },
+        {
+          "number": 3,
+          "text": "Les ânesses de Kis, le père de Saül, s'égarèrent et Kis dit à son fils Saül: «Prends avec toi l'un des serviteurs, lève-toi et va à la recherche des ânesses.»"
+        },
+        {
+          "number": 4,
+          "text": "Saül traversa la région montagneuse d'Ephraïm et le pays de Shalisha sans les trouver; ils passèrent par le pays de Shaalim et elles n'y étaient pas; ils parcoururent le pays de Benjamin et ils ne les trouvèrent pas."
+        },
+        {
+          "number": 5,
+          "text": "Ils étaient arrivés dans le pays de Tsuph, lorsque Saül dit au serviteur qui l'accompagnait: «Viens, retournons chez nous. Sinon mon père oubliera les ânesses et s'inquiétera pour nous.»"
+        },
+        {
+          "number": 6,
+          "text": "Le serviteur lui dit: «Il y a dans cette ville un homme de Dieu, et c'est un homme estimé. Tout ce qu'il dit arrive à coup sûr. Allons-y donc! Peut-être nous fera-t-il connaître le chemin que nous devons prendre.»"
+        },
+        {
+          "number": 7,
+          "text": "Saül dit à son serviteur: «Mais si nous y allons, qu’apporterons-nous à l'homme de Dieu? En effet, il n'y a plus de provisions dans nos sacs et nous n'avons aucun cadeau à lui offrir. Qu'avons-nous?»"
+        },
+        {
+          "number": 8,
+          "text": "Le serviteur reprit la parole et dit à Saül: «J'ai sur moi un peu d'argent; je le donnerai à l'homme de Dieu et il nous indiquera notre chemin.»"
+        },
+        {
+          "number": 9,
+          "text": "Quand on allait consulter Dieu, on disait autrefois en Israël: «Venez, allons trouver le voyant!» Celui qu'on appelle aujourd'hui «prophète» s'appelait en effet autrefois «voyant»."
+        },
+        {
+          "number": 10,
+          "text": "Saül dit à son serviteur: «Tu as raison. Viens, allons-y!» Et ils se rendirent à la ville où se trouvait l'homme de Dieu."
+        },
+        {
+          "number": 11,
+          "text": "Alors qu’ils montaient à la ville, ils rencontrèrent des jeunes filles sorties pour puiser de l'eau et ils leur demandèrent: «Le voyant est-il ici?»"
+        },
+        {
+          "number": 12,
+          "text": "Elles leur répondirent: «Oui, il est devant toi, mais dépêche-toi: il est venu aujourd’hui en ville parce qu'il y a un sacrifice pour le peuple sur le haut lieu."
+        },
+        {
+          "number": 13,
+          "text": "Dès que vous serez entrés dans la ville, vous pourrez le trouver avant qu'il ne monte au haut lieu pour manger. En effet, le peuple ne mangera pas avant son arrivée, parce qu'il doit bénir le sacrifice; après cela seulement, les invités mangeront. Montez donc, car vous le trouverez maintenant.»"
+        },
+        {
+          "number": 14,
+          "text": "Ils montèrent alors à la ville. Ils étaient arrivés au milieu de la ville quand ils rencontrèrent Samuel qui sortait pour monter au haut lieu."
+        },
+        {
+          "number": 15,
+          "text": "Or, un jour avant l'arrivée de Saül, l'Eternel avait averti Samuel en disant:"
+        },
+        {
+          "number": 16,
+          "text": "«Demain, à cette heure-ci, je t'enverrai un homme du pays de Benjamin. Tu le désigneras par onction comme chef de mon peuple, d'Israël. Il sauvera mon peuple de l’oppression des Philistins. En effet, j'ai regardé mon peuple parce que son cri est venu jusqu'à moi.»"
+        },
+        {
+          "number": 17,
+          "text": "Lorsque Samuel eut aperçu Saül, l'Eternel lui dit: «Voici l'homme dont je t'ai parlé, c'est lui qui régnera sur mon peuple.»"
+        },
+        {
+          "number": 18,
+          "text": "Saül s'approcha de Samuel au milieu de la porte de la ville et lui dit: «Indique-moi, je t’en prie, où se trouve la maison du voyant.»"
+        },
+        {
+          "number": 19,
+          "text": "Samuel répondit à Saül: «C'est moi qui suis le voyant. Monte devant moi au haut lieu et vous mangerez aujourd'hui avec moi. Je te laisserai partir demain, après t’avoir donné réponse pour tout ce qui te préoccupe."
+        },
+        {
+          "number": 20,
+          "text": "Ne t'inquiète pas pour les ânesses que tu as perdues il y a trois jours, car elles sont retrouvées. Et pour qui est réservé tout ce qu'il y a de précieux en Israël? N'est-ce pas pour toi et pour toute ta famille?»"
+        },
+        {
+          "number": 21,
+          "text": "Saül répondit: «Ne suis-je pas benjaminite, membre de l'une des plus petites tribus d'Israël, et mon clan n'est-il pas le plus insignifiant de tous ceux que compte la tribu de Benjamin? Pourquoi donc me tiens-tu ce discours?»"
+        },
+        {
+          "number": 22,
+          "text": "Samuel prit Saül et son serviteur, les fit entrer dans la salle et leur donna une place à la tête des invités. Il y avait là une trentaine d’hommes."
+        },
+        {
+          "number": 23,
+          "text": "Samuel dit au cuisinier: «Sers la portion que je t'ai donnée en te disant de la mettre à part.»"
+        },
+        {
+          "number": 24,
+          "text": "Le cuisinier préleva la cuisse et ce qui l'entoure, et il la servit à Saül. Samuel dit: «Voici ce qui a été réservé. Sers-toi et mange, car on l'a gardé pour toi lorsque j'ai invité le peuple.» Ainsi, Saül mangea avec Samuel ce jour-là."
+        },
+        {
+          "number": 25,
+          "text": "Ils redescendirent du haut lieu à la ville et Samuel s'entretint avec Saül sur la terrasse du toit."
+        },
+        {
+          "number": 26,
+          "text": "Puis ils se levèrent de bon matin. A l'aurore, Samuel appela Saül sur le toit en disant: «Viens et je te laisserai partir.» Saül se leva et ils sortirent tous les deux, Samuel et lui."
+        },
+        {
+          "number": 27,
+          "text": "Quand ils furent descendus à la limite de la ville, Samuel dit à Saül: «Dis à ton serviteur de passer devant nous.» Le serviteur passa devant. «Arrête-toi maintenant, reprit Samuel, et je vais te faire connaître la parole de Dieu.»"
+        }
+      ]
+    },
+    {
+      "chapter": 10,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Samuel prit une fiole d'huile qu'il versa sur la tête de Saül. Il l'embrassa et dit: «L'Eternel t'a désigné par onction pour que tu sois le chef de son héritage."
+        },
+        {
+          "number": 2,
+          "text": "Aujourd'hui, après m'avoir quitté, tu trouveras deux hommes près du tombeau de Rachel, sur la frontière de Benjamin, à Tseltsach. Ils te diront: ‘Les ânesses à la recherche desquelles tu es allé sont retrouvées. Maintenant ton père ne pense plus aux ânesses, mais il s'inquiète pour vous, il dit: Que dois-je faire au sujet de mon fils?’"
+        },
+        {
+          "number": 3,
+          "text": "De là tu iras plus loin et tu arriveras au chêne de Thabor, où tu rencontreras trois hommes en train de monter vers Dieu à Béthel. Ils portent l'un 3 chevreaux, l'autre 3 gâteaux de pain et l'autre une outre de vin."
+        },
+        {
+          "number": 4,
+          "text": "Ils te demanderont comment tu vas et te donneront deux pains. Tu les accepteras de leur part."
+        },
+        {
+          "number": 5,
+          "text": "Après cela, tu arriveras à Guibea-Elohim, où se trouve une garnison de Philistins. En entrant dans la ville, tu rencontreras une troupe de prophètes qui descendent du haut lieu, précédés du luth, du tambourin, de la flûte et de la harpe, et qui prophétisent."
+        },
+        {
+          "number": 6,
+          "text": "L'Esprit de l'Eternel viendra sur toi; tu prophétiseras avec eux et tu deviendras un autre homme."
+        },
+        {
+          "number": 7,
+          "text": "Lorsque ces signes se seront réalisés pour toi, fais ce que tu trouveras à faire, car Dieu est avec toi."
+        },
+        {
+          "number": 8,
+          "text": "Puis tu descendras avant moi à Guilgal. Je descendrai vers toi pour offrir des holocaustes et des sacrifices de communion. Tu attendras 7 jours, jusqu'à ce que j'arrive vers toi et que je te dise ce que tu dois faire.»"
+        },
+        {
+          "number": 9,
+          "text": "Dès que Saül eut tourné le dos pour se séparer de Samuel, Dieu lui donna un autre cœur et tous ces signes se réalisèrent le même jour."
+        },
+        {
+          "number": 10,
+          "text": "Lorsqu'ils arrivèrent à Guibea, une troupe de prophètes vint à sa rencontre. L'Esprit de Dieu vint sur lui et il prophétisa au milieu d'eux."
+        },
+        {
+          "number": 11,
+          "text": "Tous ceux qui l'avaient connu auparavant virent qu'il prophétisait avec les prophètes, et les membres du peuple se disaient l'un à l'autre: «Qu'est-il arrivé au fils de Kis? Saül est-il aussi parmi les prophètes?»"
+        },
+        {
+          "number": 12,
+          "text": "Quelqu'un de Guibea ajouta: «Et qui est leur père?» De là vient le proverbe: «Saül est-il aussi parmi les prophètes?»"
+        },
+        {
+          "number": 13,
+          "text": "Lorsqu'il eut fini de prophétiser, Saül se rendit au haut lieu."
+        },
+        {
+          "number": 14,
+          "text": "Son oncle lui demanda, ainsi qu’à son serviteur: «Où êtes-vous allés?» Saül répondit: «A la recherche des ânesses, mais nous ne les avons pas aperçues et nous sommes allés trouver Samuel.»"
+        },
+        {
+          "number": 15,
+          "text": "L'oncle de Saül reprit: «Raconte-moi donc ce que vous a dit Samuel.»"
+        },
+        {
+          "number": 16,
+          "text": "Saül répondit à son oncle: «Il nous a assuré que les ânesses étaient retrouvées.» Il ne lui dit rien de la royauté dont avait parlé Samuel."
+        },
+        {
+          "number": 17,
+          "text": "Samuel convoqua le peuple devant l'Eternel à Mitspa."
+        },
+        {
+          "number": 18,
+          "text": "Il annonça aux Israélites: «Voici ce que dit l'Eternel, le Dieu d'Israël: C’est moi qui ai fait sortir Israël d'Egypte, qui vous ai délivrés de la domination des Egyptiens et de tous les royaumes qui vous opprimaient."
+        },
+        {
+          "number": 19,
+          "text": "Et aujourd'hui, vous rejetez votre Dieu, celui qui vous a délivrés de tous vos maux et de toutes vos souffrances, et vous lui dites: ‘Etablis un roi sur nous!’ Présentez-vous maintenant devant l'Eternel par tribus et par milliers.»"
+        },
+        {
+          "number": 20,
+          "text": "Samuel fit approcher toutes les tribus d'Israël, et la tribu de Benjamin fut désignée."
+        },
+        {
+          "number": 21,
+          "text": "Il fit approcher la tribu de Benjamin clan par clan, et le clan de Matri fut désigné. Puis Saül, fils de Kis, fut désigné. On le chercha, mais on ne le trouva pas."
+        },
+        {
+          "number": 22,
+          "text": "On consulta de nouveau l'Eternel en demandant: «Y a-t-il encore un homme qui soit venu ici?» L'Eternel dit: «Il est caché vers les bagages.»"
+        },
+        {
+          "number": 23,
+          "text": "On courut le tirer de là et il se présenta au milieu du peuple. Il les dépassait tous d’une tête."
+        },
+        {
+          "number": 24,
+          "text": "Samuel dit à tout le peuple: «Voyez-vous celui que l'Eternel a choisi? Il n'y a personne dans tout le peuple qui soit pareil à lui.» Et tout le peuple cria: «Vive le roi!»"
+        },
+        {
+          "number": 25,
+          "text": "Samuel fit alors connaître au peuple le droit relatif à la royauté, et il l'écrivit dans un livre qu'il déposa devant l'Eternel. Puis il renvoya tout le peuple, chacun chez soi."
+        },
+        {
+          "number": 26,
+          "text": "Saül aussi alla chez lui à Guibea, accompagné des hommes de valeur dont Dieu avait touché le cœur."
+        },
+        {
+          "number": 27,
+          "text": "Il y eut toutefois des vauriens qui dirent: «Quoi! C'est celui-ci qui nous sauvera!» Ils le méprisèrent et ne lui apportèrent aucun cadeau, mais Saül n'y prêta pas attention."
+        }
+      ]
+    },
+    {
+      "chapter": 11,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Nachash l'Ammonite vint assiéger Jabès en Galaad. Tous les habitants de Jabès dirent à Nachash: «Conclus une alliance avec nous et nous te servirons.»"
+        },
+        {
+          "number": 2,
+          "text": "Mais Nachash l'Ammonite leur répondit: «Je traiterai avec vous à condition de vous crever à tous l'œil droit et de jeter ainsi la honte sur tout Israël.»"
+        },
+        {
+          "number": 3,
+          "text": "Les anciens de Jabès lui dirent: «Accorde-nous une trêve de sept jours afin que nous envoyions des messagers dans tout le territoire d'Israël. Si personne ne vient nous secourir, nous nous livrerons à toi.»"
+        },
+        {
+          "number": 4,
+          "text": "Les messagers arrivèrent à Guibea, la ville de Saül, et firent au peuple le récit de ces événements. Tout le peuple se mit alors à pleurer tout haut."
+        },
+        {
+          "number": 5,
+          "text": "A ce moment, Saül revint des champs, derrière ses bœufs. Il demanda: «Qu'a donc le peuple, à pleurer ainsi?» On lui raconta ce qu'avaient dit les habitants de Jabès."
+        },
+        {
+          "number": 6,
+          "text": "L'Esprit de Dieu vint sur Saül lorsqu'il entendit cela, et sa colère s'enflamma fortement."
+        },
+        {
+          "number": 7,
+          "text": "Il prit une paire de bœufs, les coupa en morceaux et les envoya par l’intermédiaire de messagers dans tout le territoire d'Israël en disant: «Si quelqu’un ne marche pas à la suite de Saül et de Samuel, ses bœufs seront traités de la même manière.» La terreur de l'Eternel s'empara du peuple et il se mit en marche comme un seul homme."
+        },
+        {
+          "number": 8,
+          "text": "Saül le passa en revue à Bézek: les Israélites étaient 300'000, et les hommes de Juda 30'000."
+        },
+        {
+          "number": 9,
+          "text": "Ils annoncèrent aux messagers qui étaient venus: «Voici ce que vous direz aux habitants de Jabès en Galaad: ‘Demain vous aurez du secours, quand le soleil sera à son zénith.’» Les messagers portèrent cette nouvelle aux habitants de Jabès, qui furent remplis de joie."
+        },
+        {
+          "number": 10,
+          "text": "Ils dirent aux Ammonites: «Demain nous nous livrerons à vous et vous nous traiterez comme vous voudrez.»"
+        },
+        {
+          "number": 11,
+          "text": "Le lendemain, Saül divisa le peuple en 3 groupes. Ils pénétrèrent dans le camp des Ammonites tôt le matin, et ils leur portèrent des coups jusqu'à la chaleur du jour. Ceux qui purent leur échapper furent dispersés au point qu’il n'en resta pas deux ensemble."
+        },
+        {
+          "number": 12,
+          "text": "Le peuple dit à Samuel: «Quels sont les hommes qui refusaient de voir Saül régner sur eux? Livrez-les-nous et nous les ferons mourir.»"
+        },
+        {
+          "number": 13,
+          "text": "Mais Saül dit: «Personne ne sera mis à mort aujourd’hui, car aujourd'hui l'Eternel a accompli une délivrance en Israël.»"
+        },
+        {
+          "number": 14,
+          "text": "Samuel dit au peuple: «Venez, allons à Guilgal pour y confirmer la royauté.»"
+        },
+        {
+          "number": 15,
+          "text": "Tout le peuple se rendit à Guilgal et ils y sacrèrent Saül roi devant l'Eternel. Ils y offrirent des sacrifices de communion devant l'Eternel, et Saül et tous les hommes d'Israël s’y livrèrent à de grandes réjouissances."
+        }
+      ]
+    },
+    {
+      "chapter": 12,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Samuel dit à tout Israël: «Je vous ai écoutés dans tout ce que vous m'avez dit et j'ai établi un roi sur vous."
+        },
+        {
+          "number": 2,
+          "text": "Désormais, c’est le roi qui marchera à votre tête. Quant à moi, je suis vieux, j'ai les cheveux blancs, et mes fils sont avec vous. J'ai marché à votre tête depuis ma jeunesse jusqu'à aujourd’hui."
+        },
+        {
+          "number": 3,
+          "text": "Me voici! Rendez témoignage contre moi, en présence de l'Eternel et de celui qu’il a désigné par onction. De qui ai-je pris le bœuf ou l'âne? Qui ai-je opprimé ou traité durement? De qui ai-je reçu un cadeau pour fermer les yeux sur lui? Je vous le rendrai.»"
+        },
+        {
+          "number": 4,
+          "text": "Ils répondirent: «Tu ne nous as pas opprimés, tu ne nous as pas traités durement et tu n'as rien reçu de personne.»"
+        },
+        {
+          "number": 5,
+          "text": "Il leur dit encore: «L'Eternel et celui qu’il a désigné par onction sont témoins contre vous aujourd’hui que vous n'avez rien trouvé entre mes mains.» Et ils répondirent: «Ils en sont témoins.»"
+        },
+        {
+          "number": 6,
+          "text": "Alors Samuel dit au peuple: «C'est l'Eternel qui a établi Moïse et Aaron et qui a fait sortir vos ancêtres d'Egypte."
+        },
+        {
+          "number": 7,
+          "text": "Maintenant, tenez-vous là et je vous jugerai devant l’Eternel sur tous les bienfaits qu’il vous a accordés, à vous et à vos ancêtres."
+        },
+        {
+          "number": 8,
+          "text": "Après la venue de Jacob en Egypte, vos ancêtres ont crié à l'Eternel et il a envoyé Moïse et Aaron. Ceux-ci ont fait sortir vos ancêtres d'Egypte et les ont fait habiter dans ce pays."
+        },
+        {
+          "number": 9,
+          "text": "Mais ils ont oublié l'Eternel, leur Dieu, et il les a vendus à Sisera, le chef de l'armée de Hatsor, aux Philistins et au roi de Moab, qui leur ont fait la guerre."
+        },
+        {
+          "number": 10,
+          "text": "Ils ont encore crié à l'Eternel en disant: ‘Nous avons péché, car nous avons abandonné l'Eternel et nous avons servi les Baals et les Astartés. Délivre-nous maintenant de nos ennemis, et nous te servirons.’"
+        },
+        {
+          "number": 11,
+          "text": "L'Eternel a envoyé Jerubbaal, Bedan, Jephthé et Samuel, et il vous a délivrés des ennemis qui vous environnaient, et vous avez habité en sécurité."
+        },
+        {
+          "number": 12,
+          "text": "Puis, vous avez vu que Nachash, le roi des Ammonites, venait vous attaquer et vous m'avez dit: ‘Cela suffit. Il faut qu’un roi règne sur nous.’ Et pourtant l'Eternel, votre Dieu, était votre roi."
+        },
+        {
+          "number": 13,
+          "text": "Voici donc le roi que vous avez choisi, que vous avez réclamé. L'Eternel a bien voulu établir un roi sur vous,"
+        },
+        {
+          "number": 14,
+          "text": "à condition que vous craigniez l'Eternel, que vous le serviez, que vous lui obéissiez, que vous ne vous révoltiez pas contre sa parole, mais que vous vous attachiez à l'Eternel, votre Dieu, vous et le roi qui règne sur vous."
+        },
+        {
+          "number": 15,
+          "text": "Mais si vous n'obéissez pas à la voix de l'Eternel et si vous vous révoltez contre sa parole, la main de l'Eternel se portera contre vous, comme elle s’est portée contre vos ancêtres."
+        },
+        {
+          "number": 16,
+          "text": "Attendez encore ici et regardez l’acte extraordinaire que l'Eternel va réaliser sous vos yeux."
+        },
+        {
+          "number": 17,
+          "text": "Ne sommes-nous pas à l’époque de la moisson des blés? Je vais faire appel à l'Eternel et il enverra le tonnerre et la pluie. Sachez et comprenez alors combien vous avez eu tort aux yeux de l'Eternel de réclamer un roi.»"
+        },
+        {
+          "number": 18,
+          "text": "Samuel fit appel à l'Eternel et, le jour même, l'Eternel envoya du tonnerre et de la pluie. Tout le peuple éprouva une grande crainte vis-à-vis de l'Eternel et de Samuel,"
+        },
+        {
+          "number": 19,
+          "text": "et tout le peuple dit à Samuel: «Prie l'Eternel, ton Dieu, pour nous tes serviteurs, afin que nous ne mourions pas. En effet, nous avons ajouté à tous nos péchés le tort de réclamer un roi.»"
+        },
+        {
+          "number": 20,
+          "text": "Samuel dit au peuple: «N’ayez pas peur! Vous avez certes fait tout ce mal, mais ne vous détournez pas de l'Eternel et servez-le de tout votre cœur."
+        },
+        {
+          "number": 21,
+          "text": "Ne vous détournez pas de lui, car cela reviendrait à suivre des choses sans valeur, qui ne peuvent apporter ni profit ni délivrance parce qu’elles sont elles-mêmes sans consistance."
+        },
+        {
+          "number": 22,
+          "text": "L'Eternel n'abandonnera pas son peuple, et ce à cause de son grand nom, car il a décidé de faire de vous son peuple."
+        },
+        {
+          "number": 23,
+          "text": "Je ne veux certes pas pécher contre l'Eternel en cessant de prier pour vous! Au contraire, je vous enseignerai le chemin bon et droit."
+        },
+        {
+          "number": 24,
+          "text": "Seulement, craignez l'Eternel et servez-le fidèlement, de tout votre cœur. Voyez en effet quels actes extraordinaires il a accomplis parmi vous!"
+        },
+        {
+          "number": 25,
+          "text": "Si en revanche vous faites le mal, vous disparaîtrez, vous et votre roi.»"
+        }
+      ]
+    },
+    {
+      "chapter": 13,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Saül était âgé de 30 ans lorsqu'il devint roi. Il régnait depuis 2 ans sur Israël"
+        },
+        {
+          "number": 2,
+          "text": "quand il choisit 3000 Israélites: 2000 étaient avec lui à Micmash et sur la montagne de Béthel, et 1000 étaient avec Jonathan à Guibea de Benjamin. Quant au reste du peuple, il le renvoya, chacun dans sa tente."
+        },
+        {
+          "number": 3,
+          "text": "Jonathan battit la garnison de Philistins qui se trouvait à Guéba et les Philistins l'apprirent. Saül fit sonner de la trompette dans tout le pays en disant: «Que les Hébreux l’apprennent!»"
+        },
+        {
+          "number": 4,
+          "text": "Tout Israël apprit que Saül avait battu la garnison des Philistins et qu’Israël avait ainsi provoqué le dégoût des Philistins. Le peuple fut convoqué vers Saül à Guilgal."
+        },
+        {
+          "number": 5,
+          "text": "Les Philistins se rassemblèrent pour combattre Israël. Ils avaient 30'000 chars et 6000 cavaliers, et ils formaient un peuple innombrable, comme le sable qui est au bord de la mer. Ils vinrent installer leur camp à Micmash, à l'est de Beth-Aven."
+        },
+        {
+          "number": 6,
+          "text": "Les Israélites se virent menacés, car ils étaient serrés de près, et ils se cachèrent dans les grottes, les buissons, les rochers, les caveaux et les citernes."
+        },
+        {
+          "number": 7,
+          "text": "Il y eut aussi des Hébreux qui passèrent le Jourdain pour se rendre dans le pays de Gad et de Galaad. Quant à Saül, il était encore à Guilgal, et tout le peuple qui se trouvait à ses côtés tremblait."
+        },
+        {
+          "number": 8,
+          "text": "Saül attendit 7 jours, conformément au délai fixé par Samuel, mais celui-ci n'arrivait pas à Guilgal et le peuple se dispersait loin de Saül."
+        },
+        {
+          "number": 9,
+          "text": "Saül dit alors: «Amenez-moi les victimes destinées à l'holocauste et aux sacrifices de communion», et il offrit l'holocauste."
+        },
+        {
+          "number": 10,
+          "text": "Il finissait d'offrir l'holocauste lorsque Samuel arriva. Saül sortit à sa rencontre pour le saluer."
+        },
+        {
+          "number": 11,
+          "text": "Samuel dit: «Qu'as-tu fait?» Saül répondit: «Lorsque j'ai vu que le peuple se dispersait loin de moi, que tu n'arrivais pas dans le délai fixé et que les Philistins étaient rassemblés à Micmash,"
+        },
+        {
+          "number": 12,
+          "text": "je me suis dit: ‘Les Philistins vont descendre m’attaquer à Guilgal et je n'ai pas imploré l'Eternel!’ C'est alors que je me suis fait violence et que j'ai offert l'holocauste.»"
+        },
+        {
+          "number": 13,
+          "text": "Samuel dit à Saül: «Tu t’es comporté de façon stupide! Tu n'as pas respecté le commandement que l'Eternel, ton Dieu, t'avait donné. L'Eternel aurait affermi pour toujours ton règne sur Israël,"
+        },
+        {
+          "number": 14,
+          "text": "mais maintenant ton règne ne durera pas. L'Eternel s'est choisi un homme selon son cœur, et il l'a destiné à être le chef de son peuple. Cela arrivera parce que tu n'as pas respecté ce que l'Eternel t'avait ordonné.»"
+        },
+        {
+          "number": 15,
+          "text": "Puis Samuel se leva et monta de Guilgal à Guibea de Benjamin. Saül passa en revue le peuple qui se trouvait avec lui: il y avait environ 600 hommes."
+        },
+        {
+          "number": 16,
+          "text": "Saül, son fils Jonathan et le peuple qui se trouvait avec eux avaient pris position à Guéba de Benjamin, et les Philistins avaient leur camp à Micmash."
+        },
+        {
+          "number": 17,
+          "text": "Trois troupes sortirent du camp des Philistins pour semer la dévastation: l'une prit le chemin d'Ophra, vers le pays de Shual,"
+        },
+        {
+          "number": 18,
+          "text": "l'autre le chemin de Beth-Horon, et la troisième le chemin de la frontière qui domine la vallée de Tseboïm, du côté du désert."
+        },
+        {
+          "number": 19,
+          "text": "On ne trouvait aucun forgeron dans tout le pays d'Israël, car les Philistins s’étaient dit: «Empêchons les Hébreux de fabriquer des épées ou des lances.»"
+        },
+        {
+          "number": 20,
+          "text": "Chaque Israélite descendait donc chez les Philistins pour aiguiser son soc de charrue, sa pioche, sa hache ou sa bêche."
+        },
+        {
+          "number": 21,
+          "text": "Cela coûtait deux tiers d’une pièce d’argent pour aiguiser des bêches, des pioches, des fourches et des haches ou remettre en état des aiguillons."
+        },
+        {
+          "number": 22,
+          "text": "Ainsi, le jour du combat, le peuple qui était avec Saül et Jonathan ne disposait d’aucune épée ni lance; Saül et son fils Jonathan, en revanche, en possédaient."
+        },
+        {
+          "number": 23,
+          "text": "Un poste avancé des Philistins vint s'établir au défilé de Micmash."
+        }
+      ]
+    },
+    {
+      "chapter": 14,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Un jour, Jonathan, fils de Saül, dit au jeune homme qui portait ses armes: «Viens, poussons jusqu'au poste des Philistins qui se trouve là, de l'autre côté.» Il n'en dit rien à son père."
+        },
+        {
+          "number": 2,
+          "text": "Saül se tenait à la limite de Guibea sous le grenadier de Migron, et la troupe qui était avec lui comptait environ 600 hommes."
+        },
+        {
+          "number": 3,
+          "text": "C’était Achija, fils d'Achithub – lui-même frère d'I-Kabod, le fils de Phinées et le petit-fils d'Eli, prêtre de l'Eternel à Silo – qui portait l'éphod. Le peuple ne savait pas que Jonathan était parti."
+        },
+        {
+          "number": 4,
+          "text": "Dans le passage par lequel Jonathan cherchait à arriver au poste des Philistins, il y avait une dent de rocher de chaque côté; l'une s’appelait Botsets et l'autre Séné."
+        },
+        {
+          "number": 5,
+          "text": "L'une de ces dents se trouvait au nord, en face de Micmash, et l'autre au sud, en face de Guéba."
+        },
+        {
+          "number": 6,
+          "text": "Jonathan dit au jeune homme qui portait ses armes: «Viens, poussons jusqu'au poste de ces incirconcis. Peut-être l'Eternel agira-t-il pour nous. En effet, rien ne peut empêcher l'Eternel de sauver, que ce soit au moyen d'un petit ou d'un grand nombre.»"
+        },
+        {
+          "number": 7,
+          "text": "Celui qui portait ses armes lui répondit: «Fais tout ce que tu as dans le cœur, suis ta pensée. Me voici avec toi, prêt à te suivre.»"
+        },
+        {
+          "number": 8,
+          "text": "«Eh bien! dit Jonathan, allons vers ces hommes et montrons-nous à eux."
+        },
+        {
+          "number": 9,
+          "text": "S'ils nous disent: ‘Arrêtez-vous jusqu'à ce que nous arrivions vers vous’, nous resterons à notre place et nous ne monterons pas vers eux."
+        },
+        {
+          "number": 10,
+          "text": "Mais s'ils disent: ‘Montez vers nous’, nous monterons, car l'Eternel les livre entre nos mains. C'est ce qui nous servira de signe.»"
+        },
+        {
+          "number": 11,
+          "text": "Ils se montrèrent tous les deux au poste des Philistins, et les Philistins dirent: «Voilà que les Hébreux sortent des trous où ils se sont cachés.»"
+        },
+        {
+          "number": 12,
+          "text": "Les hommes du poste s'adressèrent ainsi à Jonathan et à son porteur d’armes: «Montez vers nous et nous vous ferons savoir quelque chose.» Jonathan dit à son porteur d’armes: «Monte après moi, car l'Eternel les livre entre les mains d'Israël.»"
+        },
+        {
+          "number": 13,
+          "text": "Jonathan monta en s'aidant des mains et des pieds, et son porteur d’armes le suivit. Les Philistins tombaient devant Jonathan et son porteur d’armes donnait la mort derrière lui."
+        },
+        {
+          "number": 14,
+          "text": "Dans ce premier combat, Jonathan et son porteur d’armes tuèrent une vingtaine d'hommes, sur un espace limité."
+        },
+        {
+          "number": 15,
+          "text": "La terreur gagna le camp, la région et tout le peuple; le poste et ceux qui semaient la dévastation furent eux aussi terrifiés. La terre se mit de plus à trembler. Cela devint une terreur divine."
+        },
+        {
+          "number": 16,
+          "text": "Les sentinelles de Saül qui se trouvaient à Guibea de Benjamin virent que c’était la débandade générale parmi la foule des Philistins."
+        },
+        {
+          "number": 17,
+          "text": "Alors Saül dit au peuple qui était avec lui: «Faites donc l’appel et voyez qui nous a quittés.» Ils firent l’appel et l'on vit qu'il manquait Jonathan et son porteur d’armes."
+        },
+        {
+          "number": 18,
+          "text": "Saül dit à Achija: «Fais approcher l'arche de Dieu!» En effet, ce jour-là, l'arche de Dieu était avec les Israélites."
+        },
+        {
+          "number": 19,
+          "text": "Pendant que Saül parlait au prêtre, l’agitation allait toujours en augmentant dans le camp des Philistins. Saül dit au prêtre: «Retire ta main!»"
+        },
+        {
+          "number": 20,
+          "text": "Puis Saül et tout le peuple qui était avec lui se rassemblèrent et s'avancèrent jusqu'au lieu du combat. Alors les Philistins tournèrent l'épée les uns contre les autres, dans un très grand trouble."
+        },
+        {
+          "number": 21,
+          "text": "Il y avait des Hébreux parmi les Philistins, comme c’était le cas depuis longtemps. Ils étaient montés avec eux dans le camp, où ils se trouvaient dispersés. Ils se joignirent aux Israélites qui étaient avec Saül et Jonathan."
+        },
+        {
+          "number": 22,
+          "text": "Tous les hommes d'Israël qui s'étaient cachés dans la région montagneuse d'Ephraïm apprirent que les Philistins prenaient la fuite et se mirent aussi à les poursuivre dans la bataille."
+        },
+        {
+          "number": 23,
+          "text": "L'Eternel délivra Israël ce jour-là, et le combat se prolongea plus loin encore que Beth-Aven."
+        },
+        {
+          "number": 24,
+          "text": "La journée fut fatigante pour les Israélites. Saül avait lié le peuple par serment en disant: «Maudit soit l'homme qui prendra de la nourriture avant le soir, avant que je me sois vengé de mes ennemis!» et personne n'avait pris de nourriture."
+        },
+        {
+          "number": 25,
+          "text": "Tout le peuple était arrivé dans une forêt où il y avait du miel à la surface du sol."
+        },
+        {
+          "number": 26,
+          "text": "Lorsque le peuple entra dans la forêt, il vit le miel qui coulait, mais personne ne porta la main à la bouche, car le peuple respectait le serment."
+        },
+        {
+          "number": 27,
+          "text": "Quant à Jonathan, il ignorait le serment que son père avait fait faire au peuple. Il avança le bout du bâton qu'il avait à la main, le plongea dans un rayon de miel et ramena la main à la bouche; et sa vue devint claire."
+        },
+        {
+          "number": 28,
+          "text": "Alors quelqu'un du peuple lui adressa la parole et dit: «Ton père a fait jurer le peuple en disant: ‘Maudit soit l'homme qui prendra de la nourriture aujourd'hui!’ et le peuple est épuisé.»"
+        },
+        {
+          "number": 29,
+          "text": "Jonathan dit: «Mon père fait du tort au peuple. Regardez donc comme ma vue est devenue claire du fait que j'ai goûté un peu de ce miel."
+        },
+        {
+          "number": 30,
+          "text": "Si aujourd'hui le peuple avait mangé du butin qu'il a trouvé chez ses ennemis, la défaite des Philistins n'aurait-elle pas été plus grande?»"
+        },
+        {
+          "number": 31,
+          "text": "Ce jour-là, ils portèrent des coups aux Philistins depuis Micmash jusqu'à Ajalon. Le peuple était très fatigué,"
+        },
+        {
+          "number": 32,
+          "text": "et il se jeta sur le butin. Il prit des brebis, des bœufs et des veaux, les égorgea à même le sol et en mangea avec le sang."
+        },
+        {
+          "number": 33,
+          "text": "On le rapporta à Saül en disant: «Le peuple pèche contre l'Eternel en mangeant de la viande avec le sang.» Saül dit: «Vous commettez un acte d’infidélité. Roulez immédiatement une grande pierre vers moi.»"
+        },
+        {
+          "number": 34,
+          "text": "Puis il ajouta: «Dispersez-vous parmi le peuple et ordonnez à chacun de m'amener son bœuf ou sa brebis et de l'égorger ici. Ensuite vous pourrez manger et vous ne pécherez pas contre l'Eternel en mangeant la viande avec le sang.» Pendant la nuit, chaque membre de la troupe amena son bœuf afin de l'égorger sur la pierre."
+        },
+        {
+          "number": 35,
+          "text": "Saül construisit un autel pour l'Eternel. Ce fut le premier autel qu'il construisit en l’honneur de l'Eternel."
+        },
+        {
+          "number": 36,
+          "text": "Saül dit: «Descendons cette nuit à la poursuite des Philistins! Pillons-les jusqu'au matin, sans laisser de survivant.» Les Israélites répondirent: «Fais tout ce qui te semblera bon.» Alors le prêtre dit: «Approchons-nous ici de Dieu.»"
+        },
+        {
+          "number": 37,
+          "text": "Saül consulta Dieu: «Dois-je descendre à la poursuite des Philistins? Les livreras-tu entre les mains d'Israël?» Mais l’Eternel ne lui donna aucune réponse ce jour-là."
+        },
+        {
+          "number": 38,
+          "text": "Saül dit: «Approchez-vous ici, vous tous, les chefs du peuple. Faites des recherches et voyez quel péché a été commis aujourd'hui."
+        },
+        {
+          "number": 39,
+          "text": "En effet, l'Eternel, le libérateur d'Israël, est vivant, même si mon fils Jonathan en est l'auteur, il mourra.» Dans tout le peuple, personne ne lui répondit."
+        },
+        {
+          "number": 40,
+          "text": "Saül dit à tout Israël: «Mettez-vous d'un côté, et mon fils Jonathan et moi, nous serons de l'autre.» Le peuple dit à Saül: «Fais ce qui te semblera bon.»"
+        },
+        {
+          "number": 41,
+          "text": "Saül dit à l'Eternel: «Dieu d'Israël, fais connaître la vérité.» Jonathan et Saül furent désignés, et le peuple fut libéré."
+        },
+        {
+          "number": 42,
+          "text": "Saül dit: «Procédez à un tirage au sort entre mon fils Jonathan et moi.» Jonathan fut désigné."
+        },
+        {
+          "number": 43,
+          "text": "Saül lui dit: «Raconte-moi ce que tu as fait.» Jonathan le lui raconta. Il dit: «J'ai goûté un peu de miel avec le bout du bâton que j'avais à la main. Me voici, prêt à mourir.»"
+        },
+        {
+          "number": 44,
+          "text": "Saül dit: «Que Dieu me traite avec la plus grande sévérité si tu ne meurs pas, Jonathan!»"
+        },
+        {
+          "number": 45,
+          "text": "Le peuple dit à Saül: «Quoi! Jonathan mourrait, lui qui a accompli cette grande délivrance en Israël! Certainement pas! L'Eternel est vivant! Pas un cheveu de sa tête ne tombera à terre, car c'est avec Dieu qu'il a agi aujourd’hui.» Ainsi, le peuple sauva Jonathan et il ne mourut pas."
+        },
+        {
+          "number": 46,
+          "text": "Saül cessa de poursuivre les Philistins et ceux-ci partirent chez eux."
+        },
+        {
+          "number": 47,
+          "text": "Après avoir pris possession de la royauté sur Israël, Saül fit de tous côtés la guerre à tous ses ennemis: aux Moabites, aux Ammonites, aux Edomites, aux rois de Tsoba et aux Philistins; et partout où il se tournait, il était vainqueur."
+        },
+        {
+          "number": 48,
+          "text": "Il montra sa force, battit Amalek et délivra Israël de l’oppression de ceux qui le pillaient."
+        },
+        {
+          "number": 49,
+          "text": "Les fils de Saül étaient Jonathan, Jishvi et Malkishua. L’aînée de ses deux filles s'appelait Mérab, et la plus jeune Mical."
+        },
+        {
+          "number": 50,
+          "text": "La femme de Saül s’appelait Achinoam; elle était la fille d'Achimaats. Le chef de son armée avait pour nom Abner; il était le fils de Ner, l’oncle de Saül."
+        },
+        {
+          "number": 51,
+          "text": "Kis, le père de Saül, et Ner, le père d'Abner, étaient les fils d'Abiel."
+        },
+        {
+          "number": 52,
+          "text": "Pendant toute la vie de Saül, il y eut une guerre acharnée contre les Philistins. Dès que Saül apercevait un homme fort et vaillant, il le prenait à son service."
+        }
+      ]
+    },
+    {
+      "chapter": 15,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Samuel dit à Saül: «C'est moi que l'Eternel a envoyé pour te consacrer par onction comme roi sur son peuple, sur Israël. Ecoute donc les paroles prononcées par l'Eternel!"
+        },
+        {
+          "number": 2,
+          "text": "Voici ce que dit l'Eternel, le maître de l’univers: ‘Je me souviens de ce que les Amalécites ont fait à Israël lorsqu'ils lui ont barré le chemin à sa sortie d'Egypte."
+        },
+        {
+          "number": 3,
+          "text": "Va maintenant frapper les Amalécites. Vouez à la destruction tout ce qui leur appartient. Tu ne les épargneras pas et tu feras mourir hommes et femmes, enfants et bébés, bœufs et brebis, chameaux et ânes.’»"
+        },
+        {
+          "number": 4,
+          "text": "Saül convoqua le peuple et le passa en revue à Thelaïm: il y avait 200'000 fantassins ainsi que 10'000 hommes de Juda."
+        },
+        {
+          "number": 5,
+          "text": "Saül marcha jusqu'à la ville d'Amalek et plaça une embuscade dans la vallée."
+        },
+        {
+          "number": 6,
+          "text": "Il dit aux Kéniens: «Partez, retirez-vous, quittez les Amalécites afin que je ne vous fasse pas subir le même sort qu’à eux. En effet, vous avez fait preuve de bonté envers tous les Israélites lorsqu'ils sont montés d'Egypte.» Les Kéniens se retirèrent alors du milieu des Amalécites."
+        },
+        {
+          "number": 7,
+          "text": "Saül porta des coups à Amalek depuis Havila jusqu'à Shur, qui fait face à l'Egypte."
+        },
+        {
+          "number": 8,
+          "text": "Il captura Agag, roi d'Amalek, vivant et il voua à la destruction tout le peuple en le passant au fil de l'épée."
+        },
+        {
+          "number": 9,
+          "text": "Mais Saül et le peuple épargnèrent Agag ainsi que les meilleures brebis, les meilleurs bœufs, les meilleures bêtes de la seconde portée, les agneaux gras et tout ce qu'il y avait de bon; ils ne voulurent pas le vouer à la destruction. En revanche, ils exterminèrent tout ce qui était sans valeur et chétif."
+        },
+        {
+          "number": 10,
+          "text": "L'Eternel adressa la parole à Samuel:"
+        },
+        {
+          "number": 11,
+          "text": "«Je regrette d'avoir établi Saül pour roi, car il se détourne de moi et n'accomplit pas mes paroles.» Samuel fut irrité et il cria à l'Eternel toute la nuit."
+        },
+        {
+          "number": 12,
+          "text": "Il se leva de bon matin pour aller à la rencontre de Saül. On vint lui dire: «Saül s’est rendu à Carmel et il s'y est érigé un monument. Puis il est reparti et, passant plus loin, il est descendu à Guilgal.»"
+        },
+        {
+          "number": 13,
+          "text": "Samuel se rendit vers Saül, et Saül lui dit: «Sois béni de l'Eternel! J'ai accompli la parole de l'Eternel.»"
+        },
+        {
+          "number": 14,
+          "text": "Samuel dit: «Qu'est-ce donc que ce bêlement de brebis qui parvient à mes oreilles et ce mugissement de bœufs que j'entends?»"
+        },
+        {
+          "number": 15,
+          "text": "Saül répondit: «Ils les ont amenés de chez les Amalécites, parce que le peuple a épargné les meilleures brebis et les meilleurs bœufs afin de les offrir en sacrifice à l'Eternel, ton Dieu. Le reste, nous l'avons voué à la destruction.»"
+        },
+        {
+          "number": 16,
+          "text": "Samuel dit à Saül: «Arrête! Je vais te révéler ce que l'Eternel m'a dit cette nuit.» Saül lui dit: «Parle!»"
+        },
+        {
+          "number": 17,
+          "text": "Samuel dit: «Alors que tu étais petit à tes propres yeux, n'es-tu pas devenu le chef des tribus d'Israël et l'Eternel ne t'a-t-il pas désigné par onction pour que tu sois roi sur Israël?"
+        },
+        {
+          "number": 18,
+          "text": "L'Eternel t'avait envoyé en disant: ‘Va vouer à la destruction ces pécheurs que sont les Amalécites. Tu leur feras la guerre jusqu'à ce que tu les aies exterminés.’"
+        },
+        {
+          "number": 19,
+          "text": "Pourquoi n'as-tu pas écouté l'Eternel? Pourquoi t'es-tu jeté sur le butin et as-tu fait ce qu’il désapprouve?»"
+        },
+        {
+          "number": 20,
+          "text": "Saül répondit à Samuel: «J'ai écouté l'Eternel et j'ai suivi la voie où il m'envoyait. J'ai ramené Agag, le roi d'Amalek, et j'ai voué les Amalécites à la destruction."
+        },
+        {
+          "number": 21,
+          "text": "Mais le peuple a pris sur le butin les meilleures brebis et les meilleurs bœufs qui devaient être consacrés, afin de les offrir en sacrifice à l'Eternel, ton Dieu, à Guilgal.»"
+        },
+        {
+          "number": 22,
+          "text": "Samuel dit: «L'Eternel trouve-t-il autant de plaisir dans les holocaustes et les sacrifices que dans l'obéissance à sa voix? Non, l'obéissance vaut mieux que les sacrifices et l'écoute attentive vaut mieux que la graisse des béliers."
+        },
+        {
+          "number": 23,
+          "text": "Oui, la révolte est aussi coupable que la divination, et la résistance au Seigneur est aussi fautive que le recours aux théraphim. Puisque tu as rejeté la parole de l'Eternel, il te rejette lui aussi comme roi.»"
+        },
+        {
+          "number": 24,
+          "text": "Alors Saül dit à Samuel: «J'ai péché, car j'ai enfreint l'ordre de l'Eternel et tes paroles. J’ai eu peur du peuple et je l'ai écouté."
+        },
+        {
+          "number": 25,
+          "text": "Maintenant, je t'en prie, pardonne mon péché, reviens avec moi et j'adorerai l'Eternel.»"
+        },
+        {
+          "number": 26,
+          "text": "Samuel dit à Saül: «Je ne reviendrai pas avec toi, car tu as rejeté la parole de l'Eternel et l'Eternel te rejette. Tu ne seras plus roi sur Israël.»"
+        },
+        {
+          "number": 27,
+          "text": "Alors que Samuel tournait le dos pour s'en aller, Saül l’attrapa par le pan de son manteau, qui fut arraché."
+        },
+        {
+          "number": 28,
+          "text": "Samuel lui dit: «L'Eternel t’arrache aujourd'hui la royauté d'Israël et la donne à un autre, qui est meilleur que toi."
+        },
+        {
+          "number": 29,
+          "text": "Celui qui est la force d'Israël ne ment pas et n’éprouve pas de regrets, car il n'est pas un homme pour avoir des regrets.»"
+        },
+        {
+          "number": 30,
+          "text": "Saül répéta: «J'ai péché! Maintenant honore-moi devant les anciens de mon peuple et devant Israël. Reviens avec moi et j'adorerai l'Eternel, ton Dieu.»"
+        },
+        {
+          "number": 31,
+          "text": "Samuel revint à la suite de Saül, et Saül adora l'Eternel."
+        },
+        {
+          "number": 32,
+          "text": "Puis Samuel dit: «Amenez-moi Agag, le roi d'Amalek.» Agag s'avança vers lui d'un air joyeux; il se disait: «Certainement, l'amertume de la mort s’est écartée.»"
+        },
+        {
+          "number": 33,
+          "text": "Samuel dit: «De même que ton épée a privé des femmes de leurs enfants, de même ta mère sera privée d'un fils.» Et Samuel mit Agag en pièces devant l'Eternel à Guilgal."
+        },
+        {
+          "number": 34,
+          "text": "Samuel partit pour Rama et Saül remonta chez lui à Guibea de Saül."
+        },
+        {
+          "number": 35,
+          "text": "Samuel n'alla plus voir Saül jusqu'au jour de sa mort. En effet, il pleurait sur lui, parce que l'Eternel regrettait de l'avoir établi roi d'Israël."
+        }
+      ]
+    },
+    {
+      "chapter": 16,
+      "verses": [
+        {
+          "number": 1,
+          "text": "L'Eternel dit à Samuel: «Quand cesseras-tu de pleurer sur Saül? Je l'ai rejeté afin qu'il ne règne plus sur Israël. Remplis ta corne d'huile et pars! Je t'envoie chez Isaï, le Bethléhémite, car j'ai vu parmi ses fils celui que je désire pour roi.»"
+        },
+        {
+          "number": 2,
+          "text": "Samuel dit: «Comment pourrais-je y aller? Saül l'apprendra et me tuera.» L'Eternel dit: «Tu prendras une génisse avec toi et tu diras: ‘Je viens pour offrir un sacrifice à l'Eternel.’"
+        },
+        {
+          "number": 3,
+          "text": "Tu inviteras Isaï au sacrifice. Je te préciserai ce que tu dois faire et tu désigneras par onction pour moi celui que je t’indiquerai.»"
+        },
+        {
+          "number": 4,
+          "text": "Samuel fit ce que l'Eternel avait dit et se rendit à Bethléhem. Les anciens de la ville accoururent effrayés à sa rencontre et demandèrent: «Ton arrivée annonce-t-elle quelque chose d'heureux?»"
+        },
+        {
+          "number": 5,
+          "text": "Il répondit: «Oui, je viens pour offrir un sacrifice à l'Eternel. Consacrez-vous et venez avec moi au sacrifice.» Il fit aussi consacrer Isaï et ses fils et les invita au sacrifice."
+        },
+        {
+          "number": 6,
+          "text": "Lorsqu'ils entrèrent, il se dit, en voyant Eliab: «Certainement, celui que l'Eternel désigne par onction est ici devant lui.»"
+        },
+        {
+          "number": 7,
+          "text": "Mais l'Eternel dit à Samuel: «Ne prête pas attention à son apparence et à sa grande taille, car je l'ai rejeté. En effet, l’Eternel n’a pas le même regard que l’homme: l'homme regarde à ce qui frappe les yeux, mais l'Eternel regarde au cœur.»"
+        },
+        {
+          "number": 8,
+          "text": "Isaï appela Abinadab et le fit passer devant Samuel. Samuel dit: «L'Eternel n'a pas non plus choisi celui-ci.»"
+        },
+        {
+          "number": 9,
+          "text": "Isaï fit passer Shamma et Samuel dit: «L'Eternel n'a pas non plus choisi celui-ci.»"
+        },
+        {
+          "number": 10,
+          "text": "Isaï fit passer sept de ses fils devant Samuel et Samuel dit à Isaï: «L'Eternel n'a choisi aucun d'eux.»"
+        },
+        {
+          "number": 11,
+          "text": "Puis Samuel dit à Isaï: «Tous tes fils sont-ils là?» Il répondit: «Il reste encore le plus jeune, mais il garde les brebis.» Alors Samuel dit à Isaï: «Envoie quelqu’un le chercher, car nous ne prendrons pas place avant qu'il ne soit arrivé.»"
+        },
+        {
+          "number": 12,
+          "text": "Isaï envoya quelqu’un le chercher. Il était roux, avec de beaux yeux et une belle apparence. L'Eternel dit à Samuel: «Lève-toi, verse de l’huile sur lui, car c'est lui!»"
+        },
+        {
+          "number": 13,
+          "text": "Samuel prit la corne d'huile et le consacra par onction au milieu de ses frères. L'Esprit de l'Eternel vint sur David, à partir de ce jour et par la suite. Samuel se leva et partit à Rama."
+        },
+        {
+          "number": 14,
+          "text": "L'Esprit de l'Eternel se retira de Saül, et celui-ci fut tourmenté par un mauvais esprit envoyé par l'Eternel."
+        },
+        {
+          "number": 15,
+          "text": "Les serviteurs de Saül lui dirent: «Voici qu’un mauvais esprit envoyé par Dieu te tourmente."
+        },
+        {
+          "number": 16,
+          "text": "Que notre seigneur parle! Tes serviteurs sont à ta disposition. Ils chercheront un homme qui sache jouer de la harpe. Quand le mauvais esprit envoyé par Dieu sera sur toi, il en jouera et tu seras soulagé.»"
+        },
+        {
+          "number": 17,
+          "text": "Saül répondit à ses serviteurs: «Trouvez-moi donc un homme qui joue bien et amenez-le-moi.»"
+        },
+        {
+          "number": 18,
+          "text": "L'un des serviteurs prit la parole et dit: «J'ai vu un fils d'Isaï, le Bethléhémite, qui sait jouer. C'est aussi un homme fort et vaillant, un guerrier. Il parle bien, a une belle apparence et l'Eternel est avec lui.»"
+        },
+        {
+          "number": 19,
+          "text": "Saül envoya des messagers à Isaï pour lui dire: «Envoie-moi ton fils David, celui qui est avec les brebis.»"
+        },
+        {
+          "number": 20,
+          "text": "Isaï prit un âne qu'il chargea de pain, d'une outre de vin et d'un chevreau, et il envoya tout cela à Saül par l’intermédiaire de son fils David."
+        },
+        {
+          "number": 21,
+          "text": "David arriva vers Saül et se présenta devant lui. Il plut beaucoup à Saül et il fut désigné pour porter ses armes."
+        },
+        {
+          "number": 22,
+          "text": "Saül fit dire à Isaï: «Je t’en prie, laisse David à mon service, car il a trouvé grâce à mes yeux.»"
+        },
+        {
+          "number": 23,
+          "text": "Lorsque le mauvais esprit envoyé par Dieu était sur Saül, David prenait la harpe et en jouait. Saül se calmait alors et se sentait mieux, et le mauvais esprit s'éloignait de lui."
+        }
+      ]
+    },
+    {
+      "chapter": 17,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Les Philistins réunirent leurs troupes pour faire la guerre et ils se rassemblèrent à Soco, ville qui appartient à Juda. Ils installèrent leur camp entre Soco et Azéka, à Ephès-Dammim."
+        },
+        {
+          "number": 2,
+          "text": "Saül et les hommes d'Israël se rassemblèrent aussi. Ils installèrent leur camp dans la vallée d’Ela et ils se rangèrent en ordre de bataille contre les Philistins."
+        },
+        {
+          "number": 3,
+          "text": "Les Philistins se tenaient sur une montagne, et Israël sur celle d’en face: la vallée les séparait."
+        },
+        {
+          "number": 4,
+          "text": "Un homme sortit alors du camp des Philistins et s'avança entre les deux armées. Il s’appelait Goliath, venait de Gath et mesurait environ 3 mètres."
+        },
+        {
+          "number": 5,
+          "text": "Il avait sur la tête un casque en bronze et il portait une cuirasse à écailles en bronze qui pesait près de 60 kilos."
+        },
+        {
+          "number": 6,
+          "text": "Il avait des jambières en bronze et tenait un javelot en bronze en bandoulière."
+        },
+        {
+          "number": 7,
+          "text": "Le bois de sa lance avait la grosseur d’un cylindre de métier à tisser, et la lance, en fer, pesait 7 kilos. Celui qui portait son bouclier marchait devant lui."
+        },
+        {
+          "number": 8,
+          "text": "Le Philistin s'arrêta et s'adressa aux troupes d'Israël rangées en ordre de bataille. Il leur cria: «Pourquoi sortez-vous pour vous ranger en ordre de bataille? Ne suis-je pas le Philistin et n'êtes-vous pas des esclaves de Saül? Choisissez un homme qui descende contre moi!"
+        },
+        {
+          "number": 9,
+          "text": "S'il peut me battre et qu'il me tue, nous serons vos esclaves. Mais si je l'emporte sur lui et que je le tue, vous serez nos esclaves et vous nous servirez.»"
+        },
+        {
+          "number": 10,
+          "text": "Le Philistin dit encore: «Je jette aujourd’hui un défi à l'armée d'Israël: donnez-moi un homme, pour que nous nous battions ensemble!»"
+        },
+        {
+          "number": 11,
+          "text": "En entendant ces paroles du Philistin, Saül et tout Israël furent effrayés et remplis de peur."
+        },
+        {
+          "number": 12,
+          "text": "Or David était le fils de l’Ephratien de Bethléhem en Juda nommé Isaï qui avait huit fils. A l’époque de Saül, cet homme était vieux, d’un âge avancé."
+        },
+        {
+          "number": 13,
+          "text": "Les trois fils aînés d'Isaï avaient suivi Saül à la guerre. Voici le nom de ses trois fils partis pour la guerre: Eliab, l’aîné, Abinadab le deuxième et Shamma, le troisième."
+        },
+        {
+          "number": 14,
+          "text": "David était le plus jeune, et les trois aînés avaient suivi Saül."
+        },
+        {
+          "number": 15,
+          "text": "Quant à David, il faisait le va-et-vient, quittant Saül pour garder les brebis de son père à Bethléhem."
+        },
+        {
+          "number": 16,
+          "text": "Le Philistin s'avançait matin et soir, et il se présenta ainsi pendant 40 jours."
+        },
+        {
+          "number": 17,
+          "text": "Isaï dit à son fils David: «Prends pour tes frères cette mesure de grain rôti et ces 10 pains, et cours au camp vers tes frères."
+        },
+        {
+          "number": 18,
+          "text": "Porte aussi ces 10 fromages au chef de leur millier. Tu verras si tes frères se portent bien et tu m’en apporteras une preuve de leur part."
+        },
+        {
+          "number": 19,
+          "text": "Ils sont avec Saül et tous les hommes d'Israël dans la vallée d’Ela, et ils font la guerre aux Philistins.»"
+        },
+        {
+          "number": 20,
+          "text": "David se leva de bon matin. Il laissa les brebis à un gardien, prit ses affaires et partit, comme Isaï le lui avait ordonné. Lorsqu'il arriva au camp, l'armée était en marche pour se ranger en ordre de bataille et poussait des cris de guerre."
+        },
+        {
+          "number": 21,
+          "text": "Les Israélites et les Philistins se mirent en ordre de bataille, armée contre armée."
+        },
+        {
+          "number": 22,
+          "text": "David confia les affaires qu'il transportait au gardien du matériel et courut vers les rangs de l'armée. Aussitôt arrivé, il demanda à ses frères comment ils allaient."
+        },
+        {
+          "number": 23,
+          "text": "Il était en train de parler avec eux lorsque le Philistin de Gath appelé Goliath s'avança entre les deux armées, hors des rangs des Philistins. Il tint les mêmes discours que les autres fois et David les entendit."
+        },
+        {
+          "number": 24,
+          "text": "A la vue de cet homme, tous les Israélites prirent la fuite et furent remplis de peur."
+        },
+        {
+          "number": 25,
+          "text": "Chacun disait: «Avez-vous vu s'avancer cet homme? C'est pour jeter un défi à Israël qu'il s'est avancé! Si quelqu'un le tue, le roi le comblera de richesses, il lui donnera sa fille et libérera sa famille de tout impôt en Israël.»"
+        },
+        {
+          "number": 26,
+          "text": "David demanda aux hommes qui se trouvaient près de lui: «Que fera-t-on pour celui qui tuera ce Philistin et qui écartera la honte d’Israël? Qui est donc ce Philistin, cet incirconcis, pour insulter l'armée du Dieu vivant?»"
+        },
+        {
+          "number": 27,
+          "text": "Le peuple répéta les mêmes choses en précisant: «Voilà comment l'on agira pour celui qui le tuera.»"
+        },
+        {
+          "number": 28,
+          "text": "Eliab, le frère aîné de David, l'avait entendu parler à ces hommes, et il fut enflammé de colère contre lui. Il dit: «Pourquoi es-tu descendu ici et à qui as-tu laissé ton petit troupeau dans le désert? Je connais ton orgueil et la méchanceté de ton cœur. C'est pour voir la bataille que tu es descendu.»"
+        },
+        {
+          "number": 29,
+          "text": "David répondit: «Qu'ai-je donc fait? N’ai-je pas le droit de m’exprimer?»"
+        },
+        {
+          "number": 30,
+          "text": "Il se détourna de lui pour s'adresser à un autre et posa les mêmes questions. Le peuple lui répondit comme la première fois."
+        },
+        {
+          "number": 31,
+          "text": "Après avoir entendu les paroles prononcées par David, on les répéta à Saül, qui le fit venir."
+        },
+        {
+          "number": 32,
+          "text": "David dit à Saül: «Que personne ne se décourage à cause de ce Philistin! Moi, ton serviteur, j’irai me battre contre lui.»"
+        },
+        {
+          "number": 33,
+          "text": "Saül dit à David: «Tu ne peux pas aller te battre contre ce Philistin. Tu n’es qu’un enfant, alors que lui, il est un homme de guerre depuis sa jeunesse.»"
+        },
+        {
+          "number": 34,
+          "text": "David dit à Saül: «Ton serviteur gardait les brebis de son père. Quand un lion ou un ours venait pour en enlever une du troupeau,"
+        },
+        {
+          "number": 35,
+          "text": "je courais après lui, je le frappais et j'arrachais la brebis de sa gueule. S'il m’attaquait, je l’attrapais par la gorge, je le frappais et je le tuais."
+        },
+        {
+          "number": 36,
+          "text": "C'est ainsi que ton serviteur a frappé le lion et l'ours, et ce sera aussi le sort du Philistin, de cet incirconcis, car il a insulté l'armée du Dieu vivant.»"
+        },
+        {
+          "number": 37,
+          "text": "David ajouta: «L'Eternel m'a délivré de la griffe du lion et de la patte de l'ours, et il me délivrera aussi de ce Philistin.» Saül dit à David: «Vas-y donc et que l'Eternel soit avec toi!»"
+        },
+        {
+          "number": 38,
+          "text": "Saül fit enfiler sa tenue à David. Il plaça sur sa tête un casque en bronze et le revêtit d’une cuirasse."
+        },
+        {
+          "number": 39,
+          "text": "David mit l'épée de Saül par-dessus ses habits et voulut marcher, car il n'avait encore jamais essayé, mais il dit à Saül: «Je ne peux pas marcher avec cette armure, je n'y suis pas habitué.» Et il s'en débarrassa."
+        },
+        {
+          "number": 40,
+          "text": "Il prit en main son bâton, puis il choisit dans le torrent cinq pierres lisses et les mit dans sa gibecière de berger et dans sa poche. Enfin, sa fronde à la main, il s'avança contre le Philistin."
+        },
+        {
+          "number": 41,
+          "text": "Le Philistin s'approcha peu à peu de David, et l'homme qui portait son bouclier marchait devant lui."
+        },
+        {
+          "number": 42,
+          "text": "Le Philistin regarda David et, lorsqu'il l’aperçut, il le méprisa, car il ne vit en lui qu'un enfant roux à la belle apparence."
+        },
+        {
+          "number": 43,
+          "text": "Le Philistin dit à David: «Suis-je un chien, pour que tu viennes à moi avec des bâtons?» Après l'avoir maudit par ses dieux,"
+        },
+        {
+          "number": 44,
+          "text": "il ajouta: «Viens vers moi, que je donne ta chair à manger aux oiseaux du ciel et aux bêtes des champs!»"
+        },
+        {
+          "number": 45,
+          "text": "David dit au Philistin: «Tu marches contre moi avec l'épée, la lance et le javelot; moi, je marche contre toi au nom de l'Eternel, le maître de l’univers, au nom du Dieu de l'armée d'Israël que tu as insultée."
+        },
+        {
+          "number": 46,
+          "text": "Aujourd'hui l'Eternel va te livrer entre mes mains. Je t'abattrai et je te couperai la tête. Aujourd'hui je vais donner les cadavres du camp des Philistins aux oiseaux du ciel et aux bêtes sauvages. Toute la terre saura alors qu'Israël a un Dieu,"
+        },
+        {
+          "number": 47,
+          "text": "et toute cette assemblée saura que ce n'est ni par l'épée ni par la lance que l'Eternel sauve. En effet, la victoire appartient à l'Eternel et il vous livre entre nos mains.»"
+        },
+        {
+          "number": 48,
+          "text": "Dès que le Philistin se mit à marcher vers lui, David courut sur le champ de bataille à sa rencontre."
+        },
+        {
+          "number": 49,
+          "text": "Il porta la main à sa gibecière, y prit une pierre et la lança avec sa fronde. Il frappa le Philistin au front et la pierre s'y enfonça. Le Philistin tomba le visage contre terre."
+        },
+        {
+          "number": 50,
+          "text": "Ainsi, avec une fronde et une pierre, David fut plus fort que le Philistin; il le frappa et le mit à mort sans avoir d'épée à la main."
+        },
+        {
+          "number": 51,
+          "text": "Il courut, s'arrêta près du Philistin et prit son épée en la tirant du fourreau. Il l’acheva et lui coupa la tête. Voyant que leur héros était mort, les Philistins prirent la fuite."
+        },
+        {
+          "number": 52,
+          "text": "Les hommes d'Israël et de Juda se levèrent, poussèrent des cris et les poursuivirent jusque dans la vallée et jusqu'aux portes d'Ekron. Les Philistins blessés à mort tombèrent sur le chemin de Shaaraïm jusqu'à Gath et Ekron."
+        },
+        {
+          "number": 53,
+          "text": "Les Israélites mirent fin à leur poursuite et revinrent piller le camp."
+        },
+        {
+          "number": 54,
+          "text": "David prit la tête du Philistin et l’amena à Jérusalem, et il déposa dans sa tente les armes du Philistin."
+        },
+        {
+          "number": 55,
+          "text": "Lorsque Saül avait vu David marcher à la rencontre du Philistin, il avait dit à Abner, le chef de l'armée: «De qui ce jeune homme est-il le fils, Abner?» Abner avait répondu: «Aussi vrai que ton âme est vivante, roi, je l'ignore.»"
+        },
+        {
+          "number": 56,
+          "text": "«Informe-toi donc pour savoir de qui ce jeune homme est le fils», avait dit le roi."
+        },
+        {
+          "number": 57,
+          "text": "Quand David fut de retour après avoir tué le Philistin, Abner le prit et le conduisit devant Saül. David tenait à la main la tête du Philistin."
+        },
+        {
+          "number": 58,
+          "text": "Saül lui dit: «De qui es-tu le fils, jeune homme?» Et David répondit: «Je suis le fils de ton serviteur Isaï, le Bethléhémite.»"
+        }
+      ]
+    },
+    {
+      "chapter": 18,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Alors que David finissait de parler à Saül, Jonathan s'attacha à lui. Jonathan aima David comme lui-même."
+        },
+        {
+          "number": 2,
+          "text": "Ce jour-là, Saül garda David chez lui et ne le laissa pas retourner chez son père."
+        },
+        {
+          "number": 3,
+          "text": "Jonathan fit alliance avec David, parce qu'il l'aimait comme lui-même."
+        },
+        {
+          "number": 4,
+          "text": "Il retira le manteau qu'il portait pour le donner à David et il lui donna ses vêtements, y compris son épée, son arc et sa ceinture."
+        },
+        {
+          "number": 5,
+          "text": "David partait en campagne et il réussissait partout où l'envoyait Saül. Celui-ci le mit à la tête des hommes de guerre, et il plaisait à tout le peuple, même aux serviteurs de Saül."
+        },
+        {
+          "number": 6,
+          "text": "Alors qu’ils revenaient de guerre, après que David eut tué le Philistin, les femmes sortirent de toutes les villes d'Israël à la rencontre du roi Saül. Elles chantaient et dansaient au son des tambourins et des triangles, et elles poussaient des cris de joie."
+        },
+        {
+          "number": 7,
+          "text": "Les femmes qui chantaient se répondaient les unes aux autres en disant: «Saül a frappé ses 1000, et David ses 10'000.»"
+        },
+        {
+          "number": 8,
+          "text": "Saül fut très irrité, il prit très mal la situation. Il dit: «On en donne 10'000 à David, et c'est à moi que l'on donne les 1000! Il ne lui manque plus que la royauté!»"
+        },
+        {
+          "number": 9,
+          "text": "Saül regarda David avec malveillance à partir de ce jour et par la suite."
+        },
+        {
+          "number": 10,
+          "text": "Le lendemain, le mauvais esprit envoyé par Dieu vint sur Saül, qui eut des accès de délire au milieu de sa maison. David jouait comme les autres jours et Saül avait sa lance à la main."
+        },
+        {
+          "number": 11,
+          "text": "Saül leva sa lance en se disant: «Je vais clouer David contre la paroi.» Mais David l’évita par deux fois."
+        },
+        {
+          "number": 12,
+          "text": "Saül éprouvait de la peur vis-à-vis de David, parce que l'Eternel était avec David alors qu’il s'était retiré de lui."
+        },
+        {
+          "number": 13,
+          "text": "Il l'éloigna de lui et l'établit chef de mille hommes. David partait en campagne et en revenait à la tête du peuple."
+        },
+        {
+          "number": 14,
+          "text": "Il réussissait dans toutes ses entreprises et l'Eternel était avec lui."
+        },
+        {
+          "number": 15,
+          "text": "Voyant qu'il réussissait toujours, Saül avait peur de lui."
+        },
+        {
+          "number": 16,
+          "text": "En revanche, tout Israël et tout Juda aimaient David, parce qu'il partait en campagne et en revenait à leur tête."
+        },
+        {
+          "number": 17,
+          "text": "Saül dit à David: «Je vais te donner en mariage ma fille aînée Mérab. Seulement, sers-moi comme un vaillant homme et mène les guerres de l'Eternel.» Il se disait: «Je ne veux pas porter la main contre lui. Que ce soient les Philistins qui le fassent!»"
+        },
+        {
+          "number": 18,
+          "text": "David répondit à Saül: «Qui suis-je, qu'est-ce que ma vie et qu'est-ce que le clan de mon père en Israël, pour que je devienne le gendre du roi?»"
+        },
+        {
+          "number": 19,
+          "text": "Lorsque le moment où Mérab, la fille de Saül, devait être donnée en mariage à David arriva, elle fut donnée à Adriel, de Mehola."
+        },
+        {
+          "number": 20,
+          "text": "Mical, la fille de Saül, tomba amoureuse de David. On en informa Saül et cela lui plut."
+        },
+        {
+          "number": 21,
+          "text": "Il se disait: «Je la lui donnerai en mariage. Ainsi, elle représentera un piège pour lui et il tombera sous les coups des Philistins.» Saül dit une nouvelle fois à David: «Aujourd'hui tu vas devenir mon gendre.»"
+        },
+        {
+          "number": 22,
+          "text": "Saül donna l’ordre suivant à ses serviteurs: «Parlez en secret à David et dites-lui: ‘Le roi a de l’affection pour toi et tous ses serviteurs t'aiment. Deviens maintenant son gendre!’»"
+        },
+        {
+          "number": 23,
+          "text": "Les serviteurs de Saül répétèrent ces paroles à David et il répondit: «Croyez-vous qu'il soit facile de devenir le gendre du roi? Je ne suis qu’un homme pauvre, sans importance.»"
+        },
+        {
+          "number": 24,
+          "text": "Les serviteurs de Saül lui rapportèrent ce qu'avait répondu David."
+        },
+        {
+          "number": 25,
+          "text": "Saül dit: «Voici comment vous parlerez à David: ‘Le roi ne réclame aucune dot. Toutefois, il désire 100 prépuces de Philistins pour être vengé de ses ennemis.’» Saül avait le projet de faire tomber David entre les mains des Philistins."
+        },
+        {
+          "number": 26,
+          "text": "Les serviteurs de Saül rapportèrent ces paroles à David, et ce dernier accepta les conditions qui lui étaient posées pour devenir le gendre du roi. Avant le délai fixé,"
+        },
+        {
+          "number": 27,
+          "text": "David se leva, partit avec ses hommes et tua 200 Philistins. Il rapporta leurs prépuces et les livra tous au roi afin de devenir son gendre. Alors Saül lui donna sa fille Mical pour femme."
+        },
+        {
+          "number": 28,
+          "text": "Saül vit et comprit que l'Eternel était avec David. Quant à sa fille Mical, elle aimait David."
+        },
+        {
+          "number": 29,
+          "text": "Saül eut de plus en plus peur de David et il fut toute sa vie son ennemi."
+        },
+        {
+          "number": 30,
+          "text": "Chaque fois que les princes des Philistins partaient au combat, David avait plus de succès que tous les serviteurs de Saül, et son nom devint très célèbre."
+        }
+      ]
+    },
+    {
+      "chapter": 19,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Saül parla à son fils Jonathan et à tous ses serviteurs de faire mourir David. Mais Jonathan, fils de Saül, avait une grande affection pour David."
+        },
+        {
+          "number": 2,
+          "text": "Il l'en informa en lui disant: «Mon père Saül cherche à te faire mourir. Tiens-toi donc sur tes gardes demain matin, reste à l'écart et cache-toi."
+        },
+        {
+          "number": 3,
+          "text": "Quant à moi, je sortirai et je me tiendrai aux côtés de mon père dans le champ où tu te trouveras. Je lui parlerai de toi. Je verrai alors ce qu'il dira et je te le rapporterai.»"
+        },
+        {
+          "number": 4,
+          "text": "Jonathan parla en bien de David à son père Saül. Il dit: «Que le roi ne commette pas de péché envers son serviteur David, car il n'en a pas commis envers toi. Au contraire, il a agi pour ton bien:"
+        },
+        {
+          "number": 5,
+          "text": "il a risqué sa vie, il a tué le Philistin, et l'Eternel a accompli une grande délivrance pour tout Israël. Tu as vu cela et tu t'en es réjoui. Pourquoi pécherais-tu contre le sang innocent et ferais-tu mourir David sans raison?»"
+        },
+        {
+          "number": 6,
+          "text": "Saül écouta Jonathan et jura: «L'Eternel est vivant! David ne mourra pas.»"
+        },
+        {
+          "number": 7,
+          "text": "Jonathan appela David et lui rapporta toutes ces paroles, puis il le conduisit chez Saül, et David fut à son service comme auparavant."
+        },
+        {
+          "number": 8,
+          "text": "La guerre continuait. David marcha contre les Philistins et se battit contre eux. Il leur infligea une grande défaite et ils prirent la fuite devant lui."
+        },
+        {
+          "number": 9,
+          "text": "Alors le mauvais esprit envoyé par l'Eternel fut sur Saül. Celui-ci était assis dans sa maison, sa lance à la main."
+        },
+        {
+          "number": 10,
+          "text": "David jouait. Saül voulut le clouer avec sa lance contre la paroi, mais David l’évita et la lance s'enfonça dans la paroi. David prit la fuite et s'échappa pendant la nuit."
+        },
+        {
+          "number": 11,
+          "text": "Saül envoya des hommes à la maison de David pour le surveiller et le faire mourir au matin. Mais Mical, la femme de David, l'en informa en lui disant: «Si tu ne te sauves pas cette nuit, demain tu es un homme mort.»"
+        },
+        {
+          "number": 12,
+          "text": "Elle le fit descendre par la fenêtre, et David s'en alla et prit la fuite. C'est ainsi qu'il s’échappa."
+        },
+        {
+          "number": 13,
+          "text": "Ensuite Mical prit le théraphim et le plaça dans le lit. Elle mit une peau de chèvre à la tête du lit et elle enveloppa le théraphim d'une couverture."
+        },
+        {
+          "number": 14,
+          "text": "Lorsque Saül envoya des hommes arrêter David, elle dit: «Il est malade.»"
+        },
+        {
+          "number": 15,
+          "text": "Saül les renvoya pour qu'ils le voient en disant: «Apportez-le-moi dans son lit, afin que je le fasse mourir.»"
+        },
+        {
+          "number": 16,
+          "text": "Ces envoyés revinrent et constatèrent que c’était le théraphim qui était dans le lit, avec une peau de chèvre à l’endroit de la tête."
+        },
+        {
+          "number": 17,
+          "text": "Saül dit à Mical: «Pourquoi m'as-tu ainsi trompé et as-tu laissé partir mon ennemi? Voilà qu’il s'est échappé!» Mical répondit à Saül: «Il m'a dit: ‘Laisse-moi partir ou je te tue!’»"
+        },
+        {
+          "number": 18,
+          "text": "C'est ainsi que David prit la fuite et put s’échapper. Il se rendit vers Samuel à Rama et lui raconta tout ce que Saül lui avait fait. Puis il alla avec Samuel habiter à Najoth."
+        },
+        {
+          "number": 19,
+          "text": "On le rapporta à Saül en disant: «David se trouve à Najoth, près de Rama.»"
+        },
+        {
+          "number": 20,
+          "text": "Saül envoya des hommes arrêter David. Ils virent une assemblée de prophètes en train de prophétiser, avec Samuel à leur tête. L'Esprit de Dieu reposa sur les envoyés de Saül et ils se mirent eux aussi à prophétiser."
+        },
+        {
+          "number": 21,
+          "text": "On le rapporta à Saül, qui envoya d'autres hommes, et eux aussi se mirent à prophétiser. Il en envoya encore, pour la troisième fois, et ils se mirent également à prophétiser."
+        },
+        {
+          "number": 22,
+          "text": "Alors Saül se rendit lui-même à Rama. Arrivé à la grande citerne qui se trouve à Sécou, il demanda: «Où sont Samuel et David?» On lui répondit: «Ils sont à Najoth, près de Rama.»"
+        },
+        {
+          "number": 23,
+          "text": "Il prit alors la direction de Najoth, près de Rama. L'Esprit de Dieu reposa aussi sur lui et Saül continua son chemin en prophétisant jusqu'à son arrivée à Najoth, près de Rama."
+        },
+        {
+          "number": 24,
+          "text": "Il retira ses vêtements et prophétisa aussi devant Samuel. Il se jeta nu par terre et resta ainsi tout ce jour-là et toute la nuit. Voilà pourquoi l'on dit: «Saül est-il aussi parmi les prophètes?»"
+        }
+      ]
+    },
+    {
+      "chapter": 20,
+      "verses": [
+        {
+          "number": 1,
+          "text": "David s'enfuit de Najoth, près de Rama. Il alla trouver Jonathan et dit: «Qu'ai-je fait? Quelle est ma faute, quel est mon péché aux yeux de ton père, pour qu'il en veuille à ma vie?»"
+        },
+        {
+          "number": 2,
+          "text": "Jonathan lui répondit: «Certainement pas, tu ne mourras pas. Mon père ne fait absolument rien sans m'en informer. Pourquoi donc me cacherait-il cela? Non, ce n’est pas le cas.»"
+        },
+        {
+          "number": 3,
+          "text": "David répéta avec serment: «Ton père sait bien que j'ai trouvé grâce à tes yeux et il se sera dit: ‘Que Jonathan ne le sache pas, cela lui ferait de la peine.’ Mais l'Eternel est vivant et ton âme est vivante, il n'y a qu'un pas entre moi et la mort.»"
+        },
+        {
+          "number": 4,
+          "text": "Jonathan dit à David: «Je ferai pour toi ce que tu voudras.»"
+        },
+        {
+          "number": 5,
+          "text": "David lui répondit: «Demain, c’est le début du mois et je devrais normalement manger à la table du roi. Laisse-moi partir. Je me cacherai dans les champs jusqu'au soir du troisième jour."
+        },
+        {
+          "number": 6,
+          "text": "Si ton père remarque mon absence, tu diras: ‘David m'a supplié de le laisser aller à Bethléhem, sa ville d’origine, parce qu'il y a un sacrifice annuel pour toute sa famille.’"
+        },
+        {
+          "number": 7,
+          "text": "S'il dit: ‘C'est bien’, ton serviteur alors n'a rien à craindre. Mais si la colère s'empare de lui, sache qu’il a décidé de me faire du mal."
+        },
+        {
+          "number": 8,
+          "text": "Montre donc ton attachement à ton serviteur, puisque tu as fait une alliance devant l'Eternel avec moi. Et si je suis coupable de quelque chose, enlève-moi toi-même la vie. En effet, pourquoi me conduirais-tu jusqu'à ton père?»"
+        },
+        {
+          "number": 9,
+          "text": "Jonathan lui dit: «Sois bien certain que je t'informerai, si j'apprends que mon père a décidé de te faire du mal!»"
+        },
+        {
+          "number": 10,
+          "text": "David demanda à Jonathan: «Qui m'informera dans le cas où ton père te répondrait avec dureté?»"
+        },
+        {
+          "number": 11,
+          "text": "Jonathan lui dit: «Viens, sortons dans les champs.» Et ils sortirent tous deux dans les champs."
+        },
+        {
+          "number": 12,
+          "text": "Jonathan dit à David: «J’en prends à témoin l'Eternel, le Dieu d'Israël, je chercherai à connaître les intentions de mon père demain ou après-demain. Dans le cas où il serait bien disposé vis-à-vis de toi, si je n'envoie pas quelqu'un vers toi pour t'en informer,"
+        },
+        {
+          "number": 13,
+          "text": "que l'Eternel me traite avec la plus grande sévérité! Dans le cas où mon père trouverait bon de te faire du mal, je t'informerai aussi et je te laisserai partir, afin que tu t'en ailles en paix. Que l'Eternel soit avec toi comme il l’a été avec mon père!"
+        },
+        {
+          "number": 14,
+          "text": "Si je reste en vie, veuille agir envers moi avec la bonté de l'Eternel, et si je meurs,"
+        },
+        {
+          "number": 15,
+          "text": "ne retire jamais ta bonté envers ma famille, pas même lorsque l'Eternel supprimera chacun de tes ennemis de la surface de la terre."
+        },
+        {
+          "number": 16,
+          "text": "En effet, Jonathan a fait alliance avec la famille de David. Que l'Eternel se venge des ennemis de David!»"
+        },
+        {
+          "number": 17,
+          "text": "Jonathan fit encore prêter serment à David au nom de son amour pour lui, car il l'aimait comme lui-même."
+        },
+        {
+          "number": 18,
+          "text": "Jonathan lui dit: «Demain, c’est le début du mois. On remarquera ton absence, car ta place sera vide."
+        },
+        {
+          "number": 19,
+          "text": "Tu descendras le troisième jour jusqu'à l'endroit où tu t'étais caché le jour où l’affaire a commencé, et tu resteras près de la pierre d'Ezel."
+        },
+        {
+          "number": 20,
+          "text": "Je tirerai trois flèches du côté de la pierre, comme si je visais une cible."
+        },
+        {
+          "number": 21,
+          "text": "J'enverrai un jeune serviteur en lui disant: ‘Va retrouver les flèches.’ Si je lui dis: ‘Les flèches sont moins loin que toi, prends-les’, alors viens, car il y a paix pour toi et tu n'as rien à craindre, l'Eternel est vivant!"
+        },
+        {
+          "number": 22,
+          "text": "Mais si je dis au jeune homme: ‘Les flèches sont plus loin que toi’, alors va-t’en, car l'Eternel te fait partir."
+        },
+        {
+          "number": 23,
+          "text": "L'Eternel est pour toujours témoin de la parole que nous nous sommes donnée l'un à l'autre.»"
+        },
+        {
+          "number": 24,
+          "text": "David se cacha dans les champs. C'était le début du mois et le roi prit place à table pour manger."
+        },
+        {
+          "number": 25,
+          "text": "Le roi s'assit à sa place habituelle contre la paroi, Jonathan en face et Abner à côté de Saül, mais la place de David resta vide."
+        },
+        {
+          "number": 26,
+          "text": "Saül ne dit rien ce jour-là, car il pensait: «C'est un accident, il n'est pas pur, certainement il n'est pas pur.»"
+        },
+        {
+          "number": 27,
+          "text": "Le lendemain, deuxième jour du mois, la place de David était encore vide. Saül dit alors à son fils Jonathan: «Pourquoi le fils d'Isaï n’est-il pas venu au repas, ni hier ni aujourd'hui?»"
+        },
+        {
+          "number": 28,
+          "text": "Jonathan répondit à Saül: «David m'a demandé la permission d'aller à Bethléhem."
+        },
+        {
+          "number": 29,
+          "text": "Il a dit: ‘Laisse-moi partir car nous avons dans la ville un sacrifice de famille, et mon frère m’a ordonné d’y assister. Si donc j'ai trouvé grâce à tes yeux, permets-moi de m’échapper pour aller voir mes frères.’ C'est pour cela qu'il n'est pas venu à la table du roi.»"
+        },
+        {
+          "number": 30,
+          "text": "Alors la colère de Saül s'enflamma contre Jonathan et il lui dit: «Fils d’une femme perverse et rebelle, je sais bien que tu as pris parti pour le fils d'Isaï, à ta honte et à celle de ta mère."
+        },
+        {
+          "number": 31,
+          "text": "Aussi longtemps que le fils d'Isaï sera en vie sur la terre, il n'y aura pas de sécurité, ni pour toi ni pour ta royauté. Maintenant, envoie-le chercher et qu'on me l'amène, car il mérite la mort.»"
+        },
+        {
+          "number": 32,
+          "text": "Jonathan répondit à son père Saül: «Pourquoi le faire mourir? Qu'a-t-il fait?»"
+        },
+        {
+          "number": 33,
+          "text": "Saül dirigea alors sa lance contre lui pour le frapper. Jonathan comprit que son père était décidé à faire mourir David."
+        },
+        {
+          "number": 34,
+          "text": "Il se leva de table dans une ardente colère et ne participa pas au repas le deuxième jour du mois. Il était en effet dans la tristesse à cause de David, parce que son père l'avait insulté."
+        },
+        {
+          "number": 35,
+          "text": "Le lendemain matin, Jonathan se rendit dans les champs à l'endroit convenu avec David, accompagné d'un jeune serviteur."
+        },
+        {
+          "number": 36,
+          "text": "Il lui dit: «Cours retrouver les flèches que je vais tirer.» Le serviteur courut et Jonathan tira une flèche qui le dépassa."
+        },
+        {
+          "number": 37,
+          "text": "Lorsque le garçon arriva à l'endroit où se trouvait la flèche qu’il avait tirée, Jonathan cria derrière lui: «La flèche n'est-elle pas plus loin que toi?»"
+        },
+        {
+          "number": 38,
+          "text": "Il lui cria encore: «Vite, dépêche-toi, ne t'arrête pas!» Le serviteur de Jonathan ramassa les flèches et revint vers son maître."
+        },
+        {
+          "number": 39,
+          "text": "Le garçon ne savait rien, Jonathan et David étaient les seuls à connaître la situation."
+        },
+        {
+          "number": 40,
+          "text": "Jonathan remit ses armes à son serviteur en lui disant: «Va les porter en ville.»"
+        },
+        {
+          "number": 41,
+          "text": "Après le départ du garçon, David se leva du côté du sud, puis il se jeta le visage contre terre et se prosterna trois fois. Les deux amis s'embrassèrent et pleurèrent ensemble, en particulier David."
+        },
+        {
+          "number": 42,
+          "text": "Jonathan dit à David: «Va en paix, maintenant que nous avons l'un et l'autre prêté serment au nom de l'Eternel en disant: ‘Que l'Eternel soit pour toujours témoin entre toi et moi, entre ta descendance et ma descendance!’»"
+        }
+      ]
+    },
+    {
+      "chapter": 21,
+      "verses": [
+        {
+          "number": 1,
+          "text": "David se leva et partit, et Jonathan rentra en ville."
+        },
+        {
+          "number": 2,
+          "text": "David se rendit à Nob vers le prêtre Achimélec. Celui-ci courut effrayé à sa rencontre et lui demanda: «Pourquoi es-tu seul et n'y a-t-il personne avec toi?»"
+        },
+        {
+          "number": 3,
+          "text": "David répondit au prêtre Achimélec: «Le roi m'a donné un ordre et m'a dit: ‘Que personne ne sache rien de l'affaire pour laquelle je t'envoie ni de l'ordre que je t'ai donné.’ J'ai fixé un rendez-vous à mes hommes."
+        },
+        {
+          "number": 4,
+          "text": "Maintenant qu'as-tu sous la main? Donne-moi cinq pains ou ce que tu trouveras.»"
+        },
+        {
+          "number": 5,
+          "text": "Le prêtre répondit à David: «Je n'ai pas de pain ordinaire sous la main, mais je peux te donner du pain consacré, à condition que tes hommes n’aient pas eu de relations avec des femmes récemment!»"
+        },
+        {
+          "number": 6,
+          "text": "David répondit au prêtre: «Nous n’avons pas eu de relations avec des femmes, comme toujours quand je pars en campagne. Les affaires de mes hommes sont consacrées, même si une expédition a un caractère profane. Elles le seront d’autant plus aujourd'hui.»"
+        },
+        {
+          "number": 7,
+          "text": "Alors le prêtre lui donna du pain consacré, car il n'y avait là pas d'autre pain. On l’avait retiré de devant l'Eternel pour le remplacer par du pain chaud au moment où on l'avait pris."
+        },
+        {
+          "number": 8,
+          "text": "Ce jour-là, un des serviteurs de Saül était présent, enfermé qu’il était au service de l'Eternel. C'était un Edomite du nom de Doëg, qui était le chef des bergers de Saül."
+        },
+        {
+          "number": 9,
+          "text": "David dit à Achimélec: «N'as-tu pas sous la main une lance ou une épée? En effet, je n'ai pris avec moi ni mon épée ni mes armes, parce que l'ordre du roi était urgent.»"
+        },
+        {
+          "number": 10,
+          "text": "Le prêtre répondit: «Il y a l'épée de Goliath, le Philistin, que tu as tué dans la vallée d’Ela. Elle est enveloppée dans un drap derrière l'éphod. Si tu veux la prendre, prends-la, car il n'y en a pas d'autre ici.» David répliqua: «Il n'y en a pas de pareille. Donne-la-moi.»"
+        },
+        {
+          "number": 11,
+          "text": "David se leva et s'enfuit le jour même loin de Saül. Il arriva chez Akish, le roi de Gath."
+        },
+        {
+          "number": 12,
+          "text": "Les serviteurs d'Akish lui dirent: «N'est-ce pas David, le roi du pays? N'est-ce pas celui en l’honneur de qui l'on chantait en dansant: ‘Saül a frappé ses 1000, et David ses 10'000’?»"
+        },
+        {
+          "number": 13,
+          "text": "David prit ces paroles à cœur et éprouva une grande peur vis-à-vis d'Akish, le roi de Gath."
+        },
+        {
+          "number": 14,
+          "text": "Il fit semblant d’être fou sous leurs yeux et accomplit des actes de démence devant eux. Il faisait des marques sur les battants des portes et laissait couler sa salive sur sa barbe."
+        },
+        {
+          "number": 15,
+          "text": "Akish dit à ses serviteurs: «Vous voyez bien que cet homme a perdu la raison. Pourquoi me l'amenez-vous?"
+        },
+        {
+          "number": 16,
+          "text": "Est-ce que je manque de fous, pour que vous m'ameniez celui-ci et me rendiez témoin de ses actes de démence? Faut-il qu'il entre dans ma maison?»"
+        }
+      ]
+    },
+    {
+      "chapter": 22,
+      "verses": [
+        {
+          "number": 1,
+          "text": "David partit de là et se sauva dans la grotte d'Adullam. Ses frères et toute sa famille l'apprirent, et ils descendirent vers lui."
+        },
+        {
+          "number": 2,
+          "text": "Tous ceux qui se trouvaient dans la détresse, qui avaient des dettes ou qui étaient mécontents se rassemblèrent autour de lui, et il devint leur chef. Ainsi, ce furent environ 400 hommes qui se joignirent à lui."
+        },
+        {
+          "number": 3,
+          "text": "De là, David se rendit à Mitspé dans le pays de Moab. Il dit au roi de Moab: «Permets donc à mon père et à ma mère de se retirer chez vous jusqu'à ce que je sache ce que Dieu fera de moi.»"
+        },
+        {
+          "number": 4,
+          "text": "Il les conduisit vers le roi de Moab et ils restèrent avec lui tout le temps que David fut dans sa forteresse."
+        },
+        {
+          "number": 5,
+          "text": "Le prophète Gad dit à David: «Ne reste pas dans la forteresse, va-t'en et retourne sur le territoire de Juda.» David s'en alla et se rendit dans la forêt de Héreth."
+        },
+        {
+          "number": 6,
+          "text": "Saül apprit que l'on avait des renseignements sur David et sur ses hommes. Il siégeait alors sous un tamaris à Guibea, sur la colline. Il avait sa lance à la main et tous ses serviteurs se tenaient près de lui."
+        },
+        {
+          "number": 7,
+          "text": "Saül dit aux serviteurs qui se tenaient près de lui: «Ecoutez, Benjaminites! Le fils d'Isaï vous donnera-t-il à tous des champs et des vignes? Fera-t-il de vous tous des chefs de milliers et de centaines?"
+        },
+        {
+          "number": 8,
+          "text": "Sinon, pourquoi avez-vous tous conspiré contre moi, pourquoi n'y a-t-il personne qui m'informe de l'alliance conclue par mon fils avec le fils d'Isaï? Pourquoi n'y a-t-il aucun de vous qui s’inquiète pour moi et qui m'avertisse que mon fils a soulevé mon serviteur contre moi afin qu'il me dresse des embuscades, comme il le fait aujourd'hui?»"
+        },
+        {
+          "number": 9,
+          "text": "Doëg l'Edomite, qui figurait aussi parmi les serviteurs de Saül, répondit: «J'ai vu le fils d'Isaï venir à Nob, vers Achimélec, fils d'Achithub."
+        },
+        {
+          "number": 10,
+          "text": "Achimélec a consulté l'Eternel pour lui. Il lui a donné des vivres et lui a remis l'épée de Goliath, le Philistin.»"
+        },
+        {
+          "number": 11,
+          "text": "Le roi envoya chercher le prêtre Achimélec, fils d'Achithub, et toute sa famille, les prêtres qui se trouvaient à Nob. Ils se rendirent tous vers le roi."
+        },
+        {
+          "number": 12,
+          "text": "Saül dit: «Ecoute, fils d'Achithub!» Il répondit: «Oui, mon seigneur!»"
+        },
+        {
+          "number": 13,
+          "text": "Saül lui dit: «Pourquoi avez-vous conspiré contre moi, le fils d'Isaï et toi? Pourquoi lui as-tu donné du pain et une épée, et pourquoi as-tu consulté Dieu pour lui? Ainsi, il s'attaque à moi et me dresse des embuscades, comme il le fait aujourd'hui.»"
+        },
+        {
+          "number": 14,
+          "text": "Achimélec répondit au roi: «Parmi tous tes serviteurs, lequel est aussi fidèle que David? Il est le gendre du roi, il est dévoué à tes ordres et honoré dans ta maison."
+        },
+        {
+          "number": 15,
+          "text": "Est-ce aujourd'hui que j'ai commencé à consulter Dieu pour lui? Certainement pas! Que le roi ne fasse pas reposer de responsabilité sur moi ni sur qui que ce soit dans ma famille, car moi, ton serviteur, je ne sais absolument rien de cette affaire.»"
+        },
+        {
+          "number": 16,
+          "text": "Le roi rétorqua: «Tu mourras, Achimélec, ainsi que toute ta famille.»"
+        },
+        {
+          "number": 17,
+          "text": "Puis il ordonna aux gardes qui se tenaient près de lui: «Tournez-vous et mettez à mort les prêtres de l'Eternel, car ils sont de mèche avec David. Ils savaient bien qu'il était en fuite et ils ne m'ont pas averti.» Mais les serviteurs du roi ne voulurent pas avancer la main pour frapper les prêtres de l'Eternel."
+        },
+        {
+          "number": 18,
+          "text": "Alors le roi dit à Doëg: «Tourne-toi et frappe les prêtres.» Doëg l'Edomite se tourna, et ce fut lui qui frappa les prêtres. Il fit mourir ce jour-là 85 hommes qui portaient l'éphod de lin."
+        },
+        {
+          "number": 19,
+          "text": "Saül frappa encore du tranchant de l'épée Nob, la ville de ces prêtres. Hommes et femmes, enfants et bébés, bœufs, ânes et brebis, tous tombèrent sous le tranchant de l'épée."
+        },
+        {
+          "number": 20,
+          "text": "Un fils d'Achimélec et petit-fils d'Achithub put s’échapper. Son nom était Abiathar. Il s'enfuit vers David"
+        },
+        {
+          "number": 21,
+          "text": "et lui rapporta que Saül avait tué les prêtres de l'Eternel."
+        },
+        {
+          "number": 22,
+          "text": "David dit à Abiathar: «Je savais bien, l’autre jour, que Doëg l'Edomite, qui se trouvait là, ne manquerait pas d'informer Saül. C'est moi qui suis responsable de la mort de tous les membres de ta famille."
+        },
+        {
+          "number": 23,
+          "text": "Reste avec moi, n’aie pas peur, car celui qui en voudra à ta vie en voudra à la mienne. Près de moi tu seras en sécurité.»"
+        }
+      ]
+    },
+    {
+      "chapter": 23,
+      "verses": [
+        {
+          "number": 1,
+          "text": "On vint dire à David: «Les Philistins ont attaqué Keïla et pillent les aires de battage.»"
+        },
+        {
+          "number": 2,
+          "text": "David consulta l'Eternel en disant: «Dois-je y aller? Est-ce que je battrai ces Philistins?» L'Eternel lui répondit: «Vas-y, tu battras les Philistins et tu délivreras Keïla.»"
+        },
+        {
+          "number": 3,
+          "text": "Mais les hommes de David lui dirent: «Nous vivons dans la peur ici même en Juda. Que se passera-t-il si nous allons à Keïla pour combattre les troupes des Philistins?»"
+        },
+        {
+          "number": 4,
+          "text": "David consulta de nouveau l'Eternel, et l'Eternel lui répondit: «Lève-toi, descends à Keïla, car je livre les Philistins entre tes mains.»"
+        },
+        {
+          "number": 5,
+          "text": "David alla donc avec ses hommes à Keïla et il se battit contre les Philistins. Il emmena leur bétail et leur infligea une grande défaite. C’est ainsi que David délivra les habitants de Keïla."
+        },
+        {
+          "number": 6,
+          "text": "Lorsque Abiathar, le fils d'Achimélec, s’était réfugié auprès de David à Keïla, il avait apporté l'éphod avec lui."
+        },
+        {
+          "number": 7,
+          "text": "Saül fut informé de l'arrivée de David à Keïla et il se dit: «Dieu le livre entre mes mains, car il est venu s'enfermer dans une ville munie de portes et de verrous.»"
+        },
+        {
+          "number": 8,
+          "text": "Saül convoqua donc tout le peuple à la guerre afin de descendre à Keïla et d'assiéger David et ses hommes."
+        },
+        {
+          "number": 9,
+          "text": "David eut connaissance du mauvais projet de Saül contre lui. Il dit au prêtre Abiathar: «Apporte l'éphod!»"
+        },
+        {
+          "number": 10,
+          "text": "Puis David dit: «Eternel, Dieu d'Israël, moi, ton serviteur, j’apprends que Saül veut venir à Keïla pour détruire cette ville à cause de moi."
+        },
+        {
+          "number": 11,
+          "text": "Les habitants de Keïla me livreront-ils entre ses mains? Saül descendra-t-il, conformément à ce que ton serviteur a appris? Eternel, Dieu d'Israël, veuille le révéler à ton serviteur!» L'Eternel répondit: «Il descendra.»"
+        },
+        {
+          "number": 12,
+          "text": "David répéta: «Les habitants de Keïla me livreront-ils, ainsi que mes hommes, entre les mains de Saül?» Et l'Eternel répondit: «Ils te livreront entre ses mains.»"
+        },
+        {
+          "number": 13,
+          "text": "Alors David se leva avec ses hommes au nombre d'environ 600; ils sortirent de Keïla et s'en allèrent où ils purent. Informé que David s'était sauvé de Keïla, Saül renonça à son expédition."
+        },
+        {
+          "number": 14,
+          "text": "David habita dans le désert, dans des endroits escarpés, et il resta sur la montagne dans le désert de Ziph. Saül le cherchait toujours, mais Dieu ne le livra pas entre ses mains."
+        },
+        {
+          "number": 15,
+          "text": "Voyant que Saül partait en campagne pour attenter à sa vie, David restait dans le désert de Ziph, dans la forêt."
+        },
+        {
+          "number": 16,
+          "text": "Ce fut alors que Jonathan, fils de Saül, se leva pour aller trouver David dans la forêt. Il fortifia sa confiance en Dieu"
+        },
+        {
+          "number": 17,
+          "text": "et lui dit: «N’aie pas peur, car mon père Saül ne parviendra pas à t’attraper. Tu régneras sur Israël et moi, je serai ton bras droit. Mon père Saül le sait bien aussi.»"
+        },
+        {
+          "number": 18,
+          "text": "Ils firent tous deux alliance devant l'Eternel. David resta dans la forêt et Jonathan retourna chez lui."
+        },
+        {
+          "number": 19,
+          "text": "Les Ziphiens montèrent vers Saül à Guibea et dirent: «David n'est-il pas caché chez nous dans les endroits escarpés, dans la forêt, sur la colline de Hakila qui se trouve au sud du désert?"
+        },
+        {
+          "number": 20,
+          "text": "Descends donc, roi, si c'est ce que tu désires. C’est à nous qu’il reviendra de le livrer entre les mains du roi.»"
+        },
+        {
+          "number": 21,
+          "text": "Saül dit: «Que l'Eternel vous bénisse pour avoir eu pitié de moi!"
+        },
+        {
+          "number": 22,
+          "text": "Allez donc prendre encore des informations pour bien examiner et savoir où il se tient et qui l'y a vu, car il est très rusé, à ce qu'on m'a dit."
+        },
+        {
+          "number": 23,
+          "text": "Voyez et reconnaissez tous les endroits où il se cache, puis revenez vers moi avec des renseignements certains, et je partirai avec vous. S'il est dans le pays, je le chercherai parmi tous les milliers de Juda.»"
+        },
+        {
+          "number": 24,
+          "text": "Ils se levèrent donc et retournèrent à Ziph avant Saül. David et ses hommes se trouvaient dans le désert de Maon, dans la plaine située au sud de ce désert."
+        },
+        {
+          "number": 25,
+          "text": "Saül partit avec ses hommes à la recherche de David. On en informa David, qui descendit dans un endroit rocheux, dans le désert de Maon. L'ayant appris, Saül poursuivit David au désert de Maon."
+        },
+        {
+          "number": 26,
+          "text": "Saül marchait d'un côté de la montagne, David et ses hommes de l'autre côté. David se dépêchait pour échapper à Saül. Cependant, déjà Saül et ses hommes l’encerclaient, ainsi que les siens, pour s'emparer d'eux"
+        },
+        {
+          "number": 27,
+          "text": "lorsqu'un messager vint dire à Saül: «Viens vite, car les Philistins ont lancé une attaque contre le pays.»"
+        },
+        {
+          "number": 28,
+          "text": "Saül cessa de poursuivre David et repartit pour aller combattre les Philistins. C'est pourquoi l'on appela cet endroit Séla-Hammachlekoth."
+        }
+      ]
+    },
+    {
+      "chapter": 24,
+      "verses": [
+        {
+          "number": 1,
+          "text": "De là David monta vers les falaises d'En-Guédi, où il habita."
+        },
+        {
+          "number": 2,
+          "text": "Lorsque Saül fut de retour après avoir poursuivi les Philistins, on vint lui dire: «David est dans le désert d'En-Guédi.»"
+        },
+        {
+          "number": 3,
+          "text": "Saül prit 3000 hommes d'élite choisis sur tout Israël, et il alla à la recherche de David et de ses hommes jusque sur les rochers des bouquetins."
+        },
+        {
+          "number": 4,
+          "text": "Il arriva à des parcs à brebis, qui étaient près du chemin. Là se trouvait une grotte, où il entra pour satisfaire un besoin naturel. David et ses hommes se trouvaient au fond de la grotte."
+        },
+        {
+          "number": 5,
+          "text": "Les hommes de David lui dirent: «Voici le jour où l'Eternel te dit: ‘Je livre ton ennemi entre tes mains; traite-le comme tu le jugeras bon.’» David se leva et coupa doucement le pan du manteau de Saül."
+        },
+        {
+          "number": 6,
+          "text": "Après cela il sentit son cœur battre, parce qu'il avait coupé le pan du manteau de Saül."
+        },
+        {
+          "number": 7,
+          "text": "Il dit à ses hommes: «Que l'Eternel me garde de commettre une telle action contre mon seigneur, celui que l'Eternel a désigné par onction! Qu’il me garde de porter la main contre lui, car il est celui que l'Eternel a désigné par onction.»"
+        },
+        {
+          "number": 8,
+          "text": "Par ces paroles David arrêta ses hommes et les empêcha de se jeter sur Saül. Puis Saül se leva pour sortir de la grotte et continua son chemin."
+        },
+        {
+          "number": 9,
+          "text": "Peu après, David se leva et sortit de la grotte. Il se mit alors à crier vers Saül: «O roi, mon seigneur!» Saül regarda derrière lui et David s'inclina le visage contre terre et se prosterna."
+        },
+        {
+          "number": 10,
+          "text": "David dit à Saül: «Pourquoi écoutes-tu les propos de ceux qui prétendent que je cherche ton malheur?"
+        },
+        {
+          "number": 11,
+          "text": "Tu vois maintenant de tes propres yeux que l'Eternel t'avait livré aujourd'hui entre mes mains dans la grotte. On me poussait à te tuer, mais je t'ai épargné et j'ai dit: ‘Je ne porterai pas la main contre mon seigneur, car il est celui que l'Eternel a désigné par onction.’"
+        },
+        {
+          "number": 12,
+          "text": "Regarde, mon père, regarde donc le pan de ton manteau dans ma main. J'ai coupé le pan de ton manteau, mais je ne t'ai pas tué. Sache et reconnais donc qu'il n'y a dans ma conduite ni méchanceté ni révolte et que je n'ai pas péché contre toi. Et pourtant tu me dresses des embuscades pour m'enlever la vie!"
+        },
+        {
+          "number": 13,
+          "text": "L'Eternel sera juge entre toi et moi, et il me vengera de toi, mais je ne porterai pas la main contre toi."
+        },
+        {
+          "number": 14,
+          "text": "‘Des méchants vient la méchanceté’, dit l'ancien proverbe. Aussi, je ne porterai pas la main contre toi."
+        },
+        {
+          "number": 15,
+          "text": "Contre qui le roi d'Israël s'est-il mis en marche? Qui poursuis-tu? Un chien mort, une puce!"
+        },
+        {
+          "number": 16,
+          "text": "L'Eternel jugera et prononcera son verdict entre toi et moi. Il regardera et il défendra ma cause, il me rendra justice en me délivrant de toi.»"
+        },
+        {
+          "number": 17,
+          "text": "Lorsque David eut fini d'adresser ces paroles à Saül, celui-ci dit: «Est-ce bien ta voix, mon fils David?» Et Saül se mit à pleurer tout haut."
+        },
+        {
+          "number": 18,
+          "text": "Il dit à David: «Tu es plus juste que moi, car tu m'as fait du bien, alors que moi je t'ai fait du mal."
+        },
+        {
+          "number": 19,
+          "text": "Tu démontres aujourd'hui la bonté avec laquelle tu agis envers moi, puisque l'Eternel m'avait livré entre tes mains et que tu ne m'as pas tué."
+        },
+        {
+          "number": 20,
+          "text": "Si quelqu'un rencontre son ennemi, le laisse-t-il poursuivre tranquillement son chemin? Que l'Eternel te récompense pour ce que tu as fait pour moi aujourd’hui!"
+        },
+        {
+          "number": 21,
+          "text": "Maintenant, je sais que tu régneras et que le royaume d’Israël tiendra solidement entre tes mains."
+        },
+        {
+          "number": 22,
+          "text": "Jure-moi donc par l'Eternel que tu ne détruiras pas ma descendance après ma mort et que tu ne supprimeras pas mon nom de ma famille.»"
+        },
+        {
+          "number": 23,
+          "text": "David en fit le serment à Saül. Puis Saül retourna chez lui, et David et ses hommes gagnèrent leur retraite."
+        }
+      ]
+    },
+    {
+      "chapter": 25,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Samuel mourut. Tout Israël se rassembla pour le pleurer et on l'enterra chez lui à Rama. Quant à David, il se leva et descendit au désert de Paran."
+        },
+        {
+          "number": 2,
+          "text": "Il y avait à Maon un homme très riche, qui possédait des biens à Carmel. Il avait 3000 brebis et 1000 chèvres, et il se trouvait à Carmel pour la tonte de ses brebis."
+        },
+        {
+          "number": 3,
+          "text": "Le nom de cet homme était Nabal et sa femme s'appelait Abigaïl. C'était une femme pleine de bon sens et très belle, tandis que son mari était dur et méchant dans sa manière d’agir. Il descendait de Caleb."
+        },
+        {
+          "number": 4,
+          "text": "Alors qu’il était au désert, David apprit que Nabal tondait ses brebis."
+        },
+        {
+          "number": 5,
+          "text": "Il envoya dix jeunes gens vers lui en leur ordonnant: «Montez à Carmel et allez trouver Nabal. Vous le saluerez en mon nom"
+        },
+        {
+          "number": 6,
+          "text": "et lui direz: ‘Longue vie à toi! Que la paix soit avec toi, avec ta famille et avec tout ce qui t'appartient!"
+        },
+        {
+          "number": 7,
+          "text": "Maintenant, j'ai appris que tu as chez toi les tondeurs. Or, lorsque tes bergers étaient avec nous, nous ne leur avons fait aucun mal et rien ne leur a été volé durant tout le temps où ils étaient avec nous à Carmel."
+        },
+        {
+          "number": 8,
+          "text": "Demande-le à tes serviteurs et ils te le confirmeront. Que ces jeunes gens trouvent donc grâce à tes yeux, puisque nous venons dans un jour de joie. Donne donc à tes serviteurs et à ton fils David ce que tu as sous la main.’»"
+        },
+        {
+          "number": 9,
+          "text": "Lorsque les hommes de David furent arrivés, ils répétèrent toutes ces paroles à Nabal, au nom de David, puis ils se turent."
+        },
+        {
+          "number": 10,
+          "text": "Nabal répondit aux serviteurs de David: «Qui est David et qui est le fils d'Isaï? Il y a aujourd'hui beaucoup de serviteurs qui s'échappent de chez leur maître."
+        },
+        {
+          "number": 11,
+          "text": "Et je devrais prendre mon pain, mon eau, mon bétail que j'ai tué pour mes tondeurs, pour les donner à des gens qui sortent je ne sais d'où?»"
+        },
+        {
+          "number": 12,
+          "text": "Les hommes de David rebroussèrent chemin, ils repartirent et répétèrent, à leur arrivée, toutes ces paroles à David."
+        },
+        {
+          "number": 13,
+          "text": "Alors David dit à ses hommes: «Que chacun de vous prenne son épée!» Et ils prirent chacun leur épée. David aussi prit la sienne, et environ 400 hommes montèrent à sa suite, tandis que 200 restaient près du matériel."
+        },
+        {
+          "number": 14,
+          "text": "Un des serviteurs de Nabal vint dire à Abigaïl, la femme de Nabal: «David a envoyé du désert des messagers pour saluer notre maître, et celui-ci les a traités avec dureté."
+        },
+        {
+          "number": 15,
+          "text": "Pourtant ces hommes se sont montrés très bons pour nous. Ils ne nous ont fait aucun mal et rien ne nous a été volé durant tout le temps où nous avons été avec eux lorsque nous étions dans les champs."
+        },
+        {
+          "number": 16,
+          "text": "Ils nous ont nuit et jour servi de protection, durant tout le temps où nous avons été avec eux pour garder les troupeaux."
+        },
+        {
+          "number": 17,
+          "text": "Maintenant, sache et vois ce que tu as à faire, car la perte de notre maître et de toute sa famille est décidée. Lui-même est si méchant que nous n'osons pas lui parler.»"
+        },
+        {
+          "number": 18,
+          "text": "Abigaïl prit aussitôt 200 pains, 2 outres de vin, 5 brebis toutes préparées, 5 mesures de grain rôti, 100 gâteaux aux raisins secs et 200 aux figues sèches. Elle chargea tout cela sur des ânes"
+        },
+        {
+          "number": 19,
+          "text": "et dit à ses serviteurs: «Passez devant moi, je vais vous suivre.» Elle ne dit rien à Nabal, son mari."
+        },
+        {
+          "number": 20,
+          "text": "Montée sur un âne, elle descendit, cachée par la montagne. David et ses hommes descendaient en face d'elle, de sorte qu'elle les rencontra."
+        },
+        {
+          "number": 21,
+          "text": "David avait dit: «C'est bien inutilement que j'ai gardé tout ce que cet homme a dans le désert et que rien de tout ce qu'il possède n'a été volé. Il m'a rendu le mal pour le bien."
+        },
+        {
+          "number": 22,
+          "text": "Que Dieu traite son serviteur David avec la plus grande sévérité, si je laisse en vie jusqu'au matin un seul homme parmi tous ceux qui appartiennent à Nabal!»"
+        },
+        {
+          "number": 23,
+          "text": "Lorsque Abigaïl aperçut David, elle descendit rapidement de l'âne, tomba sur son visage devant lui et se prosterna contre terre."
+        },
+        {
+          "number": 24,
+          "text": "Puis, se jetant à ses pieds, elle dit: «C’est ma faute, mon seigneur! Permets à ta servante de te parler et écoute ses paroles."
+        },
+        {
+          "number": 25,
+          "text": "Que mon seigneur ne prête pas attention à ce méchant homme, à Nabal, car il porte bien son nom: il s’appelle Nabal et il y a chez lui de la folie. Quant à moi, ta servante, je n'ai pas vu les hommes que toi, mon seigneur, tu avais envoyés."
+        },
+        {
+          "number": 26,
+          "text": "Maintenant, mon seigneur, aussi vrai que l'Eternel est vivant et que ton âme est vivante, c'est l'Eternel qui t'a empêché de verser le sang et qui a retenu ta main. Que tes ennemis, que ceux qui veulent du mal à mon seigneur, soient pareils à Nabal!"
+        },
+        {
+          "number": 27,
+          "text": "Accepte ce cadeau que moi, ta servante, je t’apporte, à toi mon seigneur, et qu'il soit distribué aux hommes qui marchent à la suite de mon seigneur."
+        },
+        {
+          "number": 28,
+          "text": "Pardonne la faute de ta servante! En effet, l'Eternel accordera à mon seigneur une maison stable, car mon seigneur soutient les guerres de l'Eternel et on ne trouvera jamais rien de mauvais chez toi."
+        },
+        {
+          "number": 29,
+          "text": "Si quelqu'un se dresse pour te poursuivre et en veut à ta vie, ton âme, mon seigneur, sera bien gardée avec les vivants auprès de l'Eternel, ton Dieu. En revanche, il enverra au loin comme avec une fronde l'âme de tes ennemis."
+        },
+        {
+          "number": 30,
+          "text": "Lorsque l'Eternel aura fait à mon seigneur tout le bien qu'il t'a annoncé et qu'il t'aura établi chef sur Israël,"
+        },
+        {
+          "number": 31,
+          "text": "mon seigneur n'aura ni remords ni trouble dans son cœur pour avoir versé le sang inutilement et pour s'être vengé lui-même. Et lorsque l'Eternel aura fait du bien à mon seigneur, souviens-toi de ta servante.»"
+        },
+        {
+          "number": 32,
+          "text": "David dit à Abigaïl: «Béni soit l'Eternel, le Dieu d'Israël, qui t'a envoyée aujourd'hui à ma rencontre!"
+        },
+        {
+          "number": 33,
+          "text": "Béni soit ton bon sens et bénie sois-tu, toi qui m'as empêché aujourd’hui de verser le sang et qui as retenu ma main!"
+        },
+        {
+          "number": 34,
+          "text": "Mais l'Eternel, le Dieu d'Israël, qui m'a empêché de te faire du mal est vivant, si tu ne t'étais pas dépêchée de venir à ma rencontre, il ne serait pas resté un seul homme à Nabal d'ici le matin.»"
+        },
+        {
+          "number": 35,
+          "text": "David prit ce qu'Abigaïl lui avait apporté et lui dit: «Monte en paix chez toi. Tu vois, je t'ai écoutée et je t'ai bien accueillie.»"
+        },
+        {
+          "number": 36,
+          "text": "Abigaïl arriva vers Nabal alors qu’il faisait un festin digne d’un roi dans sa maison. Il avait le cœur joyeux et il était complètement ivre. Elle ne lui dit pas un seul mot jusqu'au matin."
+        },
+        {
+          "number": 37,
+          "text": "Mais le matin, l'ivresse de Nabal s'était dissipée et sa femme lui raconta ce qui s'était passé. Le cœur de Nabal reçut un coup mortel et il devint aussi inerte qu’une pierre."
+        },
+        {
+          "number": 38,
+          "text": "Environ dix jours après, l'Eternel frappa Nabal et il mourut."
+        },
+        {
+          "number": 39,
+          "text": "David apprit que Nabal était mort et il dit: «Béni soit l'Eternel! Il a défendu ma cause dans l'affront que m'a fait Nabal et il a empêché son serviteur de faire le mal. L'Eternel a fait retomber la méchanceté de Nabal sur sa tête.» David envoya proposer à Abigaïl de devenir sa femme."
+        },
+        {
+          "number": 40,
+          "text": "Les serviteurs de David arrivèrent chez Abigaïl à Carmel. Ils lui dirent: «David nous a envoyés vers toi parce qu'il désire te prendre pour femme.»"
+        },
+        {
+          "number": 41,
+          "text": "Elle se leva, se prosterna le visage contre terre et dit: «Voici, moi ta servante, je serai une esclave pour laver les pieds des serviteurs de mon seigneur.»"
+        },
+        {
+          "number": 42,
+          "text": "Abigaïl partit immédiatement, montée sur un âne et accompagnée de cinq jeunes filles. Elle suivit les messagers de David et devint ainsi sa femme."
+        },
+        {
+          "number": 43,
+          "text": "David avait aussi épousé Achinoam de Jizreel, et toutes les deux furent ses femmes."
+        },
+        {
+          "number": 44,
+          "text": "Saül avait donné sa fille Mical, la femme de David, à Palthi de Gallim, fils de Laïsh."
+        }
+      ]
+    },
+    {
+      "chapter": 26,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Les Ziphiens allèrent trouver Saül à Guibea et dirent: «David n'est-il pas caché sur la colline de Hakila, en face du désert?»"
+        },
+        {
+          "number": 2,
+          "text": "Saül se leva et descendit au désert de Ziph, avec 3000 hommes choisis dans l'élite d'Israël, pour chercher David dans le désert de Ziph."
+        },
+        {
+          "number": 3,
+          "text": "Il installa son camp sur la colline de Hakila, en face du désert, près du chemin. David était dans le désert. Quand il s'aperçut que Saül marchait à sa poursuite dans le désert,"
+        },
+        {
+          "number": 4,
+          "text": "il envoya des espions et sut ainsi avec certitude que Saül était arrivé."
+        },
+        {
+          "number": 5,
+          "text": "Alors David se leva, vint à l'endroit où Saül campait et vit la place où il couchait en compagnie d’Abner, fils de Ner et chef de son armée. Saül couchait au milieu du camp et le peuple campait autour de lui."
+        },
+        {
+          "number": 6,
+          "text": "David prit la parole et s'adressa à Achimélec, le Hittite, et à Abishaï, fils de Tseruja et frère de Joab. Il leur dit: «Qui veut descendre avec moi dans le camp vers Saül?» Abishaï répondit: «Moi, je descendrai avec toi.»"
+        },
+        {
+          "number": 7,
+          "text": "David et Abishaï se rendirent de nuit vers la troupe. Saül était couché et dormait au milieu du camp, et sa lance était fichée en terre près de sa tête. Abner et le reste de la troupe étaient couchés autour de lui."
+        },
+        {
+          "number": 8,
+          "text": "Abishaï dit à David: «Dieu livre aujourd'hui ton ennemi entre tes mains. Laisse-moi donc le frapper avec ma lance. Je le clouerai à terre d'un seul coup, je n’aurai pas à m’y reprendre à deux fois.»"
+        },
+        {
+          "number": 9,
+          "text": "Mais David dit à Abishaï: «Ne le supprime pas! En effet, qui pourrait impunément porter la main contre celui que l’Eternel a désigné par onction?»"
+        },
+        {
+          "number": 10,
+          "text": "David ajouta: «L'Eternel est vivant! C'est à l'Eternel seul de le frapper, soit que son jour soit venu et qu'il meure, soit qu'il descende sur un champ de bataille et qu'il y soit supprimé."
+        },
+        {
+          "number": 11,
+          "text": "Certes, par l'Eternel, je ne me risquerai pas à porter la main contre celui que l'Eternel a désigné par onction! Prends seulement la lance qui est près de sa tête, ainsi que la cruche d'eau, et allons-nous-en.»"
+        },
+        {
+          "number": 12,
+          "text": "David prit donc la lance et la cruche d'eau qui étaient près de la tête de Saül, et ils s'en allèrent. Personne ne les vit ni ne s'aperçut de rien, et personne ne se réveilla. Ils dormaient tous d'un profond sommeil, parce que l'Eternel les y avait plongés."
+        },
+        {
+          "number": 13,
+          "text": "David passa de l'autre côté et s'arrêta au loin sur le sommet de la montagne, à une grande distance du camp."
+        },
+        {
+          "number": 14,
+          "text": "Puis il cria à la troupe et à Abner, fils de Ner: «Vas-tu répondre, Abner?» Abner répondit: «Qui es-tu, toi qui pousses des cris vers le roi?»"
+        },
+        {
+          "number": 15,
+          "text": "David dit à Abner: «N'es-tu pas un homme? Et qui est ton pareil en Israël? Pourquoi donc n'as-tu pas gardé le roi, ton maître? En effet, quelqu'un du peuple est venu pour tuer le roi, ton maître."
+        },
+        {
+          "number": 16,
+          "text": "Ce que tu as fait là n'est pas bien. L'Eternel est vivant! Vous méritez la mort pour n'avoir pas veillé sur votre maître, sur celui que l'Eternel a désigné par onction. Regarde maintenant où sont la lance du roi et la cruche d'eau qui étaient près de sa tête!»"
+        },
+        {
+          "number": 17,
+          "text": "Saül reconnut la voix de David et dit: «Est-ce bien ta voix, mon fils David?» David répondit: «C'est ma voix, roi, mon seigneur!»"
+        },
+        {
+          "number": 18,
+          "text": "Puis il ajouta: «Pourquoi mon seigneur poursuit-il son serviteur? Qu'ai-je fait et de quoi suis-je coupable?"
+        },
+        {
+          "number": 19,
+          "text": "Que le roi, mon seigneur, veuille maintenant écouter les paroles de son serviteur! Si c'est l'Eternel qui te pousse à agir contre moi, qu'il veuille bien accepter le parfum d'une offrande. Mais si ce sont des hommes, qu'ils soient maudits devant l'Eternel, puisqu'ils me chassent aujourd'hui pour m’exclure de l'héritage de l'Eternel en me disant: ‘Va servir des dieux étrangers!’"
+        },
+        {
+          "number": 20,
+          "text": "Oh! Que mon sang ne tombe pas en terre loin de l'Eternel! Le roi d'Israël s'est mis en marche pour chercher une puce, comme on chasserait une perdrix dans les montagnes.»"
+        },
+        {
+          "number": 21,
+          "text": "Saül dit: «J'ai péché. Reviens, mon fils David! Je ne te ferai plus de mal, puisqu'aujourd’hui ma vie a été précieuse à tes yeux. Je me suis comporté de façon stupide et j'ai commis une grande faute.»"
+        },
+        {
+          "number": 22,
+          "text": "David répondit: «Voici la lance du roi. Que l'un de tes hommes vienne la prendre."
+        },
+        {
+          "number": 23,
+          "text": "L'Eternel traitera chacun en fonction de sa justice et sa fidélité. En effet, il t'avait livré aujourd'hui entre mes mains et je n'ai pas voulu porter la main sur celui que l'Eternel a désigné par onction."
+        },
+        {
+          "number": 24,
+          "text": "Tout comme aujourd'hui ta vie a eu beaucoup de valeur à mes yeux, ma vie aura beaucoup de valeur aux yeux de l'Eternel et il me délivrera de toute détresse.»"
+        },
+        {
+          "number": 25,
+          "text": "Saül dit à David: «Sois béni, mon fils David! Tu réussiras dans tes entreprises.» David poursuivit son chemin et Saül retourna chez lui."
+        }
+      ]
+    },
+    {
+      "chapter": 27,
+      "verses": [
+        {
+          "number": 1,
+          "text": "David se dit: «Je serai un jour supprimé par Saül. Je n'ai rien de mieux à faire que de me réfugier au pays des Philistins afin que Saül renonce à me chercher encore dans tout le territoire d'Israël. Ainsi, je lui échapperai.»"
+        },
+        {
+          "number": 2,
+          "text": "David se leva avec ses 600 compagnons, et ils passèrent chez Akish, fils de Maoc, roi de Gath."
+        },
+        {
+          "number": 3,
+          "text": "David et ses hommes restèrent à Gath vers Akish. Ils avaient chacun leur famille et David avait ses deux femmes, Achinoam de Jizreel et Abigaïl de Carmel, la femme de Nabal."
+        },
+        {
+          "number": 4,
+          "text": "Informé que David s'était enfui à Gath, Saül cessa de le chercher."
+        },
+        {
+          "number": 5,
+          "text": "David dit à Akish: «Si j'ai trouvé grâce à tes yeux, qu'on me donne dans l'une des villes du pays un endroit où je puisse habiter. Pourquoi ton serviteur habiterait-il avec toi dans la ville royale?»"
+        },
+        {
+          "number": 6,
+          "text": "Ce jour-là, Akish lui donna Tsiklag. C'est pourquoi Tsiklag a appartenu aux rois de Juda jusqu'à aujourd’hui."
+        },
+        {
+          "number": 7,
+          "text": "David resta dans le pays des Philistins durant un an et quatre mois."
+        },
+        {
+          "number": 8,
+          "text": "David et ses hommes montaient et faisaient des raids chez les Gueshuriens, les Guirziens et les Amalécites. Ces nations habitaient la région depuis l’Antiquité, du côté de Shur et jusqu'en Egypte."
+        },
+        {
+          "number": 9,
+          "text": "David dévasta cette région. Il ne laissait en vie ni homme ni femme et il enlevait les brebis, les bœufs, les ânes, les chameaux et les vêtements avant de retourner chez Akish."
+        },
+        {
+          "number": 10,
+          "text": "Akish demandait: «Où avez-vous fait vos coups aujourd'hui?» David répondait: «Dans le sud de Juda, des Jerachmeélites et des Kéniens.»"
+        },
+        {
+          "number": 11,
+          "text": "David ne laissait ni homme ni femme en vie pour les amener à Gath. Il pensait en effet: «Ils pourraient parler contre nous et dire: ‘Voilà ce que David a fait.’» Ce fut sa manière d'agir durant tout le temps où il habita dans le pays des Philistins."
+        },
+        {
+          "number": 12,
+          "text": "Akish se fiait à David et se disait: «Il provoque le dégoût d’Israël, son peuple, et il sera pour toujours mon serviteur.»"
+        }
+      ]
+    },
+    {
+      "chapter": 28,
+      "verses": [
+        {
+          "number": 1,
+          "text": "A cette époque-là, les Philistins rassemblèrent leurs troupes et formèrent une armée pour faire la guerre à Israël. Akish dit à David: «Tu dois savoir que vous ferez cette campagne avec moi, toi et tes hommes.»"
+        },
+        {
+          "number": 2,
+          "text": "David répondit à Akish: «Eh bien! Tu verras ce que ton serviteur fera.» Akish dit à David: «Eh bien! Je t’établirai pour toujours comme mon garde du corps.»"
+        },
+        {
+          "number": 3,
+          "text": "Samuel était mort. Tout Israël l'avait pleuré et on l'avait enterré à Rama, dans sa ville. Saül avait supprimé du pays ceux qui invoquaient les esprits et les spirites."
+        },
+        {
+          "number": 4,
+          "text": "Les Philistins se rassemblèrent et vinrent installer leur camp à Sunem. Saül rassembla tout Israël et ils établirent leur camp à Guilboa."
+        },
+        {
+          "number": 5,
+          "text": "A la vue du camp des Philistins, Saül fut rempli de peur et son cœur trembla violemment."
+        },
+        {
+          "number": 6,
+          "text": "Il consulta l'Eternel, mais l'Eternel ne lui répondit pas, ni par des rêves, ni par l'urim ni par les prophètes."
+        },
+        {
+          "number": 7,
+          "text": "Saül dit alors à ses serviteurs: «Cherchez-moi une femme capable d’invoquer les esprits et j'irai la consulter.» Ses serviteurs lui dirent: «A En-Dor il y a une femme capable d’invoquer les esprits.»"
+        },
+        {
+          "number": 8,
+          "text": "Alors Saül se déguisa en enfilant d'autres vêtements et partit avec deux hommes. Ils arrivèrent de nuit chez la femme. Saül lui dit: «Pratique donc la divination pour moi en invoquant un mort, en faisant monter pour moi celui que je t’indiquerai.»"
+        },
+        {
+          "number": 9,
+          "text": "La femme lui répondit: «Tu sais ce que Saül a fait, la manière dont il a fait disparaître du pays ceux qui sont capables d’invoquer les esprits et les spirites. Pourquoi donc tends-tu un piège à ma vie? Veux-tu me faire mourir?»"
+        },
+        {
+          "number": 10,
+          "text": "Saül lui jura par l'Eternel: «L'Eternel est vivant! Il ne t'arrivera aucun mal pour cela.»"
+        },
+        {
+          "number": 11,
+          "text": "La femme demanda: «Qui veux-tu que je fasse monter pour toi?» Il répondit: «Fais-moi monter Samuel.»"
+        },
+        {
+          "number": 12,
+          "text": "Lorsque la femme vit Samuel, elle poussa un grand cri et dit à Saül: «Pourquoi m'as-tu trompée? Tu es Saül!»"
+        },
+        {
+          "number": 13,
+          "text": "Le roi lui dit: «N’aie pas peur! Dis-moi plutôt ce que tu vois.» La femme dit à Saül: «Je vois un dieu monter de la terre.»"
+        },
+        {
+          "number": 14,
+          "text": "Il lui dit: «Quelle est son apparence?» Elle répondit: «C'est un vieillard qui monte et il est enveloppé d'un manteau.» Saül comprit alors que c'était Samuel et il s'inclina le visage contre terre et se prosterna."
+        },
+        {
+          "number": 15,
+          "text": "Samuel dit à Saül: «Pourquoi as-tu troublé mon repos en me faisant monter?» Saül répondit: «Je suis dans une grande détresse: les Philistins me font la guerre et Dieu s'est détourné de moi. Il ne m'a répondu ni par les prophètes ni par des rêves. Je t'ai appelé pour que tu me fasses connaître ce que je dois faire.»"
+        },
+        {
+          "number": 16,
+          "text": "Samuel dit: «Pourquoi donc me consultes-tu, puisque l'Eternel s'est détourné de toi et qu'il est devenu ton ennemi?"
+        },
+        {
+          "number": 17,
+          "text": "L'Eternel te traite comme je te l'avais annoncé de sa part: il a arraché la royauté de tes mains et l'a donnée à un autre, à David."
+        },
+        {
+          "number": 18,
+          "text": "Tu n'as pas obéi à l'Eternel, tu n'as pas fait sentir à Amalek l'ardeur de sa colère. Voilà pourquoi l'Eternel te traite aujourd'hui de cette manière."
+        },
+        {
+          "number": 19,
+          "text": "L'Eternel livrera même Israël avec toi entre les mains des Philistins. Demain, tes fils et toi, vous serez avec moi et l'Eternel livrera le camp d'Israël entre les mains des Philistins.»"
+        },
+        {
+          "number": 20,
+          "text": "Aussitôt Saül tomba à terre de tout son long. Les paroles de Samuel le remplissaient d'épouvante. De plus, il manquait de force, car il n'avait pris aucune nourriture de toute la journée et de toute la nuit."
+        },
+        {
+          "number": 21,
+          "text": "La femme s’approcha de Saül et, le voyant très effrayé, elle lui dit: «Ta servante t’a écouté. J'ai risqué ma vie en obéissant aux paroles que tu m'as dites."
+        },
+        {
+          "number": 22,
+          "text": "Ecoute maintenant, toi aussi, ta servante: laisse-moi t'offrir un morceau de pain à manger. Ainsi, tu auras la force de te remettre en route.»"
+        },
+        {
+          "number": 23,
+          "text": "Mais Saül refusa et déclara: «Je ne mangerai pas.» Ses serviteurs, et même la femme, insistèrent et il les écouta. Il se leva de terre et s'assit sur le lit."
+        },
+        {
+          "number": 24,
+          "text": "La femme avait chez elle un veau gras, qu'elle s’empressa de tuer. Elle prit de la farine, la pétrit et fit cuire des pains sans levain."
+        },
+        {
+          "number": 25,
+          "text": "Elle déposa le tout devant Saül et ses serviteurs, et ils mangèrent. Puis ils se levèrent et partirent la nuit même."
+        }
+      ]
+    },
+    {
+      "chapter": 29,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Les Philistins rassemblèrent toutes leurs troupes à Aphek, et Israël installa son camp près de la source de Jizreel."
+        },
+        {
+          "number": 2,
+          "text": "Les princes des Philistins s'avancèrent avec leurs centaines et leurs milliers, tandis que David et ses hommes marchaient à l'arrière-garde avec Akish."
+        },
+        {
+          "number": 3,
+          "text": "Les princes des Philistins dirent: «Que font ici ces Hébreux?» Akish leur répondit: «N'est-ce pas David, le serviteur de Saül, roi d'Israël? Il y a longtemps qu'il est avec moi et je n'ai rien trouvé à lui reprocher depuis son arrivée jusqu'à aujourd’hui.»"
+        },
+        {
+          "number": 4,
+          "text": "Mais les princes des Philistins s'irritèrent contre Akish et lui dirent: «Renvoie cet homme! Qu'il retourne là où tu l'as installé et ne descende pas avec nous sur le champ de bataille. Il risquerait d’être un ennemi pour nous pendant le combat. Comment cet homme pourrait-il rentrer en grâce auprès de son maître, si ce n'est en lui apportant la tête de nos hommes?"
+        },
+        {
+          "number": 5,
+          "text": "N'est-ce pas en l’honneur de ce David que l'on chantait en dansant: ‘Saül a frappé ses 1000, et David ses 10'000’?»"
+        },
+        {
+          "number": 6,
+          "text": "Akish appela David et lui dit: «L'Eternel est vivant! Tu es un homme droit et j'aime te voir aller et venir avec moi dans le camp, car je n'ai rien trouvé de mal en toi depuis ton arrivée chez moi jusqu'à aujourd’hui. Mais tu ne plais pas aux princes."
+        },
+        {
+          "number": 7,
+          "text": "Repars donc, va-t'en en paix, pour ne rien faire qui déplaise aux princes des Philistins.»"
+        },
+        {
+          "number": 8,
+          "text": "David dit à Akish: «Mais qu'ai-je fait et qu'as-tu trouvé chez moi, ton serviteur, depuis que je suis avec toi jusqu'à aujourd’hui, pour que je ne puisse pas aller combattre les ennemis de mon seigneur le roi?»"
+        },
+        {
+          "number": 9,
+          "text": "Akish répondit à David: «Je le sais bien, car tu me plais autant qu’un ange de Dieu. Mais les princes des Philistins refusent que tu montes avec eux au combat."
+        },
+        {
+          "number": 10,
+          "text": "Par conséquent lève-toi de bon matin, ainsi que les serviteurs de ton maître qui sont venus avec toi. Levez-vous de bon matin et partez dès qu’il fera jour.»"
+        },
+        {
+          "number": 11,
+          "text": "David et ses hommes se levèrent de bonne heure pour partir dès le matin et retourner dans le pays des Philistins. Quant aux Philistins, ils montèrent à Jizreel."
+        }
+      ]
+    },
+    {
+      "chapter": 30,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Deux jours plus tard, lorsque David arriva à Tsiklag avec ses hommes, les Amalécites avaient lancé une attaque dans le Néguev et à Tsiklag. Ils avaient détruit et brûlé Tsiklag,"
+        },
+        {
+          "number": 2,
+          "text": "après avoir fait prisonniers les femmes et tous ceux qui s'y trouvaient, petits et grands. Ils n'avaient tué personne, mais ils avaient tout emmené et s'étaient remis en route."
+        },
+        {
+          "number": 3,
+          "text": "En arrivant à la ville, David et ses hommes virent qu'elle était brûlée et que leurs femmes, leurs fils et leurs filles avaient été faits prisonniers."
+        },
+        {
+          "number": 4,
+          "text": "Alors David et la troupe qui l’accompagnait se mirent à pleurer tout haut jusqu'à ce qu'ils n'aient plus la force de pleurer."
+        },
+        {
+          "number": 5,
+          "text": "Les deux femmes de David, Achinoam de Jizreel et Abigaïl de Carmel, la femme de Nabal, avaient été emmenées."
+        },
+        {
+          "number": 6,
+          "text": "David fut dans une grande angoisse, car la troupe parlait de le lapider. Tous éprouvaient en effet de l'amertume, chacun à cause de ses fils et de ses filles. Mais David reprit courage en s'appuyant sur l'Eternel, son Dieu."
+        },
+        {
+          "number": 7,
+          "text": "Il dit au prêtre Abiathar, fils d'Achimélec: «Apporte-moi donc l'éphod!» Abiathar le lui apporta."
+        },
+        {
+          "number": 8,
+          "text": "David consulta l'Eternel en disant: «Dois-je poursuivre cette troupe? Réussirai-je à la rattraper?» L'Eternel lui répondit: «Poursuis-la, car tu la rattraperas et tu délivreras les prisonniers.»"
+        },
+        {
+          "number": 9,
+          "text": "David se mit en marche avec ses 600 compagnons. Ils arrivèrent au torrent de Besor, où ceux qui traînaient à l’arrière s'arrêtèrent."
+        },
+        {
+          "number": 10,
+          "text": "David continua la poursuite avec 400 hommes, tandis que 200 s'étaient arrêtés, trop fatigués pour passer le torrent de Besor."
+        },
+        {
+          "number": 11,
+          "text": "Ils trouvèrent dans les champs un Egyptien qu'ils conduisirent vers David. Ils lui firent manger du pain et boire de l'eau,"
+        },
+        {
+          "number": 12,
+          "text": "et ils lui donnèrent un morceau d'un gâteau aux figues sèches et deux gâteaux aux raisins secs. Lorsqu'il eut mangé, les forces lui revinrent, car il n'avait pas pris de nourriture et pas bu d'eau depuis 3 jours et 3 nuits."
+        },
+        {
+          "number": 13,
+          "text": "David lui dit: «A qui appartiens-tu et d'où viens-tu?» Il répondit: «Je suis un jeune Egyptien. J’étais au service d'un Amalécite, mais voilà 3 jours que mon maître m'a abandonné parce que j'étais malade."
+        },
+        {
+          "number": 14,
+          "text": "Nous avons lancé une attaque dans le sud du territoire des Kéréthiens, sur le territoire de Juda et au sud du territoire de Caleb, et nous avons brûlé Tsiklag.»"
+        },
+        {
+          "number": 15,
+          "text": "David lui dit: «Veux-tu me faire descendre vers cette troupe?» Il répondit: «Jure-moi au nom de Dieu que tu ne me tueras pas et que tu ne me livreras pas à mon maître, et je te ferai descendre vers cette troupe.»"
+        },
+        {
+          "number": 16,
+          "text": "Il lui servit ainsi de guide. Les Amalécites étaient dispersés dans la région. Ils mangeaient, buvaient et dansaient à cause du grand butin qu'ils avaient pris au pays des Philistins et de Juda."
+        },
+        {
+          "number": 17,
+          "text": "David leur porta des coups depuis l'aube de ce jour-là jusqu'au lendemain soir, et aucun d'eux ne put s’échapper, excepté 400 jeunes hommes qui montèrent sur des chameaux et s'enfuirent."
+        },
+        {
+          "number": 18,
+          "text": "David sauva tout ce que les Amalécites avaient pris et il délivra aussi ses deux femmes."
+        },
+        {
+          "number": 19,
+          "text": "Il ne leur manqua personne, ni petit ni grand, ni fils ni fille, ni quoi que ce soit du butin ni rien de ce qu'on leur avait enlevé. David ramena tout."
+        },
+        {
+          "number": 20,
+          "text": "David prit tout le petit et le gros bétail. Ceux qui conduisaient ce troupeau et marchaient à sa tête disaient: «Voici le butin de David!»"
+        },
+        {
+          "number": 21,
+          "text": "David arriva vers les 200 hommes qui avaient été trop fatigués pour le suivre et qu'on avait laissés au torrent de Besor. Ils s'avancèrent à la rencontre de David et de sa troupe. David s'approcha d'eux et leur demanda comment ils allaient."
+        },
+        {
+          "number": 22,
+          "text": "Tous les hommes méchants et les vauriens qui avaient accompagné David prirent la parole et dirent: «Puisqu'ils ne sont pas venus avec nous, nous ne leur donnerons rien du butin que nous avons sauvé, à part à chacun sa femme et ses enfants. Qu'ils les emmènent et s'en aillent.»"
+        },
+        {
+          "number": 23,
+          "text": "Mais David dit: «N'agissez pas ainsi, mes frères, au sujet de ce que l'Eternel nous a donné. En effet, il nous a gardés et a livré entre nos mains la troupe qui était venue nous faire du mal."
+        },
+        {
+          "number": 24,
+          "text": "Qui pourrait vous écouter dans cette affaire? La part doit être la même pour celui qui est descendu sur le champ de bataille et pour celui qui est resté près du matériel: ils partageront tout ensemble.»"
+        },
+        {
+          "number": 25,
+          "text": "Cela se passa ainsi dès ce jour et par la suite, et l'on en a fait jusqu'à aujourd’hui une prescription et une règle en Israël."
+        },
+        {
+          "number": 26,
+          "text": "De retour à Tsiklag, David envoya une partie du butin aux anciens de Juda qui étaient ses amis en leur adressant ces paroles: «Voici pour vous un cadeau pris sur le butin des ennemis de l'Eternel.»"
+        },
+        {
+          "number": 27,
+          "text": "Il fit ainsi des envois aux anciens de Béthel, de Ramoth dans le Néguev, de Jatthir,"
+        },
+        {
+          "number": 28,
+          "text": "d'Aroër, de Siphmoth, d'Eshthemoa,"
+        },
+        {
+          "number": 29,
+          "text": "de Racal, des villes des Jerachmeélites, des villes des Kéniens,"
+        },
+        {
+          "number": 30,
+          "text": "de Horma, de Cor-Ashan, d'Athac,"
+        },
+        {
+          "number": 31,
+          "text": "d'Hébron et dans tous les endroits que ses hommes et lui avaient parcourus."
+        }
+      ]
+    },
+    {
+      "chapter": 31,
+      "verses": [
+        {
+          "number": 1,
+          "text": "Les Philistins livrèrent bataille à Israël et les Israélites prirent la fuite devant eux. Ils tombèrent morts sur le mont Guilboa."
+        },
+        {
+          "number": 2,
+          "text": "Les Philistins rattrapèrent Saül et ses fils, et ils tuèrent Jonathan, Abinadab et Malkishua, les fils de Saül."
+        },
+        {
+          "number": 3,
+          "text": "L'effort du combat porta sur Saül. Les archers le touchèrent et le blessèrent grièvement."
+        },
+        {
+          "number": 4,
+          "text": "Saül dit alors à son porteur d’armes: «Tire ton épée et transperce-moi! Sinon, ce seront ces incirconcis qui viendront le faire et ils me feront subir leurs mauvais traitements.» Son porteur d’armes ne voulut pas le tuer, car il était rempli de peur. Alors Saül prit son épée et se jeta dessus."
+        },
+        {
+          "number": 5,
+          "text": "Voyant Saül mort, son porteur d’armes se jeta aussi sur son épée et il mourut avec lui."
+        },
+        {
+          "number": 6,
+          "text": "C’est ainsi que Saül et ses trois fils, son porteur d’armes et tous ses hommes moururent en même temps, dans cette journée."
+        },
+        {
+          "number": 7,
+          "text": "Lorsqu'ils virent que les Israélites s'enfuyaient et que Saül et ses fils étaient morts, ceux d'Israël qui étaient de l'autre côté de la vallée et de l'autre côté du Jourdain abandonnèrent leurs villes pour prendre aussi la fuite. Les Philistins allèrent s'y installer."
+        },
+        {
+          "number": 8,
+          "text": "Le lendemain, les Philistins vinrent pour dépouiller les morts, et ils trouvèrent le cadavre de Saül et de ses trois fils sur le mont Guilboa."
+        },
+        {
+          "number": 9,
+          "text": "Ils coupèrent la tête de Saül et le dépouillèrent de ses armes. Puis ils les firent circuler dans tout le pays des Philistins pour annoncer la nouvelle dans les temples de leurs idoles et parmi le peuple."
+        },
+        {
+          "number": 10,
+          "text": "Ils déposèrent les armes de Saül dans le temple des Astartés et ils attachèrent son cadavre sur les murs de Beth-Shan."
+        },
+        {
+          "number": 11,
+          "text": "Lorsque les habitants de Jabès en Galaad apprirent ce que les Philistins avaient fait à Saül,"
+        },
+        {
+          "number": 12,
+          "text": "tous les hommes vaillants se levèrent. Après avoir marché toute la nuit, ils arrachèrent les cadavres de Saül et de ses fils des murs de Beth-Shan. Ensuite ils revinrent à Jabès, où ils les brûlèrent."
+        },
+        {
+          "number": 13,
+          "text": "Ils prirent leurs ossements et les enterrèrent sous le tamaris à Jabès, puis ils jeûnèrent pendant 7 jours."
+        }
+      ]
+    }
+  ]
+}
