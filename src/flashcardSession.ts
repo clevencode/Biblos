@@ -381,10 +381,12 @@ export function useFlashcardSession(
   function setMark(value: RetentionMark) {
     const current = live.current;
     // Permet de changer Peu → Moyenne → Facile tant que la carte est ouverte.
+    // Même bouton (ex. déjà Moyenne) : no-op jusqu’à un autre choix — évite de re-écrire lembrete.
     if (!current?.card || !current.flipped) return;
     if (current.card.status === "encerrado") return;
     if (markingRef.current || current.sync === "saving") return;
-    if (sessionMarkRef.current === value && current.sync === "saved") return;
+    const activeMark = sessionMarkRef.current ?? current.card.categoria ?? null;
+    if (activeMark === value) return;
 
     const fromId = current.card.id;
     const fromCard = queueRef.current.find((item) => item.id === fromId) ?? current.card;

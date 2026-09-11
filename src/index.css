@@ -541,8 +541,8 @@ body,
 /* —— Session de cartes (protótipo) —— */
 .flash--session {
   --card-tint: transparent;
-  --flash-peek: 14px;
-  --flash-peek-gap: 10px;
+  --flash-peek: 28px;
+  --flash-peek-gap: 8px;
   --flash-peek-radius: 24px;
   --flash-peek-inset: 8px;
   gap: 0;
@@ -779,8 +779,8 @@ body,
 }
 
 .flash--session .flash-slide:not(.is-active) .flash-stage {
-  opacity: 0.62;
-  transform: scale(0.975);
+  opacity: 0.78;
+  transform: scale(0.99);
   transform-origin: center center;
   pointer-events: none;
 }
@@ -809,10 +809,7 @@ body,
       color-mix(in srgb, var(--card-outline) 78%, #e5e7eb) 100%
     )
       border-box;
-  box-shadow:
-    0 1px 2px color-mix(in srgb, var(--card-outline) 6%, transparent),
-    0 6px 16px color-mix(in srgb, var(--card-outline) 6%, transparent),
-    0 12px 24px color-mix(in srgb, var(--text) 2.5%, transparent);
+  box-shadow: none;
   overflow-x: hidden;
   overflow-y: auto;
 }
@@ -833,10 +830,7 @@ body,
       color-mix(in srgb, var(--card-outline) 78%, #e5e7eb) 100%
     )
       border-box;
-  box-shadow:
-    0 1px 2px color-mix(in srgb, var(--card-outline) 6%, transparent),
-    0 6px 16px color-mix(in srgb, var(--card-outline) 6%, transparent),
-    0 12px 24px color-mix(in srgb, var(--text) 2.5%, transparent);
+  box-shadow: none;
 }
 
 /* Sheen ao virar: so transform/opacity (GPU) */
