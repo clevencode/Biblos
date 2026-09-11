@@ -189,11 +189,13 @@ export function TodayView({
   }
 
   function markIntroSeen() {
+    if (!plan) return;
     setIntroSeen(true);
     saveIntroSeen(plan.id, true);
   }
 
   function startReading() {
+    if (!plan) return;
     if (planComplete) {
       onRestartPlan?.();
       setIntroSeen(false);
