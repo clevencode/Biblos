@@ -1,4 +1,5 @@
 import { todayKey } from "./calendar";
+import { clearDayNotesForPlan } from "./planDayNote";
 import type { ReadingPlan } from "./types";
 
 const KEY = "biblos-plan-progress";
@@ -75,6 +76,22 @@ export function resetPlanProgress(planId: string): PlanProgress {
   store[planId] = next;
   writeStore(store);
   return next;
+}
+
+/** Apaga progresso + notes quotidiennes locais de um plano removido do Notion. */
+export function clearPlanLocalState(planId: string): void {
+  if (!planId) return;
+  const store = readStore();
+  if (planId in store) {
+    delete store[planId];
+    writeStore(store);
+  }
+  try {
+    localStorage.removeItem(`biblos-devotional-done:${planId}`);
+  } catch {
+    /* private mode */
+  }
+  clearDayNotesForPlan(planId);
 }
 
 /** True si tous les jours du plan sont marqués lus. */

@@ -2,6 +2,7 @@ import type { Catalog, ReadingPlan, Seed } from "./types";
 import { applyRemoteOverride } from "./cardOverrides";
 import { isBiblosFlashcard } from "./catalog";
 import { sanitizePlanDays } from "./plan";
+import { clearPlanLocalState } from "./planProgress";
 import { normalizeCategoria, normalizeStatus } from "./retention";
 
 const CATALOG_CACHE_KEY = "biblos-catalog-v1";
@@ -191,7 +192,11 @@ function mergeFlashcards(prev: Seed[], incoming: Seed[]): { notes: Seed[]; chang
   return { notes: [...byId.values()], changed };
 }
 
-function mergePlans(prev: ReadingPlan[], incoming: ReadingPlan[]): { plans: ReadingPlan[]; changed: boolean } {
+function mergePlans(
+  prev: ReadingPlan[],
+  incoming: ReadingPlan[],
+  options: { reconcile?: boolean } = {},
+): { plans: ReadingPlan[]; changed: boolean; removedIds: string[] } {
   const byId = new Map(prev.map((plan) => [plan.id, plan]));
   let changed = false;
   for (const plan of incoming) {
@@ -216,12 +221,30 @@ function mergePlans(prev: ReadingPlan[], incoming: ReadingPlan[]): { plans: Read
       changed = true;
     }
   }
-  return { plans: [...byId.values()], changed };
+
+  const removedIds: string[] = [];
+  if (options.reconcile) {
+    const remoteIds = new Set(incoming.map((plan) => plan.id));
+    for (const id of [...byId.keys()]) {
+      if (remoteIds.has(id)) continue;
+      byId.delete(id);
+      removedIds.push(id);
+      changed = true;
+    }
+  }
+
+  return { plans: [...byId.values()], changed, removedIds };
 }
 
-export function mergeCatalog(base: Catalog, incoming: Catalog): { catalog: Catalog; changed: boolean } {
+export function mergeCatalog(
+  base: Catalog,
+  incoming: Catalog,
+  options: { reconcilePlans?: boolean } = {},
+): { catalog: Catalog; changed: boolean; removedPlanIds: string[] } {
   const notesMerge = mergeFlashcards(base.notas ?? [], incoming.notas ?? []);
-  const plansMerge = mergePlans(base.plans ?? [], incoming.plans ?? []);
+  const plansMerge = mergePlans(base.plans ?? [], incoming.plans ?? [], {
+    reconcile: Boolean(options.reconcilePlans),
+  });
   const catalog = pruneCatalogToVerseCards({
     notas: notesMerge.notes,
     plans: plansMerge.plans,
@@ -231,7 +254,7 @@ export function mergeCatalog(base: Catalog, incoming: Catalog): { catalog: Catal
     plansMerge.changed ||
     JSON.stringify(catalog.notas) !== JSON.stringify(notesMerge.notes);
   if (changed) persistCatalogCache(catalog);
-  return { catalog, changed };
+  return { catalog, changed, removedPlanIds: plansMerge.removedIds };
 }
 
 export async function pullCatalog(current: Catalog): Promise<{ catalog: Catalog; changed: boolean; ok: boolean }> {
@@ -243,6 +266,7 @@ export async function pullCatalog(current: Catalog): Promise<{ catalog: Catalog;
     }
     const payload = (await response.json().catch(() => ({}))) as {
       ok?: boolean;
+      plansOk?: boolean;
       catalog?: Catalog;
       notas?: Catalog["notas"];
       plans?: Catalog["plans"];
@@ -256,8 +280,15 @@ export async function pullCatalog(current: Catalog): Promise<{ catalog: Catalog;
     if (!response.ok || !payload.ok || !incoming) {
       return { catalog: current, changed: false, ok: Boolean(payload.ok) };
     }
-    const merged = mergeCatalog(current, incoming);
-    return { ...merged, ok: true };
+    // Só remove planos locais se a query Notion de planos correu bem (lista vazia = tudo apagado).
+    const reconcilePlans = payload.plansOk === true;
+    const merged = mergeCatalog(current, incoming, { reconcilePlans });
+    if (merged.removedPlanIds.length) {
+      for (const planId of merged.removedPlanIds) {
+        clearPlanLocalState(planId);
+      }
+    }
+    return { catalog: merged.catalog, changed: merged.changed, ok: true };
   } catch {
     return { catalog: current, changed: false, ok: false };
   }

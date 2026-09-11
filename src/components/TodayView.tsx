@@ -1,9 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { isPassageRef } from "../youversion/usfm";
 import { extractPassageRef, extractPassageRefs, sanitizePlanDays } from "../plan";
+import {
+  loadDayNote,
+  pullDayNote,
+  pushDayNote,
+  saveDayNoteLocal,
+} from "../planDayNote";
 import { isPlanComplete, type PlanProgress } from "../planProgress";
 import type { ReadingPlan } from "../types";
-import { PlanDescription } from "./PlanDescription";
 
 type TodayViewProps = {
   plan: ReadingPlan | null;
@@ -11,6 +16,8 @@ type TodayViewProps = {
   planJour?: number;
   /** Remet l’écran sur la timeline (ex. retour depuis Lecture du plan). */
   resumeSeq?: number;
+  /** Ouvre la note du jour après la lecture (seq change à chaque fois). */
+  dayNoteFocus?: { jour: number; seq: number } | null;
   onSelectGalerie?: () => void;
   onMarkRead?: (jour: number) => void;
   onOpenPassage?: (reference: string) => void;
@@ -20,34 +27,14 @@ type TodayViewProps = {
   onRestartPlan?: () => void;
 };
 
-type PlanScreen = "timeline" | "devotional";
-
-function devotionalKey(planId: string) {
-  return `biblos-devotional-done:${planId}`;
-}
-
-function loadDevotionalDone(planId: string): boolean {
-  try {
-    return localStorage.getItem(devotionalKey(planId)) === "1";
-  } catch {
-    return false;
-  }
-}
-
-function saveDevotionalDone(planId: string, done: boolean) {
-  try {
-    if (done) localStorage.setItem(devotionalKey(planId), "1");
-    else localStorage.removeItem(devotionalKey(planId));
-  } catch {
-    /* private mode */
-  }
-}
+type PlanScreen = "timeline" | "dayNote";
 
 export function TodayView({
   plan,
   progress = null,
   planJour = 1,
   resumeSeq = 0,
+  dayNoteFocus = null,
   onSelectGalerie,
   onMarkRead,
   onOpenPassage,
@@ -56,7 +43,10 @@ export function TodayView({
 }: TodayViewProps) {
   const [screen, setScreen] = useState<PlanScreen>("timeline");
   const [selectedJour, setSelectedJour] = useState(planJour);
-  const [devotionalDone, setDevotionalDone] = useState(false);
+  const [noteText, setNoteText] = useState("");
+  const [noteBusy, setNoteBusy] = useState(false);
+  const [noteMsg, setNoteMsg] = useState<string | null>(null);
+  const [noteSaved, setNoteSaved] = useState(false);
   const daysStripRef = useRef<HTMLDivElement>(null);
 
   const days = useMemo(() => {
@@ -75,18 +65,41 @@ export function TodayView({
   }, [plan?.id, planJour, days]);
 
   useEffect(() => {
-    if (!plan?.id) {
-      setDevotionalDone(false);
-      return;
-    }
-    setDevotionalDone(loadDevotionalDone(plan.id));
     setScreen("timeline");
+    setNoteMsg(null);
   }, [plan?.id]);
 
   useEffect(() => {
     if (!resumeSeq) return;
+    if (dayNoteFocus?.seq) return;
     setScreen("timeline");
-  }, [resumeSeq]);
+  }, [resumeSeq, dayNoteFocus?.seq]);
+
+  useEffect(() => {
+    if (!dayNoteFocus?.seq || !plan?.id) return;
+    setSelectedJour(dayNoteFocus.jour);
+    setScreen("dayNote");
+  }, [dayNoteFocus?.seq, dayNoteFocus?.jour, plan?.id]);
+
+  useEffect(() => {
+    if (screen !== "dayNote" || !plan?.id) return;
+    let cancelled = false;
+    const local = loadDayNote(plan.id, selectedJour);
+    setNoteText(local?.text ?? "");
+    setNoteSaved(Boolean(local?.text?.trim() || local?.notionUrl));
+    setNoteMsg(null);
+    setNoteBusy(true);
+    void pullDayNote(plan.id, plan.url, selectedJour).then((result) => {
+      if (cancelled) return;
+      setNoteText(result.text);
+      setNoteSaved(Boolean(result.text.trim() || result.notionUrl));
+      setNoteBusy(false);
+      if (!result.ok && result.error) setNoteMsg(result.error);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [screen, plan?.id, plan?.url, selectedJour]);
 
   useEffect(() => {
     if (screen !== "timeline") return;
@@ -130,6 +143,8 @@ export function TodayView({
     firstPassage && (onStartPlanReading || onOpenPassage) && isPassageRef(firstPassage),
   );
   const selectedIndex = selectedDay ? days.findIndex((day) => day.jour === selectedDay.jour) + 1 : 0;
+  const dayNoteLocal = loadDayNote(plan.id, selectedJour);
+  const dayNoteDone = Boolean(dayNoteLocal?.text?.trim() || dayNoteLocal?.notionUrl);
 
   function openPassage() {
     if (!selectedDay || !firstPassage || !isPassageRef(firstPassage)) return;
@@ -140,38 +155,41 @@ export function TodayView({
     onOpenPassage?.(firstPassage);
   }
 
-  function openDevotional() {
-    setScreen("devotional");
-  }
-
-  function toggleDevotionalDone() {
-    if (!plan) return;
-    const next = !devotionalDone;
-    setDevotionalDone(next);
-    saveDevotionalDone(plan.id, next);
+  function openDayNote() {
+    setScreen("dayNote");
   }
 
   function startReading() {
     if (planComplete) {
       onRestartPlan?.();
-      setDevotionalDone(false);
-      if (plan) saveDevotionalDone(plan.id, false);
       const first = days[0];
       if (first) setSelectedJour(first.jour);
-      return;
-    }
-    if (!devotionalDone) {
-      openDevotional();
       return;
     }
     openPassage();
   }
 
-  if (screen === "devotional") {
-    const continueLabel = canOpenPassage ? "Continuer la lecture" : "Retour au plan";
+  async function saveDayNote(andClose: boolean) {
+    if (!plan) return;
+    setNoteBusy(true);
+    setNoteMsg(null);
+    saveDayNoteLocal(plan.id, selectedJour, { text: noteText });
+    const result = await pushDayNote(plan.id, plan.url, selectedJour, noteText);
+    setNoteBusy(false);
+    if (!result.ok) {
+      setNoteMsg(result.error || "Enregistré en local — Notion indisponible");
+      setNoteSaved(Boolean(noteText.trim()));
+      if (andClose && !plan.url) setScreen("timeline");
+      return;
+    }
+    setNoteSaved(true);
+    setNoteMsg("Enregistré dans Notion");
+    if (andClose) setScreen("timeline");
+  }
 
+  if (screen === "dayNote") {
     return (
-      <div className="today-view panel-nota-content plan-yv plan-yv-devo">
+      <div className="today-view panel-nota-content plan-yv plan-yv-devo plan-yv-day-note">
         <header className="plan-yv-devo-head">
           <button
             type="button"
@@ -182,7 +200,7 @@ export function TodayView({
             ← Retour
           </button>
           <p className="plan-yv-devo-eyebrow">
-            Devotional
+            Note du jour
             {selectedIndex > 0 ? (
               <>
                 {" "}
@@ -191,50 +209,46 @@ export function TodayView({
             ) : null}
           </p>
           <h2 className="plan-yv-devo-title">{planTitle}</h2>
+          {passageLabel ? <p className="plan-yv-day-note-ref muted">{passageLabel}</p> : null}
         </header>
 
         <div className="plan-yv-devo-scroll">
-          <PlanDescription description={plan.description} title="Devotional" showTitle={false} />
-          {canOpenPassage && passageLabel ? (
-            <aside className="plan-yv-devo-next" aria-label="Lecture du jour">
-              <p className="plan-yv-devo-next-kicker">À lire ensuite</p>
-              <p className="plan-yv-devo-next-ref">{passageLabel}</p>
-            </aside>
-          ) : null}
+          <label className="plan-yv-day-note-label" htmlFor="plan-day-note">
+            Ta réflexion après la lecture
+          </label>
+          <textarea
+            id="plan-day-note"
+            className="plan-yv-day-note-input"
+            value={noteText}
+            onChange={(event) => {
+              setNoteText(event.target.value);
+              setNoteMsg(null);
+            }}
+            placeholder="Écris ta note du jour…"
+            rows={10}
+            disabled={noteBusy && !noteText}
+          />
+          {noteMsg ? <p className="plan-yv-day-note-msg muted">{noteMsg}</p> : null}
         </div>
 
         <footer className="plan-yv-devo-actions">
           <button
             type="button"
-            className={`plan-yv-devo-mark${devotionalDone ? " is-done" : ""}`}
-            onClick={toggleDevotionalDone}
-            aria-pressed={devotionalDone}
+            className="plan-yv-devo-mark"
+            disabled={noteBusy}
+            onClick={() => setScreen("timeline")}
           >
-            <span className="plan-yv-devo-mark-check" aria-hidden="true">
-              {devotionalDone ? "✓" : "○"}
-            </span>
-            {devotionalDone ? "Marqué comme lu" : "Marquer comme lu"}
+            Passer
           </button>
           <button
             type="button"
             className="plan-yv-devo-continue"
+            disabled={noteBusy}
             onClick={() => {
-              if (!devotionalDone) {
-                setDevotionalDone(true);
-                saveDevotionalDone(plan.id, true);
-              }
-              if (canOpenPassage && selectedDay && firstPassage) {
-                if (onStartPlanReading) {
-                  onStartPlanReading(selectedDay.jour, passage || firstPassage);
-                } else {
-                  onOpenPassage?.(firstPassage);
-                }
-                return;
-              }
-              setScreen("timeline");
+              void saveDayNote(true);
             }}
           >
-            {continueLabel}
+            {noteBusy ? "Enregistrement…" : "Enregistrer dans Notion"}
           </button>
         </footer>
       </div>
@@ -344,32 +358,6 @@ export function TodayView({
 
       <section className="plan-yv-tasks" aria-label="Lecture du jour">
         <ul className="plan-yv-task-list">
-          <li className="plan-yv-task-row">
-            <button
-              type="button"
-              className={`plan-yv-task-check-btn${devotionalDone ? " is-done" : ""}`}
-              onClick={toggleDevotionalDone}
-              aria-pressed={devotionalDone}
-              aria-label={devotionalDone ? "Démarquer le Devotional" : "Marquer le Devotional"}
-            >
-              {devotionalDone ? "✓" : "○"}
-            </button>
-            <button
-              type="button"
-              className={`plan-yv-task plan-yv-task--grow${devotionalDone ? " is-done" : ""}`}
-              onClick={openDevotional}
-            >
-              <span className="plan-yv-task-stack">
-                <span className="plan-yv-task-label">Devotional</span>
-                <span className="plan-yv-task-meta">
-                  {devotionalDone ? "Lu · Méditation" : "Méditation du jour"}
-                </span>
-              </span>
-              <span className="plan-yv-task-chevron" aria-hidden="true">
-                ›
-              </span>
-            </button>
-          </li>
           {selectedDay ? (
             <li className="plan-yv-task-row">
               {onMarkRead ? (
@@ -408,6 +396,29 @@ export function TodayView({
               </p>
             </li>
           )}
+          <li className="plan-yv-task-row">
+            <span
+              className={`plan-yv-task-check${dayNoteDone || noteSaved ? " is-done" : ""}`}
+              aria-hidden="true"
+            >
+              {dayNoteDone || noteSaved ? "✓" : "○"}
+            </span>
+            <button
+              type="button"
+              className={`plan-yv-task plan-yv-task--grow${dayNoteDone || noteSaved ? " is-done" : ""}`}
+              onClick={openDayNote}
+            >
+              <span className="plan-yv-task-stack">
+                <span className="plan-yv-task-label">Note du jour</span>
+                <span className="plan-yv-task-meta">
+                  {dayNoteDone || noteSaved ? "Écrite · fin de lecture" : "Après la lecture"}
+                </span>
+              </span>
+              <span className="plan-yv-task-chevron" aria-hidden="true">
+                ›
+              </span>
+            </button>
+          </li>
         </ul>
       </section>
 

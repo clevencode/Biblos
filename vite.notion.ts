@@ -2,7 +2,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { loadEnv, type Plugin } from "vite";
 import { runFlashcardSync, type SyncBody } from "./server/notionFlashcardSync.ts";
 import { handleYouVersion } from "./api/youversion.mjs";
-import { fetchNotionDescription, createVerseCard, archiveVerseCard } from "./shared/notion.mjs";
+import { fetchNotionDescription, createVerseCard, archiveVerseCard, fetchPlanDayNote, upsertPlanDayNote } from "./shared/notion.mjs";
 
 function readBody(req: IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -148,6 +148,54 @@ async function handleVerseCard(req: IncomingMessage, res: ServerResponse, token:
   send(res, result.ok ? 200 : 400, result);
 }
 
+async function handlePlanDayNote(req: IncomingMessage, res: ServerResponse, token: string) {
+  if (req.method === "OPTIONS") {
+    res.statusCode = 204;
+    res.end();
+    return;
+  }
+  if (req.method === "GET") {
+    const result = await fetchPlanDayNote(token, {
+      planUrl: queryParam(req, "planUrl") || queryParam(req, "url"),
+      planPageId: queryParam(req, "planPageId"),
+      jour: queryParam(req, "jour"),
+      pageId: queryParam(req, "pageId"),
+      noteUrl: queryParam(req, "noteUrl"),
+    });
+    send(res, result.ok || result.hasToken === false ? 200 : 400, result);
+    return;
+  }
+  if (req.method !== "POST") {
+    send(res, 405, { ok: false, error: "méthode invalide" });
+    return;
+  }
+  let body: {
+    planUrl?: string;
+    url?: string;
+    planPageId?: string;
+    jour?: number | string;
+    body?: string;
+    text?: string;
+    pageId?: string;
+    noteUrl?: string;
+  } = {};
+  try {
+    body = JSON.parse(await readBody(req)) as typeof body;
+  } catch {
+    send(res, 400, { ok: false, error: "JSON inválido" });
+    return;
+  }
+  const result = await upsertPlanDayNote(token, {
+    planUrl: body.planUrl || body.url || "",
+    planPageId: body.planPageId || "",
+    jour: body.jour,
+    body: body.body ?? body.text ?? "",
+    pageId: body.pageId || "",
+    noteUrl: body.noteUrl || "",
+  });
+  send(res, result.ok || result.hasToken === false ? 200 : 400, result);
+}
+
 export function notionFlashcardPlugin(mode: string): Plugin {
   const env = loadEnv(mode, process.cwd(), "");
   const token = env.NOTION_TOKEN || "";
@@ -172,6 +220,9 @@ export function notionFlashcardPlugin(mode: string): Plugin {
     });
     server.middlewares.use("/api/verse-card", (req, res) => {
       void handleVerseCard(req, res, token);
+    });
+    server.middlewares.use("/api/plan-day-note", (req, res) => {
+      void handlePlanDayNote(req, res, token);
     });
   };
   return {

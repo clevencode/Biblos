@@ -342,9 +342,11 @@ export async function buildCatalog(token, { full = false } = {}) {
   const planDb = [envSafe("NOTION_PLAN_DB"), PLAN_DB, PLAN_PAGE_DB].filter(Boolean);
 
   let planPages = [];
+  let plansOk = true;
   try {
     planPages = await queryAll(token, planDb);
   } catch (err) {
+    plansOk = false;
     console.warn("[catalog] PLAN:", err instanceof Error ? err.message : err);
   }
 
@@ -370,6 +372,7 @@ export async function buildCatalog(token, { full = false } = {}) {
   return {
     notas: [],
     plans,
+    plansOk,
     cardCount: 0,
     planCount: plans.length,
   };

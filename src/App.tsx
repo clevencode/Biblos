@@ -103,6 +103,7 @@ export function App() {
   const [bibleFocusRef, setBibleFocusRef] = useState<string | null>(null);
   const [bibleFocusSeq, setBibleFocusSeq] = useState(0);
   const [planReading, setPlanReading] = useState<PlanReadingSession | null>(null);
+  const [dayNoteFocus, setDayNoteFocus] = useState<{ jour: number; seq: number } | null>(null);
   const [planResumeSeq, setPlanResumeSeq] = useState(0);
   const [retentionTick, setRetentionTick] = useState(0);
   const [bibleChromeHidden, setBibleChromeHidden] = useState(false);
@@ -272,6 +273,7 @@ export function App() {
       if (current) {
         ensureDayCompleted(planReading.planId, current.jour);
         setPlanProgressTick((value) => value + 1);
+        setDayNoteFocus({ jour: current.jour, seq: Date.now() });
       }
       setPlanReading(null);
       setHome(false);
@@ -404,6 +406,7 @@ export function App() {
       progress={planProgress}
       planJour={todayJour}
       resumeSeq={planResumeSeq}
+      dayNoteFocus={dayNoteFocus}
       onSelectGalerie={goHome}
       onMarkRead={handleMarkRead}
       onOpenPassage={openPassageInBible}

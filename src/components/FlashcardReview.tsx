@@ -372,11 +372,13 @@ export function FlashcardReview({
           >
             <div
               className={`flash-track${dragging ? " is-dragging" : ""}`}
-              style={{
-                transform: canNav
-                  ? `translate3d(calc(var(--flash-peek) - ${slideIndex} * (100cqw - 2 * var(--flash-peek) + var(--flash-peek-gap)) + ${dragX}px), 0, 0)`
-                  : `translate3d(${dragX}px, 0, 0)`,
-              }}
+              style={
+                canNav
+                  ? {
+                      transform: `translate3d(calc(var(--flash-peek) - ${slideIndex} * (100cqw - 2 * var(--flash-peek) + var(--flash-peek-gap)) + ${dragX}px), 0, 0)`,
+                    }
+                  : undefined
+              }
             >
               {slideQueue.map((item) => {
                 const activeSlide = item.id === card.id;
@@ -495,6 +497,10 @@ const DECK_FILTERS: { id: DeckProgressFilter; label: string }[] = [
   { id: "termines", label: "Terminé" },
 ];
 
+function deckFilterLabel(filter: DeckProgressFilter): string {
+  return DECK_FILTERS.find((item) => item.id === filter)?.label ?? filter;
+}
+
 const STATUS_LABEL: Record<Flashcard["status"], string> = {
   espera: "Nouveau",
   estudo: "En révision",
@@ -532,7 +538,7 @@ export function FlashDeckList({
   focusSeq = 0,
 }: FlashDeckListProps) {
   const { queue, index, listRef, goTo, total } = session;
-  const [filter, setFilter] = useState<DeckProgressFilter>("nouveau");
+  const [filter, setFilter] = useState<DeckProgressFilter | null>("nouveau");
   const swipeOrigin = useRef<{ x: number; y: number } | null>(null);
   const today = todayKey();
   const [weekAnchor, setWeekAnchor] = useState(today);
@@ -555,7 +561,9 @@ export function FlashDeckList({
   const showFilters = !showWeekSchedule;
   const visible = showWeekSchedule
     ? queue.filter((card) => card.status !== "encerrado")
-    : queue.filter((card) => cardMatchesDeckFilter(card, filter));
+    : filter
+      ? queue.filter((card) => cardMatchesDeckFilter(card, filter))
+      : queue;
   const dayCounts = useMemo(() => countsByDay(visible), [visible]);
   const weekDays = useMemo(() => weekDaysSunday(weekAnchor), [weekAnchor]);
   const dayCards = useMemo(
@@ -669,7 +677,6 @@ export function FlashDeckList({
             item.color
               ? {
                   ["--card-tint" as string]: item.color,
-                  background: `color-mix(in srgb, ${item.color} 28%, var(--panel))`,
                 }
               : undefined
           }
@@ -707,34 +714,53 @@ export function FlashDeckList({
       {showFilters || !total ? (
         <header className="flash-list-head">
           {showFilters ? (
-            <div
-              className="flash-deck-segments"
-              role="group"
-              aria-label="Filtrer les cartes par progression"
-            >
-              {DECK_FILTERS.map((item) => {
-                const count = filterCounts[item.id];
-                const on = item.id === filter;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    className={`flash-deck-segment${on ? " is-on" : ""}${count === 0 ? " is-empty" : ""}`}
-                    aria-pressed={on}
-                    onClick={() => setFilter(item.id)}
-                  >
-                    <span className="flash-deck-segment-label">{item.label}</span>
-                    <span className="flash-deck-segment-count" aria-hidden="true">
-                      {count}
-                    </span>
-                    <span className="sr-only">
-                      {`, ${count} carte${count === 1 ? "" : "s"}`}
-                      {on ? ", sélectionné" : ""}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+            filter ? (
+              <div className="flash-deck-chip-row" role="status" aria-label="Filtre actif">
+                <span className="flash-deck-chip">
+                  <span className="flash-deck-chip-label">{deckFilterLabel(filter)}</span>
+                  <span className="flash-deck-chip-count" aria-hidden="true">
+                    {filterCounts[filter]}
+                  </span>
+                  <span className="sr-only">
+                    {`, ${filterCounts[filter]} carte${filterCounts[filter] === 1 ? "" : "s"}`}
+                  </span>
+                </span>
+                <button
+                  type="button"
+                  className="flash-deck-chip-clear"
+                  aria-label="Effacer le filtre"
+                  onClick={() => setFilter(null)}
+                >
+                  ×
+                </button>
+              </div>
+            ) : (
+              <div
+                className="flash-deck-segments"
+                role="group"
+                aria-label="Filtrer les cartes par progression"
+              >
+                {DECK_FILTERS.map((item) => {
+                  const count = filterCounts[item.id];
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      className={`flash-deck-segment${count === 0 ? " is-empty" : ""}`}
+                      onClick={() => setFilter(item.id)}
+                    >
+                      <span className="flash-deck-segment-label">{item.label}</span>
+                      <span className="flash-deck-segment-count" aria-hidden="true">
+                        {count}
+                      </span>
+                      <span className="sr-only">
+                        {`, ${count} carte${count === 1 ? "" : "s"}`}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )
           ) : null}
           {!total ? <p className="flash-list-meta-line">Aucune carte</p> : null}
         </header>

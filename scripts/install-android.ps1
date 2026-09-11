@@ -63,7 +63,7 @@ try {
 
     if (-not $viteUp) {
       Write-Host "A arrancar Vite (npm run dev)…" -ForegroundColor Cyan
-      Start-Process -FilePath "npm" -ArgumentList "run", "dev", "--", "--host", "127.0.0.1", "--port", "5173" -WorkingDirectory $root -WindowStyle Minimized
+      Start-Process -FilePath "npx" -ArgumentList "vite", "--host", "127.0.0.1", "--port", "5173" -WorkingDirectory $root -WindowStyle Minimized
       $deadline = (Get-Date).AddSeconds(45)
       do {
         Start-Sleep -Seconds 1

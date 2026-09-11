@@ -763,10 +763,18 @@ body,
   min-width: 0;
 }
 
-.flash--session .flash-viewport:not(.is-slidable) .flash-slide {
-  flex-basis: 100%;
+.flash--session .flash-viewport:not(.is-slidable) .flash-track {
   width: 100%;
   max-width: 100%;
+  gap: 0;
+  transform: none !important;
+}
+
+.flash--session .flash-viewport:not(.is-slidable) .flash-slide {
+  flex: 0 0 100%;
+  width: 100%;
+  max-width: 100%;
+  min-width: 100%;
 }
 
 .flash--session .flash-stage {
@@ -787,6 +795,12 @@ body,
 
 .flash--session .flash-viewport:not(.is-slidable) .flash-stage {
   padding: 6px var(--flash-peek-inset) 10px;
+}
+
+.flash--session .flash-viewport:not(.is-slidable) .flash-slide:not(.is-active) .flash-stage {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
 }
 
 .flash--session .flash-face {
@@ -1075,15 +1089,16 @@ body,
 }
 
 .flash-deck-segments {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 4px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
   width: 100%;
   max-width: 28rem;
-  padding: 4px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--text) 4%, var(--panel));
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
 }
 
 .flash-deck-segment {
@@ -1092,28 +1107,28 @@ body,
   justify-content: center;
   gap: 6px;
   min-width: 0;
-  min-height: 44px;
+  min-height: 36px;
   margin: 0;
-  padding: 8px 10px;
+  padding: 8px 12px;
   border: 0;
-  border-radius: 9px;
-  background: transparent;
-  color: var(--muted);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
   font: inherit;
   font-size: 0.82rem;
-  font-weight: 650;
+  font-weight: 700;
   letter-spacing: -0.01em;
   line-height: 1.15;
   cursor: pointer;
+  box-shadow: none;
   transition:
     background 0.14s ease,
-    color 0.14s ease,
-    box-shadow 0.14s ease;
+    color 0.14s ease;
 }
 
 .flash-deck-segment:hover {
   color: var(--text);
-  background: color-mix(in srgb, var(--text) 5%, transparent);
+  background: color-mix(in srgb, var(--text) 8%, var(--surface));
 }
 
 .flash-deck-segment:focus-visible {
@@ -1122,11 +1137,9 @@ body,
 }
 
 .flash-deck-segment.is-on {
-  background: var(--panel);
+  background: var(--surface);
   color: var(--text);
-  box-shadow:
-    0 1px 2px color-mix(in srgb, var(--text) 10%, transparent),
-    inset 0 0 0 1px color-mix(in srgb, var(--text) 8%, transparent);
+  box-shadow: none;
 }
 
 .flash-deck-segment.is-empty:not(.is-on) {
@@ -1149,7 +1162,7 @@ body,
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: color-mix(in srgb, var(--text) 8%, transparent);
+  background: color-mix(in srgb, var(--text) 10%, transparent);
   color: inherit;
   font-size: 0.68rem;
   font-weight: 700;
@@ -1158,8 +1171,86 @@ body,
 }
 
 .flash-deck-segment.is-on .flash-deck-segment-count {
-  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
   color: var(--accent);
+}
+
+.flash-deck-chip-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+}
+
+.flash-deck-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 9px 14px;
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  box-shadow: none;
+}
+
+.flash-deck-chip-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.flash-deck-chip-count {
+  flex-shrink: 0;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 5px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--accent);
+  font-size: 0.68rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.flash-deck-chip-clear {
+  appearance: none;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.flash-deck-chip-clear:hover {
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+}
+
+.flash-deck-chip-clear:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 
 .flash-list--plan {
@@ -1186,10 +1277,10 @@ body,
   flex-shrink: 0;
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 2px;
-  margin: 0 0 10px;
-  padding: 2px 0 10px;
-  border-bottom: 1px solid var(--line);
+  gap: 4px;
+  margin: 0 0 14px;
+  padding: 4px 0 14px;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
   touch-action: pan-y;
   user-select: none;
 }
@@ -1197,22 +1288,23 @@ body,
 .flash-week-day {
   display: grid;
   justify-items: center;
-  align-content: center;
-  gap: 3px;
+  align-content: start;
+  gap: 5px;
   min-width: 0;
-  min-height: 52px;
+  min-height: 58px;
   margin: 0;
-  padding: 6px 2px;
+  padding: 8px 2px 6px;
   border: 0;
-  border-radius: 12px;
+  border-radius: 16px;
   background: transparent;
   color: inherit;
   font: inherit;
   cursor: pointer;
+  transition: background 0.15s ease;
 }
 
 .flash-week-day:hover {
-  background: var(--hover);
+  background: color-mix(in srgb, var(--text) 4%, transparent);
 }
 
 .flash-week-day:focus-visible {
@@ -1221,20 +1313,20 @@ body,
 }
 
 .flash-week-day.is-selected {
-  background: color-mix(in srgb, var(--text) 6%, var(--panel));
+  background: color-mix(in srgb, var(--text) 4.5%, var(--panel));
 }
 
 .flash-week-dow {
-  font-size: 0.62rem;
+  font-size: 0.6rem;
   font-weight: 650;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.04em;
   line-height: 1;
   text-transform: lowercase;
   color: var(--muted);
 }
 
 .flash-week-day.is-selected .flash-week-dow {
-  color: var(--text);
+  color: color-mix(in srgb, var(--text) 78%, var(--muted));
 }
 
 .flash-week-num {
@@ -1243,7 +1335,7 @@ body,
   display: grid;
   place-items: center;
   border-radius: 999px;
-  font-size: 0.98rem;
+  font-size: 0.95rem;
   font-weight: 700;
   line-height: 1;
   color: var(--text);
@@ -1253,7 +1345,7 @@ body,
 
 /* Aujourd’hui = anneau ; sélection = remplissage (distincts). */
 .flash-week-day.is-today .flash-week-num {
-  box-shadow: inset 0 0 0 2px var(--accent);
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--accent) 85%, transparent);
   color: var(--accent);
 }
 
@@ -1266,27 +1358,27 @@ body,
 .flash-week-markers {
   display: grid;
   place-items: center;
-  min-height: 1.05rem;
+  min-height: 1rem;
 }
 
 .flash-week-count {
-  min-width: 1.15rem;
-  height: 1.15rem;
+  min-width: 1.1rem;
+  height: 1.1rem;
   padding: 0 4px;
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: color-mix(in srgb, var(--answer) 22%, transparent);
-  color: var(--text);
-  font-size: 0.62rem;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: color-mix(in srgb, var(--accent) 75%, var(--text));
+  font-size: 0.6rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   line-height: 1;
 }
 
 .flash-week-count.is-overdue {
-  background: color-mix(in srgb, var(--danger) 18%, transparent);
+  background: color-mix(in srgb, var(--danger) 14%, transparent);
   color: var(--danger);
 }
 
@@ -1294,7 +1386,7 @@ body,
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: color-mix(in srgb, var(--muted) 35%, transparent);
+  background: transparent;
 }
 
 .flash-week-day.has-cards .flash-week-dot {
@@ -1307,7 +1399,7 @@ body,
 }
 
 .flash-week-day.is-overdue.is-today .flash-week-num {
-  box-shadow: inset 0 0 0 2px var(--danger);
+  box-shadow: inset 0 0 0 1.5px var(--danger);
 }
 
 .flash-week-day.is-overdue.is-selected .flash-week-num {
@@ -1319,7 +1411,7 @@ body,
 .flash-list--plan .flash-plan-scroller {
   flex: 1;
   margin: 0;
-  padding: 0 0 8px;
+  padding: 2px 0 8px;
   list-style: none;
   min-height: 0;
   overflow-y: auto;
@@ -1330,36 +1422,42 @@ body,
 }
 
 .flash-plan-empty {
-  margin: 12px 4px;
-  font-size: 0.92rem;
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--muted);
 }
 
 .flash-plan-empty-block {
   display: grid;
-  gap: 10px;
+  gap: 12px;
   justify-items: start;
+  padding: 8px 2px 4px;
 }
 
 .flash-plan-jump {
-  margin: 0 4px;
-  padding: 0;
+  margin: 0;
+  padding: 8px 12px;
   border: 0;
-  background: transparent;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
   color: var(--accent);
   font: inherit;
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   font-weight: 650;
   cursor: pointer;
   text-align: left;
 }
 
 .flash-plan-jump:hover {
-  text-decoration: underline;
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  text-decoration: none;
 }
 
 .flash-day-cards {
   display: grid;
-  gap: 10px;
+  gap: 12px;
 }
 
 .flash-day-cards-head {
@@ -1369,8 +1467,9 @@ body,
   gap: 12px;
   margin: 0;
   color: var(--text);
-  font-size: 0.88rem;
-  font-weight: 650;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 .flash-day-cards.is-overdue .flash-day-cards-head time {
@@ -1394,7 +1493,7 @@ body,
   padding: 0;
   list-style: none;
   display: grid;
-  gap: 6px;
+  gap: 10px;
   min-width: 0;
 }
 
@@ -1407,44 +1506,56 @@ body,
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
   width: 100%;
   min-width: 0;
-  min-height: 44px;
-  padding: 12px 14px;
-  border: 0;
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--text) 6%, var(--panel));
+  min-height: 48px;
+  padding: 14px 16px;
+  border: 1px solid color-mix(in srgb, var(--card-tint, var(--line)) 22%, var(--line));
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--card-tint, var(--text)) 10%, #fff);
   color: var(--text);
   font: inherit;
   text-align: left;
   cursor: pointer;
-  box-shadow: inset 3px 0 0 var(--card-tint, transparent);
+  box-shadow: none;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.15s ease;
 }
 
 .flash-plan-event:hover {
-  filter: brightness(0.98);
+  background: color-mix(in srgb, var(--card-tint, var(--text)) 14%, #fff);
+  border-color: color-mix(in srgb, var(--card-tint, var(--line)) 32%, var(--line));
 }
 
 .flash-plan-event.is-active {
-  outline: 2px solid color-mix(in srgb, var(--text) 55%, transparent);
-  outline-offset: 1px;
+  outline: none;
+  border-color: color-mix(in srgb, var(--card-tint, var(--text)) 48%, var(--line));
+  background: color-mix(in srgb, var(--card-tint, var(--text)) 16%, #fff);
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--card-tint, var(--text)) 70%, transparent);
 }
 
 .flash-plan-event.is-closed {
-  opacity: 0.78;
+  opacity: 0.7;
 }
 
 .flash-plan-event.is-overdue {
-  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--danger) 75%, var(--card-tint, transparent));
+  border-color: color-mix(in srgb, var(--danger) 28%, var(--line));
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--danger) 70%, transparent);
+}
+
+.flash-plan-event.is-active.is-overdue {
+  border-color: color-mix(in srgb, var(--danger) 42%, var(--line));
 }
 
 .flash-plan-event-title {
   flex: 1 1 auto;
-  font-size: 0.98rem;
+  font-size: 0.94rem;
   font-weight: 700;
-  letter-spacing: -0.01em;
-  line-height: 1.25;
+  letter-spacing: -0.015em;
+  line-height: 1.3;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -2092,17 +2203,23 @@ body,
 }
 
 .calendar-today {
-  align-self: flex-start;
+  flex: none;
+  align-self: center;
   border: 0;
-  background: transparent;
-  color: var(--muted);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 5%, transparent);
+  color: var(--text);
   font: inherit;
-  font-size: 0.76rem;
+  font-size: 0.74rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
   cursor: pointer;
-  padding: 4px 0;
+  padding: 6px 10px;
+  white-space: nowrap;
 }
 
 .calendar-today:hover {
+  background: color-mix(in srgb, var(--text) 8%, transparent);
   color: var(--text);
 }
 
@@ -4566,6 +4683,45 @@ body,
   transform: translateY(1px);
 }
 
+.plan-yv-day-note-ref {
+  margin: 4px 0 0;
+  font-size: 0.9rem;
+}
+
+.plan-yv-day-note-label {
+  display: block;
+  margin: 0 0 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.plan-yv-day-note-input {
+  display: block;
+  width: 100%;
+  min-height: 12rem;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface, #fff) 92%, var(--bg));
+  color: var(--text);
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1.55;
+  resize: vertical;
+}
+
+.plan-yv-day-note-input:focus {
+  outline: 2px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  outline-offset: 1px;
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
+}
+
+.plan-yv-day-note-msg {
+  margin: 10px 0 0;
+  font-size: 0.85rem;
+}
+
 .plan-yv-devotional-actions {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -5193,12 +5349,17 @@ body,
   width: min(100% - 24px, 40rem);
   margin: 0 auto;
   padding: 12px 14px;
-  border: 1px solid var(--yv-line);
-  border-radius: 14px;
-  background: var(--yv-dock);
+  border: 1px solid color-mix(in srgb, var(--verse-tint, var(--yv-line)) 22%, var(--yv-line));
+  border-radius: 18px;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--verse-tint, transparent) 10%, #fff) 0%,
+      color-mix(in srgb, var(--verse-tint, transparent) 4%, var(--yv-dock)) 100%
+    );
   display: grid;
   gap: 10px;
-  box-shadow: 0 8px 24px color-mix(in srgb, var(--text) 10%, transparent);
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--text) 9%, transparent);
 }
 
 .bible-reader--yv .bible-verse-actions-head {
@@ -5212,24 +5373,75 @@ body,
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
-  padding: 2px 0;
+  gap: 12px;
+  padding: 4px 2px;
 }
 
 .bible-reader--yv .bible-verse-color {
   width: 28px;
   height: 28px;
   padding: 0;
-  border: 2px solid color-mix(in srgb, var(--swatch) 35%, #fff);
+  border: 0;
   border-radius: 999px;
   background: var(--swatch);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, #000 8%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, #000 10%, transparent);
   cursor: pointer;
+  transition: transform 0.12s ease;
+}
+
+.bible-reader--yv .bible-verse-color:active {
+  transform: scale(0.94);
 }
 
 .bible-reader--yv .bible-verse-color.is-on {
-  outline: 2px solid var(--yv-text);
-  outline-offset: 2px;
+  box-shadow:
+    inset 0 0 0 2px #fff,
+    0 0 0 2px var(--yv-text);
+}
+
+.bible-reader--yv .bible-verse-color-custom {
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background:
+    conic-gradient(
+      from 120deg,
+      #2563eb,
+      #e8b923,
+      #22a06b,
+      #e56910,
+      #e65caa,
+      #8270db,
+      #2563eb
+    );
+}
+
+.bible-reader--yv .bible-verse-color-custom.is-on {
+  background: var(--swatch);
+}
+
+.bible-reader--yv .bible-verse-color-picker {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.bible-reader--yv .bible-verse-color-plus {
+  position: relative;
+  z-index: 1;
+  pointer-events: none;
+  color: #fff;
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1;
+  text-shadow: 0 1px 2px color-mix(in srgb, #000 45%, transparent);
 }
 
 .bible-reader--yv .bible-verse-actions-ref {
@@ -5272,8 +5484,18 @@ body,
 
 .bible-reader--yv .bible-make-card {
   justify-self: stretch;
-  min-height: 44px;
-  color: #fff;
+  min-height: 46px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--verse-action-fill, var(--verse-tint, var(--accent)));
+  border-color: transparent;
+  color: var(--verse-action-ink, #fff);
+  font-weight: 700;
+  box-shadow: none;
+}
+
+.bible-reader--yv .bible-make-card:disabled {
+  opacity: 0.65;
 }
 
 .bible-yv-dock {
@@ -5286,11 +5508,19 @@ body,
   align-items: center;
   width: min(100% - 24px, 40rem);
   margin: 0 auto;
-  padding: 6px 8px;
+  padding: 7px 10px;
   border-radius: 999px;
-  background: var(--yv-dock);
-  border: 1px solid var(--yv-line);
-  box-shadow: 0 8px 28px color-mix(in srgb, var(--text) 12%, transparent);
+  background:
+    linear-gradient(
+      180deg,
+      #ffffff 0%,
+      color-mix(in srgb, var(--surface) 55%, #fff) 100%
+    );
+  border: 1px solid color-mix(in srgb, var(--yv-line) 55%, #fff);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, #fff 90%, transparent),
+    0 4px 14px color-mix(in srgb, var(--text) 6%, transparent),
+    0 10px 28px color-mix(in srgb, var(--text) 5%, transparent);
   transform: translate3d(0, 0, 0);
   opacity: 1;
   transition:
@@ -5344,14 +5574,22 @@ body,
   z-index: 5;
   width: min(100% - 24px, 40rem);
   margin: 0 auto;
-  padding: 10px 10px 8px;
-  border: 1px solid var(--yv-line);
-  border-radius: 16px;
-  background: var(--yv-dock);
-  box-shadow: 0 8px 22px color-mix(in srgb, var(--text) 10%, transparent);
+  padding: 14px 12px 12px;
+  border: 1px solid color-mix(in srgb, var(--yv-line) 55%, #fff);
+  border-radius: 22px;
+  background:
+    linear-gradient(
+      180deg,
+      #ffffff 0%,
+      color-mix(in srgb, var(--surface) 42%, #fff) 100%
+    );
+  box-shadow:
+    0 1px 0 color-mix(in srgb, #fff 88%, transparent),
+    0 8px 24px color-mix(in srgb, var(--text) 7%, transparent),
+    0 18px 40px color-mix(in srgb, var(--text) 5%, transparent);
   display: grid;
   align-content: start;
-  gap: 8px;
+  gap: 12px;
 }
 
 .bible-yv-pick-sheet-head {
@@ -5361,33 +5599,34 @@ body,
   gap: 8px;
   min-width: 0;
   min-height: 28px;
+  padding: 0 2px;
 }
 
 .bible-yv-pick-title {
   margin: 0;
-  font-size: 0.92rem;
-  font-weight: 650;
-  letter-spacing: -0.01em;
+  font-size: 0.94rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   color: var(--yv-text);
 }
 
 .bible-yv-pick-step,
 .bible-yv-pick-hint {
-  font-size: 0.68rem;
+  font-size: 0.66rem;
   font-weight: 650;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--yv-muted);
 }
 
 .bible-yv-pick-back {
   border: 0;
-  padding: 2px 0;
+  padding: 4px 0;
   background: transparent;
   color: var(--yv-text);
   font: inherit;
   font-size: 0.88rem;
-  font-weight: 600;
+  font-weight: 650;
   cursor: pointer;
   max-width: 70%;
   overflow: hidden;
@@ -5400,49 +5639,62 @@ body,
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   align-content: start;
-  gap: 5px;
+  gap: 7px;
   max-height: min(38vh, 260px);
   overflow: auto;
-  padding: 0;
+  padding: 0 1px 2px;
   margin: 0;
+  scrollbar-width: thin;
 }
 
 .bible-yv-pick-grid.is-books {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   max-height: min(44vh, 300px);
-  gap: 6px;
+  gap: 8px;
 }
 
 .bible-yv-pick-cell {
-  min-height: 40px;
-  border: 1px solid transparent;
-  border-radius: 11px;
-  background: color-mix(in srgb, var(--yv-text) 6%, var(--yv-surface));
+  min-height: 42px;
+  border: 1px solid color-mix(in srgb, var(--yv-line) 40%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 70%, #fff);
   color: var(--yv-text);
   font: inherit;
-  font-size: 0.92rem;
+  font-size: 0.9rem;
   font-weight: 650;
   font-variant-numeric: tabular-nums;
   cursor: pointer;
+  box-shadow: none;
+  transition:
+    background 0.14s ease,
+    border-color 0.14s ease,
+    color 0.14s ease;
+}
+
+.bible-yv-pick-cell:hover:not(:disabled):not(.is-on) {
+  background: color-mix(in srgb, var(--yv-text) 5%, #fff);
+  border-color: color-mix(in srgb, var(--yv-line) 70%, transparent);
 }
 
 .bible-yv-pick-cell.is-book {
-  min-height: 40px;
-  padding: 7px 10px;
+  min-height: 42px;
+  padding: 8px 12px;
   font-size: 0.86rem;
-  font-weight: 600;
+  font-weight: 650;
   font-variant-numeric: normal;
   text-align: left;
   line-height: 1.2;
+  letter-spacing: -0.01em;
 }
 
 .bible-yv-pick-cell.is-on {
   background: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 70%, #000);
   color: #fff;
 }
 
 .bible-yv-pick-cell:disabled {
-  opacity: 0.45;
+  opacity: 0.42;
   cursor: default;
 }
 
@@ -5471,12 +5723,20 @@ body,
 
 .bible-yv-dock-arrow {
   height: 36px;
-  font-size: 1.55rem;
+  border-radius: 999px;
+  font-size: 1.45rem;
   line-height: 1;
+  color: color-mix(in srgb, var(--yv-text) 78%, transparent);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.bible-yv-dock-arrow:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--yv-text) 5%, #fff);
+  color: var(--yv-text);
 }
 
 .bible-yv-dock-arrow:disabled {
-  opacity: 0.35;
+  opacity: 0.32;
   cursor: default;
 }
 
@@ -5488,16 +5748,23 @@ body,
   min-width: 0;
   max-width: 100%;
   margin: 0 auto;
-  padding: 8px 6px;
+  padding: 8px 10px;
   border-radius: 999px;
   font-family: "Libre Baskerville", Georgia, serif;
   font-size: 0.98rem;
   font-weight: 400;
   text-align: center;
+  color: var(--yv-text);
+  transition: background 0.15s ease;
+}
+
+.bible-yv-dock-location:hover {
+  background: color-mix(in srgb, var(--yv-text) 4%, #fff);
 }
 
 .bible-yv-dock-location.is-open {
-  background: color-mix(in srgb, var(--yv-text) 6%, var(--yv-surface));
+  background: color-mix(in srgb, var(--surface) 78%, #fff);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--yv-line) 70%, transparent);
 }
 
 .bible-yv-dock-location-text {
@@ -5509,8 +5776,8 @@ body,
 
 .bible-yv-dock-caret {
   flex: none;
-  color: var(--yv-muted);
-  font-size: 0.72rem;
+  color: color-mix(in srgb, var(--yv-muted) 85%, var(--yv-text));
+  font-size: 0.68rem;
   line-height: 1;
   transform: translateY(1px);
 }

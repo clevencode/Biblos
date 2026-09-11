@@ -82,6 +82,47 @@ export function fetchNotionDescription(token: string, urlOrId: string): Promise<
 export function isStatusOptionValidationError(statusCode: number, detail: string): boolean;
 export function notesDatabaseId(): string;
 
+export function planDayNoteTitle(jour: number | string): string;
+
+export function upsertPlanDayNote(
+  token: string,
+  input: {
+    planUrl?: string;
+    planPageId?: string;
+    jour?: number | string;
+    body?: string;
+    pageId?: string;
+    noteUrl?: string;
+  },
+): Promise<{
+  ok: boolean;
+  error?: string;
+  hasToken?: boolean;
+  jour?: number;
+  pageId?: string;
+  url?: string;
+  body?: string;
+}>;
+
+export function fetchPlanDayNote(
+  token: string,
+  input: {
+    planUrl?: string;
+    planPageId?: string;
+    jour?: number | string;
+    pageId?: string;
+    noteUrl?: string;
+  },
+): Promise<{
+  ok: boolean;
+  error?: string;
+  hasToken?: boolean;
+  jour?: number;
+  pageId?: string | null;
+  url?: string | null;
+  body: string;
+}>;
+
 export function archiveVerseCard(
   token: string,
   urlOrId: string,

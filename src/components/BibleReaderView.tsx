@@ -6,6 +6,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type CSSProperties,
 } from "react";
 import { flushSync } from "react-dom";
 import {
@@ -20,7 +21,14 @@ import {
   type YouVersionPassage,
 } from "../youversion/client";
 import { createVerseFlashcard, verseCardId } from "../verseCard";
-import { DEFAULT_VERSE_COLOR, VERSE_COLORS, normalizeVerseColor } from "../verseColors";
+import {
+  VERSE_COLORS,
+  isPresetVerseColor,
+  loadPreferredVerseColor,
+  normalizeVerseColor,
+  savePreferredVerseColor,
+  verseActionTone,
+} from "../verseColors";
 import type { Flashcard } from "../types";
 
 const STORAGE_KEY = "biblos-bible-reader";
@@ -336,7 +344,7 @@ export function BibleReaderView({
   const [passageStep, setPassageStep] = useState<"book" | "chapter" | "verse">("book");
   const [cardBusy, setCardBusy] = useState(false);
   const [cardMsg, setCardMsg] = useState<string | null>(null);
-  const [cardColor, setCardColor] = useState(DEFAULT_VERSE_COLOR);
+  const [cardColor, setCardColor] = useState(() => loadPreferredVerseColor());
   const [chromeHidden, setChromeHidden] = useState(false);
   const statusId = useId();
   const highlightRef = useRef<HTMLElement | null>(null);
@@ -505,7 +513,7 @@ export function BibleReaderView({
       }
       pendingScrollVerse.current = { number, mode: "nearest", seq: ++verseScrollSeq.current };
       setHighlightVerse(number);
-      if (!current?.length) setCardColor(DEFAULT_VERSE_COLOR);
+      if (!current?.length) setCardColor(loadPreferredVerseColor());
       return sortVerses(next);
     });
     setCardMsg(null);
@@ -516,7 +524,7 @@ export function BibleReaderView({
     pendingScrollVerse.current = { number, mode: "start", seq: ++verseScrollSeq.current };
     setSelection([number]);
     setHighlightVerse(number);
-    setCardColor(DEFAULT_VERSE_COLOR);
+    setCardColor(loadPreferredVerseColor());
     setCardMsg(null);
     setPickerOpen(false);
   }
@@ -558,7 +566,7 @@ export function BibleReaderView({
     setSelection(null);
     setHighlightVerse(null);
     setCardMsg(null);
-    setCardColor(DEFAULT_VERSE_COLOR);
+    setCardColor(loadPreferredVerseColor());
   }
 
   async function makeFlashcard() {
@@ -663,16 +671,21 @@ export function BibleReaderView({
   useEffect(() => {
     if (!selectedVerseCardId) return;
     const stored = existingVerseCardColors?.get(selectedVerseCardId);
-    setCardColor(stored ? normalizeVerseColor(stored) : DEFAULT_VERSE_COLOR);
+    setCardColor(stored ? normalizeVerseColor(stored) : loadPreferredVerseColor());
   }, [selectedVerseCardId, existingVerseCardColors]);
 
   function pickVerseColor(hex: string) {
     const next = normalizeVerseColor(hex);
     setCardColor(next);
+    savePreferredVerseColor(next);
     if (existingVerseCard && selectedVerseCardId && onUpdateVerseCardColor) {
       onUpdateVerseCardColor(selectedVerseCardId, next);
     }
   }
+
+  const actionTone = useMemo(() => verseActionTone(cardColor), [cardColor]);
+  const activeVerseColor = normalizeVerseColor(cardColor);
+  const customColorOn = !isPresetVerseColor(activeVerseColor);
 
   const showCreateCard = Boolean(selectedVerses.length && selectedVerseText && !pickerOpen);
   const forceChrome = pickerOpen || showCreateCard;
@@ -983,7 +996,7 @@ export function BibleReaderView({
         ref={passageScrollRef}
         className="bible-passage"
         aria-busy={loading}
-        style={{ ["--verse-tint" as string]: cardColor }}
+        style={{ ["--verse-tint" as string]: actionTone.tint }}
         onClick={() => {
           if (pickerOpen) {
             closePicker();
@@ -1101,7 +1114,13 @@ export function BibleReaderView({
           className="bible-verse-actions"
           role="region"
           aria-label="Flashcard du passage"
-          style={{ ["--verse-tint" as string]: cardColor }}
+          style={
+            {
+              ["--verse-tint" as string]: actionTone.tint,
+              ["--verse-action-fill" as string]: actionTone.fill,
+              ["--verse-action-ink" as string]: actionTone.ink,
+            } as CSSProperties
+          }
         >
           <div className="bible-verse-actions-head">
             <p className="bible-verse-actions-ref">
@@ -1129,7 +1148,7 @@ export function BibleReaderView({
           )}
           <div className="bible-verse-colors" role="group" aria-label="Couleur du surligneur">
             {VERSE_COLORS.map((swatch) => {
-              const on = normalizeVerseColor(cardColor) === swatch.hex;
+              const on = activeVerseColor === swatch.hex;
               return (
                 <button
                   key={swatch.id}
@@ -1142,11 +1161,32 @@ export function BibleReaderView({
                 />
               );
             })}
+            <label
+              className={`bible-verse-color bible-verse-color-custom${customColorOn ? " is-on" : ""}`}
+              style={
+                customColorOn
+                  ? ({ ["--swatch" as string]: activeVerseColor } as CSSProperties)
+                  : undefined
+              }
+              title="Couleur personnalisée"
+            >
+              <input
+                type="color"
+                className="bible-verse-color-picker"
+                value={activeVerseColor}
+                aria-label="Couleur personnalisée"
+                onChange={(event) => pickVerseColor(event.target.value)}
+              />
+              {!customColorOn ? (
+                <span className="bible-verse-color-plus" aria-hidden>
+                  +
+                </span>
+              ) : null}
+            </label>
           </div>
           <button
             type="button"
             className="bible-yv-chip is-primary bible-make-card"
-            style={{ background: cardColor, borderColor: cardColor }}
             disabled={cardBusy}
             onClick={() => {
               if (existingVerseCard && selectedVerseCardId && onViewFlashcard) {
