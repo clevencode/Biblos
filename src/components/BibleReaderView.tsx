@@ -32,6 +32,12 @@ const EMPTY_VERSES: number[] = [];
 /** Sélection multi-versets (toggle, pas forcément contigus). */
 type VerseSelection = number[];
 
+function verseRange(start: number, end: number): number[] {
+  const a = Math.min(start, end);
+  const b = Math.max(start, end);
+  return Array.from({ length: b - a + 1 }, (_, i) => a + i);
+}
+
 function sortVerses(verses: Iterable<number>): number[] {
   return [...new Set(verses)].sort((a, b) => a - b);
 }
@@ -110,6 +116,8 @@ type BibleReaderViewProps = {
     /** Nom affiché en haut (thème / titre du plan). */
     planName: string;
     label: string;
+    /** Référence du pas courant — pour détecter une navigation hors plan. */
+    focusRef: string;
     isFirst: boolean;
     isLast: boolean;
     verseStart?: number | null;
@@ -376,7 +384,17 @@ export function BibleReaderView({
     if (!focusSeq || !focusRef?.trim()) return;
     const parts = parseUsfmParts(focusRef);
     if (!isUsfmBookId(parts.bookId)) return;
-    void loadChapter(parts.bookId, parts.chapterId, parts.verse ?? null);
+    const start = parts.verse ?? planReading?.verseStart ?? null;
+    const end =
+      planReading?.verseStart != null && planReading.verseEnd != null
+        ? planReading.verseEnd
+        : parts.verse != null && focusRef.includes("-")
+          ? (() => {
+              const match = focusRef.match(/[.:](\d+)\s*[-–—]\s*(\d+)/);
+              return match ? Number(match[2]) : null;
+            })()
+          : null;
+    void loadChapter(parts.bookId, parts.chapterId, start, end);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusSeq, focusRef]);
 
@@ -406,6 +424,7 @@ export function BibleReaderView({
     nextBook: string,
     nextChapter: string,
     verse: number | null = null,
+    verseEnd: number | null = null,
   ) {
     const gen = ++loadGen.current;
     pendingScrollVerse.current =
@@ -415,7 +434,13 @@ export function BibleReaderView({
     setBookId(nextBook);
     setChapterId(nextChapter);
     setHighlightVerse(verse);
-    setSelection(verse != null ? [verse] : null);
+    setSelection(
+      verse != null
+        ? verseEnd != null
+          ? verseRange(verse, verseEnd)
+          : [verse]
+        : null,
+    );
     setCardMsg(null);
     setLoading(true);
     setError(null);
@@ -550,6 +575,46 @@ export function BibleReaderView({
   const locationLabel = selection?.length
     ? `${bookTitle} ${chapterId}.${formatVerseList(selection)}`
     : `${bookTitle} ${chapterId}`;
+  const chapterLabel = `${bookTitle} ${chapterId}`;
+  const onPlanStep = Boolean(
+    planReading &&
+      (() => {
+        const parts = parseUsfmParts(planReading.focusRef || planReading.label);
+        return (
+          parts.bookId.toUpperCase() === bookId.toUpperCase() &&
+          String(parts.chapterId) === String(chapterId)
+        );
+      })(),
+  );
+  const planHeaderTitle = planReading
+    ? onPlanStep
+      ? planReading.planName
+      : chapterLabel
+    : "";
+
+  function handlePlanBack() {
+    if (!planReading) {
+      onBack?.();
+      return;
+    }
+    // Hors du chapitre du pas → revenir au chapitre du plan en cours.
+    if (!onPlanStep) {
+      const parts = parseUsfmParts(planReading.focusRef || planReading.label);
+      if (isUsfmBookId(parts.bookId)) {
+        const start = parts.verse ?? planReading.verseStart ?? null;
+        const end = planReading.verseEnd ?? start;
+        void loadChapter(parts.bookId, parts.chapterId, start, end);
+        return;
+      }
+    }
+    // Sur le pas courant → chapitre précédent du plan, sinon quitter (timeline du jour).
+    if (!planReading.isFirst) {
+      planReading.onPrev();
+      return;
+    }
+    onBack?.();
+  }
+
   const verseOptions =
     passage?.verses?.map((verse) => verse.number) ?? (selection?.length ? selection : []);
   const selectedVerses = selection ?? EMPTY_VERSES;
@@ -727,7 +792,7 @@ export function BibleReaderView({
               closePicker();
               return;
             }
-            onBack?.();
+            handlePlanBack();
             return;
           }
           if (pickerOpen) return;
@@ -768,13 +833,19 @@ export function BibleReaderView({
               <button
                 type="button"
                 className="bible-yv-back"
-                onClick={() => onBack?.()}
-                aria-label="Quitter la lecture du plan"
+                onClick={handlePlanBack}
+                aria-label={
+                  onPlanStep
+                    ? planReading.isFirst
+                      ? "Quitter la lecture du plan"
+                      : "Chapitre précédent du plan"
+                    : "Retour au chapitre du plan"
+                }
               >
                 ←
               </button>
-              <p className="bible-yv-plan-name" title={planReading.planName}>
-                {planReading.planName}
+              <p className="bible-yv-plan-name" title={planHeaderTitle}>
+                {planHeaderTitle}
               </p>
             </div>
             <div className="bible-yv-font" role="group" aria-label="Taille du texte">
@@ -1164,11 +1235,11 @@ export function BibleReaderView({
             aria-label={
               pickerOpen
                 ? `Fermer le choix · ${locationLabel}`
-                : `Choisir un passage · ${planReading?.label || locationLabel}`
+                : `Choisir un passage · ${locationLabel}`
             }
           >
             <span className="bible-yv-dock-location-text">
-              {pickerOpen ? dockPickLabel : planReading?.label || locationLabel}
+              {pickerOpen ? dockPickLabel : locationLabel}
             </span>
             <span className="bible-yv-dock-caret" aria-hidden="true">
               ▾

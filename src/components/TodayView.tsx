@@ -9,6 +9,8 @@ type TodayViewProps = {
   plan: ReadingPlan | null;
   progress?: PlanProgress | null;
   planJour?: number;
+  /** Remet l’écran sur la timeline (ex. retour depuis Lecture du plan). */
+  resumeSeq?: number;
   onSelectGalerie?: () => void;
   onMarkRead?: (jour: number) => void;
   onOpenPassage?: (reference: string) => void;
@@ -45,6 +47,7 @@ export function TodayView({
   plan,
   progress = null,
   planJour = 1,
+  resumeSeq = 0,
   onSelectGalerie,
   onMarkRead,
   onOpenPassage,
@@ -78,6 +81,11 @@ export function TodayView({
     setDevotionalDone(loadDevotionalDone(plan.id));
     setScreen("timeline");
   }, [plan?.id]);
+
+  useEffect(() => {
+    if (!resumeSeq) return;
+    setScreen("timeline");
+  }, [resumeSeq]);
 
   if (!plan) {
     return (

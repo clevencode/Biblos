@@ -103,6 +103,7 @@ export function App() {
   const [bibleFocusRef, setBibleFocusRef] = useState<string | null>(null);
   const [bibleFocusSeq, setBibleFocusSeq] = useState(0);
   const [planReading, setPlanReading] = useState<PlanReadingSession | null>(null);
+  const [planResumeSeq, setPlanResumeSeq] = useState(0);
   const [retentionTick, setRetentionTick] = useState(0);
   const [bibleChromeHidden, setBibleChromeHidden] = useState(false);
 
@@ -252,6 +253,7 @@ export function App() {
   function exitPlanReading() {
     setPlanReading(null);
     setHome(false);
+    setPlanResumeSeq((value) => value + 1);
     setMode("today");
   }
 
@@ -273,6 +275,7 @@ export function App() {
       }
       setPlanReading(null);
       setHome(false);
+      setPlanResumeSeq((value) => value + 1);
       setMode("today");
       return;
     }
@@ -400,6 +403,7 @@ export function App() {
       plan={activePlan}
       progress={planProgress}
       planJour={todayJour}
+      resumeSeq={planResumeSeq}
       onSelectGalerie={goHome}
       onMarkRead={handleMarkRead}
       onOpenPassage={openPassageInBible}
@@ -530,6 +534,7 @@ export function App() {
                               return theme || nome || "Plan";
                             })(),
                             label: currentPlanStep(planReading)?.label ?? "",
+                            focusRef: currentPlanStep(planReading)?.focusRef ?? "",
                             isFirst: isFirstPlanStep(planReading),
                             isLast: isLastPlanStep(planReading),
                             verseStart: currentPlanStep(planReading)?.verseStart ?? null,

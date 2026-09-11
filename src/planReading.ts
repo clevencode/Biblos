@@ -80,9 +80,11 @@ export function buildChapterStep(jour: number, passage: string): PlanReadingStep
   }
   const label = formatPassageLabel(window, trimmed);
   const focusRef =
-    window.start != null
-      ? `${window.bookToken} ${window.chapter}:${window.start}`
-      : `${window.bookToken} ${window.chapter}`;
+    window.start != null && window.end != null && window.start !== window.end
+      ? `${window.bookToken} ${window.chapter}:${window.start}-${window.end}`
+      : window.start != null
+        ? `${window.bookToken} ${window.chapter}:${window.start}`
+        : `${window.bookToken} ${window.chapter}`;
   return {
     jour,
     label,
