@@ -13,6 +13,8 @@ import type { ReadingPlan } from "../types";
 import { loadOrCreateProfile, preferredDisplayName } from "../userProfile";
 import { PlanDescription } from "./PlanDescription";
 
+type PlanFlowReturn = "timeline" | "dayNote" | "intro";
+
 type TodayViewProps = {
   plan: ReadingPlan | null;
   progress?: PlanProgress | null;
@@ -24,11 +26,21 @@ type TodayViewProps = {
   resumeSeq?: number;
   /** Ouvre la note du jour après la lecture (seq change à chaque fois). */
   dayNoteFocus?: { jour: number; seq: number } | null;
+  /** Restaure l’écran description au retour depuis la lecture. */
+  introFocus?: { seq: number } | null;
+  /** Quitte / ignore le focus note (évite de rouvrir le cycle). */
+  onClearDayNoteFocus?: () => void;
+  /** Quitte le focus description. */
+  onClearIntroFocus?: () => void;
   onSelectGalerie?: () => void;
   onMarkRead?: (jour: number) => void;
   onOpenPassage?: (reference: string) => void;
   /** Démarre la lecture guidée du jour (versets → conclure). */
-  onStartPlanReading?: (jour: number, passage: string) => void;
+  onStartPlanReading?: (
+    jour: number,
+    passage: string,
+    opts?: { returnTo?: PlanFlowReturn },
+  ) => void;
   /** Remet le plan à zéro et relance la lecture. */
   onRestartPlan?: () => void;
 };
@@ -39,21 +51,57 @@ function PassageRefsList({
   refs,
   fallback,
   className,
+  done = false,
+  onToggleDone,
+  onOpenRef,
 }: {
   refs: string[];
   fallback?: string;
   className?: string;
+  done?: boolean;
+  onToggleDone?: () => void;
+  onOpenRef?: (ref: string) => void;
 }) {
-  if (refs.length === 0) {
-    return fallback ? <p className={className}>{fallback}</p> : null;
+  const items = refs.length ? refs : fallback ? [fallback] : [];
+  if (!items.length) return null;
+
+  if (!onToggleDone && !onOpenRef && items.length === 1) {
+    return <p className={className}>{items[0]}</p>;
   }
-  if (refs.length === 1) {
-    return <p className={className}>{refs[0]}</p>;
-  }
+
   return (
-    <ul className={`plan-yv-ref-list${className ? ` ${className}` : ""}`}>
-      {refs.map((ref) => (
-        <li key={ref}>{ref}</li>
+    <ul
+      className={`plan-yv-ref-list${className ? ` ${className}` : ""}`}
+      aria-label={onToggleDone || onOpenRef ? "Passages du jour" : undefined}
+    >
+      {items.map((ref) => (
+        <li
+          key={ref}
+          className={onToggleDone || onOpenRef ? "plan-yv-ref-row" : undefined}
+        >
+          {onOpenRef ? (
+            <button
+              type="button"
+              className="plan-yv-ref-text plan-yv-ref-link"
+              onClick={() => onOpenRef(ref)}
+            >
+              {ref}
+            </button>
+          ) : (
+            <span className="plan-yv-ref-text">{ref}</span>
+          )}
+          {onToggleDone ? (
+            <button
+              type="button"
+              className={`plan-yv-ref-mark${done ? " is-done" : ""}`}
+              onClick={onToggleDone}
+              aria-pressed={done}
+              aria-label={done ? "Démarquer comme lu" : "Marquer comme lu"}
+            >
+              {done ? <span aria-hidden="true">✓</span> : null}
+            </button>
+          ) : null}
+        </li>
       ))}
     </ul>
   );
@@ -87,6 +135,9 @@ export function TodayView({
   focusJour,
   resumeSeq = 0,
   dayNoteFocus = null,
+  introFocus = null,
+  onClearDayNoteFocus,
+  onClearIntroFocus,
   onSelectGalerie,
   onMarkRead,
   onOpenPassage,
@@ -132,19 +183,24 @@ export function TodayView({
 
   useEffect(() => {
     if (!resumeSeq) return;
-    if (dayNoteFocus?.seq) return;
+    if (dayNoteFocus?.seq || introFocus?.seq) return;
     setScreen("timeline");
     if (!days.length) return;
     const preferred =
       days.find((day) => day.jour === jumpJour)?.jour ?? days[0]!.jour;
     setSelectedJour(preferred);
-  }, [resumeSeq, dayNoteFocus?.seq, jumpJour, days]);
+  }, [resumeSeq, dayNoteFocus?.seq, introFocus?.seq, jumpJour, days]);
 
   useEffect(() => {
     if (!dayNoteFocus?.seq || !plan?.id) return;
     setSelectedJour(dayNoteFocus.jour);
     setScreen("dayNote");
   }, [dayNoteFocus?.seq, dayNoteFocus?.jour, plan?.id]);
+
+  useEffect(() => {
+    if (!introFocus?.seq || !plan?.id) return;
+    setScreen("intro");
+  }, [introFocus?.seq, plan?.id]);
 
   useEffect(() => {
     if (screen !== "dayNote" || !plan?.id) return;
@@ -222,13 +278,29 @@ export function TodayView({
   const progressPct =
     scheduleTotal > 0 ? Math.min(100, (scheduleDone / scheduleTotal) * 100) : 0;
 
-  function openPassage() {
-    if (!selectedDay || !firstPassage || !isPassageRef(firstPassage)) return;
+  function flowReturn(): PlanFlowReturn {
+    if (screen === "dayNote") return "dayNote";
+    if (screen === "intro") return "intro";
+    return "timeline";
+  }
+
+  function openPassageAt(ref?: string) {
+    const target = (ref ?? firstPassage ?? "").trim();
+    if (!selectedDay || !target || !isPassageRef(target)) return;
     if (onStartPlanReading) {
-      onStartPlanReading(selectedDay.jour, passage || firstPassage);
+      onStartPlanReading(selectedDay.jour, target, { returnTo: flowReturn() });
       return;
     }
-    onOpenPassage?.(firstPassage);
+    onOpenPassage?.(target);
+  }
+
+  function openPassage() {
+    openPassageAt();
+  }
+
+  function leaveDayNote() {
+    onClearDayNoteFocus?.();
+    setScreen("timeline");
   }
 
   function openDayNote() {
@@ -280,12 +352,18 @@ export function TodayView({
     if (!result.ok) {
       setNoteMsg("Enregistré sur cet appareil — sync plus tard");
       setNoteSaved(Boolean(noteText.trim()));
-      if (andClose && !plan.url) setScreen("timeline");
+      if (andClose) {
+        onClearDayNoteFocus?.();
+        setScreen("timeline");
+      }
       return;
     }
     setNoteSaved(true);
     setNoteMsg("Note enregistrée");
-    if (andClose) setScreen("timeline");
+    if (andClose) {
+      onClearDayNoteFocus?.();
+      setScreen("timeline");
+    }
   }
 
   if (screen === "intro") {
@@ -295,7 +373,10 @@ export function TodayView({
           <button
             type="button"
             className="flash-list-back"
-            onClick={() => setScreen("timeline")}
+            onClick={() => {
+              onClearIntroFocus?.();
+              setScreen("timeline");
+            }}
             aria-label="Retour au plan"
           >
             ← Retour
@@ -325,6 +406,7 @@ export function TodayView({
                 openPassage();
                 return;
               }
+              onClearIntroFocus?.();
               setScreen("timeline");
             }}
           >
@@ -342,7 +424,7 @@ export function TodayView({
           <button
             type="button"
             className="flash-list-back"
-            onClick={() => setScreen("timeline")}
+            onClick={leaveDayNote}
             aria-label="Retour au plan"
           >
             ← Retour
@@ -362,6 +444,7 @@ export function TodayView({
               refs={passageRefs}
               fallback={passageLabel}
               className="plan-yv-day-note-ref muted"
+              onOpenRef={canOpenPassage ? openPassageAt : undefined}
             />
           ) : null}
         </header>
@@ -390,7 +473,7 @@ export function TodayView({
             type="button"
             className="plan-yv-devo-mark"
             disabled={noteBusy}
-            onClick={() => setScreen("timeline")}
+            onClick={leaveDayNote}
           >
             Passer
           </button>
@@ -521,28 +604,19 @@ export function TodayView({
               Lecture du jour
               {selectedIndex > 0 ? ` · Jour ${selectedIndex}` : null}
             </p>
-            {onMarkRead ? (
-              <button
-                type="button"
-                className={`plan-yv-hero-mark${passageRead ? " is-done" : ""}`}
-                onClick={() => onMarkRead(selectedDay.jour)}
-                aria-pressed={passageRead}
-                aria-label={passageRead ? "Démarquer comme lu" : "Marquer comme lu"}
-              >
-                {passageRead ? "✓ Lu" : "Marquer lu"}
-              </button>
-            ) : null}
           </div>
-          {passageRefs.length > 1 ? (
-            <ul className="plan-yv-hero-title plan-yv-ref-list" aria-label="Passages du jour">
-              {passageRefs.map((ref) => (
-                <li key={ref}>{ref}</li>
-              ))}
-            </ul>
+          {passageRefs.length > 0 || passageLabel ? (
+            <PassageRefsList
+              refs={passageRefs.length ? passageRefs : [passageLabel || "Passage du jour"]}
+              className="plan-yv-hero-title"
+              done={passageRead}
+              onToggleDone={
+                onMarkRead && selectedDay ? () => onMarkRead(selectedDay.jour) : undefined
+              }
+              onOpenRef={canOpenPassage ? openPassageAt : undefined}
+            />
           ) : (
-            <h3 className="plan-yv-hero-title">
-              {passageRefs[0] ?? (passageLabel || "Passage du jour")}
-            </h3>
+            <h3 className="plan-yv-hero-title">Passage du jour</h3>
           )}
           {readingMinutes ? (
             <p className="plan-yv-hero-meta">{readingMinutes}</p>

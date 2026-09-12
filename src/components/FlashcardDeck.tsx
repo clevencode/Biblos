@@ -12,6 +12,8 @@ type FlashcardDeckProps = {
   splitLayout?: boolean;
   onRemoveCard?: (card: Flashcard) => void;
   onReadChapter?: (card: Flashcard) => void;
+  /** Retour ← après ouverture depuis Lecture (« Voir la carte »). */
+  onBackFromFocus?: () => void;
 };
 
 export function FlashcardDeck({
@@ -22,6 +24,7 @@ export function FlashcardDeck({
   splitLayout = false,
   onRemoveCard,
   onReadChapter,
+  onBackFromFocus,
 }: FlashcardDeckProps) {
   const [reviewing, setReviewing] = useState(false);
   const session = useFlashcardSession(cards, {
@@ -43,6 +46,11 @@ export function FlashcardDeck({
   useEffect(() => {
     if (selectedId && focusSeq > 0) setReviewing(true);
   }, [selectedId, focusSeq]);
+
+  function leaveReview() {
+    setReviewing(false);
+    onBackFromFocus?.();
+  }
 
   if (!session.total && !cards.length) {
     return (
@@ -94,7 +102,7 @@ export function FlashcardDeck({
     <FlashcardReview
       session={session}
       emptyMessage="Aucune carte dans ce filtre."
-      onBackToList={() => setReviewing(false)}
+      onBackToList={leaveReview}
       onRemoveCard={onRemoveCard}
       onReadChapter={onReadChapter}
     />

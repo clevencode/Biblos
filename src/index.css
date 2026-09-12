@@ -6387,11 +6387,80 @@ body,
   padding: 0;
   list-style: none;
   display: grid;
-  gap: 0.2em;
+  gap: 0.35em;
 }
 
 .plan-yv-ref-list li {
   margin: 0;
+}
+
+.plan-yv-ref-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.plan-yv-ref-text {
+  min-width: 0;
+}
+
+.plan-yv-ref-link {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.plan-yv-ref-link:hover,
+.plan-yv-ref-link:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+}
+
+.plan-yv-ref-mark {
+  flex: none;
+  box-sizing: border-box;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1.5px solid color-mix(in srgb, var(--muted) 55%, var(--line));
+  border-radius: 999px;
+  background: transparent;
+  color: transparent;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    color 160ms ease;
+}
+
+.plan-yv-ref-mark:hover {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
+}
+
+.plan-yv-ref-mark.is-done {
+  border-color: color-mix(in srgb, var(--accent) 70%, #1a1a1a);
+  background: color-mix(in srgb, var(--accent) 82%, #1a1a1a);
+  color: #fff;
+}
+
+.plan-yv-ref-mark:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 ul.plan-yv-hero-title {
@@ -7424,7 +7493,7 @@ ul.plan-yv-day-note-ref {
   margin: 0;
   padding: 6px 10px;
   border: 0;
-  border-radius: 8px;
+  border-radius: 0;
   background: transparent;
   text-align: left;
   cursor: pointer;
@@ -7530,7 +7599,7 @@ ul.plan-yv-day-note-ref {
   color: var(--yv-text);
   background: color-mix(in srgb, var(--verse-mark, var(--accent)) 12%, transparent);
   box-shadow: inset 3px 0 0 var(--verse-mark, var(--accent));
-  border-radius: 8px;
+  border-radius: 0;
 }
 
 .bible-reader--yv .bible-verse.is-marked.is-selected {
@@ -7539,16 +7608,16 @@ ul.plan-yv-day-note-ref {
 }
 
 .bible-reader--yv .bible-verse.is-marked.is-sel-start:not(.is-sel-end) {
-  border-radius: 8px 8px 0 0;
+  border-radius: 0;
 }
 
 .bible-reader--yv .bible-verse.is-marked.is-sel-end:not(.is-sel-start) {
-  border-radius: 0 0 8px 8px;
+  border-radius: 0;
 }
 
 .bible-reader--yv .bible-verse.is-marked.is-sel-start.is-sel-end,
 .bible-reader--yv .bible-verse.is-marked.is-sel-single {
-  border-radius: 8px;
+  border-radius: 0;
 }
 
 .bible-reader--yv .bible-verse-num {

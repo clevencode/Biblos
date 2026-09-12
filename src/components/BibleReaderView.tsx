@@ -902,11 +902,7 @@ export function BibleReaderView({
         return;
       }
     }
-    // Sur le pas courant → chapitre précédent du plan, sinon quitter (timeline du jour).
-    if (!planReading.isFirst) {
-      planReading.onPrev();
-      return;
-    }
+    // Sur le pas courant → toujours l’écran d’origine (‹ dock = chapitre précédent).
     onBack?.();
   }
 

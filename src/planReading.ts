@@ -12,12 +12,16 @@ export type PlanReadingStep = {
   verseEnd: number | null;
 };
 
+export type PlanReadingReturnTo = "timeline" | "dayNote" | "intro";
+
 export type PlanReadingSession = {
   planId: string;
   /** Jour d’où la lecture a démarré. */
   startJour: number;
   steps: PlanReadingStep[];
   index: number;
+  /** Écran d’origine à restaurer sur ←. */
+  returnTo: PlanReadingReturnTo;
 };
 
 type VerseWindow = {
@@ -103,6 +107,7 @@ export function createPlanReadingSession(input: {
   planId: string;
   startJour: number;
   days: PlanDay[];
+  returnTo?: PlanReadingReturnTo;
 }): PlanReadingSession | null {
   const dayEntries = (input.days ?? []).filter((day) => day.jour === input.startJour);
   if (!dayEntries.length) return null;
@@ -131,6 +136,7 @@ export function createPlanReadingSession(input: {
     startJour: input.startJour,
     steps,
     index: 0,
+    returnTo: input.returnTo ?? "timeline",
   };
 }
 

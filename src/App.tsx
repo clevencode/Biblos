@@ -38,11 +38,13 @@ import {
   resetPlanProgress,
 } from "./planProgress";
 import { sanitizePlanDays } from "./plan";
+import { loadDayNote } from "./planDayNote";
 import {
   createPlanReadingSession,
   currentPlanStep,
   isFirstPlanStep,
   isLastPlanStep,
+  type PlanReadingReturnTo,
   type PlanReadingSession,
 } from "./planReading";
 import { useNotionSync } from "./useNotionSync";
@@ -131,10 +133,13 @@ export function App() {
   notesRef.current = notes;
   const [cardFocusId, setCardFocusId] = useState<string | null>(null);
   const [cardFocusSeq, setCardFocusSeq] = useState(0);
+  /** Ouverture « Voir la carte » depuis Lecture → ← revient à Lecture. */
+  const [cardReturnToBible, setCardReturnToBible] = useState(false);
   const [bibleFocusRef, setBibleFocusRef] = useState<string | null>(null);
   const [bibleFocusSeq, setBibleFocusSeq] = useState(0);
   const [planReading, setPlanReading] = useState<PlanReadingSession | null>(null);
   const [dayNoteFocus, setDayNoteFocus] = useState<{ jour: number; seq: number } | null>(null);
+  const [planIntroFocus, setPlanIntroFocus] = useState<{ seq: number } | null>(null);
   const [planResumeSeq, setPlanResumeSeq] = useState(0);
   const [retentionTick, setRetentionTick] = useState(0);
   const [bibleChromeHidden, setBibleChromeHidden] = useState(false);
@@ -163,6 +168,12 @@ export function App() {
       void syncNativeChrome(applyTheme("system"));
     });
   }, [themePref]);
+
+  useEffect(() => {
+    if (mode !== "cards" && mode !== "bible") {
+      setCardReturnToBible(false);
+    }
+  }, [mode]);
 
   function cycleTheme() {
     const next = nextThemePref(themePref);
@@ -261,9 +272,16 @@ export function App() {
         return next;
       });
     }
+    setCardReturnToBible(true);
     setMode("cards");
     setCardFocusId(cardId);
     setCardFocusSeq((value) => value + 1);
+  }
+
+  function returnFromVerseFlashcard() {
+    setCardReturnToBible(false);
+    setCardFocusId(null);
+    setMode("bible");
   }
   const allFlashcards = useMemo(
     () => listAllFlashcards(notes, null).map(mergeCard),
@@ -371,27 +389,68 @@ export function App() {
     if (chapter) openPassageInBible(chapter);
   }
 
-  function startPlanReading(jour: number, _passage: string) {
+  function startPlanReading(
+    jour: number,
+    passageHint = "",
+    opts?: { returnTo?: PlanReadingReturnTo },
+  ) {
     if (!activePlan) return;
+    const returnTo = opts?.returnTo ?? "timeline";
     const session = createPlanReadingSession({
       planId: activePlan.id,
       startJour: jour,
       days: activePlan.days,
+      returnTo,
     });
     if (!session) {
-      if (_passage.trim()) openPassageInBible(_passage);
+      if (passageHint.trim()) openPassageInBible(passageHint);
       return;
     }
-    setPlanReading(session);
-    const step = currentPlanStep(session);
+    const hint = passageHint.trim().toLowerCase();
+    let index = 0;
+    if (hint) {
+      const found = session.steps.findIndex((step) => {
+        const label = step.label.toLowerCase();
+        const focus = step.focusRef.toLowerCase();
+        return label === hint || focus === hint || label.includes(hint) || hint.includes(label);
+      });
+      if (found >= 0) index = found;
+    }
+    const next = { ...session, index };
+    setPlanReading(next);
+    const step = currentPlanStep(next);
     if (step) openPassageInBible(step.focusRef, { keepPlanReading: true });
   }
 
-  function exitPlanReading() {
-    setPlanReading(null);
-    setPlanResumeSeq((value) => value + 1);
+  function restorePlanFlow(returnTo: PlanReadingReturnTo, jour: number) {
     setPlanDay(true);
     setMode("today");
+    if (returnTo === "dayNote") {
+      setDayNoteFocus({ jour, seq: Date.now() });
+      setPlanIntroFocus(null);
+      return;
+    }
+    if (returnTo === "intro") {
+      setDayNoteFocus(null);
+      setPlanIntroFocus({ seq: Date.now() });
+      return;
+    }
+    setDayNoteFocus(null);
+    setPlanIntroFocus(null);
+    setPlanResumeSeq((value) => value + 1);
+  }
+
+  /** ← : toujours l’écran d’origine de cette session de lecture. */
+  function exitPlanReading() {
+    if (!planReading) {
+      setPlanDay(true);
+      setMode("today");
+      setPlanResumeSeq((value) => value + 1);
+      return;
+    }
+    const { returnTo, startJour } = planReading;
+    setPlanReading(null);
+    restorePlanFlow(returnTo, startJour);
   }
 
   function planReadingPrev() {
@@ -406,15 +465,33 @@ export function App() {
     if (!planReading) return;
     const current = currentPlanStep(planReading);
     if (isLastPlanStep(planReading)) {
+      const origin = planReading.returnTo;
+      const jour = current?.jour ?? planReading.startJour;
       if (current) {
+        const prior = loadPlanProgress(planReading.planId);
+        const alreadySeen = prior?.completedDays.includes(current.jour) ?? false;
+        const existingNote = loadDayNote(planReading.planId, current.jour);
+        const noteAlready =
+          Boolean(existingNote?.text?.trim() || existingNote?.notionUrl);
         ensureDayCompleted(planReading.planId, current.jour);
         setPlanProgressTick((value) => value + 1);
-        setDayNoteFocus({ jour: current.jour, seq: Date.now() });
+        setPlanReading(null);
+        // Flux avant : si on venait de la note → note ; sinon invite note une fois ; sinon timeline.
+        // (← seul restaure intro ; conclure ne revient pas à l’intro.)
+        if (origin === "dayNote") {
+          restorePlanFlow("dayNote", jour);
+        } else if (!alreadySeen && !noteAlready) {
+          setPlanDay(true);
+          setMode("today");
+          setPlanIntroFocus(null);
+          setDayNoteFocus({ jour: current.jour, seq: Date.now() });
+        } else {
+          restorePlanFlow("timeline", jour);
+        }
+        return;
       }
       setPlanReading(null);
-      setPlanResumeSeq((value) => value + 1);
-      setPlanDay(true);
-      setMode("today");
+      restorePlanFlow(origin === "dayNote" ? "dayNote" : "timeline", jour);
       return;
     }
     const next = { ...planReading, index: planReading.index + 1 };
@@ -556,6 +633,9 @@ export function App() {
       focusJour={focusJour}
       resumeSeq={planResumeSeq}
       dayNoteFocus={dayNoteFocus}
+      introFocus={planIntroFocus}
+      onClearDayNoteFocus={() => setDayNoteFocus(null)}
+      onClearIntroFocus={() => setPlanIntroFocus(null)}
       onSelectGalerie={goGalerie}
       onMarkRead={handleMarkRead}
       onOpenPassage={openPassageInBible}
@@ -773,6 +853,7 @@ export function App() {
                     splitLayout={splitLayout}
                     onRemoveCard={handleRemoveCard}
                     onReadChapter={openCardChapter}
+                    onBackFromFocus={cardReturnToBible ? returnFromVerseFlashcard : undefined}
                   />
                 </div>
                 <div
