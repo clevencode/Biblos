@@ -3,9 +3,10 @@ import { createRoot } from "react-dom/client";
 import { registerSW } from "virtual:pwa-register";
 import { App } from "./App";
 import { syncNativeChrome } from "./nativeChrome";
+import { applyTheme } from "./theme";
 import "./index.css";
 
-void syncNativeChrome();
+void syncNativeChrome(applyTheme());
 
 registerSW({ immediate: true });
 

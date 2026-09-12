@@ -38,8 +38,9 @@ export function ModeTabIcon({ name, active = false }: ModeTabIconProps) {
   return (
     <Icon
       className={`mode-tab-icon${active ? " is-filled" : ""}`}
-      width={18}
-      height={18}
+      width={20}
+      height={20}
+      strokeWidth={active ? 2 : 1.75}
       aria-hidden
     />
   );

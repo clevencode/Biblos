@@ -33,6 +33,15 @@ import {
 import { useNotionSync } from "./useNotionSync";
 import { useNarrow, useSplitLayout } from "./layout";
 import { chapterFocusFromRef } from "./youversion/usfm";
+import { syncNativeChrome } from "./nativeChrome";
+import {
+  applyTheme,
+  loadThemePref,
+  nextThemePref,
+  saveThemePref,
+  watchSystemTheme,
+  type ThemePref,
+} from "./theme";
 
 const UI_KEY = "biblos-ui";
 const seedCatalog = hydrateCatalogFromCache(seed as Catalog);
@@ -107,6 +116,22 @@ export function App() {
   const [planResumeSeq, setPlanResumeSeq] = useState(0);
   const [retentionTick, setRetentionTick] = useState(0);
   const [bibleChromeHidden, setBibleChromeHidden] = useState(false);
+  const [themePref, setThemePref] = useState<ThemePref>(() => loadThemePref());
+
+  useEffect(() => {
+    const resolved = applyTheme(themePref);
+    void syncNativeChrome(resolved);
+    if (themePref !== "system") return undefined;
+    return watchSystemTheme(() => {
+      void syncNativeChrome(applyTheme("system"));
+    });
+  }, [themePref]);
+
+  function cycleTheme() {
+    const next = nextThemePref(themePref);
+    saveThemePref(next);
+    setThemePref(next);
+  }
 
   const activePlan = useMemo(
     () => plans.find((plan) => plan.id === planId) ?? plans[0] ?? null,
@@ -553,6 +578,8 @@ export function App() {
                     onUpdateVerseCardColor={handleVerseCardColor}
                     onViewFlashcard={openVerseFlashcard}
                     onReadingChromeChange={setBibleChromeHidden}
+                    themePref={themePref}
+                    onCycleTheme={cycleTheme}
                   />
                 </div>
                 <div

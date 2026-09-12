@@ -3,6 +3,7 @@
  * GET /api/youversion?action=books
  * GET /api/youversion?action=passage&usfm=JHN.3
  * GET /api/youversion?action=search&q=parole&limit=40
+ * GET /api/youversion?action=book&usfm=JHN  (livre JSON complet — téléchargement hors ligne)
  *
  * Données : data/bible/s21/books/{OSIS}.json
  * Régénérer : node scripts/convert-s21.mjs
@@ -391,6 +392,28 @@ export async function handleYouVersion(req, res) {
         hasKey: true,
         bible: BIBLE_META,
         ...payload,
+      });
+      return;
+    }
+
+    if (action === "book") {
+      const usfm = String(url.searchParams.get("usfm") || "")
+        .trim()
+        .toUpperCase()
+        .split(".")[0];
+      const meta = byUsfm.get(usfm);
+      if (!meta) {
+        send(200, { ok: false, hasKey: true, error: `Livre inconnu : ${usfm || "?"}` });
+        return;
+      }
+      const [, osis] = meta;
+      const bookJson = await loadBook(osis);
+      send(200, {
+        ok: true,
+        hasKey: true,
+        bible: BIBLE_META,
+        usfm,
+        book: bookJson,
       });
       return;
     }

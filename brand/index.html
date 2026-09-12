@@ -6,7 +6,7 @@
   <title>clevencode — Brand Identity</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="./tokens.css" />
   <link rel="icon" href="./logo-icon.svg" type="image/svg+xml" />
   <style>
@@ -207,13 +207,51 @@
 
   <section class="board">
     <div class="kicker"><i></i> 06 / Tipografia</div>
-    <h2 class="mt-sm">Outfit — geométrica premium.</h2>
-    <p class="mt-sm">Referência Azurio: sans moderna, tracking negativo, hierarquia Swiss.</p>
+    <h2 class="mt-sm">Modern editorial — 6 papéis.</h2>
+    <p class="mt-sm">Outfit (UI) + Libre Baskerville (leitura). Hierarquia clara, tracking negativo nos títulos.</p>
     <div class="mt">
-      <div class="type-row"><span>Bold / Display</span><div style="font-size:40px;font-weight:700;letter-spacing:-0.04em;">clevencode</div></div>
-      <div class="type-row"><span>SemiBold / Título</span><div style="font-size:24px;font-weight:600;letter-spacing:-0.03em;">Calendário de provas</div></div>
-      <div class="type-row"><span>Medium / Label</span><div style="font-size:14px;font-weight:500;">Navegação · widget · sessão</div></div>
-      <div class="type-row"><span>Regular / Corpo</span><div style="font-size:16px;color:var(--cc-mute);max-width:560px;">Textos longos e apoio. Títulos curtos. Poucos pesos por tela.</div></div>
+      <div class="type-row">
+        <span>Display</span>
+        <div>
+          <div style="font-size:clamp(2.75rem,8vw,4rem);font-weight:700;letter-spacing:var(--cc-tracking-display);line-height:0.95;">Títulos grandes · hero</div>
+          <p style="margin-top:8px;font-size:12px;">Outfit 700 · hero, números de capítulo</p>
+        </div>
+      </div>
+      <div class="type-row">
+        <span>Headline</span>
+        <div>
+          <div style="font-size:clamp(1.45rem,4vw,1.85rem);font-weight:700;letter-spacing:var(--cc-tracking-headline);line-height:1.15;">Seções</div>
+          <p style="margin-top:8px;font-size:12px;">Outfit 700 · títulos de página e blocos</p>
+        </div>
+      </div>
+      <div class="type-row">
+        <span>Title</span>
+        <div>
+          <div style="font-size:clamp(1.1rem,2.5vw,1.35rem);font-weight:600;letter-spacing:var(--cc-tracking-title);line-height:1.25;">Cards · listas</div>
+          <p style="margin-top:8px;font-size:12px;">Outfit 600 · tiles, itens, refs</p>
+        </div>
+      </div>
+      <div class="type-row">
+        <span>Body</span>
+        <div>
+          <div style="font-family:var(--cc-font-read);font-size:var(--cc-type-body);font-weight:400;line-height:1.7;color:var(--cc-ink);max-width:560px;">Texto de leitura — versículos, verso do cartão, devocional longo.</div>
+          <p style="margin-top:8px;font-size:12px;">Libre Baskerville 400 · leitura</p>
+        </div>
+      </div>
+      <div class="type-row">
+        <span>Label</span>
+        <div>
+          <div style="font-size:var(--cc-type-label);font-weight:600;letter-spacing:var(--cc-tracking-label);">Botões · chips · forms</div>
+          <p style="margin-top:8px;font-size:12px;">Outfit 600 · chrome interativo (uppercase só em eyebrows)</p>
+        </div>
+      </div>
+      <div class="type-row">
+        <span>Caption</span>
+        <div>
+          <div style="font-size:var(--cc-type-caption);font-weight:500;color:var(--cc-mute);">Notas · metadados · kickers</div>
+          <p style="margin-top:8px;font-size:12px;">Outfit 500 · apoio e meta</p>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -222,11 +260,11 @@
     <div class="grid-2 mt">
       <div>
         <h3>Ícones</h3>
-        <p class="mt-sm">Livro + tecnologia. Linear, geométrico, funcional. Azul no claro · branco no escuro.</p>
+        <p class="mt-sm"><strong>Heroicons 24 outline.</strong> Stroke ~2, <code>currentColor</code>, ativo em azul elétrico. Sem emoji. Chrome (dock, busca, offline, play) usa o mesmo set.</p>
         <div class="icon-row mt">
-          <div class="icon"><svg width="24" height="24" fill="none" stroke="#2563EB" stroke-width="1.75" stroke-linecap="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></div>
-          <div class="icon"><svg width="24" height="24" fill="none" stroke="#2563EB" stroke-width="1.75" stroke-linecap="round"><path d="M4 19V5h6l2 3h8v11z"/></svg></div>
-          <div class="icon" style="background:#0D1117;border-color:#0D1117;"><svg width="24" height="24" fill="none" stroke="#fff" stroke-width="1.75"><rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
+          <div class="icon"><svg width="24" height="24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg></div>
+          <div class="icon"><svg width="24" height="24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg></div>
+          <div class="icon" style="background:#0D1117;border-color:#0D1117;"><svg width="24" height="24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 010 1.972l-11.54 6.347a1.125 1.125 0 01-1.667-.986V5.653z"/></svg></div>
         </div>
       </div>
       <div>

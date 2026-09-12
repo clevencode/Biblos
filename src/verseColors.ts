@@ -14,6 +14,9 @@ export const VERSE_COLORS: readonly VerseColor[] = [
   { id: "purple", hex: "#8270db", label: "Violet" },
 ] as const;
 
+/** Trois préréglages rapides dans le sélecteur Marquer. */
+export const VERSE_COLOR_PRESETS: readonly VerseColor[] = VERSE_COLORS.slice(0, 3);
+
 export const DEFAULT_VERSE_COLOR = VERSE_COLORS[0]!.hex;
 
 const PREFERRED_COLOR_KEY = "biblos.preferredVerseColor";
@@ -42,7 +45,7 @@ export function normalizeVerseColor(value: string | null | undefined): string {
 
 export function isPresetVerseColor(hex: string): boolean {
   const n = normalizeVerseColor(hex);
-  return VERSE_COLORS.some((c) => c.hex === n);
+  return VERSE_COLOR_PRESETS.some((c) => c.hex === n);
 }
 
 function parseHex(hex: string): { r: number; g: number; b: number } | null {
@@ -65,6 +68,104 @@ export function verseColorLuminance(hex: string): number {
     return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
   };
   return 0.2126 * toLinear(rgb.r) + 0.7152 * toLinear(rgb.g) + 0.0722 * toLinear(rgb.b);
+}
+
+/** Hex normalisé en #rrggbb minuscule (affichage UI). */
+export function formatVerseColorHex(hex: string): string {
+  return normalizeVerseColor(hex);
+}
+
+/** Encre du ✓ sur swatch (contraste vs fond). */
+export function verseSwatchCheckInk(hex: string): string {
+  return verseColorLuminance(hex) >= 0.55 ? "#0d1117" : "#ffffff";
+}
+
+/** Nom approximatif FR pour a11y (ne repose pas sur la seule couleur). */
+export function verseColorHueLabel(hex: string): string {
+  const rgb = parseHex(normalizeVerseColor(hex));
+  if (!rgb) return "Couleur";
+  const { r, g, b } = rgb;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const delta = max - min;
+  const light = (max + min) / (2 * 255);
+  const sat = delta === 0 ? 0 : delta / (255 - Math.abs(2 * light * 255 - 255));
+
+  if (sat < 0.12) {
+    if (light > 0.85) return "Blanc";
+    if (light > 0.55) return "Gris clair";
+    if (light > 0.25) return "Gris";
+    return "Noir";
+  }
+
+  let hue = 0;
+  if (delta !== 0) {
+    if (max === r) hue = ((g - b) / delta) % 6;
+    else if (max === g) hue = (b - r) / delta + 2;
+    else hue = (r - g) / delta + 4;
+    hue *= 60;
+    if (hue < 0) hue += 360;
+  }
+
+  if (hue < 15 || hue >= 345) return light > 0.55 ? "Rose" : "Rouge";
+  if (hue < 40) return "Orange";
+  if (hue < 65) return "Jaune";
+  if (hue < 150) return "Vert";
+  if (hue < 200) return "Cyan";
+  if (hue < 255) return "Bleu";
+  if (hue < 290) return "Violet";
+  return "Rose";
+}
+
+export type HsvColor = { h: number; s: number; v: number };
+
+/** Valeur HSV par défaut selon le thème (tons foncés en light, clairs en dark). */
+export function themeDefaultValue(theme: "light" | "dark"): number {
+  return theme === "dark" ? 0.82 : 0.48;
+}
+
+export function hexToHsv(hex: string): HsvColor {
+  const rgb = parseHex(normalizeVerseColor(hex));
+  if (!rgb) return { h: 210, s: 0.65, v: 0.55 };
+  const r = rgb.r / 255;
+  const g = rgb.g / 255;
+  const b = rgb.b / 255;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const d = max - min;
+  let h = 0;
+  if (d !== 0) {
+    if (max === r) h = ((g - b) / d) % 6;
+    else if (max === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    h *= 60;
+    if (h < 0) h += 360;
+  }
+  const s = max === 0 ? 0 : d / max;
+  return { h, s, v: max };
+}
+
+export function hsvToHex(h: number, s: number, v: number): string {
+  const hh = ((h % 360) + 360) % 360;
+  const ss = Math.min(1, Math.max(0, s));
+  const vv = Math.min(1, Math.max(0, v));
+  const c = vv * ss;
+  const x = c * (1 - Math.abs(((hh / 60) % 2) - 1));
+  const m = vv - c;
+  let rp = 0;
+  let gp = 0;
+  let bp = 0;
+  if (hh < 60) [rp, gp, bp] = [c, x, 0];
+  else if (hh < 120) [rp, gp, bp] = [x, c, 0];
+  else if (hh < 180) [rp, gp, bp] = [0, c, x];
+  else if (hh < 240) [rp, gp, bp] = [0, x, c];
+  else if (hh < 300) [rp, gp, bp] = [x, 0, c];
+  else [rp, gp, bp] = [c, 0, x];
+  const ch = (n: number) =>
+    Math.round((n + m) * 255)
+      .toString(16)
+      .padStart(2, "0");
+  return `#${ch(rp)}${ch(gp)}${ch(bp)}`;
 }
 
 function mixHex(hex: string, toward: string, amount: number): string {
@@ -141,7 +242,7 @@ export function loadFavoriteVerseColors(): string[] {
     const seen = new Set<string>();
     for (const item of parsed) {
       const hex = parseVerseHex(String(item ?? ""));
-      if (!hex || isPresetVerseColor(hex) || seen.has(hex)) continue;
+      if (!hex || seen.has(hex)) continue;
       seen.add(hex);
       out.push(hex);
       if (out.length >= MAX_FAVORITE_COLORS) break;
@@ -155,7 +256,7 @@ export function loadFavoriteVerseColors(): string[] {
 function writeFavoriteVerseColors(colors: string[]): string[] {
   const next = colors
     .map((c) => normalizeVerseColor(c))
-    .filter((hex, i, arr) => !isPresetVerseColor(hex) && arr.indexOf(hex) === i)
+    .filter((hex, i, arr) => arr.indexOf(hex) === i)
     .slice(0, MAX_FAVORITE_COLORS);
   try {
     localStorage.setItem(FAVORITE_COLORS_KEY, JSON.stringify(next));
@@ -165,10 +266,9 @@ function writeFavoriteVerseColors(colors: string[]): string[] {
   return next;
 }
 
-/** Ajoute une couleur custom en tête des favoris. */
+/** Ajoute une couleur utilisateur en tête des favoris. */
 export function addFavoriteVerseColor(hex: string): string[] {
   const n = normalizeVerseColor(hex);
-  if (isPresetVerseColor(n)) return loadFavoriteVerseColors();
   const rest = loadFavoriteVerseColors().filter((c) => c !== n);
   return writeFavoriteVerseColors([n, ...rest]);
 }

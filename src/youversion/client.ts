@@ -1,4 +1,10 @@
 import { toUsfm } from "./usfm";
+import {
+  getOfflineMeta,
+  isOfflineBibleReady,
+  offlinePassage,
+  offlineSearch,
+} from "../bibleOffline";
 
 export type YouVersionVerse = {
   number: number;
@@ -53,16 +59,52 @@ async function bibleFetch<T extends object>(
 }
 
 export async function fetchBooks() {
-  return bibleFetch<{
+  const network = await bibleFetch<{
     bible?: YouVersionBible;
     books?: YouVersionBook[];
     usingFallback?: boolean;
     fallbackReason?: string | null;
   }>({ action: "books" });
+  if (network.ok && network.books?.length) return network;
+
+  const meta = await getOfflineMeta();
+  if (meta?.books?.length) {
+    return {
+      ok: true,
+      hasKey: true,
+      bible: {
+        id: 0,
+        abbreviation: "S21",
+        title: "Segond 21",
+        languageCode: "fr",
+      },
+      books: meta.books,
+      usingFallback: true,
+      fallbackReason: "offline",
+    };
+  }
+  return network;
 }
 
 export async function fetchPassage(reference: string, _bibleId?: number) {
   const usfm = toUsfm(reference);
+  const local = await offlinePassage(usfm);
+  if (local.ok) {
+    return {
+      ok: true,
+      hasKey: true,
+      bibleId: 0,
+      bible: {
+        id: 0,
+        abbreviation: "S21",
+        title: "Segond 21",
+        languageCode: "fr",
+      },
+      usingFallback: false,
+      passage: local.passage,
+    };
+  }
+
   return bibleFetch<{
     bibleId?: number;
     bible?: YouVersionBible;
@@ -84,6 +126,25 @@ export type BibleSearchHit = {
 };
 
 export async function searchVerses(q: string, limit = 40) {
+  if (await isOfflineBibleReady()) {
+    const local = await offlineSearch(q, limit);
+    if (local.ok) {
+      return {
+        ok: true,
+        hasKey: true,
+        bible: {
+          id: 0,
+          abbreviation: "S21",
+          title: "Segond 21",
+          languageCode: "fr",
+        },
+        q: local.q,
+        total: local.total,
+        results: local.results,
+      };
+    }
+  }
+
   return bibleFetch<{
     bible?: YouVersionBible;
     q?: string;

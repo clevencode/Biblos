@@ -38,8 +38,153 @@
   --scroll-track: transparent;
   --scroll-thumb: rgba(13, 17, 23, 0.16);
   --scroll-thumb-hover: rgba(13, 17, 23, 0.28);
-  font-family: "Outfit", "Avenir Next", "Segoe UI", sans-serif;
+
+  /* Modern editorial — famílias */
+  --font-ui: "Outfit", "Avenir Next", "Segoe UI", sans-serif;
+  --font-read: "Libre Baskerville", "Source Serif 4", Georgia, "Times New Roman", serif;
+
+  /* Modern editorial — escala tipográfica (Display → Caption) */
+  --type-display-size: clamp(2.75rem, 8vw, 4rem);
+  --type-display-weight: 700;
+  --type-display-lh: 0.95;
+  --type-display-tracking: -0.04em;
+
+  --type-headline-size: clamp(1.45rem, 4vw, 1.85rem);
+  --type-headline-weight: 700;
+  --type-headline-lh: 1.15;
+  --type-headline-tracking: -0.03em;
+
+  --type-title-size: clamp(1.1rem, 2.5vw, 1.35rem);
+  --type-title-weight: 600;
+  --type-title-lh: 1.25;
+  --type-title-tracking: -0.02em;
+
+  --type-body-size: 1.1875rem;
+  --type-body-weight: 400;
+  --type-body-lh: 1.7;
+  --type-body-tracking: 0;
+
+  --type-label-size: 0.8125rem;
+  --type-label-weight: 600;
+  --type-label-lh: 1.2;
+  --type-label-tracking: 0.04em;
+
+  --type-caption-size: 0.75rem;
+  --type-caption-weight: 500;
+  --type-caption-lh: 1.35;
+  --type-caption-tracking: 0.01em;
+
+  /* Superfícies derivadas (light) */
+  --elevated: #ffffff;
+  --sheet-bg: #f8f5f0;
+  --sheet-bg-mid: #f3efe8;
+  --sheet-bg-deep: #ebe6dd;
+  --sheen: #ffffff;
+
+  font-family: var(--font-ui);
   letter-spacing: -0.01em;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0d1117;
+  --panel: #0d1117;
+  --surface: #161b22;
+  --line: #21262d;
+  --text: #ffffff;
+  --muted: #9ca3af;
+  --accent: #2563eb;
+  --accent-soft: #1a2332;
+  --danger: #f85149;
+  --danger-soft: #3d1f1f;
+  --answer: #d4a574;
+  --hover: rgba(255, 255, 255, 0.06);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --panel-depth:
+    0 0 0 1px rgba(255, 255, 255, 0.04),
+    1px 0 2px rgba(0, 0, 0, 0.25),
+    6px 0 18px rgba(0, 0, 0, 0.35),
+    0 2px 8px rgba(0, 0, 0, 0.2);
+  --menu-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 3px 6px rgba(0, 0, 0, 0.35),
+    0 9px 24px rgba(0, 0, 0, 0.45);
+  --scroll-thumb: rgba(255, 255, 255, 0.18);
+  --scroll-thumb-hover: rgba(255, 255, 255, 0.3);
+  --elevated: #161b22;
+  --sheet-bg: #161b22;
+  --sheet-bg-mid: #1c2128;
+  --sheet-bg-deep: #0d1117;
+  --sheen: rgba(255, 255, 255, 0.55);
+}
+
+html[data-theme="light"] {
+  color-scheme: light;
+}
+
+/* Utilitários tipográficos — modern editorial */
+.type-display {
+  font-family: var(--font-ui);
+  font-size: var(--type-display-size);
+  font-weight: var(--type-display-weight);
+  line-height: var(--type-display-lh);
+  letter-spacing: var(--type-display-tracking);
+}
+
+.type-display--read {
+  font-family: var(--font-read);
+}
+
+.type-headline {
+  font-family: var(--font-ui);
+  font-size: var(--type-headline-size);
+  font-weight: var(--type-headline-weight);
+  line-height: var(--type-headline-lh);
+  letter-spacing: var(--type-headline-tracking);
+}
+
+.type-title {
+  font-family: var(--font-ui);
+  font-size: var(--type-title-size);
+  font-weight: var(--type-title-weight);
+  line-height: var(--type-title-lh);
+  letter-spacing: var(--type-title-tracking);
+}
+
+.type-body {
+  font-family: var(--font-read);
+  font-size: var(--type-body-size);
+  font-weight: var(--type-body-weight);
+  line-height: var(--type-body-lh);
+  letter-spacing: var(--type-body-tracking);
+}
+
+.type-label {
+  font-family: var(--font-ui);
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  line-height: var(--type-label-lh);
+  letter-spacing: var(--type-label-tracking);
+}
+
+.type-caption {
+  font-family: var(--font-ui);
+  font-size: var(--type-caption-size);
+  font-weight: var(--type-caption-weight);
+  line-height: var(--type-caption-lh);
+  letter-spacing: var(--type-caption-tracking);
+  color: var(--muted);
+}
+
+.type-label.is-eyebrow,
+.type-eyebrow {
+  font-family: var(--font-ui);
+  font-size: var(--type-caption-size);
+  font-weight: 650;
+  line-height: var(--type-label-lh);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
 
 * {
@@ -480,6 +625,10 @@ body,
 
 .mode-tab-label {
   display: none;
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  letter-spacing: var(--type-label-tracking);
+  line-height: var(--type-label-lh);
 }
 
 .mode-tab-badge {
@@ -589,7 +738,7 @@ body,
   place-items: center;
   border: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
   border-radius: 999px;
-  background: #fff;
+  background: var(--elevated);
   color: var(--text);
   font: inherit;
   font-size: 1.15rem;
@@ -599,7 +748,7 @@ body,
 }
 
 .flash-session-back:hover {
-  background: color-mix(in srgb, var(--card-tint) 6%, #fff);
+  background: color-mix(in srgb, var(--card-tint) 6%, var(--elevated));
   border-color: color-mix(in srgb, var(--card-tint) 22%, var(--line));
 }
 
@@ -613,14 +762,14 @@ body,
   width: 40px;
   height: 40px;
   border: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
-  background: #fff;
+  background: var(--elevated);
   border-radius: 999px;
   color: var(--text);
   box-shadow: 0 1px 2px color-mix(in srgb, var(--text) 4%, transparent);
 }
 
 .flash-session-top .flash-card-menu-trigger:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--card-tint) 6%, #fff);
+  background: color-mix(in srgb, var(--card-tint) 6%, var(--elevated));
   border-color: color-mix(in srgb, var(--card-tint) 22%, var(--line));
   color: var(--text);
 }
@@ -705,7 +854,7 @@ body,
   white-space: nowrap;
   padding: 6px 11px;
   border-radius: 999px;
-  background: #fff;
+  background: var(--elevated);
   border: 1px solid color-mix(in srgb, var(--card-tint) 24%, var(--line));
   font-size: 0.76rem;
   font-weight: 700;
@@ -717,7 +866,7 @@ body,
 
 .flash--session .flash-session-rappel.is-set {
   color: var(--text);
-  background: color-mix(in srgb, var(--card-tint) 12%, #fff);
+  background: color-mix(in srgb, var(--card-tint) 12%, var(--elevated));
   border-color: color-mix(in srgb, var(--card-tint) 30%, var(--line));
 }
 
@@ -812,23 +961,23 @@ body,
 }
 
 .flash--session .flash-face {
-  /* Fundo: gradiente suave branco + tema; outline 3px em gradiente */
+  /* Fundo: gradiente suave + tema; outline 3px em gradiente */
   --card-outline: var(--card-tint, var(--accent));
   border: 3px solid transparent;
   border-radius: var(--flash-peek-radius);
   background:
     linear-gradient(
       165deg,
-      #fff 0%,
-      color-mix(in srgb, var(--card-outline) 7%, #fff) 48%,
-      color-mix(in srgb, var(--card-outline) 14%, #fff) 100%
+      var(--elevated) 0%,
+      color-mix(in srgb, var(--card-outline) 7%, var(--elevated)) 48%,
+      color-mix(in srgb, var(--card-outline) 14%, var(--elevated)) 100%
     )
       padding-box,
     linear-gradient(
       145deg,
-      color-mix(in srgb, var(--card-outline) 92%, #fff) 0%,
-      color-mix(in srgb, var(--card-outline) 30%, #fff) 48%,
-      color-mix(in srgb, var(--card-outline) 78%, #e5e7eb) 100%
+      color-mix(in srgb, var(--card-outline) 92%, var(--elevated)) 0%,
+      color-mix(in srgb, var(--card-outline) 30%, var(--elevated)) 48%,
+      color-mix(in srgb, var(--card-outline) 78%, var(--line)) 100%
     )
       border-box;
   box-shadow: none;
@@ -839,16 +988,16 @@ body,
   background:
     linear-gradient(
       165deg,
-      #fff 0%,
-      color-mix(in srgb, var(--card-outline) 7%, #fff) 48%,
-      color-mix(in srgb, var(--card-outline) 14%, #fff) 100%
+      var(--elevated) 0%,
+      color-mix(in srgb, var(--card-outline) 7%, var(--elevated)) 48%,
+      color-mix(in srgb, var(--card-outline) 14%, var(--elevated)) 100%
     )
       padding-box,
     linear-gradient(
       145deg,
-      color-mix(in srgb, var(--card-outline) 92%, #fff) 0%,
-      color-mix(in srgb, var(--card-outline) 30%, #fff) 48%,
-      color-mix(in srgb, var(--card-outline) 78%, #e5e7eb) 100%
+      color-mix(in srgb, var(--card-outline) 92%, var(--elevated)) 0%,
+      color-mix(in srgb, var(--card-outline) 30%, var(--elevated)) 48%,
+      color-mix(in srgb, var(--card-outline) 78%, var(--line)) 100%
     )
       border-box;
   box-shadow: none;
@@ -865,7 +1014,7 @@ body,
   background: linear-gradient(
     105deg,
     transparent 32%,
-    color-mix(in srgb, #fff 62%, transparent) 50%,
+    color-mix(in srgb, var(--sheen) 62%, transparent) 50%,
     transparent 68%
   );
   transform: translate3d(-140%, 0, 0);
@@ -904,9 +1053,9 @@ body,
   min-height: 48px;
   padding: 12px 16px;
   gap: 0;
-  background: #fff;
+  background: var(--elevated);
   color: var(--text);
-  border: 1px solid color-mix(in srgb, var(--line) 88%, #fff);
+  border: 1px solid color-mix(in srgb, var(--line) 88%, var(--elevated));
   box-shadow: 0 1px 2px color-mix(in srgb, var(--text) 3%, transparent);
 }
 
@@ -926,21 +1075,21 @@ body,
 }
 
 .flash--session .flash-mark:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--card-tint) 6%, #fff);
+  background: color-mix(in srgb, var(--card-tint) 6%, var(--elevated));
   border-color: color-mix(in srgb, var(--card-tint) 24%, var(--line));
   box-shadow: none;
 }
 
 .flash--session .flash-mark.is-on,
 .flash--session .flash-mark:disabled.is-on {
-  background: color-mix(in srgb, var(--card-tint) 12%, #fff);
+  background: color-mix(in srgb, var(--card-tint) 12%, var(--elevated));
   border-color: color-mix(in srgb, var(--card-tint) 32%, var(--line));
   box-shadow: none;
   color: var(--text);
 }
 
 .flash--session .flash-mark.is-default:not(:disabled):not(.is-on) {
-  border-color: color-mix(in srgb, var(--line) 88%, #fff);
+  border-color: color-mix(in srgb, var(--line) 88%, var(--elevated));
   box-shadow: 0 1px 2px color-mix(in srgb, var(--text) 3%, transparent);
 }
 
@@ -963,7 +1112,7 @@ body,
 
 .flash--session .flash-closed-status {
   border: 1px solid color-mix(in srgb, var(--card-tint) 26%, var(--line));
-  background: color-mix(in srgb, var(--card-tint) 8%, #fff);
+  background: color-mix(in srgb, var(--card-tint) 8%, var(--elevated));
   color: color-mix(in srgb, var(--card-tint) 28%, var(--text));
   box-shadow: 0 1px 2px color-mix(in srgb, var(--text) 3%, transparent);
 }
@@ -1084,9 +1233,11 @@ body,
 
 .flash-list-heading {
   margin: 0;
-  font-size: 1.35rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
+  font-family: var(--font-ui);
+  font-size: var(--type-title-size);
+  font-weight: var(--type-title-weight);
+  letter-spacing: var(--type-title-tracking);
+  line-height: var(--type-title-lh);
 }
 
 .flash-list-meta-line {
@@ -1520,7 +1671,7 @@ body,
   padding: 14px 16px;
   border: 1px solid color-mix(in srgb, var(--card-tint, var(--line)) 22%, var(--line));
   border-radius: 16px;
-  background: color-mix(in srgb, var(--card-tint, var(--text)) 10%, #fff);
+  background: color-mix(in srgb, var(--card-tint, var(--text)) 10%, var(--elevated));
   color: var(--text);
   font: inherit;
   text-align: left;
@@ -1533,14 +1684,14 @@ body,
 }
 
 .flash-plan-event:hover {
-  background: color-mix(in srgb, var(--card-tint, var(--text)) 14%, #fff);
+  background: color-mix(in srgb, var(--card-tint, var(--text)) 14%, var(--elevated));
   border-color: color-mix(in srgb, var(--card-tint, var(--line)) 32%, var(--line));
 }
 
 .flash-plan-event.is-active {
   outline: none;
   border-color: color-mix(in srgb, var(--card-tint, var(--text)) 48%, var(--line));
-  background: color-mix(in srgb, var(--card-tint, var(--text)) 16%, #fff);
+  background: color-mix(in srgb, var(--card-tint, var(--text)) 16%, var(--elevated));
   box-shadow: inset 3px 0 0 color-mix(in srgb, var(--card-tint, var(--text)) 70%, transparent);
 }
 
@@ -2629,10 +2780,13 @@ body,
 
 .flash-kicker {
   flex: none;
-  font-size: 0.7rem;
+  font-family: var(--font-ui);
+  font-size: var(--type-caption-size);
+  font-weight: var(--type-caption-weight);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--muted);
+  line-height: var(--type-caption-lh);
 }
 
 .flash-kicker.is-answer {
@@ -2782,7 +2936,7 @@ body,
   padding: 15px 24px;
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
-  background: #fff;
+  background: var(--elevated);
   color: var(--text);
   font: inherit;
   font-size: 1rem;
@@ -2816,7 +2970,7 @@ body,
 .flash-restart-btn {
   appearance: none;
   border: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
-  background: #fff;
+  background: var(--elevated);
   color: var(--text);
   border-radius: 999px;
   padding: 12px 18px;
@@ -3075,10 +3229,11 @@ body,
 
 .page-title {
   margin: 0 0 16px;
-  font-size: 1.7rem;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  line-height: 1.2;
+  font-family: var(--font-ui);
+  font-size: var(--type-headline-size);
+  font-weight: var(--type-headline-weight);
+  letter-spacing: var(--type-headline-tracking);
+  line-height: var(--type-headline-lh);
 }
 
 
@@ -3147,7 +3302,11 @@ body,
 .meta,
 .muted {
   color: var(--muted);
-  font-size: 0.88rem;
+  font-family: var(--font-ui);
+  font-size: var(--type-caption-size);
+  font-weight: var(--type-caption-weight);
+  line-height: var(--type-caption-lh);
+  letter-spacing: var(--type-caption-tracking);
 }
 
 .resumo {
@@ -3363,8 +3522,8 @@ body,
 
   .mode-tab-label {
     display: block;
-    font-size: 0.62rem;
-    font-weight: 600;
+    font-size: var(--type-caption-size);
+    font-weight: var(--type-label-weight);
     letter-spacing: 0.01em;
     line-height: 1.15;
     color: var(--muted);
@@ -3587,18 +3746,18 @@ body,
   }
 
   .flash--session {
-    /* Mobile: peek só no carrossel; card único fica full-bleed (abaixo) */
+    /* Mobile: peek/inset coerentes; card único também respira */
     --flash-peek-radius: 20px;
-    --flash-peek-inset: 10px;
+    --flash-peek-inset: 14px;
     padding-inline: 0;
     padding-bottom: max(8px, env(safe-area-inset-bottom, 0px));
   }
 
   .flash--session .flash-main {
-    gap: 12px;
+    gap: 10px;
     max-width: none;
     width: 100%;
-    /* Cartão full-bleed; meter/ações mantêm gutter abaixo */
+    /* Cartão com gutter via stage inset; meter/ações mantêm gutter abaixo */
     padding-inline: 0;
   }
 
@@ -3612,23 +3771,23 @@ body,
     max-width: none;
   }
 
-  /* Card único: sem peek, cantos retos (full-bleed) */
+  /* Card único: inset + cantos (sem full-bleed) */
   .flash--session .flash-viewport:not(.is-slidable) {
     --flash-peek: 0;
     --flash-peek-gap: 0;
-    --flash-peek-radius: 0;
-    --flash-peek-inset: 0;
+    --flash-peek-radius: 20px;
+    --flash-peek-inset: max(14px, env(safe-area-inset-left, 0px));
     border-radius: 0;
   }
 
   .flash--session .flash-viewport:not(.is-slidable) .flash-face {
-    border-radius: 0;
+    border-radius: var(--flash-peek-radius);
   }
 
-  /* Várias cartas: peek ~5–7% — affordance de swipe sem setas */
+  /* Várias cartas: peek ~7–9% — affordance de swipe sem setas */
   .flash--session .flash-viewport.is-slidable {
-    --flash-peek: clamp(18px, 6.5cqw, 28px);
-    --flash-peek-gap: 8px;
+    --flash-peek: clamp(22px, 8cqw, 34px);
+    --flash-peek-gap: 10px;
     --flash-peek-radius: 20px;
     border-radius: var(--flash-peek-radius);
   }
@@ -3670,18 +3829,20 @@ body,
 
   .flash-stage {
     height: 100%;
-    min-height: min(260px, 44dvh);
-    max-height: min(440px, 54dvh);
+    min-height: min(220px, 38dvh);
+    max-height: min(380px, 48dvh);
     padding: 6px 36px 4px 2px;
   }
 
   .flash--session .flash-stage {
-    padding: 6px 0 10px;
-    max-height: min(480px, 56dvh);
+    padding: 4px 0 8px;
+    min-height: min(200px, 36dvh);
+    max-height: min(360px, 46dvh);
   }
 
   .flash--session .flash-viewport:not(.is-slidable) .flash-stage {
-    padding: 6px var(--flash-peek-inset) 10px;
+    padding: 4px max(14px, env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px))
+      8px;
   }
 
   .flash-card-menu {
@@ -3690,13 +3851,25 @@ body,
   }
 
   .flash-face {
-    padding: 24px 18px 18px;
+    padding: 22px 18px 16px;
     gap: 12px;
     border-radius: 16px;
   }
 
   .flash--session .flash-face {
     border-radius: var(--flash-peek-radius);
+  }
+
+  .flash--session .flash-ref-book {
+    font-size: clamp(1.25rem, 5.2vw, 1.55rem);
+  }
+
+  .flash--session .flash-ref-num {
+    font-size: clamp(1.05rem, 3.8vw, 1.25rem);
+  }
+
+  .flash--session .flash-front-ref {
+    gap: 0.55rem;
   }
 
   .flash-face p {
@@ -3928,17 +4101,20 @@ body,
 
 .plan-discover-title {
   margin: 0;
-  font-family: "Libre Baskerville", "Source Serif 4", Georgia, serif;
-  font-size: 1.85rem;
-  font-weight: 400;
-  letter-spacing: -0.03em;
-  line-height: 1.15;
+  font-family: var(--font-ui);
+  font-size: var(--type-headline-size);
+  font-weight: var(--type-headline-weight);
+  letter-spacing: var(--type-headline-tracking);
+  line-height: var(--type-headline-lh);
 }
 
 .plan-discover-meta {
   margin: 6px 0 0;
   color: var(--muted);
-  font-size: 0.82rem;
+  font-family: var(--font-ui);
+  font-size: var(--type-caption-size);
+  font-weight: var(--type-caption-weight);
+  line-height: var(--type-caption-lh);
 }
 
 .plan-discover-scroller {
@@ -4030,9 +4206,10 @@ body,
   position: absolute;
   top: -18px;
   right: 8px;
-  font-family: "Libre Baskerville", "Source Serif 4", Georgia, serif;
+  font-family: var(--font-ui);
+  /* Watermark decorative — oversized beyond standard Display */
   font-size: 7.4rem;
-  font-weight: 400;
+  font-weight: var(--type-display-weight);
   line-height: 1;
   letter-spacing: -0.06em;
   opacity: 0.14;
@@ -4048,10 +4225,12 @@ body,
   padding: 4px 9px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.16);
-  font-size: 0.7rem;
-  font-weight: 600;
+  font-family: var(--font-ui);
+  font-size: var(--type-caption-size);
+  font-weight: var(--type-label-weight);
   letter-spacing: 0.06em;
   text-transform: uppercase;
+  line-height: var(--type-label-lh);
 }
 
 .plan-tile-name {
@@ -4059,11 +4238,11 @@ body,
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
   overflow: hidden;
-  font-family: "Libre Baskerville", "Source Serif 4", Georgia, serif;
-  font-size: 1.38rem;
-  font-weight: 400;
-  letter-spacing: -0.02em;
-  line-height: 1.25;
+  font-family: var(--font-ui);
+  font-size: var(--type-title-size);
+  font-weight: var(--type-title-weight);
+  letter-spacing: var(--type-title-tracking);
+  line-height: var(--type-title-lh);
 }
 
 .plan-tile-progress {
@@ -4415,11 +4594,11 @@ body,
   background:
     linear-gradient(
       165deg,
-      #fff 0%,
-      color-mix(in srgb, var(--surface) 70%, #fff) 100%
+      var(--elevated) 0%,
+      color-mix(in srgb, var(--surface) 70%, var(--elevated)) 100%
     );
   box-shadow:
-    0 1px 0 color-mix(in srgb, #fff 88%, transparent),
+    0 1px 0 color-mix(in srgb, var(--sheen) 88%, transparent),
     0 8px 22px color-mix(in srgb, var(--text) 6%, transparent);
 }
 
@@ -4438,11 +4617,13 @@ body,
 
 .plan-yv-hero-eyebrow {
   margin: 0;
-  font-size: 0.72rem;
+  font-family: var(--font-ui);
+  font-size: var(--type-caption-size);
   font-weight: 650;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--muted);
+  line-height: var(--type-label-lh);
 }
 
 .plan-yv-hero-mark {
@@ -4453,8 +4634,11 @@ body,
   border-radius: 999px;
   background: transparent;
   color: var(--muted);
-  font-size: 0.72rem;
-  font-weight: 650;
+  font-family: var(--font-ui);
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  letter-spacing: var(--type-label-tracking);
+  line-height: var(--type-label-lh);
   cursor: pointer;
 }
 
@@ -4471,10 +4655,11 @@ body,
 
 .plan-yv-hero-title {
   margin: 0;
-  font-size: clamp(1.2rem, 4.5vw, 1.45rem);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.25;
+  font-family: var(--font-ui);
+  font-size: var(--type-title-size);
+  font-weight: var(--type-title-weight);
+  letter-spacing: var(--type-title-tracking);
+  line-height: var(--type-title-lh);
   color: var(--text);
 }
 
@@ -4484,8 +4669,11 @@ body,
 
 .plan-yv-hero-meta {
   margin: 0;
-  font-size: 0.88rem;
-  font-weight: 500;
+  font-family: var(--font-ui);
+  font-size: var(--type-caption-size);
+  font-weight: var(--type-caption-weight);
+  line-height: var(--type-caption-lh);
+  letter-spacing: var(--type-caption-tracking);
   color: var(--muted);
 }
 
@@ -4625,20 +4813,22 @@ body,
 
 .plan-yv-devo-eyebrow {
   margin: 0;
-  font-size: 0.72rem;
+  font-family: var(--font-ui);
+  font-size: var(--type-caption-size);
   font-weight: 650;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--muted);
+  line-height: var(--type-label-lh);
 }
 
 .plan-yv-devo-title {
   margin: 0;
-  font-family: "Libre Baskerville", "Source Serif 4", Georgia, serif;
-  font-size: clamp(1.45rem, 5vw, 1.85rem);
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  line-height: 1.2;
+  font-family: var(--font-ui);
+  font-size: var(--type-headline-size);
+  font-weight: var(--type-headline-weight);
+  letter-spacing: var(--type-headline-tracking);
+  line-height: var(--type-headline-lh);
   color: var(--text);
 }
 
@@ -4663,9 +4853,11 @@ body,
 
 .plan-yv-devo-body .nota-resumo-p {
   margin: 0;
-  font-family: "Libre Baskerville", "Source Serif 4", Georgia, serif;
-  font-size: clamp(1.02rem, 3.4vw, 1.12rem);
-  line-height: 1.72;
+  font-family: var(--font-read);
+  font-size: var(--type-body-size);
+  font-weight: var(--type-body-weight);
+  line-height: var(--type-body-lh);
+  letter-spacing: var(--type-body-tracking);
   color: var(--text);
 }
 
@@ -4982,6 +5174,8 @@ body,
   --yv-chrome-ms: 240ms;
   --yv-dock-hide-y: calc(100% + 28px);
   --bible-head-progress: 0;
+  /* Résolu ici pour que A± (--bible-font-size inline) agisse vraiment. */
+  --type-body-size: var(--bible-font-size, 19px);
   position: relative;
   isolation: isolate;
   gap: 0;
@@ -5047,19 +5241,20 @@ body,
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-family: "Libre Baskerville", "Source Serif 4", Georgia, serif;
-  font-size: 0.92rem;
-  font-weight: 400;
-  letter-spacing: 0.01em;
+  font-family: var(--font-ui);
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  letter-spacing: var(--type-label-tracking);
+  line-height: var(--type-label-lh);
   color: var(--yv-muted);
 }
 
 .bible-yv-compact-num {
   flex: none;
-  font-family: "Libre Baskerville", "Source Serif 4", Georgia, serif;
-  font-size: 1.15rem;
-  font-weight: 700;
-  letter-spacing: -0.03em;
+  font-family: var(--font-ui);
+  font-size: var(--type-title-size);
+  font-weight: var(--type-title-weight);
+  letter-spacing: var(--type-title-tracking);
   line-height: 1;
   color: var(--yv-text);
 }
@@ -5079,9 +5274,11 @@ body,
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 0.86rem;
+  font-family: var(--font-ui);
+  font-size: var(--type-caption-size);
   font-weight: 650;
   letter-spacing: -0.01em;
+  line-height: var(--type-caption-lh);
   color: var(--yv-text);
 }
 
@@ -5146,9 +5343,11 @@ body,
   border-radius: 999px;
   background: var(--yv-surface);
   color: var(--yv-muted);
-  font-size: 0.75rem;
-  font-weight: 700;
+  font-family: var(--font-ui);
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
   letter-spacing: 0.06em;
+  line-height: var(--type-label-lh);
   text-transform: uppercase;
   user-select: none;
 }
@@ -5180,7 +5379,11 @@ body,
   color: var(--yv-text);
   min-height: 36px;
   padding: 0 14px;
-  font: inherit;
+  font-family: var(--font-ui);
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  letter-spacing: var(--type-label-tracking);
+  line-height: var(--type-label-lh);
   cursor: pointer;
 }
 
@@ -5238,6 +5441,18 @@ body,
   cursor: default;
 }
 
+.bible-yv-font-value {
+  min-width: 2.25rem;
+  padding: 0 2px;
+  color: var(--yv-muted);
+  font-size: 0.78rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+  text-align: center;
+  line-height: 1;
+}
+
 .bible-yv-top-tools {
   display: inline-flex;
   align-items: center;
@@ -5246,7 +5461,12 @@ body,
   margin-left: auto;
 }
 
-.bible-yv-search-btn {
+.bible-yv-tools-menu {
+  position: relative;
+  flex: none;
+}
+
+.bible-yv-tools-menu-btn {
   width: 40px;
   height: 36px;
   margin: 0;
@@ -5261,18 +5481,91 @@ body,
   cursor: pointer;
 }
 
-.bible-yv-search-btn svg {
-  display: block;
-}
-
-.bible-yv-search-btn:hover,
-.bible-yv-search-btn.is-on {
+.bible-yv-tools-menu-btn:hover,
+.bible-yv-tools-menu-btn.is-on {
   background: color-mix(in srgb, var(--yv-text) 6%, transparent);
 }
 
-.bible-yv-search-btn:focus-visible {
+.bible-yv-tools-menu-btn:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
   outline-offset: 1px;
+}
+
+.bible-yv-tool-icon {
+  display: block;
+  width: 20px;
+  height: 20px;
+}
+
+.bible-yv-tools-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 40;
+  min-width: 13.5rem;
+  padding: 6px;
+  border: 1px solid color-mix(in srgb, var(--yv-text) 12%, transparent);
+  border-radius: 14px;
+  background: var(--elevated, var(--surface, #fff));
+  box-shadow:
+    0 12px 32px color-mix(in srgb, #000 18%, transparent),
+    0 2px 8px color-mix(in srgb, #000 8%, transparent);
+}
+
+.bible-yv-tools-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--yv-text);
+  font: inherit;
+  font-size: 0.92rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.bible-yv-tools-item:hover,
+.bible-yv-tools-item:focus-visible {
+  background: color-mix(in srgb, var(--yv-text) 7%, transparent);
+}
+
+.bible-yv-tools-item:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  outline-offset: -2px;
+}
+
+.bible-yv-tools-item-icon {
+  flex: none;
+  width: 18px;
+  height: 18px;
+}
+
+.bible-yv-tools-item.is-ready {
+  color: var(--accent, #2563eb);
+}
+
+.bible-yv-tools-item.is-busy {
+  color: var(--yv-muted);
+}
+
+.bible-yv-tools-font {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 2px;
+  padding: 6px 4px 4px 8px;
+  border-top: 1px solid color-mix(in srgb, var(--yv-text) 10%, transparent);
+}
+
+.bible-yv-tools-font-label {
+  color: var(--yv-muted);
+  font-size: 0.82rem;
 }
 
 .bible-yv-error-bar {
@@ -5361,20 +5654,21 @@ body,
 
 .bible-book-name {
   margin: 0;
-  font-family: "Libre Baskerville", "Source Serif 4", Georgia, serif;
-  font-size: 1rem;
-  font-weight: 400;
-  letter-spacing: 0.01em;
+  font-family: var(--font-ui);
+  font-size: var(--type-headline-size);
+  font-weight: var(--type-headline-weight);
+  letter-spacing: var(--type-headline-tracking);
+  line-height: var(--type-headline-lh);
   color: var(--yv-muted);
 }
 
 .bible-chapter-num {
   margin: 8px 0 0;
-  font-family: "Libre Baskerville", "Source Serif 4", Georgia, serif;
-  font-size: clamp(3rem, 11vw, 4.2rem);
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: -0.03em;
+  font-family: var(--font-read);
+  font-size: var(--type-display-size);
+  font-weight: var(--type-display-weight);
+  line-height: var(--type-display-lh);
+  letter-spacing: var(--type-display-tracking);
   color: var(--yv-text);
 }
 
@@ -5393,9 +5687,11 @@ body,
   background: transparent;
   text-align: left;
   cursor: pointer;
-  font-family: "Libre Baskerville", "Source Serif 4", Georgia, "Times New Roman", serif;
-  font-size: var(--bible-font-size, 19px);
-  line-height: 1.75;
+  font-family: var(--font-read);
+  font-size: var(--bible-font-size, var(--type-body-size));
+  font-weight: var(--type-body-weight);
+  line-height: var(--type-body-lh);
+  letter-spacing: var(--type-body-tracking);
   color: var(--yv-text);
   transition:
     opacity 0.22s ease,
@@ -5446,8 +5742,11 @@ body,
 
 .bible-reader--yv .bible-verse-actions-hint {
   margin: 0 0 4px;
-  font-size: 0.78rem;
-  line-height: 1.35;
+  font-family: var(--font-ui);
+  font-size: var(--type-caption-size);
+  font-weight: var(--type-caption-weight);
+  line-height: var(--type-caption-lh);
+  letter-spacing: var(--type-caption-tracking);
 }
 
 .bible-reader--yv .bible-verse-action-block {
@@ -5457,10 +5756,12 @@ body,
 
 .bible-reader--yv .bible-verse-action-label {
   margin: 0;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  font-family: var(--font-ui);
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  letter-spacing: 0.06em;
   text-transform: uppercase;
+  line-height: var(--type-label-lh);
   color: var(--yv-muted);
 }
 
@@ -5540,7 +5841,7 @@ body,
   background:
     linear-gradient(
       180deg,
-      color-mix(in srgb, var(--verse-tint, transparent) 10%, #fff) 0%,
+      color-mix(in srgb, var(--verse-tint, transparent) 10%, var(--elevated)) 0%,
       color-mix(in srgb, var(--verse-tint, transparent) 4%, var(--yv-dock)) 100%
     );
   display: grid;
@@ -5555,54 +5856,77 @@ body,
   gap: 8px;
 }
 
+.bible-reader--yv .bible-verse-color-row {
+  display: grid;
+  gap: 8px;
+}
+
 .bible-reader--yv .bible-verse-colors {
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
-  gap: 10px;
-  padding: 6px 2px 2px;
+  gap: 4px;
+  padding: 4px 0 2px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.bible-reader--yv .bible-verse-color-swatches {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 4px;
 }
 
 .bible-reader--yv .bible-verse-color-wrap {
   position: relative;
   flex: none;
-  width: 28px;
-  height: 28px;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
 }
 
 .bible-reader--yv .bible-verse-color-remove {
   position: absolute;
-  top: -5px;
-  right: -5px;
+  top: 0;
+  right: 0;
   z-index: 2;
   display: grid;
   place-items: center;
-  width: 16px;
-  height: 16px;
+  width: 22px;
+  height: 22px;
   margin: 0;
   padding: 0;
   border: 0;
   border-radius: 999px;
   background: var(--yv-text);
   color: var(--yv-bg, #fff);
-  font-size: 0.72rem;
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
   font-weight: 700;
   line-height: 1;
   cursor: pointer;
-  box-shadow: 0 0 0 1.5px var(--yv-bg, #fff);
+  box-shadow: 0 0 0 2px var(--yv-bg, #fff);
+}
+
+.bible-reader--yv .bible-verse-color-remove:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 
 .bible-reader--yv .bible-verse-color {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   padding: 0;
   border: 0;
   border-radius: 999px;
   background: var(--swatch);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, #000 10%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, #000 12%, transparent);
   cursor: pointer;
+  display: grid;
+  place-items: center;
   transition: transform 0.12s ease;
 }
 
@@ -5610,10 +5934,22 @@ body,
   transform: scale(0.94);
 }
 
+.bible-reader--yv .bible-verse-color:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .bible-reader--yv .bible-verse-color.is-on {
   box-shadow:
     inset 0 0 0 2px #fff,
     0 0 0 2px var(--yv-text);
+}
+
+.bible-reader--yv .bible-verse-color-check {
+  width: 16px;
+  height: 16px;
+  color: var(--swatch-check, #fff);
+  pointer-events: none;
 }
 
 .bible-reader--yv .bible-verse-color-custom {
@@ -5634,31 +5970,260 @@ body,
     );
 }
 
-.bible-reader--yv .bible-verse-color-custom.is-on {
-  background: var(--swatch);
-}
-
-.bible-reader--yv .bible-verse-color-picker {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  opacity: 0;
-  cursor: pointer;
-}
-
 .bible-reader--yv .bible-verse-color-plus {
   position: relative;
   z-index: 1;
   pointer-events: none;
   color: #fff;
+  font-family: var(--font-ui);
   font-size: 1.15rem;
   font-weight: 700;
   line-height: 1;
   text-shadow: 0 1px 2px color-mix(in srgb, #000 45%, transparent);
+}
+
+.bible-reader--yv .bible-verse-color-meta {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--type-caption-size);
+  font-weight: var(--type-caption-weight);
+  line-height: var(--type-caption-lh);
+  letter-spacing: var(--type-caption-tracking);
+  color: var(--yv-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* —— Éditeur circulaire HSV —— */
+.circular-color-editor-root {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: end center;
+  padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+  pointer-events: none;
+}
+
+/* Au-dessus du dock + onglets (évite de couper Appliquer / luminosité). */
+.app.is-bible-mode.is-narrow .circular-color-editor-root {
+  padding: 12px 12px calc(128px + env(safe-area-inset-bottom, 0px));
+  align-items: end;
+}
+
+.circular-color-editor-backdrop {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: color-mix(in srgb, #000 45%, transparent);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.circular-color-editor {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 20.5rem);
+  max-height: min(72dvh, 34rem);
+  margin: 0;
+  padding: 14px 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: var(--elevated);
+  color: var(--text);
+  box-shadow: var(--menu-shadow);
+  display: grid;
+  gap: 12px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  pointer-events: auto;
+  animation: circular-color-editor-in 200ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.app.is-bible-mode.is-narrow .circular-color-editor {
+  width: min(100%, 18rem);
+  max-height: min(58dvh, 28rem);
+  padding: 12px 12px 14px;
+  border-radius: 18px;
+  gap: 8px;
+}
+
+@keyframes circular-color-editor-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 12px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.circular-color-editor-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.circular-color-editor-title {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--type-title-size);
+  font-weight: var(--type-title-weight);
+  letter-spacing: var(--type-title-tracking);
+  line-height: var(--type-title-lh);
+}
+
+.circular-color-editor-close {
+  width: 36px;
+  height: 36px;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.circular-color-editor-close:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.circular-color-wheel-wrap {
+  position: relative;
+  width: min(100%, 220px);
+  aspect-ratio: 1;
+  margin: 0 auto;
+  touch-action: none;
+  cursor: crosshair;
+  user-select: none;
+}
+
+.app.is-bible-mode.is-narrow .circular-color-wheel-wrap {
+  width: min(100%, 156px);
+}
+
+.app.is-bible-mode.is-narrow .circular-color-thumb {
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+}
+
+.app.is-bible-mode.is-narrow .circular-color-value {
+  gap: 6px;
+}
+
+.app.is-bible-mode.is-narrow .circular-color-footer {
+  gap: 8px;
+}
+
+.app.is-bible-mode.is-narrow .circular-color-apply {
+  min-height: 34px;
+  padding: 0 12px;
+}
+
+.circular-color-wheel {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+.circular-color-thumb {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  margin: -11px 0 0 -11px;
+  border-radius: 999px;
+  border: 2px solid #fff;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, #000 35%, transparent),
+    0 2px 6px color-mix(in srgb, #000 25%, transparent);
+  pointer-events: none;
+}
+
+.circular-color-value {
+  display: grid;
+  gap: 8px;
+}
+
+.circular-color-value-label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 10px;
+  font-family: var(--font-ui);
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  letter-spacing: var(--type-label-tracking);
+  color: var(--text);
+}
+
+.circular-color-value-hint {
+  font-size: var(--type-caption-size);
+  font-weight: var(--type-caption-weight);
+  color: var(--muted);
+  letter-spacing: var(--type-caption-tracking);
+}
+
+.circular-color-value input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.circular-color-footer {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.circular-color-preview {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 18%, transparent);
+}
+
+.circular-color-meta {
+  margin: 0;
+  min-width: 0;
+  font-family: var(--font-ui);
+  font-size: var(--type-caption-size);
+  font-weight: var(--type-caption-weight);
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.circular-color-apply {
+  margin: 0;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-family: var(--font-ui);
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  letter-spacing: var(--type-label-tracking);
+  cursor: pointer;
+}
+
+.circular-color-apply:hover {
+  filter: brightness(1.06);
 }
 
 .bible-reader--yv .bible-verse-actions-ref {
@@ -5731,12 +6296,12 @@ body,
   background:
     linear-gradient(
       180deg,
-      #ffffff 0%,
-      color-mix(in srgb, var(--surface) 55%, #fff) 100%
+      var(--elevated) 0%,
+      color-mix(in srgb, var(--surface) 55%, var(--elevated)) 100%
     );
-  border: 1px solid color-mix(in srgb, var(--yv-line) 55%, #fff);
+  border: 1px solid color-mix(in srgb, var(--yv-line) 55%, var(--elevated));
   box-shadow:
-    0 1px 0 color-mix(in srgb, #fff 90%, transparent),
+    0 1px 0 color-mix(in srgb, var(--sheen) 90%, transparent),
     0 4px 14px color-mix(in srgb, var(--text) 6%, transparent),
     0 10px 28px color-mix(in srgb, var(--text) 5%, transparent);
   transform: translate3d(0, 0, 0);
@@ -5759,7 +6324,7 @@ body,
   padding: 0;
   border: 0;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--accent) 16%, #fff);
+  background: color-mix(in srgb, var(--accent) 16%, var(--elevated));
   color: var(--text);
   font-size: 0.78rem;
   line-height: 1;
@@ -5774,7 +6339,7 @@ body,
 }
 
 .bible-yv-dock-play:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--accent) 26%, #fff);
+  background: color-mix(in srgb, var(--accent) 26%, var(--elevated));
 }
 
 .bible-yv-dock-play.is-playing {
@@ -5818,9 +6383,9 @@ body,
   background:
     linear-gradient(
       165deg,
-      color-mix(in srgb, var(--accent) 10%, #f7f4ef) 0%,
-      #f3efe8 42%,
-      #ebe6dd 100%
+      color-mix(in srgb, var(--accent) 10%, var(--sheet-bg)) 0%,
+      var(--sheet-bg-mid) 42%,
+      var(--sheet-bg-deep) 100%
     );
   animation: bible-audio-player-in 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -6029,6 +6594,12 @@ body,
   transition: transform 0.15s ease, opacity 0.15s ease;
 }
 
+.bible-audio-player-icon {
+  width: 28px;
+  height: 28px;
+  display: block;
+}
+
 .bible-audio-player-play:active:not(:disabled) {
   transform: scale(0.96);
 }
@@ -6131,8 +6702,8 @@ body,
   background:
     linear-gradient(
       180deg,
-      #f8f5f0 0%,
-      color-mix(in srgb, var(--yv-surface, var(--surface)) 88%, #fff) 100%
+      var(--sheet-bg) 0%,
+      color-mix(in srgb, var(--yv-surface, var(--surface)) 88%, var(--elevated)) 100%
     );
   animation: bible-search-sheet-in 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -6174,9 +6745,11 @@ body,
 .bible-search-sheet-title {
   margin: 0;
   text-align: center;
-  font-size: 0.95rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  font-family: var(--font-ui);
+  font-size: var(--type-title-size);
+  font-weight: var(--type-title-weight);
+  letter-spacing: var(--type-title-tracking);
+  line-height: var(--type-title-lh);
   color: var(--text);
 }
 
@@ -6196,8 +6769,8 @@ body,
   align-items: center;
   border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
   border-radius: 14px;
-  background: #fff;
-  box-shadow: 0 1px 0 color-mix(in srgb, #fff 80%, transparent);
+  background: var(--elevated);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--sheen) 80%, transparent);
 }
 
 .bible-search-sheet-input-wrap:focus-within {
@@ -6372,16 +6945,16 @@ body,
   width: min(100% - 24px, 40rem);
   margin: 0 auto;
   padding: 14px 12px 12px;
-  border: 1px solid color-mix(in srgb, var(--yv-line) 55%, #fff);
+  border: 1px solid color-mix(in srgb, var(--yv-line) 55%, var(--elevated));
   border-radius: 22px;
   background:
     linear-gradient(
       180deg,
-      #ffffff 0%,
-      color-mix(in srgb, var(--surface) 42%, #fff) 100%
+      var(--elevated) 0%,
+      color-mix(in srgb, var(--surface) 42%, var(--elevated)) 100%
     );
   box-shadow:
-    0 1px 0 color-mix(in srgb, #fff 88%, transparent),
+    0 1px 0 color-mix(in srgb, var(--sheen) 88%, transparent),
     0 8px 24px color-mix(in srgb, var(--text) 7%, transparent),
     0 18px 40px color-mix(in srgb, var(--text) 5%, transparent);
   display: grid;
@@ -6454,7 +7027,7 @@ body,
   min-height: 42px;
   border: 1px solid color-mix(in srgb, var(--yv-line) 40%, transparent);
   border-radius: 999px;
-  background: color-mix(in srgb, var(--surface) 70%, #fff);
+  background: color-mix(in srgb, var(--surface) 70%, var(--elevated));
   color: var(--yv-text);
   font: inherit;
   font-size: 0.9rem;
@@ -6521,10 +7094,28 @@ body,
 .bible-yv-dock-arrow {
   height: 36px;
   border-radius: 999px;
-  font-size: 1.45rem;
-  line-height: 1;
+  display: grid;
+  place-items: center;
   color: color-mix(in srgb, var(--yv-text) 78%, transparent);
   transition: background 0.15s ease, color 0.15s ease;
+}
+
+.bible-yv-dock-icon {
+  width: 22px;
+  height: 22px;
+  display: block;
+  flex: none;
+}
+
+.bible-yv-dock-caret .bible-yv-dock-icon {
+  width: 16px;
+  height: 16px;
+  opacity: 0.7;
+}
+
+.bible-yv-dock-advance .bible-yv-dock-icon {
+  width: 20px;
+  height: 20px;
 }
 
 .bible-yv-dock-arrow:hover:not(:disabled) {
@@ -6547,9 +7138,11 @@ body,
   margin: 0 auto;
   padding: 8px 10px;
   border-radius: 999px;
-  font-family: "Libre Baskerville", Georgia, serif;
-  font-size: 0.98rem;
-  font-weight: 400;
+  font-family: var(--font-ui);
+  font-size: var(--type-title-size);
+  font-weight: var(--type-title-weight);
+  letter-spacing: var(--type-title-tracking);
+  line-height: var(--type-title-lh);
   text-align: center;
   color: var(--yv-text);
   transition: background 0.15s ease;
@@ -6813,20 +7406,20 @@ body,
 }
 
 .flash-front-ref.is-plain {
-  font-family: "Libre Baskerville", "Source Serif 4", Georgia, serif;
-  font-size: clamp(1.2rem, 4.5vw, 1.55rem);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.25;
+  font-family: var(--font-ui);
+  font-size: var(--type-title-size);
+  font-weight: var(--type-title-weight);
+  letter-spacing: var(--type-title-tracking);
+  line-height: var(--type-title-lh);
   color: var(--text);
 }
 
 .flash-ref-book {
-  font-family: "Libre Baskerville", "Source Serif 4", Georgia, serif;
-  font-size: clamp(1.45rem, 5.5vw, 1.9rem);
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  line-height: 1.12;
+  font-family: var(--font-ui);
+  font-size: var(--type-headline-size);
+  font-weight: var(--type-headline-weight);
+  letter-spacing: var(--type-headline-tracking);
+  line-height: var(--type-headline-lh);
   color: var(--text);
 }
 
@@ -6845,7 +7438,8 @@ body,
 }
 
 .flash-ref-label {
-  font-size: 0.68rem;
+  font-family: var(--font-ui);
+  font-size: var(--type-caption-size);
   font-weight: 650;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -6854,11 +7448,11 @@ body,
 }
 
 .flash-ref-num {
-  font-family: "Libre Baskerville", "Source Serif 4", Georgia, serif;
-  font-size: clamp(1.05rem, 3.8vw, 1.28rem);
-  font-weight: 700;
+  font-family: var(--font-ui);
+  font-size: var(--type-title-size);
+  font-weight: var(--type-title-weight);
   font-variant-numeric: lining-nums;
-  letter-spacing: -0.02em;
+  letter-spacing: var(--type-title-tracking);
   line-height: 1;
   color: var(--text);
 }
@@ -6872,12 +7466,13 @@ body,
 
 .flash-back-text {
   margin: 0;
-  font-family: "Libre Baskerville", "Source Serif 4", Georgia, serif;
-  font-weight: 400;
+  font-family: var(--font-read);
+  font-weight: var(--type-body-weight);
   text-transform: none;
   /* Tamanho base; FlashFitText ajusta via inline style para caber no card */
-  font-size: 1.22rem;
-  line-height: 1.55;
+  font-size: var(--type-body-size);
+  line-height: var(--type-body-lh);
+  letter-spacing: var(--type-body-tracking);
 }
 
 .bible-hint {

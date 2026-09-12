@@ -1,4 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { PauseIcon, PlayIcon } from "@heroicons/react/24/outline";
 import type { BibleAudioEpisode } from "../youversion/audio";
 
 export type BibleAudioPlayerProps = {
@@ -178,7 +179,11 @@ export function BibleAudioPlayer({
             aria-pressed={playing}
             aria-label={playing ? "Pause" : "Lecture"}
           >
-            <span aria-hidden="true">{playing ? "❚❚" : "▶"}</span>
+            {playing ? (
+              <PauseIcon className="bible-audio-player-icon" aria-hidden />
+            ) : (
+              <PlayIcon className="bible-audio-player-icon" aria-hidden />
+            )}
           </button>
           <button
             type="button"

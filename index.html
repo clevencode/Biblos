@@ -12,13 +12,39 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="format-detection" content="telephone=no" />
+    <script>
+      (function () {
+        try {
+          var key = "biblos-theme";
+          var pref = localStorage.getItem(key);
+          if (pref !== "light" && pref !== "dark" && pref !== "system") pref = "system";
+          var dark =
+            pref === "dark" ||
+            (pref === "system" &&
+              window.matchMedia &&
+              window.matchMedia("(prefers-color-scheme: dark)").matches);
+          var theme = dark ? "dark" : "light";
+          var color = dark ? "#0d1117" : "#FFFFFF";
+          var ink = dark ? "#ffffff" : "#0d1117";
+          var root = document.documentElement;
+          root.dataset.theme = theme;
+          root.style.colorScheme = theme;
+          root.style.backgroundColor = color;
+          root.style.color = ink;
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) meta.setAttribute("content", color);
+          var apple = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
+          if (apple) apple.setAttribute("content", dark ? "black-translucent" : "default");
+        } catch (e) {}
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Biblos</title>
     <style>
-      html, body, #root { margin: 0; height: 100%; background: #fff; color: #0d1117; }
+      html, body, #root { margin: 0; height: 100%; background: var(--bg, #fff); color: var(--text, #0d1117); }
       .boot-shell {
         min-height: 100%;
         display: grid;
@@ -29,6 +55,7 @@
       }
       .boot-brand { margin: 0; font-size: 1.4rem; font-weight: 700; letter-spacing: -0.03em; }
       .boot-muted { margin: 0; color: #6b7280; font-size: 0.9rem; }
+      html[data-theme="dark"] .boot-muted { color: #9ca3af; }
     </style>
   </head>
   <body>
