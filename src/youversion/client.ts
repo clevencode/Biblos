@@ -74,6 +74,28 @@ export async function fetchPassage(reference: string, _bibleId?: number) {
   });
 }
 
+export type BibleSearchHit = {
+  usfm: string;
+  bookTitle: string;
+  chapter: number;
+  verse: number;
+  text: string;
+  snippet: string;
+};
+
+export async function searchVerses(q: string, limit = 40) {
+  return bibleFetch<{
+    bible?: YouVersionBible;
+    q?: string;
+    total?: number;
+    results?: BibleSearchHit[];
+  }>({
+    action: "search",
+    q,
+    limit,
+  });
+}
+
 /** Identifiant local S21. */
 export const LSG_BIBLE_ID = 0;
 

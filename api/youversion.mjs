@@ -2,6 +2,7 @@
  * Texte biblique Segond 21 (S21) local.
  * GET /api/youversion?action=books
  * GET /api/youversion?action=passage&usfm=JHN.3
+ * GET /api/youversion?action=search&q=parole&limit=40
  *
  * Données : data/bible/s21/books/{OSIS}.json
  * Régénérer : node scripts/convert-s21.mjs
@@ -179,6 +180,128 @@ function chapterFromBook(bookJson, chapter, verseStart, verseEnd) {
   return verses;
 }
 
+function normalizeSearchText(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function makeSnippet(text, queryNorm, radius = 60) {
+  const raw = String(text || "");
+  const norm = normalizeSearchText(raw);
+  const idx = norm.indexOf(queryNorm);
+  if (idx < 0) {
+    return raw.length > radius * 2 ? `${raw.slice(0, radius * 2).trim()}…` : raw;
+  }
+  // Map approx char index from normalized string back to raw (accents inflate raw).
+  const ratio = raw.length / Math.max(1, norm.length);
+  const center = Math.round(idx * ratio);
+  const start = Math.max(0, center - radius);
+  const end = Math.min(raw.length, center + queryNorm.length * ratio + radius);
+  const slice = raw.slice(start, end).trim();
+  return `${start > 0 ? "…" : ""}${slice}${end < raw.length ? "…" : ""}`;
+}
+
+/** Score: mot entier > début de mot > substring. */
+function matchRank(normText, queryNorm) {
+  if (!queryNorm) return 99;
+  const reWord = new RegExp(`(?:^|[^a-z0-9])${queryNorm.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?:$|[^a-z0-9])`);
+  if (reWord.test(` ${normText} `)) return 0;
+  if (normText.startsWith(queryNorm) || new RegExp(`(?:^|[^a-z0-9])${queryNorm.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`).test(normText)) {
+    return 1;
+  }
+  return 2;
+}
+
+/** Index mémoire : texte normalisé une fois pour recherches suivantes. */
+let searchIndex = null;
+let searchIndexPromise = null;
+
+async function buildSearchIndex() {
+  /** @type {{ usfm: string, bookTitle: string, chapter: number, verse: number, text: string, norm: string }[]} */
+  const rows = [];
+  for (const [usfm, osis, title] of CANON) {
+    let bookJson;
+    try {
+      bookJson = await loadBook(osis);
+    } catch {
+      continue;
+    }
+    for (const chapter of bookJson.chapters ?? []) {
+      const chapterNum = Number(chapter.chapter);
+      if (!Number.isFinite(chapterNum)) continue;
+      for (const verse of chapter.verses ?? []) {
+        const number = Number(verse.number);
+        const text = cleanVerseText(verse.text);
+        if (!Number.isFinite(number) || !text) continue;
+        rows.push({
+          usfm: `${usfm}.${chapterNum}.${number}`,
+          bookTitle: title,
+          chapter: chapterNum,
+          verse: number,
+          text,
+          norm: normalizeSearchText(text),
+        });
+      }
+    }
+  }
+  return rows;
+}
+
+async function getSearchIndex() {
+  if (searchIndex) return searchIndex;
+  if (!searchIndexPromise) {
+    searchIndexPromise = buildSearchIndex()
+      .then((rows) => {
+        searchIndex = rows;
+        return rows;
+      })
+      .catch((err) => {
+        searchIndexPromise = null;
+        throw err;
+      });
+  }
+  return searchIndexPromise;
+}
+
+async function searchVerses(q, limit = 40) {
+  const query = String(q || "").trim();
+  const queryNorm = normalizeSearchText(query);
+  if (queryNorm.length < 2) {
+    return { q: query, total: 0, results: [] };
+  }
+  const capped = Math.min(80, Math.max(1, Number(limit) || 40));
+  const index = await getSearchIndex();
+  const bookOrder = new Map(CANON.map((row, i) => [row[0], i]));
+  const hits = [];
+  for (const row of index) {
+    if (!row.norm.includes(queryNorm)) continue;
+    const book = String(row.usfm).split(".")[0];
+    hits.push({
+      usfm: row.usfm,
+      bookTitle: row.bookTitle,
+      chapter: row.chapter,
+      verse: row.verse,
+      text: row.text,
+      snippet: makeSnippet(row.text, queryNorm),
+      _rank: matchRank(row.norm, queryNorm),
+      _book: bookOrder.get(book) ?? 999,
+    });
+  }
+  hits.sort(
+    (a, b) =>
+      a._rank - b._rank ||
+      a._book - b._book ||
+      a.chapter - b.chapter ||
+      a.verse - b.verse,
+  );
+  const results = hits.slice(0, capped).map(({ _rank, _book, ...rest }) => rest);
+  return { q: query, total: hits.length, results };
+}
+
 async function fetchPassagePayload(usfm) {
   const ref = parseUsfmRef(usfm);
   const meta = byUsfm.get(ref.book);
@@ -255,6 +378,19 @@ export async function handleYouVersion(req, res) {
         bible: BIBLE_META,
         usingFallback: false,
         books: listBooks(),
+      });
+      return;
+    }
+
+    if (action === "search") {
+      const q = String(url.searchParams.get("q") || "");
+      const limit = Number(url.searchParams.get("limit") || 40);
+      const payload = await searchVerses(q, limit);
+      send(200, {
+        ok: true,
+        hasKey: true,
+        bible: BIBLE_META,
+        ...payload,
       });
       return;
     }

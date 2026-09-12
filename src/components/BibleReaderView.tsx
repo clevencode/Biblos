@@ -27,14 +27,23 @@ import {
   type BibleAudioEpisode,
 } from "../youversion/audio";
 import { BibleAudioPlayer } from "./BibleAudioPlayer";
+import { BibleSearchSheet } from "./BibleSearchSheet";
 import { createVerseFlashcard, verseCardId } from "../verseCard";
 import {
+  COLOR_HARMONIES,
+  MAX_VERSE_PALETTES,
   VERSE_COLORS,
+  generateDarkPalette,
   isPresetVerseColor,
   loadPreferredVerseColor,
+  loadVersePalettes,
   normalizeVerseColor,
+  pushVersePalette,
+  removeVersePalette,
   savePreferredVerseColor,
   verseActionTone,
+  type ColorHarmonyId,
+  type VersePalette,
 } from "../verseColors";
 import { loadChapterMarks, setVerseMarks } from "../verseMarks";
 import type { Flashcard } from "../types";
@@ -74,12 +83,6 @@ function applyBibleHeadProgress(reader: HTMLElement | null, scrollTop: number) {
 
 /** Sélection multi-versets (toggle, pas forcément contigus). */
 type VerseSelection = number[];
-
-function verseRange(start: number, end: number): number[] {
-  const a = Math.min(start, end);
-  const b = Math.max(start, end);
-  return Array.from({ length: b - a + 1 }, (_, i) => a + i);
-}
 
 function sortVerses(verses: Iterable<number>): number[] {
   return [...new Set(verses)].sort((a, b) => a - b);
@@ -302,7 +305,11 @@ function alignVerseInScroller(
   } else if (vRect.top < visibleTop - 1) {
     delta = vRect.top - visibleTop;
   } else if (vRect.bottom > visibleBottom + 1) {
-    delta = vRect.height > visibleHeight ? vRect.top - visibleTop : vRect.bottom - visibleBottom;
+    // Preferir topo do versículo se for mais alto que a área útil (painel Marquer).
+    delta =
+      vRect.height > visibleHeight * 0.85
+        ? vRect.top - visibleTop
+        : vRect.bottom - visibleBottom;
   }
   if (Math.abs(delta) < 1) return;
   scroller.scrollTop += delta;
@@ -339,9 +346,7 @@ export function BibleReaderView({
   const [highlightVerse, setHighlightVerse] = useState<number | null>(
     initialParts.verse ?? null,
   );
-  const [selection, setSelection] = useState<VerseSelection | null>(() =>
-    initialParts.verse != null ? [initialParts.verse] : null,
-  );
+  const [selection, setSelection] = useState<VerseSelection | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [fontSize, setFontSize] = useState(() => {
@@ -356,6 +361,9 @@ export function BibleReaderView({
   const [chapterMarks, setChapterMarks] = useState<ReadonlyMap<number, string>>(
     () => new Map(),
   );
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [harmonyId, setHarmonyId] = useState<ColorHarmonyId>("analogous");
+  const [savedPalettes, setSavedPalettes] = useState<VersePalette[]>(() => loadVersePalettes());
   const [chromeHidden, setChromeHidden] = useState(false);
   const [audioByUsfm, setAudioByUsfm] = useState<Record<string, BibleAudioEpisode>>({});
   const [audioPodcast, setAudioPodcast] = useState("Bible | Podcast.s21");
@@ -365,6 +373,7 @@ export function BibleReaderView({
   const [audioActiveUsfm, setAudioActiveUsfm] = useState<string | null>(null);
   const [audioTime, setAudioTime] = useState(0);
   const [audioDuration, setAudioDuration] = useState(0);
+  const [searchOpen, setSearchOpen] = useState(false);
   const statusId = useId();
   const highlightRef = useRef<HTMLElement | null>(null);
   const dockLocationRef = useRef<HTMLButtonElement | null>(null);
@@ -587,13 +596,8 @@ export function BibleReaderView({
     setBookId(nextBook);
     setChapterId(nextChapter);
     setHighlightVerse(verse);
-    setSelection(
-      verse != null
-        ? verseEnd != null
-          ? verseRange(verse, verseEnd)
-          : [verse]
-        : null,
-    );
+    // Navigation / deep-link : surligne et scroll, sans ouvrir le panneau Marquer.
+    setSelection(null);
     setCardMsg(null);
     setLoading(true);
     setError(null);
@@ -629,7 +633,9 @@ export function BibleReaderView({
         setHighlightVerse(null);
         return null;
       }
-      pendingScrollVerse.current = { number, mode: "nearest", seq: ++verseScrollSeq.current };
+      // Premier tap → remonte le verset au-dessus du panneau Marquer.
+      const mode: VerseScrollMode = current?.length ? "nearest" : "start";
+      pendingScrollVerse.current = { number, mode, seq: ++verseScrollSeq.current };
       setHighlightVerse(number);
       if (!current?.length) setCardColor(loadPreferredVerseColor());
       return sortVerses(next);
@@ -640,9 +646,8 @@ export function BibleReaderView({
 
   function jumpToVerse(number: number) {
     pendingScrollVerse.current = { number, mode: "start", seq: ++verseScrollSeq.current };
-    setSelection([number]);
+    setSelection(null);
     setHighlightVerse(number);
-    setCardColor(loadPreferredVerseColor());
     setCardMsg(null);
     setPickerOpen(false);
   }
@@ -685,6 +690,16 @@ export function BibleReaderView({
     setHighlightVerse(null);
     setCardMsg(null);
     setCardColor(loadPreferredVerseColor());
+    setPaletteOpen(false);
+  }
+
+  function generateAndSavePalette() {
+    const colors = generateDarkPalette(harmonyId);
+    setSavedPalettes(pushVersePalette(harmonyId, colors));
+    const first = colors[0];
+    if (first) {
+      pickVerseColor(first);
+    }
   }
 
   async function makeFlashcard() {
@@ -821,7 +836,7 @@ export function BibleReaderView({
   const selectionHasMark = selectedVerses.some((n) => chapterMarks.has(n));
 
   const showCreateCard = Boolean(selectedVerses.length && selectedVerseText && !pickerOpen);
-  const forceChrome = pickerOpen || showCreateCard || audioPlayerOpen;
+  const forceChrome = pickerOpen || showCreateCard || audioPlayerOpen || searchOpen;
   const hideChrome = chromeHidden && !forceChrome;
   forceChromeRef.current = forceChrome;
 
@@ -840,6 +855,14 @@ export function BibleReaderView({
         : (root.querySelector(`[data-verse="${pending.number}"]`) as HTMLElement | null);
     if (pending.mode !== "top" && !verseEl) return;
     alignVerseInScroller(root, reader, verseEl, pending.mode);
+    // 2ᵉ passe : hauteur réelle du panneau Marquer après layout.
+    if (showCreateCard && verseEl) {
+      requestAnimationFrame(() => {
+        alignVerseInScroller(root, reader, verseEl, pending.mode === "start" ? "start" : "nearest");
+        lastScrollTop.current = root.scrollTop;
+        applyBibleHeadProgress(reader, root.scrollTop);
+      });
+    }
     lastScrollTop.current = root.scrollTop;
     scrollAcc.current = 0;
     chromeLockUntil.current = performance.now() + CHROME_PROGRAMMATIC_LOCK_MS;
@@ -1142,25 +1165,39 @@ export function BibleReaderView({
                 {planHeaderTitle}
               </p>
             </div>
-            <div className="bible-yv-font" role="group" aria-label="Taille du texte">
+            <div className="bible-yv-top-tools">
               <button
                 type="button"
-                className="bible-yv-font-btn"
-                onClick={() => setFontSize((n) => Math.max(FONT_MIN, n - 1))}
-                disabled={fontSize <= FONT_MIN}
-                aria-label="Réduire la taille du texte"
+                className={`bible-yv-search-btn${searchOpen ? " is-on" : ""}`}
+                onClick={() => setSearchOpen(true)}
+                aria-label="Rechercher un mot"
+                aria-expanded={searchOpen}
               >
-                A−
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" strokeWidth="2" />
+                  <path d="M16 16l4.5 4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
               </button>
-              <button
-                type="button"
-                className="bible-yv-font-btn"
-                onClick={() => setFontSize((n) => Math.min(FONT_MAX, n + 1))}
-                disabled={fontSize >= FONT_MAX}
-                aria-label="Augmenter la taille du texte"
-              >
-                A+
-              </button>
+              <div className="bible-yv-font" role="group" aria-label="Taille du texte">
+                <button
+                  type="button"
+                  className="bible-yv-font-btn"
+                  onClick={() => setFontSize((n) => Math.max(FONT_MIN, n - 1))}
+                  disabled={fontSize <= FONT_MIN}
+                  aria-label="Réduire la taille du texte"
+                >
+                  A−
+                </button>
+                <button
+                  type="button"
+                  className="bible-yv-font-btn"
+                  onClick={() => setFontSize((n) => Math.min(FONT_MAX, n + 1))}
+                  disabled={fontSize >= FONT_MAX}
+                  aria-label="Augmenter la taille du texte"
+                >
+                  A+
+                </button>
+              </div>
             </div>
           </>
         ) : (
@@ -1169,25 +1206,39 @@ export function BibleReaderView({
               <span className="bible-yv-compact-book">{bookTitle}</span>
               <span className="bible-yv-compact-num">{chapterId}</span>
             </p>
-            <div className="bible-yv-font" role="group" aria-label="Taille du texte">
+            <div className="bible-yv-top-tools">
               <button
                 type="button"
-                className="bible-yv-font-btn"
-                onClick={() => setFontSize((n) => Math.max(FONT_MIN, n - 1))}
-                disabled={fontSize <= FONT_MIN}
-                aria-label="Réduire la taille du texte"
+                className={`bible-yv-search-btn${searchOpen ? " is-on" : ""}`}
+                onClick={() => setSearchOpen(true)}
+                aria-label="Rechercher un mot"
+                aria-expanded={searchOpen}
               >
-                A−
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" strokeWidth="2" />
+                  <path d="M16 16l4.5 4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
               </button>
-              <button
-                type="button"
-                className="bible-yv-font-btn"
-                onClick={() => setFontSize((n) => Math.min(FONT_MAX, n + 1))}
-                disabled={fontSize >= FONT_MAX}
-                aria-label="Augmenter la taille du texte"
-              >
-                A+
-              </button>
+              <div className="bible-yv-font" role="group" aria-label="Taille du texte">
+                <button
+                  type="button"
+                  className="bible-yv-font-btn"
+                  onClick={() => setFontSize((n) => Math.max(FONT_MIN, n - 1))}
+                  disabled={fontSize <= FONT_MIN}
+                  aria-label="Réduire la taille du texte"
+                >
+                  A−
+                </button>
+                <button
+                  type="button"
+                  className="bible-yv-font-btn"
+                  onClick={() => setFontSize((n) => Math.min(FONT_MAX, n + 1))}
+                  disabled={fontSize >= FONT_MAX}
+                  aria-label="Augmenter la taille du texte"
+                >
+                  A+
+                </button>
+              </div>
             </div>
           </>
         )}
@@ -1386,32 +1437,32 @@ export function BibleReaderView({
                     style={{ ["--swatch" as string]: swatch.hex }}
                     aria-label={`Marquer · ${swatch.label}`}
                     aria-pressed={on}
-                    onClick={() => markSelection(swatch.hex)}
+                    onClick={() => {
+                      setPaletteOpen(false);
+                      markSelection(swatch.hex);
+                    }}
                   />
                 );
               })}
-              <label
-                className={`bible-verse-color bible-verse-color-custom${customColorOn ? " is-on" : ""}`}
+              <button
+                type="button"
+                className={`bible-verse-color bible-verse-color-custom${paletteOpen || customColorOn ? " is-on" : ""}`}
                 style={
                   customColorOn
                     ? ({ ["--swatch" as string]: activeVerseColor } as CSSProperties)
                     : undefined
                 }
-                title="Couleur personnalisée"
+                aria-label="Générer une palette"
+                aria-expanded={paletteOpen}
+                title="Palette"
+                onClick={() => setPaletteOpen((open) => !open)}
               >
-                <input
-                  type="color"
-                  className="bible-verse-color-picker"
-                  value={activeVerseColor}
-                  aria-label="Couleur personnalisée"
-                  onChange={(event) => markSelection(event.target.value)}
-                />
                 {!customColorOn ? (
                   <span className="bible-verse-color-plus" aria-hidden>
                     +
                   </span>
                 ) : null}
-              </label>
+              </button>
               {selectionHasMark ? (
                 <button
                   type="button"
@@ -1424,6 +1475,73 @@ export function BibleReaderView({
                 </button>
               ) : null}
             </div>
+
+            {paletteOpen ? (
+              <div className="bible-verse-palette" role="region" aria-label="Générateur de palette">
+                <p className="bible-verse-palette-hint muted">
+                  Combinaison · tons sombres (thème clair) · max {MAX_VERSE_PALETTES}
+                </p>
+                <div className="bible-verse-harmony" role="group" aria-label="Combinaison">
+                  {COLOR_HARMONIES.map((item) => {
+                    const on = harmonyId === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        className={`bible-verse-harmony-chip${on ? " is-on" : ""}`}
+                        aria-pressed={on}
+                        onClick={() => setHarmonyId(item.id)}
+                      >
+                        {item.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <button
+                  type="button"
+                  className="bible-verse-palette-gen"
+                  onClick={generateAndSavePalette}
+                >
+                  Générer palette
+                </button>
+                {savedPalettes.length ? (
+                  <ul className="bible-verse-palette-list">
+                    {savedPalettes.map((palette) => (
+                      <li key={palette.id} className="bible-verse-palette-row">
+                        <div className="bible-verse-palette-swatches">
+                          {palette.colors.map((hex) => {
+                            const on = activeVerseColor === normalizeVerseColor(hex);
+                            return (
+                              <button
+                                key={`${palette.id}-${hex}`}
+                                type="button"
+                                className={`bible-verse-color${on ? " is-on" : ""}`}
+                                style={{ ["--swatch" as string]: hex }}
+                                aria-label={`Marquer · ${hex}`}
+                                aria-pressed={on}
+                                onClick={() => markSelection(hex)}
+                              />
+                            );
+                          })}
+                        </div>
+                        <button
+                          type="button"
+                          className="bible-verse-palette-remove"
+                          aria-label="Supprimer la palette"
+                          onClick={() => setSavedPalettes(removeVersePalette(palette.id))}
+                        >
+                          ×
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="bible-verse-palette-empty muted">
+                    Choisis une combinaison, puis génère.
+                  </p>
+                )}
+              </div>
+            ) : null}
           </div>
 
           <div className="bible-verse-action-block">
@@ -1668,6 +1786,16 @@ export function BibleReaderView({
         onPlayUsfm={(usfm) => void playUsfmAudio(usfm)}
         onSeek={seekAudio}
         onSkip={skipAudio}
+      />
+
+      <BibleSearchSheet
+        open={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        onSelect={(hit) => {
+          setSearchOpen(false);
+          setPickerOpen(false);
+          void loadChapter(hit.usfm.split(".")[0]!, String(hit.chapter), hit.verse);
+        }}
       />
     </section>
   );
