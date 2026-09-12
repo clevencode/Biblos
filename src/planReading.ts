@@ -1,5 +1,5 @@
 import { toUsfm } from "./youversion/usfm";
-import { extractPassageRef } from "./plan";
+import { extractPassageRefs } from "./plan";
 import type { PlanDay } from "./types";
 
 export type PlanReadingStep = {
@@ -113,13 +113,9 @@ export function createPlanReadingSession(input: {
   for (const day of dayEntries) {
     const raw = String(`${day.texte || ""}\n${day.defi || ""}`).trim();
     if (!raw) continue;
-    const chunks = raw
-      .split(/\s*(?:;|\||\/|•|·|\n|,(?=\s*(?:[123]\s+)?[A-Za-zÀ-ÿ]))\s*/)
-      .map((part) => part.trim())
-      .filter(Boolean);
-    const refs = chunks.length ? chunks : [raw];
-    for (const chunk of refs) {
-      const passage = extractPassageRef(chunk) || chunk;
+    const refs = extractPassageRefs(raw);
+    const passages = refs.length ? refs : [raw];
+    for (const passage of passages) {
       const step = buildChapterStep(day.jour, passage);
       if (!step) continue;
       const key = step.label.toLowerCase();

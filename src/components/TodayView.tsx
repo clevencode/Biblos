@@ -35,6 +35,30 @@ type TodayViewProps = {
 
 type PlanScreen = "timeline" | "intro" | "dayNote";
 
+function PassageRefsList({
+  refs,
+  fallback,
+  className,
+}: {
+  refs: string[];
+  fallback?: string;
+  className?: string;
+}) {
+  if (refs.length === 0) {
+    return fallback ? <p className={className}>{fallback}</p> : null;
+  }
+  if (refs.length === 1) {
+    return <p className={className}>{refs[0]}</p>;
+  }
+  return (
+    <ul className={`plan-yv-ref-list${className ? ` ${className}` : ""}`}>
+      {refs.map((ref) => (
+        <li key={ref}>{ref}</li>
+      ))}
+    </ul>
+  );
+}
+
 function introKey(planId: string) {
   return `biblos-plan-intro-seen:${planId}`;
 }
@@ -175,7 +199,8 @@ export function TodayView({
   const selectedDay = days.find((day) => day.jour === selectedJour) ?? days[0] ?? null;
   const passage = selectedDay?.texte ?? "";
   const passageRefs = extractPassageRefs(passage);
-  const passageLabel = passageRefs.length > 1 ? passageRefs.join(" · ") : (passageRefs[0] ?? passage);
+  const passageLabel =
+    passageRefs.length > 1 ? passageRefs.join("; ") : (passageRefs[0] ?? passage);
   const firstPassage = passageRefs[0] ?? extractPassageRef(passage);
   const passageRead = selectedDay
     ? (progress?.completedDays.includes(selectedDay.jour) ?? false)
@@ -284,7 +309,7 @@ export function TodayView({
           {canOpenPassage && passageLabel ? (
             <aside className="plan-yv-devo-next" aria-label="Lecture du jour">
               <p className="plan-yv-devo-next-kicker">Ensuite</p>
-              <p className="plan-yv-devo-next-ref">{passageLabel}</p>
+              <PassageRefsList refs={passageRefs} fallback={passageLabel} className="plan-yv-devo-next-ref" />
             </aside>
           ) : null}
         </div>
@@ -332,7 +357,13 @@ export function TodayView({
             ) : null}
           </p>
           <h2 className="plan-yv-devo-title">{planTitle}</h2>
-          {passageLabel ? <p className="plan-yv-day-note-ref muted">{passageLabel}</p> : null}
+          {passageLabel ? (
+            <PassageRefsList
+              refs={passageRefs}
+              fallback={passageLabel}
+              className="plan-yv-day-note-ref muted"
+            />
+          ) : null}
         </header>
 
         <div className="plan-yv-devo-scroll">
@@ -502,7 +533,17 @@ export function TodayView({
               </button>
             ) : null}
           </div>
-          <h3 className="plan-yv-hero-title">{passageLabel || "Passage du jour"}</h3>
+          {passageRefs.length > 1 ? (
+            <ul className="plan-yv-hero-title plan-yv-ref-list" aria-label="Passages du jour">
+              {passageRefs.map((ref) => (
+                <li key={ref}>{ref}</li>
+              ))}
+            </ul>
+          ) : (
+            <h3 className="plan-yv-hero-title">
+              {passageRefs[0] ?? (passageLabel || "Passage du jour")}
+            </h3>
+          )}
           {readingMinutes ? (
             <p className="plan-yv-hero-meta">{readingMinutes}</p>
           ) : null}

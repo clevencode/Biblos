@@ -125,9 +125,17 @@ export type BibleSearchHit = {
   snippet: string;
 };
 
-export async function searchVerses(q: string, limit = 40) {
+export async function searchVerses(
+  q: string,
+  limit = 40,
+  options?: { books?: string[] | null },
+) {
+  const books = options?.books?.length
+    ? options.books.map((id) => String(id).toUpperCase()).filter(Boolean)
+    : null;
+
   if (await isOfflineBibleReady()) {
-    const local = await offlineSearch(q, limit);
+    const local = await offlineSearch(q, limit, undefined, books);
     if (local.ok) {
       return {
         ok: true,
@@ -154,6 +162,7 @@ export async function searchVerses(q: string, limit = 40) {
     action: "search",
     q,
     limit,
+    ...(books ? { books: books.join(",") } : {}),
   });
 }
 

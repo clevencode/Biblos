@@ -154,6 +154,62 @@ const BOOKS: Record<string, string> = {
   "2john": "2JN",
   "3john": "3JN",
   matt: "MAT",
+  mt: "MAT",
+  mc: "MRK",
+  mr: "MRK",
+  lc: "LUK",
+  jn: "JHN",
+  ac: "ACT",
+  rm: "ROM",
+  rom: "ROM",
+  ga: "GAL",
+  ep: "EPH",
+  ph: "PHP",
+  col: "COL",
+  he: "HEB",
+  jc: "JAS",
+  ap: "REV",
+  gn: "GEN",
+  ge: "GEN",
+  ex: "EXO",
+  lv: "LEV",
+  nb: "NUM",
+  dt: "DEU",
+  jg: "JDG",
+  rt: "RUT",
+  esd: "EZR",
+  ne: "NEH",
+  jb: "JOB",
+  pr: "PRO",
+  ec: "ECC",
+  ct: "SNG",
+  es: "ISA",
+  jr: "JER",
+  lm: "LAM",
+  ez: "EZK",
+  dn: "DAN",
+  os: "HOS",
+  jl: "JOL",
+  am: "AMO",
+  ab: "OBA",
+  mi: "MIC",
+  na: "NAM",
+  ha: "HAB",
+  so: "ZEP",
+  ag: "HAG",
+  za: "ZEC",
+  ml: "MAL",
+  "1jn": "1JN",
+  "2jn": "2JN",
+  "3jn": "3JN",
+  "1p": "1PE",
+  "2p": "2PE",
+  "1tm": "1TI",
+  "2tm": "2TI",
+  "1th": "1TH",
+  "2th": "2TH",
+  "1co": "1CO",
+  "2co": "2CO",
 };
 
 /** Normalise le nom de livre pour lookup (accents → ASCII). */
@@ -187,11 +243,11 @@ export function toUsfm(reference: string): string {
   }
 
   const match = trimmed.match(
-    /^([\d]?\s*[A-Za-zÀ-ÿ]+)\s+(\d+)[:.](\d+)(?:\s*[-–]\s*(\d+))?/u,
+    /^([\d]?\s*[A-Za-zÀ-ÿ.]+)\s+(\d+)[:.](\d+)(?:\s*[-–]\s*(\d+))?/u,
   );
   if (!match) {
-    // Chapitre seul : "Jean 3" / "JHN 3"
-    const chapterOnly = trimmed.match(/^([\d]?\s*[A-Za-zÀ-ÿ]+)\s+(\d+)$/u);
+    // Chapitre seul : "Jean 3" / "JHN 3" / "Rm 6"
+    const chapterOnly = trimmed.match(/^([\d]?\s*[A-Za-zÀ-ÿ.]+)\s+(\d+)$/u);
     if (chapterOnly) {
       return `${bookCode(chapterOnly[1]!.trim())}.${chapterOnly[2]}`;
     }

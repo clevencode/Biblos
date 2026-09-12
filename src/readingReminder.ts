@@ -33,7 +33,7 @@ export function buildDailyReadingReminder(
   const passages = extractPassageRefs(day.texte);
   const passageLabel =
     passages.length > 1
-      ? passages.join(" · ")
+      ? passages.join("; ")
       : passages[0] ?? (day.texte.trim() || "Lecture du jour");
   const planTitle = plan.theme?.trim() || plan.nome?.trim() || "Plan";
 

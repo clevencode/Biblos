@@ -1512,7 +1512,15 @@ export function BibleReaderView({
 
         {passage?.verses?.length ? (
           <div
-            className={`bible-verses${selection?.length ? " is-dimming" : ""}`}
+            className={[
+              "bible-verses",
+              selection?.length ? "is-dimming" : "",
+              !selection?.length && (planReading || highlightVerse != null)
+                ? "is-passage-focus"
+                : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
           >
             {passage.verses.map((verse) => {
               const inPlanRange = Boolean(
@@ -1534,13 +1542,12 @@ export function BibleReaderView({
                       planReading.verseEnd ?? planReading.verseStart,
                     )
                   : null;
-              const rangeEnd =
-                planReading?.verseEnd != null
-                  ? Math.max(
-                      planReading.verseStart ?? planReading.verseEnd,
-                      planReading.verseEnd,
-                    )
-                  : null;
+              const inDeeplink =
+                !planReading &&
+                !selection?.length &&
+                highlightVerse != null &&
+                highlightVerse === verse.number;
+              const inRange = inPlanRange || inDeeplink;
               const isRangeAnchor = selection?.length
                 ? highlightVerse === verse.number
                 : planReading
@@ -1550,9 +1557,7 @@ export function BibleReaderView({
                   : highlightVerse === verse.number;
               const active = selection?.length
                 ? highlightVerse === verse.number
-                : planReading
-                  ? inPlanRange
-                  : highlightVerse === verse.number;
+                : isRangeAnchor;
               const selected = verseInSelection(selection, verse.number);
               const markColor = chapterMarks.get(verse.number);
               const markDisplay = markColor
@@ -1560,14 +1565,6 @@ export function BibleReaderView({
                 : null;
               const selEdge = selectionEdgeClass(selection, verse.number);
               const titleLike = isLikelyVerseTitle(verse.text, verse.number);
-              const rangeEdge =
-                planReading && inPlanRange
-                  ? verse.number === rangeStart
-                    ? "is-range-start"
-                    : verse.number === rangeEnd
-                      ? "is-range-end"
-                      : "is-range-mid"
-                  : "";
               return (
                 <button
                   key={verse.number}
@@ -1575,11 +1572,10 @@ export function BibleReaderView({
                   className={[
                     "bible-verse",
                     active ? "is-focus" : "",
+                    inRange ? "is-in-range" : "",
                     selected ? "is-selected" : "",
                     markDisplay ? "is-marked" : "",
                     selEdge,
-                    inPlanRange ? "is-plan-range" : "",
-                    rangeEdge,
                     titleLike ? "is-title" : "",
                   ]
                     .filter(Boolean)
@@ -1591,7 +1587,7 @@ export function BibleReaderView({
                       : undefined
                   }
                   aria-label={`Verset ${verse.number}`}
-                  aria-pressed={selected || inPlanRange}
+                  aria-pressed={selected || inRange}
                   ref={
                     isRangeAnchor
                       ? (el) => {

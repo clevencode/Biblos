@@ -276,6 +276,7 @@ export async function offlineSearch(
   q: string,
   limit = 40,
   bookOrder?: Map<string, number>,
+  bookFilter?: Iterable<string> | null,
 ): Promise<{ ok: true; q: string; total: number; results: BibleSearchHit[] } | { ok: false; error: string }> {
   const query = String(q || "").trim();
   const queryNorm = normalizeSearchText(query);
@@ -291,6 +292,9 @@ export async function offlineSearch(
   const order =
     bookOrder ??
     new Map(books.map((b, i) => [b.id.toUpperCase(), i]));
+  const allowed = bookFilter
+    ? new Set([...bookFilter].map((id) => String(id).toUpperCase()).filter(Boolean))
+    : null;
 
   const db = await openDb();
   let rows: { usfm: string; book: S21BookJson }[] = [];
@@ -308,6 +312,7 @@ export async function offlineSearch(
 
   for (const row of rows) {
     const usfm = String(row.usfm || row.book.usfm || "").toUpperCase();
+    if (allowed && !allowed.has(usfm)) continue;
     const bookTitle = row.book.title || usfm;
     for (const chapter of row.book.chapters ?? []) {
       const chapterNum = Number(chapter.chapter);

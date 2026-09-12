@@ -159,6 +159,7 @@ function FlashCardMenu({
   onReadChapter?: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -178,31 +179,39 @@ function FlashCardMenu({
     };
   }, [open]);
 
+  useEffect(() => {
+    if (!infoOpen) return;
+    function onKey(event: globalThis.KeyboardEvent) {
+      if (event.key === "Escape") setInfoOpen(false);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [infoOpen]);
+
   const showArchive = Boolean(onArchive) && !archived;
   const showUnarchive = Boolean(onUnarchive) && archived;
-  if (!showArchive && !showUnarchive && !onDelete && !onReadChapter) return null;
 
   return (
-    <div
-      className={`flash-card-menu${open ? " is-open" : ""}`}
-      ref={rootRef}
-      onPointerDown={(event) => event.stopPropagation()}
-      onClick={(event) => event.stopPropagation()}
-    >
-      <button
-        type="button"
-        className="flash-card-menu-trigger"
-        aria-label="Options de la carte"
-        aria-haspopup="menu"
-        aria-expanded={open}
-        disabled={disabled}
-        onClick={() => setOpen((value) => !value)}
+    <>
+      <div
+        className={`flash-card-menu${open ? " is-open" : ""}`}
+        ref={rootRef}
+        onPointerDown={(event) => event.stopPropagation()}
+        onClick={(event) => event.stopPropagation()}
       >
-        ⋮
-      </button>
-      {open ? (
-        <ul className="flash-card-menu-list" role="menu">
-          {onReadChapter ? (
+        <button
+          type="button"
+          className="flash-card-menu-trigger"
+          aria-label="Options de la carte"
+          aria-haspopup="menu"
+          aria-expanded={open}
+          disabled={disabled}
+          onClick={() => setOpen((value) => !value)}
+        >
+          ⋮
+        </button>
+        {open ? (
+          <ul className="flash-card-menu-list" role="menu">
             <li role="none">
               <button
                 type="button"
@@ -210,61 +219,129 @@ function FlashCardMenu({
                 className="flash-card-menu-item"
                 onClick={() => {
                   setOpen(false);
-                  onReadChapter();
+                  setInfoOpen(true);
                 }}
               >
-                Lire le chapitre
+                Comment ça marche
               </button>
             </li>
-          ) : null}
-          {showArchive ? (
-            <li role="none">
-              <button
-                type="button"
-                role="menuitem"
-                className="flash-card-menu-item"
-                onClick={() => {
-                  setOpen(false);
-                  onArchive?.();
-                }}
-              >
-                Archiver la carte
-              </button>
-            </li>
-          ) : null}
-          {showUnarchive ? (
-            <li role="none">
-              <button
-                type="button"
-                role="menuitem"
-                className="flash-card-menu-item"
-                onClick={() => {
-                  setOpen(false);
-                  onUnarchive?.();
-                }}
-              >
-                Désarchiver
-              </button>
-            </li>
-          ) : null}
-          {onDelete ? (
-            <li role="none">
-              <button
-                type="button"
-                role="menuitem"
-                className="flash-card-menu-item is-danger"
-                onClick={() => {
-                  setOpen(false);
-                  onDelete();
-                }}
-              >
-                Supprimer la carte
-              </button>
-            </li>
-          ) : null}
-        </ul>
+            {onReadChapter ? (
+              <li role="none">
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="flash-card-menu-item"
+                  onClick={() => {
+                    setOpen(false);
+                    onReadChapter();
+                  }}
+                >
+                  Lire le chapitre
+                </button>
+              </li>
+            ) : null}
+            {showArchive ? (
+              <li role="none">
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="flash-card-menu-item"
+                  onClick={() => {
+                    setOpen(false);
+                    onArchive?.();
+                  }}
+                >
+                  Archiver la carte
+                </button>
+              </li>
+            ) : null}
+            {showUnarchive ? (
+              <li role="none">
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="flash-card-menu-item"
+                  onClick={() => {
+                    setOpen(false);
+                    onUnarchive?.();
+                  }}
+                >
+                  Désarchiver
+                </button>
+              </li>
+            ) : null}
+            {onDelete ? (
+              <li role="none">
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="flash-card-menu-item is-danger"
+                  onClick={() => {
+                    setOpen(false);
+                    onDelete();
+                  }}
+                >
+                  Supprimer la carte
+                </button>
+              </li>
+            ) : null}
+          </ul>
+        ) : null}
+      </div>
+
+      {infoOpen ? (
+        <div
+          className="flash-help-overlay"
+          role="presentation"
+          onClick={() => setInfoOpen(false)}
+          onPointerDown={(event) => event.stopPropagation()}
+        >
+          <div
+            className="flash-help-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="flash-help-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2 id="flash-help-title" className="flash-help-title">
+              Comment ça marche
+            </h2>
+            <div className="flash-help-body">
+              <p>
+                Lis la référence, puis touche <strong>Montrer la réponse</strong>{" "}
+                (ou appuie sur Espace) pour révéler le verset.
+              </p>
+              <p>
+                Note ensuite ta mémorisation — Biblos planifie le prochain rappel
+                (répétition espacée) :
+              </p>
+              <ul className="flash-help-marks">
+                <li>
+                  <strong>Peu</strong> — difficile à retenir · rappel demain
+                </li>
+                <li>
+                  <strong>Moyenne</strong> — souvenir partiel · intervalle moyen
+                </li>
+                <li>
+                  <strong>Facile</strong> — bien retenu · intervalle plus long
+                </li>
+              </ul>
+              <p className="flash-help-foot muted">
+                Plus tu réussis, plus les rappels s’espacent. Une carte terminée
+                peut être archivée depuis ce menu.
+              </p>
+            </div>
+            <button
+              type="button"
+              className="flash-help-close"
+              onClick={() => setInfoOpen(false)}
+            >
+              Compris
+            </button>
+          </div>
+        </div>
       ) : null}
-    </div>
+    </>
   );
 }
 

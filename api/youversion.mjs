@@ -268,19 +268,24 @@ async function getSearchIndex() {
   return searchIndexPromise;
 }
 
-async function searchVerses(q, limit = 40) {
+async function searchVerses(q, limit = 40, bookFilter = null) {
   const query = String(q || "").trim();
   const queryNorm = normalizeSearchText(query);
   if (queryNorm.length < 2) {
     return { q: query, total: 0, results: [] };
   }
   const capped = Math.min(80, Math.max(1, Number(limit) || 40));
+  const allowed =
+    Array.isArray(bookFilter) && bookFilter.length
+      ? new Set(bookFilter.map((id) => String(id).toUpperCase()))
+      : null;
   const index = await getSearchIndex();
   const bookOrder = new Map(CANON.map((row, i) => [row[0], i]));
   const hits = [];
   for (const row of index) {
     if (!row.norm.includes(queryNorm)) continue;
     const book = String(row.usfm).split(".")[0];
+    if (allowed && !allowed.has(book)) continue;
     hits.push({
       usfm: row.usfm,
       bookTitle: row.bookTitle,
@@ -386,7 +391,14 @@ export async function handleYouVersion(req, res) {
     if (action === "search") {
       const q = String(url.searchParams.get("q") || "");
       const limit = Number(url.searchParams.get("limit") || 40);
-      const payload = await searchVerses(q, limit);
+      const booksRaw = String(url.searchParams.get("books") || "").trim();
+      const bookFilter = booksRaw
+        ? booksRaw
+            .split(",")
+            .map((id) => id.trim().toUpperCase())
+            .filter(Boolean)
+        : null;
+      const payload = await searchVerses(q, limit, bookFilter);
       send(200, {
         ok: true,
         hasKey: true,

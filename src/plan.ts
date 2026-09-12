@@ -1,10 +1,11 @@
 import type { PlanDay } from "./types";
+import { expandBibleCitations } from "./youversion/bibleRefs";
 import { isPassageRef, toUsfm } from "./youversion/usfm";
 
 /**
  * Parse le corps / propriété Plan en jours (Texte + Défi).
  * Ne garde que les jours avec une vraie référence de verset.
- * Plusieurs chapitres le même jour : « Ésaïe 6 ; Ésaïe 7 ; Ésaïe 8 ».
+ * Norme : « Jean 3:16, 18 ; 5:24 » · « Rm 6, Rm 8 » · « Jean 3–4 ».
  */
 export function parsePlanDays(raw: string): PlanDay[] {
   const text = String(raw || "")
@@ -74,30 +75,20 @@ export function sanitizePlanDays(days: PlanDay[] | null | undefined): PlanDay[] 
   return uniqueByJour(out);
 }
 
-const PASSAGE_SPLIT = /\s*(?:[;•·|]|\n|\/)\s*/;
-
-/** Toutes les références bibliques d’une ligne (Ésaïe 6 ; Ésaïe 7). */
+/** Toutes les références bibliques d’une ligne (norme internationale). */
 export function extractPassageRefs(raw: string): string[] {
+  const expanded = expandBibleCitations(raw);
+  if (expanded.length) return expanded;
+
+  // Repli legacy : une seule ref reconnue dans un long texte.
   const cleaned = String(raw || "")
     .replace(/\*\*/g, " ")
     .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
     .trim();
   if (!cleaned) return [];
-  const chunks = cleaned
-    .split(PASSAGE_SPLIT)
-    .map((part) => part.replace(/\s+/g, " ").trim())
-    .filter(Boolean);
-  const out: string[] = [];
-  const seen = new Set<string>();
-  for (const chunk of chunks.length ? chunks : [cleaned.replace(/\s+/g, " ").trim()]) {
-    const one = extractOnePassage(chunk);
-    if (!one) continue;
-    const key = one.toLowerCase();
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push(one);
-  }
-  return out;
+  const one = extractOnePassage(cleaned);
+  return one ? [one] : [];
 }
 
 function joinPassageRefs(raw: string): string | null {
@@ -124,6 +115,8 @@ function extractOnePassage(raw: string): string | null {
   ) {
     return null;
   }
+  const expanded = expandBibleCitations(cleaned);
+  if (expanded.length) return expanded[0]!;
   if (isPassageRef(cleaned) && cleaned.length < 80) return cleaned;
 
   const match = cleaned.match(

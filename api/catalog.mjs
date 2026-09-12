@@ -166,7 +166,8 @@ function uniqueDays(days) {
   return [...byJour.values()].sort((a, b) => a.jour - b.jour);
 }
 
-const PASSAGE_SPLIT_CATALOG = /\s*(?:[;•·|]|\n|\/)\s*/;
+const PASSAGE_SPLIT_CATALOG =
+  /\s*(?:[;•·|]|\n|\/|,(?=\s*(?:[123]\s+)?[A-Za-zÀ-ÿ]))\s*/u;
 
 function joinPassageRefsCatalog(raw) {
   const refs = extractPassageRefsCatalog(raw);
