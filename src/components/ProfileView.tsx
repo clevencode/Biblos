@@ -67,7 +67,7 @@ type ProfileTabId = "config" | "library" | "help" | "about";
 
 const PROFILE_TABS: { id: ProfileTabId; label: string }[] = [
   { id: "config", label: "Réglages" },
-  { id: "library", label: "Biblio" },
+  { id: "library", label: "Gardé" },
   { id: "help", label: "Aide" },
   { id: "about", label: "À propos" },
 ];
@@ -133,6 +133,7 @@ export function ProfileView({
   );
   const [savedFlash, setSavedFlash] = useState(false);
   const nameInputRef = useRef<HTMLInputElement>(null);
+  const panelsRef = useRef<HTMLDivElement>(null);
   const [activities, setActivities] = useState<ActivityEvent[]>([]);
   const [readingHistory, setReadingHistory] = useState<ActivityEvent[]>([]);
   const [adminCategory, setAdminCategory] =
@@ -144,6 +145,10 @@ export function ProfileView({
   const [notifPrefs, setNotifPrefs] = useState<NotificationPrefs>(() =>
     loadNotificationPrefs(),
   );
+
+  useEffect(() => {
+    panelsRef.current?.scrollTo({ top: 0 });
+  }, [tab]);
 
   useEffect(() => {
     if (editingName) return;
@@ -440,14 +445,7 @@ export function ProfileView({
                   aria-selected={on}
                   aria-controls={`profile-panel-${id}`}
                   tabIndex={on ? 0 : -1}
-                  onClick={(event) => {
-                    setTab(id);
-                    event.currentTarget.scrollIntoView({
-                      behavior: "smooth",
-                      inline: "center",
-                      block: "nearest",
-                    });
-                  }}
+                  onClick={() => setTab(id)}
                 >
                   <span className="profile-tab-label">{label}</span>
                 </button>
@@ -455,7 +453,7 @@ export function ProfileView({
             })}
           </div>
 
-          <div className="profile-tab-panels">
+          <div className="profile-tab-panels" ref={panelsRef}>
             <div
               id="profile-panel-config"
               role="tabpanel"

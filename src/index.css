@@ -2096,16 +2096,18 @@ body,
   height: 100%;
   min-height: 0;
   max-width: 28rem;
+  width: 100%;
   margin: 0 auto;
-  padding: 12px 18px calc(24px + env(safe-area-inset-bottom, 0px));
-  overflow: auto;
-  display: grid;
+  padding: 12px 18px 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
   gap: 14px;
-  align-content: start;
   background: var(--surface);
 }
 
 .profile-head {
+  flex: none;
   display: flex;
   align-items: flex-start;
   gap: 12px;
@@ -2194,9 +2196,17 @@ body,
 }
 
 .profile-account-session {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
   display: grid;
   gap: 10px;
-  min-width: 0;
+  align-content: start;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
 }
 
 .profile-account-back {
@@ -2239,7 +2249,9 @@ body,
 }
 
 .profile-tabs {
-  display: flex;
+  flex: none;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   align-items: stretch;
   width: 100%;
   margin: 0;
@@ -2248,27 +2260,26 @@ body,
   border-bottom: 1px solid color-mix(in srgb, var(--text) 14%, transparent);
   background: transparent;
   gap: 0;
-  overflow: visible;
 }
 
 .profile-tab {
   position: relative;
-  flex: 1 1 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
   min-width: 0;
   min-height: 40px;
   margin: 0;
-  padding: 10px 2px 12px;
+  padding: 10px 4px 12px;
   border: 0;
   border-radius: 0;
   background: transparent;
   color: color-mix(in srgb, var(--text) 55%, transparent);
   font: inherit;
-  font-size: 0.64rem;
+  font-size: clamp(0.58rem, 2.55vw, 0.72rem);
   font-weight: 600;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
   line-height: 1.15;
   cursor: pointer;
@@ -2289,28 +2300,45 @@ body,
   font-weight: 700;
 }
 
-/* Tabline activo — dentro do botão (não cortado por overflow). */
+/* Tabline activo — largura fixa centrada (sem expandir/encolher com o rótulo). */
 .profile-tab.is-on::after {
   content: "";
   position: absolute;
-  left: 12%;
-  right: 12%;
+  left: 50%;
   bottom: 0;
+  width: 28px;
   height: 2px;
   border-radius: 1px 1px 0 0;
   background: var(--accent);
+  transform: translateX(-50%);
   pointer-events: none;
 }
 
 .profile-tab-label {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  max-width: 100%;
+  overflow: visible;
+  text-overflow: clip;
   white-space: nowrap;
+  text-align: center;
+}
+
+@media (max-width: 360px) {
+  .profile-tab {
+    padding: 10px 2px 12px;
+    letter-spacing: 0.01em;
+  }
 }
 
 .profile-tab-panels {
+  flex: 1 1 auto;
   min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
 }
 
 .profile-tab-panel {
@@ -8553,13 +8581,16 @@ ul.plan-yv-day-note-ref {
   inset: 0;
   z-index: 13;
   display: grid;
-  grid-template-rows: auto auto auto minmax(0, 1fr);
+  /* head · campo · filtros · legenda · lista */
+  grid-template-rows: auto auto auto auto minmax(0, 1fr);
   gap: 6px;
   padding:
     calc(10px + env(safe-area-inset-top, 0px))
     16px
     calc(16px + env(safe-area-inset-bottom, 0px));
-  background:
+  overflow: hidden;
+  background-color: var(--sheet-bg);
+  background-image:
     linear-gradient(
       180deg,
       var(--sheet-bg) 0%,
@@ -8683,7 +8714,7 @@ ul.plan-yv-day-note-ref {
 .bible-search-filters {
   display: grid;
   gap: 8px;
-  padding: 2px 0 0;
+  padding: 0;
 }
 
 .bible-search-scope {
@@ -8999,11 +9030,19 @@ ul.plan-yv-day-note-ref {
 }
 
 .bible-search-sheet-meta {
-  min-height: 1.2em;
-  padding: 0 2px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--muted);
+  position: relative;
+  z-index: 2;
+  isolation: isolate;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 2px 10px 6px;
+  border: 0;
+  background-color: var(--sheet-bg);
+  font-size: 0.72rem;
+  font-weight: 550;
+  letter-spacing: 0.01em;
+  line-height: 1.3;
+  color: color-mix(in srgb, var(--muted) 88%, var(--text));
 }
 
 .bible-search-sheet-error {
@@ -9011,12 +9050,17 @@ ul.plan-yv-day-note-ref {
 }
 
 .bible-search-sheet-list {
+  position: relative;
+  z-index: 0;
+  isolation: isolate;
   list-style: none;
   margin: 0;
   padding: 0 0 8px;
+  min-height: 0;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
+  background-color: var(--sheet-bg);
 }
 
 .bible-search-sheet-item {
