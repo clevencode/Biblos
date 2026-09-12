@@ -30,20 +30,15 @@ import { BibleAudioPlayer } from "./BibleAudioPlayer";
 import { BibleSearchSheet } from "./BibleSearchSheet";
 import { createVerseFlashcard, verseCardId } from "../verseCard";
 import {
-  COLOR_HARMONIES,
-  MAX_VERSE_PALETTES,
   VERSE_COLORS,
-  generateDarkPalette,
+  addFavoriteVerseColor,
   isPresetVerseColor,
+  loadFavoriteVerseColors,
   loadPreferredVerseColor,
-  loadVersePalettes,
   normalizeVerseColor,
-  pushVersePalette,
-  removeVersePalette,
+  removeFavoriteVerseColor,
   savePreferredVerseColor,
   verseActionTone,
-  type ColorHarmonyId,
-  type VersePalette,
 } from "../verseColors";
 import { loadChapterMarks, setVerseMarks } from "../verseMarks";
 import type { Flashcard } from "../types";
@@ -361,9 +356,7 @@ export function BibleReaderView({
   const [chapterMarks, setChapterMarks] = useState<ReadonlyMap<number, string>>(
     () => new Map(),
   );
-  const [paletteOpen, setPaletteOpen] = useState(false);
-  const [harmonyId, setHarmonyId] = useState<ColorHarmonyId>("analogous");
-  const [savedPalettes, setSavedPalettes] = useState<VersePalette[]>(() => loadVersePalettes());
+  const [favoriteColors, setFavoriteColors] = useState<string[]>(() => loadFavoriteVerseColors());
   const [chromeHidden, setChromeHidden] = useState(false);
   const [audioByUsfm, setAudioByUsfm] = useState<Record<string, BibleAudioEpisode>>({});
   const [audioPodcast, setAudioPodcast] = useState("Bible | Podcast.s21");
@@ -586,7 +579,7 @@ export function BibleReaderView({
     nextBook: string,
     nextChapter: string,
     verse: number | null = null,
-    verseEnd: number | null = null,
+    _verseEnd: number | null = null,
   ) {
     const gen = ++loadGen.current;
     pendingScrollVerse.current =
@@ -690,16 +683,6 @@ export function BibleReaderView({
     setHighlightVerse(null);
     setCardMsg(null);
     setCardColor(loadPreferredVerseColor());
-    setPaletteOpen(false);
-  }
-
-  function generateAndSavePalette() {
-    const colors = generateDarkPalette(harmonyId);
-    setSavedPalettes(pushVersePalette(harmonyId, colors));
-    const first = colors[0];
-    if (first) {
-      pickVerseColor(first);
-    }
   }
 
   async function makeFlashcard() {
@@ -820,6 +803,9 @@ export function BibleReaderView({
     if (!selection?.length) return;
     const next = normalizeVerseColor(hex);
     pickVerseColor(next);
+    if (!isPresetVerseColor(next)) {
+      setFavoriteColors(addFavoriteVerseColor(next));
+    }
     setChapterMarks(setVerseMarks(bookId, chapterId, selection, next));
     closeCreateCard();
   }
@@ -830,10 +816,26 @@ export function BibleReaderView({
     closeCreateCard();
   }
 
+  /** × sur le cercle : retire le favori et/ou le surlignage actif. */
+  function removeColorCircle(hex: string) {
+    const next = normalizeVerseColor(hex);
+    if (!isPresetVerseColor(next)) {
+      setFavoriteColors(removeFavoriteVerseColor(next));
+    }
+    const marksThis =
+      selectionHasMark &&
+      selectedVerses.some((n) => chapterMarks.get(n) === next);
+    if (marksThis || (selectionHasMark && activeVerseColor === next)) {
+      clearSelectionMarks();
+    }
+  }
+
   const actionTone = useMemo(() => verseActionTone(cardColor), [cardColor]);
   const activeVerseColor = normalizeVerseColor(cardColor);
-  const customColorOn = !isPresetVerseColor(activeVerseColor);
   const selectionHasMark = selectedVerses.some((n) => chapterMarks.has(n));
+  const favoriteActive = favoriteColors.includes(activeVerseColor);
+  /** Cercle chromatique « sélectionné » seulement si la couleur n’est pas déjà un favori. */
+  const customColorOn = !isPresetVerseColor(activeVerseColor) && !favoriteActive;
 
   const showCreateCard = Boolean(selectedVerses.length && selectedVerseText && !pickerOpen);
   const forceChrome = pickerOpen || showCreateCard || audioPlayerOpen || searchOpen;
@@ -1426,122 +1428,92 @@ export function BibleReaderView({
 
           <div className="bible-verse-action-block">
             <p className="bible-verse-action-label">Marquer</p>
+
             <div className="bible-verse-colors" role="group" aria-label="Couleur du surligneur">
               {VERSE_COLORS.map((swatch) => {
                 const on = activeVerseColor === swatch.hex;
+                const showRemove = on && selectionHasMark;
                 return (
-                  <button
-                    key={swatch.id}
-                    type="button"
-                    className={`bible-verse-color${on ? " is-on" : ""}`}
-                    style={{ ["--swatch" as string]: swatch.hex }}
-                    aria-label={`Marquer · ${swatch.label}`}
-                    aria-pressed={on}
-                    onClick={() => {
-                      setPaletteOpen(false);
-                      markSelection(swatch.hex);
-                    }}
-                  />
+                  <span key={swatch.id} className="bible-verse-color-wrap">
+                    <button
+                      type="button"
+                      className={`bible-verse-color${on ? " is-on" : ""}`}
+                      style={{ ["--swatch" as string]: swatch.hex }}
+                      aria-label={`Marquer · ${swatch.label}`}
+                      aria-pressed={on}
+                      onClick={() => markSelection(swatch.hex)}
+                    />
+                    {showRemove ? (
+                      <button
+                        type="button"
+                        className="bible-verse-color-remove"
+                        aria-label={`Retirer · ${swatch.label}`}
+                        onClick={() => removeColorCircle(swatch.hex)}
+                      >
+                        ×
+                      </button>
+                    ) : null}
+                  </span>
                 );
               })}
-              <button
-                type="button"
-                className={`bible-verse-color bible-verse-color-custom${paletteOpen || customColorOn ? " is-on" : ""}`}
-                style={
-                  customColorOn
-                    ? ({ ["--swatch" as string]: activeVerseColor } as CSSProperties)
-                    : undefined
-                }
-                aria-label="Générer une palette"
-                aria-expanded={paletteOpen}
-                title="Palette"
-                onClick={() => setPaletteOpen((open) => !open)}
-              >
-                {!customColorOn ? (
-                  <span className="bible-verse-color-plus" aria-hidden>
-                    +
-                  </span>
+              <span className="bible-verse-color-wrap">
+                <label
+                  className={`bible-verse-color bible-verse-color-custom${customColorOn ? " is-on" : ""}`}
+                  style={
+                    customColorOn
+                      ? ({ ["--swatch" as string]: activeVerseColor } as CSSProperties)
+                      : undefined
+                  }
+                  title="Couleur personnalisée"
+                >
+                  <input
+                    type="color"
+                    className="bible-verse-color-picker"
+                    value={activeVerseColor}
+                    aria-label="Couleur personnalisée"
+                    onChange={(event) => markSelection(event.target.value)}
+                  />
+                  {!customColorOn ? (
+                    <span className="bible-verse-color-plus" aria-hidden>
+                      +
+                    </span>
+                  ) : null}
+                </label>
+                {customColorOn && selectionHasMark ? (
+                  <button
+                    type="button"
+                    className="bible-verse-color-remove"
+                    aria-label="Retirer la couleur"
+                    onClick={() => removeColorCircle(activeVerseColor)}
+                  >
+                    ×
+                  </button>
                 ) : null}
-              </button>
-              {selectionHasMark ? (
-                <button
-                  type="button"
-                  className="bible-verse-color bible-verse-color-clear"
-                  aria-label="Retirer le surlignage"
-                  title="Retirer"
-                  onClick={clearSelectionMarks}
-                >
-                  ×
-                </button>
-              ) : null}
+              </span>
+              {favoriteColors.map((hex) => {
+                const on = activeVerseColor === hex;
+                return (
+                  <span key={hex} className="bible-verse-color-wrap">
+                    <button
+                      type="button"
+                      className={`bible-verse-color${on ? " is-on" : ""}`}
+                      style={{ ["--swatch" as string]: hex }}
+                      aria-label="Marquer · couleur favorite"
+                      aria-pressed={on}
+                      onClick={() => markSelection(hex)}
+                    />
+                    <button
+                      type="button"
+                      className="bible-verse-color-remove"
+                      aria-label="Retirer des favoris"
+                      onClick={() => removeColorCircle(hex)}
+                    >
+                      ×
+                    </button>
+                  </span>
+                );
+              })}
             </div>
-
-            {paletteOpen ? (
-              <div className="bible-verse-palette" role="region" aria-label="Générateur de palette">
-                <p className="bible-verse-palette-hint muted">
-                  Combinaison · tons sombres (thème clair) · max {MAX_VERSE_PALETTES}
-                </p>
-                <div className="bible-verse-harmony" role="group" aria-label="Combinaison">
-                  {COLOR_HARMONIES.map((item) => {
-                    const on = harmonyId === item.id;
-                    return (
-                      <button
-                        key={item.id}
-                        type="button"
-                        className={`bible-verse-harmony-chip${on ? " is-on" : ""}`}
-                        aria-pressed={on}
-                        onClick={() => setHarmonyId(item.id)}
-                      >
-                        {item.label}
-                      </button>
-                    );
-                  })}
-                </div>
-                <button
-                  type="button"
-                  className="bible-verse-palette-gen"
-                  onClick={generateAndSavePalette}
-                >
-                  Générer palette
-                </button>
-                {savedPalettes.length ? (
-                  <ul className="bible-verse-palette-list">
-                    {savedPalettes.map((palette) => (
-                      <li key={palette.id} className="bible-verse-palette-row">
-                        <div className="bible-verse-palette-swatches">
-                          {palette.colors.map((hex) => {
-                            const on = activeVerseColor === normalizeVerseColor(hex);
-                            return (
-                              <button
-                                key={`${palette.id}-${hex}`}
-                                type="button"
-                                className={`bible-verse-color${on ? " is-on" : ""}`}
-                                style={{ ["--swatch" as string]: hex }}
-                                aria-label={`Marquer · ${hex}`}
-                                aria-pressed={on}
-                                onClick={() => markSelection(hex)}
-                              />
-                            );
-                          })}
-                        </div>
-                        <button
-                          type="button"
-                          className="bible-verse-palette-remove"
-                          aria-label="Supprimer la palette"
-                          onClick={() => setSavedPalettes(removeVersePalette(palette.id))}
-                        >
-                          ×
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="bible-verse-palette-empty muted">
-                    Choisis une combinaison, puis génère.
-                  </p>
-                )}
-              </div>
-            ) : null}
           </div>
 
           <div className="bible-verse-action-block">
