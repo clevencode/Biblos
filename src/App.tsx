@@ -3,10 +3,24 @@ import seed from "./data/seed.json";
 import { FlashcardDeck } from "./components/FlashcardDeck";
 import { InboxView } from "./components/InboxView";
 import { ModeTabIcon } from "./components/ModeTabIcon";
+import { ProfileOnboarding } from "./components/ProfileOnboarding";
+import { ProfileView } from "./components/ProfileView";
 import { TodayView } from "./components/TodayView";
 import { PlanGallery } from "./components/PlanGallery";
 import { BibleReaderView } from "./components/BibleReaderView";
 import type { Catalog, CenterMode, Flashcard, ReadingPlan, Seed } from "./types";
+import { appendActivity, recordBibleRead } from "./activityLog";
+import { listAllVerseMarks } from "./verseMarks";
+import {
+  completeOnboarding,
+  isProfileOnboarded,
+  loadOrCreateProfile,
+  preferredDisplayName,
+  saveUserProfile,
+  type UserProfile,
+} from "./userProfile";
+import { syncUserProfileToNotion } from "./userProfileSync";
+import { flushActivityNotionSync } from "./activitySync";
 import {
   buildInbox,
   buildTimeline,
@@ -51,6 +65,7 @@ const modes: { id: CenterMode; label: string }[] = [
   { id: "bible", label: "Lecture" },
   { id: "cards", label: "Cartes" },
   { id: "inbox", label: "Rappel" },
+  { id: "profile", label: "Profil" },
 ];
 
 type UiSession = {
@@ -117,6 +132,16 @@ export function App() {
   const [retentionTick, setRetentionTick] = useState(0);
   const [bibleChromeHidden, setBibleChromeHidden] = useState(false);
   const [themePref, setThemePref] = useState<ThemePref>(() => loadThemePref());
+  const [profile, setProfile] = useState<UserProfile>(() => loadOrCreateProfile());
+  const [activityTick, setActivityTick] = useState(0);
+  const openedLogged = useRef(false);
+
+  useEffect(() => {
+    if (openedLogged.current || !isProfileOnboarded(profile)) return;
+    openedLogged.current = true;
+    appendActivity("app.open", undefined, profile.id);
+    setActivityTick((n) => n + 1);
+  }, [profile]);
 
   useEffect(() => {
     const resolved = applyTheme(themePref);
@@ -131,6 +156,59 @@ export function App() {
     const next = nextThemePref(themePref);
     saveThemePref(next);
     setThemePref(next);
+    if (isProfileOnboarded(profile)) {
+      appendActivity("theme.change", { pref: next }, profile.id);
+      setActivityTick((n) => n + 1);
+    }
+  }
+
+  function setThemePreference(pref: ThemePref) {
+    saveThemePref(pref);
+    setThemePref(pref);
+    if (isProfileOnboarded(profile)) {
+      appendActivity("theme.change", { pref }, profile.id);
+      setActivityTick((n) => n + 1);
+    }
+  }
+
+  function finishOnboarding(input: {
+    firstName: string;
+    lastName: string;
+    preferredName: string;
+  }) {
+    const next = completeOnboarding(input);
+    setProfile(next);
+    appendActivity(
+      "onboarding.complete",
+      { name: preferredDisplayName(next) },
+      next.id,
+    );
+    openedLogged.current = true;
+    appendActivity("app.open", undefined, next.id);
+    setActivityTick((n) => n + 1);
+    setHome(true);
+    setMode("today");
+    void syncUserProfileToNotion(next).then(() => flushActivityNotionSync());
+  }
+
+  function handleProfileSave(input: {
+    firstName: string;
+    lastName: string;
+    preferredName: string;
+  }) {
+    const next = saveUserProfile({
+      firstName: input.firstName,
+      lastName: input.lastName,
+      preferredName: input.preferredName,
+    });
+    setProfile(next);
+    appendActivity(
+      "profile.update",
+      { name: preferredDisplayName(next) },
+      next.id,
+    );
+    setActivityTick((n) => n + 1);
+    void syncUserProfileToNotion(next).then(() => flushActivityNotionSync());
   }
 
   const activePlan = useMemo(
@@ -177,6 +255,17 @@ export function App() {
     setCardFocusId(cardId);
     setCardFocusSeq((value) => value + 1);
   }
+  const allFlashcards = useMemo(
+    () => listAllFlashcards(notes, null).map(mergeCard),
+    [notes, retentionTick],
+  );
+  const savedVerses = useMemo(() => {
+    void mode;
+    void activityTick;
+    void retentionTick;
+    return listAllVerseMarks();
+  }, [mode, activityTick, retentionTick]);
+
   const timeline = useMemo(
     () => buildTimeline(notes, scopedCardIds),
     [scopedCardIds, notes, retentionTick],
@@ -338,6 +427,12 @@ export function App() {
     if (!activePlan) return;
     markDayRead(activePlan.id, jour);
     setPlanProgressTick((value) => value + 1);
+    appendActivity(
+      "plan.day_read",
+      { planId: activePlan.id, jour },
+      profile.id,
+    );
+    setActivityTick((n) => n + 1);
   }
 
   function handleRestartPlan() {
@@ -393,6 +488,13 @@ export function App() {
     });
     setRetentionTick((value) => value + 1);
 
+    appendActivity(
+      "flashcard.create",
+      { cardId: card.id, frente: card.frente?.slice(0, 80) ?? "" },
+      profile.id,
+    );
+    setActivityTick((n) => n + 1);
+
     void (async () => {
       const { syncVerseCardToNotion, attachNotionUrlToCatalog } = await import("./verseCardSync");
       const result = await syncVerseCardToNotion(card);
@@ -440,6 +542,8 @@ export function App() {
     />
   );
 
+  const onboarded = isProfileOnboarded(profile);
+
   return (
     <div
       className={`app biblos-shell${narrow ? " is-narrow" : ""}${mode === "bible" ? " is-bible-mode" : ""}${bibleChromeHidden ? " is-bible-chrome-hidden" : ""}`}
@@ -447,6 +551,9 @@ export function App() {
       <a className="skip" href="#workspace">
         Aller au contenu
       </a>
+      {!onboarded ? (
+        <ProfileOnboarding onComplete={finishOnboarding} />
+      ) : null}
       {!dismissNotionBanner && (notionHealth === "no-token" || notionHealth === "down") ? (
         <div className="sync-health-banner" role="status">
           <p>
@@ -580,6 +687,24 @@ export function App() {
                     onReadingChromeChange={setBibleChromeHidden}
                     themePref={themePref}
                     onCycleTheme={cycleTheme}
+                    onVerseMarked={({ color, verseCount }) => {
+                      appendActivity(
+                        "verse.mark",
+                        { color, verseCount },
+                        profile.id,
+                      );
+                      setActivityTick((n) => n + 1);
+                    }}
+                    onBibleRead={(payload) => {
+                      const logged = recordBibleRead({
+                        ...payload,
+                        userId: profile.id,
+                      });
+                      if (logged) setActivityTick((n) => n + 1);
+                    }}
+                    onReadingHistoryChange={() => {
+                      setActivityTick((n) => n + 1);
+                    }}
                   />
                 </div>
                 <div
@@ -612,6 +737,37 @@ export function App() {
                     active={mode === "inbox"}
                     splitLayout={splitLayout}
                     onReadChapter={openCardChapter}
+                  />
+                </div>
+                <div
+                  id="panel-profile"
+                  role="tabpanel"
+                  aria-labelledby="tab-profile"
+                  hidden={mode !== "profile"}
+                  className="pane-body"
+                >
+                  <ProfileView
+                    profile={profile}
+                    themePref={themePref}
+                    onThemePrefChange={setThemePreference}
+                    onProfileSave={handleProfileSave}
+                    activityTick={activityTick}
+                    savedVerses={savedVerses}
+                    flashcards={allFlashcards}
+                    onOpenVerse={(mark) => {
+                      openPassageInBible(`${mark.bookId}.${mark.chapterId}.${mark.verse}`);
+                    }}
+                    onOpenFlashcard={openVerseFlashcard}
+                    onOpenReading={({ bookId, chapterId, verse }) => {
+                      const ref =
+                        verse != null
+                          ? `${bookId}.${chapterId}.${verse}`
+                          : `${bookId}.${chapterId}`;
+                      openPassageInBible(ref);
+                    }}
+                    onReadingHistoryChange={() => {
+                      setActivityTick((n) => n + 1);
+                    }}
                   />
                 </div>
               </div>

@@ -19,7 +19,8 @@
     "bible:s21": "node scripts/convert-s21.mjs",
     "test:reminder": "npx --yes tsx scripts/test-reading-reminder.ts",
     "sync:cards": "node scripts/sync-flashcards.mjs --apply",
-    "sync:cards:dry": "node scripts/sync-flashcards.mjs --dry-run"
+    "sync:cards:dry": "node scripts/sync-flashcards.mjs --dry-run",
+    "setup:user-dbs": "node scripts/setup-user-notion-dbs.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.1",

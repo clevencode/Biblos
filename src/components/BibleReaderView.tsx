@@ -15,6 +15,7 @@ import {
   ChevronDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  ClockIcon,
   ComputerDesktopIcon,
   EllipsisHorizontalIcon,
   MagnifyingGlassIcon,
@@ -41,6 +42,7 @@ import {
   type BibleAudioEpisode,
 } from "../youversion/audio";
 import { BibleAudioPlayer } from "./BibleAudioPlayer";
+import { BibleHistorySheet } from "./BibleHistorySheet";
 import { BibleSearchSheet } from "./BibleSearchSheet";
 import { CircularColorEditor } from "./CircularColorEditor";
 import { createVerseFlashcard, verseCardId } from "../verseCard";
@@ -215,6 +217,17 @@ type BibleReaderViewProps = {
   themePref?: ThemePref;
   /** Cycle le thème (clair → sombre → système). */
   onCycleTheme?: () => void;
+  /** Activité : verset marqué. */
+  onVerseMarked?: (payload: { color: string; verseCount: number }) => void;
+  /** Activité : chapitre lu / ouvert. */
+  onBibleRead?: (payload: {
+    bookId: string;
+    chapterId: string;
+    verse: number | null;
+    label: string;
+  }) => void;
+  /** Historique de lecture modifié (suppression). */
+  onReadingHistoryChange?: () => void;
 };
 
 /** Ids USFM (JHN, 1SA) — ignore un livre fantôme type VERSECARD. */
@@ -362,6 +375,9 @@ export function BibleReaderView({
   onReadingChromeChange,
   themePref = "system",
   onCycleTheme,
+  onVerseMarked,
+  onBibleRead,
+  onReadingHistoryChange,
 }: BibleReaderViewProps) {
   const prefs = readPrefs();
   const prefsBookOk = isUsfmBookId(prefs.bookId || "");
@@ -406,6 +422,7 @@ export function BibleReaderView({
   const [audioTime, setAudioTime] = useState(0);
   const [audioDuration, setAudioDuration] = useState(0);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [toolsMenuOpen, setToolsMenuOpen] = useState(false);
   const toolsMenuRef = useRef<HTMLDivElement | null>(null);
   const [offlineReady, setOfflineReady] = useState(false);
@@ -676,6 +693,17 @@ export function BibleReaderView({
     setError(null);
     if (result.bibleId) setBibleId(result.bibleId);
     if (result.bible) setBible(result.bible);
+    const bookTitle = result.passage.book?.name || nextBook;
+    const label =
+      verse != null
+        ? `${bookTitle} ${nextChapter}.${verse}`
+        : `${bookTitle} ${nextChapter}`;
+    onBibleRead?.({
+      bookId: nextBook,
+      chapterId: nextChapter,
+      verse,
+      label,
+    });
   }
 
   function goAdjacent(delta: -1 | 1) {
@@ -925,6 +953,7 @@ export function BibleReaderView({
       setFavoriteColors(addFavoriteVerseColor(next));
     }
     setChapterMarks(setVerseMarks(bookId, chapterId, selection, next));
+    onVerseMarked?.({ color: next, verseCount: selection.length });
     closeCreateCard();
   }
 
@@ -1000,7 +1029,13 @@ export function BibleReaderView({
   }
 
   const showCreateCard = Boolean(selectedVerses.length && selectedVerseText && !pickerOpen);
-  const forceChrome = pickerOpen || showCreateCard || audioPlayerOpen || searchOpen || toolsMenuOpen;
+  const forceChrome =
+    pickerOpen ||
+    showCreateCard ||
+    audioPlayerOpen ||
+    searchOpen ||
+    historyOpen ||
+    toolsMenuOpen;
   const hideChrome = chromeHidden && !forceChrome;
   forceChromeRef.current = forceChrome;
 
@@ -1095,6 +1130,18 @@ export function BibleReaderView({
             >
               <MagnifyingGlassIcon className="bible-yv-tools-item-icon" aria-hidden />
               <span>Rechercher</span>
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              className="bible-yv-tools-item"
+              onClick={() => {
+                setToolsMenuOpen(false);
+                setHistoryOpen(true);
+              }}
+            >
+              <ClockIcon className="bible-yv-tools-item-icon" aria-hidden />
+              <span>Historique</span>
             </button>
             <div className="bible-yv-tools-font" role="group" aria-label="Taille du texte">
               <span className="bible-yv-tools-font-label">Texte</span>
@@ -2044,6 +2091,17 @@ export function BibleReaderView({
           setPickerOpen(false);
           void loadChapter(hit.usfm.split(".")[0]!, String(hit.chapter), hit.verse);
         }}
+      />
+
+      <BibleHistorySheet
+        open={historyOpen}
+        onClose={() => setHistoryOpen(false)}
+        onSelect={({ bookId, chapterId, verse }) => {
+          setHistoryOpen(false);
+          setPickerOpen(false);
+          void loadChapter(bookId, chapterId, verse);
+        }}
+        onHistoryChange={onReadingHistoryChange}
       />
     </section>
   );

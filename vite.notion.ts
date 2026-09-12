@@ -3,7 +3,7 @@ import { loadEnv, type Plugin } from "vite";
 import { runFlashcardSync, type SyncBody } from "./server/notionFlashcardSync.ts";
 import { handleYouVersion } from "./api/youversion.mjs";
 import { handleBibleAudio } from "./api/bible-audio.mjs";
-import { fetchNotionDescription, createVerseCard, archiveVerseCard, fetchPlanDayNote, upsertPlanDayNote } from "./shared/notion.mjs";
+import { fetchNotionDescription, createVerseCard, archiveVerseCard, fetchPlanDayNote, upsertPlanDayNote, upsertUserProfile, createActivityEvent, createAdminMessage } from "./shared/notion.mjs";
 
 function readBody(req: IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -197,11 +197,77 @@ async function handlePlanDayNote(req: IncomingMessage, res: ServerResponse, toke
   send(res, result.ok || result.hasToken === false ? 200 : 400, result);
 }
 
+async function handleUserProfile(req: IncomingMessage, res: ServerResponse, token: string) {
+  if (req.method === "OPTIONS") {
+    res.statusCode = 204;
+    res.end();
+    return;
+  }
+  if (req.method !== "POST") {
+    send(res, 405, { ok: false, error: "méthode invalide" });
+    return;
+  }
+  let body: Record<string, unknown> = {};
+  try {
+    body = JSON.parse(await readBody(req)) as Record<string, unknown>;
+  } catch {
+    send(res, 400, { ok: false, error: "JSON inválido" });
+    return;
+  }
+  const result = await upsertUserProfile(token, body);
+  send(res, result.ok || result.hasToken === false ? 200 : 400, result);
+}
+
+async function handleActivity(req: IncomingMessage, res: ServerResponse, token: string) {
+  if (req.method === "OPTIONS") {
+    res.statusCode = 204;
+    res.end();
+    return;
+  }
+  if (req.method !== "POST") {
+    send(res, 405, { ok: false, error: "méthode invalide" });
+    return;
+  }
+  let body: Record<string, unknown> = {};
+  try {
+    body = JSON.parse(await readBody(req)) as Record<string, unknown>;
+  } catch {
+    send(res, 400, { ok: false, error: "JSON inválido" });
+    return;
+  }
+  const result = await createActivityEvent(token, body);
+  send(res, result.ok || result.hasToken === false ? 200 : 400, result);
+}
+
+async function handleAdminMessage(req: IncomingMessage, res: ServerResponse, token: string) {
+  if (req.method === "OPTIONS") {
+    res.statusCode = 204;
+    res.end();
+    return;
+  }
+  if (req.method !== "POST") {
+    send(res, 405, { ok: false, error: "méthode invalide" });
+    return;
+  }
+  let body: Record<string, unknown> = {};
+  try {
+    body = JSON.parse(await readBody(req)) as Record<string, unknown>;
+  } catch {
+    send(res, 400, { ok: false, error: "JSON inválido" });
+    return;
+  }
+  const result = await createAdminMessage(token, body);
+  send(res, result.ok || result.hasToken === false ? 200 : 400, result);
+}
+
 export function notionFlashcardPlugin(mode: string): Plugin {
   const env = loadEnv(mode, process.cwd(), "");
   const token = env.NOTION_TOKEN || "";
   if (env.NOTION_BIBLECARDS_DB) process.env.NOTION_BIBLECARDS_DB = env.NOTION_BIBLECARDS_DB;
   if (env.NOTION_PLAN_DB) process.env.NOTION_PLAN_DB = env.NOTION_PLAN_DB;
+  if (env.NOTION_PROFILE_DB) process.env.NOTION_PROFILE_DB = env.NOTION_PROFILE_DB;
+  if (env.NOTION_ACTIVITY_DB) process.env.NOTION_ACTIVITY_DB = env.NOTION_ACTIVITY_DB;
+  if (env.NOTION_MESSAGES_DB) process.env.NOTION_MESSAGES_DB = env.NOTION_MESSAGES_DB;
   if (env.NOTION_TOKEN) process.env.NOTION_TOKEN = env.NOTION_TOKEN;
 
   const mount = (server: {
@@ -227,6 +293,15 @@ export function notionFlashcardPlugin(mode: string): Plugin {
     });
     server.middlewares.use("/api/plan-day-note", (req, res) => {
       void handlePlanDayNote(req, res, token);
+    });
+    server.middlewares.use("/api/user-profile", (req, res) => {
+      void handleUserProfile(req, res, token);
+    });
+    server.middlewares.use("/api/activity", (req, res) => {
+      void handleActivity(req, res, token);
+    });
+    server.middlewares.use("/api/admin-message", (req, res) => {
+      void handleAdminMessage(req, res, token);
     });
   };
   return {

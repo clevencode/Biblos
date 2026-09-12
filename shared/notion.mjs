@@ -685,3 +685,302 @@ export async function fetchPlanDayNote(token, input = {}) {
     return { ok: false, error: message, hasToken: true, body: "" };
   }
 }
+
+/* —— Profil utilisateur + activité (cloud Notion) —— */
+
+export function profileDatabaseId() {
+  return env("NOTION_PROFILE_DB", "");
+}
+
+export function activityDatabaseId() {
+  return env("NOTION_ACTIVITY_DB", "");
+}
+
+function richTextProp(content) {
+  const text = String(content ?? "").slice(0, 2000);
+  if (!text) return { rich_text: [] };
+  return { rich_text: [{ type: "text", text: { content: text } }] };
+}
+
+function titleProp(content) {
+  return {
+    title: [{ type: "text", text: { content: String(content ?? "").slice(0, 2000) || "—" } }],
+  };
+}
+
+function dateProp(iso) {
+  if (!iso) return { date: null };
+  const start = String(iso).slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(start)) return { date: null };
+  return { date: { start } };
+}
+
+function isoDateTimeProp(iso) {
+  if (!iso) return { date: null };
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return { date: null };
+  return { date: { start: d.toISOString() } };
+}
+
+/** Cherche une page par propriété LocalId (rich_text). */
+export async function findPageByLocalId(token, databaseId, localId) {
+  const id = String(localId || "").trim();
+  const db = String(databaseId || "").trim();
+  if (!token || !db || !id) return null;
+  const { ok, response, detail } = await notionFetch(
+    `https://api.notion.com/v1/databases/${db}/query`,
+    {
+      method: "POST",
+      headers: notionHeaders(token, { "Content-Type": "application/json" }),
+      body: JSON.stringify({
+        page_size: 1,
+        filter: {
+          property: "LocalId",
+          rich_text: { equals: id },
+        },
+      }),
+    },
+  );
+  if (!ok) {
+    console.warn("[notion] findPageByLocalId", humanizeCreateError(response?.status ?? 0, detail));
+    return null;
+  }
+  const body = await response.json().catch(() => ({}));
+  const page = body.results?.[0];
+  return page?.id ? { id: page.id, url: notionPageUrl(page.id) } : null;
+}
+
+/**
+ * Crée ou met à jour le profil dans NOTION_PROFILE_DB.
+ * Déduplique via LocalId = UUID local.
+ */
+export async function upsertUserProfile(token, input = {}) {
+  if (!token) {
+    return { ok: false, error: "NOTION_TOKEN em falta", hasToken: false };
+  }
+  const databaseId = profileDatabaseId();
+  if (!databaseId) {
+    return { ok: false, error: "NOTION_PROFILE_DB em falta", hasToken: true };
+  }
+  const localId = String(input.localId || input.id || "").trim();
+  if (!localId) {
+    return { ok: false, error: "localId em falta", hasToken: true };
+  }
+
+  const firstName = String(input.firstName || "").trim();
+  const lastName = String(input.lastName || "").trim();
+  const preferredName =
+    String(input.preferredName || "").trim() ||
+    [firstName, lastName].filter(Boolean).join(" ") ||
+    "Lecteur";
+  const nowIso = new Date().toISOString();
+
+  const properties = {
+    Name: titleProp(preferredName),
+    LocalId: richTextProp(localId),
+    FirstName: richTextProp(firstName),
+    LastName: richTextProp(lastName),
+    PreferredName: richTextProp(preferredName),
+    CreatedAt: dateProp(input.createdAt || nowIso),
+    OnboardedAt: dateProp(input.onboardedAt || null),
+    UpdatedAt: dateProp(nowIso),
+  };
+
+  let pageId = pageIdFromNotionUrl(input.notionUrl || input.pageId || "");
+  if (!pageId) {
+    const found = await findPageByLocalId(token, databaseId, localId);
+    if (found) pageId = found.id;
+  }
+
+  if (pageId) {
+    const { ok, response, detail } = await notionFetch(`https://api.notion.com/v1/pages/${pageId}`, {
+      method: "PATCH",
+      headers: notionHeaders(token, { "Content-Type": "application/json" }),
+      body: JSON.stringify({ properties }),
+    });
+    if (!ok) {
+      return {
+        ok: false,
+        hasToken: true,
+        error: humanizeCreateError(response?.status ?? 0, detail),
+      };
+    }
+    return { ok: true, hasToken: true, localId, pageId, url: notionPageUrl(pageId), created: false };
+  }
+
+  const { ok, response, detail } = await notionFetch("https://api.notion.com/v1/pages", {
+    method: "POST",
+    headers: notionHeaders(token, { "Content-Type": "application/json" }),
+    body: JSON.stringify({
+      parent: { database_id: databaseId },
+      properties,
+    }),
+  });
+  if (!ok) {
+    return {
+      ok: false,
+      hasToken: true,
+      error: humanizeCreateError(response?.status ?? 0, detail),
+    };
+  }
+  const page = await response.json();
+  return {
+    ok: true,
+    hasToken: true,
+    localId,
+    pageId: page.id,
+    url: notionPageUrl(page.id),
+    created: true,
+  };
+}
+
+/**
+ * Crée un événement d'activité (idempotent via LocalId).
+ */
+export async function createActivityEvent(token, input = {}) {
+  if (!token) {
+    return { ok: false, error: "NOTION_TOKEN em falta", hasToken: false };
+  }
+  const databaseId = activityDatabaseId();
+  if (!databaseId) {
+    return { ok: false, error: "NOTION_ACTIVITY_DB em falta", hasToken: true };
+  }
+  const localId = String(input.localId || input.id || "").trim();
+  const userId = String(input.userId || "").trim();
+  const type = String(input.type || "app.open").trim();
+  if (!localId || !userId) {
+    return { ok: false, error: "localId ou userId em falta", hasToken: true };
+  }
+
+  const existing = await findPageByLocalId(token, databaseId, localId);
+  if (existing) {
+    return {
+      ok: true,
+      hasToken: true,
+      localId,
+      pageId: existing.id,
+      url: existing.url,
+      created: false,
+      skipped: true,
+    };
+  }
+
+  const displayName = String(input.displayName || "").trim();
+  const title = displayName || type;
+  const metaJson = input.meta != null ? JSON.stringify(input.meta).slice(0, 1900) : "";
+  const atIso = input.at || new Date().toISOString();
+
+  const properties = {
+    Name: titleProp(title.slice(0, 120)),
+    LocalId: richTextProp(localId),
+    UserId: richTextProp(userId),
+    Type: { select: { name: type.slice(0, 100) } },
+    At: isoDateTimeProp(atIso),
+    Meta: richTextProp(metaJson),
+    DisplayName: richTextProp(displayName),
+  };
+
+  const { ok, response, detail } = await notionFetch("https://api.notion.com/v1/pages", {
+    method: "POST",
+    headers: notionHeaders(token, { "Content-Type": "application/json" }),
+    body: JSON.stringify({
+      parent: { database_id: databaseId },
+      properties,
+    }),
+  });
+  if (!ok) {
+    return {
+      ok: false,
+      hasToken: true,
+      error: humanizeCreateError(response?.status ?? 0, detail),
+    };
+  }
+  const page = await response.json();
+  return {
+    ok: true,
+    hasToken: true,
+    localId,
+    pageId: page.id,
+    url: notionPageUrl(page.id),
+    created: true,
+  };
+}
+
+export function messagesDatabaseId() {
+  return env("NOTION_MESSAGES_DB", "");
+}
+
+/**
+ * Message utilisateur → admin (Notion), Status=Nouveau pour automation IA plus tard.
+ */
+export async function createAdminMessage(token, input = {}) {
+  if (!token) {
+    return { ok: false, error: "NOTION_TOKEN em falta", hasToken: false };
+  }
+  const databaseId = messagesDatabaseId();
+  if (!databaseId) {
+    return { ok: false, error: "NOTION_MESSAGES_DB em falta", hasToken: true };
+  }
+
+  const localId = String(input.localId || input.id || "").trim();
+  const userId = String(input.userId || "").trim();
+  const bodyText = String(input.body || input.message || "").trim();
+  const titleText = String(input.title || "").trim() || bodyText.slice(0, 80).replace(/\s+/g, " ");
+  if (!localId || !userId || !bodyText) {
+    return { ok: false, error: "localId, userId ou message em falta", hasToken: true };
+  }
+  if (!String(input.title || "").trim()) {
+    return { ok: false, error: "titre em falta", hasToken: true };
+  }
+
+  const existing = await findPageByLocalId(token, databaseId, localId);
+  if (existing) {
+    return {
+      ok: true,
+      hasToken: true,
+      localId,
+      pageId: existing.id,
+      url: existing.url,
+      created: false,
+      skipped: true,
+    };
+  }
+
+  const displayName = String(input.displayName || "").trim() || "Lecteur";
+  const atIso = input.at || new Date().toISOString();
+
+  const properties = {
+    Name: titleProp(titleText.slice(0, 120)),
+    LocalId: richTextProp(localId),
+    UserId: richTextProp(userId),
+    DisplayName: richTextProp(displayName),
+    Body: richTextProp(bodyText.slice(0, 2000)),
+    Status: { select: { name: "Nouveau" } },
+    CreatedAt: isoDateTimeProp(atIso),
+  };
+
+  const { ok, response, detail } = await notionFetch("https://api.notion.com/v1/pages", {
+    method: "POST",
+    headers: notionHeaders(token, { "Content-Type": "application/json" }),
+    body: JSON.stringify({
+      parent: { database_id: databaseId },
+      properties,
+    }),
+  });
+  if (!ok) {
+    return {
+      ok: false,
+      hasToken: true,
+      error: humanizeCreateError(response?.status ?? 0, detail),
+    };
+  }
+  const page = await response.json();
+  return {
+    ok: true,
+    hasToken: true,
+    localId,
+    pageId: page.id,
+    url: notionPageUrl(page.id),
+    created: true,
+  };
+}
