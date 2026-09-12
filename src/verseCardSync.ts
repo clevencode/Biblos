@@ -132,8 +132,8 @@ export async function flushVerseCardCreates(): Promise<PushVerseResult> {
         error =
           payload.error ||
           (payload.hasToken === false
-            ? "NOTION_TOKEN em falta no servidor"
-            : "Échec de création Notion");
+            ? "Synchronisation cloud non configurée"
+            : "Impossible de créer la carte");
         kept.push(item, ...pending.slice(pending.indexOf(item) + 1));
         break;
       }
@@ -180,7 +180,7 @@ export async function archiveRemoteVerseCard(card: Pick<Flashcard, "id" | "url">
       return { ok: false, error: "API /api/verse-card indisponible" };
     }
     const payload = (await response.json()) as { ok?: boolean; error?: string };
-    if (!payload.ok) return { ok: false, error: payload.error || "Échec de suppression Notion" };
+    if (!payload.ok) return { ok: false, error: payload.error || "Impossible de supprimer la carte" };
     return { ok: true };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Échec réseau" };
@@ -199,5 +199,5 @@ export async function syncVerseCardToNotion(card: Flashcard): Promise<{
   const hit = result.updates.find((item) => item.localId === card.id);
   if (hit) return { ok: true, url: hit.url, queued: false };
   if (result.error) return { ok: false, queued: true, error: result.error };
-  return { ok: false, queued: true, error: "En attente de sync Notion" };
+  return { ok: false, queued: true, error: "En attente de synchronisation" };
 }

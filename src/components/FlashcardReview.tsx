@@ -532,7 +532,7 @@ export function FlashcardReview({
         )}
         {sync === "error" ? (
           <p className="flash-sync is-error" role="alert">
-            {syncError ?? "Échec de la synchronisation Notion"}
+            {syncError ?? "Impossible d’enregistrer pour le moment"}
           </p>
         ) : null}
       </div>

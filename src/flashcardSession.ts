@@ -368,7 +368,7 @@ export function useFlashcardSession(
         setSyncError(
           result.queued
             ? "Hors ligne — reste en file et synchronise sur un autre appareil bientôt"
-            : (result.error ?? "Échec de la synchronisation Notion"),
+            : (result.error ?? "Impossible d’enregistrer pour le moment"),
         );
         live.current = { ...live.current, sync: "error" };
       }

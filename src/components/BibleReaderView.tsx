@@ -11,6 +11,8 @@ import {
 import { flushSync } from "react-dom";
 import {
   ArrowDownTrayIcon,
+  BookmarkIcon,
+  BookmarkSlashIcon,
   CheckIcon,
   ChevronDownIcon,
   ChevronLeftIcon,
@@ -55,16 +57,10 @@ import {
 } from "../bibleOffline";
 import {
   adaptVerseColorForTheme,
-  addFavoriteVerseColor,
   formatVerseColorHex,
-  isPresetVerseColor,
-  loadFavoriteVerseColors,
   loadPreferredVerseColor,
   normalizeVerseColor,
-  removeFavoriteVerseColor,
-  sameVerseColorFamily,
   savePreferredVerseColor,
-  VERSE_COLOR_PRESETS,
   verseActionTone,
   verseColorHueLabel,
   verseSwatchCheckInk,
@@ -412,7 +408,6 @@ export function BibleReaderView({
   const [chapterMarks, setChapterMarks] = useState<ReadonlyMap<number, string>>(
     () => new Map(),
   );
-  const [favoriteColors, setFavoriteColors] = useState<string[]>(() => loadFavoriteVerseColors());
   const [chromeHidden, setChromeHidden] = useState(false);
   const [audioByUsfm, setAudioByUsfm] = useState<Record<string, BibleAudioEpisode>>({});
   const [audioPodcast, setAudioPodcast] = useState("Bible | Podcast.s21");
@@ -855,7 +850,7 @@ export function BibleReaderView({
         return;
       }
       onFlashcardCreated?.(result.card);
-      setCardMsg(`Flashcard · ${frente}`);
+      setCardMsg(`Carte créée pour ${frente}`);
     } finally {
       setCardBusy(false);
     }
@@ -946,13 +941,19 @@ export function BibleReaderView({
     }
   }
 
+  function applyPickerColor(hex: string) {
+    const next = adaptVerseColorForTheme(normalizeVerseColor(hex), uiTheme);
+    pickVerseColor(next);
+    if (!selection?.length) return;
+    if (!selectedVerses.some((n) => chapterMarks.has(n))) return;
+    setChapterMarks(setVerseMarks(bookId, chapterId, selection, next));
+    onVerseMarked?.({ color: next, verseCount: selection.length });
+  }
+
   function markSelection(hex: string) {
     if (!selection?.length) return;
     const next = adaptVerseColorForTheme(normalizeVerseColor(hex), uiTheme);
     pickVerseColor(next);
-    if (!isPresetVerseColor(next)) {
-      setFavoriteColors(addFavoriteVerseColor(next));
-    }
     setChapterMarks(setVerseMarks(bookId, chapterId, selection, next));
     onVerseMarked?.({ color: next, verseCount: selection.length });
     closeCreateCard();
@@ -962,31 +963,6 @@ export function BibleReaderView({
     if (!selection?.length) return;
     setChapterMarks(setVerseMarks(bookId, chapterId, selection, null));
     closeCreateCard();
-  }
-
-  /** × sur préréglage : retire seulement le surlignage (le swatch reste). */
-  function deselectPresetColor(hex: string) {
-    if (!selection?.length) return;
-    const marksThis = selectedVerses.some((n) => {
-      const marked = chapterMarks.get(n);
-      return marked ? sameVerseColorFamily(marked, hex) : false;
-    });
-    if (marksThis) clearSelectionMarks();
-  }
-
-  /** × sur le cercle custom : retire la couleur utilisateur et/ou le surlignage actif. */
-  function removeColorCircle(hex: string) {
-    const next = normalizeVerseColor(hex);
-    setFavoriteColors(removeFavoriteVerseColor(next));
-    const marksThis =
-      selectionHasMark &&
-      selectedVerses.some((n) => {
-        const marked = chapterMarks.get(n);
-        return marked ? sameVerseColorFamily(marked, next) : false;
-      });
-    if (marksThis || (selectionHasMark && sameVerseColorFamily(activeVerseColor, next))) {
-      clearSelectionMarks();
-    }
   }
 
   const actionTone = useMemo(
@@ -1002,32 +978,7 @@ export function BibleReaderView({
     }
     return null;
   }, [selectedVerses, chapterMarks, uiTheme]);
-  /** Couleurs marquées hors favoris (ex. anciennes marques) — affichées pour pouvoir retirer. */
-  const orphanMarkColors = useMemo(() => {
-    if (!selectionHasMark) return [] as string[];
-    const seen = new Set(favoriteColors.map((hex) => hex));
-    const out: string[] = [];
-    for (const n of selectedVerses) {
-      const hex = chapterMarks.get(n);
-      if (!hex) continue;
-      const next = normalizeVerseColor(hex);
-      if (seen.has(next)) continue;
-      if (favoriteColors.some((fav) => sameVerseColorFamily(fav, next))) continue;
-      seen.add(next);
-      out.push(next);
-    }
-    return out;
-  }, [selectionHasMark, selectedVerses, chapterMarks, favoriteColors]);
-  const userColors = useMemo(() => {
-    return [...orphanMarkColors, ...favoriteColors].filter(
-      (hex) => !VERSE_COLOR_PRESETS.some((preset) => sameVerseColorFamily(preset.hex, hex)),
-    );
-  }, [orphanMarkColors, favoriteColors]);
-
-  function swatchIsOn(hex: string) {
-    const ref = selectionMarkColor ?? activeVerseColor;
-    return sameVerseColorFamily(ref, hex);
-  }
+  const pickerColor = selectionMarkColor ?? activeVerseColor;
 
   const showCreateCard = Boolean(selectedVerses.length && selectedVerseText && !pickerOpen);
   const forceChrome =
@@ -1701,159 +1652,87 @@ export function BibleReaderView({
 
           <div className="bible-verse-action-block">
             <p className="bible-verse-action-label" id="bible-verse-color-label">
-              Marquer
+              Couleur
             </p>
 
             <div className="bible-verse-color-row">
               <div className="bible-verse-colors">
-                <div
-                  className="bible-verse-color-swatches"
-                  role="radiogroup"
+                <button
+                  type="button"
+                  className={`bible-verse-color-picker${selectionHasMark ? " is-marked" : ""}`}
+                  style={
+                    {
+                      ["--swatch" as string]: pickerColor,
+                      ["--swatch-check" as string]: verseSwatchCheckInk(pickerColor),
+                    } as CSSProperties
+                  }
+                  title="Personnaliser la couleur"
+                  aria-label={`Couleur ${verseColorHueLabel(pickerColor)} ${formatVerseColorHex(pickerColor)}. Ouvrir l’éditeur`}
                   aria-labelledby="bible-verse-color-label"
+                  aria-haspopup="dialog"
+                  aria-expanded={colorEditorOpen}
+                  onClick={() => setColorEditorOpen(true)}
                 >
-                  {VERSE_COLOR_PRESETS.map((preset) => {
-                    const hex = adaptVerseColorForTheme(preset.hex, uiTheme);
-                    const on = selectionHasMark && swatchIsOn(preset.hex);
-                    return (
-                      <span key={preset.id} className="bible-verse-color-wrap">
-                        <button
-                          type="button"
-                          role="radio"
-                          className={`bible-verse-color${on ? " is-on" : ""}`}
-                          style={
-                            {
-                              ["--swatch" as string]: hex,
-                              ["--swatch-check" as string]: verseSwatchCheckInk(hex),
-                            } as CSSProperties
-                          }
-                          aria-label={preset.label}
-                          aria-checked={on}
-                          onClick={() => {
-                            if (on) {
-                              deselectPresetColor(preset.hex);
-                              return;
-                            }
-                            markSelection(preset.hex);
-                          }}
-                        >
-                          {on ? (
-                            <CheckIcon className="bible-verse-color-check" aria-hidden />
-                          ) : null}
-                        </button>
-                        {on ? (
-                          <button
-                            type="button"
-                            className="bible-verse-color-remove"
-                            aria-label={`Retirer le surlignage ${preset.label}`}
-                            onClick={() => deselectPresetColor(preset.hex)}
-                          >
-                            ×
-                          </button>
-                        ) : null}
-                      </span>
-                    );
-                  })}
-
-                  <span className="bible-verse-color-wrap">
-                    <button
-                      type="button"
-                      className="bible-verse-color bible-verse-color-custom"
-                      title="Ajouter une couleur personnalisée"
-                      aria-label="Ouvrir l'éditeur de couleur circulaire"
-                      aria-haspopup="dialog"
-                      aria-expanded={colorEditorOpen}
-                      onClick={() => setColorEditorOpen(true)}
-                    >
-                      <span className="bible-verse-color-plus" aria-hidden>
-                        +
-                      </span>
-                    </button>
+                  <span className="bible-verse-color-picker-plus" aria-hidden>
+                    +
                   </span>
-
-                  {userColors.map((hex) => {
-                    const display = adaptVerseColorForTheme(hex, uiTheme);
-                    const on = selectionHasMark && swatchIsOn(hex);
-                    const hue = verseColorHueLabel(display);
-                    const hexLabel = formatVerseColorHex(display);
-                    return (
-                      <span key={hex} className="bible-verse-color-wrap">
-                        <button
-                          type="button"
-                          role="radio"
-                          className={`bible-verse-color${on ? " is-on" : ""}`}
-                          style={
-                            {
-                              ["--swatch" as string]: display,
-                              ["--swatch-check" as string]: verseSwatchCheckInk(display),
-                            } as CSSProperties
-                          }
-                          aria-label={`${hue} ${hexLabel}`}
-                          aria-checked={on}
-                          onClick={() => {
-                            if (on) {
-                              clearSelectionMarks();
-                              return;
-                            }
-                            markSelection(hex);
-                          }}
-                        >
-                          {on ? (
-                            <CheckIcon className="bible-verse-color-check" aria-hidden />
-                          ) : null}
-                        </button>
-                        <button
-                          type="button"
-                          className="bible-verse-color-remove"
-                          aria-label={`Retirer ${hue} ${hexLabel}`}
-                          onClick={() => removeColorCircle(hex)}
-                        >
-                          ×
-                        </button>
-                      </span>
-                    );
-                  })}
-                </div>
+                </button>
               </div>
-
-              <p className="bible-verse-color-meta" aria-live="polite">
-                {selectionHasMark
-                  ? `${verseColorHueLabel(activeVerseColor)} · ${formatVerseColorHex(activeVerseColor)}`
-                  : `Sélectionnée · ${verseColorHueLabel(activeVerseColor)} · ${formatVerseColorHex(activeVerseColor)}`}
-              </p>
             </div>
 
             <CircularColorEditor
               open={colorEditorOpen}
-              initialHex={activeVerseColor}
+              initialHex={pickerColor}
               theme={uiTheme}
               onClose={() => setColorEditorOpen(false)}
               onConfirm={(hex) => {
                 setColorEditorOpen(false);
-                markSelection(hex);
+                applyPickerColor(hex);
               }}
             />
           </div>
 
           <div className="bible-verse-action-block">
-            <p className="bible-verse-action-label">Flashcard</p>
-            <button
-              type="button"
-              className="bible-yv-chip is-primary bible-make-card"
-              disabled={cardBusy}
-              onClick={() => {
-                if (existingVerseCard && selectedVerseCardId && onViewFlashcard) {
-                  onViewFlashcard(selectedVerseCardId);
-                  return;
-                }
-                void makeFlashcard();
-              }}
-            >
-              {cardBusy
-                ? "Création…"
-                : existingVerseCard
-                  ? "Voir la carte"
-                  : "Créer flashcard"}
-            </button>
+            <p className="bible-verse-action-label">Actions</p>
+            <div className="bible-verse-cta-row">
+              <button
+                type="button"
+                className={`bible-yv-chip bible-mark-toggle${selectionHasMark ? " is-marked" : ""}`}
+                aria-pressed={selectionHasMark}
+                onClick={() => {
+                  if (selectionHasMark) {
+                    clearSelectionMarks();
+                    return;
+                  }
+                  markSelection(activeVerseColor);
+                }}
+              >
+                {selectionHasMark ? (
+                  <BookmarkSlashIcon className="bible-verse-cta-icon" aria-hidden />
+                ) : (
+                  <BookmarkIcon className="bible-verse-cta-icon" aria-hidden />
+                )}
+                <span>{selectionHasMark ? "Démarquer" : "Marquer"}</span>
+              </button>
+              <button
+                type="button"
+                className="bible-yv-chip is-primary bible-make-card"
+                disabled={cardBusy}
+                onClick={() => {
+                  if (existingVerseCard && selectedVerseCardId && onViewFlashcard) {
+                    onViewFlashcard(selectedVerseCardId);
+                    return;
+                  }
+                  void makeFlashcard();
+                }}
+              >
+                {cardBusy
+                  ? "Création…"
+                  : existingVerseCard
+                    ? "Voir la carte"
+                    : "Créer flashcard"}
+              </button>
+            </div>
           </div>
           {cardMsg ? <p className="bible-verse-actions-msg">{cardMsg}</p> : null}
         </div>

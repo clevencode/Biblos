@@ -98,7 +98,7 @@ export async function pullDayNote(
         text: local?.text ?? "",
         notionUrl: local?.notionUrl ?? null,
         ok: false,
-        error: payload.error || "échec lecture Notion",
+        error: payload.error || "Impossible de charger la note",
       };
     }
     const remoteText = typeof payload.body === "string" ? payload.body : "";
@@ -126,7 +126,7 @@ export async function pushDayNote(
   const trimmed = String(text ?? "");
   const local = saveDayNoteLocal(planId, jour, { text: trimmed });
   if (!planUrl) {
-    return { ok: false, notionUrl: local.notionUrl ?? null, error: "Plan sans URL Notion" };
+    return { ok: false, notionUrl: local.notionUrl ?? null, error: "Plan non synchronisé" };
   }
   try {
     const response = await fetch("/api/plan-day-note", {
@@ -148,7 +148,7 @@ export async function pushDayNote(
       return {
         ok: false,
         notionUrl: local.notionUrl ?? null,
-        error: payload.error || "échec enregistrement Notion",
+        error: payload.error || "Impossible d’enregistrer la note",
       };
     }
     const notionUrl = payload.url ?? local.notionUrl ?? null;

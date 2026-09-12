@@ -224,7 +224,7 @@ export async function pullFlashcardStates(
       error?: string;
     };
     if (!response.ok || !payload.ok || !Array.isArray(payload.cards)) {
-      return { updated: 0, ok: false, error: payload.error ?? "falha ao ler Notion", notes: options?.notes };
+      return { updated: 0, ok: false, error: payload.error ?? "Impossible de synchroniser", notes: options?.notes };
     }
 
     if (options?.notes) {
@@ -324,7 +324,7 @@ export async function probeNotionSyncHealth(): Promise<NotionSyncHealth> {
     return {
       ok: response.ok,
       hasToken: Boolean(payload.hasToken),
-      error: payload.hasToken ? undefined : "NOTION_TOKEN em falta no servidor",
+      error: payload.hasToken ? undefined : "Synchronisation cloud non configurée",
     };
   } catch {
     return { ok: false, hasToken: false, error: "sem ligação" };

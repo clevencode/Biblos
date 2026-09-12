@@ -198,7 +198,7 @@ export function PlanGallery({
       ) : (
         <div className="plan-discover-empty">
           <p className="plan-discover-empty-title">Aucun plan</p>
-          <p className="muted">Synchronise Notion pour charger tes plans de lecture.</p>
+          <p className="muted">Tes plans apparaîtront ici dès qu’ils seront disponibles.</p>
         </div>
       )}
     </>

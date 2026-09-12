@@ -548,8 +548,8 @@ export function App() {
         <div className="sync-health-banner" role="status">
           <p>
             {notionHealth === "no-token"
-              ? "Synchronisation Notion indisponible : NOTION_TOKEN manquant sur le serveur (Vercel)."
-              : "API de synchronisation Notion indisponible sur cet hôte."}
+              ? "La synchronisation cloud n’est pas encore configurée."
+              : "La synchronisation est temporairement indisponible."}
           </p>
           <button type="button" className="sync-health-dismiss" onClick={() => setDismissNotionBanner(true)}>
             Fermer

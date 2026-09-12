@@ -156,7 +156,7 @@ export function TodayView({
           </button>
           <h2 className="page-title">Aucun plan</h2>
           <p className="page-session-meta muted">
-            Seed vide (MVP) — synchronise Notion pour charger un plan.
+            Aucun plan chargé pour le moment.
           </p>
         </header>
       </div>
@@ -238,13 +238,13 @@ export function TodayView({
     const result = await pushDayNote(plan.id, plan.url, selectedJour, noteText);
     setNoteBusy(false);
     if (!result.ok) {
-      setNoteMsg(result.error || "Enregistré en local — Notion indisponible");
+      setNoteMsg("Enregistré sur cet appareil — sync plus tard");
       setNoteSaved(Boolean(noteText.trim()));
       if (andClose && !plan.url) setScreen("timeline");
       return;
     }
     setNoteSaved(true);
-    setNoteMsg("Enregistré dans Notion (Note)");
+    setNoteMsg("Note enregistrée");
     if (andClose) setScreen("timeline");
   }
 
@@ -344,7 +344,7 @@ export function TodayView({
 
         <div className="plan-yv-devo-scroll">
           <label className="plan-yv-day-note-label" htmlFor="plan-day-note">
-            Ta réflexion — enregistrée dans Notion (Note)
+            Ta réflexion du jour
           </label>
           <textarea
             id="plan-day-note"
@@ -378,7 +378,7 @@ export function TodayView({
               void saveDayNote(true);
             }}
           >
-            {noteBusy ? "Enregistrement…" : "Enregistrer dans Notion"}
+            {noteBusy ? "Enregistrement…" : "Enregistrer"}
           </button>
         </footer>
       </div>
@@ -533,7 +533,7 @@ export function TodayView({
           <span className="plan-yv-secondary-stack">
             <span className="plan-yv-secondary-label">Note du jour</span>
             <span className="plan-yv-secondary-meta">
-              {dayNoteDone || noteSaved ? "Écrite · Notion" : "Optionnelle · après la lecture"}
+              {dayNoteDone || noteSaved ? "Écrite" : "Optionnelle · après la lecture"}
             </span>
           </span>
           <span className="plan-yv-secondary-chevron" aria-hidden="true">

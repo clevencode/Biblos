@@ -27,8 +27,7 @@ export function PlanDescription({
       <div className="plan-yv-devo-empty" role="status">
         <p className="plan-yv-devo-empty-title">Pas encore de description</p>
         <p className="plan-yv-devo-empty-copy">
-          Ajoute le texte dans la propriété <strong>Description</strong> de ce plan sur Notion
-          pour l’afficher au démarrage.
+          La description de ce plan n’est pas encore disponible.
         </p>
       </div>
     );
