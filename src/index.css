@@ -6117,10 +6117,6 @@ body,
   margin: -9px 0 0 -9px;
 }
 
-.app.is-bible-mode.is-narrow .circular-color-value {
-  gap: 6px;
-}
-
 .app.is-bible-mode.is-narrow .circular-color-footer {
   gap: 8px;
 }
@@ -6150,34 +6146,15 @@ body,
   pointer-events: none;
 }
 
-.circular-color-value {
-  display: grid;
-  gap: 8px;
-}
-
-.circular-color-value-label {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 4px 10px;
+.circular-color-tone-hint {
+  margin: 0;
   font-family: var(--font-ui);
-  font-size: var(--type-label-size);
-  font-weight: var(--type-label-weight);
-  letter-spacing: var(--type-label-tracking);
-  color: var(--text);
-}
-
-.circular-color-value-hint {
   font-size: var(--type-caption-size);
   font-weight: var(--type-caption-weight);
   color: var(--muted);
   letter-spacing: var(--type-caption-tracking);
-}
-
-.circular-color-value input[type="range"] {
-  width: 100%;
-  accent-color: var(--accent);
+  text-align: center;
+  line-height: var(--type-caption-lh);
 }
 
 .circular-color-footer {

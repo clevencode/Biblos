@@ -81,9 +81,8 @@ function drawWheel(ctx: CanvasRenderingContext2D, size: number, value: number) {
 }
 
 /**
- * Éditeur circulaire HSV (roue hue×saturation + curseur valeur).
- * Light → tons plutôt foncés ; dark → tons plutôt clairs (défaut),
- * curseur de luminosité pour toute la gamme.
+ * Éditeur circulaire HSV (teinte × saturation).
+ * La luminosité suit automatiquement le thème (tons foncés en light, clairs en dark).
  */
 export function CircularColorEditor({
   open,
@@ -95,22 +94,17 @@ export function CircularColorEditor({
   const titleId = useId();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const dragging = useRef(false);
-  const defaultV = themeDefaultValue(theme);
+  const value = themeDefaultValue(theme);
 
   const [h, setH] = useState(210);
   const [s, setS] = useState(0.7);
-  const [v, setV] = useState(defaultV);
 
   useEffect(() => {
     if (!open) return;
     const hsv = hexToHsv(initialHex);
     setH(hsv.h);
-    setS(hsv.s);
-    /* Si la couleur initiale est neutre / défaut, privilégier le V du thème. */
-    const lumOk =
-      theme === "dark" ? hsv.v >= 0.55 : hsv.v <= 0.7;
-    setV(lumOk ? hsv.v : defaultV);
-  }, [open, initialHex, theme, defaultV]);
+    setS(clamp01(hsv.s));
+  }, [open, initialHex]);
 
   useEffect(() => {
     if (!open) return;
@@ -118,8 +112,8 @@ export function CircularColorEditor({
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    drawWheel(ctx, WHEEL_SIZE, v);
-  }, [open, v]);
+    drawWheel(ctx, WHEEL_SIZE, value);
+  }, [open, value]);
 
   useEffect(() => {
     if (!open) return;
@@ -130,17 +124,21 @@ export function CircularColorEditor({
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  const hex = hsvToHex(h, s, v);
+  const hex = hsvToHex(h, s, value);
   const label = verseColorHueLabel(hex);
 
   const thumbStyle = (() => {
     const cx = WHEEL_SIZE / 2;
     const cy = WHEEL_SIZE / 2;
     const rad = (h * Math.PI) / 180;
-    const r = s * RADIUS;
+    /* Garde le centre du point dans le disque peint (échelle CSS via %). */
+    const maxR = Math.max(0, RADIUS - 1);
+    const r = Math.min(clamp01(s), 1) * maxR;
+    const x = cx + Math.cos(rad) * r;
+    const y = cy + Math.sin(rad) * r;
     return {
-      left: cx + Math.cos(rad) * r,
-      top: cy + Math.sin(rad) * r,
+      left: `${(x / WHEEL_SIZE) * 100}%`,
+      top: `${(y / WHEEL_SIZE) * 100}%`,
     };
   })();
 
@@ -148,6 +146,7 @@ export function CircularColorEditor({
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
+    if (rect.width < 1 || rect.height < 1) return;
     const scaleX = WHEEL_SIZE / rect.width;
     const scaleY = WHEEL_SIZE / rect.height;
     const x = (clientX - rect.left) * scaleX;
@@ -188,8 +187,8 @@ export function CircularColorEditor({
 
   const toneHint =
     theme === "dark"
-      ? "Tons clairs pour le thème sombre"
-      : "Tons foncés pour le thème clair";
+      ? "Tons clairs · adaptés au thème sombre"
+      : "Tons foncés · adaptés au thème clair";
 
   return (
     <div className="circular-color-editor-root" role="presentation">
@@ -244,21 +243,7 @@ export function CircularColorEditor({
           />
         </div>
 
-        <label className="circular-color-value">
-          <span className="circular-color-value-label">
-            Luminosité
-            <span className="circular-color-value-hint">{toneHint}</span>
-          </span>
-          <input
-            type="range"
-            min={0.2}
-            max={1}
-            step={0.01}
-            value={v}
-            aria-valuetext={`${Math.round(v * 100)}%`}
-            onChange={(event) => setV(Number(event.target.value))}
-          />
-        </label>
+        <p className="circular-color-tone-hint">{toneHint}</p>
 
         <div className="circular-color-footer">
           <span

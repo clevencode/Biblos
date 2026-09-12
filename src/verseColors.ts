@@ -43,11 +43,6 @@ export function normalizeVerseColor(value: string | null | undefined): string {
   return parseVerseHex(value) ?? DEFAULT_VERSE_COLOR;
 }
 
-export function isPresetVerseColor(hex: string): boolean {
-  const n = normalizeVerseColor(hex);
-  return VERSE_COLOR_PRESETS.some((c) => c.hex === n);
-}
-
 function parseHex(hex: string): { r: number; g: number; b: number } | null {
   const normalized = parseVerseHex(hex);
   if (!normalized) return null;
@@ -122,6 +117,42 @@ export type HsvColor = { h: number; s: number; v: number };
 /** Valeur HSV par défaut selon le thème (tons foncés en light, clairs en dark). */
 export function themeDefaultValue(theme: "light" | "dark"): number {
   return theme === "dark" ? 0.82 : 0.48;
+}
+
+/**
+ * Adapte la luminosité au thème en préservant teinte + saturation.
+ * Dark → tons plus clairs ; light → tons plus foncés (miroir autour du milieu).
+ */
+export function adaptVerseColorForTheme(
+  hex: string,
+  theme: "light" | "dark",
+): string {
+  const normalized = normalizeVerseColor(hex);
+  const { h, s, v } = hexToHsv(normalized);
+  const lightV = themeDefaultValue("light");
+  const darkV = themeDefaultValue("dark");
+  const mid = (lightV + darkV) / 2;
+  const suitedForDark = v >= mid;
+  if (theme === "dark" && suitedForDark) return normalized;
+  if (theme === "light" && !suitedForDark) return normalized;
+  const flipped = mid - (v - mid);
+  return hsvToHex(h, s, Math.min(1, Math.max(0.22, flipped)));
+}
+
+/** Clé teinte+saturation pour reconnaître la même couleur sous deux luminosités. */
+export function verseColorFamilyKey(hex: string): string {
+  const { h, s, v } = hexToHsv(hex);
+  if (s < 0.12) return `g:${Math.round(v * 5)}`;
+  return `${Math.round(h / 12) * 12}:${Math.round(s * 8)}`;
+}
+
+export function sameVerseColorFamily(a: string, b: string): boolean {
+  return verseColorFamilyKey(a) === verseColorFamilyKey(b);
+}
+
+export function isPresetVerseColor(hex: string): boolean {
+  const n = normalizeVerseColor(hex);
+  return VERSE_COLOR_PRESETS.some((c) => sameVerseColorFamily(c.hex, n));
 }
 
 export function hexToHsv(hex: string): HsvColor {
