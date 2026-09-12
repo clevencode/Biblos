@@ -1,10 +1,12 @@
 import {
+  Cog6ToothIcon,
   ComputerDesktopIcon,
   MoonIcon,
   SunIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
 import {
+  clearOfflineBible,
   isOfflineBibleReady,
 } from "../bibleOffline";
 import {
@@ -61,14 +63,16 @@ type ProfileViewProps = {
   onReadingHistoryChange?: () => void;
 };
 
-type ProfileTabId = "compte" | "config" | "library" | "help";
+type ProfileTabId = "config" | "library" | "help" | "about";
 
 const PROFILE_TABS: { id: ProfileTabId; label: string }[] = [
-  { id: "compte", label: "Compte" },
   { id: "config", label: "Réglages" },
   { id: "library", label: "Biblio" },
   { id: "help", label: "Aide" },
+  { id: "about", label: "À propos" },
 ];
+
+const APP_VERSION = __APP_VERSION__;
 
 const THEME_OPTIONS: {
   id: ThemePref;
@@ -115,8 +119,12 @@ export function ProfileView({
   onOpenReading,
   onReadingHistoryChange,
 }: ProfileViewProps) {
-  const [tab, setTab] = useState<ProfileTabId>("compte");
+  const [tab, setTab] = useState<ProfileTabId>("config");
+  const [accountSession, setAccountSession] = useState(
+    () => !joinFullName(profile.firstName, profile.lastName),
+  );
   const [offlineReady, setOfflineReady] = useState(false);
+  const [offlineClearBusy, setOfflineClearBusy] = useState(false);
   const [fullName, setFullName] = useState(() =>
     joinFullName(profile.firstName, profile.lastName),
   );
@@ -202,6 +210,18 @@ export function ProfileView({
     window.setTimeout(() => setSavedFlash(false), 1600);
   }
 
+  function openAccountSession() {
+    setAccountSession(true);
+    if (!joinFullName(profile.firstName, profile.lastName)) {
+      startEditName();
+    }
+  }
+
+  function closeAccountSession() {
+    cancelEditName();
+    setAccountSession(false);
+  }
+
   const savedFullName = joinFullName(profile.firstName, profile.lastName);
   const hasSavedName = Boolean(savedFullName);
   const nameLocked = hasSavedName && !editingName;
@@ -253,8 +273,28 @@ export function ProfileView({
     }
   }
 
+  async function confirmClearOfflineBible() {
+    if (offlineClearBusy || !offlineReady) return;
+    const ok = window.confirm(
+      "Supprimer la Bible hors ligne (~6 Mo) de cet appareil ?",
+    );
+    if (!ok) return;
+    setOfflineClearBusy(true);
+    try {
+      await clearOfflineBible();
+      setOfflineReady(false);
+    } catch {
+      window.alert("Impossible de supprimer la Bible hors ligne. Réessaie.");
+    } finally {
+      setOfflineClearBusy(false);
+    }
+  }
+
   const display = preferredDisplayName(profile);
   const avatarLetter = (display.trim().charAt(0) || "?").toLocaleUpperCase("fr-FR");
+  const syncHint = profile.notionUrl
+    ? "Synchronisé entre tes appareils"
+    : "Enregistré sur cet appareil";
 
   return (
     <div className="profile-view">
@@ -264,50 +304,34 @@ export function ProfileView({
         </span>
         <div className="profile-head-copy">
           <h1 className="profile-title type-title">{display}</h1>
-          <p className="profile-subtitle muted">Profil · préférences</p>
+          <p className="profile-subtitle muted">
+            {savedFlash ? "Nom enregistré" : syncHint}
+          </p>
         </div>
+        {!accountSession ? (
+          <button
+            type="button"
+            className="profile-config-btn"
+            onClick={openAccountSession}
+            aria-label="Configurer le compte"
+            title="Compte"
+          >
+            <Cog6ToothIcon className="profile-config-icon" aria-hidden />
+          </button>
+        ) : null}
       </header>
 
-      <div
-        className="profile-tabs"
-        role="tablist"
-        aria-label="Sections du profil"
-      >
-        {PROFILE_TABS.map(({ id, label }) => {
-          const on = tab === id;
-          return (
-            <button
-              key={id}
-              type="button"
-              role="tab"
-              id={`profile-tab-${id}`}
-              className={`profile-tab${on ? " is-on" : ""}`}
-              aria-selected={on}
-              aria-controls={`profile-panel-${id}`}
-              tabIndex={on ? 0 : -1}
-              onClick={(event) => {
-                setTab(id);
-                event.currentTarget.scrollIntoView({
-                  behavior: "smooth",
-                  inline: "center",
-                  block: "nearest",
-                });
-              }}
-            >
-              <span className="profile-tab-label">{label}</span>
-            </button>
-          );
-        })}
-      </div>
+      {accountSession ? (
+        <div className="profile-account-session">
+          <button
+            type="button"
+            className="flash-list-back profile-account-back"
+            onClick={closeAccountSession}
+            aria-label="Retour au profil"
+          >
+            ← Compte
+          </button>
 
-      <div className="profile-tab-panels">
-        <div
-          id="profile-panel-compte"
-          role="tabpanel"
-          aria-labelledby="profile-tab-compte"
-          hidden={tab !== "compte"}
-          className="profile-tab-panel"
-        >
           <ProfilePanel titleId="profile-name-label" title="Identité">
             <form
               className={`profile-name-form${editingName ? " is-editing" : ""}${nameLocked ? " is-locked" : ""}`}
@@ -377,14 +401,10 @@ export function ProfileView({
                 ) : null}
               </div>
             </form>
-            <p className="profile-id-hint muted">
-              {profile.notionUrl
-                ? "Profil synchronisé entre tes appareils"
-                : "Profil enregistré sur cet appareil"}
-            </p>
+            <p className="profile-id-hint muted">{syncHint}</p>
           </ProfilePanel>
 
-          <ProfilePanel titleId="profile-delete-label" title="Suppression">
+          <ProfilePanel titleId="profile-delete-label" title="Compte">
             <p className="profile-delete-warn">
               Supprimer ton compte effacera <strong>toutes tes données</strong>{" "}
               sur cet appareil : profil, progression, notes, flashcards et
@@ -401,14 +421,48 @@ export function ProfileView({
             </button>
           </ProfilePanel>
         </div>
+      ) : (
+        <>
+          <div
+            className="profile-tabs"
+            role="tablist"
+            aria-label="Sections du profil"
+          >
+            {PROFILE_TABS.map(({ id, label }) => {
+              const on = tab === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  role="tab"
+                  id={`profile-tab-${id}`}
+                  className={`profile-tab${on ? " is-on" : ""}`}
+                  aria-selected={on}
+                  aria-controls={`profile-panel-${id}`}
+                  tabIndex={on ? 0 : -1}
+                  onClick={(event) => {
+                    setTab(id);
+                    event.currentTarget.scrollIntoView({
+                      behavior: "smooth",
+                      inline: "center",
+                      block: "nearest",
+                    });
+                  }}
+                >
+                  <span className="profile-tab-label">{label}</span>
+                </button>
+              );
+            })}
+          </div>
 
-        <div
-          id="profile-panel-config"
-          role="tabpanel"
-          aria-labelledby="profile-tab-config"
-          hidden={tab !== "config"}
-          className="profile-tab-panel"
-        >
+          <div className="profile-tab-panels">
+            <div
+              id="profile-panel-config"
+              role="tabpanel"
+              aria-labelledby="profile-tab-config"
+              hidden={tab !== "config"}
+              className="profile-tab-panel"
+            >
           <ProfilePanel
             titleId="profile-theme-label"
             title="Apparence"
@@ -441,7 +495,7 @@ export function ProfileView({
           <ProfilePanel
             titleId="profile-notif-label"
             title="Notifications"
-            hint="Types d’infos dans le fil Accueil — activés à l’acceptation des termes."
+            hint="Alertes sur ton téléphone — activées à l’acceptation des termes."
           >
             <ul className="profile-notif-toggles">
               {(
@@ -449,17 +503,12 @@ export function ProfileView({
                   {
                     key: "verseOfDay" as const,
                     label: "Verset du jour",
-                    desc: "Rappel du verset quotidien",
+                    desc: "Notification quotidienne sur l’appareil",
                   },
                   {
                     key: "planReminder" as const,
                     label: "Rappel de plan",
-                    desc: "Progression et lecture du jour",
-                  },
-                  {
-                    key: "appInfo" as const,
-                    label: "Informations de l’app",
-                    desc: "Nouveautés et messages Biblos",
+                    desc: "Rappel de lecture sur l’appareil",
                   },
                 ] as const
               ).map(({ key, label, desc }) => {
@@ -503,6 +552,23 @@ export function ProfileView({
                 </span>
               </li>
             </ul>
+            {offlineReady ? (
+              <button
+                type="button"
+                className="profile-offline-remove-btn"
+                disabled={offlineClearBusy}
+                onClick={() => void confirmClearOfflineBible()}
+              >
+                <TrashIcon className="profile-offline-remove-icon" aria-hidden />
+                {offlineClearBusy
+                  ? "Suppression…"
+                  : "Supprimer le téléchargement"}
+              </button>
+            ) : (
+              <p className="profile-id-hint muted">
+                Télécharge la Bible depuis Lecture pour l’utiliser hors ligne.
+              </p>
+            )}
           </ProfilePanel>
         </div>
 
@@ -765,6 +831,27 @@ export function ProfileView({
               )}
             </ProfilePanel>
           ) : null}
+        </div>
+
+        <div
+          id="profile-panel-about"
+          role="tabpanel"
+          aria-labelledby="profile-tab-about"
+          hidden={tab !== "about"}
+          className="profile-tab-panel"
+        >
+          <ProfilePanel titleId="profile-app-label" title="Application">
+            <ul className="profile-facts">
+              <li>
+                <span className="profile-fact-label">Version</span>
+                <span className="profile-fact-value">{APP_VERSION}</span>
+              </li>
+              <li>
+                <span className="profile-fact-label">Mise à jour</span>
+                <span className="profile-fact-value">n° {APP_VERSION}</span>
+              </li>
+            </ul>
+          </ProfilePanel>
 
           <ProfilePanel titleId="profile-about-label" title="À propos">
             <p className="profile-about">
@@ -782,6 +869,8 @@ export function ProfileView({
           </ProfilePanel>
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 }

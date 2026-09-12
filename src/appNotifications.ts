@@ -1,10 +1,7 @@
 /** Notifications in-app — feed pour informer l’utilisateur de ce qui se passe. */
 
 import { todayKey } from "./calendar";
-import {
-  isNotificationKindEnabled,
-  loadNotificationPrefs,
-} from "./notificationPrefs";
+import { loadNotificationPrefs } from "./notificationPrefs";
 import {
   isPlanComplete,
   loadPlanProgress,
@@ -12,8 +9,11 @@ import {
 } from "./planProgress";
 import type { ReadingPlan } from "./types";
 import { getVerseOfDay } from "./verseOfDay";
+import { buildDailyReadingReminder } from "./readingReminder";
+import { scheduleDeviceDailyAlerts } from "./readingReminderNotify";
 
 const STORE_KEY = "biblos-app-notifications-v1";
+const DISMISSED_KEY = "biblos-app-notifications-dismissed-v1";
 const MAX_ITEMS = 80;
 
 export type AppNotificationKind = "info" | "plan" | "verse" | "system";
@@ -58,17 +58,53 @@ function writeStore(store: Store): void {
   }
 }
 
+function readDismissedKeys(): Set<string> {
+  try {
+    const raw = localStorage.getItem(DISMISSED_KEY);
+    if (!raw) return new Set();
+    const parsed = JSON.parse(raw) as unknown;
+    return new Set(Array.isArray(parsed) ? parsed.map(String) : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function writeDismissedKeys(keys: Set<string>): void {
+  try {
+    localStorage.setItem(DISMISSED_KEY, JSON.stringify([...keys].slice(0, 200)));
+  } catch {
+    /* private mode */
+  }
+}
+
+export function getAppNotificationById(id: string): AppNotification | null {
+  return readStore().items.find((item) => item.id === id) ?? null;
+}
+
+export function removeAppNotification(id: string): boolean {
+  const store = readStore();
+  const target = store.items.find((item) => item.id === id);
+  if (!target) return false;
+  store.items = store.items.filter((item) => item.id !== id);
+  writeStore(store);
+  const dismissed = readDismissedKeys();
+  dismissed.add(`id:${id}`);
+  if (target.dedupeKey) dismissed.add(target.dedupeKey);
+  writeDismissedKeys(dismissed);
+  return true;
+}
+
 export function listAppNotifications(limit = 40): AppNotification[] {
-  const prefs = loadNotificationPrefs();
+  // Fil in-app = uniquement infos / mises à jour de l’app.
   return readStore()
-    .items.filter((item) => isNotificationKindEnabled(item.kind, prefs))
+    .items.filter((item) => item.kind === "info" || item.kind === "system")
     .slice(0, Math.max(1, limit));
 }
 
 export function countUnreadAppNotifications(): number {
-  const prefs = loadNotificationPrefs();
   return readStore().items.filter(
-    (item) => !item.read && isNotificationKindEnabled(item.kind, prefs),
+    (item) =>
+      !item.read && (item.kind === "info" || item.kind === "system"),
   ).length;
 }
 
@@ -77,9 +113,12 @@ export function pushAppNotification(input: {
   title: string;
   body: string;
   dedupeKey?: string;
-}): AppNotification {
-  const store = readStore();
+}): AppNotification | null {
   const dedupeKey = input.dedupeKey?.trim() || undefined;
+  if (dedupeKey && readDismissedKeys().has(dedupeKey)) {
+    return null;
+  }
+  const store = readStore();
   if (dedupeKey) {
     const existing = store.items.find((item) => item.dedupeKey === dedupeKey);
     if (existing) {
@@ -142,61 +181,83 @@ function planTitle(plan: ReadingPlan): string {
 }
 
 /**
- * Met à jour le fil avec le contexte actuel (verset du jour, plans en cours).
- * Respecte les préférences de types activés.
+ * Fil in-app = mises à jour de l’app (Notion Notifications).
+ * Verset du jour + rappel de plan → alertes appareil (hors fil).
  */
 export function syncContextualNotifications(plans: ReadingPlan[]): void {
+  void pullRemoteAppNotifications();
+  void syncDeviceAlertsFromPrefs(plans);
+}
+
+/** Importe les messages publiés depuis Notion dans le fil local. */
+export async function pullRemoteAppNotifications(): Promise<void> {
+  try {
+    const res = await fetch("/api/notifications?limit=40");
+    const data = (await res.json()) as {
+      ok?: boolean;
+      items?: Array<{
+        id: string;
+        title: string;
+        body: string;
+        kind?: string;
+        at?: string;
+      }>;
+    };
+    if (!data?.ok || !Array.isArray(data.items)) return;
+    for (const item of data.items) {
+      const id = String(item.id || "").trim();
+      if (!id) continue;
+      pushAppNotification({
+        kind: item.kind === "info" ? "info" : "system",
+        title: String(item.title || "Notification").trim() || "Notification",
+        body: String(item.body || "").trim(),
+        dedupeKey: `notion:${id}`,
+      });
+    }
+  } catch {
+    /* offline / API indisponible */
+  }
+}
+
+/** Prépare les alertes système selon les préférences (verset / plan). */
+export async function syncDeviceAlertsFromPrefs(
+  plans: ReadingPlan[],
+): Promise<void> {
   const prefs = loadNotificationPrefs();
   const day = todayKey();
+  const verse = prefs.verseOfDay ? getVerseOfDay(day) : null;
 
-  if (prefs.verseOfDay) {
-    const verse = getVerseOfDay(day);
-    pushAppNotification({
-      kind: "verse",
-      title: "Verset du jour",
-      body: `${verse.reference} — ouvre-le depuis l’Accueil pour le lire.`,
-      dedupeKey: `verse-day:${day}`,
-    });
-  }
-
+  let planAlert: { title: string; body: string } | null = null;
   if (prefs.planReminder) {
-    let hasActive = false;
     for (const plan of plans) {
       const progress = loadPlanProgress(plan.id);
       if (!progress || isPlanComplete(plan, progress)) continue;
-      const { done, total } = progressCounts(plan, progress);
-      if (!total) continue;
-      hasActive = true;
-      const jour = Math.min(done + 1, total);
-      pushAppNotification({
-        kind: "plan",
-        title: planTitle(plan),
+      const reminder = buildDailyReadingReminder(plan, progress);
+      if (!reminder || reminder.complete) continue;
+      planAlert = { title: reminder.title, body: reminder.body };
+      break;
+    }
+    if (!planAlert && plans.length) {
+      const { done, total } = progressCounts(plans[0]!, loadPlanProgress(plans[0]!.id));
+      planAlert = {
+        title: planTitle(plans[0]!),
         body:
-          done === 0
-            ? `Prêt à commencer · Jour 1 sur ${total}`
-            : `Continue au jour ${jour} · ${done}/${total} jours lus`,
-        dedupeKey: `plan-progress:${plan.id}:${day}`,
-      });
-    }
-
-    if (!hasActive && plans.length) {
-      pushAppNotification({
-        kind: "plan",
-        title: "Choisis un plan",
-        body: "Parcours l’onglet Plan pour démarrer une lecture guidée.",
-        dedupeKey: `pick-plan:${day}`,
-      });
+          total > 0
+            ? `Continue ta lecture · ${done}/${total} jours`
+            : "Ouvre l’onglet Plan pour avancer.",
+      };
     }
   }
 
-  if (prefs.appInfo) {
-    pushAppNotification({
-      kind: "system",
-      title: "Bienvenue sur Biblos",
-      body: "Ici tu suis tes lectures, cartes et versets — ce fil te tient informé de ce qui se passe.",
-      dedupeKey: "welcome-biblos",
-    });
-  }
+  await scheduleDeviceDailyAlerts({
+    verse: verse
+      ? {
+          title: "Verset du jour",
+          body: `${verse.reference} — ${verse.fallback.slice(0, 120)}${verse.fallback.length > 120 ? "…" : ""}`,
+        }
+      : null,
+    plan: planAlert,
+  });
 }
 
 export function formatNotificationWhen(iso: string): string {

@@ -10,6 +10,29 @@ type PlanGalleryProps = {
   onClose?: () => void;
 };
 
+type PlanProgressFilter = "attente" | "cours" | "termines";
+
+const PLAN_FILTERS: { id: PlanProgressFilter; label: string }[] = [
+  { id: "attente", label: "En attente" },
+  { id: "cours", label: "En cours" },
+  { id: "termines", label: "Terminé" },
+];
+
+const EMPTY_COPY: Record<PlanProgressFilter, { title: string; body: string }> = {
+  attente: {
+    title: "Aucun plan en attente",
+    body: "Les plans à commencer apparaîtront ici.",
+  },
+  cours: {
+    title: "Aucun plan en cours",
+    body: "Commence un plan pour le retrouver ici.",
+  },
+  termines: {
+    title: "Aucun plan terminé",
+    body: "Tes plans conclus s’afficheront ici.",
+  },
+};
+
 const THEME_HUES = [18, 32, 205, 228, 265, 340, 152, 188];
 
 function coverStyle(id: string): { background: string } {
@@ -59,6 +82,22 @@ function snippet(raw: string, title: string): string {
   return prose.length > 108 ? `${prose.slice(0, 106).trim()}…` : prose;
 }
 
+function planBucket(plan: ReadingPlan): PlanProgressFilter {
+  const { done, total } = progressCounts(plan, loadPlanProgress(plan.id));
+  if (total > 0 && done >= total) return "termines";
+  if (done > 0) return "cours";
+  return "attente";
+}
+
+function defaultFilter(
+  counts: Record<PlanProgressFilter, number>,
+): PlanProgressFilter {
+  if (counts.cours > 0) return "cours";
+  if (counts.attente > 0) return "attente";
+  if (counts.termines > 0) return "termines";
+  return "attente";
+}
+
 /** Galerie de plans — cartões Discover (capa + durée + progrès). */
 export function PlanGallery({
   plans,
@@ -72,16 +111,42 @@ export function PlanGallery({
     () => [...plans].sort((a, b) => (b.criadoEm ?? "").localeCompare(a.criadoEm ?? "")),
     [plans],
   );
-  const [activeId, setActiveId] = useState(selectedId ?? ordered[0]?.id ?? "");
+
+  const filterCounts = useMemo(() => {
+    const counts: Record<PlanProgressFilter, number> = {
+      attente: 0,
+      cours: 0,
+      termines: 0,
+    };
+    for (const plan of ordered) counts[planBucket(plan)] += 1;
+    return counts;
+  }, [ordered]);
+
+  const [filter, setFilter] = useState<PlanProgressFilter>("attente");
+  const filterSeeded = useRef(false);
 
   useEffect(() => {
-    if (ordered.some((plan) => plan.id === activeId)) return;
+    if (filterSeeded.current) return;
+    if (!ordered.length) return;
+    filterSeeded.current = true;
+    setFilter(defaultFilter(filterCounts));
+  }, [filterCounts, ordered.length]);
+
+  const filtered = useMemo(
+    () => ordered.filter((plan) => planBucket(plan) === filter),
+    [ordered, filter],
+  );
+
+  const [activeId, setActiveId] = useState(selectedId ?? filtered[0]?.id ?? "");
+
+  useEffect(() => {
+    if (filtered.some((plan) => plan.id === activeId)) return;
     setActiveId(
-      selectedId && ordered.some((plan) => plan.id === selectedId)
+      selectedId && filtered.some((plan) => plan.id === selectedId)
         ? selectedId
-        : (ordered[0]?.id ?? ""),
+        : (filtered[0]?.id ?? ""),
     );
-  }, [activeId, ordered, selectedId]);
+  }, [activeId, filtered, selectedId]);
 
   function reveal(id: string) {
     const root = gridRef.current;
@@ -95,15 +160,15 @@ export function PlanGallery({
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
-      if (!ordered.length) return;
+      if (!filtered.length) return;
       const typing = event.target instanceof HTMLElement && event.target.closest("input, textarea");
       if (typing) return;
-      const index = Math.max(0, ordered.findIndex((plan) => plan.id === activeId));
+      const index = Math.max(0, filtered.findIndex((plan) => plan.id === activeId));
       let next = index;
-      if (event.key === "ArrowDown") next = Math.min(ordered.length - 1, index + 1);
+      if (event.key === "ArrowDown") next = Math.min(filtered.length - 1, index + 1);
       else if (event.key === "ArrowUp") next = Math.max(0, index - 1);
       else if (event.key === "Enter") {
-        const current = ordered[index];
+        const current = filtered[index];
         if (!current) return;
         event.preventDefault();
         onPick(current);
@@ -111,22 +176,46 @@ export function PlanGallery({
       } else return;
       if (next === index) return;
       event.preventDefault();
-      const id = ordered[next].id;
+      const id = filtered[next]!.id;
       setActiveId(id);
       reveal(id);
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [activeId, onPick, ordered]);
+  }, [activeId, filtered, onPick]);
 
-  const countLabel = `${ordered.length} plan${ordered.length === 1 ? "" : "s"}`;
+  const empty = EMPTY_COPY[filter];
 
   const content = (
     <>
       <header className="plan-discover-head">
-        <div>
-          <h2 className="plan-discover-title">Plans</h2>
-          <p className="plan-discover-meta">{countLabel}</p>
+        <div
+          className="flash-deck-tabs"
+          role="tablist"
+          aria-label="Filtrer les plans par progression"
+        >
+          {PLAN_FILTERS.map((item) => {
+            const count = filterCounts[item.id];
+            const selected = filter === item.id;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                role="tab"
+                id={`plan-gallery-tab-${item.id}`}
+                className={`flash-deck-tab${selected ? " is-on" : ""}${count === 0 ? " is-empty" : ""}`}
+                aria-selected={selected}
+                tabIndex={selected ? 0 : -1}
+                onClick={() => setFilter(item.id)}
+                aria-label={`${item.label}, ${count} plan${count === 1 ? "" : "s"}`}
+              >
+                <span className="flash-deck-tab-label">{item.label}</span>
+                <span className="flash-deck-tab-count" aria-hidden="true">
+                  {count}
+                </span>
+              </button>
+            );
+          })}
         </div>
         {onClose ? (
           <button
@@ -139,14 +228,14 @@ export function PlanGallery({
           </button>
         ) : null}
       </header>
-      {ordered.length ? (
+      {filtered.length ? (
         <div className="plan-discover-scroller" ref={gridRef}>
           <div
             className={`plan-discover-grid${embedded ? " is-stack" : ""}`}
             role="listbox"
-            aria-label="Plans de lecture"
+            aria-label={PLAN_FILTERS.find((item) => item.id === filter)?.label ?? "Plans"}
           >
-            {ordered.map((plan) => {
+            {filtered.map((plan) => {
               const current = plan.id === selectedId;
               const active = plan.id === activeId;
               const title = planTitle(plan);
@@ -197,8 +286,8 @@ export function PlanGallery({
         </div>
       ) : (
         <div className="plan-discover-empty">
-          <p className="plan-discover-empty-title">Aucun plan</p>
-          <p className="muted">Tes plans apparaîtront ici dès qu’ils seront disponibles.</p>
+          <p className="plan-discover-empty-title">{empty.title}</p>
+          <p className="muted">{empty.body}</p>
         </div>
       )}
     </>

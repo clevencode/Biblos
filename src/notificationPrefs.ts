@@ -20,6 +20,7 @@ const DEFAULT_OFF: NotificationPrefs = {
 const DEFAULT_ON: NotificationPrefs = {
   verseOfDay: true,
   planReminder: true,
+  /** Toujours actif pour le fil in-app (pas d’interrupteur UI). */
   appInfo: true,
 };
 
@@ -81,11 +82,12 @@ export function ensureNotificationPrefsIfPrivacyAccepted(
 }
 
 export function patchNotificationPrefs(
-  patch: Partial<NotificationPrefs>,
+  patch: Partial<Pick<NotificationPrefs, "verseOfDay" | "planReminder">>,
 ): NotificationPrefs {
   return saveNotificationPrefs({
     ...loadNotificationPrefs(),
     ...patch,
+    appInfo: true,
   });
 }
 

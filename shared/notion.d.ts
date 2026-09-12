@@ -191,3 +191,23 @@ export function upsertAdminPersonalNote(
   url?: string;
   created?: boolean;
 }>;
+
+export function notificationsDatabaseId(): string;
+
+export function listPublishedNotifications(
+  token: string,
+  opts?: { limit?: number },
+): Promise<{
+  ok: boolean;
+  error?: string;
+  hasToken?: boolean;
+  items: Array<{
+    id: string;
+    title: string;
+    body: string;
+    kind: string;
+    kindLabel?: string;
+    at: string;
+    url?: string;
+  }>;
+}>;

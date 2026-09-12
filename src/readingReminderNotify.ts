@@ -148,3 +148,71 @@ export async function scheduleReadingReminderTest(
     };
   }
 }
+
+const VERSE_NOTIFICATION_ID = 71010;
+const PLAN_NOTIFICATION_ID = 71011;
+
+function nextMorningAt(hour = 8, minute = 0): Date {
+  const at = new Date();
+  at.setSeconds(0, 0);
+  at.setHours(hour, minute, 0, 0);
+  if (at.getTime() <= Date.now() + 60_000) {
+    at.setDate(at.getDate() + 1);
+  }
+  return at;
+}
+
+/**
+ * Agenda (ou annule) les alertes appareil pour verset du jour et rappel de plan.
+ * Ne touche pas au fil in-app.
+ */
+export async function scheduleDeviceDailyAlerts(input: {
+  verse: { title: string; body: string } | null;
+  plan: { title: string; body: string } | null;
+}): Promise<void> {
+  const at = nextMorningAt(8, 0);
+
+  if (Capacitor.isNativePlatform()) {
+    try {
+      await ensureNativeChannel();
+      const allowed = await ensureNativePermission();
+      await LocalNotifications.cancel({
+        notifications: [
+          { id: VERSE_NOTIFICATION_ID },
+          { id: PLAN_NOTIFICATION_ID },
+        ],
+      });
+      if (!allowed) return;
+      const notifications = [];
+      if (input.verse) {
+        notifications.push({
+          id: VERSE_NOTIFICATION_ID,
+          title: input.verse.title,
+          body: input.verse.body,
+          schedule: { at, allowWhileIdle: true },
+          channelId: CHANNEL_ID,
+          extra: { kind: "verse-of-day" },
+        });
+      }
+      if (input.plan) {
+        const planAt = new Date(at.getTime() + 5 * 60_000);
+        notifications.push({
+          id: PLAN_NOTIFICATION_ID,
+          title: input.plan.title,
+          body: input.plan.body,
+          schedule: { at: planAt, allowWhileIdle: true },
+          channelId: CHANNEL_ID,
+          extra: { kind: "plan-reminder" },
+        });
+      }
+      if (notifications.length) {
+        await LocalNotifications.schedule({ notifications });
+      }
+    } catch {
+      /* ignore */
+    }
+    return;
+  }
+
+  // Web : pas d’alerte récurrente fiable sans service worker dédié.
+}

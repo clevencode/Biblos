@@ -1,18 +1,14 @@
-import { BellAlertIcon, BellIcon } from "@heroicons/react/24/outline";
+import { ChevronRightIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { useEffect, useState } from "react";
 import {
   formatNotificationWhen,
   listAppNotifications,
   markAllAppNotificationsRead,
   markAppNotificationRead,
+  removeAppNotification,
   syncContextualNotifications,
   type AppNotification,
 } from "../appNotifications";
-import {
-  getNotificationPermissionState,
-  requestNotificationPermission,
-  type NotificationPermissionState,
-} from "../readingReminderNotify";
 import type { ReadingPlan } from "../types";
 
 type NotificationsViewProps = {
@@ -20,50 +16,34 @@ type NotificationsViewProps = {
   onBack: () => void;
 };
 
+function previewBody(body: string, max = 96): string {
+  const text = body.replace(/\s+/g, " ").trim();
+  if (text.length <= max) return text;
+  return `${text.slice(0, max - 1).trim()}…`;
+}
+
 export function NotificationsView({ plans, onBack }: NotificationsViewProps) {
   const [items, setItems] = useState<AppNotification[]>([]);
-  const [perm, setPerm] = useState<NotificationPermissionState>("prompt");
-  const [permBusy, setPermBusy] = useState(false);
-  const [permHint, setPermHint] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  function refresh() {
+  async function refresh() {
     syncContextualNotifications(plans);
+    await new Promise((r) => window.setTimeout(r, 400));
     setItems(listAppNotifications(50));
   }
 
   useEffect(() => {
-    refresh();
+    void refresh();
   }, [plans]);
 
-  useEffect(() => {
-    let cancelled = false;
-    void getNotificationPermissionState().then((state) => {
-      if (!cancelled) setPerm(state);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  async function toggleDeviceNotifications() {
-    if (permBusy) return;
-    setPermBusy(true);
-    setPermHint(null);
-    const next = await requestNotificationPermission();
-    setPerm(next);
-    setPermBusy(false);
-    if (next === "granted") {
-      setPermHint("Tu recevras aussi des alertes sur cet appareil.");
-    } else if (next === "denied") {
-      setPermHint("Autorisation refusée — tu peux l’activer dans les réglages du système.");
-    } else if (next === "unsupported") {
-      setPermHint("Alertes système indisponibles ici.");
-    }
-  }
+  const selected = selectedId
+    ? items.find((item) => item.id === selectedId) ?? null
+    : null;
 
   function onOpenItem(item: AppNotification) {
     markAppNotificationRead(item.id);
     setItems(listAppNotifications(50));
+    setSelectedId(item.id);
   }
 
   function onMarkAll() {
@@ -71,9 +51,54 @@ export function NotificationsView({ plans, onBack }: NotificationsViewProps) {
     setItems(listAppNotifications(50));
   }
 
+  function onDeleteSelected() {
+    if (!selected) return;
+    const ok = window.confirm("Supprimer cette notification ?");
+    if (!ok) return;
+    removeAppNotification(selected.id);
+    setSelectedId(null);
+    setItems(listAppNotifications(50));
+  }
+
   const unread = items.filter((item) => !item.read).length;
-  const deviceOn = perm === "granted";
-  const DeviceBell = deviceOn ? BellAlertIcon : BellIcon;
+
+  if (selected) {
+    return (
+      <div className="notif-view notif-detail">
+        <header className="notif-head">
+          <button
+            type="button"
+            className="flash-list-back"
+            onClick={() => setSelectedId(null)}
+            aria-label="Retour à la liste"
+          >
+            ←
+          </button>
+          <div className="notif-head-copy">
+            <h1 className="notif-title type-title">{selected.title}</h1>
+            <p className="notif-detail-when muted">
+              {formatNotificationWhen(selected.at)}
+            </p>
+          </div>
+        </header>
+
+        <article className="notif-detail-card">
+          <p className="notif-detail-body">{selected.body || "—"}</p>
+        </article>
+
+        <div className="notif-detail-actions">
+          <button
+            type="button"
+            className="notif-delete-btn"
+            onClick={onDeleteSelected}
+          >
+            <TrashIcon className="notif-delete-icon" aria-hidden />
+            Supprimer
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="notif-view">
@@ -88,38 +113,11 @@ export function NotificationsView({ plans, onBack }: NotificationsViewProps) {
         </button>
         <div className="notif-head-copy">
           <h1 className="notif-title type-title">Notifications</h1>
-          <p className="notif-lead muted">
-            Pour te tenir informé de ce qui se passe dans Biblos.
-          </p>
         </div>
       </header>
 
-      <section className="notif-device" aria-label="Alertes appareil">
-        <button
-          type="button"
-          className={`notif-device-btn${deviceOn ? " is-on" : ""}`}
-          disabled={permBusy}
-          onClick={() => void toggleDeviceNotifications()}
-        >
-          <DeviceBell className="notif-device-icon" aria-hidden />
-          <span className="notif-device-stack">
-            <span className="notif-device-label">
-              {deviceOn ? "Alertes appareil activées" : "Activer les alertes appareil"}
-            </span>
-            <span className="notif-device-meta muted">
-              Rappels et infos même hors de l’app
-            </span>
-          </span>
-        </button>
-        {permHint ? (
-          <p className="notif-device-hint muted" role="status">
-            {permHint}
-          </p>
-        ) : null}
-      </section>
-
       <div className="notif-list-head">
-        <h2 className="notif-list-title">Activité</h2>
+        <h2 className="notif-list-title">Mises à jour</h2>
         {unread > 0 ? (
           <button type="button" className="notif-mark-all" onClick={onMarkAll}>
             Tout marquer lu
@@ -136,19 +134,28 @@ export function NotificationsView({ plans, onBack }: NotificationsViewProps) {
                 className={`notif-item${item.read ? "" : " is-unread"}`}
                 onClick={() => onOpenItem(item)}
               >
-                <span className="notif-item-top">
-                  <span className="notif-item-title">{item.title}</span>
-                  <span className="notif-item-when muted">
-                    {formatNotificationWhen(item.at)}
+                <span className="notif-item-main">
+                  <span className="notif-item-top">
+                    <span className="notif-item-title">{item.title}</span>
+                    <span className="notif-item-when muted">
+                      {formatNotificationWhen(item.at)}
+                    </span>
                   </span>
+                  {item.body.trim() ? (
+                    <span className="notif-item-body muted">
+                      {previewBody(item.body)}
+                    </span>
+                  ) : null}
                 </span>
-                <span className="notif-item-body muted">{item.body}</span>
+                <ChevronRightIcon className="notif-item-chevron" aria-hidden />
               </button>
             </li>
           ))}
         </ul>
       ) : (
-        <p className="notif-empty muted">Aucune notification pour le moment.</p>
+        <p className="notif-empty muted">
+          Aucune mise à jour pour le moment.
+        </p>
       )}
     </div>
   );

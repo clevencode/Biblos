@@ -1045,3 +1045,94 @@ export async function upsertAdminPersonalNote(token, input = {}) {
     created: true,
   };
 }
+
+/* —— Notifications (mises à jour app → onglet Notifications) —— */
+
+export function notificationsDatabaseId() {
+  return env("NOTION_NOTIFICATIONS_DB", "5d217d65-b106-46f6-8ddc-c86ff7197e30");
+}
+
+function plainFromProp(prop) {
+  if (!prop || typeof prop !== "object") return "";
+  if (prop.type === "title" && Array.isArray(prop.title)) {
+    return prop.title.map((s) => s?.plain_text ?? "").join("").trim();
+  }
+  if (prop.type === "rich_text" && Array.isArray(prop.rich_text)) {
+    return prop.rich_text.map((s) => s?.plain_text ?? "").join("").trim();
+  }
+  if (prop.type === "select") return String(prop.select?.name ?? "").trim();
+  if (prop.type === "checkbox") return Boolean(prop.checkbox);
+  if (prop.type === "date") return String(prop.date?.start ?? "").trim();
+  return "";
+}
+
+/**
+ * Liste les notifications publiées (Published=true) pour le fil in-app.
+ */
+export async function listPublishedNotifications(token, { limit = 40 } = {}) {
+  if (!token) {
+    return { ok: false, error: "NOTION_TOKEN em falta", hasToken: false, items: [] };
+  }
+  const databaseId = notificationsDatabaseId();
+  if (!databaseId) {
+    return { ok: false, error: "NOTION_NOTIFICATIONS_DB em falta", hasToken: true, items: [] };
+  }
+
+  const parents = [
+    databaseId,
+    "5d217d65b10646f68ddcc86ff7197e30",
+    "6fd374ac-1d14-4eb0-9a67-33839434e512",
+  ].filter((id, i, arr) => id && arr.indexOf(id) === i);
+
+  let lastError = "";
+  for (const database_id of parents) {
+    const queried = await notionFetch(
+      `https://api.notion.com/v1/databases/${database_id}/query`,
+      {
+        method: "POST",
+        headers: notionHeaders(token, { "Content-Type": "application/json" }),
+        body: JSON.stringify({
+          page_size: Math.min(100, Math.max(1, limit)),
+          filter: {
+            property: "Published",
+            checkbox: { equals: true },
+          },
+          sorts: [{ property: "PublishedAt", direction: "descending" }],
+        }),
+      },
+    );
+    if (!queried.ok) {
+      lastError = humanizeCreateError(queried.response?.status ?? 0, queried.detail);
+      continue;
+    }
+    const data = await queried.response.json();
+    const items = (data.results || []).map((page) => {
+      const props = page.properties || {};
+      const title = plainFromProp(props.Name) || "Notification";
+      const body = plainFromProp(props.Body) || "";
+      const kindRaw = plainFromProp(props.Kind) || "Info";
+      const publishedAt =
+        plainFromProp(props.PublishedAt) ||
+        page.created_time ||
+        new Date().toISOString();
+      const kind = /mise|update|annonce/i.test(kindRaw) ? "system" : "info";
+      return {
+        id: page.id,
+        title,
+        body,
+        kind,
+        kindLabel: kindRaw,
+        at: publishedAt,
+        url: page.url || notionPageUrl(page.id),
+      };
+    });
+    return { ok: true, hasToken: true, items };
+  }
+
+  return {
+    ok: false,
+    hasToken: true,
+    items: [],
+    error: lastError || "Impossible de lire Notifications",
+  };
+}

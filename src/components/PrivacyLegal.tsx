@@ -115,8 +115,8 @@ export function PrivacyEntryGate({ onAccepted }: { onAccepted: () => void }) {
           />
           <span>
             J’accepte la confidentialité des données, l’usage du stockage local
-            et les notifications de l’app (verset du jour, rappel de plan,
-            informations) — modifiables plus tard dans Réglages.
+            et les alertes téléphone (verset du jour, rappel de plan) —
+            modifiables plus tard dans Réglages.
           </span>
         </label>
 

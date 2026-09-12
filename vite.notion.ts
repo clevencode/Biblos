@@ -3,7 +3,7 @@ import { loadEnv, type Plugin } from "vite";
 import { runFlashcardSync, type SyncBody } from "./server/notionFlashcardSync.ts";
 import { handleYouVersion } from "./api/youversion.mjs";
 import { handleBibleAudio } from "./api/bible-audio.mjs";
-import { fetchNotionDescription, createVerseCard, archiveVerseCard, fetchPlanDayNote, upsertPlanDayNote, upsertUserProfile, createAdminMessage, upsertAdminPersonalNote } from "./shared/notion.mjs";
+import { fetchNotionDescription, createVerseCard, archiveVerseCard, fetchPlanDayNote, upsertPlanDayNote, upsertUserProfile, createAdminMessage, upsertAdminPersonalNote, listPublishedNotifications } from "./shared/notion.mjs";
 
 function readBody(req: IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -260,12 +260,28 @@ async function handleAdminNote(req: IncomingMessage, res: ServerResponse, token:
   send(res, result.ok || result.hasToken === false ? 200 : 400, result);
 }
 
+async function handleNotifications(req: IncomingMessage, res: ServerResponse, token: string) {
+  if (req.method === "OPTIONS") {
+    res.statusCode = 204;
+    res.end();
+    return;
+  }
+  if (req.method !== "GET") {
+    send(res, 405, { ok: false, error: "méthode invalide", items: [] });
+    return;
+  }
+  const limit = Number(queryParam(req, "limit")) || 40;
+  const result = await listPublishedNotifications(token, { limit });
+  send(res, result.ok || result.hasToken === false ? 200 : 400, result);
+}
+
 export function notionFlashcardPlugin(mode: string): Plugin {
   const env = loadEnv(mode, process.cwd(), "");
   const token = env.NOTION_TOKEN || "";
   if (env.NOTION_BIBLECARDS_DB) process.env.NOTION_BIBLECARDS_DB = env.NOTION_BIBLECARDS_DB;
   if (env.NOTION_PLAN_DB) process.env.NOTION_PLAN_DB = env.NOTION_PLAN_DB;
   if (env.NOTION_ADMIN_DB) process.env.NOTION_ADMIN_DB = env.NOTION_ADMIN_DB;
+  if (env.NOTION_NOTIFICATIONS_DB) process.env.NOTION_NOTIFICATIONS_DB = env.NOTION_NOTIFICATIONS_DB;
   // Compat: anciennes vars → même DB Admin si NOTION_ADMIN_DB absent
   if (env.NOTION_PROFILE_DB) process.env.NOTION_PROFILE_DB = env.NOTION_PROFILE_DB;
   if (env.NOTION_MESSAGES_DB) process.env.NOTION_MESSAGES_DB = env.NOTION_MESSAGES_DB;
@@ -303,6 +319,9 @@ export function notionFlashcardPlugin(mode: string): Plugin {
     });
     server.middlewares.use("/api/admin-note", (req, res) => {
       void handleAdminNote(req, res, token);
+    });
+    server.middlewares.use("/api/notifications", (req, res) => {
+      void handleNotifications(req, res, token);
     });
   };
   return {
