@@ -1,31 +1,32 @@
 import {
   BookOpenIcon as BookOutline,
+  HomeIcon as HomeOutline,
   RectangleStackIcon as StackOutline,
   Squares2X2Icon as SquaresOutline,
   UserCircleIcon as UserOutline,
 } from "@heroicons/react/24/outline";
 import {
   BookOpenIcon as BookSolid,
+  HomeIcon as HomeSolid,
   RectangleStackIcon as StackSolid,
   Squares2X2Icon as SquaresSolid,
   UserCircleIcon as UserSolid,
 } from "@heroicons/react/24/solid";
-
-type ModeTabName = "today" | "bible" | "cards" | "profile";
+import type { CenterMode } from "../types";
 
 type ModeTabIconProps = {
-  name: ModeTabName;
+  name: CenterMode;
   active?: boolean;
 };
 
-/** Galerie de plans. */
 const ICONS: Record<
-  ModeTabName,
+  CenterMode,
   {
-    Outline: typeof SquaresOutline;
-    Solid: typeof SquaresSolid;
+    Outline: typeof HomeOutline;
+    Solid: typeof HomeSolid;
   }
 > = {
+  home: { Outline: HomeOutline, Solid: HomeSolid },
   today: { Outline: SquaresOutline, Solid: SquaresSolid },
   bible: { Outline: BookOutline, Solid: BookSolid },
   cards: { Outline: StackOutline, Solid: StackSolid },

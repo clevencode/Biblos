@@ -708,6 +708,23 @@ function titleProp(content) {
   };
 }
 
+/** Blocs paragraphe pour lire le message / la note dans la page ouverte. */
+function paragraphChildrenFromText(text) {
+  const children = [];
+  let rest = String(text ?? "").slice(0, 8000);
+  while (rest.length) {
+    children.push({
+      object: "block",
+      type: "paragraph",
+      paragraph: {
+        rich_text: [{ type: "text", text: { content: rest.slice(0, 1900) } }],
+      },
+    });
+    rest = rest.slice(1900);
+  }
+  return children;
+}
+
 function dateProp(iso) {
   if (!iso) return { date: null };
   const start = String(iso).slice(0, 10);
@@ -898,6 +915,7 @@ export async function createAdminMessage(token, input = {}) {
     body: JSON.stringify({
       parent: { database_id: databaseId },
       properties,
+      children: paragraphChildrenFromText(bodyText),
     }),
   });
   if (!ok) {
@@ -908,6 +926,116 @@ export async function createAdminMessage(token, input = {}) {
     };
   }
   const page = await response.json();
+  return {
+    ok: true,
+    hasToken: true,
+    localId,
+    pageId: page.id,
+    url: notionPageUrl(page.id),
+    created: true,
+  };
+}
+
+/**
+ * Note personnelle du plan → Admin (Kind=Note), liée au plan + jour.
+ * LocalId stable : note:{userId}:{planId}:{jour}
+ */
+export async function upsertAdminPersonalNote(token, input = {}) {
+  if (!token) {
+    return { ok: false, error: "NOTION_TOKEN em falta", hasToken: false };
+  }
+  const databaseId = adminDatabaseId();
+  if (!databaseId) {
+    return { ok: false, error: "NOTION_ADMIN_DB em falta", hasToken: true };
+  }
+
+  const userId = String(input.userId || "").trim();
+  const planId = String(input.planId || "").trim();
+  const jour = Number(input.jour);
+  const bodyText = String(input.body || input.text || "").trim();
+  if (!userId || !planId || !Number.isFinite(jour) || jour < 1) {
+    return { ok: false, error: "userId, planId ou jour em falta", hasToken: true };
+  }
+  if (!bodyText) {
+    return { ok: false, error: "note vide", hasToken: true };
+  }
+
+  const localId =
+    String(input.localId || "").trim() || `note:${userId}:${planId}:${jour}`;
+  const displayName = String(input.displayName || "").trim() || "Lecteur";
+  const planName = String(input.planName || input.plan || "").trim() || "Plan";
+  const passage = String(input.passage || "").trim();
+  const atIso = input.at || new Date().toISOString();
+  const titleText = `Note · ${planName} · Jour ${jour} · ${displayName}`.slice(0, 120);
+
+  const properties = {
+    Name: titleProp(titleText),
+    Kind: { select: { name: "Note" } },
+    LocalId: richTextProp(localId),
+    UserId: richTextProp(userId),
+    DisplayName: richTextProp(displayName),
+    Body: richTextProp(bodyText.slice(0, 2000)),
+    Plan: richTextProp(planName.slice(0, 500)),
+    PlanId: richTextProp(planId.slice(0, 200)),
+    Jour: { number: jour },
+    Passage: richTextProp(passage.slice(0, 500)),
+    Status: { select: { name: "Nouveau" } },
+    UpdatedAt: isoDateTimeProp(atIso),
+  };
+
+  const existing = await findPageByLocalId(token, databaseId, localId);
+  if (existing) {
+    const patch = await notionFetch(`https://api.notion.com/v1/pages/${existing.id}`, {
+      method: "PATCH",
+      headers: notionHeaders(token, { "Content-Type": "application/json" }),
+      body: JSON.stringify({ properties }),
+    });
+    if (!patch.ok) {
+      return {
+        ok: false,
+        hasToken: true,
+        error: humanizeCreateError(patch.response?.status ?? 0, patch.detail),
+      };
+    }
+    return {
+      ok: true,
+      hasToken: true,
+      localId,
+      pageId: existing.id,
+      url: existing.url || notionPageUrl(existing.id),
+      created: false,
+    };
+  }
+
+  properties.CreatedAt = isoDateTimeProp(atIso);
+
+  const created = await notionFetch("https://api.notion.com/v1/pages", {
+    method: "POST",
+    headers: notionHeaders(token, { "Content-Type": "application/json" }),
+    body: JSON.stringify({
+      parent: { database_id: databaseId },
+      properties,
+      children: paragraphChildrenFromText(
+        [
+          planName ? `Plan : ${planName}` : null,
+          jour ? `Jour ${jour}` : null,
+          passage ? `Passage : ${passage}` : null,
+          "",
+          bodyText,
+        ]
+          .filter((line) => line !== null)
+          .join("\n"),
+      ),
+    }),
+  });
+  if (!created.ok) {
+    return {
+      ok: false,
+      hasToken: true,
+      error: humanizeCreateError(created.response?.status ?? 0, created.detail),
+    };
+  }
+  const page = await created.response.json();
   return {
     ok: true,
     hasToken: true,

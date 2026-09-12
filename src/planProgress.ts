@@ -1,4 +1,4 @@
-import { todayKey } from "./calendar";
+import { shiftDay, todayKey } from "./calendar";
 import { clearDayNotesForPlan } from "./planDayNote";
 import type { ReadingPlan } from "./types";
 
@@ -131,4 +131,22 @@ export function nextUnreadJour(plan: ReadingPlan, progress: PlanProgress | null)
   const unread = plan.days.find((day) => !p.completedDays.includes(day.jour));
   if (unread && unread.jour <= cal) return unread.jour;
   return cal;
+}
+
+/**
+ * Jour à ouvrir dans le plan : lendemain du dernier jour marqué lu
+ * (ou jour 1 si rien n’est encore terminé).
+ */
+export function latestPlanJour(plan: ReadingPlan, progress: PlanProgress | null): number {
+  const p = progress ?? { startDate: todayKey(), completedDays: [] };
+  const total = plan.days.length || 1;
+  if (!p.completedDays.length) return 1;
+  const lastDone = Math.max(...p.completedDays);
+  return Math.min(lastDone + 1, total);
+}
+
+/** Date calendaire du jour N du plan (jour 1 = startDate). */
+export function planJourDate(startDate: string, jour: number): string {
+  if (!startDate || !jour) return todayKey();
+  return shiftDay(startDate, Math.max(0, jour - 1));
 }

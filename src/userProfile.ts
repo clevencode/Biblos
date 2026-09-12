@@ -7,7 +7,7 @@ export type UserProfile = {
   id: string;
   firstName: string;
   lastName: string;
-  /** Nom préféré d’affichage ; sinon prénom + nom. */
+  /** Conservé pour sync ; affichage = nom complet. */
   preferredName: string;
   createdAt: string;
   onboardedAt: string | null;
@@ -29,12 +29,31 @@ function cleanName(value: string | null | undefined): string {
     .slice(0, 64);
 }
 
+/** Affichage / saisie « Nom complet » à partir de prénom + nom stockés. */
+export function joinFullName(firstName: string, lastName: string): string {
+  return [cleanName(firstName), cleanName(lastName)].filter(Boolean).join(" ");
+}
+
+/** Découpe « Nom complet » pour stocker firstName / lastName. */
+export function splitFullName(fullName: string): {
+  firstName: string;
+  lastName: string;
+} {
+  const cleaned = String(fullName ?? "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .slice(0, 128);
+  if (!cleaned) return { firstName: "", lastName: "" };
+  const space = cleaned.indexOf(" ");
+  if (space < 0) return { firstName: cleanName(cleaned), lastName: "" };
+  return {
+    firstName: cleanName(cleaned.slice(0, space)),
+    lastName: cleanName(cleaned.slice(space + 1)),
+  };
+}
+
 export function preferredDisplayName(profile: UserProfile): string {
-  const preferred = cleanName(profile.preferredName);
-  if (preferred) return preferred;
-  const full = [cleanName(profile.firstName), cleanName(profile.lastName)]
-    .filter(Boolean)
-    .join(" ");
+  const full = joinFullName(profile.firstName, profile.lastName);
   return full || "Lecteur";
 }
 
@@ -108,16 +127,15 @@ export type UserProfilePatch = Partial<
 
 export function saveUserProfile(patch: UserProfilePatch): UserProfile {
   const current = loadOrCreateProfile();
+  const firstName =
+    patch.firstName !== undefined ? cleanName(patch.firstName) : current.firstName;
+  const lastName =
+    patch.lastName !== undefined ? cleanName(patch.lastName) : current.lastName;
   const next: UserProfile = {
     ...current,
-    firstName:
-      patch.firstName !== undefined ? cleanName(patch.firstName) : current.firstName,
-    lastName:
-      patch.lastName !== undefined ? cleanName(patch.lastName) : current.lastName,
-    preferredName:
-      patch.preferredName !== undefined
-        ? cleanName(patch.preferredName)
-        : current.preferredName,
+    firstName,
+    lastName,
+    preferredName: joinFullName(firstName, lastName),
     onboardedAt:
       patch.onboardedAt !== undefined ? patch.onboardedAt : current.onboardedAt,
     notionUrl:
@@ -134,7 +152,7 @@ export function completeOnboarding(input: {
 }): UserProfile {
   const firstName = cleanName(input.firstName);
   const lastName = cleanName(input.lastName);
-  const preferredName = cleanName(input.preferredName) || firstName;
+  const preferredName = joinFullName(firstName, lastName);
   return saveUserProfile({
     firstName,
     lastName,
@@ -142,3 +160,50 @@ export function completeOnboarding(input: {
     onboardedAt: new Date().toISOString(),
   });
 }
+
+function clearStorageMatching(
+  storage: Storage,
+  keepKey?: (key: string) => boolean,
+): void {
+  const keys: string[] = [];
+  for (let i = 0; i < storage.length; i += 1) {
+    const key = storage.key(i);
+    if (key) keys.push(key);
+  }
+  for (const key of keys) {
+    if (keepKey?.(key)) continue;
+    const lower = key.toLowerCase();
+    if (
+      lower.startsWith("biblos") ||
+      lower.startsWith("studyos") ||
+      lower.includes("biblos") ||
+      lower.includes("flashcard")
+    ) {
+      storage.removeItem(key);
+    }
+  }
+}
+
+/**
+ * Efface profil + données locales de l’app sur cet appareil.
+ * La Bible hors ligne IndexedDB est aussi vidée.
+ */
+export async function wipeLocalUserData(): Promise<void> {
+  try {
+    clearStorageMatching(localStorage);
+  } catch {
+    /* private mode */
+  }
+  try {
+    clearStorageMatching(sessionStorage);
+  } catch {
+    /* ignore */
+  }
+  try {
+    const { clearOfflineBible } = await import("./bibleOffline");
+    await clearOfflineBible();
+  } catch {
+    /* IDB indisponible */
+  }
+}
+

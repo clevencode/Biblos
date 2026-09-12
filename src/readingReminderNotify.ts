@@ -34,6 +34,49 @@ async function ensureNativePermission(): Promise<boolean> {
   return next.display === "granted";
 }
 
+export type NotificationPermissionState = "granted" | "denied" | "prompt" | "unsupported";
+
+export async function getNotificationPermissionState(): Promise<NotificationPermissionState> {
+  if (Capacitor.isNativePlatform()) {
+    try {
+      const current = await LocalNotifications.checkPermissions();
+      if (current.display === "granted") return "granted";
+      if (current.display === "denied") return "denied";
+      return "prompt";
+    } catch {
+      return "unsupported";
+    }
+  }
+  if (typeof Notification === "undefined") return "unsupported";
+  if (Notification.permission === "granted") return "granted";
+  if (Notification.permission === "denied") return "denied";
+  return "prompt";
+}
+
+/** Demande l’autorisation des notifications (natif ou navigateur). */
+export async function requestNotificationPermission(): Promise<NotificationPermissionState> {
+  if (Capacitor.isNativePlatform()) {
+    try {
+      await ensureNativeChannel();
+      const allowed = await ensureNativePermission();
+      return allowed ? "granted" : "denied";
+    } catch {
+      return "unsupported";
+    }
+  }
+  if (typeof Notification === "undefined") return "unsupported";
+  try {
+    if (Notification.permission === "granted") return "granted";
+    if (Notification.permission === "denied") return "denied";
+    const next = await Notification.requestPermission();
+    if (next === "granted") return "granted";
+    if (next === "denied") return "denied";
+    return "prompt";
+  } catch {
+    return "unsupported";
+  }
+}
+
 /**
  * Agenda um lembrete de teste (default: daqui a 15s) com o conteúdo do dia.
  * Native = Capacitor Local Notifications; browser = Notification API.

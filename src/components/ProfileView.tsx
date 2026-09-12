@@ -18,9 +18,17 @@ import {
   type ActivityEvent,
 } from "../activityLog";
 import {
+  joinFullName,
   preferredDisplayName,
+  splitFullName,
+  wipeLocalUserData,
   type UserProfile,
 } from "../userProfile";
+import {
+  loadNotificationPrefs,
+  patchNotificationPrefs,
+  type NotificationPrefs,
+} from "../notificationPrefs";
 import {
   themePrefLabel,
   type ThemePref,
@@ -28,7 +36,8 @@ import {
 import { sendAdminMessage, ADMIN_MESSAGE_CATEGORIES, type AdminMessageCategoryId } from "../adminMessage";
 import type { Flashcard } from "../types";
 import type { SavedVerseMark } from "../verseMarks";
-import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { PrivacyPolicyPanels } from "./PrivacyLegal";
 
 type ProfileViewProps = {
   profile: UserProfile;
@@ -108,10 +117,14 @@ export function ProfileView({
 }: ProfileViewProps) {
   const [tab, setTab] = useState<ProfileTabId>("compte");
   const [offlineReady, setOfflineReady] = useState(false);
-  const [firstName, setFirstName] = useState(profile.firstName);
-  const [lastName, setLastName] = useState(profile.lastName);
-  const [preferredName, setPreferredName] = useState(profile.preferredName);
+  const [fullName, setFullName] = useState(() =>
+    joinFullName(profile.firstName, profile.lastName),
+  );
+  const [editingName, setEditingName] = useState(
+    () => !joinFullName(profile.firstName, profile.lastName),
+  );
   const [savedFlash, setSavedFlash] = useState(false);
+  const nameInputRef = useRef<HTMLInputElement>(null);
   const [activities, setActivities] = useState<ActivityEvent[]>([]);
   const [readingHistory, setReadingHistory] = useState<ActivityEvent[]>([]);
   const [adminCategory, setAdminCategory] =
@@ -119,12 +132,37 @@ export function ProfileView({
   const [adminMessage, setAdminMessage] = useState("");
   const [adminBusy, setAdminBusy] = useState(false);
   const [adminStatus, setAdminStatus] = useState<string | null>(null);
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [notifPrefs, setNotifPrefs] = useState<NotificationPrefs>(() =>
+    loadNotificationPrefs(),
+  );
 
   useEffect(() => {
-    setFirstName(profile.firstName);
-    setLastName(profile.lastName);
-    setPreferredName(profile.preferredName);
-  }, [profile.firstName, profile.lastName, profile.preferredName, profile.id]);
+    if (editingName) return;
+    setFullName(joinFullName(profile.firstName, profile.lastName));
+  }, [profile.firstName, profile.lastName, profile.id, editingName]);
+
+  function startEditName() {
+    setEditingName(true);
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        const input = nameInputRef.current;
+        if (!input) return;
+        input.focus({ preventScroll: true });
+        const len = input.value.length;
+        try {
+          input.setSelectionRange(0, len);
+        } catch {
+          input.select();
+        }
+      });
+    });
+  }
+
+  function cancelEditName() {
+    setFullName(joinFullName(profile.firstName, profile.lastName));
+    setEditingName(false);
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -143,16 +181,33 @@ export function ProfileView({
 
   function submitName(event: FormEvent) {
     event.preventDefault();
-    const first = firstName.trim();
-    if (!first) return;
+    if (!editingName) return;
+    const trimmed = fullName.trim().replace(/\s+/g, " ");
+    const { firstName, lastName } = splitFullName(trimmed);
+    if (!firstName) return;
+    const nextFull = joinFullName(firstName, lastName);
+    if (nextFull === joinFullName(profile.firstName, profile.lastName)) {
+      setFullName(nextFull);
+      setEditingName(false);
+      return;
+    }
     onProfileSave({
-      firstName: first,
-      lastName: lastName.trim(),
-      preferredName: preferredName.trim() || first,
+      firstName,
+      lastName,
+      preferredName: nextFull,
     });
+    setFullName(nextFull);
+    setEditingName(false);
     setSavedFlash(true);
     window.setTimeout(() => setSavedFlash(false), 1600);
   }
+
+  const savedFullName = joinFullName(profile.firstName, profile.lastName);
+  const hasSavedName = Boolean(savedFullName);
+  const nameLocked = hasSavedName && !editingName;
+  const nameCanSave =
+    Boolean(fullName.trim()) &&
+    fullName.trim().replace(/\s+/g, " ") !== savedFullName;
 
   async function submitAdminMessage(event: FormEvent) {
     event.preventDefault();
@@ -180,6 +235,22 @@ export function ProfileView({
     setAdminCategory("suggestion");
     setAdminMessage("");
     setAdminStatus("Message envoyé à l’admin");
+  }
+
+  async function confirmDeleteAccount() {
+    if (deleteBusy) return;
+    const ok = window.confirm(
+      "Attention : supprimer ton compte effacera définitivement toutes tes données sur cet appareil (profil, progression, notes, flashcards, historique, préférences…). Cette action est irréversible.\n\nContinuer ?",
+    );
+    if (!ok) return;
+    setDeleteBusy(true);
+    try {
+      await wipeLocalUserData();
+      window.location.reload();
+    } catch {
+      setDeleteBusy(false);
+      window.alert("Impossible d’effacer les données. Réessaie.");
+    }
   }
 
   const display = preferredDisplayName(profile);
@@ -238,40 +309,67 @@ export function ProfileView({
           className="profile-tab-panel"
         >
           <ProfilePanel titleId="profile-name-label" title="Identité">
-            <form className="profile-name-form" onSubmit={submitName}>
+            <form
+              className={`profile-name-form${editingName ? " is-editing" : ""}${nameLocked ? " is-locked" : ""}`}
+              onSubmit={submitName}
+            >
               <label className="profile-field">
-                <span>Prénom</span>
+                <span>Nom complet</span>
                 <input
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  autoComplete="given-name"
+                  ref={nameInputRef}
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  onClick={() => {
+                    if (nameLocked) startEditName();
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === "Escape" && editingName && hasSavedName) {
+                      event.preventDefault();
+                      cancelEditName();
+                    }
+                  }}
+                  autoComplete="name"
+                  enterKeyHint="done"
+                  spellCheck={false}
                   required
-                  maxLength={64}
-                />
-              </label>
-              <label className="profile-field">
-                <span>Nom</span>
-                <input
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  autoComplete="family-name"
-                  maxLength={64}
-                />
-              </label>
-              <label className="profile-field">
-                <span>Nom préféré</span>
-                <input
-                  value={preferredName}
-                  onChange={(e) => setPreferredName(e.target.value)}
-                  autoComplete="nickname"
-                  placeholder={firstName.trim() || "Nom affiché"}
-                  maxLength={64}
+                  maxLength={128}
+                  placeholder="Ex. Alex Dupont"
+                  readOnly={nameLocked}
+                  aria-readonly={nameLocked}
+                  className={
+                    nameLocked ? "is-locked" : editingName ? "is-editing" : undefined
+                  }
                 />
               </label>
               <div className="profile-name-actions">
-                <button type="submit" className="profile-save-btn">
-                  Enregistrer
-                </button>
+                {nameLocked ? (
+                  <button
+                    type="button"
+                    className="profile-save-btn is-secondary"
+                    onClick={startEditName}
+                  >
+                    Modifier
+                  </button>
+                ) : (
+                  <>
+                    {hasSavedName ? (
+                      <button
+                        type="button"
+                        className="profile-save-btn is-ghost"
+                        onClick={cancelEditName}
+                      >
+                        Annuler
+                      </button>
+                    ) : null}
+                    <button
+                      type="submit"
+                      className="profile-save-btn"
+                      disabled={!nameCanSave && hasSavedName}
+                    >
+                      Enregistrer
+                    </button>
+                  </>
+                )}
                 {savedFlash ? (
                   <span className="profile-saved muted" aria-live="polite">
                     Enregistré
@@ -284,6 +382,23 @@ export function ProfileView({
                 ? "Profil synchronisé entre tes appareils"
                 : "Profil enregistré sur cet appareil"}
             </p>
+          </ProfilePanel>
+
+          <ProfilePanel titleId="profile-delete-label" title="Suppression">
+            <p className="profile-delete-warn">
+              Supprimer ton compte effacera <strong>toutes tes données</strong>{" "}
+              sur cet appareil : profil, progression, notes, flashcards et
+              historique. Cette action est irréversible.
+            </p>
+            <button
+              type="button"
+              className="profile-delete-btn"
+              disabled={deleteBusy}
+              onClick={() => void confirmDeleteAccount()}
+            >
+              <TrashIcon className="profile-delete-btn-icon" aria-hidden />
+              {deleteBusy ? "Suppression…" : "Supprimer mon compte"}
+            </button>
           </ProfilePanel>
         </div>
 
@@ -321,6 +436,58 @@ export function ProfileView({
                 );
               })}
             </div>
+          </ProfilePanel>
+
+          <ProfilePanel
+            titleId="profile-notif-label"
+            title="Notifications"
+            hint="Types d’infos dans le fil Accueil — activés à l’acceptation des termes."
+          >
+            <ul className="profile-notif-toggles">
+              {(
+                [
+                  {
+                    key: "verseOfDay" as const,
+                    label: "Verset du jour",
+                    desc: "Rappel du verset quotidien",
+                  },
+                  {
+                    key: "planReminder" as const,
+                    label: "Rappel de plan",
+                    desc: "Progression et lecture du jour",
+                  },
+                  {
+                    key: "appInfo" as const,
+                    label: "Informations de l’app",
+                    desc: "Nouveautés et messages Biblos",
+                  },
+                ] as const
+              ).map(({ key, label, desc }) => {
+                const on = notifPrefs[key];
+                return (
+                  <li key={key}>
+                    <button
+                      type="button"
+                      className={`profile-notif-toggle${on ? " is-on" : ""}`}
+                      role="switch"
+                      aria-checked={on}
+                      onClick={() => {
+                        const next = patchNotificationPrefs({ [key]: !on });
+                        setNotifPrefs(next);
+                      }}
+                    >
+                      <span className="profile-notif-toggle-copy">
+                        <span className="profile-notif-toggle-label">{label}</span>
+                        <span className="profile-notif-toggle-desc muted">{desc}</span>
+                      </span>
+                      <span className="profile-notif-switch" aria-hidden>
+                        <span className="profile-notif-switch-knob" />
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
           </ProfilePanel>
 
           <ProfilePanel titleId="profile-bible-label" title="Bible">
@@ -601,8 +768,17 @@ export function ProfileView({
 
           <ProfilePanel titleId="profile-about-label" title="À propos">
             <p className="profile-about">
-              Biblos — lecture, plans et flashcards. Application web progressive.
+              Biblos — lecture, plans et flashcards. Prototype en phase de test
+              (application web progressive).
             </p>
+          </ProfilePanel>
+
+          <ProfilePanel
+            titleId="profile-legal-label"
+            title="Confidentialité"
+            hint="Prototype — données non partagées avec des tiers"
+          >
+            <PrivacyPolicyPanels />
           </ProfilePanel>
         </div>
       </div>

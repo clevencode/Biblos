@@ -122,11 +122,44 @@ export async function pushDayNote(
   planUrl: string | null | undefined,
   jour: number,
   text: string,
+  meta?: {
+    planName?: string;
+    passage?: string;
+    userId?: string;
+    displayName?: string;
+  },
 ): Promise<{ ok: boolean; notionUrl: string | null; error?: string }> {
   const trimmed = String(text ?? "");
   const local = saveDayNoteLocal(planId, jour, { text: trimmed });
+
+  // Admin DB (Kind=Note) — note personnelle + plan lié.
+  if (trimmed.trim() && meta?.userId) {
+    try {
+      await fetch("/api/admin-note", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: meta.userId,
+          displayName: meta.displayName,
+          planId,
+          planName: meta.planName,
+          jour,
+          passage: meta.passage,
+          body: trimmed,
+          at: new Date().toISOString(),
+        }),
+      });
+    } catch {
+      /* best-effort */
+    }
+  }
+
   if (!planUrl) {
-    return { ok: false, notionUrl: local.notionUrl ?? null, error: "Plan non synchronisé" };
+    return {
+      ok: Boolean(trimmed.trim()),
+      notionUrl: local.notionUrl ?? null,
+      error: trimmed.trim() ? undefined : "Note vide",
+    };
   }
   try {
     const response = await fetch("/api/plan-day-note", {

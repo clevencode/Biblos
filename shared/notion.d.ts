@@ -166,3 +166,28 @@ export function createVerseCard(
     criadoEm: string | null;
   };
 }>;
+
+export function upsertAdminPersonalNote(
+  token: string,
+  input?: {
+    localId?: string;
+    userId?: string;
+    displayName?: string;
+    planId?: string;
+    planName?: string;
+    plan?: string;
+    jour?: number | string;
+    passage?: string;
+    body?: string;
+    text?: string;
+    at?: string;
+  },
+): Promise<{
+  ok: boolean;
+  error?: string;
+  hasToken?: boolean;
+  localId?: string;
+  pageId?: string;
+  url?: string;
+  created?: boolean;
+}>;

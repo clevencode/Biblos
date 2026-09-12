@@ -1,4 +1,5 @@
 import { useId, useState, type FormEvent } from "react";
+import { joinFullName, splitFullName } from "../userProfile";
 
 type ProfileOnboardingProps = {
   onComplete: (input: {
@@ -10,24 +11,21 @@ type ProfileOnboardingProps = {
 
 export function ProfileOnboarding({ onComplete }: ProfileOnboardingProps) {
   const formId = useId();
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [preferredName, setPreferredName] = useState("");
+  const [fullName, setFullName] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   function submit(event: FormEvent) {
     event.preventDefault();
-    const first = firstName.trim();
-    const last = lastName.trim();
-    if (!first) {
-      setError("Indique ton prénom pour continuer.");
+    const { firstName, lastName } = splitFullName(fullName);
+    if (!firstName) {
+      setError("Indique ton nom complet pour continuer.");
       return;
     }
     setError(null);
     onComplete({
-      firstName: first,
-      lastName: last,
-      preferredName: preferredName.trim() || first,
+      firstName,
+      lastName,
+      preferredName: joinFullName(firstName, lastName),
     });
   }
 
@@ -39,42 +37,22 @@ export function ProfileOnboarding({ onComplete }: ProfileOnboardingProps) {
           Bienvenue
         </h1>
         <p className="profile-onboarding-lead muted">
-          Comment veux-tu être appelé ? Ton activité sera liée à un identifiant
-          privé, pas à ton nom.
+          Quel est ton nom ? Ton activité sera liée à un identifiant privé, pas
+          à ton nom.
         </p>
 
         <form className="profile-onboarding-form" onSubmit={submit}>
           <label className="profile-field">
-            <span>Prénom</span>
+            <span>Nom complet</span>
             <input
-              name="firstName"
-              autoComplete="given-name"
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
+              name="fullName"
+              autoComplete="name"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
               required
-              maxLength={64}
+              maxLength={128}
               autoFocus
-            />
-          </label>
-          <label className="profile-field">
-            <span>Nom</span>
-            <input
-              name="lastName"
-              autoComplete="family-name"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              maxLength={64}
-            />
-          </label>
-          <label className="profile-field">
-            <span>Nom préféré</span>
-            <input
-              name="preferredName"
-              autoComplete="nickname"
-              value={preferredName}
-              onChange={(e) => setPreferredName(e.target.value)}
-              placeholder={firstName.trim() || "Ex. Alex"}
-              maxLength={64}
+              placeholder="Ex. Alex Dupont"
             />
           </label>
           {error ? <p className="profile-onboarding-error">{error}</p> : null}

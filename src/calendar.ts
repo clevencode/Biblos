@@ -22,6 +22,14 @@ export function formatDay(day: string): string {
   }).format(new Date(`${day}T00:00:00`));
 }
 
+/** Date compacte pour tuiles de plan : « 12 sept. ». */
+export function formatPlanTileDate(day: string): string {
+  return new Intl.DateTimeFormat("fr-FR", {
+    day: "numeric",
+    month: "short",
+  }).format(new Date(`${day}T00:00:00`));
+}
+
 /** Étiquette relative pour en-têtes d’agenda (Aujourd’hui / Hier / Demain). */
 export function relativeDayLabel(day: string, today = todayKey()): string | null {
   if (day === today) return "Aujourd’hui";

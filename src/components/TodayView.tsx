@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { formatPlanTileDate } from "../calendar";
 import { isPassageRef } from "../youversion/usfm";
 import { extractPassageRef, extractPassageRefs, sanitizePlanDays } from "../plan";
 import {
@@ -7,16 +8,18 @@ import {
   pushDayNote,
   saveDayNoteLocal,
 } from "../planDayNote";
-import { isPlanComplete, type PlanProgress } from "../planProgress";
-import { buildDailyReadingReminder } from "../readingReminder";
-import { scheduleReadingReminderTest } from "../readingReminderNotify";
+import { isPlanComplete, planJourDate, type PlanProgress } from "../planProgress";
 import type { ReadingPlan } from "../types";
+import { loadOrCreateProfile, preferredDisplayName } from "../userProfile";
 import { PlanDescription } from "./PlanDescription";
 
 type TodayViewProps = {
   plan: ReadingPlan | null;
   progress?: PlanProgress | null;
+  /** Jour calendaire « aujourd’hui » dans le plan. */
   planJour?: number;
+  /** Jour à ouvrir / recentrer (le plus récent). */
+  focusJour?: number;
   /** Remet l’écran sur la timeline (ex. retour depuis Lecture du plan). */
   resumeSeq?: number;
   /** Ouvre la note du jour après la lecture (seq change à chaque fois). */
@@ -57,6 +60,7 @@ export function TodayView({
   plan,
   progress = null,
   planJour = 1,
+  focusJour,
   resumeSeq = 0,
   dayNoteFocus = null,
   onSelectGalerie,
@@ -65,15 +69,14 @@ export function TodayView({
   onStartPlanReading,
   onRestartPlan,
 }: TodayViewProps) {
+  const jumpJour = focusJour ?? planJour;
   const [screen, setScreen] = useState<PlanScreen>("timeline");
-  const [selectedJour, setSelectedJour] = useState(planJour);
+  const [selectedJour, setSelectedJour] = useState(jumpJour);
   const [introSeen, setIntroSeen] = useState(false);
   const [noteText, setNoteText] = useState("");
   const [noteBusy, setNoteBusy] = useState(false);
   const [noteMsg, setNoteMsg] = useState<string | null>(null);
   const [noteSaved, setNoteSaved] = useState(false);
-  const [reminderBusy, setReminderBusy] = useState(false);
-  const [reminderMsg, setReminderMsg] = useState<string | null>(null);
   const daysStripRef = useRef<HTMLDivElement>(null);
 
   const days = useMemo(() => {
@@ -88,9 +91,10 @@ export function TodayView({
 
   useEffect(() => {
     if (!days.length) return;
-    const preferred = days.find((day) => day.jour === planJour)?.jour ?? days[0]!.jour;
+    const preferred =
+      days.find((day) => day.jour === jumpJour)?.jour ?? days[0]!.jour;
     setSelectedJour(preferred);
-  }, [plan?.id, planJour, days]);
+  }, [plan?.id, jumpJour, days]);
 
   useEffect(() => {
     if (!plan?.id) {
@@ -106,7 +110,11 @@ export function TodayView({
     if (!resumeSeq) return;
     if (dayNoteFocus?.seq) return;
     setScreen("timeline");
-  }, [resumeSeq, dayNoteFocus?.seq]);
+    if (!days.length) return;
+    const preferred =
+      days.find((day) => day.jour === jumpJour)?.jour ?? days[0]!.jour;
+    setSelectedJour(preferred);
+  }, [resumeSeq, dayNoteFocus?.seq, jumpJour, days]);
 
   useEffect(() => {
     if (!dayNoteFocus?.seq || !plan?.id) return;
@@ -150,7 +158,7 @@ export function TodayView({
             type="button"
             className="flash-list-back"
             onClick={() => onSelectGalerie?.()}
-            aria-label="Retour à la galerie"
+            aria-label="Retour aux plans"
           >
             ← Retour
           </button>
@@ -235,7 +243,14 @@ export function TodayView({
     setNoteBusy(true);
     setNoteMsg(null);
     saveDayNoteLocal(plan.id, selectedJour, { text: noteText });
-    const result = await pushDayNote(plan.id, plan.url, selectedJour, noteText);
+    const profile = loadOrCreateProfile();
+    const planTitle = plan.theme?.trim() || plan.nome;
+    const result = await pushDayNote(plan.id, plan.url, selectedJour, noteText, {
+      planName: planTitle,
+      passage: passageLabel,
+      userId: profile.id,
+      displayName: preferredDisplayName(profile),
+    });
     setNoteBusy(false);
     if (!result.ok) {
       setNoteMsg("Enregistré sur cet appareil — sync plus tard");
@@ -246,28 +261,6 @@ export function TodayView({
     setNoteSaved(true);
     setNoteMsg("Note enregistrée");
     if (andClose) setScreen("timeline");
-  }
-
-  async function testReadingReminder() {
-    if (!plan) return;
-    const reminder = buildDailyReadingReminder(plan, progress);
-    if (!reminder) {
-      setReminderMsg("Aucune lecture à rappeler pour ce plan.");
-      return;
-    }
-    setReminderBusy(true);
-    setReminderMsg(null);
-    const result = await scheduleReadingReminderTest(reminder, 15);
-    setReminderBusy(false);
-    if (!result.ok) {
-      setReminderMsg(result.error || "Échec du rappel de test");
-      return;
-    }
-    setReminderMsg(
-      result.mode === "native"
-        ? `Rappel test dans ~15 s : ${reminder.passageLabel}`
-        : `Rappel navigateur dans ~15 s : ${reminder.passageLabel}`,
-    );
   }
 
   if (screen === "intro") {
@@ -393,7 +386,7 @@ export function TodayView({
             type="button"
             className="flash-list-back"
             onClick={() => onSelectGalerie?.()}
-            aria-label="Retour à la galerie"
+            aria-label="Retour aux plans"
           >
             ←
           </button>
@@ -445,6 +438,9 @@ export function TodayView({
               const selected = day.jour === selectedDay?.jour;
               const read = progress?.completedDays.includes(day.jour) ?? false;
               const isCurrent = day.jour === planJour;
+              const startDate = progress?.startDate;
+              const realDate = startDate ? planJourDate(startDate, day.jour) : null;
+              const dateLabel = realDate ? formatPlanTileDate(realDate) : "Jour";
               return (
                 <button
                   key={day.jour}
@@ -462,6 +458,7 @@ export function TodayView({
                   onClick={() => setSelectedJour(day.jour)}
                   aria-label={[
                     `Jour ${day.jour}`,
+                    realDate ? dateLabel : null,
                     selected ? "sélectionné" : null,
                     isCurrent ? "jour actuel" : null,
                     read ? "terminé" : null,
@@ -475,7 +472,7 @@ export function TodayView({
                     </span>
                   ) : null}
                   <span className="plan-yv-day-num">{day.jour}</span>
-                  <span className="plan-yv-day-label">Jour</span>
+                  <span className="plan-yv-day-label">{dateLabel}</span>
                 </button>
               );
             })}
@@ -540,27 +537,7 @@ export function TodayView({
             ›
           </span>
         </button>
-
-        <button
-          type="button"
-          className="plan-yv-secondary-row is-ghost"
-          disabled={reminderBusy}
-          onClick={() => {
-            void testReadingReminder();
-          }}
-        >
-          <span className="plan-yv-secondary-stack">
-            <span className="plan-yv-secondary-label">
-              {reminderBusy ? "Programmation…" : "Tester le rappel"}
-            </span>
-            <span className="plan-yv-secondary-meta">Notification dans ~15 s</span>
-          </span>
-          <span className="plan-yv-secondary-chevron" aria-hidden="true">
-            ›
-          </span>
-        </button>
       </nav>
-      {reminderMsg ? <p className="plan-yv-reminder-msg muted">{reminderMsg}</p> : null}
     </div>
   );
 }

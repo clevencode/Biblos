@@ -4,7 +4,10 @@ import { FlashcardDeck } from "./components/FlashcardDeck";
 import { ModeTabIcon } from "./components/ModeTabIcon";
 import { ProfileOnboarding } from "./components/ProfileOnboarding";
 import { ProfileView } from "./components/ProfileView";
+import { PrivacyEntryGate, hasPrivacyAck } from "./components/PrivacyLegal";
+import { ensureNotificationPrefsIfPrivacyAccepted } from "./notificationPrefs";
 import { TodayView } from "./components/TodayView";
+import { HomeView } from "./components/HomeView";
 import { PlanGallery } from "./components/PlanGallery";
 import { BibleReaderView } from "./components/BibleReaderView";
 import type { Catalog, CenterMode, Flashcard, ReadingPlan, Seed } from "./types";
@@ -26,13 +29,15 @@ import {
 import { mergeCard } from "./cardOverrides";
 import { hydrateCatalogFromCache, persistCatalogCache, removeCardFromCatalog } from "./catalogSync";
 import {
+  calendarJour,
   ensurePlanStart,
   ensureDayCompleted,
+  latestPlanJour,
   loadPlanProgress,
   markDayRead,
-  nextUnreadJour,
   resetPlanProgress,
 } from "./planProgress";
+import { sanitizePlanDays } from "./plan";
 import {
   createPlanReadingSession,
   currentPlanStep,
@@ -57,7 +62,8 @@ const UI_KEY = "biblos-ui";
 const seedCatalog = hydrateCatalogFromCache(seed as Catalog);
 
 const modes: { id: CenterMode; label: string }[] = [
-  { id: "today", label: "Galerie" },
+  { id: "home", label: "Accueil" },
+  { id: "today", label: "Plan" },
   { id: "bible", label: "Lecture" },
   { id: "cards", label: "Cartes" },
   { id: "profile", label: "Profil" },
@@ -99,17 +105,23 @@ function isMode(value: unknown): value is CenterMode {
   return modes.some((item) => item.id === value);
 }
 
+function resolveInitialMode(session: UiSession): CenterMode {
+  const value = session.mode as string | undefined;
+  if (value === "calendar" || value === "inbox") return "cards";
+  if (isMode(value)) return value;
+  return "home";
+}
+
 export function App() {
   const initialUi = readUi();
   const [catalog, setCatalog] = useState<Catalog>(() => seedCatalog);
   const notes = catalog.notas;
   const plans = catalog.plans;
-  const [mode, setMode] = useState<CenterMode>(() => {
-    const value = initialUi.mode as string | undefined;
-    if (value === "calendar" || value === "inbox") return "cards";
-    return isMode(value) ? value : "today";
-  });
-  const [home, setHome] = useState(() => initialUi.home ?? !initialUi.planId);
+  const [mode, setMode] = useState<CenterMode>(() => resolveInitialMode(initialUi));
+  /** Sous l’onglet Plan : détail du jour vs liste. */
+  const [planDay, setPlanDay] = useState(
+    () => initialUi.mode === "today" && initialUi.home === false,
+  );
   const [planId, setPlanId] = useState(() => initialUi.planId ?? plans[0]?.id ?? "");
   const [planProgressTick, setPlanProgressTick] = useState(0);
   const [dismissNotionBanner, setDismissNotionBanner] = useState(false);
@@ -129,6 +141,11 @@ export function App() {
   const [themePref, setThemePref] = useState<ThemePref>(() => loadThemePref());
   const [profile, setProfile] = useState<UserProfile>(() => loadOrCreateProfile());
   const [activityTick, setActivityTick] = useState(0);
+  const [privacyOk, setPrivacyOk] = useState(() => {
+    const ok = hasPrivacyAck();
+    ensureNotificationPrefsIfPrivacyAccepted(ok);
+    return ok;
+  });
   const openedLogged = useRef(false);
 
   useEffect(() => {
@@ -181,8 +198,7 @@ export function App() {
     openedLogged.current = true;
     appendActivity("app.open", undefined, next.id);
     setActivityTick((n) => n + 1);
-    setHome(true);
-    setMode("today");
+    setMode("home");
     void syncUserProfileToNotion(next);
   }
 
@@ -245,7 +261,6 @@ export function App() {
         return next;
       });
     }
-    setHome(false);
     setMode("cards");
     setCardFocusId(cardId);
     setCardFocusSeq((value) => value + 1);
@@ -272,10 +287,20 @@ export function App() {
     return loadPlanProgress(activePlan.id) ?? ensurePlanStart(activePlan.id);
   }, [activePlan, planProgressTick]);
 
+  const planDays = useMemo(
+    () => (activePlan ? sanitizePlanDays(activePlan.days) : []),
+    [activePlan],
+  );
+
   const todayJour = useMemo(() => {
+    if (!activePlan || !planProgress) return 1;
+    return calendarJour(planProgress.startDate, planDays.length || 1);
+  }, [activePlan, planProgress, planDays.length]);
+
+  const focusJour = useMemo(() => {
     if (!activePlan) return 1;
-    return nextUnreadJour(activePlan, planProgress);
-  }, [activePlan, planProgress]);
+    return latestPlanJour({ ...activePlan, days: planDays }, planProgress);
+  }, [activePlan, planProgress, planDays]);
 
   const { notionHealth } = useNotionSync({
     catalog,
@@ -294,8 +319,12 @@ export function App() {
   }, [planId, plans]);
 
   useEffect(() => {
-    writeUi({ home, mode, planId: activePlan?.id });
-  }, [activePlan?.id, home, mode]);
+    writeUi({
+      home: mode === "today" ? !planDay : undefined,
+      mode,
+      planId: activePlan?.id,
+    });
+  }, [activePlan?.id, mode, planDay]);
 
   useEffect(() => {
     if (mode !== "bible") setBibleChromeHidden(false);
@@ -304,23 +333,27 @@ export function App() {
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
       if (event.key !== "Escape") return;
-      if (mode === "today" && !home) {
+      if (mode === "today" && planDay) {
         event.preventDefault();
-        goHome();
+        goGalerie();
       }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [home, mode]);
+  }, [mode, planDay]);
+
+  function goGalerie() {
+    setPlanDay(false);
+    setMode("today");
+  }
 
   function goHome() {
-    setHome(true);
-    setMode("today");
+    setMode("home");
   }
 
   function pickPlan(plan: ReadingPlan) {
     setPlanId(plan.id);
-    setHome(false);
+    setPlanDay(true);
     setMode("today");
   }
 
@@ -328,7 +361,6 @@ export function App() {
     const ref = reference.trim();
     if (!ref) return;
     if (!opts?.keepPlanReading) setPlanReading(null);
-    setHome(false);
     setBibleFocusRef(ref);
     setBibleFocusSeq((value) => value + 1);
     setMode("bible");
@@ -357,8 +389,8 @@ export function App() {
 
   function exitPlanReading() {
     setPlanReading(null);
-    setHome(false);
     setPlanResumeSeq((value) => value + 1);
+    setPlanDay(true);
     setMode("today");
   }
 
@@ -380,8 +412,8 @@ export function App() {
         setDayNoteFocus({ jour: current.jour, seq: Date.now() });
       }
       setPlanReading(null);
-      setHome(false);
       setPlanResumeSeq((value) => value + 1);
+      setPlanDay(true);
       setMode("today");
       return;
     }
@@ -511,8 +543,7 @@ export function App() {
     const items = modes.map((item) => item.id);
     const index = Math.max(0, items.indexOf(mode));
     const next = items[(index + (event.key === "ArrowRight" ? 1 : -1) + items.length) % items.length];
-    if (next === "today") setHome(true);
-    else setHome(false);
+    if (next === "today") setPlanDay(false);
     setMode(next);
     document.getElementById(`tab-${next}`)?.focus();
   }
@@ -522,9 +553,10 @@ export function App() {
       plan={activePlan}
       progress={planProgress}
       planJour={todayJour}
+      focusJour={focusJour}
       resumeSeq={planResumeSeq}
       dayNoteFocus={dayNoteFocus}
-      onSelectGalerie={goHome}
+      onSelectGalerie={goGalerie}
       onMarkRead={handleMarkRead}
       onOpenPassage={openPassageInBible}
       onStartPlanReading={startPlanReading}
@@ -532,7 +564,31 @@ export function App() {
     />
   );
 
+  const homePanel = (
+    <HomeView
+      profile={profile}
+      plans={plans}
+      progressTick={planProgressTick}
+      onOpenPlan={pickPlan}
+      onBrowsePlans={goGalerie}
+      onOpenVerse={(reference) => openPassageInBible(reference)}
+    />
+  );
+
   const onboarded = isProfileOnboarded(profile);
+
+  if (!privacyOk) {
+    return (
+      <div className={`app biblos-shell${narrow ? " is-narrow" : ""}`}>
+        <PrivacyEntryGate
+          onAccepted={() => {
+            ensureNotificationPrefsIfPrivacyAccepted(true);
+            setPrivacyOk(true);
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div
@@ -589,8 +645,7 @@ export function App() {
                       title={item.label}
                       tabIndex={on ? 0 : -1}
                       onClick={() => {
-                        if (item.id === "today") setHome(true);
-                        else setHome(false);
+                        if (item.id === "today") setPlanDay(false);
                         setMode(item.id);
                       }}
                     >
@@ -610,21 +665,30 @@ export function App() {
             <section className="graph-pane" aria-label="Contenu">
               <div className="graph-pane-body">
                 <div
+                  id="panel-home"
+                  role="tabpanel"
+                  aria-labelledby="tab-home"
+                  hidden={mode !== "home"}
+                  className="pane-body"
+                >
+                  {homePanel}
+                </div>
+                <div
                   id="panel-today"
                   role="tabpanel"
                   aria-labelledby="tab-today"
                   hidden={mode !== "today"}
                   className="pane-body"
                 >
-                  {home ? (
+                  {planDay ? (
+                    themePanel
+                  ) : (
                     <PlanGallery
                       embedded={narrow}
                       plans={plans}
                       selectedId={activePlan?.id ?? null}
                       onPick={pickPlan}
                     />
-                  ) : (
-                    themePanel
                   )}
                 </div>
                 <div
@@ -639,7 +703,10 @@ export function App() {
                     focusRef={bibleFocusRef}
                     focusSeq={bibleFocusSeq}
                     active={mode === "bible"}
-                    onBack={planReading ? exitPlanReading : () => setMode("today")}
+                    onBack={planReading ? exitPlanReading : () => {
+                      if (planDay) setMode("today");
+                      else goHome();
+                    }}
                     planReading={
                       planReading && activePlan
                         ? {

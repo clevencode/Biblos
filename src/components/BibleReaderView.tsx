@@ -689,7 +689,9 @@ export function BibleReaderView({
     setError(null);
     if (result.bibleId) setBibleId(result.bibleId);
     if (result.bible) setBible(result.bible);
-    const bookTitle = result.passage.book?.name || nextBook;
+    const bookTitle =
+      books.find((b) => b.id.toUpperCase() === nextBook.toUpperCase())?.title ||
+      nextBook;
     const label =
       verse != null
         ? `${bookTitle} ${nextChapter}.${verse}`

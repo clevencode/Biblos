@@ -133,7 +133,7 @@ export function PlanGallery({
             type="button"
             className="plan-discover-close"
             onClick={onClose}
-            aria-label="Fermer la galerie"
+            aria-label="Fermer les plans"
           >
             ×
           </button>

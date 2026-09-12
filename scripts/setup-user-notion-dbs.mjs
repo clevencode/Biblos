@@ -74,6 +74,7 @@ async function main() {
         options: [
           { name: "Profil", color: "blue" },
           { name: "Message", color: "orange" },
+          { name: "Note", color: "purple" },
         ],
       },
     },
@@ -84,6 +85,10 @@ async function main() {
     PreferredName: { rich_text: {} },
     DisplayName: { rich_text: {} },
     Body: { rich_text: {} },
+    Plan: { rich_text: {} },
+    PlanId: { rich_text: {} },
+    Jour: { number: {} },
+    Passage: { rich_text: {} },
     Category: {
       select: {
         options: [
