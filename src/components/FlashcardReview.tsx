@@ -641,7 +641,7 @@ type DeckProgressFilter = "nouveau" | "revisando" | "termines";
 
 const DECK_FILTERS: { id: DeckProgressFilter; label: string }[] = [
   { id: "nouveau", label: "Nouveau" },
-  { id: "revisando", label: "En révision" },
+  { id: "revisando", label: "Révision" },
   { id: "termines", label: "Terminé" },
 ];
 
@@ -722,16 +722,13 @@ export function FlashDeckList({
   const [weekAnchor, setWeekAnchor] = useState(today);
   const [selectedDay, setSelectedDay] = useState(today);
 
-  const nouveauCount = queue.filter((card) => cardMatchesDeckFilter(card, "nouveau")).length;
-  const revisandoCount = queue.filter((card) => cardMatchesDeckFilter(card, "revisando")).length;
-  const terminesCount = queue.filter((card) => cardMatchesDeckFilter(card, "termines")).length;
   const filterCounts: Record<DeckProgressFilter, number> = {
-    nouveau: nouveauCount,
-    revisando: revisandoCount,
-    termines: terminesCount,
+    nouveau: queue.filter((card) => cardMatchesDeckFilter(card, "nouveau")).length,
+    revisando: queue.filter((card) => cardMatchesDeckFilter(card, "revisando")).length,
+    termines: queue.filter((card) => cardMatchesDeckFilter(card, "termines")).length,
   };
   const statusFiltered = queue.filter((card) => cardMatchesDeckFilter(card, filter));
-  /** Navigation ← → : tous les statuts (Nouveau / En révision / Terminé). */
+  /** Navigation ← → : tous les statuts. */
   const allBusyDays = useMemo(() => busyDaysFromCards(queue), [queue]);
   const prevBusyDay = useMemo(
     () => adjacentBusyDay(selectedDay, -1, allBusyDays),
@@ -942,9 +939,6 @@ export function FlashDeckList({
                 aria-label={`${item.label}, ${count} carte${count === 1 ? "" : "s"}`}
               >
                 <span className="flash-deck-tab-label">{item.label}</span>
-                <span className="flash-deck-tab-count" aria-hidden="true">
-                  {count}
-                </span>
               </button>
             );
           })}

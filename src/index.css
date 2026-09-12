@@ -5524,9 +5524,15 @@ body,
   }
 
   .plan-discover-head .flash-deck-tab {
-    font-size: 0.66rem;
-    padding: 10px 4px 12px;
-    letter-spacing: 0.04em;
+    font-size: 0.7rem;
+    padding: 10px 6px 12px;
+    letter-spacing: 0.05em;
+  }
+
+  .plan-discover-head .flash-deck-tab-label {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: nowrap;
   }
 
   .plan-discover-title {

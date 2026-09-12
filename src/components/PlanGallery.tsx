@@ -10,15 +10,20 @@ type PlanGalleryProps = {
   onClose?: () => void;
 };
 
-type PlanProgressFilter = "attente" | "cours" | "termines";
+type PlanProgressFilter = "tout" | "attente" | "cours" | "termines";
 
 const PLAN_FILTERS: { id: PlanProgressFilter; label: string }[] = [
-  { id: "attente", label: "En attente" },
-  { id: "cours", label: "En cours" },
+  { id: "tout", label: "Tout" },
+  { id: "attente", label: "Attente" },
+  { id: "cours", label: "Cours" },
   { id: "termines", label: "Terminé" },
 ];
 
 const EMPTY_COPY: Record<PlanProgressFilter, { title: string; body: string }> = {
+  tout: {
+    title: "Aucun plan",
+    body: "Tes plans de lecture apparaîtront ici.",
+  },
   attente: {
     title: "Aucun plan en attente",
     body: "Les plans à commencer apparaîtront ici.",
@@ -82,19 +87,10 @@ function snippet(raw: string, title: string): string {
   return prose.length > 108 ? `${prose.slice(0, 106).trim()}…` : prose;
 }
 
-function planBucket(plan: ReadingPlan): PlanProgressFilter {
+function planBucket(plan: ReadingPlan): Exclude<PlanProgressFilter, "tout"> {
   const { done, total } = progressCounts(plan, loadPlanProgress(plan.id));
   if (total > 0 && done >= total) return "termines";
   if (done > 0) return "cours";
-  return "attente";
-}
-
-function defaultFilter(
-  counts: Record<PlanProgressFilter, number>,
-): PlanProgressFilter {
-  if (counts.cours > 0) return "cours";
-  if (counts.attente > 0) return "attente";
-  if (counts.termines > 0) return "termines";
   return "attente";
 }
 
@@ -114,26 +110,25 @@ export function PlanGallery({
 
   const filterCounts = useMemo(() => {
     const counts: Record<PlanProgressFilter, number> = {
+      tout: 0,
       attente: 0,
       cours: 0,
       termines: 0,
     };
-    for (const plan of ordered) counts[planBucket(plan)] += 1;
+    for (const plan of ordered) {
+      counts.tout += 1;
+      counts[planBucket(plan)] += 1;
+    }
     return counts;
   }, [ordered]);
 
-  const [filter, setFilter] = useState<PlanProgressFilter>("attente");
-  const filterSeeded = useRef(false);
-
-  useEffect(() => {
-    if (filterSeeded.current) return;
-    if (!ordered.length) return;
-    filterSeeded.current = true;
-    setFilter(defaultFilter(filterCounts));
-  }, [filterCounts, ordered.length]);
+  const [filter, setFilter] = useState<PlanProgressFilter>("tout");
 
   const filtered = useMemo(
-    () => ordered.filter((plan) => planBucket(plan) === filter),
+    () =>
+      filter === "tout"
+        ? ordered
+        : ordered.filter((plan) => planBucket(plan) === filter),
     [ordered, filter],
   );
 
@@ -210,9 +205,6 @@ export function PlanGallery({
                 aria-label={`${item.label}, ${count} plan${count === 1 ? "" : "s"}`}
               >
                 <span className="flash-deck-tab-label">{item.label}</span>
-                <span className="flash-deck-tab-count" aria-hidden="true">
-                  {count}
-                </span>
               </button>
             );
           })}
@@ -261,7 +253,11 @@ export function PlanGallery({
                     <span className="plan-tile-mark" aria-hidden="true">
                       {title.charAt(0)}
                     </span>
-                    {total ? <span className="plan-tile-days">{total} jours</span> : null}
+                    {total ? (
+                      <span className="plan-tile-days">
+                        {total} jour{total === 1 ? "" : "s"}
+                      </span>
+                    ) : null}
                     <span className="plan-tile-name">{title}</span>
                     {preview ? <span className="plan-tile-blurb">{preview}</span> : null}
                     {total && started ? (

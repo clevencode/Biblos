@@ -68,6 +68,36 @@ function formatPassageLabel(window: VerseWindow, fallback: string): string {
   return `${bookToken} ${chapter}` || fallback;
 }
 
+/** Nombre de versets explicitement cités (ex. 3:16 → 1, 3:16-18 → 3). Chapitre seul → 0. */
+export function countDefinedVerses(refs: string[]): number {
+  let total = 0;
+  for (const ref of refs) {
+    const window = parseVerseWindow(ref);
+    if (!window || window.start == null) continue;
+    const end = window.end ?? window.start;
+    total += Math.max(1, Math.abs(end - window.start) + 1);
+  }
+  return total;
+}
+
+/**
+ * Estimation basée sur les versets définis (pas 5–8 min par chapitre).
+ * Chapitre sans verset → ~20 versets (moyenne), pour rester en unité « verset ».
+ */
+export function formatReadingTimeLabel(refs: string[]): string | null {
+  if (!refs.length) return null;
+  const defined = countDefinedVerses(refs);
+  const verses =
+    defined > 0
+      ? defined
+      : refs.reduce((sum, ref) => (parseVerseWindow(ref) ? sum + 20 : sum), 0);
+  if (verses <= 0) return null;
+  // Lecture dévotionnelle : ~6–12 versets / min
+  const low = Math.max(1, Math.ceil(verses / 12));
+  const high = Math.max(low + (verses > 1 && low === 1 ? 1 : 0), Math.ceil(verses / 6));
+  return low === high ? `~${low} min` : `~${low}–${high} min`;
+}
+
 /** Une étape = un chapitre / passage du jour (pas un verset isolé). */
 export function buildChapterStep(jour: number, passage: string): PlanReadingStep | null {
   const trimmed = passage.trim();

@@ -8,6 +8,7 @@ import {
   pushDayNote,
   saveDayNoteLocal,
 } from "../planDayNote";
+import { formatReadingTimeLabel } from "../planReading";
 import { isPlanComplete, planJourDate, type PlanProgress } from "../planProgress";
 import type { ReadingPlan } from "../types";
 import { loadOrCreateProfile, preferredDisplayName } from "../userProfile";
@@ -268,13 +269,7 @@ export function TodayView({
   const dayNoteLocal = loadDayNote(plan.id, selectedJour);
   const dayNoteDone = Boolean(dayNoteLocal?.text?.trim() || dayNoteLocal?.notionUrl);
   const readingMinutes =
-    passageRefs.length > 0
-      ? (() => {
-          const low = Math.max(5, passageRefs.length * 5);
-          const high = Math.max(low + 5, passageRefs.length * 8);
-          return `~${low}–${high} min`;
-        })()
-      : null;
+    passageRefs.length > 0 ? formatReadingTimeLabel(passageRefs) : null;
   const progressPct =
     scheduleTotal > 0 ? Math.min(100, (scheduleDone / scheduleTotal) * 100) : 0;
 

@@ -49,6 +49,11 @@ import { BibleHistorySheet } from "./BibleHistorySheet";
 import { BibleSearchSheet } from "./BibleSearchSheet";
 import { CircularColorEditor } from "./CircularColorEditor";
 import { ACTIVITY_TRACKING_ENABLED } from "../activityLog";
+import {
+  bindBibleAudioControls,
+  clearBibleAudioControls,
+  syncBibleAudioControls,
+} from "../bibleAudioControls";
 import { createVerseFlashcard, verseCardId } from "../verseCard";
 import {
   clearOfflineBible,
@@ -508,6 +513,7 @@ export function BibleReaderView({
       setAudioPlaying(false);
       if (audioBookRef.current) saveAudioPosition(audioBookRef.current, 0);
       setAudioTime(0);
+      void clearBibleAudioControls();
     };
     const onWaiting = () => setAudioBusy(true);
     const onCanPlay = () => setAudioBusy(false);
@@ -532,7 +538,36 @@ export function BibleReaderView({
     audio.addEventListener("loadedmetadata", onMeta);
     audio.addEventListener("durationchange", onMeta);
 
+    let unbindNative: (() => void) | undefined;
+    void bindBibleAudioControls({
+      onPlay: () => {
+        void audio.play().catch(() => undefined);
+      },
+      onPause: () => {
+        audio.pause();
+      },
+      onSkipBackward: () => {
+        const next = Math.max(0, (audio.currentTime || 0) - 15);
+        audio.currentTime = next;
+        setAudioTime(next);
+      },
+      onSkipForward: () => {
+        const max = Number.isFinite(audio.duration) ? audio.duration : (audio.currentTime || 0) + 30;
+        const next = Math.min(max, (audio.currentTime || 0) + 30);
+        audio.currentTime = next;
+        setAudioTime(next);
+      },
+      onDestroy: () => {
+        audio.pause();
+        void clearBibleAudioControls();
+      },
+    }).then((unbind) => {
+      unbindNative = unbind;
+    });
+
     return () => {
+      unbindNative?.();
+      void clearBibleAudioControls();
       audio.pause();
       audio.removeEventListener("play", onPlay);
       audio.removeEventListener("pause", onPause);
@@ -547,6 +582,42 @@ export function BibleReaderView({
       }
     };
   }, []);
+
+  useEffect(() => {
+    const usfm = (audioActiveUsfm || audioBookRef.current || "").toUpperCase();
+    const episode = usfm ? audioByUsfm[usfm] : null;
+    if (!episode) {
+      if (!audioPlaying) void clearBibleAudioControls();
+      return;
+    }
+    void syncBibleAudioControls({
+      track: episode.title,
+      artist: audioPodcast,
+      album: "Segond 21",
+      isPlaying: audioPlaying,
+      duration: audioDuration,
+      elapsed: audioTime,
+    });
+  }, [audioPlaying, audioActiveUsfm, audioDuration, audioPodcast, audioByUsfm]);
+
+  useEffect(() => {
+    if (!audioPlaying) return;
+    const id = window.setInterval(() => {
+      const audio = audioRef.current;
+      const usfm = (audioActiveUsfm || audioBookRef.current || "").toUpperCase();
+      const episode = usfm ? audioByUsfm[usfm] : null;
+      if (!audio || !episode) return;
+      void syncBibleAudioControls({
+        track: episode.title,
+        artist: audioPodcast,
+        album: "Segond 21",
+        isPlaying: !audio.paused,
+        duration: Number.isFinite(audio.duration) ? audio.duration : audioDuration,
+        elapsed: audio.currentTime || 0,
+      });
+    }, 2500);
+    return () => window.clearInterval(id);
+  }, [audioPlaying, audioActiveUsfm, audioByUsfm, audioPodcast, audioDuration]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -565,6 +636,7 @@ export function BibleReaderView({
     setAudioBusy(false);
     setAudioTime(0);
     setAudioDuration(0);
+    void clearBibleAudioControls();
   }, [bookId]);
 
   useEffect(() => {
@@ -1210,6 +1282,11 @@ export function BibleReaderView({
     const episode = audioByUsfm[usfm];
     const audio = audioRef.current;
     if (!episode?.audioUrl || !audio) return;
+
+    // Aligne le sélecteur Livre/chapitre sur le livre audio choisi.
+    if (usfm !== bookId.toUpperCase() && isUsfmBookId(usfm)) {
+      void loadChapter(usfm, "1", null);
+    }
 
     try {
       setAudioBusy(true);
