@@ -45,7 +45,7 @@ export function weekdayLabel(day: string): string {
   return new Intl.DateTimeFormat("fr-FR", { weekday: "long" }).format(new Date(`${day}T00:00:00`));
 }
 
-/** Agenda style Google Calendar : « jeu » + « 10 ». */
+/** Calendrier (bandeau jour) : « jeu » + « 10 ». */
 export function scheduleDayParts(day: string): { weekday: string; dayNum: string } {
   const date = new Date(`${day}T00:00:00`);
   const weekday = new Intl.DateTimeFormat("fr-FR", { weekday: "short" })

@@ -1,19 +1,17 @@
 import {
   BookOpenIcon as BookOutline,
-  QueueListIcon as TimelineOutline,
   RectangleStackIcon as StackOutline,
   Squares2X2Icon as SquaresOutline,
   UserCircleIcon as UserOutline,
 } from "@heroicons/react/24/outline";
 import {
   BookOpenIcon as BookSolid,
-  QueueListIcon as TimelineSolid,
   RectangleStackIcon as StackSolid,
   Squares2X2Icon as SquaresSolid,
   UserCircleIcon as UserSolid,
 } from "@heroicons/react/24/solid";
 
-type ModeTabName = "today" | "bible" | "cards" | "inbox" | "profile";
+type ModeTabName = "today" | "bible" | "cards" | "profile";
 
 type ModeTabIconProps = {
   name: ModeTabName;
@@ -31,7 +29,6 @@ const ICONS: Record<
   today: { Outline: SquaresOutline, Solid: SquaresSolid },
   bible: { Outline: BookOutline, Solid: BookSolid },
   cards: { Outline: StackOutline, Solid: StackSolid },
-  inbox: { Outline: TimelineOutline, Solid: TimelineSolid },
   profile: { Outline: UserOutline, Solid: UserSolid },
 };
 

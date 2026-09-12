@@ -1246,169 +1246,86 @@ body,
   font-size: 0.88rem;
 }
 
-.flash-deck-segments {
+.flash-deck-tabs {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
+  align-items: stretch;
   width: 100%;
   max-width: 28rem;
+  margin: 0;
   padding: 0;
   border: 0;
-  border-radius: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--text) 14%, transparent);
   background: transparent;
+  gap: 0;
 }
 
-.flash-deck-segment {
+.flash-deck-tab {
+  flex: 1 1 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
   min-width: 0;
-  min-height: 36px;
-  margin: 0;
-  padding: 8px 12px;
+  min-height: 40px;
+  margin: 0 0 -1px;
+  padding: 10px 8px 12px;
   border: 0;
-  border-radius: 999px;
-  background: var(--surface);
-  color: var(--text);
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: color-mix(in srgb, var(--text) 55%, transparent);
   font: inherit;
-  font-size: 0.82rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   line-height: 1.15;
   cursor: pointer;
-  box-shadow: none;
   transition:
-    background 0.14s ease,
-    color 0.14s ease;
+    color 0.14s ease,
+    border-color 0.14s ease;
 }
 
-.flash-deck-segment:hover {
-  color: var(--text);
-  background: color-mix(in srgb, var(--text) 8%, var(--surface));
+.flash-deck-tab:hover {
+  color: color-mix(in srgb, var(--text) 82%, transparent);
 }
 
-.flash-deck-segment:focus-visible {
+.flash-deck-tab:focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 1px;
+  outline-offset: 2px;
 }
 
-.flash-deck-segment.is-on {
-  background: var(--surface);
+.flash-deck-tab.is-on {
   color: var(--text);
-  box-shadow: none;
+  border-bottom-color: var(--accent);
+  font-weight: 700;
 }
 
-.flash-deck-segment.is-empty:not(.is-on) {
+.flash-deck-tab.is-empty:not(.is-on) {
   opacity: 0.72;
 }
 
-.flash-deck-segment-label {
+.flash-deck-tab-label {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.flash-deck-segment-count {
+.flash-deck-tab-count {
   flex-shrink: 0;
-  min-width: 1.25rem;
-  height: 1.25rem;
-  padding: 0 5px;
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: color-mix(in srgb, var(--text) 10%, transparent);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
   color: inherit;
-  font-size: 0.68rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
+  opacity: 0.75;
 }
 
-.flash-deck-segment.is-on .flash-deck-segment-count {
-  background: color-mix(in srgb, var(--accent) 16%, transparent);
+.flash-deck-tab.is-on .flash-deck-tab-count {
+  opacity: 1;
   color: var(--accent);
-}
-
-.flash-deck-chip-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  min-width: 0;
-}
-
-.flash-deck-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  min-width: 0;
-  max-width: 100%;
-  padding: 9px 14px;
-  border-radius: 999px;
-  background: var(--surface);
-  color: var(--text);
-  font-size: 0.88rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
-  box-shadow: none;
-}
-
-.flash-deck-chip-label {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.flash-deck-chip-count {
-  flex-shrink: 0;
-  min-width: 1.25rem;
-  height: 1.25rem;
-  padding: 0 5px;
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: color-mix(in srgb, var(--accent) 16%, transparent);
-  color: var(--accent);
-  font-size: 0.68rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-}
-
-.flash-deck-chip-clear {
-  appearance: none;
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--text);
-  font: inherit;
-  font-size: 1.35rem;
-  font-weight: 700;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.flash-deck-chip-clear:hover {
-  background: color-mix(in srgb, var(--text) 6%, transparent);
-}
-
-.flash-deck-chip-clear:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
 }
 
 .flash-list--plan {
@@ -1431,7 +1348,7 @@ body,
   padding-bottom: 8px;
 }
 
-.flash-week {
+.flash-cal {
   flex-shrink: 0;
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -1443,7 +1360,42 @@ body,
   user-select: none;
 }
 
-.flash-week-day {
+.flash-day-nav-btn {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: color-mix(in srgb, var(--text) 72%, transparent);
+  cursor: pointer;
+}
+
+.flash-day-nav-btn:hover:not(:disabled) {
+  color: var(--text);
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+}
+
+.flash-day-nav-btn:disabled {
+  opacity: 0.28;
+  cursor: default;
+}
+
+.flash-day-nav-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.flash-day-nav-icon {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.flash-cal-day {
   display: grid;
   justify-items: center;
   align-content: start;
@@ -1461,20 +1413,20 @@ body,
   transition: background 0.15s ease;
 }
 
-.flash-week-day:hover {
+.flash-cal-day:hover {
   background: color-mix(in srgb, var(--text) 4%, transparent);
 }
 
-.flash-week-day:focus-visible {
+.flash-cal-day:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
 
-.flash-week-day.is-selected {
+.flash-cal-day.is-selected {
   background: color-mix(in srgb, var(--text) 4.5%, var(--panel));
 }
 
-.flash-week-dow {
+.flash-cal-dow {
   font-size: 0.6rem;
   font-weight: 650;
   letter-spacing: 0.04em;
@@ -1483,11 +1435,11 @@ body,
   color: var(--muted);
 }
 
-.flash-week-day.is-selected .flash-week-dow {
+.flash-cal-day.is-selected .flash-cal-dow {
   color: color-mix(in srgb, var(--text) 78%, var(--muted));
 }
 
-.flash-week-num {
+.flash-cal-num {
   min-width: 2rem;
   min-height: 2rem;
   display: grid;
@@ -1502,24 +1454,24 @@ body,
 }
 
 /* Aujourd’hui = anneau ; sélection = remplissage (distincts). */
-.flash-week-day.is-today .flash-week-num {
+.flash-cal-day.is-today .flash-cal-num {
   box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--accent) 85%, transparent);
   color: var(--accent);
 }
 
-.flash-week-day.is-selected .flash-week-num {
+.flash-cal-day.is-selected .flash-cal-num {
   background: var(--accent);
   color: #fff;
   box-shadow: none;
 }
 
-.flash-week-markers {
+.flash-cal-markers {
   display: grid;
   place-items: center;
   min-height: 1rem;
 }
 
-.flash-week-count {
+.flash-cal-count {
   min-width: 1.1rem;
   height: 1.1rem;
   padding: 0 4px;
@@ -1535,32 +1487,32 @@ body,
   line-height: 1;
 }
 
-.flash-week-count.is-overdue {
+.flash-cal-count.is-overdue {
   background: color-mix(in srgb, var(--danger) 14%, transparent);
   color: var(--danger);
 }
 
-.flash-week-dot {
+.flash-cal-dot {
   width: 4px;
   height: 4px;
   border-radius: 50%;
   background: transparent;
 }
 
-.flash-week-day.has-cards .flash-week-dot {
+.flash-cal-day.has-cards .flash-cal-dot {
   display: none;
 }
 
-.flash-week-day.is-overdue .flash-week-dow,
-.flash-week-day.is-overdue .flash-week-num {
+.flash-cal-day.is-overdue .flash-cal-dow,
+.flash-cal-day.is-overdue .flash-cal-num {
   color: var(--danger);
 }
 
-.flash-week-day.is-overdue.is-today .flash-week-num {
+.flash-cal-day.is-overdue.is-today .flash-cal-num {
   box-shadow: inset 0 0 0 1.5px var(--danger);
 }
 
-.flash-week-day.is-overdue.is-selected .flash-week-num {
+.flash-cal-day.is-overdue.is-selected .flash-cal-num {
   background: var(--danger);
   color: #fff;
   box-shadow: none;
@@ -1619,15 +1571,29 @@ body,
 }
 
 .flash-day-cards-head {
-  display: flex;
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) 36px;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  gap: 6px;
   margin: 0;
   color: var(--text);
   font-size: 0.9rem;
   font-weight: 700;
   letter-spacing: -0.02em;
+}
+
+.flash-day-cards-copy {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 10px;
+  text-align: center;
+}
+
+.flash-day-cards-copy time {
+  text-transform: none;
 }
 
 .flash-day-cards.is-overdue .flash-day-cards-head time {

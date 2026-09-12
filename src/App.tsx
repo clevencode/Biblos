@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import seed from "./data/seed.json";
 import { FlashcardDeck } from "./components/FlashcardDeck";
-import { InboxView } from "./components/InboxView";
 import { ModeTabIcon } from "./components/ModeTabIcon";
 import { ProfileOnboarding } from "./components/ProfileOnboarding";
 import { ProfileView } from "./components/ProfileView";
@@ -21,8 +20,6 @@ import {
 } from "./userProfile";
 import { syncUserProfileToNotion } from "./userProfileSync";
 import {
-  buildInbox,
-  buildTimeline,
   listAllFlashcards,
   planCardIds,
 } from "./catalog";
@@ -63,7 +60,6 @@ const modes: { id: CenterMode; label: string }[] = [
   { id: "today", label: "Galerie" },
   { id: "bible", label: "Lecture" },
   { id: "cards", label: "Cartes" },
-  { id: "inbox", label: "Rappel" },
   { id: "profile", label: "Profil" },
 ];
 
@@ -110,7 +106,7 @@ export function App() {
   const plans = catalog.plans;
   const [mode, setMode] = useState<CenterMode>(() => {
     const value = initialUi.mode as string | undefined;
-    if (value === "calendar") return "cards";
+    if (value === "calendar" || value === "inbox") return "cards";
     return isMode(value) ? value : "today";
   });
   const [home, setHome] = useState(() => initialUi.home ?? !initialUi.planId);
@@ -265,11 +261,6 @@ export function App() {
     return listAllVerseMarks();
   }, [mode, activityTick, retentionTick]);
 
-  const timeline = useMemo(
-    () => buildTimeline(notes, scopedCardIds),
-    [scopedCardIds, notes, retentionTick],
-  );
-  const inboxDue = useMemo(() => buildInbox(notes, scopedCardIds), [scopedCardIds, notes, retentionTick]);
   const activeCardsCount = useMemo(
     () => cards.filter((card) => card.status !== "encerrado").length,
     [cards],
@@ -593,9 +584,7 @@ export function App() {
                       aria-label={
                         item.id === "cards" && activeCardsCount
                           ? `${item.label}, ${activeCardsCount} carte${activeCardsCount === 1 ? "" : "s"} active${activeCardsCount === 1 ? "" : "s"}`
-                          : item.id === "inbox" && inboxDue.length
-                            ? `${item.label}, ${inboxDue.length} à revoir`
-                            : item.label
+                          : item.label
                       }
                       title={item.label}
                       tabIndex={on ? 0 : -1}
@@ -610,11 +599,6 @@ export function App() {
                       {item.id === "cards" && activeCardsCount ? (
                         <span className="mode-tab-badge" aria-hidden="true">
                           {activeCardsCount}
-                        </span>
-                      ) : null}
-                      {item.id === "inbox" && inboxDue.length ? (
-                        <span className="mode-tab-badge" aria-hidden="true">
-                          {inboxDue.length}
                         </span>
                       ) : null}
                     </button>
@@ -721,20 +705,6 @@ export function App() {
                     focusSeq={cardFocusSeq}
                     splitLayout={splitLayout}
                     onRemoveCard={handleRemoveCard}
-                    onReadChapter={openCardChapter}
-                  />
-                </div>
-                <div
-                  id="panel-inbox"
-                  role="tabpanel"
-                  aria-labelledby="tab-inbox"
-                  hidden={mode !== "inbox"}
-                  className="pane-body"
-                >
-                  <InboxView
-                    items={timeline}
-                    active={mode === "inbox"}
-                    splitLayout={splitLayout}
                     onReadChapter={openCardChapter}
                   />
                 </div>

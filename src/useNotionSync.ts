@@ -22,7 +22,7 @@ const CATALOG_PULL_MS = 45_000;
 const HEALTH_PULL_MS = 60_000;
 const INBOX_RECONCILE_MS = 25_000;
 
-const FLASHCARD_SYNC_MODES: CenterMode[] = ["cards", "inbox"];
+const FLASHCARD_SYNC_MODES: CenterMode[] = ["cards"];
 
 /**
  * Polling Notion + révisions locales.
@@ -196,7 +196,6 @@ export function useNotionSync(options: {
 
   const notionPullActive = FLASHCARD_SYNC_MODES.includes(mode);
   const scopedSyncCards = useMemo(() => {
-    if (mode === "inbox") return listInboxSyncCards(catalog.notas, cardIds);
     return listScopedFlashcards(catalog.notas, mode === "cards" ? cardIds : null);
   }, [catalog.notas, cardIds, mode]);
 
@@ -204,7 +203,6 @@ export function useNotionSync(options: {
     if (!notionPullActive || !scopedSyncCards.length) return;
     let cancelled = false;
     let busy = false;
-    const persistSeed = mode === "inbox";
     const cards = scopedSyncCards;
 
     async function pullFromNotion() {
@@ -213,7 +211,7 @@ export function useNotionSync(options: {
       try {
         await flushFlashcardQueue();
         const result = await pullFlashcardStates(cards, {
-          persist: persistSeed,
+          persist: false,
           notes: notesRef.current,
         });
         if (!cancelled && result.notes && result.updated) {

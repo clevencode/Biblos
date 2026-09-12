@@ -7,6 +7,7 @@ import {
   type KeyboardEvent,
   type PointerEvent,
 } from "react";
+import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { dateKey, formatDay, relativeDayLabel, scheduleDayParts, shiftDay, todayKey, weekDaysSunday, weekdayLabel } from "../calendar";
 import {
   RETENTION_LABELS,
@@ -542,10 +543,8 @@ export function FlashcardReview({
 type FlashDeckListProps = {
   session: FlashcardSession;
   onPick?: (index: number) => void;
-  /** Titre accessible du panneau (Cartes / Timeline). */
+  /** Titre accessible du panneau (Cartes). */
   title?: string;
-  /** Bandeau hebdomadaire (filtre par jour) — Timeline. */
-  showWeekSchedule?: boolean;
   /** Aligne le filtre Nouveau/En révision/Terminé sur une carte (Visualiser). */
   focusCardId?: string | null;
   focusSeq?: number;
@@ -558,10 +557,6 @@ const DECK_FILTERS: { id: DeckProgressFilter; label: string }[] = [
   { id: "revisando", label: "En révision" },
   { id: "termines", label: "Terminé" },
 ];
-
-function deckFilterLabel(filter: DeckProgressFilter): string {
-  return DECK_FILTERS.find((item) => item.id === filter)?.label ?? filter;
-}
 
 const STATUS_LABEL: Record<Flashcard["status"], string> = {
   espera: "Nouveau",
@@ -581,6 +576,41 @@ function cardMatchesDeckFilter(card: Flashcard, filter: DeckProgressFilter): boo
   return card.status === "estudo";
 }
 
+/** Catégorie de date : Aujourd’hui / Hier / Demain, sinon jour de la semaine. */
+function dayCategoryLabel(day: string, today = todayKey()): string {
+  const relative = relativeDayLabel(day, today);
+  const formatted = formatDay(day);
+  if (relative) return `${relative} · ${formatted}`;
+  const weekday = weekdayLabel(day);
+  const titled = weekday ? weekday.charAt(0).toLocaleUpperCase("fr-FR") + weekday.slice(1) : "";
+  return titled ? `${titled} · ${formatted}` : formatted;
+}
+
+/** Jours avec au moins une carte (lembrete), triés. */
+function busyDaysFromCards(cards: Flashcard[]): string[] {
+  const days = new Set<string>();
+  for (const card of cards) {
+    if (!card.lembrete) continue;
+    days.add(dateKey(card.lembrete));
+  }
+  return [...days].sort();
+}
+
+function adjacentBusyDay(
+  from: string,
+  direction: 1 | -1,
+  busyDays: string[],
+): string | null {
+  if (direction > 0) {
+    return busyDays.find((day) => day > from) ?? null;
+  }
+  for (let i = busyDays.length - 1; i >= 0; i -= 1) {
+    const day = busyDays[i]!;
+    if (day < from) return day;
+  }
+  return null;
+}
+
 function countsByDay(cards: Flashcard[]): Map<string, number> {
   const counts = new Map<string, number>();
   for (const card of cards) {
@@ -595,22 +625,15 @@ export function FlashDeckList({
   session,
   onPick,
   title = "Cartes",
-  showWeekSchedule = false,
   focusCardId = null,
   focusSeq = 0,
 }: FlashDeckListProps) {
   const { queue, index, listRef, goTo, total } = session;
-  const [filter, setFilter] = useState<DeckProgressFilter | null>("nouveau");
+  const [filter, setFilter] = useState<DeckProgressFilter>("nouveau");
   const swipeOrigin = useRef<{ x: number; y: number } | null>(null);
   const today = todayKey();
   const [weekAnchor, setWeekAnchor] = useState(today);
   const [selectedDay, setSelectedDay] = useState(today);
-
-  useEffect(() => {
-    if (!focusCardId || focusSeq <= 0) return;
-    const focused = queue.find((card) => card.id === focusCardId);
-    if (focused) setFilter(filterForStatus(focused.status));
-  }, [focusCardId, focusSeq, queue]);
 
   const nouveauCount = queue.filter((card) => cardMatchesDeckFilter(card, "nouveau")).length;
   const revisandoCount = queue.filter((card) => cardMatchesDeckFilter(card, "revisando")).length;
@@ -620,21 +643,32 @@ export function FlashDeckList({
     revisando: revisandoCount,
     termines: terminesCount,
   };
-  const showFilters = !showWeekSchedule;
-  const visible = showWeekSchedule
-    ? queue.filter((card) => card.status !== "encerrado")
-    : filter
-      ? queue.filter((card) => cardMatchesDeckFilter(card, filter))
-      : queue;
-  const dayCounts = useMemo(() => countsByDay(visible), [visible]);
+  const statusFiltered = queue.filter((card) => cardMatchesDeckFilter(card, filter));
+  /** Navigation ← → : tous les statuts (Nouveau / En révision / Terminé). */
+  const allBusyDays = useMemo(() => busyDaysFromCards(queue), [queue]);
+  const prevBusyDay = useMemo(
+    () => adjacentBusyDay(selectedDay, -1, allBusyDays),
+    [selectedDay, allBusyDays],
+  );
+  const nextBusyAcross = useMemo(
+    () => adjacentBusyDay(selectedDay, 1, allBusyDays),
+    [selectedDay, allBusyDays],
+  );
+  const dayCounts = useMemo(() => countsByDay(statusFiltered), [statusFiltered]);
   const weekDays = useMemo(() => weekDaysSunday(weekAnchor), [weekAnchor]);
   const dayCards = useMemo(
-    () => visible.filter((card) => card.lembrete && dateKey(card.lembrete) === selectedDay),
-    [visible, selectedDay],
+    () =>
+      statusFiltered.filter(
+        (card) => card.lembrete && dateKey(card.lembrete) === selectedDay,
+      ),
+    [statusFiltered, selectedDay],
   );
-  const nodateCards = useMemo(() => visible.filter((card) => !card.lembrete), [visible]);
-  const listCards = showWeekSchedule ? dayCards : visible;
-  const nextBusyDay = useMemo(() => {
+  const nodateCards = useMemo(
+    () => statusFiltered.filter((card) => !card.lembrete),
+    [statusFiltered],
+  );
+  const listCards = dayCards;
+  const nextBusyInWeek = useMemo(() => {
     for (const day of weekDays) {
       if (day > selectedDay && (dayCounts.get(day) ?? 0) > 0) return day;
     }
@@ -644,14 +678,26 @@ export function FlashDeckList({
     return null;
   }, [weekDays, dayCounts, selectedDay]);
   const nextBusyLabel = useMemo(() => {
-    if (!nextBusyDay || nextBusyDay === selectedDay) return null;
-    const parts = scheduleDayParts(nextBusyDay);
-    const count = dayCounts.get(nextBusyDay) ?? 0;
+    if (!nextBusyInWeek || nextBusyInWeek === selectedDay) return null;
+    const parts = scheduleDayParts(nextBusyInWeek);
+    const count = dayCounts.get(nextBusyInWeek) ?? 0;
     return `Aller au ${parts.weekday} ${parts.dayNum} · ${count} carte${count === 1 ? "" : "s"}`;
-  }, [nextBusyDay, selectedDay, dayCounts]);
-  const selectedRelative = relativeDayLabel(selectedDay, today);
+  }, [nextBusyInWeek, selectedDay, dayCounts]);
+  const selectedDayTitle = dayCategoryLabel(selectedDay, today);
   const selectedOverdue = selectedDay < today && dayCards.length > 0;
   const selectedCount = dayCounts.get(selectedDay) ?? 0;
+
+  useEffect(() => {
+    if (!focusCardId || focusSeq <= 0) return;
+    const focused = queue.find((card) => card.id === focusCardId);
+    if (!focused) return;
+    setFilter(filterForStatus(focused.status));
+    if (focused.lembrete) {
+      const day = dateKey(focused.lembrete);
+      setSelectedDay(day);
+      setWeekAnchor(day);
+    }
+  }, [focusCardId, focusSeq, queue]);
 
   function pickCard(card: Flashcard) {
     const queueIndex = queue.findIndex((item) => item.id === card.id);
@@ -665,10 +711,24 @@ export function FlashDeckList({
     setWeekAnchor(day);
   }
 
+  /** Va au jour précédent/suivant qui a au moins une carte (tout statut). */
+  function goToAdjacentBusyDay(direction: 1 | -1) {
+    const target =
+      direction > 0 ? nextBusyAcross : prevBusyDay;
+    if (!target) return;
+    selectDay(target);
+    const onDay = queue.filter(
+      (card) => card.lembrete && dateKey(card.lembrete) === target,
+    );
+    if (onDay.some((card) => cardMatchesDeckFilter(card, filter))) return;
+    const first = onDay[0];
+    if (first) setFilter(filterForStatus(first.status));
+  }
+
   function shiftWeek(delta: number) {
-    const next = shiftDay(weekAnchor, delta * 7);
-    setWeekAnchor(next);
-    setSelectedDay(shiftDay(selectedDay, delta * 7));
+    const nextSelected = shiftDay(selectedDay, delta * 7);
+    setSelectedDay(nextSelected);
+    setWeekAnchor(nextSelected);
   }
 
   function goThisWeek() {
@@ -676,15 +736,15 @@ export function FlashDeckList({
     setSelectedDay(today);
   }
 
-  function onWeekKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+  function onCalKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     if (event.key === "ArrowRight" || event.key === "ArrowDown") {
       event.preventDefault();
-      selectDay(shiftDay(selectedDay, 1));
+      goToAdjacentBusyDay(1);
       return;
     }
     if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
       event.preventDefault();
-      selectDay(shiftDay(selectedDay, -1));
+      goToAdjacentBusyDay(-1);
       return;
     }
     if (event.key === "PageDown") {
@@ -703,12 +763,12 @@ export function FlashDeckList({
     }
   }
 
-  function onWeekPointerDown(event: PointerEvent<HTMLDivElement>) {
+  function onCalPointerDown(event: PointerEvent<HTMLDivElement>) {
     if (event.pointerType === "mouse" && event.button !== 0) return;
     swipeOrigin.current = { x: event.clientX, y: event.clientY };
   }
 
-  function onWeekPointerUp(event: PointerEvent<HTMLDivElement>) {
+  function onCalPointerUp(event: PointerEvent<HTMLDivElement>) {
     const origin = swipeOrigin.current;
     swipeOrigin.current = null;
     if (!origin) return;
@@ -718,7 +778,7 @@ export function FlashDeckList({
     shiftWeek(dx < 0 ? 1 : -1);
   }
 
-  function onWeekPointerCancel() {
+  function onCalPointerCancel() {
     swipeOrigin.current = null;
   }
 
@@ -727,7 +787,7 @@ export function FlashDeckList({
     const activeItem = queueIndex === index;
     const overdue = Boolean(item.lembrete && dateKey(item.lembrete) < today && item.status !== "encerrado");
     const statusLabel = STATUS_LABEL[item.status];
-    const chipLabel = overdue ? "En retard" : showWeekSchedule ? statusLabel : null;
+    const chipLabel = overdue ? "En retard" : null;
     return (
       <li key={item.id} className="flash-plan-row">
         <button
@@ -769,186 +829,176 @@ export function FlashDeckList({
 
   return (
     <nav
-      className={`flash-list flash-list--deck${showWeekSchedule ? " flash-list--plan" : ""}`}
+      className="flash-list flash-list--deck flash-list--plan"
       ref={listRef}
-      aria-label={showWeekSchedule ? "Planning des rappels" : title}
+      aria-label={title}
     >
-      {showFilters || !total ? (
-        <header className="flash-list-head">
-          {showFilters ? (
-            filter ? (
-              <div className="flash-deck-chip-row" role="status" aria-label="Filtre actif">
-                <span className="flash-deck-chip">
-                  <span className="flash-deck-chip-label">{deckFilterLabel(filter)}</span>
-                  <span className="flash-deck-chip-count" aria-hidden="true">
-                    {filterCounts[filter]}
-                  </span>
-                  <span className="sr-only">
-                    {`, ${filterCounts[filter]} carte${filterCounts[filter] === 1 ? "" : "s"}`}
-                  </span>
-                </span>
-                <button
-                  type="button"
-                  className="flash-deck-chip-clear"
-                  aria-label="Effacer le filtre"
-                  onClick={() => setFilter(null)}
-                >
-                  ×
-                </button>
-              </div>
-            ) : (
-              <div
-                className="flash-deck-segments"
-                role="group"
-                aria-label="Filtrer les cartes par progression"
+      <header className="flash-list-head">
+        <div
+          className="flash-deck-tabs"
+          role="tablist"
+          aria-label="Filtrer les cartes par progression"
+        >
+          {DECK_FILTERS.map((item) => {
+            const count = filterCounts[item.id];
+            const selected = filter === item.id;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                role="tab"
+                id={`flash-deck-tab-${item.id}`}
+                className={`flash-deck-tab${selected ? " is-on" : ""}${count === 0 ? " is-empty" : ""}`}
+                aria-selected={selected}
+                tabIndex={selected ? 0 : -1}
+                onClick={() => setFilter(item.id)}
+                aria-label={`${item.label}, ${count} carte${count === 1 ? "" : "s"}`}
               >
-                {DECK_FILTERS.map((item) => {
-                  const count = filterCounts[item.id];
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      className={`flash-deck-segment${count === 0 ? " is-empty" : ""}`}
-                      onClick={() => setFilter(item.id)}
-                    >
-                      <span className="flash-deck-segment-label">{item.label}</span>
-                      <span className="flash-deck-segment-count" aria-hidden="true">
-                        {count}
-                      </span>
-                      <span className="sr-only">
-                        {`, ${count} carte${count === 1 ? "" : "s"}`}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            )
-          ) : null}
-          {!total ? <p className="flash-list-meta-line">Aucune carte</p> : null}
-        </header>
-      ) : null}
+                <span className="flash-deck-tab-label">{item.label}</span>
+                <span className="flash-deck-tab-count" aria-hidden="true">
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+        {!total ? <p className="flash-list-meta-line">Aucune carte</p> : null}
+      </header>
 
-      {showWeekSchedule ? (
-        <>
-          <div
-            className="flash-week"
-            role="radiogroup"
-            aria-label="Jours de la semaine"
-            onKeyDown={onWeekKeyDown}
-            onPointerDown={onWeekPointerDown}
-            onPointerUp={onWeekPointerUp}
-            onPointerCancel={onWeekPointerCancel}
-          >
-            {weekDays.map((day) => {
-              const parts = scheduleDayParts(day);
-              const count = dayCounts.get(day) ?? 0;
-              const isToday = day === today;
-              const selected = day === selectedDay;
-              const overdue = day < today && count > 0;
-              const countLabel = count === 0 ? "aucune carte" : `${count} carte${count === 1 ? "" : "s"}`;
-              return (
-                <button
-                  key={day}
-                  type="button"
-                  role="radio"
-                  aria-checked={selected}
-                  tabIndex={selected ? 0 : -1}
-                  className={[
-                    "flash-week-day",
-                    isToday ? "is-today" : "",
-                    selected ? "is-selected" : "",
-                    count ? "has-cards" : "is-empty",
-                    overdue ? "is-overdue" : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                  onClick={() => selectDay(day)}
-                  aria-current={isToday ? "date" : undefined}
-                  aria-label={`${weekdayLabel(day)} ${formatDay(day)}, ${countLabel}`}
-                >
-                  <span className="flash-week-dow" aria-hidden="true">
-                    {parts.weekday}
+      <div
+        className="flash-cal"
+        role="radiogroup"
+        aria-label="Calendrier"
+        onKeyDown={onCalKeyDown}
+        onPointerDown={onCalPointerDown}
+        onPointerUp={onCalPointerUp}
+        onPointerCancel={onCalPointerCancel}
+      >
+        {weekDays.map((day) => {
+          const parts = scheduleDayParts(day);
+          const count = dayCounts.get(day) ?? 0;
+          const isToday = day === today;
+          const selected = day === selectedDay;
+          const overdue = day < today && count > 0;
+          const countLabel =
+            count === 0 ? "aucune carte" : `${count} carte${count === 1 ? "" : "s"}`;
+          return (
+            <button
+              key={day}
+              type="button"
+              role="radio"
+              aria-checked={selected}
+              tabIndex={selected ? 0 : -1}
+              className={[
+                "flash-cal-day",
+                isToday ? "is-today" : "",
+                selected ? "is-selected" : "",
+                count ? "has-cards" : "is-empty",
+                overdue ? "is-overdue" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              onClick={() => selectDay(day)}
+              aria-current={isToday ? "date" : undefined}
+              aria-label={`${weekdayLabel(day)} ${formatDay(day)}, ${countLabel}`}
+            >
+              <span className="flash-cal-dow" aria-hidden="true">
+                {parts.weekday}
+              </span>
+              <span className="flash-cal-num" aria-hidden="true">
+                {parts.dayNum}
+              </span>
+              <span className="flash-cal-markers" aria-hidden="true">
+                {count > 0 ? (
+                  <span className={`flash-cal-count${overdue ? " is-overdue" : ""}`}>
+                    {count > 9 ? "9+" : count}
                   </span>
-                  <span className="flash-week-num" aria-hidden="true">
-                    {parts.dayNum}
-                  </span>
-                  <span className="flash-week-markers" aria-hidden="true">
-                    {count > 0 ? (
-                      <span className={`flash-week-count${overdue ? " is-overdue" : ""}`}>
-                        {count > 9 ? "9+" : count}
-                      </span>
-                    ) : (
-                      <span className="flash-week-dot" />
-                    )}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+                ) : (
+                  <span className="flash-cal-dot" />
+                )}
+              </span>
+            </button>
+          );
+        })}
+      </div>
 
-          <p className="flash-week-live sr-only" aria-live="polite">
-            {weekdayLabel(selectedDay)} {formatDay(selectedDay)}
-            {selectedCount
-              ? `, ${selectedCount} carte${selectedCount === 1 ? "" : "s"}`
-              : ", aucune carte"}
-          </p>
-        </>
-      ) : null}
+      <p className="flash-cal-live sr-only" aria-live="polite">
+        {selectedDayTitle}
+        {selectedCount
+          ? `, ${selectedCount} carte${selectedCount === 1 ? "" : "s"}`
+          : ", aucune carte"}
+      </p>
 
-      <div className={showWeekSchedule ? "flash-plan-scroller" : "flash-list-scroller"}>
-        {showWeekSchedule ? (
-          <section
-            className={`flash-day-cards${selectedOverdue ? " is-overdue" : ""}`}
-            aria-label={
-              selectedRelative
-                ? `${selectedRelative} · ${formatDay(selectedDay)}`
-                : formatDay(selectedDay)
-            }
-          >
-            <p className="flash-day-cards-head">
-              <time dateTime={selectedDay}>
-                {selectedRelative ? `${selectedRelative} · ${formatDay(selectedDay)}` : formatDay(selectedDay)}
-              </time>
+      <div className="flash-plan-scroller">
+        <section
+          className={`flash-day-cards${selectedOverdue ? " is-overdue" : ""}`}
+          aria-label={selectedDayTitle}
+        >
+          <div className="flash-day-cards-head">
+            <button
+              type="button"
+              className="flash-day-nav-btn"
+              aria-label="Jour précédent avec carte"
+              disabled={!prevBusyDay}
+              onClick={() => goToAdjacentBusyDay(-1)}
+            >
+              <ChevronLeftIcon className="flash-day-nav-icon" aria-hidden />
+            </button>
+            <div className="flash-day-cards-copy">
+              <time dateTime={selectedDay}>{selectedDayTitle}</time>
               {selectedDay !== today ? (
                 <button type="button" className="calendar-today" onClick={goThisWeek}>
                   Aujourd’hui
                 </button>
               ) : null}
-            </p>
-
-            {listCards.length === 0 ? (
-              <div className="flash-plan-empty-block">
-                <p className="flash-plan-empty muted">Aucune carte ce jour.</p>
-                {nextBusyLabel && nextBusyDay ? (
-                  <button type="button" className="flash-plan-jump" onClick={() => selectDay(nextBusyDay)}>
-                    {nextBusyLabel}
-                  </button>
-                ) : null}
-              </div>
-            ) : (
-              <ul className="flash-plan-events flash-plan-events--cards">{listCards.map(renderCardButton)}</ul>
-            )}
-
-            {nodateCards.length > 0 && selectedDay === today ? (
-              <div className="flash-nodate">
-                <p className="flash-nodate-label muted">Sans date</p>
-                <ul className="flash-plan-events flash-plan-events--cards">{nodateCards.map(renderCardButton)}</ul>
-              </div>
-            ) : null}
-          </section>
-        ) : visible.length === 0 ? (
-          <div className="flash-plan-empty-block">
-            <p className="flash-plan-empty muted">
-              {filter === "nouveau"
-                ? "Aucune nouvelle carte."
-                : filter === "termines"
-                  ? "Aucune carte terminée."
-                  : "Aucune carte en révision."}
-            </p>
+            </div>
+            <button
+              type="button"
+              className="flash-day-nav-btn"
+              aria-label="Jour suivant avec carte"
+              disabled={!nextBusyAcross}
+              onClick={() => goToAdjacentBusyDay(1)}
+            >
+              <ChevronRightIcon className="flash-day-nav-icon" aria-hidden />
+            </button>
           </div>
-        ) : (
-          <ul className="flash-plan-events flash-plan-events--cards">{visible.map(renderCardButton)}</ul>
-        )}
+
+          {listCards.length === 0 ? (
+            <div className="flash-plan-empty-block">
+              <p className="flash-plan-empty muted">
+                {statusFiltered.length === 0
+                  ? filter === "nouveau"
+                    ? "Aucune nouvelle carte."
+                    : filter === "termines"
+                      ? "Aucune carte terminée."
+                      : "Aucune carte en révision."
+                  : "Aucune carte ce jour."}
+              </p>
+              {nextBusyLabel && nextBusyInWeek && statusFiltered.length > 0 ? (
+                <button
+                  type="button"
+                  className="flash-plan-jump"
+                  onClick={() => selectDay(nextBusyInWeek)}
+                >
+                  {nextBusyLabel}
+                </button>
+              ) : null}
+            </div>
+          ) : (
+            <ul className="flash-plan-events flash-plan-events--cards">
+              {listCards.map(renderCardButton)}
+            </ul>
+          )}
+
+          {nodateCards.length > 0 && selectedDay === today ? (
+            <div className="flash-nodate">
+              <p className="flash-nodate-label muted">Sans date</p>
+              <ul className="flash-plan-events flash-plan-events--cards">
+                {nodateCards.map(renderCardButton)}
+              </ul>
+            </div>
+          ) : null}
+        </section>
       </div>
     </nav>
   );
