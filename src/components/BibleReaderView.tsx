@@ -24,6 +24,7 @@ import {
   MoonIcon,
   PauseIcon,
   PlayIcon,
+  RectangleStackIcon,
   SunIcon,
 } from "@heroicons/react/24/outline";
 import {
@@ -157,6 +158,32 @@ function selectionUsfm(bookId: string, chapterId: string, verses: number[]): str
   const base = chapterUsfm(bookId, chapterId);
   const list = formatVerseList(verses).replace(/ · /g, ".");
   return list ? `${base}.${list}` : base;
+}
+
+/** Versets du chapitre qui ont déjà une flashcard. */
+function verseNumbersWithCards(
+  bookId: string,
+  chapterId: string,
+  ids: ReadonlySet<string> | undefined,
+): Set<number> {
+  const found = new Set<number>();
+  if (!ids?.size) return found;
+  const chapterPrefix = `verse-${chapterUsfm(bookId, chapterId)}.`.toUpperCase();
+  for (const id of ids) {
+    const upper = String(id || "").toUpperCase();
+    if (!upper.startsWith(chapterPrefix)) continue;
+    const listPart = upper.slice(chapterPrefix.length);
+    for (const chunk of listPart.split(".")) {
+      const match = chunk.match(/^(\d+)(?:-(\d+))?$/);
+      if (!match) continue;
+      const start = Number(match[1]);
+      const end = match[2] ? Number(match[2]) : start;
+      const a = Math.min(start, end);
+      const b = Math.max(start, end);
+      for (let n = a; n <= b; n += 1) found.add(n);
+    }
+  }
+  return found;
 }
 
 function selectionEdgeClass(sel: VerseSelection | null, number: number): string {
@@ -923,6 +950,10 @@ export function BibleReaderView({
   }, [bookId, chapterId, selection]);
   const existingVerseCard =
     Boolean(selectedVerseCardId && existingVerseCardIds?.has(selectedVerseCardId));
+  const chapterCardVerses = useMemo(
+    () => verseNumbersWithCards(bookId, chapterId, existingVerseCardIds),
+    [bookId, chapterId, existingVerseCardIds],
+  );
 
   useEffect(() => {
     if (!selectedVerseCardId) return;
@@ -1560,6 +1591,7 @@ export function BibleReaderView({
                 ? adaptVerseColorForTheme(markColor, uiTheme)
                 : null;
               const selEdge = selectionEdgeClass(selection, verse.number);
+              const hasFlashcard = chapterCardVerses.has(verse.number);
               const titleLike = isLikelyVerseTitle(verse.text, verse.number);
               return (
                 <button
@@ -1571,6 +1603,7 @@ export function BibleReaderView({
                     inRange ? "is-in-range" : "",
                     selected ? "is-selected" : "",
                     markDisplay ? "is-marked" : "",
+                    hasFlashcard ? "has-card" : "",
                     selEdge,
                     titleLike ? "is-title" : "",
                   ]
@@ -1582,7 +1615,11 @@ export function BibleReaderView({
                       ? ({ ["--verse-mark" as string]: markDisplay } as CSSProperties)
                       : undefined
                   }
-                  aria-label={`Verset ${verse.number}`}
+                  aria-label={
+                    hasFlashcard
+                      ? `Verset ${verse.number}, flashcard`
+                      : `Verset ${verse.number}`
+                  }
                   aria-pressed={selected || inRange}
                   ref={
                     isRangeAnchor
@@ -1594,6 +1631,11 @@ export function BibleReaderView({
                   onClick={() => selectVerse(verse.number)}
                 >
                   <sup className="bible-verse-num">{verse.number}</sup>
+                  {hasFlashcard ? (
+                    <span className="bible-verse-card-icon" aria-hidden="true">
+                      <RectangleStackIcon />
+                    </span>
+                  ) : null}
                   <span className="bible-verse-text">{verse.text}</span>
                 </button>
               );
@@ -1624,6 +1666,11 @@ export function BibleReaderView({
               {selectedVerses.length
                 ? formatSelectionFront(bookTitle, chapterId, selectedVerses)
                 : ""}
+              {existingVerseCard ? (
+                <span className="bible-verse-actions-card-icon" aria-hidden="true">
+                  <RectangleStackIcon />
+                </span>
+              ) : null}
             </p>
             <button
               type="button"

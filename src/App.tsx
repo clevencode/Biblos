@@ -49,7 +49,7 @@ import {
 } from "./planReading";
 import { useNotionSync } from "./useNotionSync";
 import { useNarrow, useSplitLayout } from "./layout";
-import { chapterFocusFromRef } from "./youversion/usfm";
+import { chapterFocusFromRef, isPassageRef } from "./youversion/usfm";
 import { syncNativeChrome } from "./nativeChrome";
 import {
   applyTheme,
@@ -385,7 +385,13 @@ export function App() {
   }
 
   function openCardChapter(card: Flashcard) {
-    const chapter = chapterFocusFromRef(card.frente);
+    const frente = card.frente?.trim() ?? "";
+    // Ouvre Lecture sur le verset de la carte (pas seulement le chapitre).
+    if (isPassageRef(frente)) {
+      openPassageInBible(frente);
+      return;
+    }
+    const chapter = chapterFocusFromRef(frente);
     if (chapter) openPassageInBible(chapter);
   }
 

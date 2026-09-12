@@ -3823,12 +3823,48 @@ body,
   color: var(--text);
 }
 
+.flash-help-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 8px;
+}
+
 .flash-help-title {
   margin: 0;
   font-family: var(--font-ui);
   font-size: 1.05rem;
   font-weight: 700;
   line-height: 1.25;
+}
+
+.flash-help-exit {
+  flex: none;
+  box-sizing: border-box;
+  width: 36px;
+  height: 36px;
+  margin: -6px -4px 0 0;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1.45rem;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.flash-help-exit:hover {
+  background: color-mix(in srgb, var(--muted) 14%, transparent);
+  color: var(--text);
+}
+
+.flash-help-exit:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .flash-help-body {
@@ -7550,6 +7586,17 @@ ul.plan-yv-day-note-ref {
   color: var(--yv-text);
 }
 
+.bible-reader--yv .bible-verse.is-selected .bible-verse-text {
+  text-decoration: underline;
+  text-decoration-thickness: from-font;
+  text-underline-offset: 0.2em;
+  text-decoration-color: color-mix(in srgb, var(--accent) 55%, var(--yv-text));
+}
+
+.bible-reader--yv .bible-verse.is-selected.is-marked .bible-verse-text {
+  text-decoration-color: color-mix(in srgb, var(--verse-mark, var(--accent)) 65%, var(--yv-text));
+}
+
 .bible-reader--yv .bible-verse.is-selected.is-sel-single:not(.is-marked),
 .bible-reader--yv .bible-verse.is-selected.is-sel-start.is-sel-end:not(.is-marked) {
   border-radius: 0;
@@ -7633,9 +7680,37 @@ ul.plan-yv-day-note-ref {
   user-select: none;
 }
 
+.bible-reader--yv .bible-verse-card-icon {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 0.22em;
+  vertical-align: super;
+  color: var(--accent);
+  line-height: 0;
+}
+
+.bible-reader--yv .bible-verse-card-icon svg {
+  width: 0.72em;
+  height: 0.72em;
+  min-width: 11px;
+  min-height: 11px;
+}
+
 .bible-reader--yv .bible-verse-text {
   font: inherit;
   line-height: inherit;
+}
+
+.bible-reader--yv .bible-verse-actions-card-icon {
+  display: inline-flex;
+  flex: none;
+  color: var(--accent);
+  line-height: 0;
+}
+
+.bible-reader--yv .bible-verse-actions-card-icon svg {
+  width: 1rem;
+  height: 1rem;
 }
 
 .bible-reader--yv .bible-text {
@@ -7965,6 +8040,9 @@ ul.plan-yv-day-note-ref {
 }
 
 .bible-reader--yv .bible-verse-actions-ref {
+  display: flex;
+  align-items: center;
+  gap: 0.35em;
   margin: 0;
   min-width: 0;
   flex: 1;
@@ -9457,6 +9535,11 @@ ul.plan-yv-day-note-ref {
 .bible-verse.is-selected {
   background: color-mix(in srgb, var(--accent) 22%, transparent);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.bible-verse.is-selected .bible-verse-text {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
 }
 
 .bible-verse-num {

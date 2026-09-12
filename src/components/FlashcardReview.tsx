@@ -303,9 +303,19 @@ function FlashCardMenu({
             aria-labelledby="flash-help-title"
             onClick={(event) => event.stopPropagation()}
           >
-            <h2 id="flash-help-title" className="flash-help-title">
-              Comment ça marche
-            </h2>
+            <div className="flash-help-head">
+              <h2 id="flash-help-title" className="flash-help-title">
+                Comment ça marche
+              </h2>
+              <button
+                type="button"
+                className="flash-help-exit"
+                onClick={() => setInfoOpen(false)}
+                aria-label="Fermer"
+              >
+                ×
+              </button>
+            </div>
             <div className="flash-help-body">
               <p>
                 Lis la référence, puis touche <strong>Montrer la réponse</strong>{" "}

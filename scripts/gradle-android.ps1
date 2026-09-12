@@ -1,4 +1,4 @@
-# Corre gradlew assembleDebug com JDK 21 (ignora JAVA_HOME=17 do sistema).
+# Corre gradlew com o JDK mais recente (>= 21), ignorando JAVA_HOME=17 do sistema.
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
