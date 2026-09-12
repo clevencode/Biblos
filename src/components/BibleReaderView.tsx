@@ -35,6 +35,7 @@ import {
   savePreferredVerseColor,
   verseActionTone,
 } from "../verseColors";
+import { loadChapterMarks, setVerseMarks } from "../verseMarks";
 import type { Flashcard } from "../types";
 
 const STORAGE_KEY = "biblos-bible-reader";
@@ -351,6 +352,9 @@ export function BibleReaderView({
   const [cardBusy, setCardBusy] = useState(false);
   const [cardMsg, setCardMsg] = useState<string | null>(null);
   const [cardColor, setCardColor] = useState(() => loadPreferredVerseColor());
+  const [chapterMarks, setChapterMarks] = useState<ReadonlyMap<number, string>>(
+    () => new Map(),
+  );
   const [chromeHidden, setChromeHidden] = useState(false);
   const [audioByUsfm, setAudioByUsfm] = useState<Record<string, BibleAudioEpisode>>({});
   const [audioPlaying, setAudioPlaying] = useState(false);
@@ -474,6 +478,10 @@ export function BibleReaderView({
     }
     writePrefs({ fontSize });
   }, [bookId, chapterId, fontSize]);
+
+  useEffect(() => {
+    setChapterMarks(loadChapterMarks(bookId, chapterId));
+  }, [bookId, chapterId]);
 
   useEffect(() => {
     if (!books.length) return;
@@ -759,9 +767,24 @@ export function BibleReaderView({
     }
   }
 
+  function markSelection(hex: string) {
+    if (!selection?.length) return;
+    const next = normalizeVerseColor(hex);
+    pickVerseColor(next);
+    setChapterMarks(setVerseMarks(bookId, chapterId, selection, next));
+    closeCreateCard();
+  }
+
+  function clearSelectionMarks() {
+    if (!selection?.length) return;
+    setChapterMarks(setVerseMarks(bookId, chapterId, selection, null));
+    closeCreateCard();
+  }
+
   const actionTone = useMemo(() => verseActionTone(cardColor), [cardColor]);
   const activeVerseColor = normalizeVerseColor(cardColor);
   const customColorOn = !isPresetVerseColor(activeVerseColor);
+  const selectionHasMark = selectedVerses.some((n) => chapterMarks.has(n));
 
   const showCreateCard = Boolean(selectedVerses.length && selectedVerseText && !pickerOpen);
   const forceChrome = pickerOpen || showCreateCard;
@@ -1179,6 +1202,7 @@ export function BibleReaderView({
                   ? inPlanRange
                   : highlightVerse === verse.number;
               const selected = verseInSelection(selection, verse.number);
+              const markColor = chapterMarks.get(verse.number);
               const selEdge = selectionEdgeClass(selection, verse.number);
               const titleLike = isLikelyVerseTitle(verse.text, verse.number);
               const rangeEdge =
@@ -1197,6 +1221,7 @@ export function BibleReaderView({
                     "bible-verse",
                     active ? "is-focus" : "",
                     selected ? "is-selected" : "",
+                    markColor ? "is-marked" : "",
                     selEdge,
                     inPlanRange ? "is-plan-range" : "",
                     rangeEdge,
@@ -1205,6 +1230,11 @@ export function BibleReaderView({
                     .filter(Boolean)
                     .join(" ")}
                   data-verse={verse.number}
+                  style={
+                    markColor
+                      ? ({ ["--verse-mark" as string]: markColor } as CSSProperties)
+                      : undefined
+                  }
                   aria-label={`Verset ${verse.number}`}
                   aria-pressed={selected || inPlanRange}
                   ref={
@@ -1233,7 +1263,7 @@ export function BibleReaderView({
         <div
           className="bible-verse-actions"
           role="region"
-          aria-label="Flashcard du passage"
+          aria-label="Actions du verset"
           style={
             {
               ["--verse-tint" as string]: actionTone.tint,
@@ -1266,62 +1296,81 @@ export function BibleReaderView({
               Tape d&apos;autres versets pour ajouter à la sélection
             </p>
           )}
-          <div className="bible-verse-colors" role="group" aria-label="Couleur du surligneur">
-            {VERSE_COLORS.map((swatch) => {
-              const on = activeVerseColor === swatch.hex;
-              return (
-                <button
-                  key={swatch.id}
-                  type="button"
-                  className={`bible-verse-color${on ? " is-on" : ""}`}
-                  style={{ ["--swatch" as string]: swatch.hex }}
-                  aria-label={swatch.label}
-                  aria-pressed={on}
-                  onClick={() => pickVerseColor(swatch.hex)}
+
+          <div className="bible-verse-action-block">
+            <p className="bible-verse-action-label">Marquer</p>
+            <div className="bible-verse-colors" role="group" aria-label="Couleur du surligneur">
+              {VERSE_COLORS.map((swatch) => {
+                const on = activeVerseColor === swatch.hex;
+                return (
+                  <button
+                    key={swatch.id}
+                    type="button"
+                    className={`bible-verse-color${on ? " is-on" : ""}`}
+                    style={{ ["--swatch" as string]: swatch.hex }}
+                    aria-label={`Marquer · ${swatch.label}`}
+                    aria-pressed={on}
+                    onClick={() => markSelection(swatch.hex)}
+                  />
+                );
+              })}
+              <label
+                className={`bible-verse-color bible-verse-color-custom${customColorOn ? " is-on" : ""}`}
+                style={
+                  customColorOn
+                    ? ({ ["--swatch" as string]: activeVerseColor } as CSSProperties)
+                    : undefined
+                }
+                title="Couleur personnalisée"
+              >
+                <input
+                  type="color"
+                  className="bible-verse-color-picker"
+                  value={activeVerseColor}
+                  aria-label="Couleur personnalisée"
+                  onChange={(event) => markSelection(event.target.value)}
                 />
-              );
-            })}
-            <label
-              className={`bible-verse-color bible-verse-color-custom${customColorOn ? " is-on" : ""}`}
-              style={
-                customColorOn
-                  ? ({ ["--swatch" as string]: activeVerseColor } as CSSProperties)
-                  : undefined
-              }
-              title="Couleur personnalisée"
-            >
-              <input
-                type="color"
-                className="bible-verse-color-picker"
-                value={activeVerseColor}
-                aria-label="Couleur personnalisée"
-                onChange={(event) => pickVerseColor(event.target.value)}
-              />
-              {!customColorOn ? (
-                <span className="bible-verse-color-plus" aria-hidden>
-                  +
-                </span>
+                {!customColorOn ? (
+                  <span className="bible-verse-color-plus" aria-hidden>
+                    +
+                  </span>
+                ) : null}
+              </label>
+              {selectionHasMark ? (
+                <button
+                  type="button"
+                  className="bible-verse-color bible-verse-color-clear"
+                  aria-label="Retirer le surlignage"
+                  title="Retirer"
+                  onClick={clearSelectionMarks}
+                >
+                  ×
+                </button>
               ) : null}
-            </label>
+            </div>
           </div>
-          <button
-            type="button"
-            className="bible-yv-chip is-primary bible-make-card"
-            disabled={cardBusy}
-            onClick={() => {
-              if (existingVerseCard && selectedVerseCardId && onViewFlashcard) {
-                onViewFlashcard(selectedVerseCardId);
-                return;
-              }
-              void makeFlashcard();
-            }}
-          >
-            {cardBusy
-              ? "Création…"
-              : existingVerseCard
-                ? "Voir la carte"
-                : "Créer flashcard"}
-          </button>
+
+          <div className="bible-verse-action-block">
+            <p className="bible-verse-action-label">Flashcard</p>
+            <button
+              type="button"
+              className="bible-yv-chip is-primary bible-make-card"
+              disabled={cardBusy}
+              onClick={() => {
+                if (existingVerseCard && selectedVerseCardId && onViewFlashcard) {
+                  onViewFlashcard(selectedVerseCardId);
+                  return;
+                }
+                void makeFlashcard();
+              }}
+            >
+              {cardBusy
+                ? "Création…"
+                : existingVerseCard
+                  ? "Voir la carte"
+                  : "Créer flashcard"}
+            </button>
+          </div>
           {cardMsg ? <p className="bible-verse-actions-msg">{cardMsg}</p> : null}
         </div>
       ) : null}

@@ -178,6 +178,16 @@ export function TodayView({
   const selectedIndex = selectedDay ? days.findIndex((day) => day.jour === selectedDay.jour) + 1 : 0;
   const dayNoteLocal = loadDayNote(plan.id, selectedJour);
   const dayNoteDone = Boolean(dayNoteLocal?.text?.trim() || dayNoteLocal?.notionUrl);
+  const readingMinutes =
+    passageRefs.length > 0
+      ? (() => {
+          const low = Math.max(5, passageRefs.length * 5);
+          const high = Math.max(low + 5, passageRefs.length * 8);
+          return `~${low}–${high} min`;
+        })()
+      : null;
+  const progressPct =
+    scheduleTotal > 0 ? Math.min(100, (scheduleDone / scheduleTotal) * 100) : 0;
 
   function openPassage() {
     if (!selectedDay || !firstPassage || !isPassageRef(firstPassage)) return;
@@ -393,6 +403,38 @@ export function TodayView({
 
       {days.length ? (
         <section className="plan-yv-timeline" aria-label="Progression du plan">
+          <div className="plan-yv-timeline-meta">
+            {selectedDay ? (
+              <p className="plan-yv-progress">
+                Jour {selectedIndex} sur {scheduleTotal}
+                {selectedDay.jour === planJour ? (
+                  <span className="plan-yv-progress-today"> · Aujourd’hui</span>
+                ) : null}
+              </p>
+            ) : null}
+          </div>
+
+          {scheduleTotal > 0 ? (
+            <div className="plan-yv-progress-row">
+              <div
+                className="plan-yv-timeline-track"
+                role="progressbar"
+                aria-valuemin={0}
+                aria-valuemax={scheduleTotal}
+                aria-valuenow={scheduleDone}
+                aria-label="Lectures terminées"
+              >
+                <span
+                  className="plan-yv-timeline-fill"
+                  style={{ width: `${progressPct}%` }}
+                />
+              </div>
+              <p className="plan-yv-timeline-count" aria-live="polite">
+                {scheduleDone}/{scheduleTotal} lectures
+              </p>
+            </div>
+          ) : null}
+
           <div
             ref={daysStripRef}
             className={`plan-yv-days${days.length <= 7 ? " is-fit" : ""}`}
@@ -413,7 +455,7 @@ export function TodayView({
                     "plan-yv-day",
                     selected ? "is-selected" : "",
                     read ? "is-read" : "",
-                    isCurrent ? "is-today" : "",
+                    isCurrent && !read ? "is-today" : "",
                   ]
                     .filter(Boolean)
                     .join(" ")}
@@ -434,128 +476,90 @@ export function TodayView({
                   ) : null}
                   <span className="plan-yv-day-num">{day.jour}</span>
                   <span className="plan-yv-day-label">Jour</span>
-                  {isCurrent ? <span className="plan-yv-day-dot" aria-hidden="true" /> : null}
                 </button>
               );
             })}
           </div>
-
-          <div className="plan-yv-timeline-meta">
-            {selectedDay ? (
-              <p className="plan-yv-progress">
-                Jour {selectedIndex} sur {scheduleTotal}
-                {selectedDay.jour === planJour ? (
-                  <span className="plan-yv-progress-today"> · Aujourd’hui</span>
-                ) : null}
-              </p>
-            ) : null}
-            {scheduleTotal > 0 ? (
-              <p className="plan-yv-timeline-count" aria-live="polite">
-                {scheduleDone}/{scheduleTotal} lus
-              </p>
-            ) : null}
-          </div>
-
-          {scheduleTotal > 0 ? (
-            <div
-              className="plan-yv-timeline-track"
-              role="progressbar"
-              aria-valuemin={0}
-              aria-valuemax={scheduleTotal}
-              aria-valuenow={scheduleDone}
-              aria-label="Jours terminés"
-            >
-              <span
-                className="plan-yv-timeline-fill"
-                style={{
-                  width: `${Math.min(100, (scheduleDone / scheduleTotal) * 100)}%`,
-                }}
-              />
-            </div>
-          ) : null}
         </section>
       ) : null}
 
-      <section className="plan-yv-tasks" aria-label="Lecture du jour">
-        <ul className="plan-yv-task-list">
-          {selectedDay ? (
-            <li className="plan-yv-task-row">
-              {onMarkRead ? (
-                <button
-                  type="button"
-                  className={`plan-yv-task-check-btn${passageRead ? " is-done" : ""}`}
-                  onClick={() => onMarkRead(selectedDay.jour)}
-                  aria-pressed={passageRead}
-                  aria-label={passageRead ? "Démarquer comme lu" : "Marquer comme lu"}
-                >
-                  {passageRead ? "✓" : "○"}
-                </button>
-              ) : (
-                <span className={`plan-yv-task-check${passageRead ? " is-done" : ""}`} aria-hidden="true">
-                  {passageRead ? "✓" : "○"}
-                </span>
-              )}
+      {selectedDay ? (
+        <section
+          className={`plan-yv-hero${passageRead ? " is-done" : ""}`}
+          aria-label="Lecture du jour"
+        >
+          <div className="plan-yv-hero-top">
+            <p className="plan-yv-hero-eyebrow">
+              Lecture du jour
+              {selectedIndex > 0 ? ` · Jour ${selectedIndex}` : null}
+            </p>
+            {onMarkRead ? (
               <button
                 type="button"
-                className={`plan-yv-task plan-yv-task--grow${passageRead ? " is-done" : ""}`}
-                disabled={!canOpenPassage}
-                onClick={() => {
-                  if (canOpenPassage) openPassage();
-                }}
+                className={`plan-yv-hero-mark${passageRead ? " is-done" : ""}`}
+                onClick={() => onMarkRead(selectedDay.jour)}
+                aria-pressed={passageRead}
+                aria-label={passageRead ? "Démarquer comme lu" : "Marquer comme lu"}
               >
-                <span className="plan-yv-task-label">{passageLabel}</span>
-                <span className="plan-yv-task-chevron" aria-hidden="true">
-                  ›
-                </span>
+                {passageRead ? "✓ Lu" : "Marquer lu"}
               </button>
-            </li>
-          ) : (
-            <li>
-              <p className="muted plan-yv-empty">
-                Aucun verset pour ce jour — le plan n’affiche que les références bibliques.
-              </p>
-            </li>
-          )}
-          <li className="plan-yv-task-row">
-            <span
-              className={`plan-yv-task-check${dayNoteDone || noteSaved ? " is-done" : ""}`}
-              aria-hidden="true"
-            >
-              {dayNoteDone || noteSaved ? "✓" : "○"}
+            ) : null}
+          </div>
+          <h3 className="plan-yv-hero-title">{passageLabel || "Passage du jour"}</h3>
+          {readingMinutes ? (
+            <p className="plan-yv-hero-meta">{readingMinutes}</p>
+          ) : null}
+          <button
+            type="button"
+            className="plan-yv-start"
+            disabled={!planComplete && !canOpenPassage && !hasDescription}
+            onClick={startReading}
+          >
+            {planComplete ? "Recommencer la lecture" : "Commencer la lecture"}
+          </button>
+        </section>
+      ) : (
+        <p className="muted plan-yv-empty">
+          Aucun verset pour ce jour — le plan n’affiche que les références bibliques.
+        </p>
+      )}
+
+      <nav className="plan-yv-secondary" aria-label="Actions secondaires">
+        <button
+          type="button"
+          className={`plan-yv-secondary-row${dayNoteDone || noteSaved ? " is-done" : ""}`}
+          onClick={openDayNote}
+        >
+          <span className="plan-yv-secondary-stack">
+            <span className="plan-yv-secondary-label">Note du jour</span>
+            <span className="plan-yv-secondary-meta">
+              {dayNoteDone || noteSaved ? "Écrite · Notion" : "Optionnelle · après la lecture"}
             </span>
-            <button
-              type="button"
-              className={`plan-yv-task plan-yv-task--grow${dayNoteDone || noteSaved ? " is-done" : ""}`}
-              onClick={openDayNote}
-            >
-              <span className="plan-yv-task-stack">
-                <span className="plan-yv-task-label">Note du jour</span>
-                <span className="plan-yv-task-meta">
-                  {dayNoteDone || noteSaved ? "Écrite · Notion Note" : "Fin de lecture → Note"}
-                </span>
-              </span>
-              <span className="plan-yv-task-chevron" aria-hidden="true">
-                ›
-              </span>
-            </button>
-          </li>
-        </ul>
-      </section>
+          </span>
+          <span className="plan-yv-secondary-chevron" aria-hidden="true">
+            ›
+          </span>
+        </button>
 
-      <button type="button" className="plan-yv-start" onClick={startReading}>
-        {planComplete ? "Recommencer la lecture" : "Commencer la lecture"}
-      </button>
-
-      <button
-        type="button"
-        className="plan-yv-reminder-test"
-        disabled={reminderBusy}
-        onClick={() => {
-          void testReadingReminder();
-        }}
-      >
-        {reminderBusy ? "Programmation…" : "Tester le rappel (15 s)"}
-      </button>
+        <button
+          type="button"
+          className="plan-yv-secondary-row is-ghost"
+          disabled={reminderBusy}
+          onClick={() => {
+            void testReadingReminder();
+          }}
+        >
+          <span className="plan-yv-secondary-stack">
+            <span className="plan-yv-secondary-label">
+              {reminderBusy ? "Programmation…" : "Tester le rappel"}
+            </span>
+            <span className="plan-yv-secondary-meta">Notification dans ~15 s</span>
+          </span>
+          <span className="plan-yv-secondary-chevron" aria-hidden="true">
+            ›
+          </span>
+        </button>
+      </nav>
       {reminderMsg ? <p className="plan-yv-reminder-msg muted">{reminderMsg}</p> : null}
     </div>
   );
