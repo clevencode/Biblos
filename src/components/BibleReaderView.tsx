@@ -26,6 +26,7 @@ import {
   saveAudioPosition,
   type BibleAudioEpisode,
 } from "../youversion/audio";
+import { BibleAudioPlayer } from "./BibleAudioPlayer";
 import { createVerseFlashcard, verseCardId } from "../verseCard";
 import {
   VERSE_COLORS,
@@ -357,14 +358,20 @@ export function BibleReaderView({
   );
   const [chromeHidden, setChromeHidden] = useState(false);
   const [audioByUsfm, setAudioByUsfm] = useState<Record<string, BibleAudioEpisode>>({});
+  const [audioPodcast, setAudioPodcast] = useState("Bible | Podcast.s21");
   const [audioPlaying, setAudioPlaying] = useState(false);
   const [audioBusy, setAudioBusy] = useState(false);
+  const [audioPlayerOpen, setAudioPlayerOpen] = useState(false);
+  const [audioActiveUsfm, setAudioActiveUsfm] = useState<string | null>(null);
+  const [audioTime, setAudioTime] = useState(0);
+  const [audioDuration, setAudioDuration] = useState(0);
   const statusId = useId();
   const highlightRef = useRef<HTMLElement | null>(null);
   const dockLocationRef = useRef<HTMLButtonElement | null>(null);
   const passageScrollRef = useRef<HTMLElement | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioBookRef = useRef<string>("");
+  const audioPlayerOpenRef = useRef(false);
   const lastScrollTop = useRef(0);
   const scrollAcc = useRef(0);
   const chromeHiddenRef = useRef(false);
@@ -385,11 +392,16 @@ export function BibleReaderView({
       const result = await fetchBibleAudioCatalog();
       if (cancelled || !result.ok || !result.books) return;
       setAudioByUsfm(result.books);
+      if (result.podcast) setAudioPodcast(result.podcast);
     })();
     return () => {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    audioPlayerOpenRef.current = audioPlayerOpen;
+  }, [audioPlayerOpen]);
 
   useEffect(() => {
     const audio = audioRef.current ?? new Audio();
@@ -406,15 +418,30 @@ export function BibleReaderView({
     const onEnded = () => {
       setAudioPlaying(false);
       if (audioBookRef.current) saveAudioPosition(audioBookRef.current, 0);
+      setAudioTime(0);
     };
     const onWaiting = () => setAudioBusy(true);
     const onCanPlay = () => setAudioBusy(false);
+    const onTime = () => {
+      setAudioTime(audio.currentTime || 0);
+      if (Number.isFinite(audio.duration) && audio.duration > 0) {
+        setAudioDuration(audio.duration);
+      }
+    };
+    const onMeta = () => {
+      if (Number.isFinite(audio.duration) && audio.duration > 0) {
+        setAudioDuration(audio.duration);
+      }
+    };
 
     audio.addEventListener("play", onPlay);
     audio.addEventListener("pause", onPause);
     audio.addEventListener("ended", onEnded);
     audio.addEventListener("waiting", onWaiting);
     audio.addEventListener("canplay", onCanPlay);
+    audio.addEventListener("timeupdate", onTime);
+    audio.addEventListener("loadedmetadata", onMeta);
+    audio.addEventListener("durationchange", onMeta);
 
     return () => {
       audio.pause();
@@ -423,6 +450,9 @@ export function BibleReaderView({
       audio.removeEventListener("ended", onEnded);
       audio.removeEventListener("waiting", onWaiting);
       audio.removeEventListener("canplay", onCanPlay);
+      audio.removeEventListener("timeupdate", onTime);
+      audio.removeEventListener("loadedmetadata", onMeta);
+      audio.removeEventListener("durationchange", onMeta);
       if (audioBookRef.current && Number.isFinite(audio.currentTime)) {
         saveAudioPosition(audioBookRef.current, audio.currentTime);
       }
@@ -433,6 +463,7 @@ export function BibleReaderView({
     const audio = audioRef.current;
     if (!audio) return;
     const usfm = bookId.toUpperCase();
+    if (audioPlayerOpenRef.current) return;
     if (audioBookRef.current === usfm) return;
     if (!audio.paused) {
       audio.pause();
@@ -440,8 +471,11 @@ export function BibleReaderView({
     audio.removeAttribute("src");
     audio.load();
     audioBookRef.current = "";
+    setAudioActiveUsfm(null);
     setAudioPlaying(false);
     setAudioBusy(false);
+    setAudioTime(0);
+    setAudioDuration(0);
   }, [bookId]);
 
   useEffect(() => {
@@ -787,7 +821,7 @@ export function BibleReaderView({
   const selectionHasMark = selectedVerses.some((n) => chapterMarks.has(n));
 
   const showCreateCard = Boolean(selectedVerses.length && selectedVerseText && !pickerOpen);
-  const forceChrome = pickerOpen || showCreateCard;
+  const forceChrome = pickerOpen || showCreateCard || audioPlayerOpen;
   const hideChrome = chromeHidden && !forceChrome;
   forceChromeRef.current = forceChrome;
 
@@ -824,27 +858,34 @@ export function BibleReaderView({
 
   const bookAudio = audioByUsfm[bookId.toUpperCase()] ?? null;
   const canPlayBookAudio = Boolean(bookAudio?.audioUrl);
+  const bookOrder = useMemo(
+    () => books.map((b) => b.id.toUpperCase()),
+    [books],
+  );
+  const playingUsfm = audioActiveUsfm ?? (audioBookRef.current || null);
 
-  const toggleBookAudio = useEffectEvent(async () => {
-    const episode = audioByUsfm[bookId.toUpperCase()];
+  const playUsfmAudio = useEffectEvent(async (targetUsfm: string) => {
+    const usfm = targetUsfm.toUpperCase();
+    const episode = audioByUsfm[usfm];
     const audio = audioRef.current;
     if (!episode?.audioUrl || !audio) return;
 
-    if (audioBookRef.current === bookId.toUpperCase() && !audio.paused) {
-      audio.pause();
-      return;
-    }
-
     try {
       setAudioBusy(true);
-      const usfm = bookId.toUpperCase();
-      if (audioBookRef.current !== usfm || audio.src !== episode.audioUrl) {
+      setAudioActiveUsfm(usfm);
+      if (audioBookRef.current !== usfm || !String(audio.src || "").includes(episode.audioUrl)) {
+        if (audioBookRef.current && Number.isFinite(audio.currentTime)) {
+          saveAudioPosition(audioBookRef.current, audio.currentTime);
+        }
         audio.src = episode.audioUrl;
         audioBookRef.current = usfm;
+        setAudioTime(0);
+        setAudioDuration(0);
         const resume = loadAudioPositions()[usfm];
         if (resume && resume > 2) {
           const onMeta = () => {
             audio.currentTime = Math.min(resume, Math.max(0, (audio.duration || resume) - 1));
+            setAudioTime(audio.currentTime);
             audio.removeEventListener("loadedmetadata", onMeta);
           };
           audio.addEventListener("loadedmetadata", onMeta);
@@ -853,7 +894,7 @@ export function BibleReaderView({
       if ("mediaSession" in navigator) {
         navigator.mediaSession.metadata = new MediaMetadata({
           title: episode.title,
-          artist: "Bible | Podcast.s21",
+          artist: audioPodcast,
           album: "Segond 21",
         });
       }
@@ -864,6 +905,41 @@ export function BibleReaderView({
     } finally {
       setAudioBusy(false);
     }
+  });
+
+  const toggleBookAudio = useEffectEvent(async () => {
+    const usfm = (audioActiveUsfm || bookId).toUpperCase();
+    const audio = audioRef.current;
+    if (audio && audioBookRef.current === usfm && !audio.paused) {
+      audio.pause();
+      return;
+    }
+    await playUsfmAudio(usfm);
+  });
+
+  const openAudioPlayer = useEffectEvent(() => {
+    const usfm = bookId.toUpperCase();
+    setAudioActiveUsfm(audioBookRef.current || usfm);
+    setAudioPlayerOpen(true);
+    if (!canPlayBookAudio && !audioByUsfm[usfm]) return;
+    const audio = audioRef.current;
+    if (audio && audioBookRef.current === usfm && !audio.paused) return;
+    void playUsfmAudio(usfm);
+  });
+
+  const seekAudio = useEffectEvent((seconds: number) => {
+    const audio = audioRef.current;
+    if (!audio || !Number.isFinite(seconds)) return;
+    const max = Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : seconds;
+    audio.currentTime = Math.min(Math.max(0, seconds), Math.max(0, max));
+    setAudioTime(audio.currentTime);
+    if (audioBookRef.current) saveAudioPosition(audioBookRef.current, audio.currentTime);
+  });
+
+  const skipAudio = useEffectEvent((delta: number) => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    seekAudio((audio.currentTime || 0) + delta);
   });
 
   const setReadingChrome = useEffectEvent((hidden: boolean, force = false) => {
@@ -1483,22 +1559,33 @@ export function BibleReaderView({
       >
         <button
           type="button"
-          className={`bible-yv-dock-play${audioPlaying ? " is-playing" : ""}${audioBusy ? " is-busy" : ""}`}
-          onClick={() => void toggleBookAudio()}
+          className={`bible-yv-dock-play${audioPlaying ? " is-playing" : ""}${audioBusy ? " is-busy" : ""}${audioPlayerOpen ? " is-open" : ""}`}
+          onClick={() => {
+            if (audioPlayerOpen) {
+              void toggleBookAudio();
+              return;
+            }
+            openAudioPlayer();
+          }}
           disabled={!canPlayBookAudio || audioBusy}
           aria-pressed={audioPlaying}
+          aria-expanded={audioPlayerOpen}
           aria-label={
             !canPlayBookAudio
               ? `Audio indisponible pour ${bookTitle}`
-              : audioPlaying
-                ? `Pause · ${bookTitle}`
-                : `Écouter ${bookTitle}`
+              : audioPlayerOpen
+                ? audioPlaying
+                  ? `Pause · ${bookTitle}`
+                  : `Lecture · ${bookTitle}`
+                : `Ouvrir le lecteur · ${bookTitle}`
           }
           title={
             !canPlayBookAudio
               ? "Audio du livre bientôt disponible"
-              : audioPlaying
-                ? "Pause"
+              : audioPlayerOpen
+                ? audioPlaying
+                  ? "Pause"
+                  : "Lecture"
                 : "Écouter le livre"
           }
         >
@@ -1565,6 +1652,23 @@ export function BibleReaderView({
           )}
         </div>
       </footer>
+
+      <BibleAudioPlayer
+        open={audioPlayerOpen}
+        onClose={() => setAudioPlayerOpen(false)}
+        podcastTitle={audioPodcast}
+        booksByUsfm={audioByUsfm}
+        bookOrder={bookOrder}
+        activeUsfm={playingUsfm}
+        playing={audioPlaying}
+        busy={audioBusy}
+        currentTime={audioTime}
+        duration={audioDuration}
+        onTogglePlay={() => void toggleBookAudio()}
+        onPlayUsfm={(usfm) => void playUsfmAudio(usfm)}
+        onSeek={seekAudio}
+        onSkip={skipAudio}
+      />
     </section>
   );
 }
