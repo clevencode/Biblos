@@ -45,6 +45,7 @@ import { BibleAudioPlayer } from "./BibleAudioPlayer";
 import { BibleHistorySheet } from "./BibleHistorySheet";
 import { BibleSearchSheet } from "./BibleSearchSheet";
 import { CircularColorEditor } from "./CircularColorEditor";
+import { ACTIVITY_TRACKING_ENABLED } from "../activityLog";
 import { createVerseFlashcard, verseCardId } from "../verseCard";
 import {
   clearOfflineBible,
@@ -1131,18 +1132,20 @@ export function BibleReaderView({
               <MagnifyingGlassIcon className="bible-yv-tools-item-icon" aria-hidden />
               <span>Rechercher</span>
             </button>
-            <button
-              type="button"
-              role="menuitem"
-              className="bible-yv-tools-item"
-              onClick={() => {
-                setToolsMenuOpen(false);
-                setHistoryOpen(true);
-              }}
-            >
-              <ClockIcon className="bible-yv-tools-item-icon" aria-hidden />
-              <span>Historique</span>
-            </button>
+            {ACTIVITY_TRACKING_ENABLED ? (
+              <button
+                type="button"
+                role="menuitem"
+                className="bible-yv-tools-item"
+                onClick={() => {
+                  setToolsMenuOpen(false);
+                  setHistoryOpen(true);
+                }}
+              >
+                <ClockIcon className="bible-yv-tools-item-icon" aria-hidden />
+                <span>Historique</span>
+              </button>
+            ) : null}
             <div className="bible-yv-tools-font" role="group" aria-label="Taille du texte">
               <span className="bible-yv-tools-font-label">Texte</span>
               <div className="bible-yv-font">
@@ -2093,16 +2096,18 @@ export function BibleReaderView({
         }}
       />
 
-      <BibleHistorySheet
-        open={historyOpen}
-        onClose={() => setHistoryOpen(false)}
-        onSelect={({ bookId, chapterId, verse }) => {
-          setHistoryOpen(false);
-          setPickerOpen(false);
-          void loadChapter(bookId, chapterId, verse);
-        }}
-        onHistoryChange={onReadingHistoryChange}
-      />
+      {ACTIVITY_TRACKING_ENABLED ? (
+        <BibleHistorySheet
+          open={historyOpen}
+          onClose={() => setHistoryOpen(false)}
+          onSelect={({ bookId, chapterId, verse }) => {
+            setHistoryOpen(false);
+            setPickerOpen(false);
+            void loadChapter(bookId, chapterId, verse);
+          }}
+          onHistoryChange={onReadingHistoryChange}
+        />
+      ) : null}
     </section>
   );
 }

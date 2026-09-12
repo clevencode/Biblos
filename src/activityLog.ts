@@ -5,6 +5,12 @@ import { loadOrCreateProfile } from "./userProfile";
 const ACTIVITY_KEY = "biblos-activity-v1";
 const MAX_EVENTS = 300;
 
+/**
+ * Désactivé pour l’instant (réutilisable plus tard).
+ * Remettre à `true` pour enregistrer / afficher l’activité.
+ */
+export const ACTIVITY_TRACKING_ENABLED = false;
+
 export type ActivityType =
   | "app.open"
   | "onboarding.complete"
@@ -59,7 +65,7 @@ export function appendActivity(
   type: ActivityType,
   meta?: ActivityEvent["meta"],
   userId?: string,
-): ActivityEvent {
+): ActivityEvent | null {
   const uid = userId ?? loadOrCreateProfile().id;
   const event: ActivityEvent = {
     id: newEventId(),
@@ -68,16 +74,10 @@ export function appendActivity(
     at: new Date().toISOString(),
     ...(meta ? { meta } : {}),
   };
+  if (!ACTIVITY_TRACKING_ENABLED) return null;
   const store = readStore();
   store.events = [event, ...store.events].slice(0, MAX_EVENTS);
   writeStore(store);
-  void import("./activitySync")
-    .then(({ enqueueActivityNotionSync }) => {
-      enqueueActivityNotionSync(event);
-    })
-    .catch(() => {
-      /* ignore */
-    });
   return event;
 }
 
@@ -85,6 +85,7 @@ export function listActivityForUser(
   userId?: string,
   limit = 40,
 ): ActivityEvent[] {
+  if (!ACTIVITY_TRACKING_ENABLED) return [];
   const uid = userId ?? loadOrCreateProfile().id;
   return readStore()
     .events.filter((event) => event.userId === uid)
@@ -95,6 +96,7 @@ export function listBibleReadingHistory(
   userId?: string,
   limit = 30,
 ): ActivityEvent[] {
+  if (!ACTIVITY_TRACKING_ENABLED) return [];
   const uid = userId ?? loadOrCreateProfile().id;
   return readStore()
     .events.filter((event) => event.userId === uid && event.type === "bible.read")
@@ -102,6 +104,7 @@ export function listBibleReadingHistory(
 }
 
 export function removeActivityById(id: string, userId?: string): boolean {
+  if (!ACTIVITY_TRACKING_ENABLED) return false;
   const target = String(id || "").trim();
   if (!target) return false;
   const uid = userId ?? loadOrCreateProfile().id;
@@ -116,6 +119,7 @@ export function removeActivityById(id: string, userId?: string): boolean {
 
 /** Supprime toutes les lectures bibliques de l’utilisateur. */
 export function clearBibleReadingHistory(userId?: string): number {
+  if (!ACTIVITY_TRACKING_ENABLED) return 0;
   const uid = userId ?? loadOrCreateProfile().id;
   const store = readStore();
   const next = store.events.filter(
@@ -134,6 +138,7 @@ export function recordBibleRead(input: {
   label?: string;
   userId?: string;
 }): ActivityEvent | null {
+  if (!ACTIVITY_TRACKING_ENABLED) return null;
   const bookId = String(input.bookId || "").trim().toUpperCase();
   const chapterId = String(input.chapterId || "").trim();
   if (!bookId || !chapterId) return null;

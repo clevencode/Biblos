@@ -20,7 +20,6 @@ import {
   type UserProfile,
 } from "./userProfile";
 import { syncUserProfileToNotion } from "./userProfileSync";
-import { flushActivityNotionSync } from "./activitySync";
 import {
   buildInbox,
   buildTimeline,
@@ -188,7 +187,7 @@ export function App() {
     setActivityTick((n) => n + 1);
     setHome(true);
     setMode("today");
-    void syncUserProfileToNotion(next).then(() => flushActivityNotionSync());
+    void syncUserProfileToNotion(next);
   }
 
   function handleProfileSave(input: {
@@ -208,7 +207,7 @@ export function App() {
       next.id,
     );
     setActivityTick((n) => n + 1);
-    void syncUserProfileToNotion(next).then(() => flushActivityNotionSync());
+    void syncUserProfileToNotion(next);
   }
 
   const activePlan = useMemo(

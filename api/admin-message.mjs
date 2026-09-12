@@ -23,6 +23,7 @@ export default async function handler(req, res) {
       localId: body.localId || body.id,
       userId: body.userId,
       displayName: body.displayName,
+      category: body.category || body.title,
       title: body.title,
       body: body.body || body.message,
       at: body.at,

@@ -1,5 +1,5 @@
 /**
- * POST /api/user-profile — upsert du profil local dans Notion (NOTION_PROFILE_DB).
+ * POST /api/user-profile — upsert du profil local dans Notion (NOTION_ADMIN_DB).
  */
 import { upsertUserProfile } from "../shared/notion.mjs";
 

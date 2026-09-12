@@ -8,6 +8,7 @@ import {
   isOfflineBibleReady,
 } from "../bibleOffline";
 import {
+  ACTIVITY_TRACKING_ENABLED,
   activityTypeLabel,
   clearBibleReadingHistory,
   formatActivityWhen,
@@ -24,7 +25,7 @@ import {
   themePrefLabel,
   type ThemePref,
 } from "../theme";
-import { sendAdminMessage } from "../adminMessage";
+import { sendAdminMessage, ADMIN_MESSAGE_CATEGORIES, type AdminMessageCategoryId } from "../adminMessage";
 import type { Flashcard } from "../types";
 import type { SavedVerseMark } from "../verseMarks";
 import { useEffect, useState, type FormEvent } from "react";
@@ -81,7 +82,8 @@ export function ProfileView({
   const [savedFlash, setSavedFlash] = useState(false);
   const [activities, setActivities] = useState<ActivityEvent[]>([]);
   const [readingHistory, setReadingHistory] = useState<ActivityEvent[]>([]);
-  const [adminTitle, setAdminTitle] = useState("");
+  const [adminCategory, setAdminCategory] =
+    useState<AdminMessageCategoryId>("suggestion");
   const [adminMessage, setAdminMessage] = useState("");
   const [adminBusy, setAdminBusy] = useState(false);
   const [adminStatus, setAdminStatus] = useState<string | null>(null);
@@ -123,10 +125,9 @@ export function ProfileView({
   async function submitAdminMessage(event: FormEvent) {
     event.preventDefault();
     if (adminBusy) return;
-    const title = adminTitle.trim();
     const body = adminMessage.trim();
-    if (!title) {
-      setAdminStatus("Titre requis");
+    if (!adminCategory) {
+      setAdminStatus("Catégorie requise");
       return;
     }
     if (!body) {
@@ -135,13 +136,16 @@ export function ProfileView({
     }
     setAdminBusy(true);
     setAdminStatus(null);
-    const result = await sendAdminMessage(profile, { title, body });
+    const result = await sendAdminMessage(profile, {
+      category: adminCategory,
+      body,
+    });
     setAdminBusy(false);
     if (!result.ok) {
       setAdminStatus(result.error || "Envoi échoué");
       return;
     }
-    setAdminTitle("");
+    setAdminCategory("suggestion");
     setAdminMessage("");
     setAdminStatus("Message envoyé à l’admin");
   }
@@ -212,6 +216,7 @@ export function ProfileView({
         </p>
       </section>
 
+      {ACTIVITY_TRACKING_ENABLED ? (
       <section className="profile-section" aria-labelledby="profile-reading-label">
         <h2 id="profile-reading-label" className="profile-section-title">
           Historique de lecture
@@ -297,6 +302,7 @@ export function ProfileView({
           </>
         )}
       </section>
+      ) : null}
 
       <section className="profile-section" aria-labelledby="profile-verses-label">
         <h2 id="profile-verses-label" className="profile-section-title">
@@ -408,16 +414,30 @@ export function ProfileView({
           Envoie une note à l’équipe — stockée dans Notion pour suivi / IA.
         </p>
         <form className="profile-admin-form" onSubmit={(e) => void submitAdminMessage(e)}>
-          <label className="profile-field">
-            <span>Titre</span>
-            <input
-              value={adminTitle}
-              onChange={(e) => setAdminTitle(e.target.value)}
-              maxLength={120}
-              placeholder="Sujet du message"
-              required
-            />
-          </label>
+          <div
+            className="profile-admin-categories"
+            role="radiogroup"
+            aria-label="Type de message"
+          >
+            <span className="profile-admin-categories-label">Type</span>
+            <div className="profile-admin-category-row">
+              {ADMIN_MESSAGE_CATEGORIES.map(({ id, label }) => {
+                const on = adminCategory === id;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    role="radio"
+                    className={`profile-admin-category-btn${on ? " is-on" : ""}`}
+                    aria-checked={on}
+                    onClick={() => setAdminCategory(id)}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
           <label className="profile-field">
             <span>Message</span>
             <textarea
@@ -425,7 +445,7 @@ export function ProfileView({
               onChange={(e) => setAdminMessage(e.target.value)}
               rows={4}
               maxLength={2000}
-              placeholder="Suggestion, bug, question…"
+              placeholder="Décris ton bug, ta suggestion ou ta question…"
               required
             />
           </label>
@@ -433,7 +453,7 @@ export function ProfileView({
             <button
               type="submit"
               className="profile-save-btn"
-              disabled={adminBusy || !adminTitle.trim() || !adminMessage.trim()}
+              disabled={adminBusy || !adminCategory || !adminMessage.trim()}
             >
               {adminBusy ? "Envoi…" : "Envoyer"}
             </button>
@@ -446,6 +466,7 @@ export function ProfileView({
         </form>
       </section>
 
+      {ACTIVITY_TRACKING_ENABLED ? (
       <section className="profile-section" aria-labelledby="profile-activity-label">
         <h2 id="profile-activity-label" className="profile-section-title">
           Activité récente
@@ -474,6 +495,7 @@ export function ProfileView({
           </ul>
         )}
       </section>
+      ) : null}
 
       <section className="profile-section" aria-labelledby="profile-bible-label">
         <h2 id="profile-bible-label" className="profile-section-title">

@@ -13,7 +13,6 @@ import {
   enqueuePendingVerseCreatesFromCatalog,
   flushVerseCardCreates,
 } from "./verseCardSync";
-import { flushActivityNotionSync } from "./activitySync";
 import { syncUserProfileToNotion } from "./userProfileSync";
 import { DESCRIPTION_PULL_MS, pullPlanDescription } from "./planDescriptionSync";
 import type { Catalog, CenterMode, ReadingPlan, Seed } from "./types";
@@ -62,7 +61,6 @@ export function useNotionSync(options: {
         });
       }
       await syncUserProfileToNotion();
-      await flushActivityNotionSync();
     })();
   }, [setCatalog]);
 
@@ -90,7 +88,6 @@ export function useNotionSync(options: {
           setCatalog(result.catalog);
         }
         await syncUserProfileToNotion();
-        await flushActivityNotionSync();
       } finally {
         busy = false;
       }

@@ -1,7 +1,37 @@
 /**
- * Envoi d’un message admin → Notion (Status Nouveau pour automation IA).
+ * Envoi d’un message admin → Notion (catégorie + corps, Status Nouveau).
+ * Catégories = pattern feedback in-app (bug / suggestion / réclamation / question).
  */
 import { preferredDisplayName, type UserProfile } from "./userProfile";
+
+export type AdminMessageCategoryId =
+  | "bug"
+  | "suggestion"
+  | "complaint"
+  | "question"
+  | "other";
+
+export type AdminMessageCategory = {
+  id: AdminMessageCategoryId;
+  /** Libellé UI (FR) — aussi stocké dans Notion Category. */
+  label: string;
+};
+
+/** 5 types max — évite la paralysie de choix (best practice feedback forms). */
+export const ADMIN_MESSAGE_CATEGORIES: readonly AdminMessageCategory[] = [
+  { id: "bug", label: "Bug" },
+  { id: "suggestion", label: "Suggestion" },
+  { id: "complaint", label: "Réclamation" },
+  { id: "question", label: "Question" },
+  { id: "other", label: "Autre" },
+] as const;
+
+export function adminMessageCategoryLabel(
+  id: string | null | undefined,
+): string | null {
+  const hit = ADMIN_MESSAGE_CATEGORIES.find((item) => item.id === id);
+  return hit?.label ?? null;
+}
 
 export type AdminMessageResult = {
   ok: boolean;
@@ -19,17 +49,13 @@ function newLocalId(): string {
 
 export async function sendAdminMessage(
   profile: UserProfile,
-  input: { title: string; body: string } | string,
+  input: { category: AdminMessageCategoryId; body: string },
 ): Promise<AdminMessageResult> {
-  const title =
-    typeof input === "string"
-      ? String(input).trim().slice(0, 80)
-      : String(input.title || "").trim();
-  const body =
-    typeof input === "string" ? String(input).trim() : String(input.body || "").trim();
-  if (!title) return { ok: false, error: "Titre requis" };
+  const categoryId = input.category;
+  const categoryLabel = adminMessageCategoryLabel(categoryId);
+  const body = String(input.body || "").trim();
+  if (!categoryLabel) return { ok: false, error: "Catégorie requise" };
   if (!body) return { ok: false, error: "Message vide" };
-  if (title.length > 120) return { ok: false, error: "Titre trop long (120 max)" };
   if (body.length > 2000) return { ok: false, error: "Message trop long (2000 max)" };
 
   try {
@@ -40,7 +66,8 @@ export async function sendAdminMessage(
         localId: newLocalId(),
         userId: profile.id,
         displayName: preferredDisplayName(profile),
-        title,
+        category: categoryLabel,
+        title: categoryLabel,
         body,
         at: new Date().toISOString(),
       }),

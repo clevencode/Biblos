@@ -1,14 +1,13 @@
 /**
- * Crée les databases Notion Profil + Activité sous une page parente.
+ * Crée la database Notion Admin (profils + messages) sous une page parente.
  *
  * Usage:
  *   NOTION_TOKEN=… NOTION_PARENT_PAGE=… node scripts/setup-user-notion-dbs.mjs
  *
- * Puis copie les IDs imprimés dans .env :
- *   NOTION_PROFILE_DB=…
- *   NOTION_ACTIVITY_DB=…
+ * Puis copie l’ID imprimé dans .env :
+ *   NOTION_ADMIN_DB=…
  *
- * Partage chaque DB avec l’intégration Notion (Connections → Biblos).
+ * Partage la DB avec l’intégration Notion (Connections → ton intégration).
  */
 import { loadEnv } from "vite";
 
@@ -66,48 +65,36 @@ async function main() {
     process.exit(1);
   }
 
-  console.log("Création des databases…");
+  console.log("Création de la database Admin…");
 
-  const profileId = await createDb("Biblos · Profils", {
+  const adminId = await createDb("Admin", {
     Name: { title: {} },
-    LocalId: { rich_text: {} },
-    FirstName: { rich_text: {} },
-    LastName: { rich_text: {} },
-    PreferredName: { rich_text: {} },
-    CreatedAt: { date: {} },
-    OnboardedAt: { date: {} },
-    UpdatedAt: { date: {} },
-  });
-
-  const activityId = await createDb("Biblos · Activité", {
-    Name: { title: {} },
-    LocalId: { rich_text: {} },
-    UserId: { rich_text: {} },
-    Type: {
+    Kind: {
       select: {
         options: [
-          { name: "app.open" },
-          { name: "onboarding.complete" },
-          { name: "plan.day_read" },
-          { name: "flashcard.create" },
-          { name: "verse.mark" },
-          { name: "theme.change" },
-          { name: "profile.update" },
-          { name: "bible.read" },
+          { name: "Profil", color: "blue" },
+          { name: "Message", color: "orange" },
         ],
       },
     },
-    At: { date: {} },
-    Meta: { rich_text: {} },
-    DisplayName: { rich_text: {} },
-  });
-
-  const messagesId = await createDb("Biblos · Messages admin", {
-    Name: { title: {} },
     LocalId: { rich_text: {} },
     UserId: { rich_text: {} },
+    FirstName: { rich_text: {} },
+    LastName: { rich_text: {} },
+    PreferredName: { rich_text: {} },
     DisplayName: { rich_text: {} },
     Body: { rich_text: {} },
+    Category: {
+      select: {
+        options: [
+          { name: "Bug", color: "red" },
+          { name: "Suggestion", color: "green" },
+          { name: "Réclamation", color: "orange" },
+          { name: "Question", color: "blue" },
+          { name: "Autre", color: "gray" },
+        ],
+      },
+    },
     Status: {
       select: {
         options: [
@@ -119,15 +106,16 @@ async function main() {
       },
     },
     CreatedAt: { date: {} },
+    OnboardedAt: { date: {} },
+    UpdatedAt: { date: {} },
   });
 
   console.log("\nOK — ajoute dans .env (et Vercel) :\n");
-  console.log(`NOTION_PROFILE_DB=${profileId}`);
-  console.log(`NOTION_ACTIVITY_DB=${activityId}`);
-  console.log(`NOTION_MESSAGES_DB=${messagesId}`);
+  console.log(`NOTION_ADMIN_DB=${adminId}`);
   console.log(
-    "\nDans Notion : ouvre chaque DB → ··· → Connections → ajoute ton intégration.",
+    "\nDans Notion : ouvre Admin → ··· → Connections → ajoute ton intégration.",
   );
+  console.log("(Activité de lecture reste locale.)");
 }
 
 main().catch((error) => {
