@@ -35,6 +35,8 @@ export type ReadingPlan = {
   description?: string;
   /** Notion Audience: Admin (dono) | Shared (tous). Absent → Shared. */
   audience?: "Admin" | "Shared";
+  /** Notion checkbox Published — seul les plans cochés sont listés. */
+  published?: boolean;
   cardIds?: string[];
   criadoEm?: string | null;
 };

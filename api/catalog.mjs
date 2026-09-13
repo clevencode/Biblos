@@ -334,6 +334,25 @@ function audienceFromProps(props) {
   return "Shared";
 }
 
+/** Checkbox Published / Publié — seul les plans cochés apparaissent dans l’app. */
+function isPlanPublished(props) {
+  const prop = findProp(
+    props,
+    "Published",
+    "Publié",
+    "Publier",
+    "Publish",
+    "Publicado",
+  );
+  if (!prop) return false;
+  if (prop.type === "checkbox") return Boolean(prop.checkbox);
+  if (prop.type === "select") {
+    const name = String(prop.select?.name ?? "").trim().toLowerCase();
+    return name === "oui" || name === "yes" || name === "true" || name === "publié";
+  }
+  return false;
+}
+
 function includePlanForScope(audience, scope) {
   if (scope === "admin") return true;
   return audience !== "Admin";
@@ -350,6 +369,7 @@ function mapPlanPage(page, bodyText = "", planProp = "", description = "") {
   const days = parsePlanDays(bodyText);
   const merged = days.length ? days : parsePlanDays(`${bodyText}\n${planField}`);
   const audience = audienceFromProps(props);
+  const published = isPlanPublished(props);
   return {
     id: `plan-${String(id).replace(/-/g, "").slice(0, 16)}`,
     nome,
@@ -358,6 +378,7 @@ function mapPlanPage(page, bodyText = "", planProp = "", description = "") {
     days: merged,
     description: descriptionField,
     audience,
+    published,
     criadoEm: page.created_time ? dateKey(page.created_time) : null,
   };
 }
@@ -419,6 +440,7 @@ export async function buildCatalog(token, { full = false, scope = "shared" } = {
       description = richFromProp(findProp(page.properties, "Description", "Devotional"));
     }
     const mapped = mapPlanPage(page, body, planProp, description);
+    if (!mapped.published) continue;
     if (!includePlanForScope(mapped.audience, catalogScope)) continue;
     plans.push(mapped);
   }

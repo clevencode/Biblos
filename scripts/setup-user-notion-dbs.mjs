@@ -126,42 +126,57 @@ const messageProps = {
 async function ensurePlanAudience() {
   const dbId = pageUuid(planDb) || planDb;
   if (!dbId) {
-    console.warn("NOTION_PLAN_DB manquant — Audience non configuré.");
+    console.warn("NOTION_PLAN_DB manquant — Audience/Published non configurés.");
     return;
   }
   try {
     const db = await notion(`/databases/${dbId}`, { method: "GET" });
     const props = db.properties || {};
-    const existing =
+    const patch = {};
+    const hasAudience =
       props.Audience ||
       Object.keys(props).find((key) => key.toLowerCase() === "audience");
-    if (existing) {
-      console.log("Audience déjà présent sur PLAN_DB.");
+    if (!hasAudience) {
+      patch.Audience = {
+        select: {
+          options: [
+            { name: "Shared", color: "green" },
+            { name: "Admin", color: "purple" },
+          ],
+        },
+      };
+    }
+    const hasPublished =
+      props.Published ||
+      props.Publié ||
+      Object.keys(props).find((key) =>
+        ["published", "publié", "publier", "publish", "publicado"].includes(
+          key.toLowerCase(),
+        ),
+      );
+    if (!hasPublished) {
+      patch.Published = { checkbox: {} };
+    }
+    if (!Object.keys(patch).length) {
+      console.log("Audience + Published déjà présents sur PLAN_DB.");
       return;
     }
     await notion(`/databases/${dbId}`, {
       method: "PATCH",
-      body: JSON.stringify({
-        properties: {
-          Audience: {
-            select: {
-              options: [
-                { name: "Shared", color: "green" },
-                { name: "Admin", color: "purple" },
-              ],
-            },
-          },
-        },
-      }),
+      body: JSON.stringify({ properties: patch }),
     });
-    console.log("Audience ajouté sur PLAN_DB (Shared | Admin).");
+    console.log(
+      "PLAN_DB mis à jour:",
+      Object.keys(patch).join(", "),
+      "(Published = cocher pour publier dans l’app).",
+    );
   } catch (error) {
     console.warn(
-      "Impossible d’ajouter Audience sur PLAN_DB:",
+      "Impossible d’ajouter Audience/Published sur PLAN_DB:",
       error instanceof Error ? error.message : error,
     );
     console.warn(
-      "Ajoute manuellement la propriété select Audience = Shared | Admin.",
+      "Ajoute manuellement: Audience (select Admin|Shared) + Published (checkbox).",
     );
   }
 }
@@ -197,7 +212,7 @@ async function main() {
     "\nDans Notion : ouvre chaque DB → ··· → Connections → ajoute ton intégration.",
   );
   console.log(
-    "Planos: marque Audience=Admin (perso) ou Shared (tous). Sans valeur = Shared.",
+    "Planos: coche Published pour publier dans l’app ; Audience=Admin (perso) ou Shared (tous).",
   );
   console.log(
     "Compat: NOTION_ADMIN_DB reste un fallback si PROFILE/MESSAGES absents.",
