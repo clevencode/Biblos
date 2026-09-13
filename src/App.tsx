@@ -153,6 +153,10 @@ export function App() {
   const [bibleChromeHidden, setBibleChromeHidden] = useState(false);
   const [themePref, setThemePref] = useState<ThemePref>(() => loadThemePref());
   const [profile, setProfile] = useState<UserProfile>(() => loadOrCreateProfile());
+  /** Empêche le retour de l’écran Bienvenue si un sync stale réécrit le profil. */
+  const [onboardingDone, setOnboardingDone] = useState(() =>
+    isProfileOnboarded(loadOrCreateProfile()),
+  );
   const [activityTick, setActivityTick] = useState(0);
   const [privacyOk, setPrivacyOk] = useState(() => {
     const ok = hasPrivacyAck();
@@ -160,6 +164,14 @@ export function App() {
     return ok;
   });
   const openedLogged = useRef(false);
+
+  function applySyncedProfile(remote: UserProfile | undefined) {
+    if (!remote) return;
+    setProfile((prev) => {
+      if (isProfileOnboarded(prev) && !isProfileOnboarded(remote)) return prev;
+      return remote;
+    });
+  }
 
   useEffect(() => {
     if (openedLogged.current || !isProfileOnboarded(profile)) return;
@@ -170,10 +182,10 @@ export function App() {
 
   useEffect(() => {
     if (!isProfileOnboarded(profile)) return undefined;
-    const stopPresence = startPresenceAndUsageSync((next) => setProfile(next));
+    const stopPresence = startPresenceAndUsageSync((next) => applySyncedProfile(next));
     const stopUsage = startAppUsageTracking(() => {
       void syncUserProfileToNotion(undefined, { presence: "Online" }).then((result) => {
-        if (result.profile) setProfile(result.profile);
+        applySyncedProfile(result.profile);
       });
     });
     return () => {
@@ -192,7 +204,7 @@ export function App() {
       setOfflineToast(false);
       void flushAdminMessageOutbox();
       void syncUserProfileToNotion(undefined, { presence: "Online" }).then((result) => {
-        if (result.profile) setProfile(result.profile);
+        applySyncedProfile(result.profile);
       });
     }
     window.addEventListener("offline", onOffline);
@@ -243,6 +255,7 @@ export function App() {
     preferredName: string;
   }) {
     const next = completeOnboarding(input);
+    setOnboardingDone(true);
     setProfile(next);
     appendActivity(
       "onboarding.complete",
@@ -254,7 +267,7 @@ export function App() {
     setActivityTick((n) => n + 1);
     setMode("home");
     void syncUserProfileToNotion(next).then((result) => {
-      if (result.profile) setProfile(result.profile);
+      applySyncedProfile(result.profile);
     });
   }
 
@@ -276,7 +289,7 @@ export function App() {
     );
     setActivityTick((n) => n + 1);
     void syncUserProfileToNotion(next).then((result) => {
-      if (result.profile) setProfile(result.profile);
+      applySyncedProfile(result.profile);
     });
   }
 
@@ -731,7 +744,7 @@ export function App() {
     />
   );
 
-  const onboarded = isProfileOnboarded(profile);
+  const onboarded = onboardingDone || isProfileOnboarded(profile);
 
   if (!privacyOk) {
     return (

@@ -50,75 +50,107 @@ function adoptStableLocalId(
   return next;
 }
 
+async function pushUserProfileOnce(
+  profile: UserProfile | undefined,
+  options?: { presence?: PresenceStatus },
+): Promise<ProfilePushResult> {
+  // Toujours relire le stockage après une éventuelle file d’attente :
+  // un sync antérieur (ex. online) ne doit pas écraser un onboarding tout juste sauvé.
+  let current = ensureStableAdminIdentity(
+    profile?.onboardedAt ? profile : loadOrCreateProfile(),
+  );
+  if (!current.onboardedAt) {
+    return { ok: false, skipped: true, error: "profil non onboardé", profile: current };
+  }
+  const timeSpentMinutes = getTimeSpentMinutes();
+  const presence: PresenceStatus =
+    options?.presence ??
+    (typeof document !== "undefined" && document.visibilityState === "visible"
+      ? "Online"
+      : "Offline");
+  const lastSeenAt = new Date().toISOString();
+  try {
+    const response = await fetch(apiUrl("/api/user-profile"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        localId: isClevencodeAdmin(current)
+          ? CLEVENCODE_ADMIN_USER_ID
+          : current.id,
+        firstName: current.firstName,
+        lastName: current.lastName,
+        preferredName: current.preferredName,
+        createdAt: current.createdAt,
+        onboardedAt: current.onboardedAt,
+        timeSpentMinutes,
+        presence,
+        lastSeenAt,
+        notionUrl: current.notionUrl ?? null,
+      }),
+      keepalive: presence === "Offline",
+    });
+    const data = (await response.json()) as {
+      ok?: boolean;
+      url?: string;
+      error?: string;
+      hasToken?: boolean;
+      localId?: string;
+    };
+    if (!data.ok) {
+      return {
+        ok: false,
+        error: data.error || "sync profil échoué",
+        hasToken: data.hasToken,
+        profile: current,
+      };
+    }
+    markTimeSpentSynced(timeSpentMinutes);
+    current = adoptStableLocalId(current, data.localId);
+    if (data.url && data.url !== current.notionUrl) {
+      // Ne pas se fier à un reload LS seul : un write onboarding peut avoir échoué
+      // (quota / private mode) alors que `current` en mémoire est déjà valide.
+      current = saveUserProfile({
+        firstName: current.firstName,
+        lastName: current.lastName,
+        preferredName: current.preferredName,
+        onboardedAt: current.onboardedAt,
+        notionUrl: data.url,
+      });
+    }
+    return { ok: true, url: data.url, hasToken: data.hasToken, profile: current };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "réseau",
+      profile: current,
+    };
+  }
+}
+
+/**
+ * Enfile les syncs au lieu de réutiliser la promesse en cours.
+ * Sinon un sync « skipped » (pré-onboarding) peut être renvoyé à Continuer
+ * et réappliquer un profil sans onboardedAt → écran Bienvenue bloqué.
+ */
 export async function syncUserProfileToNotion(
   profile?: UserProfile,
   options?: { presence?: PresenceStatus },
 ): Promise<ProfilePushResult> {
-  if (inflight) return inflight;
-  inflight = (async () => {
-    let current = ensureStableAdminIdentity(profile ?? loadOrCreateProfile());
-    if (!current.onboardedAt) {
-      return { ok: false, skipped: true, error: "profil non onboardé", profile: current };
-    }
-    const timeSpentMinutes = getTimeSpentMinutes();
-    const presence: PresenceStatus =
-      options?.presence ??
-      (typeof document !== "undefined" && document.visibilityState === "visible"
-        ? "Online"
-        : "Offline");
-    const lastSeenAt = new Date().toISOString();
-    try {
-      const response = await fetch(apiUrl("/api/user-profile"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          localId: isClevencodeAdmin(current)
-            ? CLEVENCODE_ADMIN_USER_ID
-            : current.id,
-          firstName: current.firstName,
-          lastName: current.lastName,
-          preferredName: current.preferredName,
-          createdAt: current.createdAt,
-          onboardedAt: current.onboardedAt,
-          timeSpentMinutes,
-          presence,
-          lastSeenAt,
-          notionUrl: current.notionUrl ?? null,
-        }),
-        keepalive: presence === "Offline",
-      });
-      const data = (await response.json()) as {
-        ok?: boolean;
-        url?: string;
-        error?: string;
-        hasToken?: boolean;
-        localId?: string;
-      };
-      if (!data.ok) {
-        return {
-          ok: false,
-          error: data.error || "sync profil échoué",
-          hasToken: data.hasToken,
-          profile: current,
-        };
+  const previous = inflight;
+  const run = (async () => {
+    if (previous) {
+      try {
+        await previous;
+      } catch {
+        /* ignore */
       }
-      markTimeSpentSynced(timeSpentMinutes);
-      current = adoptStableLocalId(current, data.localId);
-      if (data.url && data.url !== current.notionUrl) {
-        current = saveUserProfile({ notionUrl: data.url });
-      }
-      return { ok: true, url: data.url, hasToken: data.hasToken, profile: current };
-    } catch (error) {
-      return {
-        ok: false,
-        error: error instanceof Error ? error.message : "réseau",
-        profile: current,
-      };
-    } finally {
-      inflight = null;
     }
+    return pushUserProfileOnce(profile, options);
   })();
-  return inflight;
+  inflight = run.finally(() => {
+    if (inflight === run) inflight = null;
+  });
+  return run;
 }
 
 /**

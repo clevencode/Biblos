@@ -1,4 +1,4 @@
-import { useId, useState, type FormEvent } from "react";
+import { useId, useRef, useState, type FormEvent } from "react";
 import { joinFullName, splitFullName } from "../userProfile";
 
 type ProfileOnboardingProps = {
@@ -11,17 +11,24 @@ type ProfileOnboardingProps = {
 
 export function ProfileOnboarding({ onComplete }: ProfileOnboardingProps) {
   const formId = useId();
+  const nameRef = useRef<HTMLInputElement>(null);
   const [fullName, setFullName] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
   function submit(event: FormEvent) {
     event.preventDefault();
-    const { firstName, lastName } = splitFullName(fullName);
+    if (busy) return;
+    // Autofill / IME : la valeur DOM peut être à jour alors que React ne l’est pas encore.
+    const raw = (fullName.trim() || nameRef.current?.value.trim() || "").trim();
+    const { firstName, lastName } = splitFullName(raw);
     if (!firstName) {
       setError("Indique ton nom complet pour continuer.");
+      nameRef.current?.focus();
       return;
     }
     setError(null);
+    setBusy(true);
     onComplete({
       firstName,
       lastName,
@@ -45,18 +52,31 @@ export function ProfileOnboarding({ onComplete }: ProfileOnboardingProps) {
           <label className="profile-field">
             <span>Nom complet</span>
             <input
+              ref={nameRef}
               name="fullName"
               autoComplete="name"
               value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              required
+              onChange={(e) => {
+                setFullName(e.target.value);
+                if (error) setError(null);
+              }}
               maxLength={128}
               autoFocus
               placeholder="Ex. Alex Dupont"
+              aria-invalid={Boolean(error)}
+              aria-describedby={error ? `${formId}-error` : undefined}
             />
           </label>
-          {error ? <p className="profile-onboarding-error">{error}</p> : null}
-          <button type="submit" className="profile-onboarding-submit">
+          {error ? (
+            <p id={`${formId}-error`} className="profile-onboarding-error" role="alert">
+              {error}
+            </p>
+          ) : null}
+          <button
+            type="submit"
+            className="profile-onboarding-submit"
+            disabled={busy}
+          >
             Continuer
           </button>
         </form>

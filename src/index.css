@@ -3390,6 +3390,11 @@ body,
   cursor: pointer;
 }
 
+.profile-onboarding-submit:disabled {
+  opacity: 0.72;
+  cursor: wait;
+}
+
 .inbox-head {
   flex-shrink: 0;
   margin: 0 0 18px;
