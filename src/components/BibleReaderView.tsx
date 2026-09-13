@@ -12,19 +12,15 @@ import {
   ArrowDownTrayIcon,
   BookmarkIcon,
   BookmarkSlashIcon,
-  CheckIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
   ClockIcon,
   ComputerDesktopIcon,
   EllipsisHorizontalIcon,
   MagnifyingGlassIcon,
   MoonIcon,
-  PauseIcon,
-  PlayIcon,
   RectangleStackIcon,
   SunIcon,
 } from "@heroicons/react/24/outline";
+import { MaterialIcon } from "./MaterialIcon";
 import {
   adjacentChapter,
   chapterUsfm,
@@ -1229,7 +1225,7 @@ export function BibleReaderView({
               }
             >
               {offlineReady ? (
-                <CheckIcon className="bible-yv-tools-item-icon" aria-hidden />
+                <MaterialIcon name="check" className="bible-yv-tools-item-icon" />
               ) : (
                 <ArrowDownTrayIcon className="bible-yv-tools-item-icon" aria-hidden />
               )}
@@ -2128,9 +2124,9 @@ export function BibleReaderView({
           }
         >
           {audioPlaying ? (
-            <PauseIcon className="bible-yv-dock-icon" aria-hidden />
+            <MaterialIcon name="pause" className="bible-yv-dock-icon" />
           ) : (
-            <PlayIcon className="bible-yv-dock-icon" aria-hidden />
+            <MaterialIcon name="play_arrow" className="bible-yv-dock-icon" />
           )}
         </button>
         <div className={`bible-yv-dock-nav${planReading && onPlanStep ? " bible-yv-dock-nav--plan" : ""}`}>
@@ -2156,7 +2152,7 @@ export function BibleReaderView({
                 : "Chapitre précédent"
             }
           >
-            <ChevronLeftIcon className="bible-yv-dock-icon" aria-hidden />
+            <MaterialIcon name="chevron_left" className="bible-yv-dock-icon" />
           </button>
           <button
             ref={dockLocationRef}
@@ -2187,9 +2183,9 @@ export function BibleReaderView({
               }
             >
               {planReading.isLast ? (
-                <CheckIcon className="bible-yv-dock-icon" aria-hidden />
+                <MaterialIcon name="check" className="bible-yv-dock-icon" />
               ) : (
-                <ChevronRightIcon className="bible-yv-dock-icon" aria-hidden />
+                <MaterialIcon name="chevron_right" className="bible-yv-dock-icon" />
               )}
             </button>
           ) : (
@@ -2203,7 +2199,7 @@ export function BibleReaderView({
               disabled={!canNext || loading}
               aria-label="Chapitre suivant"
             >
-              <ChevronRightIcon className="bible-yv-dock-icon" aria-hidden />
+              <MaterialIcon name="chevron_right" className="bible-yv-dock-icon" />
             </button>
           )}
         </div>

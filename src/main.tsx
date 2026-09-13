@@ -2,13 +2,27 @@ import { Component, StrictMode, type ErrorInfo, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import { registerSW } from "virtual:pwa-register";
 import { App } from "./App";
+import { ensureCleanSlate } from "./cleanSlate";
 import { syncNativeChrome } from "./nativeChrome";
 import { applyTheme } from "./theme";
 import "./index.css";
 
 void syncNativeChrome(applyTheme());
 
-registerSW({ immediate: true });
+async function boot() {
+  const reloading = await ensureCleanSlate();
+  if (reloading) return;
+
+  registerSW({ immediate: true });
+
+  createRoot(document.getElementById("root")!).render(
+    <StrictMode>
+      <BootErrorBoundary>
+        <App />
+      </BootErrorBoundary>
+    </StrictMode>,
+  );
+}
 
 class BootErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   state: { error: Error | null } = { error: null };
@@ -54,10 +68,4 @@ class BootErrorBoundary extends Component<{ children: ReactNode }, { error: Erro
   }
 }
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <BootErrorBoundary>
-      <App />
-    </BootErrorBoundary>
-  </StrictMode>,
-);
+void boot();
