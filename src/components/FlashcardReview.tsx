@@ -322,7 +322,7 @@ function FlashCardMenu({
                 (ou appuie sur Espace) pour révéler le verset.
               </p>
               <p>
-                Note ensuite ta mémorisation — Biblios planifie le prochain rappel
+                Note ensuite ta mémorisation — Biblos planifie le prochain rappel
                 (répétition espacée) :
               </p>
               <ul className="flash-help-marks">

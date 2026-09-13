@@ -28,7 +28,7 @@ export function PrivacyPolicyPanels() {
         <summary className="profile-legal-summary">Confidentialité des données</summary>
         <div className="profile-legal-body">
           <p>
-            Biblios est en <strong>phase de test / prototype</strong>. Les données
+            Biblos est en <strong>phase de test / prototype</strong>. Les données
             que tu confies à l’app servent uniquement à faire fonctionner la
             lecture, les plans, les flashcards et ton profil.
           </p>
@@ -57,7 +57,7 @@ export function PrivacyPolicyPanels() {
         <summary className="profile-legal-summary">Cookies et stockage local</summary>
         <div className="profile-legal-body">
           <p>
-            Biblios <strong>n’utilise pas de cookies publicitaires</strong> ni de
+            Biblos <strong>n’utilise pas de cookies publicitaires</strong> ni de
             traceurs marketing. L’app s’appuie surtout sur le{" "}
             <strong>stockage local</strong> de ton appareil (préférences, thème,
             progression, brouillons) pour garder ton expérience entre deux
@@ -94,7 +94,7 @@ export function PrivacyEntryGate({ onAccepted }: { onAccepted: () => void }) {
       aria-labelledby={`${formId}-title`}
     >
       <div className="privacy-gate-card">
-        <p className="privacy-gate-brand">Biblios</p>
+        <p className="privacy-gate-brand">Biblos</p>
         <h1 id={`${formId}-title`} className="privacy-gate-title type-title">
           Confidentialité
         </h1>

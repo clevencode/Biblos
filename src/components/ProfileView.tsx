@@ -867,7 +867,7 @@ export function ProfileView({
 
           <ProfilePanel titleId="profile-about-label" title="À propos">
             <p className="profile-about">
-              Biblios — lecture, plans et flashcards. Prototype en phase de test
+              Biblos — lecture, plans et flashcards. Prototype en phase de test
               (application web progressive).
             </p>
           </ProfilePanel>

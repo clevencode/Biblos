@@ -25,11 +25,28 @@ class BootErrorBoundary extends Component<{ children: ReactNode }, { error: Erro
     if (this.state.error) {
       return (
         <div className="boot-shell" role="alert">
-          <p className="boot-brand">Biblios</p>
-          <p className="boot-muted">Erreur au démarrage</p>
+          <p className="boot-brand">Biblos</p>
+          <p className="boot-muted">Une erreur est survenue</p>
           <p className="muted" style={{ maxWidth: "28rem", margin: "8px auto 0", fontSize: "0.85rem" }}>
             {this.state.error.message}
           </p>
+          <button
+            type="button"
+            style={{
+              marginTop: 16,
+              padding: "10px 16px",
+              borderRadius: 10,
+              border: "1px solid #d1d5db",
+              background: "#fff",
+              color: "#0d1117",
+              font: "inherit",
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+            onClick={() => this.setState({ error: null })}
+          >
+            Réessayer
+          </button>
         </div>
       );
     }

@@ -1,6 +1,5 @@
 import {
   useEffect,
-  useEffectEvent,
   useId,
   useLayoutEffect,
   useMemo,
@@ -494,16 +493,16 @@ export function BibleReaderView({
   const booted = useRef(false);
   const loadGen = useRef(0);
 
-  const setFocusDim = useEffectEvent((active: boolean) => {
+  const setFocusDim = (active: boolean) => {
     focusDimActiveRef.current = active;
     setFocusDimActive(active);
-  });
+  };
 
-  const clearFocusDimOnUserScroll = useEffectEvent(() => {
+  const clearFocusDimOnUserScroll = () => {
     if (!focusDimActiveRef.current) return;
     focusDimActiveRef.current = false;
     setFocusDimActive(false);
-  });
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -836,25 +835,26 @@ export function BibleReaderView({
   }
 
   function selectVerse(number: number) {
-    setSelection((current) => {
-      const next = new Set(current ?? []);
-      if (next.has(number)) next.delete(number);
-      else next.add(number);
-      if (!next.size) {
-        pendingScrollVerse.current = null;
-        lastAppliedVerseScroll.current = "";
-        setHighlightVerse(null);
-        setFocusDim(false);
-        return null;
-      }
-      // Premier tap → remonte le verset au-dessus du panneau Marquer.
+    // Side-effects fora do updater (React pode correr updaters na fase de render).
+    const current = selection;
+    const next = new Set(current ?? []);
+    if (next.has(number)) next.delete(number);
+    else next.add(number);
+
+    if (!next.size) {
+      pendingScrollVerse.current = null;
+      lastAppliedVerseScroll.current = "";
+      setHighlightVerse(null);
+      setFocusDim(false);
+      setSelection(null);
+    } else {
       const mode: VerseScrollMode = current?.length ? "nearest" : "start";
       pendingScrollVerse.current = { number, mode, seq: ++verseScrollSeq.current };
       setHighlightVerse(number);
       setFocusDim(false);
       if (!current?.length) setCardColor(loadPreferredVerseColor());
-      return sortVerses(next);
-    });
+      setSelection(sortVerses(next));
+    }
     setCardMsg(null);
     setPickerOpen(false);
   }
@@ -1307,7 +1307,7 @@ export function BibleReaderView({
   );
   const playingUsfm = audioActiveUsfm ?? (audioBookRef.current || null);
 
-  const playUsfmAudio = useEffectEvent(async (targetUsfm: string) => {
+  async function playUsfmAudio(targetUsfm: string) {
     const usfm = targetUsfm.toUpperCase();
     const episode = audioByUsfm[usfm];
     const audio = audioRef.current;
@@ -1353,9 +1353,9 @@ export function BibleReaderView({
     } finally {
       setAudioBusy(false);
     }
-  });
+  }
 
-  const toggleBookAudio = useEffectEvent(async () => {
+  async function toggleBookAudio() {
     const usfm = (audioActiveUsfm || bookId).toUpperCase();
     const audio = audioRef.current;
     if (audio && audioBookRef.current === usfm && !audio.paused) {
@@ -1363,9 +1363,9 @@ export function BibleReaderView({
       return;
     }
     await playUsfmAudio(usfm);
-  });
+  }
 
-  const openAudioPlayer = useEffectEvent(() => {
+  function openAudioPlayer() {
     const usfm = bookId.toUpperCase();
     setAudioActiveUsfm(audioBookRef.current || usfm);
     setAudioPlayerOpen(true);
@@ -1373,24 +1373,24 @@ export function BibleReaderView({
     const audio = audioRef.current;
     if (audio && audioBookRef.current === usfm && !audio.paused) return;
     void playUsfmAudio(usfm);
-  });
+  }
 
-  const seekAudio = useEffectEvent((seconds: number) => {
+  function seekAudio(seconds: number) {
     const audio = audioRef.current;
     if (!audio || !Number.isFinite(seconds)) return;
     const max = Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : seconds;
     audio.currentTime = Math.min(Math.max(0, seconds), Math.max(0, max));
     setAudioTime(audio.currentTime);
     if (audioBookRef.current) saveAudioPosition(audioBookRef.current, audio.currentTime);
-  });
+  }
 
-  const skipAudio = useEffectEvent((delta: number) => {
+  function skipAudio(delta: number) {
     const audio = audioRef.current;
     if (!audio) return;
     seekAudio((audio.currentTime || 0) + delta);
-  });
+  }
 
-  const setReadingChrome = useEffectEvent((hidden: boolean, force = false) => {
+  function setReadingChrome(hidden: boolean, force = false) {
     if (chromeHiddenRef.current === hidden) return;
     const now = performance.now();
     // Lock após toggle: não aceitar o sentido contrário imediatamente.
@@ -1403,13 +1403,14 @@ export function BibleReaderView({
       setChromeHidden(hidden);
       onReadingChromeChange?.(hidden);
     });
-  });
+  }
 
   useEffect(() => {
     if (!forceChrome) return;
     chromeLockUntil.current = 0;
     setReadingChrome(false, true);
-  }, [forceChrome, setReadingChrome]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- setReadingChrome is a render-local helper
+  }, [forceChrome]);
 
   useEffect(() => {
     return () => {
@@ -1423,11 +1424,13 @@ export function BibleReaderView({
     scrollAcc.current = 0;
     chromeLockUntil.current = performance.now() + CHROME_PROGRAMMATIC_LOCK_MS;
     applyBibleHeadCompact(readerRef.current, passageScrollRef.current?.scrollTop ?? 0);
-  }, [bookId, chapterId, planReading?.label, setReadingChrome]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- setReadingChrome is a render-local helper
+  }, [bookId, chapterId, planReading?.label]);
 
   useEffect(() => {
     if (planReading) setFocusDim(true);
-  }, [planReading?.label, planReading?.verseStart, planReading?.verseEnd, setFocusDim]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional plan focus reset
+  }, [planReading?.label, planReading?.verseStart, planReading?.verseEnd]);
 
   useEffect(() => {
     if (!active) {
@@ -1529,7 +1532,8 @@ export function BibleReaderView({
         scrollRaf.current = 0;
       }
     };
-  }, [active, setReadingChrome, bookId, chapterId, clearFocusDimOnUserScroll]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- setReadingChrome is a render-local helper
+  }, [active, bookId, chapterId]);
 
   return (
     <section
@@ -2124,8 +2128,8 @@ export function BibleReaderView({
         duration={audioDuration}
         onTogglePlay={() => void toggleBookAudio()}
         onPlayUsfm={(usfm) => void playUsfmAudio(usfm)}
-        onSeek={seekAudio}
-        onSkip={skipAudio}
+        onSeek={(seconds) => seekAudio(seconds)}
+        onSkip={(delta) => skipAudio(delta)}
       />
 
       <BibleSearchSheet
