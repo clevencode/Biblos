@@ -1,5 +1,6 @@
 /** Notifications in-app — feed pour informer l’utilisateur de ce qui se passe. */
 
+import { apiUrl } from "./apiBase";
 import { todayKey } from "./calendar";
 import { loadNotificationPrefs } from "./notificationPrefs";
 import {
@@ -250,7 +251,7 @@ export function ensureWelcomeNotification(): void {
 /** Importe les messages publiés depuis Notion dans le fil local. */
 export async function pullRemoteAppNotifications(): Promise<void> {
   try {
-    const res = await fetch("/api/notifications?limit=40");
+    const res = await fetch(apiUrl("/api/notifications?limit=40"));
     const data = (await res.json()) as {
       ok?: boolean;
       items?: Array<{

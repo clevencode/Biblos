@@ -1,3 +1,4 @@
+import { apiUrl } from "../apiBase";
 import { toUsfm } from "./usfm";
 import {
   getOfflineMeta,
@@ -47,7 +48,7 @@ async function bibleFetch<T extends object>(
     if (v !== undefined && v !== "") qs.set(k, String(v));
   }
   try {
-    const res = await fetch(`/api/youversion?${qs.toString()}`);
+    const res = await fetch(apiUrl(`/api/youversion?${qs.toString()}`));
     const json = (await res.json()) as ApiResult<T>;
     return json;
   } catch (err) {

@@ -2,6 +2,7 @@
  * Envoi d’un message admin → Notion (catégorie + corps, Status Nouveau).
  * Hors ligne : file locale, flush dès que le réseau revient.
  */
+import { apiUrl } from "./apiBase";
 import { preferredDisplayName, type UserProfile } from "./userProfile";
 
 export type AdminMessageCategoryId =
@@ -102,7 +103,7 @@ function enqueueAdminMessage(item: AdminMessageOutboxItem): void {
 async function postAdminMessage(
   item: AdminMessageOutboxItem,
 ): Promise<AdminMessageResult & { status?: number }> {
-  const response = await fetch("/api/admin-message", {
+  const response = await fetch(apiUrl("/api/admin-message"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({

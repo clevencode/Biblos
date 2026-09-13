@@ -365,7 +365,7 @@ export function App() {
     return latestPlanJour({ ...activePlan, days: planDays }, planProgress);
   }, [activePlan, planProgress, planDays]);
 
-  const { notionHealth } = useNotionSync({
+  useNotionSync({
     catalog,
     setCatalog,
     notesRef,
@@ -376,20 +376,14 @@ export function App() {
   });
 
   useEffect(() => {
-    const offline =
-      notionHealth === "down" ||
-      (typeof navigator !== "undefined" && navigator.onLine === false);
-    if (!offline) {
-      setOfflineToast(false);
-      offlineToastSeen.current = false;
-      return undefined;
-    }
+    // Uniquement le vrai hors ligne réseau — pas l’échec d’API Notion.
+    if (typeof navigator === "undefined" || navigator.onLine !== false) return undefined;
     if (offlineToastSeen.current) return undefined;
     offlineToastSeen.current = true;
     setOfflineToast(true);
     const timer = window.setTimeout(() => setOfflineToast(false), 4200);
     return () => window.clearTimeout(timer);
-  }, [notionHealth]);
+  }, []);
 
   useEffect(() => {
     if (plans.length && !plans.some((plan) => plan.id === planId)) {

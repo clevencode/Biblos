@@ -1,3 +1,4 @@
+import { Capacitor } from "@capacitor/core";
 import { Component, StrictMode, type ErrorInfo, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import { registerSW } from "virtual:pwa-register";
@@ -13,7 +14,10 @@ async function boot() {
   const reloading = await ensureCleanSlate();
   if (reloading) return;
 
-  registerSW({ immediate: true });
+  // SW sur Capacitor peut servir du cache et simuler un hors ligne.
+  if (!Capacitor.isNativePlatform()) {
+    registerSW({ immediate: true });
+  }
 
   createRoot(document.getElementById("root")!).render(
     <StrictMode>

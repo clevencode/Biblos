@@ -1,4 +1,5 @@
 import type { ReadingPlan } from "./types";
+import { apiUrl, readApiJson } from "./apiBase";
 
 const DESCRIPTION_PULL_MS = 20_000;
 
@@ -29,21 +30,26 @@ export async function pullPlanDescription(
 ): Promise<{ plans: ReadingPlan[]; changed: boolean; error?: string }> {
   if (!plan?.url) return { plans, changed: false };
   try {
-    const response = await fetch(`/api/description-sync?url=${encodeURIComponent(plan.url)}`);
+    const response = await fetch(
+      apiUrl(`/api/description-sync?url=${encodeURIComponent(plan.url)}`),
+    );
     if (!response.ok && response.status >= 500) {
       return { plans, changed: false, error: "API de Devotional indisponível" };
     }
-    const payload = (await response.json().catch(() => ({}))) as {
+    const parsed = await readApiJson<{
       ok?: boolean;
       description?: string;
       error?: string;
-    };
-    if (!response.ok || !payload.ok || typeof payload.description !== "string") {
+    }>(response);
+    const payload = parsed.data ?? {};
+    if (!parsed.ok || !response.ok || !payload.ok || typeof payload.description !== "string") {
       return { plans, changed: false, error: payload.error ?? "falha ao ler Devotional" };
     }
-    return {
-      ...applyPlanDescription(plans, { planId: plan.id, url: plan.url }, payload.description),
-    };
+    return applyPlanDescription(
+      plans,
+      { planId: plan.id, url: plan.url },
+      payload.description,
+    );
   } catch {
     return { plans, changed: false, error: "API de Devotional indisponível" };
   }

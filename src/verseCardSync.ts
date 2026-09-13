@@ -4,6 +4,7 @@
  * Les autres utilisateurs gardent les cartes dans le stockage local de l’appareil.
  */
 import type { Catalog, Flashcard } from "./types";
+import { apiUrl, readApiJson } from "./apiBase";
 import { isBiblosFlashcard } from "./catalog";
 import { persistCatalogCache } from "./catalogSync";
 import { loadOverride, notifyFlashcardRevision } from "./cardOverrides";
@@ -114,7 +115,7 @@ export async function flushVerseCardCreates(): Promise<PushVerseResult> {
   for (const item of pending) {
     const override = loadOverride(item.id);
     try {
-      const response = await fetch("/api/verse-card", {
+      const response = await fetch(apiUrl("/api/verse-card"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -126,19 +127,19 @@ export async function flushVerseCardCreates(): Promise<PushVerseResult> {
           categoria: override?.categoria ?? item.categoria,
         }),
       });
-      const contentType = response.headers.get("content-type") ?? "";
-      if (!contentType.includes("application/json")) {
-        error = "API /api/verse-card indisponible";
-        kept.push(item, ...pending.slice(pending.indexOf(item) + 1));
-        break;
-      }
-      const payload = (await response.json()) as {
+      const parsed = await readApiJson<{
         ok?: boolean;
         error?: string;
         hasToken?: boolean;
         card?: { url?: string };
         localId?: string;
-      };
+      }>(response);
+      if (!parsed.ok || !parsed.data) {
+        error = "API /api/verse-card indisponible";
+        kept.push(item, ...pending.slice(pending.indexOf(item) + 1));
+        break;
+      }
+      const payload = parsed.data;
       if (!payload.ok || !payload.card?.url) {
         error =
           payload.error ||
@@ -185,16 +186,16 @@ export async function archiveRemoteVerseCard(card: Pick<Flashcard, "id" | "url">
     return { ok: true };
   }
   try {
-    const response = await fetch("/api/verse-card", {
+    const response = await fetch(apiUrl("/api/verse-card"), {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ url: card.url }),
     });
-    const contentType = response.headers.get("content-type") ?? "";
-    if (!contentType.includes("application/json")) {
+    const parsed = await readApiJson<{ ok?: boolean; error?: string }>(response);
+    if (!parsed.ok || !parsed.data) {
       return { ok: false, error: "API /api/verse-card indisponible" };
     }
-    const payload = (await response.json()) as { ok?: boolean; error?: string };
+    const payload = parsed.data;
     if (!payload.ok) return { ok: false, error: payload.error || "Impossible de supprimer la carte" };
     return { ok: true };
   } catch (err) {

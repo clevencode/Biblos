@@ -11,6 +11,40 @@ export function parsePlanDays(raw: string): PlanDay[] {
   const text = String(raw || "")
     .replace(/<br\s*\/?>/gi, "\n")
     .replace(/\r/g, "");
+
+  const trimmed = text.trim();
+  if (trimmed.startsWith("[") || trimmed.startsWith("{")) {
+    try {
+      const parsed = JSON.parse(trimmed) as
+        | PlanDay[]
+        | { days?: PlanDay[]; jours?: PlanDay[] };
+      const rows = Array.isArray(parsed)
+        ? parsed
+        : Array.isArray(parsed.days)
+          ? parsed.days
+          : Array.isArray(parsed.jours)
+            ? parsed.jours
+            : [];
+      const fromJson: PlanDay[] = [];
+      for (const row of rows) {
+        const jour = Number((row as { jour?: number; day?: number; n?: number }).jour ?? (row as { day?: number }).day ?? (row as { n?: number }).n);
+        const texte = String(
+          (row as { texte?: string; text?: string; passage?: string }).texte ??
+            (row as { text?: string }).text ??
+            (row as { passage?: string }).passage ??
+            "",
+        ).trim();
+        if (!Number.isFinite(jour) || jour < 1 || !texte) continue;
+        const passage = joinPassageRefs(texte);
+        if (!passage) continue;
+        fromJson.push({ jour, texte: passage, defi: "" });
+      }
+      if (fromJson.length) return uniqueByJour(fromJson);
+    } catch {
+      /* texte libre */
+    }
+  }
+
   const days: PlanDay[] = [];
   const jourRe =
     /(?:^|\n)\s*[•*]?\s*Jour\s+(\d+)\s*[:：]\s*([^\n]*)([\s\S]*?)(?=(?:\n\s*[•*]?\s*Jour\s+\d+\s*[:：])|$)/gi;

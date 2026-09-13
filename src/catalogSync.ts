@@ -1,4 +1,5 @@
 import type { Catalog, ReadingPlan, Seed } from "./types";
+import { apiUrl, readApiJson } from "./apiBase";
 import { applyRemoteOverride } from "./cardOverrides";
 import { isBiblosFlashcard } from "./catalog";
 import { sanitizePlanDays } from "./plan";
@@ -42,13 +43,18 @@ export function hydrateCatalogFromCache(catalog: Catalog): Catalog {
       persistCatalogCache(pruned);
       return pruned;
     }
-    const cached = JSON.parse(raw) as Catalog;
-    if (!cached || !Array.isArray(cached.notas)) {
+    const cached = JSON.parse(raw) as Partial<Catalog>;
+    // Accepter un JSON partiel (plans seuls) — sinon le cache Notion est ignoré.
+    if (!cached || typeof cached !== "object") {
       const pruned = pruneCatalogToVerseCards(catalog);
       persistCatalogCache(pruned);
       return pruned;
     }
-    const merged = pruneCatalogToVerseCards(mergeCatalog(catalog, cached).catalog);
+    const normalized: Catalog = {
+      notas: Array.isArray(cached.notas) ? cached.notas : [],
+      plans: Array.isArray(cached.plans) ? cached.plans : [],
+    };
+    const merged = pruneCatalogToVerseCards(mergeCatalog(catalog, normalized).catalog);
     persistCatalogCache(merged);
     return merged;
   } catch {
@@ -259,19 +265,19 @@ export function mergeCatalog(
 
 export async function pullCatalog(current: Catalog): Promise<{ catalog: Catalog; changed: boolean; ok: boolean }> {
   try {
-    const response = await fetch("/api/catalog?mode=index");
-    const contentType = response.headers.get("content-type") ?? "";
-    if (!contentType.includes("application/json")) {
-      return { catalog: current, changed: false, ok: false };
-    }
-    const payload = (await response.json().catch(() => ({}))) as {
+    const response = await fetch(apiUrl("/api/catalog?mode=index"));
+    const parsed = await readApiJson<{
       ok?: boolean;
       plansOk?: boolean;
       catalog?: Catalog;
       notas?: Catalog["notas"];
       plans?: Catalog["plans"];
       error?: string;
-    };
+    }>(response);
+    if (!parsed.ok || !parsed.data) {
+      return { catalog: current, changed: false, ok: false };
+    }
+    const payload = parsed.data;
     const incoming: Catalog | null = payload.catalog
       ? payload.catalog
       : Array.isArray(payload.notas) || Array.isArray(payload.plans)

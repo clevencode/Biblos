@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type Dispatch, type MutableRefObject, type SetStateAction } from "react";
 import { listInboxSyncCards, listScopedFlashcards } from "./catalog";
-import { pullCatalog } from "./catalogSync";
+import { pullCatalog, persistCatalogCache } from "./catalogSync";
 import {
   flushFlashcardQueue,
   probeNotionSyncHealth,
@@ -86,7 +86,7 @@ export function useNotionSync(options: {
           });
         }
         const result = await pullCatalog(catalogRef.current);
-        if (!cancelled && result.changed) {
+        if (!cancelled && result.ok && result.changed) {
           setCatalog(result.catalog);
         }
         await flushAdminMessageOutbox();
@@ -120,7 +120,11 @@ export function useNotionSync(options: {
       try {
         const result = await pullPlanDescription(catalogRef.current.plans, activePlan);
         if (!cancelled && result.changed) {
-          setCatalog((prev) => ({ ...prev, plans: result.plans }));
+          setCatalog((prev) => {
+            const next = { ...prev, plans: result.plans };
+            persistCatalogCache(next);
+            return next;
+          });
         }
       } finally {
         busy = false;

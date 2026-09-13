@@ -116,6 +116,34 @@ export function parsePlanDays(raw) {
   const text = String(raw || "")
     .replace(/<br\s*\/?>/gi, "\n")
     .replace(/\r/g, "");
+
+  // JSON Notion (array de jours) — sync catalogue sans format « Jour N : ».
+  const trimmed = text.trim();
+  if (trimmed.startsWith("[") || trimmed.startsWith("{")) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      const rows = Array.isArray(parsed)
+        ? parsed
+        : Array.isArray(parsed?.days)
+          ? parsed.days
+          : Array.isArray(parsed?.jours)
+            ? parsed.jours
+            : [];
+      const fromJson = [];
+      for (const row of rows) {
+        const jour = Number(row?.jour ?? row?.day ?? row?.n);
+        const texte = String(row?.texte ?? row?.text ?? row?.passage ?? "").trim();
+        if (!Number.isFinite(jour) || jour < 1 || !texte) continue;
+        const passage = joinPassageRefsCatalog(texte);
+        if (!passage) continue;
+        fromJson.push({ jour, texte: passage, defi: "" });
+      }
+      if (fromJson.length) return uniqueDays(fromJson);
+    } catch {
+      /* pas du JSON valide — continuer le parse texte */
+    }
+  }
+
   const days = [];
   const jourRe =
     /(?:^|\n)\s*[•*]?\s*Jour\s+(\d+)\s*[:：]\s*([^\n]*)([\s\S]*?)(?=(?:\n\s*[•*]?\s*Jour\s+\d+\s*[:：])|$)/gi;
@@ -263,7 +291,6 @@ function mapCardPage(page, bodyText = "") {
     url: pageUrl(id),
     lembrete,
     cardCategory: category,
-    connaissance,
     criadoEm: criadoEm ? dateKey(criadoEm) : null,
   };
 }
@@ -381,6 +408,10 @@ export async function buildCatalog(token, { full = false } = {}) {
 
 export default async function handler(req, res) {
   try {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
     if (req.method === "OPTIONS") {
       res.status(204).end();
       return;

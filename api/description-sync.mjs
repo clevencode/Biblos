@@ -7,6 +7,10 @@ import { fetchNotionDescription } from "../shared/notion.mjs";
 
 export default async function handler(req, res) {
   try {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
     const token = process.env.NOTION_TOKEN || "";
     const method = req.method ?? "GET";
 

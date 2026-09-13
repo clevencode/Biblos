@@ -4,15 +4,16 @@ const config: CapacitorConfig = {
   appId: "app.biblos.mobile",
   appName: "Biblos",
   webDir: "dist",
-  server: {
-    // App native charge la PWA hébergée (évite localhost sur mobile).
-    url: "https://biblos-two.vercel.app",
-    cleartext: false,
-  },
+  // Pas de server.url : l’APK embarque le build local.
+  // Les /api passent par apiUrl() → https://biblos-two.vercel.app (+ CapacitorHttp).
   android: {
     allowMixedContent: false,
   },
   plugins: {
+    // Bypass CORS pour les fetch /api vers Vercel depuis le WebView bundlé.
+    CapacitorHttp: {
+      enabled: true,
+    },
     StatusBar: {
       style: "DARK",
       backgroundColor: "#0D1117",

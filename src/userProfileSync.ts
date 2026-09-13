@@ -1,6 +1,7 @@
 /**
  * Sync profil local → Notion (nome + tempo gasto — pas de notes personnelles).
  */
+import { apiUrl } from "./apiBase";
 import {
   getTimeSpentMinutes,
   markTimeSpentSynced,
@@ -32,7 +33,7 @@ export async function syncUserProfileToNotion(
     }
     const timeSpentMinutes = getTimeSpentMinutes();
     try {
-      const response = await fetch("/api/user-profile", {
+      const response = await fetch(apiUrl("/api/user-profile"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

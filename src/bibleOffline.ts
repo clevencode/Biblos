@@ -3,6 +3,7 @@
  * Téléchargement via /api/youversion?action=book&usfm=…
  */
 
+import { apiUrl } from "./apiBase";
 import type {
   BibleSearchHit,
   YouVersionBook,
@@ -350,7 +351,7 @@ export async function offlineSearch(
 
 async function fetchBookPayload(usfm: string): Promise<S21BookJson> {
   const qs = new URLSearchParams({ action: "book", usfm });
-  const res = await fetch(`/api/youversion?${qs.toString()}`);
+  const res = await fetch(apiUrl(`/api/youversion?${qs.toString()}`));
   const json = (await res.json()) as {
     ok?: boolean;
     error?: string;

@@ -6,6 +6,7 @@
  * 1) push local (outbox durável) → Notion
  * 2) pull Notion → overrides (excepto dirty/outbox)
  */
+import { apiUrl, readApiJson } from "./apiBase";
 import type { Flashcard, Seed } from "./types";
 import {
   applyRemoteOverride,
@@ -63,7 +64,7 @@ export async function syncFlashcard(input: {
     return { ok: true, localOnly: true };
   }
   try {
-    const response = await fetch("/api/flashcard-sync", {
+    const response = await fetch(apiUrl("/api/flashcard-sync"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -73,8 +74,12 @@ export async function syncFlashcard(input: {
         status: input.status,
       }),
     });
-    const contentType = response.headers.get("content-type") ?? "";
-    if (!contentType.includes("application/json")) {
+    const parsed = await readApiJson<{
+      synced?: boolean;
+      queued?: boolean;
+      error?: string;
+    }>(response);
+    if (!parsed.ok || !parsed.data) {
       if (input.id) {
         upsertOutbox({
           id: input.id,
@@ -86,11 +91,7 @@ export async function syncFlashcard(input: {
       }
       return { ok: false, queued: Boolean(input.id), error: "API de sincronização indisponível" };
     }
-    const payload = (await response.json().catch(() => ({}))) as {
-      synced?: boolean;
-      queued?: boolean;
-      error?: string;
-    };
+    const payload = parsed.data;
     if (response.ok && payload.synced) {
       if (input.id) removeOutbox(input.id);
       return { ok: true };
@@ -205,7 +206,7 @@ export async function pullFlashcardStates(
   if (!syncable.length) return { updated: 0, ok: true, notes: options?.notes };
 
   try {
-    const response = await fetch("/api/flashcard-sync", {
+    const response = await fetch(apiUrl("/api/flashcard-sync"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -214,15 +215,15 @@ export async function pullFlashcardStates(
         urls: syncable.map((card) => card.url),
       }),
     });
-    const contentType = response.headers.get("content-type") ?? "";
-    if (!contentType.includes("application/json")) {
-      return { updated: 0, ok: false, error: "API de sincronização indisponível", notes: options?.notes };
-    }
-    const payload = (await response.json().catch(() => ({}))) as {
+    const parsed = await readApiJson<{
       ok?: boolean;
       cards?: PullCard[];
       error?: string;
-    };
+    }>(response);
+    if (!parsed.ok || !parsed.data) {
+      return { updated: 0, ok: false, error: "API de sincronização indisponível", notes: options?.notes };
+    }
+    const payload = parsed.data;
     if (!response.ok || !payload.ok || !Array.isArray(payload.cards)) {
       return { updated: 0, ok: false, error: payload.error ?? "Impossible de synchroniser", notes: options?.notes };
     }
@@ -267,7 +268,7 @@ export async function flushFlashcardQueue(): Promise<{ flushed: number; remainin
     flushed += 1;
   }
   try {
-    await fetch("/api/flashcard-sync");
+    await fetch(apiUrl("/api/flashcard-sync"));
   } catch {
     /* ignore */
   }
@@ -312,15 +313,15 @@ export type NotionSyncHealth = {
 /** GET /api/flashcard-sync — verifica se a API de produção tem NOTION_TOKEN. */
 export async function probeNotionSyncHealth(): Promise<NotionSyncHealth> {
   try {
-    const response = await fetch("/api/flashcard-sync");
-    const contentType = response.headers.get("content-type") ?? "";
-    if (!contentType.includes("application/json")) {
-      return { ok: false, hasToken: false, error: "API de sincronização indisponível" };
-    }
-    const payload = (await response.json().catch(() => ({}))) as {
+    const response = await fetch(apiUrl("/api/flashcard-sync"));
+    const parsed = await readApiJson<{
       hasToken?: boolean;
       error?: string;
-    };
+    }>(response);
+    if (!parsed.ok || !parsed.data) {
+      return { ok: false, hasToken: false, error: "API de sincronização indisponível" };
+    }
+    const payload = parsed.data;
     return {
       ok: response.ok,
       hasToken: Boolean(payload.hasToken),
