@@ -791,6 +791,11 @@ export async function upsertUserProfile(token, input = {}) {
     [firstName, lastName].filter(Boolean).join(" ") ||
     "Lecteur";
   const nowIso = new Date().toISOString();
+  const timeSpentRaw = Number(input.timeSpentMinutes);
+  const timeSpentMinutes =
+    Number.isFinite(timeSpentRaw) && timeSpentRaw >= 0
+      ? Math.floor(timeSpentRaw)
+      : null;
 
   const properties = {
     Name: titleProp(preferredName),
@@ -804,6 +809,9 @@ export async function upsertUserProfile(token, input = {}) {
     CreatedAt: dateProp(input.createdAt || nowIso),
     OnboardedAt: dateProp(input.onboardedAt || null),
     UpdatedAt: dateProp(nowIso),
+    ...(timeSpentMinutes != null
+      ? { TimeSpentMinutes: { number: timeSpentMinutes } }
+      : {}),
   };
 
   let pageId = null;
@@ -1108,17 +1116,17 @@ export async function listPublishedNotifications(token, { limit = 40 } = {}) {
     const data = await queried.response.json();
     const items = (data.results || []).map((page) => {
       const props = page.properties || {};
-      const title = plainFromProp(props.Name) || "Notification";
       const body = plainFromProp(props.Body) || "";
-      const kindRaw = plainFromProp(props.Kind) || "Info";
+      const kindRaw = plainFromProp(props.Kind) || "Actualité";
       const publishedAt =
         plainFromProp(props.PublishedAt) ||
         page.created_time ||
         new Date().toISOString();
       const kind = /mise|update|annonce/i.test(kindRaw) ? "system" : "info";
+      const name = plainFromProp(props.Name) || "";
       return {
         id: page.id,
-        title,
+        title: name || kindRaw,
         body,
         kind,
         kindLabel: kindRaw,

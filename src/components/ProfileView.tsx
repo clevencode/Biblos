@@ -22,6 +22,7 @@ import {
 import {
   joinFullName,
   preferredDisplayName,
+  isClevencodeAdmin,
   splitFullName,
   wipeLocalUserData,
   type UserProfile,
@@ -259,7 +260,11 @@ export function ProfileView({
     }
     setAdminCategory("suggestion");
     setAdminMessage("");
-    setAdminStatus("Message envoyé à l’admin");
+    setAdminStatus(
+      result.queued
+        ? "Message enregistré — il sera envoyé dès que tu seras en ligne"
+        : "Message envoyé à l’admin",
+    );
   }
 
   async function confirmDeleteAccount() {
@@ -296,10 +301,17 @@ export function ProfileView({
   }
 
   const display = preferredDisplayName(profile);
+  const isAdminOwner = isClevencodeAdmin(profile);
   const avatarLetter = (display.trim().charAt(0) || "?").toLocaleUpperCase("fr-FR");
   const syncHint = profile.notionUrl
     ? "Synchronisé entre tes appareils"
     : "Enregistré sur cet appareil";
+  const ownerHint = "você é o dono do app";
+  const subtitleHint = savedFlash
+    ? "Nom enregistré"
+    : isAdminOwner
+      ? ownerHint
+      : syncHint;
 
   return (
     <div className="profile-view">
@@ -310,7 +322,7 @@ export function ProfileView({
         <div className="profile-head-copy">
           <h1 className="profile-title type-title">{display}</h1>
           <p className="profile-subtitle muted">
-            {savedFlash ? "Nom enregistré" : syncHint}
+            {subtitleHint}
           </p>
         </div>
         {!accountSession ? (
@@ -406,7 +418,9 @@ export function ProfileView({
                 ) : null}
               </div>
             </form>
-            <p className="profile-id-hint muted">{syncHint}</p>
+            <p className="profile-id-hint muted">
+              {isAdminOwner ? ownerHint : syncHint}
+            </p>
           </ProfilePanel>
 
           <ProfilePanel titleId="profile-delete-label" title="Compte">
@@ -853,7 +867,7 @@ export function ProfileView({
 
           <ProfilePanel titleId="profile-about-label" title="À propos">
             <p className="profile-about">
-              Biblos — lecture, plans et flashcards. Prototype en phase de test
+              Biblios — lecture, plans et flashcards. Prototype en phase de test
               (application web progressive).
             </p>
           </ProfilePanel>

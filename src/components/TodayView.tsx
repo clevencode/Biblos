@@ -8,13 +8,21 @@ import {
   pushDayNote,
   saveDayNoteLocal,
 } from "../planDayNote";
-import { formatReadingTimeLabel } from "../planReading";
+import { formatReadingTimeLabel, parseVerseWindow } from "../planReading";
 import { isPlanComplete, planJourDate, type PlanProgress } from "../planProgress";
 import type { ReadingPlan } from "../types";
 import { loadOrCreateProfile, preferredDisplayName } from "../userProfile";
 import { PlanDescription } from "./PlanDescription";
 
 type PlanFlowReturn = "timeline" | "dayNote" | "intro";
+
+/** Jour avec au moins une référence à un chapitre biblique défini. */
+function dayHasDefinedChapter(texte: string | undefined | null): boolean {
+  const refs = extractPassageRefs(texte ?? "");
+  if (refs.some((ref) => Boolean(parseVerseWindow(ref)))) return true;
+  const single = extractPassageRef(texte ?? "");
+  return Boolean(single && parseVerseWindow(single));
+}
 
 type TodayViewProps = {
   plan: ReadingPlan | null;
@@ -194,9 +202,14 @@ export function TodayView({
 
   useEffect(() => {
     if (!dayNoteFocus?.seq || !plan?.id) return;
+    const day = days.find((d) => d.jour === dayNoteFocus.jour);
+    if (!dayHasDefinedChapter(day?.texte)) {
+      onClearDayNoteFocus?.();
+      return;
+    }
     setSelectedJour(dayNoteFocus.jour);
     setScreen("dayNote");
-  }, [dayNoteFocus?.seq, dayNoteFocus?.jour, plan?.id]);
+  }, [dayNoteFocus?.seq, dayNoteFocus?.jour, plan?.id, days, onClearDayNoteFocus]);
 
   useEffect(() => {
     if (!introFocus?.seq || !plan?.id) return;
@@ -265,6 +278,7 @@ export function TodayView({
   const canOpenPassage = Boolean(
     firstPassage && (onStartPlanReading || onOpenPassage) && isPassageRef(firstPassage),
   );
+  const hasDefinedChapter = dayHasDefinedChapter(selectedDay?.texte);
   const selectedIndex = selectedDay ? days.findIndex((day) => day.jour === selectedDay.jour) + 1 : 0;
   const dayNoteLocal = loadDayNote(plan.id, selectedJour);
   const dayNoteDone = Boolean(dayNoteLocal?.text?.trim() || dayNoteLocal?.notionUrl);
@@ -299,6 +313,7 @@ export function TodayView({
   }
 
   function openDayNote() {
+    if (!hasDefinedChapter) return;
     setScreen("dayNote");
   }
 
@@ -354,7 +369,7 @@ export function TodayView({
       return;
     }
     setNoteSaved(true);
-    setNoteMsg("Note enregistrée");
+    setNoteMsg("Note enregistrée sur cet appareil");
     if (andClose) {
       onClearDayNoteFocus?.();
       setScreen("timeline");
@@ -412,7 +427,7 @@ export function TodayView({
     );
   }
 
-  if (screen === "dayNote") {
+  if (screen === "dayNote" && hasDefinedChapter) {
     return (
       <div className="today-view panel-nota-content plan-yv plan-yv-devo plan-yv-day-note">
         <header className="plan-yv-devo-head">
@@ -631,23 +646,25 @@ export function TodayView({
         </p>
       )}
 
-      <nav className="plan-yv-secondary" aria-label="Actions secondaires">
-        <button
-          type="button"
-          className={`plan-yv-secondary-row${dayNoteDone || noteSaved ? " is-done" : ""}`}
-          onClick={openDayNote}
-        >
-          <span className="plan-yv-secondary-stack">
-            <span className="plan-yv-secondary-label">Note du jour</span>
-            <span className="plan-yv-secondary-meta">
-              {dayNoteDone || noteSaved ? "Écrite" : "Optionnelle · après la lecture"}
+      {hasDefinedChapter ? (
+        <nav className="plan-yv-secondary" aria-label="Actions secondaires">
+          <button
+            type="button"
+            className={`plan-yv-secondary-row${dayNoteDone || noteSaved ? " is-done" : ""}`}
+            onClick={openDayNote}
+          >
+            <span className="plan-yv-secondary-stack">
+              <span className="plan-yv-secondary-label">Note du jour</span>
+              <span className="plan-yv-secondary-meta">
+                {dayNoteDone || noteSaved ? "Écrite" : "Optionnelle · après la lecture"}
+              </span>
             </span>
-          </span>
-          <span className="plan-yv-secondary-chevron" aria-hidden="true">
-            ›
-          </span>
-        </button>
-      </nav>
+            <span className="plan-yv-secondary-chevron" aria-hidden="true">
+              ›
+            </span>
+          </button>
+        </nav>
+      ) : null}
     </div>
   );
 }

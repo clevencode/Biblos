@@ -1,4 +1,4 @@
-/** Notes quotidiennes du plan de lecture (local + Notion). */
+/** Notes quotidiennes du plan — stockage local uniquement (jamais Notion). */
 
 export type DayNoteRecord = {
   text: string;
@@ -70,128 +70,35 @@ export function clearDayNotesForPlan(planId: string): void {
   if (changed) writeStore(store);
 }
 
+/** Lecture locale uniquement (pas de pull Notion). */
 export async function pullDayNote(
   planId: string,
-  planUrl: string | null | undefined,
+  _planUrl: string | null | undefined,
   jour: number,
 ): Promise<{ text: string; notionUrl: string | null; ok: boolean; error?: string }> {
   const local = loadDayNote(planId, jour);
-  if (!planUrl) {
-    return { text: local?.text ?? "", notionUrl: local?.notionUrl ?? null, ok: true };
-  }
-  try {
-    const params = new URLSearchParams({
-      planUrl,
-      jour: String(jour),
-    });
-    if (local?.notionUrl) params.set("noteUrl", local.notionUrl);
-    const response = await fetch(`/api/plan-day-note?${params}`);
-    const payload = (await response.json().catch(() => ({}))) as {
-      ok?: boolean;
-      body?: string;
-      url?: string | null;
-      error?: string;
-      hasToken?: boolean;
-    };
-    if (!payload.ok) {
-      return {
-        text: local?.text ?? "",
-        notionUrl: local?.notionUrl ?? null,
-        ok: false,
-        error: payload.error || "Impossible de charger la note",
-      };
-    }
-    const remoteText = typeof payload.body === "string" ? payload.body : "";
-    const notionUrl = payload.url ?? local?.notionUrl ?? null;
-    // Prefer remote if present; keep local draft if remote empty and local has text.
-    const text = remoteText.trim() ? remoteText : (local?.text ?? "");
-    saveDayNoteLocal(planId, jour, { text, notionUrl });
-    return { text, notionUrl, ok: true };
-  } catch {
-    return {
-      text: local?.text ?? "",
-      notionUrl: local?.notionUrl ?? null,
-      ok: false,
-      error: "API note quotidienne indisponible",
-    };
-  }
+  return { text: local?.text ?? "", notionUrl: local?.notionUrl ?? null, ok: true };
 }
 
+/** Enregistrement local uniquement (pas de push Notion). */
 export async function pushDayNote(
   planId: string,
-  planUrl: string | null | undefined,
+  _planUrl: string | null | undefined,
   jour: number,
   text: string,
-  meta?: {
+  _meta?: {
     planName?: string;
     passage?: string;
     userId?: string;
     displayName?: string;
   },
-): Promise<{ ok: boolean; notionUrl: string | null; error?: string }> {
+): Promise<{ ok: boolean; notionUrl: string | null; error?: string; localOnly?: boolean }> {
   const trimmed = String(text ?? "");
   const local = saveDayNoteLocal(planId, jour, { text: trimmed });
-
-  // Admin DB (Kind=Note) — note personnelle + plan lié.
-  if (trimmed.trim() && meta?.userId) {
-    try {
-      await fetch("/api/admin-note", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: meta.userId,
-          displayName: meta.displayName,
-          planId,
-          planName: meta.planName,
-          jour,
-          passage: meta.passage,
-          body: trimmed,
-          at: new Date().toISOString(),
-        }),
-      });
-    } catch {
-      /* best-effort */
-    }
-  }
-
-  if (!planUrl) {
-    return {
-      ok: Boolean(trimmed.trim()),
-      notionUrl: local.notionUrl ?? null,
-      error: trimmed.trim() ? undefined : "Note vide",
-    };
-  }
-  try {
-    const response = await fetch("/api/plan-day-note", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        planUrl,
-        jour,
-        body: trimmed,
-        noteUrl: local.notionUrl || undefined,
-      }),
-    });
-    const payload = (await response.json().catch(() => ({}))) as {
-      ok?: boolean;
-      url?: string | null;
-      error?: string;
-    };
-    if (!payload.ok) {
-      return {
-        ok: false,
-        notionUrl: local.notionUrl ?? null,
-        error: payload.error || "Impossible d’enregistrer la note",
-      };
-    }
-    const notionUrl = payload.url ?? local.notionUrl ?? null;
-    saveDayNoteLocal(planId, jour, { text: trimmed, notionUrl });
-    return { ok: true, notionUrl };
-  } catch {
-    return {
-      ok: false,
-      notionUrl: local.notionUrl ?? null,
-      error: "API note quotidienne indisponible",
-    };
-  }
+  return {
+    ok: true,
+    notionUrl: local.notionUrl ?? null,
+    localOnly: true,
+    error: trimmed.trim() ? undefined : "Note vide",
+  };
 }

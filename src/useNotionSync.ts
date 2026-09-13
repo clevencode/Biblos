@@ -14,6 +14,7 @@ import {
   flushVerseCardCreates,
 } from "./verseCardSync";
 import { syncUserProfileToNotion } from "./userProfileSync";
+import { flushAdminMessageOutbox } from "./adminMessage";
 import { DESCRIPTION_PULL_MS, pullPlanDescription } from "./planDescriptionSync";
 import type { Catalog, CenterMode, ReadingPlan, Seed } from "./types";
 
@@ -60,6 +61,7 @@ export function useNotionSync(options: {
           return next;
         });
       }
+      await flushAdminMessageOutbox();
       await syncUserProfileToNotion();
     })();
   }, [setCatalog]);
@@ -87,6 +89,7 @@ export function useNotionSync(options: {
         if (!cancelled && result.changed) {
           setCatalog(result.catalog);
         }
+        await flushAdminMessageOutbox();
         await syncUserProfileToNotion();
       } finally {
         busy = false;

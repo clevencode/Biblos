@@ -113,7 +113,7 @@ export async function syncBibleAudioControls(payload: ControlsPayload): Promise<
         hasScrubbing: false,
         duration: Math.max(0, Math.floor(payload.duration || 0)),
         elapsed: Math.max(0, Math.floor(payload.elapsed || 0)),
-        ticker: `Biblos · ${payload.track}`,
+        ticker: `Biblios · ${payload.track}`,
         notificationIcon: "ic_launcher",
       });
       created = true;

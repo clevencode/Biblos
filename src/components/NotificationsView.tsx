@@ -5,6 +5,7 @@ import {
   listAppNotifications,
   markAllAppNotificationsRead,
   markAppNotificationRead,
+  notificationDisplayTitle,
   removeAppNotification,
   syncContextualNotifications,
   type AppNotification,
@@ -75,7 +76,9 @@ export function NotificationsView({ plans, onBack }: NotificationsViewProps) {
             ←
           </button>
           <div className="notif-head-copy">
-            <h1 className="notif-title type-title">{selected.title}</h1>
+            <h1 className="notif-title type-title">
+              {notificationDisplayTitle(selected)}
+            </h1>
             <p className="notif-detail-when muted">
               {formatNotificationWhen(selected.at)}
             </p>
@@ -117,7 +120,6 @@ export function NotificationsView({ plans, onBack }: NotificationsViewProps) {
       </header>
 
       <div className="notif-list-head">
-        <h2 className="notif-list-title">Mises à jour</h2>
         {unread > 0 ? (
           <button type="button" className="notif-mark-all" onClick={onMarkAll}>
             Tout marquer lu
@@ -136,7 +138,9 @@ export function NotificationsView({ plans, onBack }: NotificationsViewProps) {
               >
                 <span className="notif-item-main">
                   <span className="notif-item-top">
-                    <span className="notif-item-title">{item.title}</span>
+                    <span className="notif-item-title">
+                      {notificationDisplayTitle(item)}
+                    </span>
                     <span className="notif-item-when muted">
                       {formatNotificationWhen(item.at)}
                     </span>
@@ -154,7 +158,7 @@ export function NotificationsView({ plans, onBack }: NotificationsViewProps) {
         </ul>
       ) : (
         <p className="notif-empty muted">
-          Aucune mise à jour pour le moment.
+          Aucune notification pour le moment.
         </p>
       )}
     </div>

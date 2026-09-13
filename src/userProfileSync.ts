@@ -1,6 +1,10 @@
 /**
- * Sync profil local → Notion (local-first + outbox).
+ * Sync profil local → Notion (nome + tempo gasto — pas de notes personnelles).
  */
+import {
+  getTimeSpentMinutes,
+  markTimeSpentSynced,
+} from "./appUsage";
 import {
   loadOrCreateProfile,
   saveUserProfile,
@@ -26,6 +30,7 @@ export async function syncUserProfileToNotion(
     if (!current.onboardedAt) {
       return { ok: false, skipped: true, error: "profil non onboardé" };
     }
+    const timeSpentMinutes = getTimeSpentMinutes();
     try {
       const response = await fetch("/api/user-profile", {
         method: "POST",
@@ -37,6 +42,7 @@ export async function syncUserProfileToNotion(
           preferredName: current.preferredName,
           createdAt: current.createdAt,
           onboardedAt: current.onboardedAt,
+          timeSpentMinutes,
           notionUrl: current.notionUrl ?? null,
         }),
       });
@@ -53,6 +59,7 @@ export async function syncUserProfileToNotion(
           hasToken: data.hasToken,
         };
       }
+      markTimeSpentSynced(timeSpentMinutes);
       if (data.url && data.url !== current.notionUrl) {
         saveUserProfile({ notionUrl: data.url });
       }

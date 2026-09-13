@@ -281,33 +281,77 @@ body,
   top: 12px;
 }
 
-.sync-health-banner {
+.offline-toast {
+  position: fixed;
+  z-index: 80;
+  left: 50%;
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 10px 14px;
-  background: color-mix(in srgb, var(--danger) 10%, var(--panel));
-  border-bottom: 1px solid color-mix(in srgb, var(--danger) 28%, var(--line));
-  color: var(--text);
-  font-size: 0.86rem;
-}
-
-.sync-health-banner p {
+  gap: 10px;
+  max-width: min(92vw, 22rem);
   margin: 0;
+  padding: 10px 12px 10px 14px;
+  border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--elevated) 94%, var(--panel));
+  box-shadow: var(--menu-shadow);
+  color: var(--text);
+  font-size: 0.84rem;
   line-height: 1.35;
+  pointer-events: auto;
+  animation: offline-toast-in 220ms ease-out both;
 }
 
-.sync-health-dismiss {
-  appearance: none;
-  flex-shrink: 0;
-  border: 1px solid var(--line);
-  background: var(--panel);
-  border-radius: 8px;
-  padding: 6px 10px;
+.offline-toast p {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+}
+
+.offline-toast-dismiss {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+  color: var(--muted);
   font: inherit;
-  font-size: 0.8rem;
+  font-size: 1.15rem;
+  line-height: 1;
   cursor: pointer;
+}
+
+.offline-toast-dismiss:hover {
+  color: var(--text);
+  background: color-mix(in srgb, var(--text) 12%, transparent);
+}
+
+@keyframes offline-toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .offline-toast {
+    animation: none;
+  }
+}
+
+@media (max-width: 860px) {
+  .offline-toast {
+    bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 .crumb {
@@ -445,8 +489,8 @@ body,
   margin-top: 2px;
   border: 0;
   border-radius: 999px;
-  background: #d1d5db;
-  color: #374151;
+  background: var(--surface);
+  color: var(--muted);
   cursor: pointer;
   font-size: 1.45rem;
   line-height: 1;
@@ -454,8 +498,8 @@ body,
 }
 
 .plan-discover-close:hover {
-  background: #9ca3af;
-  color: #111827;
+  background: var(--hover);
+  color: var(--text);
 }
 
 .date-filter-menu {
@@ -5943,7 +5987,7 @@ body,
 .notif-list-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 12px;
   margin-top: 2px;
   min-height: 1.25rem;
@@ -7053,7 +7097,6 @@ ul.plan-yv-day-note-ref {
   --yv-chrome-ease: cubic-bezier(0.4, 0, 0.2, 1);
   --yv-chrome-ms: 240ms;
   --yv-dock-hide-y: calc(100% + 28px);
-  --bible-head-progress: 0;
   /* Résolu ici pour que A± (--bible-font-size inline) agisse vraiment. */
   --type-body-size: var(--bible-font-size, 19px);
   position: relative;
@@ -7101,7 +7144,7 @@ ul.plan-yv-day-note-ref {
   justify-content: space-between;
 }
 
-/* UI atom: compact chapter ref (appears as --bible-head-progress → 1) */
+/* UI atom: ref compacta no topo — fade estável (sem scroll-linked transform) */
 .bible-yv-compact-ref {
   margin: 0;
   min-width: 0;
@@ -7110,11 +7153,14 @@ ul.plan-yv-day-note-ref {
   align-items: baseline;
   gap: 0.35em;
   overflow: hidden;
-  opacity: max(0, min(1, calc((var(--bible-head-progress, 0) - 0.28) / 0.42)));
-  transform: translate3d(calc((1 - var(--bible-head-progress, 0)) * -10px), 0, 0);
+  opacity: 0;
+  transform: translate3d(0, 0, 0);
   pointer-events: none;
-  transition: none;
-  will-change: opacity, transform;
+  transition: opacity var(--yv-chrome-ms) var(--yv-chrome-ease);
+}
+
+.bible-reader--yv.is-head-compact .bible-yv-compact-ref {
+  opacity: 1;
 }
 
 .bible-yv-compact-book {
@@ -7499,36 +7545,29 @@ ul.plan-yv-day-note-ref {
 }
 
 .bible-reader--yv .bible-passage-head {
-  /* UI atom: shrinking chapter head — driven by --bible-head-progress (0→1) */
-  --bible-head-progress: inherit;
-  margin: 12px 0 calc(22px - var(--bible-head-progress, 0) * 108px);
+  /* Hero → compacto: transição CSS discreta (sem margin/progress por pixel = sem tremedeira) */
+  margin: 12px 0 22px;
   text-align: center;
-  transform-origin: 50% 0%;
-  opacity: max(0, calc(1 - var(--bible-head-progress, 0) * 1.15));
-  transform: translate3d(
-      calc(var(--bible-head-progress, 0) * -36%),
-      calc(var(--bible-head-progress, 0) * -18px),
-      0
-    )
-    scale(calc(1 - var(--bible-head-progress, 0) * 0.58));
-  will-change: transform, opacity;
+  transform-origin: 12% 0%;
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+  transition:
+    opacity var(--yv-chrome-ms) var(--yv-chrome-ease),
+    transform var(--yv-chrome-ms) var(--yv-chrome-ease);
   pointer-events: none;
 }
 
 .bible-reader--yv.is-head-compact .bible-passage-head {
-  visibility: hidden;
+  opacity: 0;
+  transform: translate3d(-10px, -6px, 0) scale(0.92);
+  /* Mantém o espaço no fluxo — evita salto de scroll ao colapsar */
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .bible-reader--yv .bible-passage-head {
-    transform: none;
-    opacity: calc(1 - var(--bible-head-progress, 0));
-    margin-bottom: calc(22px * (1 - var(--bible-head-progress, 0)));
-  }
-
+  .bible-reader--yv .bible-passage-head,
   .bible-yv-compact-ref {
+    transition: opacity 1ms linear;
     transform: none;
-    opacity: var(--bible-head-progress, 0);
   }
 }
 
@@ -8542,7 +8581,7 @@ ul.plan-yv-day-note-ref {
 }
 
 .bible-audio-player-item:hover {
-  background: color-mix(in srgb, #fff 55%, transparent);
+  background: var(--hover);
 }
 
 .bible-audio-player-item.is-on {
@@ -9046,7 +9085,7 @@ ul.plan-yv-day-note-ref {
 }
 
 .bible-search-sheet-error {
-  color: color-mix(in srgb, #b42318 80%, var(--text));
+  color: var(--danger);
 }
 
 .bible-search-sheet-list {
@@ -9078,7 +9117,7 @@ ul.plan-yv-day-note-ref {
 }
 
 .bible-search-sheet-item:hover {
-  background: color-mix(in srgb, #fff 60%, transparent);
+  background: var(--hover);
 }
 
 .bible-search-sheet-ref {
@@ -9258,7 +9297,7 @@ ul.plan-yv-day-note-ref {
 }
 
 .bible-yv-pick-cell:hover:not(:disabled):not(.is-on) {
-  background: color-mix(in srgb, var(--yv-text) 5%, #fff);
+  background: var(--hover);
   border-color: color-mix(in srgb, var(--yv-line) 70%, transparent);
 }
 
@@ -9335,7 +9374,7 @@ ul.plan-yv-day-note-ref {
 }
 
 .bible-yv-dock-arrow:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--yv-text) 5%, #fff);
+  background: var(--hover);
   color: var(--yv-text);
 }
 
@@ -9365,11 +9404,11 @@ ul.plan-yv-day-note-ref {
 }
 
 .bible-yv-dock-location:hover {
-  background: color-mix(in srgb, var(--yv-text) 4%, #fff);
+  background: var(--hover);
 }
 
 .bible-yv-dock-location.is-open {
-  background: color-mix(in srgb, var(--surface) 78%, #fff);
+  background: color-mix(in srgb, var(--yv-text) 8%, var(--elevated));
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--yv-line) 70%, transparent);
 }
 

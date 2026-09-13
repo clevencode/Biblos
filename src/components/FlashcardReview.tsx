@@ -322,7 +322,7 @@ function FlashCardMenu({
                 (ou appuie sur Espace) pour révéler le verset.
               </p>
               <p>
-                Note ensuite ta mémorisation — Biblos planifie le prochain rappel
+                Note ensuite ta mémorisation — Biblios planifie le prochain rappel
                 (répétition espacée) :
               </p>
               <ul className="flash-help-marks">
@@ -939,6 +939,9 @@ export function FlashDeckList({
                 aria-label={`${item.label}, ${count} carte${count === 1 ? "" : "s"}`}
               >
                 <span className="flash-deck-tab-label">{item.label}</span>
+                <span className="flash-deck-tab-count" aria-hidden>
+                  {count}
+                </span>
               </button>
             );
           })}

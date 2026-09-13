@@ -26,6 +26,7 @@ export default async function handler(req, res) {
       preferredName: body.preferredName,
       createdAt: body.createdAt,
       onboardedAt: body.onboardedAt,
+      timeSpentMinutes: body.timeSpentMinutes,
       notionUrl: body.notionUrl || body.url,
       pageId: body.pageId,
     });

@@ -2,7 +2,7 @@ import type { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
   appId: "app.biblos.mobile",
-  appName: "Biblos",
+  appName: "Biblios",
   webDir: "dist",
   server: {
     // App native charge la PWA hébergée (évite localhost sur mobile).
@@ -20,7 +20,7 @@ const config: CapacitorConfig = {
     },
     LocalNotifications: {
       smallIcon: "ic_launcher",
-      iconColor: "#2563eb",
+      iconColor: "#59AD9D",
     },
   },
 };

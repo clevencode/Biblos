@@ -22,6 +22,8 @@ import {
   type UserProfile,
 } from "./userProfile";
 import { syncUserProfileToNotion } from "./userProfileSync";
+import { startAppUsageTracking } from "./appUsage";
+import { flushAdminMessageOutbox } from "./adminMessage";
 import {
   listAllFlashcards,
   planCardIds,
@@ -48,6 +50,10 @@ import {
   type PlanReadingSession,
 } from "./planReading";
 import { useNotionSync } from "./useNotionSync";
+import {
+  countUnreadAppNotifications,
+  syncContextualNotifications,
+} from "./appNotifications";
 import { useNarrow, useSplitLayout } from "./layout";
 import { chapterFocusFromRef, isPassageRef } from "./youversion/usfm";
 import { syncNativeChrome } from "./nativeChrome";
@@ -126,7 +132,8 @@ export function App() {
   );
   const [planId, setPlanId] = useState(() => initialUi.planId ?? plans[0]?.id ?? "");
   const [planProgressTick, setPlanProgressTick] = useState(0);
-  const [dismissNotionBanner, setDismissNotionBanner] = useState(false);
+  const [offlineToast, setOfflineToast] = useState(false);
+  const offlineToastSeen = useRef(false);
   const narrow = useNarrow();
   const splitLayout = useSplitLayout();
   const notesRef = useRef(notes);
@@ -159,6 +166,32 @@ export function App() {
     appendActivity("app.open", undefined, profile.id);
     setActivityTick((n) => n + 1);
   }, [profile]);
+
+  useEffect(() => {
+    if (!isProfileOnboarded(profile)) return undefined;
+    return startAppUsageTracking(() => {
+      void syncUserProfileToNotion();
+    });
+  }, [profile.id, profile.onboardedAt]);
+
+  useEffect(() => {
+    function onOffline() {
+      offlineToastSeen.current = false;
+      setOfflineToast(true);
+      window.setTimeout(() => setOfflineToast(false), 4200);
+    }
+    function onOnline() {
+      setOfflineToast(false);
+      void flushAdminMessageOutbox();
+      void syncUserProfileToNotion();
+    }
+    window.addEventListener("offline", onOffline);
+    window.addEventListener("online", onOnline);
+    return () => {
+      window.removeEventListener("offline", onOffline);
+      window.removeEventListener("online", onOnline);
+    };
+  }, []);
 
   useEffect(() => {
     const resolved = applyTheme(themePref);
@@ -299,6 +332,17 @@ export function App() {
     [cards],
   );
 
+  const [homeUnread, setHomeUnread] = useState(0);
+
+  useEffect(() => {
+    syncContextualNotifications(plans);
+    setHomeUnread(countUnreadAppNotifications());
+    const id = window.setInterval(() => {
+      setHomeUnread(countUnreadAppNotifications());
+    }, 15_000);
+    return () => window.clearInterval(id);
+  }, [plans, planProgressTick, mode]);
+
   const planProgress = useMemo(() => {
     if (!activePlan) return null;
     void planProgressTick;
@@ -329,6 +373,22 @@ export function App() {
     cardIds: scopedCardIds,
     activePlan,
   });
+
+  useEffect(() => {
+    const offline =
+      notionHealth === "down" ||
+      (typeof navigator !== "undefined" && navigator.onLine === false);
+    if (!offline) {
+      setOfflineToast(false);
+      offlineToastSeen.current = false;
+      return undefined;
+    }
+    if (offlineToastSeen.current) return undefined;
+    offlineToastSeen.current = true;
+    setOfflineToast(true);
+    const timer = window.setTimeout(() => setOfflineToast(false), 4200);
+    return () => window.clearTimeout(timer);
+  }, [notionHealth]);
 
   useEffect(() => {
     if (plans.length && !plans.some((plan) => plan.id === planId)) {
@@ -686,15 +746,16 @@ export function App() {
       {!onboarded ? (
         <ProfileOnboarding onComplete={finishOnboarding} />
       ) : null}
-      {!dismissNotionBanner && (notionHealth === "no-token" || notionHealth === "down") ? (
-        <div className="sync-health-banner" role="status">
-          <p>
-            {notionHealth === "no-token"
-              ? "La synchronisation cloud n’est pas encore configurée."
-              : "La synchronisation est temporairement indisponible."}
-          </p>
-          <button type="button" className="sync-health-dismiss" onClick={() => setDismissNotionBanner(true)}>
-            Fermer
+      {offlineToast ? (
+        <div className="offline-toast" role="status" aria-live="polite">
+          <p>Hors ligne — tout reste enregistré sur cet appareil.</p>
+          <button
+            type="button"
+            className="offline-toast-dismiss"
+            aria-label="Fermer"
+            onClick={() => setOfflineToast(false)}
+          >
+            ×
           </button>
         </div>
       ) : null}
@@ -726,7 +787,9 @@ export function App() {
                       aria-label={
                         item.id === "cards" && activeCardsCount
                           ? `${item.label}, ${activeCardsCount} carte${activeCardsCount === 1 ? "" : "s"} active${activeCardsCount === 1 ? "" : "s"}`
-                          : item.label
+                          : item.id === "home" && homeUnread
+                            ? `${item.label}, ${homeUnread} notification${homeUnread === 1 ? "" : "s"}`
+                            : item.label
                       }
                       title={item.label}
                       tabIndex={on ? 0 : -1}
@@ -740,6 +803,11 @@ export function App() {
                       {item.id === "cards" && activeCardsCount ? (
                         <span className="mode-tab-badge" aria-hidden="true">
                           {activeCardsCount}
+                        </span>
+                      ) : null}
+                      {item.id === "home" && homeUnread > 0 ? (
+                        <span className="mode-tab-badge" aria-hidden="true">
+                          {homeUnread > 9 ? "9+" : homeUnread}
                         </span>
                       ) : null}
                     </button>

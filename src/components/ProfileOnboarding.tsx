@@ -32,7 +32,7 @@ export function ProfileOnboarding({ onComplete }: ProfileOnboardingProps) {
   return (
     <div className="profile-onboarding" role="dialog" aria-modal="true" aria-labelledby={`${formId}-title`}>
       <div className="profile-onboarding-card">
-        <p className="profile-onboarding-brand">Biblos</p>
+        <p className="profile-onboarding-brand">Biblios</p>
         <h1 id={`${formId}-title`} className="profile-onboarding-title type-title">
           Bienvenue
         </h1>

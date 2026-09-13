@@ -57,6 +57,29 @@ export function preferredDisplayName(profile: UserProfile): string {
   return full || "Lecteur";
 }
 
+/** Nom d’admin reconnu (insensible à la casse / accents). */
+export const CLEVENCODE_ADMIN_NAME = "clevencode";
+
+function normalizeIdentityName(value: string): string {
+  return cleanName(value)
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "");
+}
+
+/** Detecte le propriétaire de l’app via le nom complet / prénom. */
+export function isClevencodeAdmin(profile?: UserProfile | null): boolean {
+  const p = profile ?? loadOrCreateProfile();
+  const needle = normalizeIdentityName(CLEVENCODE_ADMIN_NAME);
+  const candidates = [
+    preferredDisplayName(p),
+    p.preferredName,
+    p.firstName,
+    joinFullName(p.firstName, p.lastName),
+  ];
+  return candidates.some((value) => normalizeIdentityName(value) === needle);
+}
+
 export function isProfileOnboarded(profile: UserProfile): boolean {
   return Boolean(profile.onboardedAt && cleanName(profile.firstName));
 }

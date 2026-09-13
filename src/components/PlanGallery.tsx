@@ -205,6 +205,9 @@ export function PlanGallery({
                 aria-label={`${item.label}, ${count} plan${count === 1 ? "" : "s"}`}
               >
                 <span className="flash-deck-tab-label">{item.label}</span>
+                <span className="flash-deck-tab-count" aria-hidden>
+                  {count}
+                </span>
               </button>
             );
           })}

@@ -25,9 +25,35 @@ export type AppNotification = {
   body: string;
   at: string;
   read: boolean;
+  /** Libellé Notion (Annonce, Mise à jour, …) — pour l’affichage du type. */
+  kindLabel?: string;
   /** Empêche les doublons (ex. verset du jour). */
   dedupeKey?: string;
 };
+
+const GENERIC_TITLE_RE =
+  /^(info|information|notification|mise\s*à\s*jour|annonces?|actualité|actualite)$/iu;
+
+/** Libellé de type jamais générique « Info ». */
+export function notificationKindDisplayLabel(kindLabel?: string, kind?: AppNotificationKind): string {
+  const raw = String(kindLabel || "").trim();
+  const key = raw.toLowerCase().normalize("NFD").replace(/\p{M}/gu, "");
+  if (key.includes("annonce")) return "Annonce";
+  if (key.includes("mise")) return "Mise à jour";
+  if (key === "system" || kind === "system") return "Mise à jour";
+  if (key === "plan" || kind === "plan") return "Plan";
+  if (key === "verse" || kind === "verse") return "Verset";
+  if (key === "info" || key === "information" || !raw) return "Actualité";
+  return raw;
+}
+
+/** Titre affiché : type concret, ou Name Notion s’il n’est pas générique. */
+export function notificationDisplayTitle(item: AppNotification): string {
+  const name = String(item.title || "").trim();
+  const typeLabel = notificationKindDisplayLabel(item.kindLabel, item.kind);
+  if (name && !GENERIC_TITLE_RE.test(name)) return name;
+  return typeLabel;
+}
 
 type Store = { items: AppNotification[] };
 
@@ -112,12 +138,14 @@ export function pushAppNotification(input: {
   kind: AppNotificationKind;
   title: string;
   body: string;
+  kindLabel?: string;
   dedupeKey?: string;
 }): AppNotification | null {
   const dedupeKey = input.dedupeKey?.trim() || undefined;
   if (dedupeKey && readDismissedKeys().has(dedupeKey)) {
     return null;
   }
+  const kindLabel = input.kindLabel?.trim() || undefined;
   const store = readStore();
   if (dedupeKey) {
     const existing = store.items.find((item) => item.dedupeKey === dedupeKey);
@@ -127,6 +155,7 @@ export function pushAppNotification(input: {
         title: input.title,
         body: input.body,
         kind: input.kind,
+        ...(kindLabel ? { kindLabel } : {}),
       };
       store.items = store.items.map((item) =>
         item.id === existing.id ? next : item,
@@ -142,6 +171,7 @@ export function pushAppNotification(input: {
     body: input.body.trim(),
     at: new Date().toISOString(),
     read: false,
+    ...(kindLabel ? { kindLabel } : {}),
     ...(dedupeKey ? { dedupeKey } : {}),
   };
   store.items = [item, ...store.items].slice(0, MAX_ITEMS);
@@ -207,10 +237,16 @@ export async function pullRemoteAppNotifications(): Promise<void> {
     for (const item of data.items) {
       const id = String(item.id || "").trim();
       if (!id) continue;
+      const kindLabel = String(
+        (item as { kindLabel?: string }).kindLabel || item.kind || "",
+      ).trim();
+      const mappedKind: AppNotificationKind =
+        /mise|update|annonce|system/i.test(kindLabel) ? "system" : "info";
       pushAppNotification({
-        kind: item.kind === "info" ? "info" : "system",
-        title: String(item.title || "Notification").trim() || "Notification",
+        kind: mappedKind,
+        title: String(item.title || "").trim() || notificationKindDisplayLabel(kindLabel),
         body: String(item.body || "").trim(),
+        kindLabel: kindLabel || notificationKindDisplayLabel(kindLabel, mappedKind),
         dedupeKey: `notion:${id}`,
       });
     }

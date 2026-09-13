@@ -84,6 +84,7 @@ async function main() {
     LastName: { rich_text: {} },
     PreferredName: { rich_text: {} },
     DisplayName: { rich_text: {} },
+    TimeSpentMinutes: { number: {} },
     Body: { rich_text: {} },
     Plan: { rich_text: {} },
     PlanId: { rich_text: {} },
@@ -120,7 +121,9 @@ async function main() {
   console.log(
     "\nDans Notion : ouvre Admin → ··· → Connections → ajoute ton intégration.",
   );
-  console.log("(Activité de lecture reste locale.)");
+  console.log(
+    "Scope: Profil (nome + TimeSpentMinutes) · Message (ajuda). Notes = local only.",
+  );
 }
 
 main().catch((error) => {

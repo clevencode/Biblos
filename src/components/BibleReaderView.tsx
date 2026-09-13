@@ -86,8 +86,12 @@ function clampFontSize(n: number) {
   const stepped = Math.round(n / FONT_STEP) * FONT_STEP;
   return Math.min(FONT_MAX, Math.max(FONT_MIN, stepped));
 }
-/** Distância de scroll (px) para o título do capítulo colapsar no topo. */
-const BIBLE_HEAD_COLLAPSE_PX = 88;
+/**
+ * Título do capítulo: estado discreto + histerese (anti-tremedeira).
+ * Sem CSS variable por pixel — evita reflow/layout thrash no scroll.
+ */
+const BIBLE_HEAD_COMPACT_ENTER_PX = 52;
+const BIBLE_HEAD_COMPACT_EXIT_PX = 14;
 
 /**
  * Hide-on-scroll anti-tremedeira (chrome: topo + dock + tabs).
@@ -103,15 +107,20 @@ const CHROME_TOP_SAFE_PX = 12;
 const CHROME_NEAR_END_PX = 72;
 const CHROME_MIN_SCROLLABLE_PX = 140;
 const CHROME_PROGRAMMATIC_LOCK_MS = 320;
+/** Scroll do utilizador (px) para desligar o texto opaco do verso focado. */
+const FOCUS_DIM_CLEAR_PX = 6;
 
 const EMPTY_VERSES: number[] = [];
 
-/** UI atom: `--bible-head-progress` 0 (hero) → 1 (compacto no topo). */
-function applyBibleHeadProgress(reader: HTMLElement | null, scrollTop: number) {
+/** UI atom: hero ↔ compacto no topo (classe `is-head-compact`, com histerese). */
+function applyBibleHeadCompact(reader: HTMLElement | null, scrollTop: number) {
   if (!reader) return;
-  const progress = Math.min(1, Math.max(0, scrollTop / BIBLE_HEAD_COLLAPSE_PX));
-  reader.style.setProperty("--bible-head-progress", String(Math.round(progress * 1000) / 1000));
-  reader.classList.toggle("is-head-compact", progress >= 0.55);
+  const compact = reader.classList.contains("is-head-compact");
+  if (!compact && scrollTop >= BIBLE_HEAD_COMPACT_ENTER_PX) {
+    reader.classList.add("is-head-compact");
+  } else if (compact && scrollTop <= BIBLE_HEAD_COMPACT_EXIT_PX) {
+    reader.classList.remove("is-head-compact");
+  }
 }
 
 /** Sélection multi-versets (toggle, pas forcément contigus). */
@@ -425,6 +434,11 @@ export function BibleReaderView({
   const [highlightVerse, setHighlightVerse] = useState<number | null>(
     initialParts.verse ?? null,
   );
+  /** Texto opaco (foco YouVersion) após escolher livro/capítulo/verso — some no 1.º scroll. */
+  const [focusDimActive, setFocusDimActive] = useState(
+    () => initialParts.verse != null,
+  );
+  const focusDimActiveRef = useRef(initialParts.verse != null);
   const [selection, setSelection] = useState<VerseSelection | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -479,6 +493,17 @@ export function BibleReaderView({
   const lastAppliedVerseScroll = useRef("");
   const booted = useRef(false);
   const loadGen = useRef(0);
+
+  const setFocusDim = useEffectEvent((active: boolean) => {
+    focusDimActiveRef.current = active;
+    setFocusDimActive(active);
+  });
+
+  const clearFocusDimOnUserScroll = useEffectEvent(() => {
+    if (!focusDimActiveRef.current) return;
+    focusDimActiveRef.current = false;
+    setFocusDimActive(false);
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -770,6 +795,7 @@ export function BibleReaderView({
     setBookId(nextBook);
     setChapterId(nextChapter);
     setHighlightVerse(verse);
+    setFocusDim(verse != null);
     // Navigation / deep-link : surligne et scroll, sans ouvrir le panneau Marquer.
     setSelection(null);
     setCardMsg(null);
@@ -818,12 +844,14 @@ export function BibleReaderView({
         pendingScrollVerse.current = null;
         lastAppliedVerseScroll.current = "";
         setHighlightVerse(null);
+        setFocusDim(false);
         return null;
       }
       // Premier tap → remonte le verset au-dessus du panneau Marquer.
       const mode: VerseScrollMode = current?.length ? "nearest" : "start";
       pendingScrollVerse.current = { number, mode, seq: ++verseScrollSeq.current };
       setHighlightVerse(number);
+      setFocusDim(false);
       if (!current?.length) setCardColor(loadPreferredVerseColor());
       return sortVerses(next);
     });
@@ -835,6 +863,7 @@ export function BibleReaderView({
     pendingScrollVerse.current = { number, mode: "start", seq: ++verseScrollSeq.current };
     setSelection(null);
     setHighlightVerse(number);
+    setFocusDim(true);
     setCardMsg(null);
     setPickerOpen(false);
   }
@@ -875,6 +904,7 @@ export function BibleReaderView({
   function closeCreateCard() {
     setSelection(null);
     setHighlightVerse(null);
+    setFocusDim(false);
     setCardMsg(null);
     setCardColor(loadPreferredVerseColor());
     setColorEditorOpen(false);
@@ -1250,13 +1280,13 @@ export function BibleReaderView({
       requestAnimationFrame(() => {
         alignVerseInScroller(root, reader, verseEl, pending.mode === "start" ? "start" : "nearest");
         lastScrollTop.current = root.scrollTop;
-        applyBibleHeadProgress(reader, root.scrollTop);
+        applyBibleHeadCompact(reader, root.scrollTop);
       });
     }
     lastScrollTop.current = root.scrollTop;
     scrollAcc.current = 0;
     chromeLockUntil.current = performance.now() + CHROME_PROGRAMMATIC_LOCK_MS;
-    applyBibleHeadProgress(reader, root.scrollTop);
+    applyBibleHeadCompact(reader, root.scrollTop);
     lastAppliedVerseScroll.current = key;
   }, [active, loading, passage?.id, highlightVerse, selection, showCreateCard, pickerOpen, planReading?.label]);
 
@@ -1392,8 +1422,12 @@ export function BibleReaderView({
     lastScrollTop.current = passageScrollRef.current?.scrollTop ?? 0;
     scrollAcc.current = 0;
     chromeLockUntil.current = performance.now() + CHROME_PROGRAMMATIC_LOCK_MS;
-    applyBibleHeadProgress(readerRef.current, passageScrollRef.current?.scrollTop ?? 0);
+    applyBibleHeadCompact(readerRef.current, passageScrollRef.current?.scrollTop ?? 0);
   }, [bookId, chapterId, planReading?.label, setReadingChrome]);
+
+  useEffect(() => {
+    if (planReading) setFocusDim(true);
+  }, [planReading?.label, planReading?.verseStart, planReading?.verseEnd, setFocusDim]);
 
   useEffect(() => {
     if (!active) {
@@ -1408,7 +1442,7 @@ export function BibleReaderView({
     // Sync baseline so a restored/programmatic offset doesn't look like a huge down-scroll.
     lastScrollTop.current = root.scrollTop;
     scrollAcc.current = 0;
-    applyBibleHeadProgress(readerRef.current, root.scrollTop);
+    applyBibleHeadCompact(readerRef.current, root.scrollTop);
 
     const onScroll = () => {
       if (scrollRaf.current) return;
@@ -1426,7 +1460,16 @@ export function BibleReaderView({
         const top = rawTop;
         const delta = top - lastScrollTop.current;
         lastScrollTop.current = top;
-        applyBibleHeadProgress(readerRef.current, top);
+        applyBibleHeadCompact(readerRef.current, top);
+
+        // 1.º scroll do utilizador: desliga o texto opaco (foco livro→capítulo→verso).
+        if (
+          focusDimActiveRef.current &&
+          Math.abs(delta) >= FOCUS_DIM_CLEAR_PX &&
+          performance.now() >= chromeLockUntil.current
+        ) {
+          clearFocusDimOnUserScroll();
+        }
 
         if (forceChromeRef.current) {
           scrollAcc.current = 0;
@@ -1486,7 +1529,7 @@ export function BibleReaderView({
         scrollRaf.current = 0;
       }
     };
-  }, [active, setReadingChrome, bookId, chapterId]);
+  }, [active, setReadingChrome, bookId, chapterId, clearFocusDimOnUserScroll]);
 
   return (
     <section
@@ -1619,7 +1662,9 @@ export function BibleReaderView({
             className={[
               "bible-verses",
               selection?.length ? "is-dimming" : "",
-              !selection?.length && (planReading || highlightVerse != null)
+              !selection?.length &&
+              focusDimActive &&
+              (planReading || highlightVerse != null)
                 ? "is-passage-focus"
                 : "",
             ]
