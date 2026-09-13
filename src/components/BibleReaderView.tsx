@@ -8,23 +8,8 @@ import {
   type CSSProperties,
 } from "react";
 import { createPortal, flushSync } from "react-dom";
-import {
-  ArrowDownTrayIcon,
-  BookmarkIcon,
-  BookmarkSlashIcon,
-  CheckIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  ClockIcon,
-  ComputerDesktopIcon,
-  EllipsisHorizontalIcon,
-  MagnifyingGlassIcon,
-  MoonIcon,
-  PauseIcon,
-  PlayIcon,
-  RectangleStackIcon,
-  SunIcon,
-} from "@heroicons/react/24/outline";
+import { RectangleStackIcon } from "@heroicons/react/24/outline";
+import { YvIcon } from "./YvIcon";
 import {
   adjacentChapter,
   chapterUsfm,
@@ -1191,7 +1176,7 @@ export function BibleReaderView({
           aria-expanded={toolsMenuOpen}
           onClick={() => setToolsMenuOpen((open) => !open)}
         >
-          <EllipsisHorizontalIcon className="bible-yv-tool-icon" aria-hidden />
+          <YvIcon name="more_horiz" className="bible-yv-tool-icon" />
         </button>
         {toolsMenuOpen ? (
           <div className="bible-yv-tools-popover" role="menu" aria-label="Options de lecture">
@@ -1203,11 +1188,11 @@ export function BibleReaderView({
                 onClick={() => onCycleTheme()}
               >
                 {themePref === "light" ? (
-                  <SunIcon className="bible-yv-tools-item-icon" aria-hidden />
+                  <YvIcon name="light_mode" className="bible-yv-tools-item-icon" />
                 ) : themePref === "dark" ? (
-                  <MoonIcon className="bible-yv-tools-item-icon" aria-hidden />
+                  <YvIcon name="dark_mode" className="bible-yv-tools-item-icon" />
                 ) : (
-                  <ComputerDesktopIcon className="bible-yv-tools-item-icon" aria-hidden />
+                  <YvIcon name="routine" className="bible-yv-tools-item-icon" />
                 )}
                 <span>{themeLabel}</span>
               </button>
@@ -1229,9 +1214,9 @@ export function BibleReaderView({
               }
             >
               {offlineReady ? (
-                <CheckIcon className="bible-yv-tools-item-icon" aria-hidden />
+                <YvIcon name="check_circle" filled className="bible-yv-tools-item-icon" />
               ) : (
-                <ArrowDownTrayIcon className="bible-yv-tools-item-icon" aria-hidden />
+                <YvIcon name="download" className="bible-yv-tools-item-icon" />
               )}
               <span>
                 {offlineBusy
@@ -1251,7 +1236,7 @@ export function BibleReaderView({
                   setHistoryOpen(true);
                 }}
               >
-                <ClockIcon className="bible-yv-tools-item-icon" aria-hidden />
+                <YvIcon name="history" className="bible-yv-tools-item-icon" />
                 <span>Historique</span>
               </button>
             ) : null}
@@ -1676,7 +1661,7 @@ export function BibleReaderView({
               setSearchOpen(true);
             }}
           >
-            <MagnifyingGlassIcon className="bible-yv-tool-icon" aria-hidden />
+            <YvIcon name="search" className="bible-yv-tool-icon" />
           </button>
           {renderTopToolsMenu()}
         </div>
@@ -1959,9 +1944,9 @@ export function BibleReaderView({
                 }}
               >
                 {selectionHasMark ? (
-                  <BookmarkSlashIcon className="bible-verse-cta-icon" aria-hidden />
+                  <YvIcon name="bookmark_remove" className="bible-verse-cta-icon" />
                 ) : (
-                  <BookmarkIcon className="bible-verse-cta-icon" aria-hidden />
+                  <YvIcon name="bookmark" className="bible-verse-cta-icon" />
                 )}
                 <span>{selectionHasMark ? "Démarquer" : "Marquer"}</span>
               </button>
@@ -2128,9 +2113,9 @@ export function BibleReaderView({
           }
         >
           {audioPlaying ? (
-            <PauseIcon className="bible-yv-dock-icon bible-yv-dock-icon--play" aria-hidden />
+            <YvIcon name="pause" filled className="bible-yv-dock-icon bible-yv-dock-icon--play" />
           ) : (
-            <PlayIcon className="bible-yv-dock-icon bible-yv-dock-icon--play" aria-hidden />
+            <YvIcon name="play_arrow" filled className="bible-yv-dock-icon bible-yv-dock-icon--play" />
           )}
         </button>
         <div className={`bible-yv-dock-nav${planReading && onPlanStep ? " bible-yv-dock-nav--plan" : ""}`}>
@@ -2156,7 +2141,7 @@ export function BibleReaderView({
                 : "Chapitre précédent"
             }
           >
-            <ChevronLeftIcon className="bible-yv-dock-icon" aria-hidden />
+            <YvIcon name="chevron_left" className="bible-yv-dock-icon" />
           </button>
           <button
             ref={dockLocationRef}
@@ -2187,9 +2172,9 @@ export function BibleReaderView({
               }
             >
               {planReading.isLast ? (
-                <CheckIcon className="bible-yv-dock-icon" aria-hidden />
+                <YvIcon name="check" className="bible-yv-dock-icon" />
               ) : (
-                <ChevronRightIcon className="bible-yv-dock-icon" aria-hidden />
+                <YvIcon name="chevron_right" className="bible-yv-dock-icon" />
               )}
             </button>
           ) : (
@@ -2203,7 +2188,7 @@ export function BibleReaderView({
               disabled={!canNext || loading}
               aria-label="Chapitre suivant"
             >
-              <ChevronRightIcon className="bible-yv-dock-icon" aria-hidden />
+              <YvIcon name="chevron_right" className="bible-yv-dock-icon" />
             </button>
           )}
         </div>
