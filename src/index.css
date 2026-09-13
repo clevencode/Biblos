@@ -350,7 +350,12 @@ body,
 
 @media (max-width: 860px) {
   .offline-toast {
-    bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+    bottom: calc(var(--mobile-bottom-chrome, 72px) + 12px);
+  }
+
+  .app.is-bible-mode .offline-toast {
+    /* Acima do dock Bíblia (lift) + altura aproximada do dock */
+    bottom: calc(var(--bible-dock-lift, var(--mobile-bottom-chrome, 72px)) + 64px);
   }
 }
 

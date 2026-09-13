@@ -72,7 +72,7 @@ const seedCatalog = hydrateCatalogFromCache(seed as Catalog);
 const modes: { id: CenterMode; label: string }[] = [
   { id: "home", label: "Accueil" },
   { id: "today", label: "Plan" },
-  { id: "bible", label: "Lecture" },
+  { id: "bible", label: "Bible" },
   { id: "cards", label: "Cartes" },
   { id: "profile", label: "Profil" },
 ];

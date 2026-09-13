@@ -484,6 +484,8 @@ export function BibleReaderView({
   const scrollAcc = useRef(0);
   const chromeHiddenRef = useRef(false);
   const chromeLockUntil = useRef(0);
+  /** Bloqueia limpar focus-dim durante scroll programático (independente do chrome). */
+  const suppressFocusDimClearUntil = useRef(0);
   const forceChromeRef = useRef(false);
   const scrollRaf = useRef(0);
   const readerRef = useRef<HTMLElement | null>(null);
@@ -1298,11 +1300,14 @@ export function BibleReaderView({
         alignVerseInScroller(root, reader, verseEl, pending.mode === "start" ? "start" : "nearest");
         lastScrollTop.current = root.scrollTop;
         syncHeadCompact(root.scrollTop);
+        suppressFocusDimClearUntil.current = performance.now() + CHROME_PROGRAMMATIC_LOCK_MS;
       });
     }
     lastScrollTop.current = root.scrollTop;
     scrollAcc.current = 0;
-    chromeLockUntil.current = performance.now() + CHROME_PROGRAMMATIC_LOCK_MS;
+    const lockUntil = performance.now() + CHROME_PROGRAMMATIC_LOCK_MS;
+    chromeLockUntil.current = lockUntil;
+    suppressFocusDimClearUntil.current = lockUntil;
     syncHeadCompact(root.scrollTop);
     lastAppliedVerseScroll.current = key;
   }, [active, loading, passage?.id, highlightVerse, selection, showCreateCard, pickerOpen, planReading?.label]);
@@ -1482,11 +1487,11 @@ export function BibleReaderView({
         lastScrollTop.current = top;
         syncHeadCompact(top);
 
-        // 1.º scroll do utilizador: desliga o texto opaco (foco livro→capítulo→verso).
+        // 1.º scroll do utilizador: desliga o texto opaco (não partilha lock do chrome).
         if (
           focusDimActiveRef.current &&
           Math.abs(delta) >= FOCUS_DIM_CLEAR_PX &&
-          performance.now() >= chromeLockUntil.current
+          performance.now() >= suppressFocusDimClearUntil.current
         ) {
           clearFocusDimOnUserScroll();
         }
@@ -1568,6 +1573,10 @@ export function BibleReaderView({
               closePicker();
               return;
             }
+            if (showCreateCard) {
+              closeCreateCard();
+              return;
+            }
             handlePlanBack();
             return;
           }
@@ -1599,9 +1608,13 @@ export function BibleReaderView({
           return;
         }
         if (event.key === "Escape") {
+          event.preventDefault();
           if (pickerOpen) {
-            event.preventDefault();
             closePicker();
+            return;
+          }
+          if (showCreateCard) {
+            closeCreateCard();
             return;
           }
         }
@@ -1619,6 +1632,8 @@ export function BibleReaderView({
       <header
         className={`bible-yv-top${planReading ? " is-plan" : " is-free"}`}
         aria-label="Navigation biblique"
+        aria-hidden={hideChrome || undefined}
+        inert={hideChrome || undefined}
       >
         {planReading ? (
           <>
@@ -1682,9 +1697,18 @@ export function BibleReaderView({
         className="bible-passage"
         aria-busy={loading}
         style={{ ["--verse-tint" as string]: actionTone.tint }}
-        onClick={() => {
+        onClick={(event) => {
           if (pickerOpen) {
             closePicker();
+            return;
+          }
+          const target = event.target;
+          if (
+            showCreateCard &&
+            target instanceof Element &&
+            !target.closest(".bible-verse, .bible-verse-actions")
+          ) {
+            closeCreateCard();
             return;
           }
           // Tap to reveal chrome (YouVersion).

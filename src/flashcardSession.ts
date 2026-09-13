@@ -315,16 +315,21 @@ export function useFlashcardSession(
   function onSlidePointerDown(event: React.PointerEvent<HTMLDivElement>) {
     if (event.button > 0) return;
     dragRef.current = { active: true, startX: event.clientX, moved: false };
-    setDragging(canNav);
-    event.currentTarget.setPointerCapture(event.pointerId);
+    setDragging(false);
   }
 
   function onSlidePointerMove(event: React.PointerEvent<HTMLDivElement>) {
     if (!dragRef.current.active) return;
     const delta = event.clientX - dragRef.current.startX;
     if (!canNav) return;
-    if (Math.abs(delta) > 8) dragRef.current.moved = true;
-    setDragX(delta);
+    if (Math.abs(delta) > 8) {
+      dragRef.current.moved = true;
+      if (!event.currentTarget.hasPointerCapture(event.pointerId)) {
+        event.currentTarget.setPointerCapture(event.pointerId);
+      }
+      setDragging(true);
+    }
+    if (dragRef.current.moved) setDragX(delta);
   }
 
   function finishSlidePointer(event: React.PointerEvent<HTMLDivElement>) {
