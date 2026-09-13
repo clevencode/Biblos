@@ -121,17 +121,14 @@ export function ProfileView({
   onReadingHistoryChange,
 }: ProfileViewProps) {
   const [tab, setTab] = useState<ProfileTabId>("config");
-  const [accountSession, setAccountSession] = useState(
-    () => !joinFullName(profile.firstName, profile.lastName),
-  );
+  /** Toujours false au montage — le panneau Profil est monté avant l’onboarding. */
+  const [accountSession, setAccountSession] = useState(false);
   const [offlineReady, setOfflineReady] = useState(false);
   const [offlineClearBusy, setOfflineClearBusy] = useState(false);
   const [fullName, setFullName] = useState(() =>
     joinFullName(profile.firstName, profile.lastName),
   );
-  const [editingName, setEditingName] = useState(
-    () => !joinFullName(profile.firstName, profile.lastName),
-  );
+  const [editingName, setEditingName] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
   const nameInputRef = useRef<HTMLInputElement>(null);
   const panelsRef = useRef<HTMLDivElement>(null);
@@ -155,6 +152,16 @@ export function ProfileView({
     if (editingName) return;
     setFullName(joinFullName(profile.firstName, profile.lastName));
   }, [profile.firstName, profile.lastName, profile.id, editingName]);
+
+  /** Après onboarding : fermer une éventuelle session Compte ouverte au montage à vide. */
+  useEffect(() => {
+    if (!profile.onboardedAt) return;
+    const next = joinFullName(profile.firstName, profile.lastName);
+    if (!next) return;
+    setAccountSession(false);
+    setEditingName(false);
+    setFullName(next);
+  }, [profile.onboardedAt, profile.id]);
 
   function startEditName() {
     setEditingName(true);
