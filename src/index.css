@@ -2321,12 +2321,16 @@ body,
   background: transparent;
   color: color-mix(in srgb, var(--text) 55%, transparent);
   font: inherit;
-  font-size: clamp(0.58rem, 2.55vw, 0.72rem);
+  font-size: clamp(0.62rem, 2.6vw, 0.74rem);
   font-weight: 600;
   letter-spacing: 0.02em;
   text-transform: uppercase;
   line-height: 1.15;
   cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
   transition: color 0.14s ease;
 }
 
@@ -2361,8 +2365,8 @@ body,
 .profile-tab-label {
   min-width: 0;
   max-width: 100%;
-  overflow: visible;
-  text-overflow: clip;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
   text-align: center;
 }
@@ -4651,6 +4655,15 @@ body,
     --mobile-touch: 44px;
     --mobile-tab-min: 48px;
     --mobile-chrome-gap: 10px;
+    /* Chrome inferior partilhado (tabs + safe-area) — evita números mágicos */
+    --mobile-tabbar-h: 58px;
+    --mobile-bottom-chrome: calc(var(--mobile-tabbar-h) + env(safe-area-inset-bottom, 0px));
+    --bible-dock-lift: calc(var(--mobile-bottom-chrome) + 8px);
+    --bible-passage-clearance: calc(var(--bible-dock-lift) + 52px);
+    --bible-actions-lift: calc(var(--bible-dock-lift) + 68px);
+    --bible-pick-lift: calc(var(--bible-dock-lift) + 52px);
+    --bible-verse-sheet-clearance: calc(var(--bible-actions-lift) + 220px);
+    --panel-gutter: var(--mobile-gutter);
   }
 
   html,
@@ -4670,37 +4683,9 @@ body,
     padding-right: max(var(--mobile-gutter), env(safe-area-inset-right, 0px));
   }
 
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
   .page-session-head .page-title {
     font-size: 1.35rem;
   }
-
-  
-
-  
 
   .note-shell-main {
     flex-direction: column;
@@ -4715,6 +4700,7 @@ body,
     border-right: 0;
     border-bottom: 0;
     border-top: 1px solid var(--line);
+    min-height: var(--mobile-tabbar-h);
     padding: 6px var(--mobile-gutter) max(6px, env(safe-area-inset-bottom, 0px));
     padding-left: max(var(--mobile-gutter), env(safe-area-inset-left, 0px));
     padding-right: max(var(--mobile-gutter), env(safe-area-inset-right, 0px));
@@ -5316,41 +5302,46 @@ body,
     }
   }
 
-  
+  /* —— Mobile-first polish: gutters + sem safe-area duplicada —— */
+  .profile-view {
+    max-width: none;
+    padding: 10px var(--mobile-gutter) 0;
+    gap: 12px;
+  }
 
-  
+  .profile-tabs {
+    gap: 2px;
+  }
 
-  
+  .profile-tab {
+    min-height: 44px;
+    padding: 10px 3px 12px;
+    font-size: clamp(0.62rem, 2.8vw, 0.76rem);
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 
-  
+  .profile-tab-panels,
+  .profile-account-session {
+    /* Tabs já incluem safe-area — não somar outra vez */
+    padding-bottom: 20px;
+  }
 
-  
+  .plan-yv-devo-actions {
+    padding-bottom: 12px;
+  }
 
-  
+  .home-view {
+    padding-left: max(var(--mobile-gutter), env(safe-area-inset-left, 0px));
+    padding-right: max(var(--mobile-gutter), env(safe-area-inset-right, 0px));
+    padding-bottom: 24px;
+  }
 
-  /* Zoom à direita: alvos 44px, chrome compacto. */
-  
-
-  
-
-  
-
-  /* Mapa mobile: inline only + menos trabalho de paint/layout */
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
+  .bible-yv-top {
+    padding-top: max(6px, env(safe-area-inset-top, 0px));
+    padding-left: max(14px, env(safe-area-inset-left, 0px));
+    padding-right: max(14px, env(safe-area-inset-right, 0px));
+  }
 }
 
 /* —— Biblos: shell StudyOS (note-shell + rail) —— */
@@ -7111,8 +7102,7 @@ ul.plan-yv-day-note-ref {
 }
 
 .app.is-bible-mode.is-narrow .bible-reader--yv {
-  /* Dock precisa passar pelas tabs (~66px) + safe-area ao esconder */
-  --yv-dock-hide-y: calc(100% + 72px + env(safe-area-inset-bottom, 0px));
+  --yv-dock-hide-y: calc(100% + var(--mobile-tabbar-h, 58px) + 14px + env(safe-area-inset-bottom, 0px));
 }
 
 .bible-yv-top {
@@ -7530,8 +7520,10 @@ ul.plan-yv-day-note-ref {
 }
 
 .app.is-bible-mode.is-narrow .bible-reader--yv .bible-passage {
-  padding-bottom: calc(148px + env(safe-area-inset-bottom, 0px));
-  scroll-padding-bottom: calc(148px + env(safe-area-inset-bottom, 0px));
+  padding-inline: max(var(--mobile-gutter, 12px), env(safe-area-inset-left, 0px))
+    max(var(--mobile-gutter, 12px), env(safe-area-inset-right, 0px));
+  padding-bottom: var(--bible-passage-clearance, calc(148px + env(safe-area-inset-bottom, 0px)));
+  scroll-padding-bottom: var(--bible-passage-clearance, calc(148px + env(safe-area-inset-bottom, 0px)));
 }
 
 .bible-reader--yv.has-verse-actions .bible-passage {
@@ -7540,8 +7532,8 @@ ul.plan-yv-day-note-ref {
 }
 
 .app.is-bible-mode.is-narrow .bible-reader--yv.has-verse-actions .bible-passage {
-  padding-bottom: calc(380px + env(safe-area-inset-bottom, 0px));
-  scroll-padding-bottom: calc(340px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: var(--bible-verse-sheet-clearance, calc(380px + env(safe-area-inset-bottom, 0px)));
+  scroll-padding-bottom: var(--bible-verse-sheet-clearance, calc(340px + env(safe-area-inset-bottom, 0px)));
 }
 
 .bible-reader--yv .bible-passage-head {
@@ -9168,15 +9160,15 @@ ul.plan-yv-day-note-ref {
 }
 
 .app.is-bible-mode.is-narrow .bible-yv-dock {
-  bottom: calc(66px + env(safe-area-inset-bottom, 0px));
+  bottom: var(--bible-dock-lift, calc(66px + env(safe-area-inset-bottom, 0px)));
 }
 
 .app.is-bible-mode.is-narrow .bible-yv-pick-sheet {
-  bottom: calc(118px + env(safe-area-inset-bottom, 0px));
+  bottom: var(--bible-pick-lift, calc(118px + env(safe-area-inset-bottom, 0px)));
 }
 
 .app.is-bible-mode.is-narrow .bible-reader--yv .bible-verse-actions {
-  bottom: calc(134px + env(safe-area-inset-bottom, 0px));
+  bottom: var(--bible-actions-lift, calc(134px + env(safe-area-inset-bottom, 0px)));
 }
 
 @media (prefers-reduced-motion: reduce) {

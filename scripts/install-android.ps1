@@ -103,8 +103,15 @@ export default config;
     Set-Content -Path $configPath -Value $liveConfig -Encoding utf8
   }
 
-  $apk = Join-Path $root "android\app\build\outputs\apk\debug\app-debug.apk"
-  if (-not (Test-Path $apk) -or $rebuild) {
+  $apkDir = Join-Path $root "android\app\build\outputs\apk\debug"
+  $apkCandidates = @(
+    (Join-Path $apkDir "Biblos.apk"),
+    (Join-Path $apkDir "Biblios.apk"),
+    (Join-Path $apkDir "app-debug.apk")
+  )
+  $apk = $apkCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+
+  if (-not $apk -or $rebuild) {
     Write-Host "A gerar APK…"
     $env:CAPACITOR = "1"
     npm run build:mobile
@@ -120,10 +127,11 @@ export default config;
     } finally {
       Pop-Location
     }
+    $apk = $apkCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
   }
 
-  if (-not (Test-Path $apk)) {
-    Write-Host "APK não encontrado: $apk" -ForegroundColor Red
+  if (-not $apk -or -not (Test-Path $apk)) {
+    Write-Host "APK não encontrado em $apkDir (Biblos.apk / app-debug.apk)" -ForegroundColor Red
     exit 1
   }
 
@@ -132,6 +140,7 @@ export default config;
   if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
   Write-Host "A abrir $pkg…"
+  adb shell am force-stop $pkg
   adb shell am start -n "$pkg/$activity"
   if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
