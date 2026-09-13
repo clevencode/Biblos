@@ -60,6 +60,12 @@ export function preferredDisplayName(profile: UserProfile): string {
 /** Nom d’admin reconnu (insensible à la casse / accents). */
 export const CLEVENCODE_ADMIN_NAME = "clevencode";
 
+/**
+ * Identifiant stable partagé sur tous les appareils pour l’admin.
+ * Évite une nouvelle ligne Notion à chaque login sur un autre device.
+ */
+export const CLEVENCODE_ADMIN_USER_ID = "biblos-admin-clevencode";
+
 function normalizeIdentityName(value: string): string {
   return cleanName(value)
     .toLowerCase()
@@ -67,17 +73,35 @@ function normalizeIdentityName(value: string): string {
     .replace(/\p{M}/gu, "");
 }
 
+export function isClevencodeAdminName(
+  firstName: string,
+  lastName = "",
+  preferredName = "",
+): boolean {
+  const needle = normalizeIdentityName(CLEVENCODE_ADMIN_NAME);
+  const candidates = [
+    preferredName,
+    firstName,
+    joinFullName(firstName, lastName),
+  ];
+  return candidates.some((value) => normalizeIdentityName(value) === needle);
+}
+
 /** Detecte le propriétaire de l’app via le nom complet / prénom. */
 export function isClevencodeAdmin(profile?: UserProfile | null): boolean {
   const p = profile ?? loadOrCreateProfile();
-  const needle = normalizeIdentityName(CLEVENCODE_ADMIN_NAME);
-  const candidates = [
-    preferredDisplayName(p),
-    p.preferredName,
-    p.firstName,
-    joinFullName(p.firstName, p.lastName),
-  ];
-  return candidates.some((value) => normalizeIdentityName(value) === needle);
+  return isClevencodeAdminName(p.firstName, p.lastName, p.preferredName);
+}
+
+/**
+ * Force l’id local de l’admin vers l’id stable (tous appareils → une ligne Notion).
+ */
+export function ensureStableAdminIdentity(profile: UserProfile): UserProfile {
+  if (!isClevencodeAdmin(profile)) return profile;
+  if (profile.id === CLEVENCODE_ADMIN_USER_ID) return profile;
+  const next: UserProfile = { ...profile, id: CLEVENCODE_ADMIN_USER_ID };
+  writeProfile(next);
+  return next;
 }
 
 export function isProfileOnboarded(profile: UserProfile): boolean {
@@ -126,7 +150,7 @@ export function loadOrCreateProfile(): UserProfile {
     const raw = localStorage.getItem(PROFILE_KEY);
     if (raw) {
       const parsed = parseProfile(JSON.parse(raw) as unknown);
-      if (parsed) return parsed;
+      if (parsed) return ensureStableAdminIdentity(parsed);
     }
   } catch {
     /* ignore */
@@ -165,7 +189,7 @@ export function saveUserProfile(patch: UserProfilePatch): UserProfile {
       patch.notionUrl !== undefined ? patch.notionUrl : current.notionUrl ?? null,
   };
   writeProfile(next);
-  return next;
+  return ensureStableAdminIdentity(next);
 }
 
 export function completeOnboarding(input: {

@@ -173,7 +173,9 @@ export function App() {
     if (!isProfileOnboarded(profile)) return undefined;
     void flushActivityOutbox();
     return startAppUsageTracking(() => {
-      void syncUserProfileToNotion();
+      void syncUserProfileToNotion().then((result) => {
+        if (result.profile) setProfile(result.profile);
+      });
     });
   }, [profile.id, profile.onboardedAt]);
 
@@ -187,7 +189,9 @@ export function App() {
       setOfflineToast(false);
       void flushAdminMessageOutbox();
       void flushActivityOutbox();
-      void syncUserProfileToNotion();
+      void syncUserProfileToNotion().then((result) => {
+        if (result.profile) setProfile(result.profile);
+      });
     }
     window.addEventListener("offline", onOffline);
     window.addEventListener("online", onOnline);
@@ -247,7 +251,9 @@ export function App() {
     appendActivity("app.open", undefined, next.id);
     setActivityTick((n) => n + 1);
     setMode("home");
-    void syncUserProfileToNotion(next);
+    void syncUserProfileToNotion(next).then((result) => {
+      if (result.profile) setProfile(result.profile);
+    });
   }
 
   function handleProfileSave(input: {
@@ -267,7 +273,9 @@ export function App() {
       next.id,
     );
     setActivityTick((n) => n + 1);
-    void syncUserProfileToNotion(next);
+    void syncUserProfileToNotion(next).then((result) => {
+      if (result.profile) setProfile(result.profile);
+    });
   }
 
   const activePlan = useMemo(

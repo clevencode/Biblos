@@ -793,7 +793,82 @@ export async function findPageByLocalId(token, databaseId, localId) {
 /**
  * Crée ou met à jour le profil dans NOTION_PROFILE_DB (ou ADMIN legacy).
  * Déduplique via LocalId = UUID local.
+ * Admin clevencode : LocalId stable partagé (tous appareils → une seule ligne).
  */
+const CLEVENCODE_ADMIN_USER_ID = "biblos-admin-clevencode";
+const CLEVENCODE_ADMIN_NAME = "clevencode";
+
+function normalizeIdentityName(value) {
+  return String(value ?? "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "");
+}
+
+function isClevencodeAdminInput(input = {}) {
+  const needle = normalizeIdentityName(CLEVENCODE_ADMIN_NAME);
+  const firstName = String(input.firstName || "").trim();
+  const lastName = String(input.lastName || "").trim();
+  const preferredName =
+    String(input.preferredName || "").trim() ||
+    [firstName, lastName].filter(Boolean).join(" ");
+  const candidates = [preferredName, firstName, [firstName, lastName].filter(Boolean).join(" ")];
+  return candidates.some((value) => normalizeIdentityName(value) === needle);
+}
+
+function plainPropText(prop) {
+  if (!prop || typeof prop !== "object") return "";
+  if (prop.type === "title" && Array.isArray(prop.title)) {
+    return prop.title.map((s) => s?.plain_text ?? "").join("").trim();
+  }
+  if (prop.type === "rich_text" && Array.isArray(prop.rich_text)) {
+    return prop.rich_text.map((s) => s?.plain_text ?? "").join("").trim();
+  }
+  if (prop.type === "number" && typeof prop.number === "number") {
+    return prop.number;
+  }
+  return "";
+}
+
+/** Cherche le profil admin existant (LocalId stable ou nom clevencode). */
+async function findClevencodeAdminProfilePage(token, databaseId) {
+  const byStable = await findPageByLocalId(token, databaseId, CLEVENCODE_ADMIN_USER_ID);
+  if (byStable) return byStable;
+
+  const { ok, response, detail } = await notionFetch(
+    `https://api.notion.com/v1/databases/${databaseId}/query`,
+    {
+      method: "POST",
+      headers: notionHeaders(token, { "Content-Type": "application/json" }),
+      body: JSON.stringify({
+        page_size: 50,
+        sorts: [{ timestamp: "last_edited_time", direction: "descending" }],
+      }),
+    },
+  );
+  if (!ok) {
+    console.warn("[notion] findClevencodeAdminProfilePage", humanizeCreateError(response?.status ?? 0, detail));
+    return null;
+  }
+  const body = await response.json().catch(() => ({}));
+  const needle = normalizeIdentityName(CLEVENCODE_ADMIN_NAME);
+  for (const page of body.results || []) {
+    const props = page.properties || {};
+    const candidates = [
+      plainPropText(props.Name),
+      plainPropText(props.DisplayName),
+      plainPropText(props.PreferredName),
+      plainPropText(props.FirstName),
+    ];
+    if (candidates.some((value) => normalizeIdentityName(String(value)) === needle)) {
+      return { id: page.id, url: notionPageUrl(page.id), page };
+    }
+  }
+  return null;
+}
+
 export async function upsertUserProfile(token, input = {}) {
   if (!token) {
     return { ok: false, error: "NOTION_TOKEN em falta", hasToken: false };
@@ -802,7 +877,10 @@ export async function upsertUserProfile(token, input = {}) {
   if (!databaseId) {
     return { ok: false, error: "NOTION_PROFILE_DB em falta", hasToken: true };
   }
-  const localId = String(input.localId || input.id || "").trim();
+  const isAdmin = isClevencodeAdminInput(input);
+  const localId = isAdmin
+    ? CLEVENCODE_ADMIN_USER_ID
+    : String(input.localId || input.id || "").trim();
   if (!localId) {
     return { ok: false, error: "localId em falta", hasToken: true };
   }
@@ -820,6 +898,39 @@ export async function upsertUserProfile(token, input = {}) {
       ? Math.floor(timeSpentRaw)
       : null;
 
+  let pageId = null;
+  let existingPage = null;
+  if (isAdmin) {
+    const found = await findClevencodeAdminProfilePage(token, databaseId);
+    if (found) {
+      pageId = found.id;
+      existingPage = found.page || null;
+      if (!existingPage) {
+        const got = await notionFetch(`https://api.notion.com/v1/pages/${pageId}`, {
+          method: "GET",
+          headers: notionHeaders(token),
+        });
+        if (got.ok) existingPage = await got.response.json().catch(() => null);
+      }
+    }
+  } else {
+    const found = await findPageByLocalId(token, databaseId, localId);
+    if (found) pageId = found.id;
+  }
+
+  let mergedMinutes = timeSpentMinutes;
+  if (pageId && existingPage?.properties?.TimeSpentMinutes != null) {
+    const prev = plainPropText(existingPage.properties.TimeSpentMinutes);
+    const prevNum = typeof prev === "number" ? prev : Number(prev);
+    if (Number.isFinite(prevNum) && mergedMinutes != null) {
+      mergedMinutes = Math.max(Math.floor(prevNum), mergedMinutes);
+    } else if (Number.isFinite(prevNum) && mergedMinutes == null) {
+      mergedMinutes = Math.floor(prevNum);
+    }
+  } else if (pageId && mergedMinutes != null && !existingPage) {
+    // Admin trouvé par LocalId sans page complète : garde la valeur entrante.
+  }
+
   const properties = {
     Name: titleProp(preferredName),
     ...(usesLegacyAdminKind(databaseId)
@@ -834,14 +945,10 @@ export async function upsertUserProfile(token, input = {}) {
     CreatedAt: dateProp(input.createdAt || nowIso),
     OnboardedAt: dateProp(input.onboardedAt || null),
     UpdatedAt: dateProp(nowIso),
-    ...(timeSpentMinutes != null
-      ? { TimeSpentMinutes: { number: timeSpentMinutes } }
+    ...(mergedMinutes != null
+      ? { TimeSpentMinutes: { number: mergedMinutes } }
       : {}),
   };
-
-  let pageId = null;
-  const found = await findPageByLocalId(token, databaseId, localId);
-  if (found) pageId = found.id;
 
   if (pageId) {
     const { ok, response, detail } = await notionFetch(`https://api.notion.com/v1/pages/${pageId}`, {
@@ -856,7 +963,15 @@ export async function upsertUserProfile(token, input = {}) {
         error: humanizeCreateError(response?.status ?? 0, detail),
       };
     }
-    return { ok: true, hasToken: true, localId, pageId, url: notionPageUrl(pageId), created: false };
+    return {
+      ok: true,
+      hasToken: true,
+      localId,
+      pageId,
+      url: notionPageUrl(pageId),
+      created: false,
+      stableAdmin: isAdmin,
+    };
   }
 
   const { ok, response, detail } = await notionFetch("https://api.notion.com/v1/pages", {
@@ -882,6 +997,7 @@ export async function upsertUserProfile(token, input = {}) {
     pageId: page.id,
     url: notionPageUrl(page.id),
     created: true,
+    stableAdmin: isAdmin,
   };
 }
 

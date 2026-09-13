@@ -208,6 +208,7 @@ export function upsertUserProfile(
   pageId?: string;
   url?: string;
   created?: boolean;
+  stableAdmin?: boolean;
 }>;
 
 export function createAdminMessage(
