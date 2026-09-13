@@ -62,21 +62,18 @@ function PrivacyDataBody() {
       </ul>
 
       <p>
-        <strong>3. Journal d’activité (sync admin, non affiché dans l’app)</strong>
+        <strong>3. Présence Online / Offline</strong>
       </p>
       <ul>
         <li>
-          <strong>Données :</strong> événements liés à ton identifiant et ton
-          nom — ouverture de l’app, création du profil, lecture biblique
-          (livre / chapitre / verset), marquage de versets, création de
-          flashcards, jours de plan lus, changement de thème, mise à jour du
-          profil.
+          <strong>Données :</strong> statut <em>Online</em> quand l’app est au
+          premier plan, <em>Offline</em> quand tu la quittes ou la mets en
+          arrière-plan, avec l’heure de dernière activité.
         </li>
         <li>
-          <strong>Finalité :</strong> monitoring du test par l’admin (comprendre
-          comment l’app est utilisée). Ces événements ne sont{" "}
-          <strong>pas montrés</strong> dans ton interface ; ils partent vers
-          l’espace technique privé du projet.
+          <strong>Finalité :</strong> indiquer à l’admin si tu es actuellement
+          dans l’app pendant le test (valable pour tous les utilisateurs, y
+          compris l’admin).
         </li>
       </ul>
 

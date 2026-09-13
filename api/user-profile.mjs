@@ -27,6 +27,8 @@ export default async function handler(req, res) {
       createdAt: body.createdAt,
       onboardedAt: body.onboardedAt,
       timeSpentMinutes: body.timeSpentMinutes,
+      presence: body.presence,
+      lastSeenAt: body.lastSeenAt,
       notionUrl: body.notionUrl || body.url,
       pageId: body.pageId,
     });

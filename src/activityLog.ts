@@ -10,12 +10,12 @@ import {
 const ACTIVITY_KEY = "biblos-activity-v1";
 const MAX_EVENTS = 300;
 
-/** Journal local + sync Notion (NOTION_ACTIVITY_DB) via activitySync. */
-export const ACTIVITY_TRACKING_ENABLED = true;
+/** Journal local désactivé — plus de sync Notion d’événements (évite le volume). */
+export const ACTIVITY_TRACKING_ENABLED = false;
 
 /**
  * Affichage in-app (profil / historique).
- * false = l’utilisateur ne voit pas son activité ; le sync Notion continue.
+ * false = l’utilisateur ne voit pas son activité.
  */
 export const ACTIVITY_UI_ENABLED = false;
 
@@ -152,9 +152,7 @@ export function appendActivity(
   const store = readStore();
   store.events = [event, ...store.events].slice(0, MAX_EVENTS);
   writeStore(store);
-  void import("./activitySync")
-    .then((mod) => mod.scheduleActivitySync(event))
-    .catch(() => undefined);
+  // Plus de sync Notion des événements d’activité (profil = nom + temps + présence).
   return event;
 }
 

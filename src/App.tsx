@@ -22,10 +22,9 @@ import {
   saveUserProfile,
   type UserProfile,
 } from "./userProfile";
-import { syncUserProfileToNotion } from "./userProfileSync";
+import { syncUserProfileToNotion, startPresenceAndUsageSync } from "./userProfileSync";
 import { startAppUsageTracking } from "./appUsage";
 import { flushAdminMessageOutbox } from "./adminMessage";
-import { syncAdminActivityAcrossDevices } from "./activitySync";
 import {
   listAllFlashcards,
   planCardIds,
@@ -171,14 +170,16 @@ export function App() {
 
   useEffect(() => {
     if (!isProfileOnboarded(profile)) return undefined;
-    void syncAdminActivityAcrossDevices().then(() => {
-      setActivityTick((n) => n + 1);
-    });
-    return startAppUsageTracking(() => {
-      void syncUserProfileToNotion().then((result) => {
+    const stopPresence = startPresenceAndUsageSync((next) => setProfile(next));
+    const stopUsage = startAppUsageTracking(() => {
+      void syncUserProfileToNotion(undefined, { presence: "Online" }).then((result) => {
         if (result.profile) setProfile(result.profile);
       });
     });
+    return () => {
+      stopUsage();
+      stopPresence();
+    };
   }, [profile.id, profile.onboardedAt]);
 
   useEffect(() => {
@@ -190,10 +191,7 @@ export function App() {
     function onOnline() {
       setOfflineToast(false);
       void flushAdminMessageOutbox();
-      void syncAdminActivityAcrossDevices().then(() => {
-        setActivityTick((n) => n + 1);
-      });
-      void syncUserProfileToNotion().then((result) => {
+      void syncUserProfileToNotion(undefined, { presence: "Online" }).then((result) => {
         if (result.profile) setProfile(result.profile);
       });
     }

@@ -897,6 +897,10 @@ export async function upsertUserProfile(token, input = {}) {
     Number.isFinite(timeSpentRaw) && timeSpentRaw >= 0
       ? Math.floor(timeSpentRaw)
       : null;
+  const presenceRaw = String(input.presence || "").trim();
+  const presence =
+    presenceRaw === "Online" || presenceRaw === "Offline" ? presenceRaw : null;
+  const lastSeenAt = input.lastSeenAt || (presence ? nowIso : null);
 
   let pageId = null;
   let existingPage = null;
@@ -948,6 +952,8 @@ export async function upsertUserProfile(token, input = {}) {
     ...(mergedMinutes != null
       ? { TimeSpentMinutes: { number: mergedMinutes } }
       : {}),
+    ...(presence ? { Presence: { select: { name: presence } } } : {}),
+    ...(lastSeenAt ? { LastSeenAt: isoDateTimeProp(lastSeenAt) } : {}),
   };
 
   if (pageId) {

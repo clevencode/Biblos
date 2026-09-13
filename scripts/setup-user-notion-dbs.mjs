@@ -66,6 +66,15 @@ const profileProps = {
   PreferredName: { rich_text: {} },
   DisplayName: { rich_text: {} },
   TimeSpentMinutes: { number: {} },
+  Presence: {
+    select: {
+      options: [
+        { name: "Online", color: "green" },
+        { name: "Offline", color: "gray" },
+      ],
+    },
+  },
+  LastSeenAt: { date: {} },
   CreatedAt: { date: {} },
   OnboardedAt: { date: {} },
   UpdatedAt: { date: {} },
