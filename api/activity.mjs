@@ -1,7 +1,7 @@
 /**
- * POST /api/activity — événement d’activité utilisateur → NOTION_ACTIVITY_DB.
+ * /api/activity — POST crée un événement ; GET liste par userId (pull admin).
  */
-import { createActivityEvent } from "../shared/notion.mjs";
+import { createActivityEvent, listActivityEvents } from "../shared/notion.mjs";
 
 export default async function handler(req, res) {
   try {
@@ -10,6 +10,15 @@ export default async function handler(req, res) {
 
     if (method === "OPTIONS") {
       res.status(204).end();
+      return;
+    }
+
+    if (method === "GET") {
+      const url = new URL(req.url || "/", "http://localhost");
+      const userId = url.searchParams.get("userId") || "";
+      const limit = Number(url.searchParams.get("limit")) || 80;
+      const result = await listActivityEvents(token, { userId, limit });
+      res.status(result.ok || result.hasToken === false ? 200 : 400).json(result);
       return;
     }
 

@@ -1,6 +1,11 @@
 /** Journal d’activité local, indexé par userId (pas par nom). */
 
-import { loadOrCreateProfile } from "./userProfile";
+import {
+  CLEVENCODE_ADMIN_USER_ID,
+  ensureStableAdminIdentity,
+  isClevencodeAdmin,
+  loadOrCreateProfile,
+} from "./userProfile";
 
 const ACTIVITY_KEY = "biblos-activity-v1";
 const MAX_EVENTS = 300;
@@ -36,6 +41,17 @@ type ActivityStore = {
   events: ActivityEvent[];
 };
 
+const ACTIVITY_TYPES = new Set<ActivityType>([
+  "app.open",
+  "onboarding.complete",
+  "plan.day_read",
+  "flashcard.create",
+  "verse.mark",
+  "theme.change",
+  "profile.update",
+  "bible.read",
+]);
+
 function newEventId(): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
     return crypto.randomUUID();
@@ -64,12 +80,67 @@ function writeStore(store: ActivityStore): void {
   }
 }
 
+/** UserId à stocker / syncer (admin = id stable multi-appareils). */
+export function resolveActivityUserId(userId?: string): string {
+  const profile = ensureStableAdminIdentity(loadOrCreateProfile());
+  if (isClevencodeAdmin(profile)) return CLEVENCODE_ADMIN_USER_ID;
+  const uid = String(userId || profile.id || "").trim();
+  return uid || profile.id;
+}
+
+/** Remappe les événements locaux admin vers l’id stable. */
+export function remapAdminActivityUserIds(): number {
+  if (!isClevencodeAdmin()) return 0;
+  const store = readStore();
+  let changed = 0;
+  const events = store.events.map((event) => {
+    if (event.userId === CLEVENCODE_ADMIN_USER_ID) return event;
+    changed += 1;
+    return { ...event, userId: CLEVENCODE_ADMIN_USER_ID };
+  });
+  if (changed > 0) writeStore({ events });
+  return changed;
+}
+
+/** Fusionne des événements distants (Notion) dans le journal local. */
+export function mergeRemoteActivityEvents(
+  remote: Array<Partial<ActivityEvent> & { id?: string; type?: string; at?: string }>,
+): number {
+  if (!ACTIVITY_TRACKING_ENABLED || !Array.isArray(remote) || !remote.length) return 0;
+  const store = readStore();
+  const byId = new Map(store.events.map((event) => [event.id, event]));
+  let added = 0;
+  for (const item of remote) {
+    const id = String(item.id || "").trim();
+    const type = String(item.type || "").trim() as ActivityType;
+    const at = String(item.at || "").trim();
+    if (!id || !ACTIVITY_TYPES.has(type) || !at) continue;
+    if (byId.has(id)) continue;
+    const userId = resolveActivityUserId(item.userId);
+    const event: ActivityEvent = {
+      id,
+      userId,
+      type,
+      at,
+      ...(item.meta && typeof item.meta === "object" ? { meta: item.meta as ActivityEvent["meta"] } : {}),
+    };
+    byId.set(id, event);
+    added += 1;
+  }
+  if (added === 0) return 0;
+  const events = [...byId.values()].sort(
+    (a, b) => new Date(b.at).getTime() - new Date(a.at).getTime(),
+  );
+  writeStore({ events: events.slice(0, MAX_EVENTS) });
+  return added;
+}
+
 export function appendActivity(
   type: ActivityType,
   meta?: ActivityEvent["meta"],
   userId?: string,
 ): ActivityEvent | null {
-  const uid = userId ?? loadOrCreateProfile().id;
+  const uid = resolveActivityUserId(userId);
   const event: ActivityEvent = {
     id: newEventId(),
     userId: uid,
@@ -92,7 +163,7 @@ export function listActivityForUser(
   limit = 40,
 ): ActivityEvent[] {
   if (!ACTIVITY_TRACKING_ENABLED) return [];
-  const uid = userId ?? loadOrCreateProfile().id;
+  const uid = resolveActivityUserId(userId);
   return readStore()
     .events.filter((event) => event.userId === uid)
     .slice(0, Math.max(1, limit));
@@ -103,7 +174,7 @@ export function listBibleReadingHistory(
   limit = 30,
 ): ActivityEvent[] {
   if (!ACTIVITY_TRACKING_ENABLED) return [];
-  const uid = userId ?? loadOrCreateProfile().id;
+  const uid = resolveActivityUserId(userId);
   return readStore()
     .events.filter((event) => event.userId === uid && event.type === "bible.read")
     .slice(0, Math.max(1, limit));

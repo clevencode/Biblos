@@ -1091,6 +1091,7 @@ export async function createAdminMessage(token, input = {}) {
 
 /**
  * Événement d’activité → NOTION_ACTIVITY_DB (une ligne par event, indexée UserId).
+ * Admin clevencode : UserId forcé vers l’id stable (tous appareils).
  */
 export async function createActivityEvent(token, input = {}) {
   if (!token) {
@@ -1102,10 +1103,21 @@ export async function createActivityEvent(token, input = {}) {
   }
 
   const localId = String(input.localId || input.id || "").trim();
-  const userId = String(input.userId || "").trim();
+  let userId = String(input.userId || "").trim();
   const type = String(input.type || "").trim();
   if (!localId || !userId || !type) {
     return { ok: false, error: "localId, userId ou type em falta", hasToken: true };
+  }
+
+  const displayName = String(input.displayName || "").trim() || "Lecteur";
+  const adminEvent =
+    userId === CLEVENCODE_ADMIN_USER_ID ||
+    isClevencodeAdminInput({
+      firstName: displayName,
+      preferredName: displayName,
+    });
+  if (adminEvent) {
+    userId = CLEVENCODE_ADMIN_USER_ID;
   }
 
   const existing = await findPageByLocalId(token, databaseId, localId);
@@ -1118,10 +1130,10 @@ export async function createActivityEvent(token, input = {}) {
       url: existing.url,
       created: false,
       skipped: true,
+      userId,
     };
   }
 
-  const displayName = String(input.displayName || "").trim() || "Lecteur";
   const atIso = input.at || new Date().toISOString();
   const nowIso = new Date().toISOString();
   let metaText = "";
@@ -1169,10 +1181,102 @@ export async function createActivityEvent(token, input = {}) {
     ok: true,
     hasToken: true,
     localId,
+    userId,
     pageId: page.id,
     url: notionPageUrl(page.id),
     created: true,
   };
+}
+
+/**
+ * Liste les événements d’activité Notion pour un UserId.
+ * Admin : inclut aussi les lignes Nome/DisplayName = clevencode (appareils anciens).
+ */
+export async function listActivityEvents(token, input = {}) {
+  if (!token) {
+    return { ok: false, error: "NOTION_TOKEN em falta", hasToken: false, items: [] };
+  }
+  const databaseId = activityDatabaseId();
+  if (!databaseId) {
+    return { ok: false, error: "NOTION_ACTIVITY_DB em falta", hasToken: true, items: [] };
+  }
+  const userId = String(input.userId || "").trim();
+  if (!userId) {
+    return { ok: false, error: "userId em falta", hasToken: true, items: [] };
+  }
+  const limit = Math.min(200, Math.max(1, Math.floor(Number(input.limit) || 80)));
+  const isAdmin = userId === CLEVENCODE_ADMIN_USER_ID;
+  const filter = isAdmin
+    ? {
+        or: [
+          { property: "UserId", rich_text: { equals: CLEVENCODE_ADMIN_USER_ID } },
+          { property: "Nome", rich_text: { equals: "clevencode" } },
+          { property: "DisplayName", rich_text: { equals: "clevencode" } },
+        ],
+      }
+    : {
+        property: "UserId",
+        rich_text: { equals: userId },
+      };
+
+  const items = [];
+  let cursor;
+  do {
+    const { ok, response, detail } = await notionFetch(
+      `https://api.notion.com/v1/databases/${databaseId}/query`,
+      {
+        method: "POST",
+        headers: notionHeaders(token, { "Content-Type": "application/json" }),
+        body: JSON.stringify({
+          page_size: Math.min(100, limit - items.length),
+          start_cursor: cursor,
+          filter,
+          sorts: [{ timestamp: "created_time", direction: "descending" }],
+        }),
+      },
+    );
+    if (!ok) {
+      return {
+        ok: false,
+        hasToken: true,
+        error: humanizeCreateError(response?.status ?? 0, detail),
+        items,
+      };
+    }
+    const body = await response.json().catch(() => ({}));
+    for (const page of body.results || []) {
+      const props = page.properties || {};
+      const type = String(plainPropText(props.Type) || "").trim();
+      const localId =
+        String(plainPropText(props.LocalId) || "").trim() || String(page.id || "");
+      const atRaw = props.At?.date?.start || page.created_time || new Date().toISOString();
+      let meta;
+      const metaText = String(plainPropText(props.Meta) || "").trim();
+      if (metaText) {
+        try {
+          meta = JSON.parse(metaText);
+        } catch {
+          meta = { raw: metaText };
+        }
+      }
+      items.push({
+        id: localId,
+        userId: isAdmin
+          ? CLEVENCODE_ADMIN_USER_ID
+          : String(plainPropText(props.UserId) || userId).trim(),
+        type,
+        at: atRaw,
+        ...(meta && typeof meta === "object" ? { meta } : {}),
+        displayName:
+          String(plainPropText(props.Nome) || plainPropText(props.DisplayName) || "").trim() ||
+          null,
+      });
+      if (items.length >= limit) break;
+    }
+    cursor = items.length < limit && body.has_more ? body.next_cursor : undefined;
+  } while (cursor);
+
+  return { ok: true, hasToken: true, items, userId: isAdmin ? CLEVENCODE_ADMIN_USER_ID : userId };
 }
 
 /**

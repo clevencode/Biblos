@@ -25,7 +25,7 @@ import {
 import { syncUserProfileToNotion } from "./userProfileSync";
 import { startAppUsageTracking } from "./appUsage";
 import { flushAdminMessageOutbox } from "./adminMessage";
-import { flushActivityOutbox } from "./activitySync";
+import { syncAdminActivityAcrossDevices } from "./activitySync";
 import {
   listAllFlashcards,
   planCardIds,
@@ -171,7 +171,9 @@ export function App() {
 
   useEffect(() => {
     if (!isProfileOnboarded(profile)) return undefined;
-    void flushActivityOutbox();
+    void syncAdminActivityAcrossDevices().then(() => {
+      setActivityTick((n) => n + 1);
+    });
     return startAppUsageTracking(() => {
       void syncUserProfileToNotion().then((result) => {
         if (result.profile) setProfile(result.profile);
@@ -188,7 +190,9 @@ export function App() {
     function onOnline() {
       setOfflineToast(false);
       void flushAdminMessageOutbox();
-      void flushActivityOutbox();
+      void syncAdminActivityAcrossDevices().then(() => {
+        setActivityTick((n) => n + 1);
+      });
       void syncUserProfileToNotion().then((result) => {
         if (result.profile) setProfile(result.profile);
       });

@@ -92,6 +92,14 @@ async function handleActivity(req: IncomingMessage, res: ServerResponse, token: 
     res.end();
     return;
   }
+  if (req.method === "GET") {
+    const userId = queryParam(req, "userId");
+    const limit = Number(queryParam(req, "limit")) || 80;
+    const { listActivityEvents } = await import("./shared/notion.mjs");
+    const result = await listActivityEvents(token, { userId, limit });
+    send(res, result.ok || result.hasToken === false ? 200 : 400, result);
+    return;
+  }
   if (req.method !== "POST") {
     send(res, 405, { ok: false, error: "méthode invalide" });
     return;

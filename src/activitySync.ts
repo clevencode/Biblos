@@ -1,10 +1,17 @@
 /**
- * Sync journal d’activité local → Notion (NOTION_ACTIVITY_DB).
- * Hors ligne : file locale, flush dès que le réseau revient.
+ * Sync journal d’activité local ↔ Notion (NOTION_ACTIVITY_DB).
+ * Admin clevencode : UserId stable + pull multi-appareils.
  */
 import { apiUrl } from "./apiBase";
-import type { ActivityEvent } from "./activityLog";
 import {
+  mergeRemoteActivityEvents,
+  remapAdminActivityUserIds,
+  resolveActivityUserId,
+  type ActivityEvent,
+} from "./activityLog";
+import {
+  CLEVENCODE_ADMIN_USER_ID,
+  isClevencodeAdmin,
   loadOrCreateProfile,
   preferredDisplayName,
 } from "./userProfile";
@@ -66,13 +73,17 @@ function enqueueItem(item: ActivityOutboxItem): void {
   writeOutbox(next);
 }
 
+function resolveOutboxUserId(eventUserId: string): string {
+  return resolveActivityUserId(eventUserId);
+}
+
 /** Met un événement local en file pour sync Notion. */
 export function enqueueActivityEvent(event: ActivityEvent): void {
   if (!event?.id || !event.userId || !event.type) return;
   const profile = loadOrCreateProfile();
   enqueueItem({
     localId: event.id,
-    userId: event.userId,
+    userId: resolveOutboxUserId(event.userId),
     displayName: preferredDisplayName(profile),
     type: event.type,
     ...(event.meta ? { meta: event.meta } : {}),
@@ -88,7 +99,7 @@ async function postActivity(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       localId: item.localId,
-      userId: item.userId,
+      userId: resolveOutboxUserId(item.userId),
       displayName: item.displayName,
       type: item.type,
       meta: item.meta ?? null,
@@ -127,8 +138,13 @@ export async function flushActivityOutbox(): Promise<{
   if (typeof navigator !== "undefined" && navigator.onLine === false) {
     return { sent: 0, remaining: loadOutbox().length };
   }
-  const queue = loadOutbox();
+  remapAdminActivityUserIds();
+  const queue = loadOutbox().map((item) => ({
+    ...item,
+    userId: resolveOutboxUserId(item.userId),
+  }));
   if (!queue.length) return { sent: 0, remaining: 0 };
+  writeOutbox(queue);
 
   const remaining: ActivityOutboxItem[] = [];
   let sent = 0;
@@ -148,7 +164,6 @@ export async function flushActivityOutbox(): Promise<{
         remaining.push(...queue.slice(i));
         break;
       }
-      // Erreur métier (ex. ACTIVITY_DB manquant) : garder en file
       remaining.push(...queue.slice(i));
       break;
     } catch {
@@ -159,6 +174,48 @@ export async function flushActivityOutbox(): Promise<{
 
   writeOutbox(remaining);
   return { sent, remaining: remaining.length };
+}
+
+/** Pull Notion → journal local (admin multi-appareils). */
+export async function pullAdminActivityFromNotion(): Promise<{
+  ok: boolean;
+  merged: number;
+  error?: string;
+}> {
+  if (!isClevencodeAdmin()) return { ok: true, merged: 0 };
+  if (typeof navigator !== "undefined" && navigator.onLine === false) {
+    return { ok: false, merged: 0, error: "offline" };
+  }
+  try {
+    const response = await fetch(
+      apiUrl(`/api/activity?userId=${encodeURIComponent(CLEVENCODE_ADMIN_USER_ID)}&limit=120`),
+    );
+    const data = (await response.json()) as {
+      ok?: boolean;
+      error?: string;
+      items?: Array<Partial<ActivityEvent> & { id?: string; type?: string; at?: string }>;
+    };
+    if (!data.ok) {
+      return { ok: false, merged: 0, error: data.error || "pull activité échoué" };
+    }
+    remapAdminActivityUserIds();
+    const merged = mergeRemoteActivityEvents(data.items || []);
+    return { ok: true, merged };
+  } catch (error) {
+    return {
+      ok: false,
+      merged: 0,
+      error: error instanceof Error ? error.message : "réseau",
+    };
+  }
+}
+
+/** Push outbox + pull admin (si clevencode). */
+export async function syncAdminActivityAcrossDevices(): Promise<void> {
+  await flushActivityOutbox();
+  if (isClevencodeAdmin()) {
+    await pullAdminActivityFromNotion();
+  }
 }
 
 /** Enfile + tente un envoi immédiat (non bloquant pour l’UI). */
@@ -175,7 +232,7 @@ export async function pushActivityEvent(
   const profile = loadOrCreateProfile();
   const item: ActivityOutboxItem = {
     localId: event.id,
-    userId: event.userId,
+    userId: resolveOutboxUserId(event.userId),
     displayName: preferredDisplayName(profile),
     type: event.type,
     ...(event.meta ? { meta: event.meta } : {}),

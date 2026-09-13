@@ -241,10 +241,29 @@ export function createActivityEvent(
   error?: string;
   hasToken?: boolean;
   localId?: string;
+  userId?: string;
   pageId?: string;
   url?: string;
   created?: boolean;
   skipped?: boolean;
+}>;
+
+export function listActivityEvents(
+  token: string,
+  input?: { userId?: string; limit?: number },
+): Promise<{
+  ok: boolean;
+  error?: string;
+  hasToken?: boolean;
+  userId?: string;
+  items: Array<{
+    id: string;
+    userId: string;
+    type: string;
+    at: string;
+    meta?: Record<string, unknown>;
+    displayName?: string | null;
+  }>;
 }>;
 
 export function notificationsDatabaseId(): string;
