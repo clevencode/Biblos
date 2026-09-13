@@ -15,6 +15,7 @@ import { appendActivity, recordBibleRead } from "./activityLog";
 import { listAllVerseMarks } from "./verseMarks";
 import {
   completeOnboarding,
+  isClevencodeAdmin,
   isProfileOnboarded,
   loadOrCreateProfile,
   preferredDisplayName,
@@ -661,6 +662,7 @@ export function App() {
     setActivityTick((n) => n + 1);
 
     void (async () => {
+      if (!isClevencodeAdmin(profile)) return;
       const { syncVerseCardToNotion, attachNotionUrlToCatalog } = await import("./verseCardSync");
       const result = await syncVerseCardToNotion(card);
       if (result.ok && result.url) {
@@ -675,6 +677,7 @@ export function App() {
     setCatalog((current) => removeCardFromCatalog(current, card.id));
     setRetentionTick((value) => value + 1);
     void (async () => {
+      if (!isClevencodeAdmin(profile)) return;
       const { archiveRemoteVerseCard } = await import("./verseCardSync");
       await archiveRemoteVerseCard(card);
     })();

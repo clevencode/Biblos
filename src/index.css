@@ -8774,26 +8774,27 @@ ul.plan-yv-day-note-ref {
   display: grid;
   /* head · campo · filtros · legenda · lista */
   grid-template-rows: auto auto auto auto minmax(0, 1fr);
-  gap: 6px;
+  gap: 10px;
   padding:
-    calc(10px + env(safe-area-inset-top, 0px))
-    16px
-    calc(16px + env(safe-area-inset-bottom, 0px));
+    max(12px, env(safe-area-inset-top, 0px))
+    max(var(--mobile-gutter, 12px), env(safe-area-inset-right, 0px))
+    calc(16px + env(safe-area-inset-bottom, 0px))
+    max(var(--mobile-gutter, 12px), env(safe-area-inset-left, 0px));
   overflow: hidden;
-  background-color: var(--sheet-bg);
-  background-image:
-    linear-gradient(
-      180deg,
-      var(--sheet-bg) 0%,
-      color-mix(in srgb, var(--yv-surface, var(--surface)) 88%, var(--elevated)) 100%
-    );
+  background: var(--panel);
+  box-shadow: none;
   animation: bible-search-sheet-in 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.app.is-bible-mode.is-narrow .bible-search-sheet {
+  bottom: var(--bible-dock-lift, var(--mobile-bottom-chrome, 0px));
+  padding-bottom: 12px;
 }
 
 @keyframes bible-search-sheet-in {
   from {
     opacity: 0;
-    transform: translate3d(0, 14px, 0);
+    transform: translate3d(0, 10px, 0);
   }
   to {
     opacity: 1;
@@ -8816,7 +8817,7 @@ ul.plan-yv-day-note-ref {
   display: grid;
   place-items: center;
   border: 0;
-  border-radius: 999px;
+  border-radius: 12px;
   background: color-mix(in srgb, var(--text) 6%, transparent);
   color: var(--text);
   font-size: 1.45rem;
@@ -8848,7 +8849,7 @@ ul.plan-yv-day-note-ref {
   display: grid;
   place-items: center;
   border: 0;
-  border-radius: 999px;
+  border-radius: 12px;
   background: color-mix(in srgb, var(--text) 6%, transparent);
   color: var(--text);
   cursor: pointer;
@@ -8904,7 +8905,7 @@ ul.plan-yv-day-note-ref {
 
 .bible-search-filters {
   display: grid;
-  gap: 8px;
+  gap: 10px;
   padding: 0;
 }
 
@@ -8916,29 +8917,30 @@ ul.plan-yv-day-note-ref {
 
 .bible-search-scope-btn {
   margin: 0;
-  min-height: 34px;
+  min-height: 36px;
   padding: 6px 8px;
-  border: 1px solid color-mix(in srgb, var(--line) 85%, transparent);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--elevated) 92%, transparent);
-  color: color-mix(in srgb, var(--text) 70%, transparent);
+  border: 0;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+  color: color-mix(in srgb, var(--text) 72%, var(--muted));
   font: inherit;
   font-size: 0.78rem;
   font-weight: 650;
   letter-spacing: 0.02em;
   cursor: pointer;
+  box-shadow: none;
 }
 
 .bible-search-scope-btn.is-on {
-  border-color: color-mix(in srgb, var(--accent) 35%, var(--line));
-  background: color-mix(in srgb, var(--accent) 12%, var(--elevated));
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
   color: var(--accent);
+  box-shadow: none;
 }
 
 .bible-search-book-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   min-width: 0;
 }
 
@@ -8952,21 +8954,23 @@ ul.plan-yv-day-note-ref {
   flex: 1;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 10px;
   min-width: 0;
-  min-height: 42px;
+  min-height: 44px;
   margin: 0;
-  padding: 8px 12px 8px 14px;
-  border: 1px solid color-mix(in srgb, var(--line) 85%, transparent);
+  padding: 8px 14px;
+  border: 0;
   border-radius: 12px;
-  background: var(--elevated);
-  color: var(--muted);
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+  color: color-mix(in srgb, var(--text) 70%, var(--muted));
   font: inherit;
   font-size: 0.92rem;
-  font-weight: 600;
+  font-weight: 650;
   text-align: left;
   cursor: pointer;
+  box-shadow: none;
+  overflow: hidden;
 }
 
 .bible-search-book-trigger.has-value {
@@ -8974,42 +8978,33 @@ ul.plan-yv-day-note-ref {
 }
 
 .bible-search-book-trigger.is-open {
-  border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 16%, transparent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--text);
+  box-shadow: none;
 }
 
 .bible-search-book-trigger-label {
+  display: block;
+  width: 100%;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.bible-search-book-trigger-chevron {
-  flex: none;
-  color: var(--muted);
-  font-size: 0.75rem;
-  line-height: 1;
-}
-
 .bible-search-book-panel {
   display: grid;
   gap: 14px;
-  max-height: min(42vh, 320px);
+  max-height: min(52dvh, 420px);
   overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   margin: 0;
-  padding: 12px;
-  border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
-  border-radius: 16px;
-  background:
-    linear-gradient(
-      180deg,
-      var(--elevated) 0%,
-      color-mix(in srgb, var(--surface) 55%, var(--elevated)) 100%
-    );
-  box-shadow:
-    0 1px 0 color-mix(in srgb, var(--sheen) 80%, transparent),
-    0 10px 28px color-mix(in srgb, var(--text) 8%, transparent);
+  padding: 4px 0 4px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
   scrollbar-width: thin;
 }
 
@@ -9023,65 +9018,65 @@ ul.plan-yv-day-note-ref {
   margin: 0;
   padding: 0 2px;
   font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.07em;
+  font-weight: 650;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: color-mix(in srgb, var(--muted) 88%, var(--text));
 }
 
 .bible-search-book-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 7px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
 }
 
 .bible-search-book-option {
   min-width: 0;
-  min-height: 40px;
+  min-height: 44px;
   margin: 0;
-  padding: 8px 10px;
-  border: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--surface) 72%, var(--elevated));
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--text) 6%, transparent);
   color: var(--text);
   font: inherit;
-  font-size: 0.82rem;
+  font-size: 0.92rem;
   font-weight: 650;
-  line-height: 1.2;
-  text-align: center;
+  line-height: 1.25;
+  text-align: left;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   cursor: pointer;
+  box-shadow: none;
 }
 
 .bible-search-book-option:hover {
-  border-color: color-mix(in srgb, var(--text) 22%, var(--line));
-  background: color-mix(in srgb, var(--text) 4%, var(--elevated));
+  background: color-mix(in srgb, var(--text) 10%, transparent);
 }
 
 .bible-search-book-option.is-on {
-  border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
-  background: color-mix(in srgb, var(--accent) 14%, var(--elevated));
-  color: var(--accent);
+  background: var(--accent);
+  color: #fff;
 }
 
 .bible-search-book-clear {
   flex: none;
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   margin: 0;
   padding: 0;
-  border: 1px solid color-mix(in srgb, var(--line) 85%, transparent);
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--elevated) 92%, transparent);
-  color: var(--muted);
+  border: 0;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+  color: color-mix(in srgb, var(--text) 70%, var(--muted));
   font: inherit;
   font-size: 1.2rem;
   line-height: 1;
   cursor: pointer;
+  box-shadow: none;
 }
 
 .bible-search-book-clear:hover {
@@ -9114,10 +9109,10 @@ ul.plan-yv-day-note-ref {
   justify-content: space-between;
   gap: 10px;
   min-width: 0;
-  padding: 8px 10px;
+  padding: 8px 12px;
   border-radius: 12px;
-  background: color-mix(in srgb, var(--accent) 8%, var(--elevated));
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  box-shadow: none;
 }
 
 .bible-search-filter-chip-text {
@@ -9161,21 +9156,22 @@ ul.plan-yv-day-note-ref {
   display: grid;
   grid-template-columns: 40px minmax(0, 1fr) 40px;
   align-items: center;
-  border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
-  border-radius: 14px;
-  background: var(--elevated);
-  box-shadow: 0 1px 0 color-mix(in srgb, var(--sheen) 80%, transparent);
+  border: 0;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+  box-shadow: none;
 }
 
 .bible-search-sheet-input-wrap:focus-within {
-  outline: 2px solid color-mix(in srgb, var(--accent) 45%, transparent);
-  outline-offset: 1px;
+  outline: none;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent);
 }
 
 .bible-search-sheet-glyph {
   display: grid;
   place-items: center;
-  color: var(--muted);
+  color: color-mix(in srgb, var(--muted) 88%, var(--text));
   pointer-events: none;
 }
 
@@ -9204,9 +9200,9 @@ ul.plan-yv-day-note-ref {
   display: grid;
   place-items: center;
   border: 0;
-  border-radius: 999px;
+  border-radius: 12px;
   background: color-mix(in srgb, var(--text) 6%, transparent);
-  color: var(--muted);
+  color: color-mix(in srgb, var(--muted) 88%, var(--text));
   font-size: 1.2rem;
   line-height: 1;
   cursor: pointer;
@@ -9251,7 +9247,7 @@ ul.plan-yv-day-note-ref {
   overflow: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
-  background-color: var(--sheet-bg);
+  background: transparent;
 }
 
 .bible-search-sheet-item {
@@ -9259,9 +9255,10 @@ ul.plan-yv-day-note-ref {
   display: grid;
   gap: 4px;
   margin: 0;
-  padding: 14px 10px;
+  padding: 12px 10px;
   border: 0;
-  border-bottom: 1px solid color-mix(in srgb, var(--text) 8%, transparent);
+  border-radius: 12px;
+  border-bottom: 0;
   background: transparent;
   color: inherit;
   text-align: left;
@@ -9269,7 +9266,7 @@ ul.plan-yv-day-note-ref {
 }
 
 .bible-search-sheet-item:hover {
-  background: var(--hover);
+  background: color-mix(in srgb, var(--text) 6%, transparent);
 }
 
 .bible-search-sheet-ref {

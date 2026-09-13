@@ -1,13 +1,20 @@
 /**
  * Sync VERSECARD locaux (Bible) → Notion BIBLECARDS.
- * Création reste local-first ; cette file pousse l’URL Notion dès que l’intégration a accès à la DB.
+ * Création reste local-first ; seule l’admin clevencode pousse vers Notion.
+ * Les autres utilisateurs gardent les cartes dans le stockage local de l’appareil.
  */
 import type { Catalog, Flashcard } from "./types";
 import { isBiblosFlashcard } from "./catalog";
 import { persistCatalogCache } from "./catalogSync";
 import { loadOverride, notifyFlashcardRevision } from "./cardOverrides";
+import { isClevencodeAdmin } from "./userProfile";
 
 const OUTBOX_KEY = "biblos-verse-create-outbox";
+
+/** Seul l’admin propriétaire synchronise les VERSECARD vers Notion. */
+export function canPushVerseCardsToNotion(): boolean {
+  return isClevencodeAdmin();
+}
 
 export type VerseCreateOutboxItem = {
   id: string;
@@ -38,8 +45,9 @@ export function listVerseCreateOutbox(): VerseCreateOutboxItem[] {
   return loadOutbox();
 }
 
-/** Met le flashcard local en file pour création Notion. */
+/** Met le flashcard local en file pour création Notion (admin seulement). */
 export function enqueueVerseCardCreate(card: Flashcard) {
+  if (!canPushVerseCardsToNotion()) return;
   if (!isBiblosFlashcard(card)) return;
   if (card.url && /notion\.(so|com|site)/i.test(card.url)) return;
   const next: VerseCreateOutboxItem = {
@@ -90,8 +98,11 @@ export type PushVerseResult = {
   updates: Array<{ localId: string; url: string }>;
 };
 
-/** Pousse la file verse → Notion (un par un). */
+/** Pousse la file verse → Notion (un par un). Admin seulement. */
 export async function flushVerseCardCreates(): Promise<PushVerseResult> {
+  if (!canPushVerseCardsToNotion()) {
+    return { pushed: 0, remaining: 0, updates: [] };
+  }
   const pending = loadOutbox();
   if (!pending.length) return { pushed: 0, remaining: 0, updates: [] };
 
@@ -151,8 +162,9 @@ export async function flushVerseCardCreates(): Promise<PushVerseResult> {
   return { pushed, remaining: kept.length, error, updates };
 }
 
-/** Remplit la file avec les VERSECARD locaux sans URL Notion. */
+/** Remplit la file avec les VERSECARD locaux sans URL Notion (admin seulement). */
 export function enqueuePendingVerseCreatesFromCatalog(catalog: Catalog) {
+  if (!canPushVerseCardsToNotion()) return;
   for (const note of catalog.notas ?? []) {
     for (const card of note.flashcards ?? []) {
       if (needsNotionCreate(card)) enqueueVerseCardCreate(card);
@@ -160,12 +172,15 @@ export function enqueuePendingVerseCreatesFromCatalog(catalog: Catalog) {
   }
 }
 
-/** Archive la page Notion d’une VERSECARD (si elle a déjà une URL). */
+/** Archive la page Notion d’une VERSECARD (si elle a déjà une URL). Admin seulement. */
 export async function archiveRemoteVerseCard(card: Pick<Flashcard, "id" | "url">): Promise<{
   ok: boolean;
   error?: string;
 }> {
   removeVerseCreateOutbox(card.id);
+  if (!canPushVerseCardsToNotion()) {
+    return { ok: true };
+  }
   if (!card.url || !/notion\.(so|com|site)/i.test(card.url)) {
     return { ok: true };
   }
@@ -187,13 +202,16 @@ export async function archiveRemoteVerseCard(card: Pick<Flashcard, "id" | "url">
   }
 }
 
-/** Enfile + tente un push immédiat (après création Bible). */
+/** Enfile + tente un push immédiat (après création Bible). No-op hors admin. */
 export async function syncVerseCardToNotion(card: Flashcard): Promise<{
   ok: boolean;
   url?: string;
   queued: boolean;
   error?: string;
 }> {
+  if (!canPushVerseCardsToNotion()) {
+    return { ok: true, queued: false };
+  }
   enqueueVerseCardCreate(card);
   const result = await flushVerseCardCreates();
   const hit = result.updates.find((item) => item.localId === card.id);

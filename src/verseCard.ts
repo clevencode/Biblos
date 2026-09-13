@@ -1,6 +1,6 @@
 /**
  * VERSECARD a partir da Bible (YouVersion) — local-first.
- * Sync Notion: `verseCardSync.ts` (outbox → POST /api/verse-card).
+ * Sync Notion (admin clevencode seulement): `verseCardSync.ts` (outbox → POST /api/verse-card).
  */
 import { todayKey } from "./calendar";
 import { applyRemoteOverride, notifyFlashcardRevision } from "./cardOverrides";

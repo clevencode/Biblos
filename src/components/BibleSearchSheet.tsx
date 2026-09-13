@@ -79,7 +79,7 @@ function scopeLabel(scope: SearchScope, bookId: string): string | null {
   if (scope === "nt") return "Nouveau Testament";
   if (scope === "book") {
     const book = CANON_BOOKS.find((item) => item.id === bookId);
-    return book?.title ?? null;
+    return book?.title ?? "Livre";
   }
   return null;
 }
@@ -100,11 +100,9 @@ export function BibleSearchSheet({ open, onClose, onSelect }: BibleSearchSheetPr
   const titleId = useId();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const listRef = useRef<HTMLUListElement | null>(null);
-  const bookPickerRef = useRef<HTMLDivElement | null>(null);
   const [query, setQuery] = useState("");
   const [scope, setScope] = useState<SearchScope>("all");
   const [bookId, setBookId] = useState("");
-  const [bookPickerOpen, setBookPickerOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
@@ -113,12 +111,12 @@ export function BibleSearchSheet({ open, onClose, onSelect }: BibleSearchSheetPr
 
   const filterActive = scope !== "all";
   const bookReady = scope !== "book" || Boolean(bookId);
+  const showBookList = scope === "book" && !bookId;
   const bookFilter = useMemo(
     () => (bookReady ? booksForSearchScope(scope, bookId) : null),
     [scope, bookId, bookReady],
   );
   const activeFilterLabel = scopeLabel(scope, bookId);
-  const selectedBook = CANON_BOOKS.find((book) => book.id === bookId) ?? null;
 
   const otBooks = useMemo(
     () => CANON_BOOKS.filter((book) => book.testament === "at"),
@@ -132,7 +130,6 @@ export function BibleSearchSheet({ open, onClose, onSelect }: BibleSearchSheetPr
   function clearFilter() {
     setScope("all");
     setBookId("");
-    setBookPickerOpen(false);
   }
 
   function toggleScope(next: SearchScope) {
@@ -141,17 +138,11 @@ export function BibleSearchSheet({ open, onClose, onSelect }: BibleSearchSheetPr
       return;
     }
     setScope(next);
-    if (next !== "book") {
-      setBookId("");
-      setBookPickerOpen(false);
-    } else {
-      setBookPickerOpen(true);
-    }
+    setBookId("");
   }
 
   function pickBook(id: string) {
     setBookId(id);
-    setBookPickerOpen(false);
     inputRef.current?.focus();
   }
 
@@ -169,11 +160,6 @@ export function BibleSearchSheet({ open, onClose, onSelect }: BibleSearchSheetPr
     if (!open) return;
     const onKey = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
-      if (bookPickerOpen) {
-        event.preventDefault();
-        setBookPickerOpen(false);
-        return;
-      }
       if (filterActive) {
         event.preventDefault();
         clearFilter();
@@ -183,17 +169,7 @@ export function BibleSearchSheet({ open, onClose, onSelect }: BibleSearchSheetPr
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose, filterActive, bookPickerOpen]);
-
-  useEffect(() => {
-    if (!bookPickerOpen) return;
-    function onPointerDown(event: PointerEvent) {
-      if (bookPickerRef.current?.contains(event.target as Node)) return;
-      setBookPickerOpen(false);
-    }
-    window.addEventListener("pointerdown", onPointerDown);
-    return () => window.removeEventListener("pointerdown", onPointerDown);
-  }, [bookPickerOpen]);
+  }, [open, onClose, filterActive]);
 
   useEffect(() => {
     if (!open) return;
@@ -330,94 +306,6 @@ export function BibleSearchSheet({ open, onClose, onSelect }: BibleSearchSheetPr
           })}
         </div>
 
-        {scope === "book" ? (
-          <div className="bible-search-book-picker" ref={bookPickerRef}>
-            <div className="bible-search-book-row">
-              <button
-                type="button"
-                className={`bible-search-book-trigger${bookPickerOpen ? " is-open" : ""}${selectedBook ? " has-value" : ""}`}
-                aria-haspopup="listbox"
-                aria-expanded={bookPickerOpen}
-                aria-label="Choisir un livre"
-                onClick={() => setBookPickerOpen((value) => !value)}
-              >
-                <span className="bible-search-book-trigger-label">
-                  {selectedBook ? selectedBook.title : "Choisir un livre…"}
-                </span>
-                <span className="bible-search-book-trigger-chevron" aria-hidden>
-                  {bookPickerOpen ? "▴" : "▾"}
-                </span>
-              </button>
-              {bookId ? (
-                <button
-                  type="button"
-                  className="bible-search-book-clear"
-                  aria-label="Effacer le livre"
-                  onClick={() => {
-                    setBookId("");
-                    setBookPickerOpen(true);
-                  }}
-                >
-                  ×
-                </button>
-              ) : null}
-            </div>
-
-            {bookPickerOpen ? (
-              <div
-                className="bible-search-book-panel"
-                role="listbox"
-                aria-label="Livres de la Bible"
-              >
-                <div className="bible-search-book-section">
-                  <p className="bible-search-book-section-title">
-                    Ancien Testament
-                  </p>
-                  <div className="bible-search-book-grid">
-                    {otBooks.map((book) => {
-                      const on = book.id === bookId;
-                      return (
-                        <button
-                          key={book.id}
-                          type="button"
-                          role="option"
-                          aria-selected={on}
-                          className={`bible-search-book-option${on ? " is-on" : ""}`}
-                          onClick={() => pickBook(book.id)}
-                        >
-                          {book.title}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-                <div className="bible-search-book-section">
-                  <p className="bible-search-book-section-title">
-                    Nouveau Testament
-                  </p>
-                  <div className="bible-search-book-grid">
-                    {ntBooks.map((book) => {
-                      const on = book.id === bookId;
-                      return (
-                        <button
-                          key={book.id}
-                          type="button"
-                          role="option"
-                          aria-selected={on}
-                          className={`bible-search-book-option${on ? " is-on" : ""}`}
-                          onClick={() => pickBook(book.id)}
-                        >
-                          {book.title}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            ) : null}
-          </div>
-        ) : null}
-
         {filterActive ? (
           <div className="bible-search-filter-chip">
             <span className="bible-search-filter-chip-text">
@@ -430,6 +318,53 @@ export function BibleSearchSheet({ open, onClose, onSelect }: BibleSearchSheetPr
             >
               Annuler
             </button>
+          </div>
+        ) : null}
+
+        {showBookList ? (
+          <div
+            className="bible-search-book-panel"
+            role="listbox"
+            aria-label="Livres de la Bible"
+          >
+            <div className="bible-search-book-section">
+              <p className="bible-search-book-section-title">
+                Ancien Testament
+              </p>
+              <div className="bible-search-book-grid">
+                {otBooks.map((book) => (
+                  <button
+                    key={book.id}
+                    type="button"
+                    role="option"
+                    aria-selected={false}
+                    className="bible-search-book-option"
+                    onClick={() => pickBook(book.id)}
+                  >
+                    {book.title}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="bible-search-book-section">
+              <p className="bible-search-book-section-title">
+                Nouveau Testament
+              </p>
+              <div className="bible-search-book-grid">
+                {ntBooks.map((book) => (
+                  <button
+                    key={book.id}
+                    type="button"
+                    role="option"
+                    aria-selected={false}
+                    className="bible-search-book-option"
+                    onClick={() => pickBook(book.id)}
+                  >
+                    {book.title}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         ) : null}
       </div>
