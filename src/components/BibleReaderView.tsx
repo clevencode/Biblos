@@ -111,15 +111,11 @@ const FOCUS_DIM_CLEAR_PX = 6;
 
 const EMPTY_VERSES: number[] = [];
 
-/** UI atom: hero ↔ compacto no topo (classe `is-head-compact`, com histerese). */
-function applyBibleHeadCompact(reader: HTMLElement | null, scrollTop: number) {
-  if (!reader) return;
-  const compact = reader.classList.contains("is-head-compact");
-  if (!compact && scrollTop >= BIBLE_HEAD_COMPACT_ENTER_PX) {
-    reader.classList.add("is-head-compact");
-  } else if (compact && scrollTop <= BIBLE_HEAD_COMPACT_EXIT_PX) {
-    reader.classList.remove("is-head-compact");
-  }
+/** UI atom: hero ↔ compacto no topo (histerese). Devolve o próximo estado — React controla a classe. */
+function nextHeadCompact(compact: boolean, scrollTop: number): boolean {
+  if (!compact && scrollTop >= BIBLE_HEAD_COMPACT_ENTER_PX) return true;
+  if (compact && scrollTop <= BIBLE_HEAD_COMPACT_EXIT_PX) return false;
+  return compact;
 }
 
 /** Sélection multi-versets (toggle, pas forcément contigus). */
@@ -433,11 +429,16 @@ export function BibleReaderView({
   const [highlightVerse, setHighlightVerse] = useState<number | null>(
     initialParts.verse ?? null,
   );
+  const [highlightVerseEnd, setHighlightVerseEnd] = useState<number | null>(null);
+  /** Título compacto no topo — estado React (não classList) para sobreviver a re-renders. */
+  const [headCompact, setHeadCompact] = useState(false);
   /** Texto opaco (foco YouVersion) após escolher livro/capítulo/verso — some no 1.º scroll. */
   const [focusDimActive, setFocusDimActive] = useState(
     () => initialParts.verse != null,
   );
   const focusDimActiveRef = useRef(initialParts.verse != null);
+  /** Salto no picker: prioriza o verso saltado sobre a janela do plano. */
+  const preferJumpFocusRef = useRef(false);
   const [selection, setSelection] = useState<VerseSelection | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -501,7 +502,12 @@ export function BibleReaderView({
   const clearFocusDimOnUserScroll = () => {
     if (!focusDimActiveRef.current) return;
     focusDimActiveRef.current = false;
+    preferJumpFocusRef.current = false;
     setFocusDimActive(false);
+  };
+
+  const syncHeadCompact = (scrollTop: number) => {
+    setHeadCompact((prev) => nextHeadCompact(prev, scrollTop));
   };
 
   useEffect(() => {
@@ -784,16 +790,20 @@ export function BibleReaderView({
     nextBook: string,
     nextChapter: string,
     verse: number | null = null,
-    _verseEnd: number | null = null,
+    verseEnd: number | null = null,
   ) {
     const gen = ++loadGen.current;
     pendingScrollVerse.current =
       verse != null
         ? { number: verse, mode: "start", seq: ++verseScrollSeq.current }
         : { number: 0, mode: "top", seq: ++verseScrollSeq.current };
+    preferJumpFocusRef.current = false;
     setBookId(nextBook);
     setChapterId(nextChapter);
     setHighlightVerse(verse);
+    setHighlightVerseEnd(
+      verse != null && verseEnd != null && verseEnd !== verse ? verseEnd : null,
+    );
     setFocusDim(verse != null);
     // Navigation / deep-link : surligne et scroll, sans ouvrir le panneau Marquer.
     setSelection(null);
@@ -836,6 +846,7 @@ export function BibleReaderView({
 
   function selectVerse(number: number) {
     // Side-effects fora do updater (React pode correr updaters na fase de render).
+    preferJumpFocusRef.current = false;
     const current = selection;
     const next = new Set(current ?? []);
     if (next.has(number)) next.delete(number);
@@ -845,12 +856,14 @@ export function BibleReaderView({
       pendingScrollVerse.current = null;
       lastAppliedVerseScroll.current = "";
       setHighlightVerse(null);
+      setHighlightVerseEnd(null);
       setFocusDim(false);
       setSelection(null);
     } else {
       const mode: VerseScrollMode = current?.length ? "nearest" : "start";
       pendingScrollVerse.current = { number, mode, seq: ++verseScrollSeq.current };
       setHighlightVerse(number);
+      setHighlightVerseEnd(null);
       setFocusDim(false);
       if (!current?.length) setCardColor(loadPreferredVerseColor());
       setSelection(sortVerses(next));
@@ -860,9 +873,11 @@ export function BibleReaderView({
   }
 
   function jumpToVerse(number: number) {
+    preferJumpFocusRef.current = true;
     pendingScrollVerse.current = { number, mode: "start", seq: ++verseScrollSeq.current };
     setSelection(null);
     setHighlightVerse(number);
+    setHighlightVerseEnd(null);
     setFocusDim(true);
     setCardMsg(null);
     setPickerOpen(false);
@@ -902,8 +917,10 @@ export function BibleReaderView({
   }
 
   function closeCreateCard() {
+    preferJumpFocusRef.current = false;
     setSelection(null);
     setHighlightVerse(null);
+    setHighlightVerseEnd(null);
     setFocusDim(false);
     setCardMsg(null);
     setCardColor(loadPreferredVerseColor());
@@ -1280,13 +1297,13 @@ export function BibleReaderView({
       requestAnimationFrame(() => {
         alignVerseInScroller(root, reader, verseEl, pending.mode === "start" ? "start" : "nearest");
         lastScrollTop.current = root.scrollTop;
-        applyBibleHeadCompact(reader, root.scrollTop);
+        syncHeadCompact(root.scrollTop);
       });
     }
     lastScrollTop.current = root.scrollTop;
     scrollAcc.current = 0;
     chromeLockUntil.current = performance.now() + CHROME_PROGRAMMATIC_LOCK_MS;
-    applyBibleHeadCompact(reader, root.scrollTop);
+    syncHeadCompact(root.scrollTop);
     lastAppliedVerseScroll.current = key;
   }, [active, loading, passage?.id, highlightVerse, selection, showCreateCard, pickerOpen, planReading?.label]);
 
@@ -1423,14 +1440,14 @@ export function BibleReaderView({
     lastScrollTop.current = passageScrollRef.current?.scrollTop ?? 0;
     scrollAcc.current = 0;
     chromeLockUntil.current = performance.now() + CHROME_PROGRAMMATIC_LOCK_MS;
-    applyBibleHeadCompact(readerRef.current, passageScrollRef.current?.scrollTop ?? 0);
+    syncHeadCompact(passageScrollRef.current?.scrollTop ?? 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- setReadingChrome is a render-local helper
   }, [bookId, chapterId, planReading?.label]);
 
   useEffect(() => {
-    if (planReading) setFocusDim(true);
+    if (planReading && onPlanStep) setFocusDim(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional plan focus reset
-  }, [planReading?.label, planReading?.verseStart, planReading?.verseEnd]);
+  }, [planReading?.label, planReading?.verseStart, planReading?.verseEnd, onPlanStep]);
 
   useEffect(() => {
     if (!active) {
@@ -1445,7 +1462,7 @@ export function BibleReaderView({
     // Sync baseline so a restored/programmatic offset doesn't look like a huge down-scroll.
     lastScrollTop.current = root.scrollTop;
     scrollAcc.current = 0;
-    applyBibleHeadCompact(readerRef.current, root.scrollTop);
+    syncHeadCompact(root.scrollTop);
 
     const onScroll = () => {
       if (scrollRaf.current) return;
@@ -1463,7 +1480,7 @@ export function BibleReaderView({
         const top = rawTop;
         const delta = top - lastScrollTop.current;
         lastScrollTop.current = top;
-        applyBibleHeadCompact(readerRef.current, top);
+        syncHeadCompact(top);
 
         // 1.º scroll do utilizador: desliga o texto opaco (foco livro→capítulo→verso).
         if (
@@ -1538,7 +1555,7 @@ export function BibleReaderView({
   return (
     <section
       ref={readerRef}
-      className={`bible-reader bible-reader--yv${hideChrome ? " is-chrome-hidden" : ""}${showCreateCard ? " has-verse-actions" : ""}`}
+      className={`bible-reader bible-reader--yv${hideChrome ? " is-chrome-hidden" : ""}${showCreateCard ? " has-verse-actions" : ""}${headCompact ? " is-head-compact" : ""}`}
       style={{ ["--bible-font-size" as string]: `${fontSize}px` }}
       onKeyDown={(event) => {
         if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement) {
@@ -1557,10 +1574,18 @@ export function BibleReaderView({
           if (pickerOpen) return;
           if (event.key === "ArrowLeft") {
             event.preventDefault();
-            if (!planReading.isFirst) planReading.onPrev();
+            if (onPlanStep) {
+              if (!planReading.isFirst) planReading.onPrev();
+            } else {
+              goAdjacent(-1);
+            }
           } else if (event.key === "ArrowRight" || event.key === "Enter") {
             event.preventDefault();
-            planReading.onAdvance();
+            if (onPlanStep) {
+              planReading.onAdvance();
+            } else {
+              goAdjacent(1);
+            }
           }
           return;
         }
@@ -1595,9 +1620,7 @@ export function BibleReaderView({
                 onClick={handlePlanBack}
                 aria-label={
                   onPlanStep
-                    ? planReading.isFirst
-                      ? "Quitter la lecture du plan"
-                      : "Chapitre précédent du plan"
+                    ? "Quitter la lecture du plan"
                     : "Retour au chapitre du plan"
                 }
               >
@@ -1668,7 +1691,7 @@ export function BibleReaderView({
               selection?.length ? "is-dimming" : "",
               !selection?.length &&
               focusDimActive &&
-              (planReading || highlightVerse != null)
+              ((planReading && onPlanStep) || highlightVerse != null)
                 ? "is-passage-focus"
                 : "",
             ]
@@ -1676,8 +1699,11 @@ export function BibleReaderView({
               .join(" ")}
           >
             {passage.verses.map((verse) => {
+              const jumpFocus = preferJumpFocusRef.current;
               const inPlanRange = Boolean(
                 planReading &&
+                  onPlanStep &&
+                  !jumpFocus &&
                   !selection?.length &&
                   (() => {
                     const start = planReading.verseStart;
@@ -1689,24 +1715,33 @@ export function BibleReaderView({
                   })(),
               );
               const rangeStart =
-                planReading?.verseStart != null
+                planReading && onPlanStep && !jumpFocus && planReading.verseStart != null
                   ? Math.min(
                       planReading.verseStart,
                       planReading.verseEnd ?? planReading.verseStart,
                     )
+                  : highlightVerse;
+              const focusLo =
+                highlightVerse != null
+                  ? Math.min(highlightVerse, highlightVerseEnd ?? highlightVerse)
                   : null;
-              const inDeeplink =
-                !planReading &&
+              const focusHi =
+                highlightVerse != null
+                  ? Math.max(highlightVerse, highlightVerseEnd ?? highlightVerse)
+                  : null;
+              const inDeeplink = Boolean(
                 !selection?.length &&
-                highlightVerse != null &&
-                highlightVerse === verse.number;
+                  focusLo != null &&
+                  focusHi != null &&
+                  verse.number >= focusLo &&
+                  verse.number <= focusHi &&
+                  (jumpFocus || !planReading || !onPlanStep),
+              );
               const inRange = inPlanRange || inDeeplink;
               const isRangeAnchor = selection?.length
                 ? highlightVerse === verse.number
-                : planReading
-                  ? rangeStart != null
-                    ? verse.number === rangeStart
-                    : verse.number === (passage.verses?.[0]?.number ?? 1)
+                : rangeStart != null
+                  ? verse.number === rangeStart
                   : highlightVerse === verse.number;
               const active = selection?.length
                 ? highlightVerse === verse.number
@@ -1746,7 +1781,8 @@ export function BibleReaderView({
                       ? `Verset ${verse.number}, flashcard`
                       : `Verset ${verse.number}`
                   }
-                  aria-pressed={selected || inRange}
+                  aria-pressed={selected}
+                  aria-current={inRange && !selected ? "true" : undefined}
                   ref={
                     isRangeAnchor
                       ? (el) => {
@@ -1977,7 +2013,7 @@ export function BibleReaderView({
                     );
                   })
                 : verseOptions.map((n) => {
-                    const on = verseInSelection(selection, n);
+                    const on = highlightVerse === n || verseInSelection(selection, n);
                     return (
                       <button
                         key={n}
@@ -2049,19 +2085,23 @@ export function BibleReaderView({
             <PlayIcon className="bible-yv-dock-icon" aria-hidden />
           )}
         </button>
-        <div className={`bible-yv-dock-nav${planReading ? " bible-yv-dock-nav--plan" : ""}`}>
+        <div className={`bible-yv-dock-nav${planReading && onPlanStep ? " bible-yv-dock-nav--plan" : ""}`}>
           <button
             type="button"
             className="bible-yv-dock-arrow"
             onClick={() => {
-              if (planReading) {
+              if (planReading && onPlanStep) {
                 planReading.onPrev();
                 return;
               }
               if (pickerOpen) setPassageStep("chapter");
               goAdjacent(-1);
             }}
-            disabled={planReading ? planReading.isFirst : !canPrev || loading}
+            disabled={
+              planReading && onPlanStep
+                ? planReading.isFirst
+                : !canPrev || loading
+            }
             aria-label="Chapitre précédent"
           >
             <ChevronLeftIcon className="bible-yv-dock-icon" aria-hidden />
@@ -2085,7 +2125,7 @@ export function BibleReaderView({
               <ChevronDownIcon className="bible-yv-dock-icon" />
             </span>
           </button>
-          {planReading ? (
+          {planReading && onPlanStep ? (
             <button
               type="button"
               className={`bible-yv-dock-advance${planReading.isLast ? " is-complete" : ""}`}
