@@ -10,6 +10,7 @@ import {
   progressCounts,
   type PlanProgress,
 } from "../planProgress";
+import { planCoverStyle, planTitle } from "../planTheme";
 import type { ReadingPlan } from "../types";
 import { preferredDisplayName, type UserProfile } from "../userProfile";
 import { fetchPassage } from "../youversion/client";
@@ -32,15 +33,6 @@ type InProgressItem = {
   total: number;
 };
 
-function planTitle(plan: ReadingPlan): string {
-  const theme = plan.theme?.trim() ?? "";
-  const nome = plan.nome?.trim() ?? "";
-  const generic = (value: string) => !value || /^plan$/i.test(value);
-  if (!generic(theme)) return theme;
-  if (!generic(nome)) return nome;
-  return theme || nome || "Plan";
-}
-
 function greetingForHour(hour: number): string {
   if (hour >= 5 && hour < 12) return "Bonjour";
   if (hour >= 12 && hour < 18) return "Bon après-midi";
@@ -54,7 +46,8 @@ function listInProgress(plans: ReadingPlan[]): InProgressItem[] {
     if (!progress) continue;
     if (isPlanComplete(plan, progress)) continue;
     const { done, total } = progressCounts(plan, progress);
-    if (!total) continue;
+    // Aligné sur Plan « En cours » : au moins un jour terminé.
+    if (!total || done <= 0) continue;
     items.push({ plan, progress, done, total });
   }
   return items.sort((a, b) => b.progress.startDate.localeCompare(a.progress.startDate));
@@ -116,8 +109,8 @@ export function HomeView({
     <div className="home-view">
       <header className="home-head">
         <div className="home-head-copy">
-          <p className="home-greeting muted">{greeting}</p>
-          <h1 className="home-name type-title">{name}</h1>
+          <p className="home-greeting type-caption">{greeting}</p>
+          <h1 className="home-name type-headline">{name}</h1>
         </div>
         <button
           type="button"
@@ -141,14 +134,14 @@ export function HomeView({
 
       <section className="home-section" aria-labelledby="home-plans-title">
         <div className="home-section-head">
-          <h2 id="home-plans-title" className="home-section-title">
+          <h2 id="home-plans-title" className="home-section-title type-eyebrow">
             {inProgress.length === 0
               ? "Plan pour toi"
               : inProgress.length === 1
                 ? "Plan en cours"
                 : "Plans en cours"}
           </h2>
-          <button type="button" className="home-section-link" onClick={onBrowsePlans}>
+          <button type="button" className="home-section-link type-label" onClick={onBrowsePlans}>
             Voir tout
           </button>
         </div>
@@ -156,19 +149,36 @@ export function HomeView({
           <ul className="home-plan-list">
             {inProgress.map(({ plan, done, total }) => {
               const pct = total ? Math.round((done / total) * 100) : 0;
+              const title = planTitle(plan);
+              const day = Math.min(done + 1, total);
               return (
                 <li key={plan.id}>
                   <button
                     type="button"
-                    className="home-plan-card"
+                    className="plan-card"
                     onClick={() => onOpenPlan(plan)}
                   >
-                    <span className="home-plan-card-title">{planTitle(plan)}</span>
-                    <span className="home-plan-card-meta muted">
-                      Jour {Math.min(done + 1, total)} · {done}/{total}
+                    <span
+                      className="plan-card-swatch"
+                      style={planCoverStyle(plan.id)}
+                      aria-hidden="true"
+                    >
+                      <span className="plan-card-mark">{title.charAt(0)}</span>
                     </span>
-                    <span className="home-plan-card-bar" aria-hidden>
-                      <span style={{ width: `${pct}%` }} />
+                    <span className="plan-card-body">
+                      <span className="plan-card-title">{title}</span>
+                      <span className="plan-card-meta">
+                        Jour {day} · {done}/{total}
+                      </span>
+                      <span className="plan-card-progress" aria-hidden="true">
+                        <span className="plan-card-progress-track">
+                          <span className="plan-card-progress-fill" style={{ width: `${pct}%` }} />
+                        </span>
+                      </span>
+                    </span>
+                    <span className="plan-card-cta">
+                      Continuer
+                      <span aria-hidden="true">›</span>
                     </span>
                   </button>
                 </li>
@@ -178,7 +188,7 @@ export function HomeView({
         ) : (
           <div className="home-empty">
             <p className="muted">Aucun plan commencé pour le moment.</p>
-            <button type="button" className="home-empty-cta" onClick={onBrowsePlans}>
+            <button type="button" className="home-empty-cta type-label" onClick={onBrowsePlans}>
               Choisir un plan
             </button>
           </div>
@@ -186,7 +196,7 @@ export function HomeView({
       </section>
 
       <section className="home-section" aria-labelledby="home-verse-title">
-        <h2 id="home-verse-title" className="home-section-title">
+        <h2 id="home-verse-title" className="home-section-title type-eyebrow">
           Verset du jour
         </h2>
         <button
@@ -195,7 +205,7 @@ export function HomeView({
           onClick={() => onOpenVerse(verseMeta.reference)}
         >
           <p className="home-verse-text type-body">{verseText}</p>
-          <p className="home-verse-ref">{verseMeta.reference}</p>
+          <p className="home-verse-ref type-label">{verseMeta.reference}</p>
         </button>
       </section>
     </div>

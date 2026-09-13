@@ -641,7 +641,7 @@ type DeckProgressFilter = "nouveau" | "revisando" | "termines";
 
 const DECK_FILTERS: { id: DeckProgressFilter; label: string }[] = [
   { id: "nouveau", label: "Nouveau" },
-  { id: "revisando", label: "Révision" },
+  { id: "revisando", label: "En révision" },
   { id: "termines", label: "Terminé" },
 ];
 
@@ -718,9 +718,17 @@ export function FlashDeckList({
   const { queue, index, listRef, goTo, total } = session;
   const [filter, setFilter] = useState<DeckProgressFilter>("nouveau");
   const swipeOrigin = useRef<{ x: number; y: number } | null>(null);
+  const tabsRef = useRef<HTMLDivElement>(null);
   const today = todayKey();
   const [weekAnchor, setWeekAnchor] = useState(today);
   const [selectedDay, setSelectedDay] = useState(today);
+
+  useEffect(() => {
+    const active = tabsRef.current?.querySelector<HTMLElement>(
+      `.flash-deck-tab[aria-selected="true"]`,
+    );
+    active?.scrollIntoView({ inline: "nearest", block: "nearest", behavior: "smooth" });
+  }, [filter]);
 
   const filterCounts: Record<DeckProgressFilter, number> = {
     nouveau: queue.filter((card) => cardMatchesDeckFilter(card, "nouveau")).length,
@@ -919,6 +927,7 @@ export function FlashDeckList({
     >
       <header className="flash-list-head">
         <div
+          ref={tabsRef}
           className="flash-deck-tabs"
           role="tablist"
           aria-label="Filtrer les cartes par progression"

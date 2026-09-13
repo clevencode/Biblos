@@ -17,10 +17,91 @@ type NotificationsViewProps = {
   onBack: () => void;
 };
 
+type NotifBlock =
+  | { type: "p"; text: string }
+  | { type: "feature"; label: string; text: string }
+  | { type: "tip"; text: string };
+
 function previewBody(body: string, max = 96): string {
   const text = body.replace(/\s+/g, " ").trim();
   if (text.length <= max) return text;
   return `${text.slice(0, max - 1).trim()}…`;
+}
+
+/** Structure le corps : paragraphes, lignes « Label — … », astuce. */
+function parseNotificationBody(body: string): NotifBlock[] {
+  const lines = body
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const blocks: NotifBlock[] = [];
+  const featureRe = /^(.+?)\s+[—–-]\s+(.+)$/u;
+
+  for (const line of lines) {
+    if (/^astuce\b/i.test(line)) {
+      blocks.push({
+        type: "tip",
+        text: line.replace(/^astuce\s*:\s*/i, "").trim() || line,
+      });
+      continue;
+    }
+    const match = line.match(featureRe);
+    if (match) {
+      blocks.push({
+        type: "feature",
+        label: match[1]!.trim(),
+        text: match[2]!.trim(),
+      });
+      continue;
+    }
+    blocks.push({ type: "p", text: line });
+  }
+  return blocks;
+}
+
+function NotificationBody({ body }: { body: string }) {
+  const blocks = parseNotificationBody(body);
+  if (!blocks.length) {
+    return <p className="notif-detail-p muted">—</p>;
+  }
+
+  const features = blocks.filter(
+    (block): block is Extract<NotifBlock, { type: "feature" }> =>
+      block.type === "feature",
+  );
+  const rest = blocks.filter((block) => block.type !== "feature");
+
+  return (
+    <div className="notif-detail-body">
+      {rest
+        .filter((block) => block.type === "p")
+        .map((block, index) => (
+          <p key={`p-${index}`} className="notif-detail-p">
+            {block.text}
+          </p>
+        ))}
+
+      {features.length ? (
+        <ul className="notif-feature-list">
+          {features.map((block) => (
+            <li key={block.label} className="notif-feature">
+              <span className="notif-feature-label">{block.label}</span>
+              <span className="notif-feature-copy">{block.text}</span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+
+      {rest
+        .filter((block): block is Extract<NotifBlock, { type: "tip" }> => block.type === "tip")
+        .map((block, index) => (
+          <aside key={`tip-${index}`} className="notif-tip">
+            <span className="notif-tip-label">Astuce</span>
+            <p className="notif-tip-copy">{block.text}</p>
+          </aside>
+        ))}
+    </div>
+  );
 }
 
 export function NotificationsView({ plans, onBack }: NotificationsViewProps) {
@@ -86,7 +167,7 @@ export function NotificationsView({ plans, onBack }: NotificationsViewProps) {
         </header>
 
         <article className="notif-detail-card">
-          <p className="notif-detail-body">{selected.body || "—"}</p>
+          <NotificationBody body={selected.body || ""} />
         </article>
 
         <div className="notif-detail-actions">

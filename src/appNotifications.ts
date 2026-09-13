@@ -215,8 +215,36 @@ function planTitle(plan: ReadingPlan): string {
  * Verset du jour + rappel de plan → alertes appareil (hors fil).
  */
 export function syncContextualNotifications(plans: ReadingPlan[]): void {
+  ensureWelcomeNotification();
   void pullRemoteAppNotifications();
   void syncDeviceAlertsFromPrefs(plans);
+}
+
+const WELCOME_DEDUPE = "welcome:v1";
+
+/** Message d’accueil (une fois) : but de l’app + parcours des onglets. */
+export function ensureWelcomeNotification(): void {
+  pushAppNotification({
+    kind: "info",
+    kindLabel: "Bienvenue",
+    title: "Bienvenue sur Biblos",
+    dedupeKey: WELCOME_DEDUPE,
+    body: [
+      "Biblos t’aide à lire la Bible chaque jour, suivre un plan et mémoriser les versets qui comptent.",
+      "",
+      "Accueil — Vois tes plans en cours, le verset du jour et ouvre tes notifications.",
+      "",
+      "Plan — Choisis un plan de lecture, filtre par progression (attente, en cours, terminé) et avance jour après jour.",
+      "",
+      "Bible — Lis le texte, cherche un passage, écoute l’audio et marque les versets à garder.",
+      "",
+      "Cartes — Révise tes flashcards (nouveau, en révision, terminé) pour ancrer ce que tu as lu.",
+      "",
+      "Profil — Règle le thème, les alertes, retrouve ce que tu as gardé, et consulte l’aide.",
+      "",
+      "Astuce : ouvre Accueil pour le verset du jour, choisis un plan dans Plan, lis le chapitre du jour dans Bible (marque un verset), puis révise-le dans Cartes.",
+    ].join("\n"),
+  });
 }
 
 /** Importe les messages publiés depuis Notion dans le fil local. */

@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { loadPlanProgress, progressCounts } from "../planProgress";
+import { planCoverStyle, planTitle } from "../planTheme";
 import type { ReadingPlan } from "../types";
 
 type PlanGalleryProps = {
@@ -15,7 +16,7 @@ type PlanProgressFilter = "tout" | "attente" | "cours" | "termines";
 const PLAN_FILTERS: { id: PlanProgressFilter; label: string }[] = [
   { id: "tout", label: "Tout" },
   { id: "attente", label: "Attente" },
-  { id: "cours", label: "Cours" },
+  { id: "cours", label: "En cours" },
   { id: "termines", label: "Terminé" },
 ];
 
@@ -38,55 +39,6 @@ const EMPTY_COPY: Record<PlanProgressFilter, { title: string; body: string }> = 
   },
 };
 
-const THEME_HUES = [18, 32, 205, 228, 265, 340, 152, 188];
-
-function coverStyle(id: string): { background: string } {
-  let hash = 0;
-  for (let i = 0; i < id.length; i += 1) hash = (hash * 33 + id.charCodeAt(i)) >>> 0;
-  const hue = THEME_HUES[hash % THEME_HUES.length];
-  const hue2 = (hue + 28) % 360;
-  return {
-    background: [
-      `radial-gradient(120% 90% at 8% 0%, hsl(${hue} 42% 46% / 0.9) 0%, transparent 52%)`,
-      `radial-gradient(80% 70% at 100% 110%, hsl(${hue2} 38% 22%) 0%, transparent 55%)`,
-      `linear-gradient(165deg, hsl(${hue} 28% 14%), hsl(${hue} 36% 28%))`,
-    ].join(", "),
-  };
-}
-
-function planTitle(plan: ReadingPlan): string {
-  const theme = plan.theme?.trim() ?? "";
-  const nome = plan.nome?.trim() ?? "";
-  const generic = (value: string) => !value || /^plan$/i.test(value);
-  if (!generic(theme)) return theme;
-  if (!generic(nome)) return nome;
-  return theme || nome || "Plan";
-}
-
-function snippet(raw: string, title: string): string {
-  const foldedTitle = title.toLowerCase();
-  const paragraphs = raw
-    .split(/\n+/)
-    .map((line) =>
-      line
-        .replace(/<[^>]+>/g, " ")
-        .replace(/[*_`#]+/g, "")
-        .replace(/^\d+\.\s+/, "")
-        .replace(/\s+/g, " ")
-        .trim(),
-    )
-    .filter((line) => {
-      if (!line || line.length < 36) return false;
-      if (line.toLowerCase() === foldedTitle) return false;
-      if (/^(grande synthèse|introduction|conséquence|conclusion)\b/i.test(line)) return false;
-      return true;
-    });
-  const prose =
-    paragraphs.find((line) => /[.!?]/.test(line)) ?? paragraphs[0] ?? "";
-  if (!prose) return "";
-  return prose.length > 108 ? `${prose.slice(0, 106).trim()}…` : prose;
-}
-
 function planBucket(plan: ReadingPlan): Exclude<PlanProgressFilter, "tout"> {
   const { done, total } = progressCounts(plan, loadPlanProgress(plan.id));
   if (total > 0 && done >= total) return "termines";
@@ -94,7 +46,7 @@ function planBucket(plan: ReadingPlan): Exclude<PlanProgressFilter, "tout"> {
   return "attente";
 }
 
-/** Galerie de plans — cartões Discover (capa + durée + progrès). */
+/** Galerie de plans — liste compacte (filtre + lignes). */
 export function PlanGallery({
   plans,
   selectedId,
@@ -123,6 +75,7 @@ export function PlanGallery({
   }, [ordered]);
 
   const [filter, setFilter] = useState<PlanProgressFilter>("tout");
+  const tabsRef = useRef<HTMLDivElement>(null);
 
   const filtered = useMemo(
     () =>
@@ -131,6 +84,40 @@ export function PlanGallery({
         : ordered.filter((plan) => planBucket(plan) === filter),
     [ordered, filter],
   );
+
+  useEffect(() => {
+    const active = tabsRef.current?.querySelector<HTMLElement>(
+      `.flash-deck-tab[aria-selected="true"]`,
+    );
+    active?.scrollIntoView({ inline: "nearest", block: "nearest", behavior: "smooth" });
+  }, [filter]);
+
+  function selectFilter(next: PlanProgressFilter, focus = false) {
+    setFilter(next);
+    if (!focus) return;
+    requestAnimationFrame(() => {
+      document.getElementById(`plan-gallery-tab-${next}`)?.focus();
+    });
+  }
+
+  function onTabListKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
+    const index = PLAN_FILTERS.findIndex((item) => item.id === filter);
+    if (index < 0) return;
+    let next = index;
+    if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+      next = (index + 1) % PLAN_FILTERS.length;
+    } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+      next = (index - 1 + PLAN_FILTERS.length) % PLAN_FILTERS.length;
+    } else if (event.key === "Home") {
+      next = 0;
+    } else if (event.key === "End") {
+      next = PLAN_FILTERS.length - 1;
+    } else {
+      return;
+    }
+    event.preventDefault();
+    selectFilter(PLAN_FILTERS[next]!.id, true);
+  }
 
   const [activeId, setActiveId] = useState(selectedId ?? filtered[0]?.id ?? "");
 
@@ -185,9 +172,11 @@ export function PlanGallery({
     <>
       <header className="plan-discover-head">
         <div
-          className="flash-deck-tabs"
+          ref={tabsRef}
+          className="flash-deck-tabs plan-discover-tabs"
           role="tablist"
           aria-label="Filtrer les plans par progression"
+          onKeyDown={onTabListKeyDown}
         >
           {PLAN_FILTERS.map((item) => {
             const count = filterCounts[item.id];
@@ -200,8 +189,9 @@ export function PlanGallery({
                 id={`plan-gallery-tab-${item.id}`}
                 className={`flash-deck-tab${selected ? " is-on" : ""}${count === 0 ? " is-empty" : ""}`}
                 aria-selected={selected}
+                aria-controls="plan-gallery-list"
                 tabIndex={selected ? 0 : -1}
-                onClick={() => setFilter(item.id)}
+                onClick={() => selectFilter(item.id)}
                 aria-label={`${item.label}, ${count} plan${count === 1 ? "" : "s"}`}
               >
                 <span className="flash-deck-tab-label">{item.label}</span>
@@ -226,6 +216,7 @@ export function PlanGallery({
       {filtered.length ? (
         <div className="plan-discover-scroller" ref={gridRef}>
           <div
+            id="plan-gallery-list"
             className={`plan-discover-grid${embedded ? " is-stack" : ""}`}
             role="listbox"
             aria-label={PLAN_FILTERS.find((item) => item.id === filter)?.label ?? "Plans"}
@@ -234,12 +225,16 @@ export function PlanGallery({
               const current = plan.id === selectedId;
               const active = plan.id === activeId;
               const title = planTitle(plan);
-              const preview = snippet(plan.description ?? "", title);
               const { done, total } = progressCounts(plan, loadPlanProgress(plan.id));
               const started = done > 0;
               const complete = total > 0 && done >= total;
               const pct = total ? Math.min(100, Math.round((done / total) * 100)) : 0;
               const action = complete ? "Terminé" : started ? "Continuer" : "Commencer";
+              const metaParts = [
+                total ? `${total} jour${total === 1 ? "" : "s"}` : null,
+                started && !complete ? `${done}/${total}` : null,
+                complete ? "Terminé" : null,
+              ].filter(Boolean);
               return (
                 <button
                   key={plan.id}
@@ -247,34 +242,28 @@ export function PlanGallery({
                   type="button"
                   role="option"
                   aria-selected={active}
-                  className={`plan-tile${current ? " is-on" : ""}`}
+                  className={`plan-card${current ? " is-on" : ""}${active ? " is-active" : ""}`}
                   onMouseEnter={() => setActiveId(plan.id)}
                   onFocus={() => setActiveId(plan.id)}
                   onClick={() => onPick(plan)}
                 >
-                  <span className="plan-tile-art" style={coverStyle(plan.id)}>
-                    <span className="plan-tile-mark" aria-hidden="true">
-                      {title.charAt(0)}
-                    </span>
-                    {total ? (
-                      <span className="plan-tile-days">
-                        {total} jour{total === 1 ? "" : "s"}
-                      </span>
+                  <span className="plan-card-swatch" style={planCoverStyle(plan.id)} aria-hidden="true">
+                    <span className="plan-card-mark">{title.charAt(0)}</span>
+                  </span>
+                  <span className="plan-card-body">
+                    <span className="plan-card-title">{title}</span>
+                    {metaParts.length ? (
+                      <span className="plan-card-meta">{metaParts.join(" · ")}</span>
                     ) : null}
-                    <span className="plan-tile-name">{title}</span>
-                    {preview ? <span className="plan-tile-blurb">{preview}</span> : null}
                     {total && started ? (
-                      <span className="plan-tile-progress" aria-hidden="true">
-                        <span className="plan-tile-progress-track">
-                          <span className="plan-tile-progress-fill" style={{ width: `${pct}%` }} />
-                        </span>
-                        <span className="plan-tile-progress-label">
-                          {complete ? "Terminé" : `${done}/${total}`}
+                      <span className="plan-card-progress" aria-hidden="true">
+                        <span className="plan-card-progress-track">
+                          <span className="plan-card-progress-fill" style={{ width: `${pct}%` }} />
                         </span>
                       </span>
                     ) : null}
                   </span>
-                  <span className="plan-tile-cta">
+                  <span className="plan-card-cta">
                     {action}
                     <span aria-hidden="true">›</span>
                   </span>

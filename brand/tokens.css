@@ -20,8 +20,10 @@
   --cc-tracking-display: -0.04em;
   --cc-tracking-headline: -0.03em;
   --cc-tracking-title: -0.02em;
-  --cc-tracking-body: -0.01em;
+  --cc-tracking-body: 0;
   --cc-tracking-label: 0.04em;
+  --cc-tracking-caption: 0.01em;
+  --cc-tracking-eyebrow: 0.08em;
 
   --cc-type-display: clamp(2.75rem, 8vw, 4rem);
   --cc-type-headline: clamp(1.45rem, 4vw, 1.85rem);
@@ -29,6 +31,7 @@
   --cc-type-body: 1.1875rem;
   --cc-type-label: 0.8125rem;
   --cc-type-caption: 0.75rem;
+  --cc-type-eyebrow-weight: 650;
 
   /* Espaço Swiss */
   --cc-space-1: 8px;

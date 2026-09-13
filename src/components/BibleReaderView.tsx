@@ -1241,18 +1241,6 @@ export function BibleReaderView({
                     : "Télécharger hors ligne"}
               </span>
             </button>
-            <button
-              type="button"
-              role="menuitem"
-              className="bible-yv-tools-item"
-              onClick={() => {
-                setToolsMenuOpen(false);
-                setSearchOpen(true);
-              }}
-            >
-              <MagnifyingGlassIcon className="bible-yv-tools-item-icon" aria-hidden />
-              <span>Rechercher</span>
-            </button>
             {ACTIVITY_TRACKING_ENABLED ? (
               <button
                 type="button"
@@ -1647,42 +1635,51 @@ export function BibleReaderView({
         inert={hideChrome || undefined}
       >
         {planReading ? (
-          <>
-            <div className="bible-yv-top-plan">
-              <button
-                type="button"
-                className="bible-yv-back"
-                onClick={handlePlanBack}
-                aria-label={
-                  onPlanStep
-                    ? "Quitter la lecture du plan"
-                    : "Retour au chapitre du plan"
-                }
-              >
-                ←
-              </button>
-              <div className="bible-yv-plan-titles">
-                <p className="bible-yv-plan-name" title={planHeaderTitle}>
-                  {planHeaderTitle}
+          <div className="bible-yv-top-plan">
+            <button
+              type="button"
+              className="bible-yv-back"
+              onClick={handlePlanBack}
+              aria-label={
+                onPlanStep
+                  ? "Quitter la lecture du plan"
+                  : "Retour au chapitre du plan"
+              }
+            >
+              ←
+            </button>
+            <div className="bible-yv-plan-titles">
+              <p className="bible-yv-plan-name" title={planHeaderTitle}>
+                {planHeaderTitle}
+              </p>
+              {headCompact && onPlanStep ? (
+                <p className="bible-yv-plan-chapter" aria-hidden="true">
+                  {chapterLabel}
                 </p>
-                {headCompact && onPlanStep ? (
-                  <p className="bible-yv-plan-chapter" aria-hidden="true">
-                    {chapterLabel}
-                  </p>
-                ) : null}
-              </div>
+              ) : null}
             </div>
-            <div className="bible-yv-top-tools">{renderTopToolsMenu()}</div>
-          </>
+          </div>
         ) : (
-          <>
-            <p className="bible-yv-compact-ref" aria-hidden="true">
-              <span className="bible-yv-compact-book">{bookTitle}</span>
-              <span className="bible-yv-compact-num">{chapterId}</span>
-            </p>
-            <div className="bible-yv-top-tools">{renderTopToolsMenu()}</div>
-          </>
+          <p className="bible-yv-compact-ref" aria-hidden="true">
+            <span className="bible-yv-compact-book">{bookTitle}</span>
+            <span className="bible-yv-compact-num">{chapterId}</span>
+          </p>
         )}
+        <div className="bible-yv-top-tools">
+          <button
+            type="button"
+            className="bible-yv-search-btn"
+            aria-label="Rechercher"
+            title="Rechercher"
+            onClick={() => {
+              setToolsMenuOpen(false);
+              setSearchOpen(true);
+            }}
+          >
+            <MagnifyingGlassIcon className="bible-yv-tool-icon" aria-hidden />
+          </button>
+          {renderTopToolsMenu()}
+        </div>
       </header>
 
       <div id={statusId} className="sr-only" aria-live="polite">
