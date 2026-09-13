@@ -83,7 +83,7 @@ function PassageRefsList({
       className={`plan-yv-ref-list${className ? ` ${className}` : ""}`}
       aria-label={onToggleDone || onOpenRef ? "Passages du jour" : undefined}
     >
-      {items.map((ref) => (
+      {items.map((ref, index) => (
         <li
           key={ref}
           className={onToggleDone || onOpenRef ? "plan-yv-ref-row" : undefined}
@@ -99,13 +99,14 @@ function PassageRefsList({
           ) : (
             <span className="plan-yv-ref-text">{ref}</span>
           )}
-          {onToggleDone ? (
+          {/* État « lu » = jour entier — un seul check (1.ª linha), não por passage. */}
+          {onToggleDone && index === 0 ? (
             <button
               type="button"
               className={`plan-yv-ref-mark${done ? " is-done" : ""}`}
               onClick={onToggleDone}
               aria-pressed={done}
-              aria-label={done ? "Démarquer comme lu" : "Marquer comme lu"}
+              aria-label={done ? "Démarquer le jour comme lu" : "Marquer le jour comme lu"}
             >
               {done ? <span aria-hidden="true">✓</span> : null}
             </button>
@@ -637,7 +638,11 @@ export function TodayView({
             disabled={!planComplete && !canOpenPassage && !hasDescription}
             onClick={startReading}
           >
-            {planComplete ? "Recommencer la lecture" : "Commencer la lecture"}
+            {planComplete
+              ? "Recommencer la lecture"
+              : passageRead
+                ? "Relire"
+                : "Commencer la lecture"}
           </button>
         </section>
       ) : (

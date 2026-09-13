@@ -1571,7 +1571,16 @@ export function BibleReaderView({
             handlePlanBack();
             return;
           }
-          if (pickerOpen) return;
+          if (
+            pickerOpen ||
+            showCreateCard ||
+            audioPlayerOpen ||
+            searchOpen ||
+            toolsMenuOpen ||
+            historyOpen
+          ) {
+            return;
+          }
           if (event.key === "ArrowLeft") {
             event.preventDefault();
             if (onPlanStep) {
@@ -1626,9 +1635,16 @@ export function BibleReaderView({
               >
                 ←
               </button>
-              <p className="bible-yv-plan-name" title={planHeaderTitle}>
-                {planHeaderTitle}
-              </p>
+              <div className="bible-yv-plan-titles">
+                <p className="bible-yv-plan-name" title={planHeaderTitle}>
+                  {planHeaderTitle}
+                </p>
+                {headCompact && onPlanStep ? (
+                  <p className="bible-yv-plan-chapter" aria-hidden="true">
+                    {chapterLabel}
+                  </p>
+                ) : null}
+              </div>
             </div>
             <div className="bible-yv-top-tools">{renderTopToolsMenu()}</div>
           </>
@@ -2102,7 +2118,11 @@ export function BibleReaderView({
                 ? planReading.isFirst
                 : !canPrev || loading
             }
-            aria-label="Chapitre précédent"
+            aria-label={
+              planReading && onPlanStep
+                ? "Passage précédent du plan"
+                : "Chapitre précédent"
+            }
           >
             <ChevronLeftIcon className="bible-yv-dock-icon" aria-hidden />
           </button>
@@ -2130,7 +2150,11 @@ export function BibleReaderView({
               type="button"
               className={`bible-yv-dock-advance${planReading.isLast ? " is-complete" : ""}`}
               onClick={planReading.onAdvance}
-              aria-label={planReading.isLast ? "Conclure la lecture du jour" : "Chapitre suivant du jour"}
+              aria-label={
+                planReading.isLast
+                  ? "Conclure la lecture du jour"
+                  : "Passage suivant du plan"
+              }
             >
               {planReading.isLast ? (
                 <CheckIcon className="bible-yv-dock-icon" aria-hidden />
