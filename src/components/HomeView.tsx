@@ -142,7 +142,11 @@ export function HomeView({
       <section className="home-section" aria-labelledby="home-plans-title">
         <div className="home-section-head">
           <h2 id="home-plans-title" className="home-section-title">
-            Plans en cours
+            {inProgress.length === 0
+              ? "Plan pour toi"
+              : inProgress.length === 1
+                ? "Plan en cours"
+                : "Plans en cours"}
           </h2>
           <button type="button" className="home-section-link" onClick={onBrowsePlans}>
             Voir tout
@@ -173,7 +177,7 @@ export function HomeView({
           </ul>
         ) : (
           <div className="home-empty">
-            <p className="muted">Aucun plan en cours pour le moment.</p>
+            <p className="muted">Aucun plan commencé pour le moment.</p>
             <button type="button" className="home-empty-cta" onClick={onBrowsePlans}>
               Choisir un plan
             </button>

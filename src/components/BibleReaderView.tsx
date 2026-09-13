@@ -7,13 +7,12 @@ import {
   useState,
   type CSSProperties,
 } from "react";
-import { flushSync } from "react-dom";
+import { createPortal, flushSync } from "react-dom";
 import {
   ArrowDownTrayIcon,
   BookmarkIcon,
   BookmarkSlashIcon,
   CheckIcon,
-  ChevronDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   ClockIcon,
@@ -350,7 +349,11 @@ function overlayReserve(scroller: HTMLElement, reader: HTMLElement): { top: numb
   let bottom = 16;
   const selectors = [".bible-verse-actions", ".bible-yv-dock", ".bible-yv-pick-sheet"];
   for (const sel of selectors) {
-    const el = reader.querySelector(sel);
+    const el =
+      sel === ".bible-yv-dock"
+        ? reader.querySelector(sel) ??
+          document.querySelector(".mode-tabs-bible-tools .bible-yv-dock")
+        : reader.querySelector(sel);
     if (!el || !(el instanceof HTMLElement)) continue;
     if (sel === ".bible-yv-dock" && chromeHidden) continue;
     const r = el.getBoundingClientRect();
@@ -448,6 +451,7 @@ export function BibleReaderView({
   });
   const [pickerOpen, setPickerOpen] = useState(false);
   const [passageStep, setPassageStep] = useState<"book" | "chapter" | "verse">("book");
+  const [tabDockHost, setTabDockHost] = useState<HTMLElement | null>(null);
   const [cardBusy, setCardBusy] = useState(false);
   const [cardMsg, setCardMsg] = useState<string | null>(null);
   const [cardColor, setCardColor] = useState(() => loadPreferredVerseColor());
@@ -495,6 +499,22 @@ export function BibleReaderView({
   const lastAppliedVerseScroll = useRef("");
   const booted = useRef(false);
   const loadGen = useRef(0);
+
+  useLayoutEffect(() => {
+    if (!active) {
+      setTabDockHost(null);
+      return;
+    }
+    const mq = window.matchMedia("(max-width: 860px)");
+    const sync = () => {
+      setTabDockHost(
+        mq.matches ? document.getElementById("bible-chrome-dock") : null,
+      );
+    };
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, [active]);
 
   const setFocusDim = (active: boolean) => {
     focusDimActiveRef.current = active;
@@ -1312,15 +1332,6 @@ export function BibleReaderView({
     lastAppliedVerseScroll.current = key;
   }, [active, loading, passage?.id, highlightVerse, selection, showCreateCard, pickerOpen, planReading?.label]);
 
-  const dockPickLabel =
-    !pickerOpen
-      ? locationLabel
-      : passageStep === "book"
-        ? "Livre"
-        : passageStep === "chapter"
-          ? bookTitle
-          : `${bookTitle} ${chapterId}`;
-
   const bookAudio = audioByUsfm[bookId.toUpperCase()] ?? null;
   const canPlayBookAudio = Boolean(bookAudio?.audioUrl);
   const bookOrder = useMemo(
@@ -1852,7 +1863,7 @@ export function BibleReaderView({
 
       {showCreateCard ? (
         <div
-          className="bible-verse-actions"
+          className={`bible-verse-actions${tabDockHost ? " is-tab-chrome" : ""}`}
           role="region"
           aria-label="Actions du verset"
           style={
@@ -1983,36 +1994,34 @@ export function BibleReaderView({
 
       {pickerOpen ? (
         <div
-          className={`bible-yv-pick-sheet is-${passageStep}`}
+          className={`bible-yv-pick-sheet is-${passageStep}${tabDockHost ? " is-tab-chrome" : ""}`}
           role="dialog"
           aria-label="Choisir livre, chapitre ou verset"
         >
-          <div className="bible-yv-pick-sheet-head">
-            {passageStep === "verse" ? (
-              <button
-                type="button"
-                className="bible-yv-pick-back"
-                onClick={() => setPassageStep("chapter")}
-              >
-                ← Ch. {chapterId}
-              </button>
-            ) : passageStep === "chapter" ? (
-              <button
-                type="button"
-                className="bible-yv-pick-back"
-                onClick={() => setPassageStep("book")}
-              >
-                ← {bookTitle}
-              </button>
-            ) : (
-              <span className="bible-yv-pick-title">Choisir un livre</span>
-            )}
-            {passageStep !== "book" ? (
+          {passageStep !== "book" ? (
+            <div className="bible-yv-pick-sheet-head">
+              {passageStep === "verse" ? (
+                <button
+                  type="button"
+                  className="bible-yv-pick-back"
+                  onClick={() => setPassageStep("chapter")}
+                >
+                  ← Ch. {chapterId}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="bible-yv-pick-back"
+                  onClick={() => setPassageStep("book")}
+                >
+                  ← {bookTitle}
+                </button>
+              )}
               <span className="bible-yv-pick-hint">
                 {passageStep === "chapter" ? "Chapitre" : "Verset"}
               </span>
-            ) : null}
-          </div>
+            </div>
+          ) : null}
           <div
             className={`bible-yv-pick-grid${passageStep === "book" ? " is-books" : ""}`}
             role="listbox"
@@ -2081,8 +2090,10 @@ export function BibleReaderView({
         </div>
       ) : null}
 
+      {(() => {
+        const dock = (
       <footer
-        className={`bible-yv-dock${planReading ? " is-plan" : ""}${showCreateCard ? " has-verse-actions" : ""}${audioPlaying ? " is-playing" : ""}`}
+        className={`bible-yv-dock${planReading ? " is-plan" : ""}${showCreateCard ? " has-verse-actions" : ""}${audioPlaying ? " is-playing" : ""}${tabDockHost ? " is-tab-panel" : ""}`}
         aria-hidden={hideChrome || undefined}
         inert={hideChrome || undefined}
         aria-label={planReading ? "Lecture du plan" : pickerOpen ? "Choisir livre et passage" : "Chapitre"}
@@ -2161,12 +2172,10 @@ export function BibleReaderView({
                 ? `Fermer le choix · ${locationLabel}`
                 : `Choisir un passage · ${locationLabel}`
             }
+            title={chapterLabel}
           >
             <span className="bible-yv-dock-location-text">
-              {pickerOpen ? dockPickLabel : locationLabel}
-            </span>
-            <span className="bible-yv-dock-caret" aria-hidden="true">
-              <ChevronDownIcon className="bible-yv-dock-icon" />
+              {chapterLabel}
             </span>
           </button>
           {planReading && onPlanStep ? (
@@ -2202,6 +2211,9 @@ export function BibleReaderView({
           )}
         </div>
       </footer>
+        );
+        return tabDockHost ? createPortal(dock, tabDockHost) : dock;
+      })()}
 
       <BibleAudioPlayer
         open={audioPlayerOpen}

@@ -221,29 +221,24 @@ export type VerseActionTone = {
 
 /**
  * Algo UX couleur : le swatch reste fidèle ;
- * le CTA s’adapte (assombri si trop clair) pour garder un contraste lisible.
+ * le CTA utilise une tonalité légèrement plus claire (pastel) pour la hiérarchie.
  */
 export function verseActionTone(hex: string): VerseActionTone {
   const tint = normalizeVerseColor(hex);
   const lum = verseColorLuminance(tint);
+  let fill: string;
   if (lum >= 0.62) {
-    return {
-      tint,
-      fill: mixHex(tint, "#0d1117", 0.22),
-      ink: "#ffffff",
-    };
+    fill = mixHex(tint, "#ffffff", 0.1);
+  } else if (lum >= 0.4) {
+    fill = mixHex(tint, "#ffffff", 0.28);
+  } else {
+    fill = mixHex(tint, "#ffffff", 0.42);
   }
-  if (lum >= 0.45) {
-    return {
-      tint,
-      fill: mixHex(tint, "#0d1117", 0.1),
-      ink: "#ffffff",
-    };
-  }
+  const fillLum = verseColorLuminance(fill);
   return {
     tint,
-    fill: tint,
-    ink: "#ffffff",
+    fill,
+    ink: fillLum >= 0.58 ? "#1c1c1c" : "#ffffff",
   };
 }
 

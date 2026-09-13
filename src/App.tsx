@@ -766,7 +766,10 @@ export function App() {
       >
         <div className="note-shell">
           <div className="note-shell-main">
-            <div className="mode-tabs">
+            <div className={`mode-tabs${mode === "bible" && narrow ? " has-bible-tools" : ""}`}>
+              {mode === "bible" && narrow ? (
+                <div id="bible-chrome-dock" className="mode-tabs-bible-tools" />
+              ) : null}
               <div
                 className="mode-tabs-nav"
                 role="tablist"
