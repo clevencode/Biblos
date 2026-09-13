@@ -3,7 +3,7 @@ import { loadEnv, type Plugin } from "vite";
 import { runFlashcardSync, type SyncBody } from "./server/notionFlashcardSync.ts";
 import { handleYouVersion } from "./api/youversion.mjs";
 import { handleBibleAudio } from "./api/bible-audio.mjs";
-import { fetchNotionDescription, createVerseCard, archiveVerseCard, fetchPlanDayNote, upsertPlanDayNote, upsertUserProfile, createAdminMessage, upsertAdminPersonalNote, listPublishedNotifications } from "./shared/notion.mjs";
+import { fetchNotionDescription, createVerseCard, archiveVerseCard, fetchPlanDayNote, upsertPlanDayNote, upsertUserProfile, createAdminMessage, createActivityEvent, upsertAdminPersonalNote, listPublishedNotifications } from "./shared/notion.mjs";
 
 function readBody(req: IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -74,14 +74,37 @@ async function handleCatalog(req: IncomingMessage, res: ServerResponse, token: s
   }
   try {
     const mode = queryParam(req, "mode") || "index";
+    const scopeRaw = queryParam(req, "scope") || "shared";
+    const scope = scopeRaw === "admin" ? "admin" : "shared";
     const { buildCatalog } = await import("./api/catalog.mjs");
-    const catalog = await buildCatalog(token, { full: mode === "full" });
+    const catalog = await buildCatalog(token, { full: mode === "full", scope });
     send(res, 200, { ok: true, hasToken: true, ...catalog });
   } catch (error) {
     console.error("[catalog]", error);
     const message = error instanceof Error ? error.message : String(error);
     send(res, 500, { ok: false, error: message });
   }
+}
+
+async function handleActivity(req: IncomingMessage, res: ServerResponse, token: string) {
+  if (req.method === "OPTIONS") {
+    res.statusCode = 204;
+    res.end();
+    return;
+  }
+  if (req.method !== "POST") {
+    send(res, 405, { ok: false, error: "méthode invalide" });
+    return;
+  }
+  let body: Record<string, unknown> = {};
+  try {
+    body = JSON.parse(await readBody(req)) as Record<string, unknown>;
+  } catch {
+    send(res, 400, { ok: false, error: "JSON inválido" });
+    return;
+  }
+  const result = await createActivityEvent(token, body);
+  send(res, result.ok || result.hasToken === false ? 200 : 400, result);
 }
 
 async function handleDescriptionSync(req: IncomingMessage, res: ServerResponse, token: string) {
@@ -282,9 +305,9 @@ export function notionFlashcardPlugin(mode: string): Plugin {
   if (env.NOTION_PLAN_DB) process.env.NOTION_PLAN_DB = env.NOTION_PLAN_DB;
   if (env.NOTION_ADMIN_DB) process.env.NOTION_ADMIN_DB = env.NOTION_ADMIN_DB;
   if (env.NOTION_NOTIFICATIONS_DB) process.env.NOTION_NOTIFICATIONS_DB = env.NOTION_NOTIFICATIONS_DB;
-  // Compat: anciennes vars → même DB Admin si NOTION_ADMIN_DB absent
   if (env.NOTION_PROFILE_DB) process.env.NOTION_PROFILE_DB = env.NOTION_PROFILE_DB;
   if (env.NOTION_MESSAGES_DB) process.env.NOTION_MESSAGES_DB = env.NOTION_MESSAGES_DB;
+  if (env.NOTION_ACTIVITY_DB) process.env.NOTION_ACTIVITY_DB = env.NOTION_ACTIVITY_DB;
   if (env.NOTION_TOKEN) process.env.NOTION_TOKEN = env.NOTION_TOKEN;
 
   const mount = (server: {
@@ -316,6 +339,9 @@ export function notionFlashcardPlugin(mode: string): Plugin {
     });
     server.middlewares.use("/api/admin-message", (req, res) => {
       void handleAdminMessage(req, res, token);
+    });
+    server.middlewares.use("/api/activity", (req, res) => {
+      void handleActivity(req, res, token);
     });
     server.middlewares.use("/api/admin-note", (req, res) => {
       void handleAdminNote(req, res, token);

@@ -5,6 +5,7 @@ import { isBiblosFlashcard } from "./catalog";
 import { sanitizePlanDays } from "./plan";
 import { clearPlanLocalState } from "./planProgress";
 import { normalizeCategoria, normalizeStatus } from "./retention";
+import { isClevencodeAdmin } from "./userProfile";
 
 const CATALOG_CACHE_KEY = "biblos-catalog-v1";
 
@@ -265,7 +266,8 @@ export function mergeCatalog(
 
 export async function pullCatalog(current: Catalog): Promise<{ catalog: Catalog; changed: boolean; ok: boolean }> {
   try {
-    const response = await fetch(apiUrl("/api/catalog?mode=index"));
+    const scope = isClevencodeAdmin() ? "admin" : "shared";
+    const response = await fetch(apiUrl(`/api/catalog?mode=index&scope=${scope}`));
     const parsed = await readApiJson<{
       ok?: boolean;
       plansOk?: boolean;

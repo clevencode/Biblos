@@ -192,6 +192,60 @@ export function upsertAdminPersonalNote(
   created?: boolean;
 }>;
 
+export function profileDatabaseId(): string;
+export function messagesDatabaseId(): string;
+export function activityDatabaseId(): string;
+export function adminDatabaseId(): string;
+
+export function upsertUserProfile(
+  token: string,
+  input?: Record<string, unknown>,
+): Promise<{
+  ok: boolean;
+  error?: string;
+  hasToken?: boolean;
+  localId?: string;
+  pageId?: string;
+  url?: string;
+  created?: boolean;
+}>;
+
+export function createAdminMessage(
+  token: string,
+  input?: Record<string, unknown>,
+): Promise<{
+  ok: boolean;
+  error?: string;
+  hasToken?: boolean;
+  localId?: string;
+  pageId?: string;
+  url?: string;
+  created?: boolean;
+  skipped?: boolean;
+}>;
+
+export function createActivityEvent(
+  token: string,
+  input?: {
+    localId?: string;
+    id?: string;
+    userId?: string;
+    displayName?: string;
+    type?: string;
+    meta?: unknown;
+    at?: string;
+  },
+): Promise<{
+  ok: boolean;
+  error?: string;
+  hasToken?: boolean;
+  localId?: string;
+  pageId?: string;
+  url?: string;
+  created?: boolean;
+  skipped?: boolean;
+}>;
+
 export function notificationsDatabaseId(): string;
 
 export function listPublishedNotifications(

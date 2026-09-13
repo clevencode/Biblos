@@ -686,14 +686,37 @@ export async function fetchPlanDayNote(token, input = {}) {
   }
 }
 
-/* —— Admin Notion (profils + messages, une seule DB) —— */
+/* —— Monitoring Notion (Profil / Activité / Message séparés) —— */
 
+/** Profil dédié ; fallback legacy NOTION_ADMIN_DB. */
+export function profileDatabaseId() {
+  return env("NOTION_PROFILE_DB", "") || env("NOTION_ADMIN_DB", "");
+}
+
+/** Messages dédiés ; fallback legacy NOTION_ADMIN_DB. */
+export function messagesDatabaseId() {
+  return env("NOTION_MESSAGES_DB", "") || env("NOTION_ADMIN_DB", "");
+}
+
+/** Activité — DB dédiée uniquement (pas de fallback multi-Kind). */
+export function activityDatabaseId() {
+  return env("NOTION_ACTIVITY_DB", "");
+}
+
+/** Legacy Admin multi-Kind (notes perso / compat). */
 export function adminDatabaseId() {
   return (
     env("NOTION_ADMIN_DB", "") ||
     env("NOTION_PROFILE_DB", "") ||
     env("NOTION_MESSAGES_DB", "")
   );
+}
+
+/** True si on écrit encore dans l’ancienne DB Admin (propriété Kind requise). */
+function usesLegacyAdminKind(databaseId) {
+  const admin = env("NOTION_ADMIN_DB", "").trim();
+  if (!admin || !databaseId) return false;
+  return String(databaseId).trim() === admin;
 }
 
 function richTextProp(content) {
@@ -768,16 +791,16 @@ export async function findPageByLocalId(token, databaseId, localId) {
 }
 
 /**
- * Crée ou met à jour le profil dans NOTION_ADMIN_DB (Kind=Profil).
+ * Crée ou met à jour le profil dans NOTION_PROFILE_DB (ou ADMIN legacy).
  * Déduplique via LocalId = UUID local.
  */
 export async function upsertUserProfile(token, input = {}) {
   if (!token) {
     return { ok: false, error: "NOTION_TOKEN em falta", hasToken: false };
   }
-  const databaseId = adminDatabaseId();
+  const databaseId = profileDatabaseId();
   if (!databaseId) {
-    return { ok: false, error: "NOTION_ADMIN_DB em falta", hasToken: true };
+    return { ok: false, error: "NOTION_PROFILE_DB em falta", hasToken: true };
   }
   const localId = String(input.localId || input.id || "").trim();
   if (!localId) {
@@ -799,7 +822,9 @@ export async function upsertUserProfile(token, input = {}) {
 
   const properties = {
     Name: titleProp(preferredName),
-    Kind: { select: { name: "Profil" } },
+    ...(usesLegacyAdminKind(databaseId)
+      ? { Kind: { select: { name: "Profil" } } }
+      : {}),
     LocalId: richTextProp(localId),
     UserId: richTextProp(localId),
     FirstName: richTextProp(firstName),
@@ -861,7 +886,7 @@ export async function upsertUserProfile(token, input = {}) {
 }
 
 /**
- * Message utilisateur → admin (même DB Admin, Kind=Message).
+ * Message utilisateur → NOTION_MESSAGES_DB (ou ADMIN legacy).
  * Category = Bug | Suggestion | Réclamation | Question | Autre.
  * Status=Nouveau pour automation IA plus tard.
  */
@@ -869,9 +894,9 @@ export async function createAdminMessage(token, input = {}) {
   if (!token) {
     return { ok: false, error: "NOTION_TOKEN em falta", hasToken: false };
   }
-  const databaseId = adminDatabaseId();
+  const databaseId = messagesDatabaseId();
   if (!databaseId) {
-    return { ok: false, error: "NOTION_ADMIN_DB em falta", hasToken: true };
+    return { ok: false, error: "NOTION_MESSAGES_DB em falta", hasToken: true };
   }
 
   const localId = String(input.localId || input.id || "").trim();
@@ -906,7 +931,9 @@ export async function createAdminMessage(token, input = {}) {
 
   const properties = {
     Name: titleProp(titleText),
-    Kind: { select: { name: "Message" } },
+    ...(usesLegacyAdminKind(databaseId)
+      ? { Kind: { select: { name: "Message" } } }
+      : {}),
     Category: { select: { name: category } },
     LocalId: richTextProp(localId),
     UserId: richTextProp(userId),
@@ -914,7 +941,9 @@ export async function createAdminMessage(token, input = {}) {
     Body: richTextProp(bodyText.slice(0, 2000)),
     Status: { select: { name: "Nouveau" } },
     CreatedAt: isoDateTimeProp(atIso),
-    UpdatedAt: isoDateTimeProp(atIso),
+    ...(usesLegacyAdminKind(databaseId)
+      ? { UpdatedAt: isoDateTimeProp(atIso) }
+      : {}),
   };
 
   const { ok, response, detail } = await notionFetch("https://api.notion.com/v1/pages", {
@@ -924,6 +953,92 @@ export async function createAdminMessage(token, input = {}) {
       parent: { database_id: databaseId },
       properties,
       children: paragraphChildrenFromText(bodyText),
+    }),
+  });
+  if (!ok) {
+    return {
+      ok: false,
+      hasToken: true,
+      error: humanizeCreateError(response?.status ?? 0, detail),
+    };
+  }
+  const page = await response.json();
+  return {
+    ok: true,
+    hasToken: true,
+    localId,
+    pageId: page.id,
+    url: notionPageUrl(page.id),
+    created: true,
+  };
+}
+
+/**
+ * Événement d’activité → NOTION_ACTIVITY_DB (une ligne par event, indexée UserId).
+ */
+export async function createActivityEvent(token, input = {}) {
+  if (!token) {
+    return { ok: false, error: "NOTION_TOKEN em falta", hasToken: false };
+  }
+  const databaseId = activityDatabaseId();
+  if (!databaseId) {
+    return { ok: false, error: "NOTION_ACTIVITY_DB em falta", hasToken: true };
+  }
+
+  const localId = String(input.localId || input.id || "").trim();
+  const userId = String(input.userId || "").trim();
+  const type = String(input.type || "").trim();
+  if (!localId || !userId || !type) {
+    return { ok: false, error: "localId, userId ou type em falta", hasToken: true };
+  }
+
+  const existing = await findPageByLocalId(token, databaseId, localId);
+  if (existing) {
+    return {
+      ok: true,
+      hasToken: true,
+      localId,
+      pageId: existing.id,
+      url: existing.url,
+      created: false,
+      skipped: true,
+    };
+  }
+
+  const displayName = String(input.displayName || "").trim() || "Lecteur";
+  const atIso = input.at || new Date().toISOString();
+  const nowIso = new Date().toISOString();
+  let metaText = "";
+  if (input.meta != null) {
+    try {
+      metaText = typeof input.meta === "string"
+        ? input.meta
+        : JSON.stringify(input.meta);
+    } catch {
+      metaText = String(input.meta);
+    }
+  }
+  metaText = metaText.slice(0, 1900);
+  const titleText = `${displayName} · ${type}`.slice(0, 120);
+
+  const properties = {
+    Name: titleProp(titleText),
+    LocalId: richTextProp(localId),
+    UserId: richTextProp(userId),
+    DisplayName: richTextProp(displayName),
+    Nome: richTextProp(displayName),
+    Type: richTextProp(type),
+    Meta: richTextProp(metaText),
+    At: isoDateTimeProp(atIso),
+    SyncedAt: isoDateTimeProp(nowIso),
+  };
+
+  const { ok, response, detail } = await notionFetch("https://api.notion.com/v1/pages", {
+    method: "POST",
+    headers: notionHeaders(token, { "Content-Type": "application/json" }),
+    body: JSON.stringify({
+      parent: { database_id: databaseId },
+      properties,
     }),
   });
   if (!ok) {

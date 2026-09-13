@@ -10,7 +10,7 @@ import {
   isOfflineBibleReady,
 } from "../bibleOffline";
 import {
-  ACTIVITY_TRACKING_ENABLED,
+  ACTIVITY_UI_ENABLED,
   activityTypeLabel,
   clearBibleReadingHistory,
   formatActivityWhen,
@@ -591,7 +591,7 @@ export function ProfileView({
           hidden={tab !== "library"}
           className="profile-tab-panel"
         >
-          {ACTIVITY_TRACKING_ENABLED ? (
+          {ACTIVITY_UI_ENABLED ? (
             <ProfilePanel titleId="profile-reading-label" title="Historique de lecture">
               {readingHistory.length === 0 ? (
                 <p className="profile-section-hint muted">
@@ -816,7 +816,7 @@ export function ProfileView({
             </form>
           </ProfilePanel>
 
-          {ACTIVITY_TRACKING_ENABLED ? (
+          {ACTIVITY_UI_ENABLED ? (
             <ProfilePanel titleId="profile-activity-label" title="Activité récente">
               {activities.length === 0 ? (
                 <p className="profile-section-hint muted">Aucune activité pour l’instant.</p>

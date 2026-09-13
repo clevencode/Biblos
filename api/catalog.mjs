@@ -318,6 +318,27 @@ function themeFromProp(prop) {
   return richFromProp(prop).replace(/\*\*/g, "").trim();
 }
 
+/** Audience Notion: Admin | Shared. Absente → Shared (rétrocompat). */
+function audienceFromProps(props) {
+  const prop = findProp(props, "Audience", "audience", "Public", "Visibilité");
+  if (!prop) return "Shared";
+  if (prop.type === "select") {
+    const name = String(prop.select?.name ?? "").trim();
+    if (/^admin$/i.test(name)) return "Admin";
+    return "Shared";
+  }
+  if (prop.type === "rich_text" || prop.type === "title") {
+    const text = richFromProp(prop).trim();
+    if (/^admin$/i.test(text)) return "Admin";
+  }
+  return "Shared";
+}
+
+function includePlanForScope(audience, scope) {
+  if (scope === "admin") return true;
+  return audience !== "Admin";
+}
+
 function mapPlanPage(page, bodyText = "", planProp = "", description = "") {
   const props = page.properties ?? {};
   const id = page.id;
@@ -328,6 +349,7 @@ function mapPlanPage(page, bodyText = "", planProp = "", description = "") {
     description || richFromProp(findProp(props, "Description", "Devotional")).trim();
   const days = parsePlanDays(bodyText);
   const merged = days.length ? days : parsePlanDays(`${bodyText}\n${planField}`);
+  const audience = audienceFromProps(props);
   return {
     id: `plan-${String(id).replace(/-/g, "").slice(0, 16)}`,
     nome,
@@ -335,6 +357,7 @@ function mapPlanPage(page, bodyText = "", planProp = "", description = "") {
     url: pageUrl(id),
     days: merged,
     description: descriptionField,
+    audience,
     criadoEm: page.created_time ? dateKey(page.created_time) : null,
   };
 }
@@ -366,8 +389,9 @@ export function cardsToSeeds(cards) {
   return [...groups.values()];
 }
 
-export async function buildCatalog(token, { full = false } = {}) {
+export async function buildCatalog(token, { full = false, scope = "shared" } = {}) {
   const planDb = [envSafe("NOTION_PLAN_DB"), PLAN_DB, PLAN_PAGE_DB].filter(Boolean);
+  const catalogScope = scope === "admin" ? "admin" : "shared";
 
   let planPages = [];
   let plansOk = true;
@@ -394,7 +418,9 @@ export async function buildCatalog(token, { full = false } = {}) {
     } catch {
       description = richFromProp(findProp(page.properties, "Description", "Devotional"));
     }
-    plans.push(mapPlanPage(page, body, planProp, description));
+    const mapped = mapPlanPage(page, body, planProp, description);
+    if (!includePlanForScope(mapped.audience, catalogScope)) continue;
+    plans.push(mapped);
   }
 
   return {
@@ -403,6 +429,7 @@ export async function buildCatalog(token, { full = false } = {}) {
     plansOk,
     cardCount: 0,
     planCount: plans.length,
+    scope: catalogScope,
   };
 }
 
@@ -425,6 +452,8 @@ export default async function handler(req, res) {
     const url = new URL(req.url || "/", "http://localhost");
     const mode = url.searchParams.get("mode") || "index";
     const full = mode === "full";
+    const scopeRaw = url.searchParams.get("scope") || "shared";
+    const scope = scopeRaw === "admin" ? "admin" : "shared";
 
     if (!token) {
       res.status(200).json({
@@ -437,7 +466,7 @@ export default async function handler(req, res) {
       return;
     }
 
-    const catalog = await buildCatalog(token, { full });
+    const catalog = await buildCatalog(token, { full, scope });
     res.status(200).json({ ok: true, hasToken: true, ...catalog });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

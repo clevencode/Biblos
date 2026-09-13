@@ -5,11 +5,14 @@ import { loadOrCreateProfile } from "./userProfile";
 const ACTIVITY_KEY = "biblos-activity-v1";
 const MAX_EVENTS = 300;
 
+/** Journal local + sync Notion (NOTION_ACTIVITY_DB) via activitySync. */
+export const ACTIVITY_TRACKING_ENABLED = true;
+
 /**
- * Désactivé pour l’instant (réutilisable plus tard).
- * Remettre à `true` pour enregistrer / afficher l’activité.
+ * Affichage in-app (profil / historique).
+ * false = l’utilisateur ne voit pas son activité ; le sync Notion continue.
  */
-export const ACTIVITY_TRACKING_ENABLED = false;
+export const ACTIVITY_UI_ENABLED = false;
 
 export type ActivityType =
   | "app.open"
@@ -78,6 +81,9 @@ export function appendActivity(
   const store = readStore();
   store.events = [event, ...store.events].slice(0, MAX_EVENTS);
   writeStore(store);
+  void import("./activitySync")
+    .then((mod) => mod.scheduleActivitySync(event))
+    .catch(() => undefined);
   return event;
 }
 

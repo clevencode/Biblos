@@ -25,6 +25,7 @@ import {
 import { syncUserProfileToNotion } from "./userProfileSync";
 import { startAppUsageTracking } from "./appUsage";
 import { flushAdminMessageOutbox } from "./adminMessage";
+import { flushActivityOutbox } from "./activitySync";
 import {
   listAllFlashcards,
   planCardIds,
@@ -170,6 +171,7 @@ export function App() {
 
   useEffect(() => {
     if (!isProfileOnboarded(profile)) return undefined;
+    void flushActivityOutbox();
     return startAppUsageTracking(() => {
       void syncUserProfileToNotion();
     });
@@ -184,6 +186,7 @@ export function App() {
     function onOnline() {
       setOfflineToast(false);
       void flushAdminMessageOutbox();
+      void flushActivityOutbox();
       void syncUserProfileToNotion();
     }
     window.addEventListener("offline", onOffline);

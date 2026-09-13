@@ -1,19 +1,24 @@
 /**
- * Crée la database Notion Admin (profils + messages) sous une page parente.
+ * Crée les databases Notion de monitoring (Profil, Activité, Message)
+ * sous une page parente, et assure Audience sur la PLAN_DB.
  *
  * Usage:
  *   NOTION_TOKEN=… NOTION_PARENT_PAGE=… node scripts/setup-user-notion-dbs.mjs
  *
- * Puis copie l’ID imprimé dans .env :
- *   NOTION_ADMIN_DB=…
+ * Puis copie les IDs imprimés dans .env / Vercel :
+ *   NOTION_PROFILE_DB=…
+ *   NOTION_ACTIVITY_DB=…
+ *   NOTION_MESSAGES_DB=…
  *
- * Partage la DB avec l’intégration Notion (Connections → ton intégration).
+ * Partage chaque DB avec l’intégration Notion (Connections).
  */
 import { loadEnv } from "vite";
 
 const env = loadEnv("development", process.cwd(), "");
 const token = process.env.NOTION_TOKEN || env.NOTION_TOKEN || "";
 const parentPage = process.env.NOTION_PARENT_PAGE || env.NOTION_PARENT_PAGE || "";
+const planDb =
+  process.env.NOTION_PLAN_DB || env.NOTION_PLAN_DB || "3d103af9-2e96-80c4-bcdd-000bd60ac72f";
 const version = "2022-06-28";
 
 function pageUuid(raw) {
@@ -52,6 +57,106 @@ async function createDb(title, properties) {
   return page.id;
 }
 
+const profileProps = {
+  Name: { title: {} },
+  LocalId: { rich_text: {} },
+  UserId: { rich_text: {} },
+  FirstName: { rich_text: {} },
+  LastName: { rich_text: {} },
+  PreferredName: { rich_text: {} },
+  DisplayName: { rich_text: {} },
+  TimeSpentMinutes: { number: {} },
+  CreatedAt: { date: {} },
+  OnboardedAt: { date: {} },
+  UpdatedAt: { date: {} },
+};
+
+const activityProps = {
+  Name: { title: {} },
+  LocalId: { rich_text: {} },
+  UserId: { rich_text: {} },
+  DisplayName: { rich_text: {} },
+  /** Nome d’utilisateur (colonne visible / filtre). */
+  Nome: { rich_text: {} },
+  Type: { rich_text: {} },
+  Meta: { rich_text: {} },
+  At: { date: {} },
+  SyncedAt: { date: {} },
+};
+
+const messageProps = {
+  Name: { title: {} },
+  LocalId: { rich_text: {} },
+  UserId: { rich_text: {} },
+  DisplayName: { rich_text: {} },
+  Body: { rich_text: {} },
+  Category: {
+    select: {
+      options: [
+        { name: "Bug", color: "red" },
+        { name: "Suggestion", color: "green" },
+        { name: "Réclamation", color: "orange" },
+        { name: "Question", color: "blue" },
+        { name: "Autre", color: "gray" },
+      ],
+    },
+  },
+  Status: {
+    select: {
+      options: [
+        { name: "Nouveau", color: "blue" },
+        { name: "En cours", color: "yellow" },
+        { name: "Traité", color: "green" },
+        { name: "Archivé", color: "gray" },
+      ],
+    },
+  },
+  CreatedAt: { date: {} },
+};
+
+async function ensurePlanAudience() {
+  const dbId = pageUuid(planDb) || planDb;
+  if (!dbId) {
+    console.warn("NOTION_PLAN_DB manquant — Audience non configuré.");
+    return;
+  }
+  try {
+    const db = await notion(`/databases/${dbId}`, { method: "GET" });
+    const props = db.properties || {};
+    const existing =
+      props.Audience ||
+      Object.keys(props).find((key) => key.toLowerCase() === "audience");
+    if (existing) {
+      console.log("Audience déjà présent sur PLAN_DB.");
+      return;
+    }
+    await notion(`/databases/${dbId}`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        properties: {
+          Audience: {
+            select: {
+              options: [
+                { name: "Shared", color: "green" },
+                { name: "Admin", color: "purple" },
+              ],
+            },
+          },
+        },
+      }),
+    });
+    console.log("Audience ajouté sur PLAN_DB (Shared | Admin).");
+  } catch (error) {
+    console.warn(
+      "Impossible d’ajouter Audience sur PLAN_DB:",
+      error instanceof Error ? error.message : error,
+    );
+    console.warn(
+      "Ajoute manuellement la propriété select Audience = Shared | Admin.",
+    );
+  }
+}
+
 async function main() {
   if (!token) {
     console.error("Manque NOTION_TOKEN");
@@ -65,64 +170,28 @@ async function main() {
     process.exit(1);
   }
 
-  console.log("Création de la database Admin…");
+  console.log("Création Profil…");
+  const profileId = await createDb("Biblos Profil", profileProps);
+  console.log("Création Activité…");
+  const activityId = await createDb("Biblos Activité", activityProps);
+  console.log("Création Message…");
+  const messagesId = await createDb("Biblos Message", messageProps);
 
-  const adminId = await createDb("Admin", {
-    Name: { title: {} },
-    Kind: {
-      select: {
-        options: [
-          { name: "Profil", color: "blue" },
-          { name: "Message", color: "orange" },
-          { name: "Note", color: "purple" },
-        ],
-      },
-    },
-    LocalId: { rich_text: {} },
-    UserId: { rich_text: {} },
-    FirstName: { rich_text: {} },
-    LastName: { rich_text: {} },
-    PreferredName: { rich_text: {} },
-    DisplayName: { rich_text: {} },
-    TimeSpentMinutes: { number: {} },
-    Body: { rich_text: {} },
-    Plan: { rich_text: {} },
-    PlanId: { rich_text: {} },
-    Jour: { number: {} },
-    Passage: { rich_text: {} },
-    Category: {
-      select: {
-        options: [
-          { name: "Bug", color: "red" },
-          { name: "Suggestion", color: "green" },
-          { name: "Réclamation", color: "orange" },
-          { name: "Question", color: "blue" },
-          { name: "Autre", color: "gray" },
-        ],
-      },
-    },
-    Status: {
-      select: {
-        options: [
-          { name: "Nouveau", color: "blue" },
-          { name: "En cours", color: "yellow" },
-          { name: "Traité", color: "green" },
-          { name: "Archivé", color: "gray" },
-        ],
-      },
-    },
-    CreatedAt: { date: {} },
-    OnboardedAt: { date: {} },
-    UpdatedAt: { date: {} },
-  });
+  console.log("\nAudience sur PLAN_DB…");
+  await ensurePlanAudience();
 
   console.log("\nOK — ajoute dans .env (et Vercel) :\n");
-  console.log(`NOTION_ADMIN_DB=${adminId}`);
+  console.log(`NOTION_PROFILE_DB=${profileId}`);
+  console.log(`NOTION_ACTIVITY_DB=${activityId}`);
+  console.log(`NOTION_MESSAGES_DB=${messagesId}`);
   console.log(
-    "\nDans Notion : ouvre Admin → ··· → Connections → ajoute ton intégration.",
+    "\nDans Notion : ouvre chaque DB → ··· → Connections → ajoute ton intégration.",
   );
   console.log(
-    "Scope: Profil (nome + TimeSpentMinutes) · Message (ajuda). Notes = local only.",
+    "Planos: marque Audience=Admin (perso) ou Shared (tous). Sans valeur = Shared.",
+  );
+  console.log(
+    "Compat: NOTION_ADMIN_DB reste un fallback si PROFILE/MESSAGES absents.",
   );
 }
 

@@ -31,7 +31,7 @@ import { BibleAudioPlayer } from "./BibleAudioPlayer";
 import { BibleHistorySheet } from "./BibleHistorySheet";
 import { BibleSearchSheet } from "./BibleSearchSheet";
 import { CircularColorEditor } from "./CircularColorEditor";
-import { ACTIVITY_TRACKING_ENABLED } from "../activityLog";
+import { ACTIVITY_UI_ENABLED } from "../activityLog";
 import {
   bindBibleAudioControls,
   clearBibleAudioControls,
@@ -1226,7 +1226,7 @@ export function BibleReaderView({
                     : "Télécharger hors ligne"}
               </span>
             </button>
-            {ACTIVITY_TRACKING_ENABLED ? (
+            {ACTIVITY_UI_ENABLED ? (
               <button
                 type="button"
                 role="menuitem"
@@ -2224,7 +2224,7 @@ export function BibleReaderView({
         }}
       />
 
-      {ACTIVITY_TRACKING_ENABLED ? (
+      {ACTIVITY_UI_ENABLED ? (
         <BibleHistorySheet
           open={historyOpen}
           onClose={() => setHistoryOpen(false)}

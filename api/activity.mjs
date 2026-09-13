@@ -1,7 +1,7 @@
 /**
- * POST /api/admin-message — message utilisateur → NOTION_MESSAGES_DB.
+ * POST /api/activity — événement d’activité utilisateur → NOTION_ACTIVITY_DB.
  */
-import { createAdminMessage } from "../shared/notion.mjs";
+import { createActivityEvent } from "../shared/notion.mjs";
 
 export default async function handler(req, res) {
   try {
@@ -19,18 +19,17 @@ export default async function handler(req, res) {
     }
 
     const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body || {};
-    const result = await createAdminMessage(token, {
+    const result = await createActivityEvent(token, {
       localId: body.localId || body.id,
       userId: body.userId,
       displayName: body.displayName,
-      category: body.category || body.title,
-      title: body.title,
-      body: body.body || body.message,
+      type: body.type,
+      meta: body.meta,
       at: body.at,
     });
     res.status(result.ok || result.hasToken === false ? 200 : 400).json(result);
   } catch (error) {
-    console.error("[admin-message]", error);
+    console.error("[activity]", error);
     res.status(500).json({
       ok: false,
       error: error instanceof Error ? error.message : "erro interno",

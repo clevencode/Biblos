@@ -31,7 +31,7 @@ if (!token) {
   process.exit(1);
 }
 
-const catalog = await buildCatalog(token, { full: true });
+const catalog = await buildCatalog(token, { full: true, scope: "admin" });
 const out = {
   notas: catalog.notas,
   plans: catalog.plans,

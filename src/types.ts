@@ -33,6 +33,8 @@ export type ReadingPlan = {
   days: PlanDay[];
   /** Propriedade Notion `Devotional` (ex-Description / comme Resumo no StudyOS). */
   description?: string;
+  /** Notion Audience: Admin (dono) | Shared (tous). Absent → Shared. */
+  audience?: "Admin" | "Shared";
   cardIds?: string[];
   criadoEm?: string | null;
 };
