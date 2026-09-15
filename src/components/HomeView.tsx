@@ -1,4 +1,4 @@
-import { BellAlertIcon, BellIcon } from "@heroicons/react/24/outline";
+import { Bell, BellRing } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import {
   countUnreadAppNotifications,
@@ -103,7 +103,7 @@ export function HomeView({
   }
 
   const hasUnread = unread > 0;
-  const Bell = hasUnread ? BellAlertIcon : BellIcon;
+  const NotifIcon = hasUnread ? BellRing : Bell;
 
   return (
     <div className="home-view">
@@ -123,7 +123,7 @@ export function HomeView({
           title="Notifications"
           onClick={() => setShowNotifications(true)}
         >
-          <Bell className="home-notif-icon" aria-hidden />
+          <NotifIcon className="home-notif-icon" aria-hidden />
           {hasUnread ? (
             <span className="home-notif-badge" aria-hidden>
               {unread > 9 ? "9+" : unread}

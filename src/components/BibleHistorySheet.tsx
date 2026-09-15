@@ -1,5 +1,5 @@
 import { useEffect, useId, useState } from "react";
-import { TrashIcon } from "@heroicons/react/24/outline";
+import { Trash2 } from "lucide-react";
 import {
   clearBibleReadingHistory,
   formatActivityWhen,
@@ -110,7 +110,7 @@ export function BibleHistorySheet({
             aria-label="Effacer tout l’historique"
             title="Effacer tout"
           >
-            <TrashIcon className="bible-search-sheet-clear-all-icon" aria-hidden />
+            <Trash2 className="bible-search-sheet-clear-all-icon" aria-hidden />
           </button>
         ) : (
           <span className="bible-search-sheet-spacer" aria-hidden />
@@ -159,7 +159,7 @@ export function BibleHistorySheet({
                     deleteOne(event.id);
                   }}
                 >
-                  <TrashIcon className="bible-history-delete-icon" aria-hidden />
+                  <Trash2 className="bible-history-delete-icon" aria-hidden />
                 </button>
               </li>
             );

@@ -208,23 +208,20 @@ summary {
 }
 
 .yv-icon {
-  font-family: "Material Symbols Rounded", sans-serif;
-  font-weight: normal;
-  font-style: normal;
-  font-size: 24px;
-  line-height: 1;
-  letter-spacing: normal;
-  text-transform: none;
-  display: inline-grid;
-  place-items: center;
-  white-space: nowrap;
-  word-wrap: normal;
-  direction: ltr;
-  font-feature-settings: "liga";
-  -webkit-font-smoothing: antialiased;
-  user-select: none;
+  display: inline-block;
   flex: none;
   color: inherit;
+  stroke: currentColor;
+  vertical-align: middle;
+  user-select: none;
+  pointer-events: none;
+  overflow: visible;
+}
+
+/* Lucide Play is optically left-heavy inside round CTAs */
+.yv-icon.bible-yv-dock-icon--play[data-lucide="play"],
+.yv-icon.bible-audio-player-icon[data-lucide="play"] {
+  transform: translateX(1.5px);
 }
 
 *::-webkit-scrollbar {
@@ -701,12 +698,9 @@ body,
 }
 
 .mode-tab-icon {
-  display: inline-grid;
-  place-items: center;
   flex-shrink: 0;
   width: 24px;
   height: 24px;
-  font-size: 24px;
   color: inherit;
 }
 
@@ -7701,11 +7695,8 @@ ul.plan-yv-day-note-ref {
 }
 
 .bible-yv-tool-icon {
-  display: inline-grid;
-  place-items: center;
-  width: 24px;
-  height: 24px;
-  font-size: 24px;
+  width: 22px;
+  height: 22px;
 }
 
 .bible-yv-tools-popover {
@@ -7752,9 +7743,8 @@ ul.plan-yv-day-note-ref {
 
 .bible-yv-tools-item-icon {
   flex: none;
-  width: 20px;
-  height: 20px;
-  font-size: 20px;
+  width: 18px;
+  height: 18px;
 }
 
 .bible-yv-tools-item.is-ready {
@@ -8471,9 +8461,8 @@ ul.plan-yv-day-note-ref {
 
 .bible-reader--yv .bible-verse-cta-icon {
   flex: none;
-  width: 20px;
-  height: 20px;
-  font-size: 20px;
+  width: 18px;
+  height: 18px;
   color: color-mix(in srgb, var(--yv-text) 82%, var(--yv-muted));
 }
 
@@ -8880,9 +8869,8 @@ ul.plan-yv-day-note-ref {
 }
 
 .bible-audio-player-icon {
-  width: 32px;
-  height: 32px;
-  font-size: 32px;
+  width: 28px;
+  height: 28px;
 }
 
 .bible-audio-player-play:active:not(:disabled) {
@@ -9788,23 +9776,20 @@ ul.plan-yv-day-note-ref {
 }
 
 .bible-yv-dock-icon {
-  width: 24px;
-  height: 24px;
-  font-size: 24px;
+  width: 22px;
+  height: 22px;
   flex: none;
   color: inherit;
 }
 
 .bible-yv-dock-icon--play {
-  width: 24px;
-  height: 24px;
-  font-size: 24px;
+  width: 22px;
+  height: 22px;
 }
 
 .bible-yv-dock-advance .bible-yv-dock-icon {
-  width: 22px;
-  height: 22px;
-  font-size: 22px;
+  width: 20px;
+  height: 20px;
 }
 
 .bible-yv-dock-arrow:hover:not(:disabled) {

@@ -1,4 +1,4 @@
-import { ChevronRightIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { ChevronRight, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
   formatNotificationWhen,
@@ -176,7 +176,7 @@ export function NotificationsView({ plans, onBack }: NotificationsViewProps) {
             className="notif-delete-btn"
             onClick={onDeleteSelected}
           >
-            <TrashIcon className="notif-delete-icon" aria-hidden />
+            <Trash2 className="notif-delete-icon" aria-hidden />
             Supprimer
           </button>
         </div>
@@ -232,7 +232,7 @@ export function NotificationsView({ plans, onBack }: NotificationsViewProps) {
                     </span>
                   ) : null}
                 </span>
-                <ChevronRightIcon className="notif-item-chevron" aria-hidden />
+                <ChevronRight className="notif-item-chevron" aria-hidden />
               </button>
             </li>
           ))}

@@ -7,7 +7,7 @@ import {
   type KeyboardEvent,
   type PointerEvent,
 } from "react";
-import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { dateKey, formatDay, relativeDayLabel, scheduleDayParts, shiftDay, todayKey, weekDaysSunday, weekdayLabel } from "../calendar";
 import {
   RETENTION_LABELS,
@@ -1035,7 +1035,7 @@ export function FlashDeckList({
               disabled={!prevBusyDay}
               onClick={() => goToAdjacentBusyDay(-1)}
             >
-              <ChevronLeftIcon className="flash-day-nav-icon" aria-hidden />
+              <ChevronLeft className="flash-day-nav-icon" aria-hidden />
             </button>
             <div className="flash-day-cards-copy">
               <time dateTime={selectedDay}>{selectedDayTitle}</time>
@@ -1052,7 +1052,7 @@ export function FlashDeckList({
               disabled={!nextBusyAcross}
               onClick={() => goToAdjacentBusyDay(1)}
             >
-              <ChevronRightIcon className="flash-day-nav-icon" aria-hidden />
+              <ChevronRight className="flash-day-nav-icon" aria-hidden />
             </button>
           </div>
 

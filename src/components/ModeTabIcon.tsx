@@ -1,27 +1,41 @@
 import type { CenterMode } from "../types";
-import { YvIcon } from "./YvIcon";
+import {
+  BookOpen,
+  CalendarDays,
+  Home,
+  Layers,
+  User,
+  type LucideIcon,
+} from "lucide-react";
 
 type ModeTabIconProps = {
   name: CenterMode;
   active?: boolean;
 };
 
-/** Tab icons aligned with YouVersion Bible (menu_book, home, person, etc.). */
-const ICONS: Record<CenterMode, string> = {
-  home: "home",
-  today: "calendar_month",
-  bible: "menu_book",
-  cards: "style",
-  profile: "person",
+const ICONS: Record<CenterMode, LucideIcon> = {
+  home: Home,
+  today: CalendarDays,
+  bible: BookOpen,
+  cards: Layers,
+  profile: User,
 };
 
+/** Solid fill reads well; open glyphs stay stroke-only when active. */
+const SOLID_WHEN_ACTIVE = new Set<CenterMode>(["home", "profile"]);
+
+/** Tab icons — Lucide, filled when the tab is active. */
 export function ModeTabIcon({ name, active = false }: ModeTabIconProps) {
+  const Icon = ICONS[name];
+  const solid = active && SOLID_WHEN_ACTIVE.has(name);
   return (
-    <YvIcon
-      name={ICONS[name]}
-      filled={active}
-      className={`mode-tab-icon${active ? " is-filled" : ""}`}
-      opsz={24}
+    <Icon
+      className={`yv-icon mode-tab-icon${active ? " is-filled" : ""}`}
+      size={24}
+      strokeWidth={active ? 2.25 : 1.75}
+      absoluteStrokeWidth
+      fill={solid ? "currentColor" : "none"}
+      aria-hidden
     />
   );
 }

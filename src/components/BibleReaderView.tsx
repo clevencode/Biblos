@@ -8,7 +8,7 @@ import {
   type CSSProperties,
 } from "react";
 import { createPortal, flushSync } from "react-dom";
-import { RectangleStackIcon } from "@heroicons/react/24/outline";
+import { Layers } from "lucide-react";
 import { YvIcon } from "./YvIcon";
 import {
   adjacentChapter,
@@ -1828,7 +1828,7 @@ export function BibleReaderView({
                   <sup className="bible-verse-num">{verse.number}</sup>
                   {hasFlashcard ? (
                     <span className="bible-verse-card-icon" aria-hidden="true">
-                      <RectangleStackIcon />
+                      <Layers />
                     </span>
                   ) : null}
                   <span className="bible-verse-text">{verse.text}</span>
@@ -1863,7 +1863,7 @@ export function BibleReaderView({
                 : ""}
               {existingVerseCard ? (
                 <span className="bible-verse-actions-card-icon" aria-hidden="true">
-                  <RectangleStackIcon />
+                  <Layers />
                 </span>
               ) : null}
             </p>

@@ -1,10 +1,11 @@
 import {
-  Cog6ToothIcon,
-  ComputerDesktopIcon,
-  MoonIcon,
-  SunIcon,
-  TrashIcon,
-} from "@heroicons/react/24/outline";
+  Monitor,
+  Moon,
+  Settings,
+  Sun,
+  Trash2,
+  type LucideIcon,
+} from "lucide-react";
 import {
   clearOfflineBible,
   isOfflineBibleReady,
@@ -78,11 +79,11 @@ const APP_VERSION = __APP_VERSION__;
 const THEME_OPTIONS: {
   id: ThemePref;
   label: string;
-  Icon: typeof SunIcon;
+  Icon: LucideIcon;
 }[] = [
-  { id: "light", label: "Clair", Icon: SunIcon },
-  { id: "dark", label: "Sombre", Icon: MoonIcon },
-  { id: "system", label: "Système", Icon: ComputerDesktopIcon },
+  { id: "light", label: "Clair", Icon: Sun },
+  { id: "dark", label: "Sombre", Icon: Moon },
+  { id: "system", label: "Système", Icon: Monitor },
 ];
 
 function ProfilePanel({
@@ -340,7 +341,7 @@ export function ProfileView({
             aria-label="Configurer le compte"
             title="Compte"
           >
-            <Cog6ToothIcon className="profile-config-icon" aria-hidden />
+            <Settings className="profile-config-icon" aria-hidden />
           </button>
         ) : null}
       </header>
@@ -442,7 +443,7 @@ export function ProfileView({
               disabled={deleteBusy}
               onClick={() => void confirmDeleteAccount()}
             >
-              <TrashIcon className="profile-delete-btn-icon" aria-hidden />
+              <Trash2 className="profile-delete-btn-icon" aria-hidden />
               {deleteBusy ? "Suppression…" : "Supprimer mon compte"}
             </button>
           </ProfilePanel>
@@ -578,7 +579,7 @@ export function ProfileView({
                 disabled={offlineClearBusy}
                 onClick={() => void confirmClearOfflineBible()}
               >
-                <TrashIcon className="profile-offline-remove-icon" aria-hidden />
+                <Trash2 className="profile-offline-remove-icon" aria-hidden />
                 {offlineClearBusy
                   ? "Suppression…"
                   : "Supprimer le téléchargement"}
@@ -620,7 +621,7 @@ export function ProfileView({
                         onReadingHistoryChange?.();
                       }}
                     >
-                      <TrashIcon className="profile-clear-history-icon" aria-hidden />
+                      <Trash2 className="profile-clear-history-icon" aria-hidden />
                       Effacer l’historique
                     </button>
                   </div>
@@ -669,7 +670,7 @@ export function ProfileView({
                               onReadingHistoryChange?.();
                             }}
                           >
-                            <TrashIcon
+                            <Trash2
                               className="profile-history-delete-icon"
                               aria-hidden
                             />
