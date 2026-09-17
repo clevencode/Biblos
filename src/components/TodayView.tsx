@@ -182,7 +182,6 @@ export function TodayView({
   );
 
   const scheduleTotal = days.length;
-  const scheduleDone = days.filter((day) => progress?.completedDays.includes(day.jour)).length;
   const planComplete = isPlanComplete({ days }, progress);
   const hasDescription = Boolean(plan?.description?.trim());
   const hasStages = stages.length > 0;
@@ -198,9 +197,6 @@ export function TodayView({
   const stageDayIndex = hasStages
     ? Math.max(0, stageDays.findIndex((day) => day.jour === selectedJour) + 1)
     : 0;
-  const stageDoneCount = stageDays.filter((day) =>
-    progress?.completedDays.includes(day.jour),
-  ).length;
 
   useEffect(() => {
     if (!days.length) return;
@@ -592,15 +588,18 @@ export function TodayView({
       {days.length ? (
         <section
           className={`plan-yv-timeline${hasStages ? " has-stages" : ""}`}
-          aria-label={hasStages ? "Étapes du plan" : "Progression du plan"}
+          aria-label={hasStages ? "Navigation du plan" : "Progression du plan"}
         >
           {hasStages && selectedStage ? (
             <div className="plan-yv-stage-catalog">
+              <p className="plan-yv-section-label" id="plan-yv-stages-label">
+                Étapes
+              </p>
               <div
                 ref={stagesStripRef}
                 className="plan-yv-stages"
                 role="tablist"
-                aria-label="Catégories d’étapes"
+                aria-labelledby="plan-yv-stages-label"
               >
                 {stages.map((stage) => {
                   const active = selectedStage.id === stage.id;
@@ -632,8 +631,8 @@ export function TodayView({
                         .filter(Boolean)
                         .join(" ")}
                       onClick={() => selectStage(stage)}
-                      title={stage.title}
-                      aria-label={`Étape ${stage.id} · ${stage.title} · ${stageDoneCountLocal}/${stageTotalLocal}`}
+                      title={`${stage.title} · ${stageDoneCountLocal}/${stageTotalLocal}`}
+                      aria-label={`Étape ${stage.id} · ${stage.title} · ${stageDoneCountLocal} sur ${stageTotalLocal}`}
                     >
                       <span
                         className="plan-yv-stage-num"
@@ -642,12 +641,7 @@ export function TodayView({
                       >
                         {stageDone ? "✓" : stage.id}
                       </span>
-                      <span className="plan-yv-stage-copy">
-                        <span className="plan-yv-stage-name">{stage.title}</span>
-                        <span className="plan-yv-stage-prog">
-                          {stageDoneCountLocal}/{stageTotalLocal}
-                        </span>
-                      </span>
+                      <span className="plan-yv-stage-name">{stage.title}</span>
                     </button>
                   );
                 })}
@@ -655,78 +649,70 @@ export function TodayView({
             </div>
           ) : null}
 
-          <div
-            ref={daysStripRef}
-            className={`plan-yv-days${stageDays.length <= 7 ? " is-fit" : ""}`}
-            role="listbox"
-            aria-label={
-              selectedStage
-                ? `Jours de l’étape ${selectedStage.id}`
-                : "Jours du plan"
-            }
-          >
-            {stageDays.map((day, idx) => {
-              const selected = day.jour === selectedDay?.jour;
-              const read = progress?.completedDays.includes(day.jour) ?? false;
-              const isCurrent = day.jour === planJour;
-              const startDate = progress?.startDate;
-              const realDate = startDate ? planJourDate(startDate, day.jour) : null;
-              const dateLabel = realDate ? formatPlanTileDate(realDate) : "Jour";
-              const tileNum = hasStages ? idx + 1 : day.jour;
-              return (
-                <button
-                  key={day.jour}
-                  type="button"
-                  role="option"
-                  data-jour={day.jour}
-                  aria-selected={selected}
-                  className={[
-                    "plan-yv-day",
-                    selected ? "is-selected" : "",
-                    read ? "is-read" : "",
-                    isCurrent && !read ? "is-today" : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                  onClick={() => setSelectedJour(day.jour)}
-                  aria-label={[
-                    hasStages && selectedStage
-                      ? `Étape ${selectedStage.id}, jour ${tileNum}`
-                      : `Jour ${day.jour}`,
-                    realDate ? dateLabel : null,
-                    selected ? "sélectionné" : null,
-                    isCurrent ? "jour actuel" : null,
-                    read ? "terminé" : null,
-                  ]
-                    .filter(Boolean)
-                    .join(", ")}
-                >
-                  {read ? (
-                    <span className="plan-yv-day-check" aria-hidden="true">
-                      ✓
-                    </span>
-                  ) : null}
-                  <span className="plan-yv-day-num">{tileNum}</span>
-                  <span className="plan-yv-day-label">{dateLabel}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="plan-yv-timeline-meta">
-            {selectedDay && hasStages && selectedStage ? (
-              <p className="plan-yv-progress-stage-line">
-                Étape {selectedStage.id}
-                {selectedStage.title ? ` · ${selectedStage.title}` : ""}
+          <div className="plan-yv-days-block">
+            <div className="plan-yv-days-head">
+              <p className="plan-yv-section-label" id="plan-yv-days-label">
+                {hasStages && selectedStage
+                  ? `Étape ${selectedStage.id}${selectedStage.title ? ` · ${selectedStage.title}` : ""}`
+                  : "Jours"}
               </p>
-            ) : selectedDay && !hasStages ? (
-              <p className="plan-yv-progress">
-                Jour {displayJourIndex} sur {displayProgressTotal}
-                {selectedDay.jour === planJour ? (
-                  <span className="plan-yv-progress-today"> · Aujourd’hui</span>
-                ) : null}
-              </p>
-            ) : null}
+              {selectedDay?.jour === planJour ? (
+                <span className="plan-yv-days-today">Aujourd’hui</span>
+              ) : null}
+            </div>
+            <div
+              ref={daysStripRef}
+              className={`plan-yv-days${stageDays.length <= 7 ? " is-fit" : ""}`}
+              role="listbox"
+              aria-labelledby="plan-yv-days-label"
+            >
+              {stageDays.map((day, idx) => {
+                const selected = day.jour === selectedDay?.jour;
+                const read = progress?.completedDays.includes(day.jour) ?? false;
+                const isCurrent = day.jour === planJour;
+                const startDate = progress?.startDate;
+                const realDate = startDate ? planJourDate(startDate, day.jour) : null;
+                const dateLabel = realDate ? formatPlanTileDate(realDate) : "Jour";
+                const tileNum = hasStages ? idx + 1 : day.jour;
+                return (
+                  <button
+                    key={day.jour}
+                    type="button"
+                    role="option"
+                    data-jour={day.jour}
+                    aria-selected={selected}
+                    className={[
+                      "plan-yv-day",
+                      selected ? "is-selected" : "",
+                      read ? "is-read" : "",
+                      isCurrent && !read ? "is-today" : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                    onClick={() => setSelectedJour(day.jour)}
+                    aria-label={[
+                      hasStages && selectedStage
+                        ? `Étape ${selectedStage.id}, jour ${tileNum}`
+                        : `Jour ${day.jour}`,
+                      realDate ? dateLabel : null,
+                      selected ? "sélectionné" : null,
+                      isCurrent ? "jour actuel" : null,
+                      read ? "terminé" : null,
+                    ]
+                      .filter(Boolean)
+                      .join(", ")}
+                  >
+                    {read ? (
+                      <span className="plan-yv-day-check" aria-hidden="true">
+                        ✓
+                      </span>
+                    ) : null}
+                    <span className="plan-yv-day-num">{tileNum}</span>
+                    <span className="plan-yv-day-label">{dateLabel}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </section>
       ) : null}
@@ -738,10 +724,10 @@ export function TodayView({
         >
           <div className="plan-yv-hero-top">
             <p className="plan-yv-hero-eyebrow">
-              {hasStages && selectedStage
-                ? `Étape ${selectedStage.id} · Jour ${displayJourIndex || selectedIndex}`
+              {displayJourIndex > 0
+                ? `Jour ${displayJourIndex}${displayProgressTotal > 0 ? ` sur ${displayProgressTotal}` : ""}`
                 : "Lecture du jour"}
-              {!hasStages && selectedIndex > 0 ? ` · Jour ${selectedIndex}` : null}
+              {selectedDay.jour === planJour ? " · Aujourd’hui" : null}
             </p>
           </div>
           {passageRefs.length > 0 || passageLabel ? (
