@@ -511,7 +511,7 @@ export function ProfileView({
             title="Synchronisation"
             hint={
               isAdminOwner
-                ? "VERSECARD et VerseMark voyagent via Notion (compte clevencode)."
+                ? "Versets marqués et leurs cartes (VERSECARD) sync via Notion — clevencode."
                 : "Ton profil et ta progression suivent ton compte."
             }
           >
@@ -529,18 +529,22 @@ export function ProfileView({
                 </span>
               </li>
               <li>
+                <span className="profile-fact-label">Versets marqués</span>
+                <span className="profile-fact-value">{savedVerses.length}</span>
+              </li>
+              <li>
+                <span className="profile-fact-label">VERSECARD</span>
+                <span className="profile-fact-value">{flashcards.length}</span>
+              </li>
+              <li>
                 <span className="profile-fact-label">Appareil</span>
                 <span className="profile-fact-value">
                   {isAdminOwner
-                    ? "Cartes & surlignages → Notion"
+                    ? "Marques & cartes → Notion"
                     : profile.notionUrl
                       ? "Profil lié"
                       : "Local"}
                 </span>
-              </li>
-              <li>
-                <span className="profile-fact-label">Versets marqués</span>
-                <span className="profile-fact-value">{savedVerses.length}</span>
               </li>
             </ul>
             {isAdminOwner && onSyncNow ? (
@@ -794,10 +798,14 @@ export function ProfileView({
             ) : null}
           </ProfilePanel>
 
-          <ProfilePanel titleId="profile-cards-label" title="Flashcards">
+          <ProfilePanel
+            titleId="profile-cards-label"
+            title="VERSECARD"
+            hint="Cartes d’étude liées aux versets marqués — même sync multi-appareil."
+          >
             {flashcards.length === 0 ? (
               <p className="profile-section-hint muted">
-                Aucune flashcard — crée-en depuis un verset.
+                Aucune carte — marque un verset puis crée une flashcard dans Lecture.
               </p>
             ) : (
               <ul className="profile-library-list">

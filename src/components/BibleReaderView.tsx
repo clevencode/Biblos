@@ -219,6 +219,8 @@ type BibleReaderViewProps = {
   } | null;
   /** Après création d’une VERSECARD (catalogue local). */
   onFlashcardCreated?: (card: Flashcard) => void;
+  /** Retire une VERSECARD (même logique toggle que Démarquer). */
+  onFlashcardRemoved?: (cardId: string) => void;
   /** Ids des VERSECARD déjà enregistrées (ex. verse-HAG.2.10). */
   existingVerseCardIds?: ReadonlySet<string>;
   /** Couleurs actuelles des VERSECARD (id → hex). */
@@ -394,6 +396,7 @@ export function BibleReaderView({
   onBack,
   planReading = null,
   onFlashcardCreated,
+  onFlashcardRemoved,
   existingVerseCardIds,
   existingVerseCardColors,
   onUpdateVerseCardColor,
@@ -996,14 +999,26 @@ export function BibleReaderView({
     const frente = formatSelectionFront(title, chapterId, selection);
     const usfm = selectionUsfm(bookId, chapterId, selection);
     const verso = verses.map((item) => item.text.trim()).join(" ");
+    const color = adaptVerseColorForTheme(normalizeVerseColor(cardColor), uiTheme);
     setCardBusy(true);
     setCardMsg(null);
     try {
+      // Même logique que Marquer : une VERSECARD s’appuie sur un verset marqué.
+      if (!selection.some((n) => chapterMarks.has(n))) {
+        setChapterMarks(setVerseMarks(bookId, chapterId, selection, color));
+        onVerseMarked?.({
+          color,
+          verses: [...selection],
+          bookId,
+          chapterId,
+          bookTitle: title,
+        });
+      }
       const result = createVerseFlashcard({
         frente,
         verso,
         usfm,
-        color: cardColor,
+        color,
       });
       if (!result.ok) {
         setCardMsg(result.error);
@@ -1011,9 +1026,17 @@ export function BibleReaderView({
       }
       onFlashcardCreated?.(result.card);
       setCardMsg(`Carte créée pour ${frente}`);
+      closeCreateCard();
     } finally {
       setCardBusy(false);
     }
+  }
+
+  function removeFlashcard() {
+    if (!selectedVerseCardId || cardBusy) return;
+    onFlashcardRemoved?.(selectedVerseCardId);
+    setCardMsg(null);
+    closeCreateCard();
   }
 
   const selectedBook = books.find((b) => b.id.toUpperCase() === bookId.toUpperCase());
@@ -1976,22 +1999,41 @@ export function BibleReaderView({
               </button>
               <button
                 type="button"
-                className="bible-yv-chip is-primary bible-make-card"
+                className={`bible-yv-chip is-primary bible-make-card${existingVerseCard ? " is-carded" : ""}`}
                 disabled={cardBusy}
+                aria-pressed={existingVerseCard}
                 onClick={() => {
-                  if (existingVerseCard && selectedVerseCardId && onViewFlashcard) {
-                    onViewFlashcard(selectedVerseCardId);
+                  if (existingVerseCard) {
+                    removeFlashcard();
                     return;
                   }
                   void makeFlashcard();
                 }}
               >
-                {cardBusy
-                  ? "Création…"
-                  : existingVerseCard
-                    ? "Voir la carte"
-                    : "Créer flashcard"}
+                {cardBusy ? (
+                  "…"
+                ) : existingVerseCard ? (
+                  <>
+                    <YvIcon name="style" className="bible-verse-cta-icon" />
+                    <span>Retirer carte</span>
+                  </>
+                ) : (
+                  <>
+                    <YvIcon name="style" className="bible-verse-cta-icon" />
+                    <span>Créer flashcard</span>
+                  </>
+                )}
               </button>
+              {existingVerseCard && selectedVerseCardId && onViewFlashcard ? (
+                <button
+                  type="button"
+                  className="bible-yv-chip bible-view-card"
+                  disabled={cardBusy}
+                  onClick={() => onViewFlashcard(selectedVerseCardId)}
+                >
+                  <span>Voir</span>
+                </button>
+              ) : null}
             </div>
           </div>
           {cardMsg ? <p className="bible-verse-actions-msg">{cardMsg}</p> : null}

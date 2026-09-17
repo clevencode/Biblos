@@ -785,6 +785,27 @@ export function App() {
     })();
   }
 
+  /** Toggle VERSECARD depuis Lecture (sans confirm — même logique que Démarquer). */
+  function handleFlashcardRemovedFromBible(cardId: string) {
+    let cardToArchive: Flashcard | null = null;
+    for (const note of catalog.notas ?? []) {
+      const hit = (note.flashcards ?? []).find((c) => c.id === cardId);
+      if (hit) {
+        cardToArchive = hit;
+        break;
+      }
+    }
+    setCatalog((current) => removeCardFromCatalog(current, cardId));
+    setRetentionTick((value) => value + 1);
+    if (cardToArchive && isClevencodeAdmin(profile)) {
+      const archived = cardToArchive;
+      void (async () => {
+        const { archiveRemoteVerseCard } = await import("./verseCardSync");
+        await archiveRemoteVerseCard(archived);
+      })();
+    }
+  }
+
   function onTabKey(event: ReactKeyboardEvent<HTMLDivElement>) {
     if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
     event.preventDefault();
@@ -992,6 +1013,7 @@ export function App() {
                         : null
                     }
                     onFlashcardCreated={handleFlashcardCreated}
+                    onFlashcardRemoved={handleFlashcardRemovedFromBible}
                     existingVerseCardIds={verseCardIds}
                     existingVerseCardColors={verseCardColors}
                     onUpdateVerseCardColor={handleVerseCardColor}
@@ -1077,7 +1099,14 @@ export function App() {
                     onOpenVerse={(mark) => {
                       openPassageInBible(`${mark.bookId}.${mark.chapterId}.${mark.verse}`);
                     }}
-                    onOpenFlashcard={openVerseFlashcard}
+                    onOpenFlashcard={(cardId) => {
+                      const card = allFlashcards.find((item) => item.id === cardId);
+                      if (card) {
+                        openCardChapter(card);
+                        return;
+                      }
+                      openVerseFlashcard(cardId);
+                    }}
                     onOpenReading={({ bookId, chapterId, verse }) => {
                       const ref =
                         verse != null
