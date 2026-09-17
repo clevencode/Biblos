@@ -42,8 +42,11 @@
   /* Modern editorial — famílias */
   --font-ui: "Outfit", "Avenir Next", "Segoe UI", sans-serif;
   --font-read: "Libre Baskerville", "Source Serif 4", Georgia, "Times New Roman", serif;
-  /* Lecture Bible : monospace sans-serif (rythme vertical stable). */
-  --font-bible: "Outfit", "Avenir Next", "Segoe UI", sans-serif;
+  /* Lecture Bible : humanist sans (corps regular, pas de gras). */
+  --font-bible: "Source Sans 3", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --type-bible-weight: 400;
+  --type-bible-lh: 1.7;
+  --type-bible-tracking: 0.01em;
 
   /* Modern editorial — escala tipográfica (Display → Caption) */
   --type-display-size: clamp(2.75rem, 8vw, 4rem);
@@ -8096,9 +8099,12 @@ ul.plan-yv-day-note-ref {
   cursor: pointer;
   font-family: var(--font-bible);
   font-size: var(--bible-font-size, var(--type-body-size));
-  font-weight: 700;
-  line-height: 1.65;
-  letter-spacing: -0.01em;
+  font-weight: var(--type-bible-weight);
+  line-height: var(--type-bible-lh);
+  letter-spacing: var(--type-bible-tracking);
+  font-kerning: normal;
+  font-variant-ligatures: common-ligatures;
+  text-rendering: optimizeLegibility;
   color: var(--yv-text);
   transition:
     opacity 0.22s ease,
@@ -8282,9 +8288,12 @@ ul.plan-yv-day-note-ref {
   margin: 0;
   font-family: var(--font-bible);
   font-size: var(--bible-font-size, 19px);
-  font-weight: 700;
-  line-height: 1.65;
-  letter-spacing: -0.01em;
+  font-weight: var(--type-bible-weight);
+  line-height: var(--type-bible-lh);
+  letter-spacing: var(--type-bible-tracking);
+  font-kerning: normal;
+  font-variant-ligatures: common-ligatures;
+  text-rendering: optimizeLegibility;
   color: var(--yv-text);
   white-space: pre-wrap;
 }
@@ -10265,9 +10274,12 @@ ul.plan-yv-day-note-ref {
   cursor: pointer;
   font-family: var(--font-bible);
   font-size: var(--bible-font-size, 18px);
-  font-weight: 700;
-  line-height: 1.65;
-  letter-spacing: -0.01em;
+  font-weight: var(--type-bible-weight);
+  line-height: var(--type-bible-lh);
+  letter-spacing: var(--type-bible-tracking);
+  font-kerning: normal;
+  font-variant-ligatures: common-ligatures;
+  text-rendering: optimizeLegibility;
   color: var(--text);
 }
 
@@ -10291,7 +10303,7 @@ ul.plan-yv-day-note-ref {
   min-width: 1.1em;
   font-family: inherit;
   font-size: 0.68em;
-  font-weight: 700;
+  font-weight: 500;
   color: var(--accent);
   vertical-align: super;
   line-height: 1;
@@ -10306,9 +10318,12 @@ ul.plan-yv-day-note-ref {
   margin: 0;
   font-family: var(--font-bible);
   font-size: var(--bible-font-size, 18px);
-  font-weight: 700;
-  line-height: 1.65;
-  letter-spacing: -0.01em;
+  font-weight: var(--type-bible-weight);
+  line-height: var(--type-bible-lh);
+  letter-spacing: var(--type-bible-tracking);
+  font-kerning: normal;
+  font-variant-ligatures: common-ligatures;
+  text-rendering: optimizeLegibility;
   white-space: pre-wrap;
 }
 
