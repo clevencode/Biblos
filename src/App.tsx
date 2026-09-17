@@ -43,7 +43,7 @@ import {
   markDayRead,
   resetPlanProgress,
 } from "./planProgress";
-import { sanitizePlanDays } from "./plan";
+import { sanitizePlanDays, stageForJour } from "./plan";
 import { loadDayNote } from "./planDayNote";
 import {
   createPlanReadingSession,
@@ -994,6 +994,17 @@ export function App() {
                       planReading && activePlan
                         ? {
                             planName: (() => {
+                              const step = currentPlanStep(planReading);
+                              const stage = step
+                                ? stageForJour(activePlan.stages, step.jour)
+                                : undefined;
+                              if (stage) {
+                                const title = stage.title.trim();
+                                if (/^[ée]tape\s+\d+/i.test(title)) return title;
+                                return title
+                                  ? `Étape ${stage.id} · ${title}`
+                                  : `Étape ${stage.id}`;
+                              }
                               const theme = activePlan.theme?.trim() ?? "";
                               const nome = activePlan.nome?.trim() ?? "";
                               const generic = (value: string) => !value || /^plan$/i.test(value);
@@ -1070,31 +1081,12 @@ export function App() {
                     flashcards={allFlashcards}
                     notionHealth={notionHealth}
                     onSyncNow={async () => {
-                      const {
-                        enqueuePendingVerseCreatesFromCatalog,
-                        flushVerseCardCreates,
-                        attachNotionUrlToCatalog,
-                      } = await import("./verseCardSync");
-                      const { pullCatalog } = await import("./catalogSync");
-                      enqueuePendingVerseCreatesFromCatalog(catalogRef.current);
-                      const push = await flushVerseCardCreates();
-                      let base = catalogRef.current;
-                      if (push.updates.length) {
-                        for (const item of push.updates) {
-                          base = attachNotionUrlToCatalog(base, item.localId, item.url);
-                        }
-                        setCatalog(base);
-                        catalogRef.current = base;
-                      }
-                      const pulled = await pullCatalog(base);
-                      if (pulled.ok && pulled.changed) {
-                        setCatalog(pulled.catalog);
-                        catalogRef.current = pulled.catalog;
-                        setRetentionTick((v) => v + 1);
-                      } else if (push.pushed) {
-                        setRetentionTick((v) => v + 1);
-                      }
-                      if (push.error) throw new Error(push.error);
+                      const { pushMobileCatalogToNotion } = await import("./verseCardSync");
+                      const result = await pushMobileCatalogToNotion(catalogRef.current);
+                      setCatalog(result.catalog);
+                      catalogRef.current = result.catalog;
+                      setRetentionTick((v) => v + 1);
+                      if (result.error) throw new Error(result.error);
                     }}
                     onOpenVerse={(mark) => {
                       openPassageInBible(`${mark.bookId}.${mark.chapterId}.${mark.verse}`);

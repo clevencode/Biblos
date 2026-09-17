@@ -313,8 +313,8 @@ export function ProfileView({
   const cloudOk = notionHealth === "ok";
   const syncHint = isAdminOwner
     ? cloudOk
-      ? "Notion + clevencode — sync entre appareils"
-      : notionHealth === "no-token"
+    ? "Notion + clevencode — cet appareil prime"
+    : notionHealth === "no-token"
         ? "Cloud non configuré sur ce serveur"
         : notionHealth === "down"
           ? "Sync cloud indisponible"
@@ -511,7 +511,7 @@ export function ProfileView({
             title="Synchronisation"
             hint={
               isAdminOwner
-                ? "Versets marqués et leurs cartes (VERSECARD) sync via Notion — clevencode."
+                ? "Cet appareil est la source de vérité : sync envoie au Notion ce qui manque."
                 : "Ton profil et ta progression suivent ton compte."
             }
           >
@@ -540,7 +540,7 @@ export function ProfileView({
                 <span className="profile-fact-label">Appareil</span>
                 <span className="profile-fact-value">
                   {isAdminOwner
-                    ? "Marques & cartes → Notion"
+                    ? "Mobile → Notion (si absent)"
                     : profile.notionUrl
                       ? "Profil lié"
                       : "Local"}

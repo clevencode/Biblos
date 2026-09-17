@@ -10,6 +10,7 @@ import {
 } from "./flashcardSync";
 import {
   attachNotionUrlToCatalog,
+  ensureLocalMarksInCatalog,
   enqueuePendingVerseCreatesFromCatalog,
   flushVerseCardCreates,
 } from "./verseCardSync";
@@ -49,6 +50,11 @@ export function useNotionSync(options: {
 
   useEffect(() => {
     void (async () => {
+      let base = ensureLocalMarksInCatalog(catalogRef.current);
+      if (base !== catalogRef.current) {
+        setCatalog(base);
+        catalogRef.current = base;
+      }
       enqueuePendingVerseCreatesFromCatalog(catalogRef.current);
       await flushFlashcardQueue();
       const versePush = await flushVerseCardCreates();
@@ -74,6 +80,11 @@ export function useNotionSync(options: {
       if (busy || cancelled) return;
       busy = true;
       try {
+        let base = ensureLocalMarksInCatalog(catalogRef.current);
+        if (base !== catalogRef.current) {
+          setCatalog(base);
+          catalogRef.current = base;
+        }
         enqueuePendingVerseCreatesFromCatalog(catalogRef.current);
         const versePush = await flushVerseCardCreates();
         if (!cancelled && versePush.updates.length) {
@@ -85,6 +96,7 @@ export function useNotionSync(options: {
             return next;
           });
         }
+        // Plans via pull ; cartes = local-first (merge n’écrase pas le mobile).
         const result = await pullCatalog(catalogRef.current);
         if (!cancelled && result.ok && result.changed) {
           setCatalog(result.catalog);

@@ -137,6 +137,7 @@ function mergeFlashcards(prev: Seed[], incoming: Seed[]): { notes: Seed[]; chang
       if (!card.id) continue;
       const old = byCard.get(card.id);
       if (!old) {
+        // Bootstrap autre appareil : carte absente localement → prendre le remote.
         byCard.set(card.id, card);
         cardsChanged = true;
         if (card.url) {
@@ -152,12 +153,17 @@ function mergeFlashcards(prev: Seed[], incoming: Seed[]): { notes: Seed[]; chang
         }
         continue;
       }
+      // Source de vérité = local : ne remplit que l’URL Notion manquante.
       const merged = {
-        ...old,
         ...card,
-        lembrete: card.lembrete ?? old.lembrete,
-        categoria: card.categoria ?? old.categoria,
-        status: card.status ?? old.status,
+        ...old,
+        url: old.url && /notion\.(so|com|site)/i.test(old.url) ? old.url : card.url || old.url,
+        lembrete: old.lembrete ?? card.lembrete,
+        categoria: old.categoria ?? card.categoria,
+        status: old.status ?? card.status,
+        color: old.color ?? card.color,
+        frente: old.frente || card.frente,
+        verso: old.verso || card.verso,
       };
       if (JSON.stringify(old) !== JSON.stringify(merged)) {
         byCard.set(card.id, merged);

@@ -3,13 +3,17 @@
  * Création reste local-first ; seule l’admin clevencode pousse vers Notion.
  * Les autres utilisateurs gardent les cartes dans le stockage local de l’appareil.
  */
-import type { Catalog, Flashcard } from "./types";
+import type { Catalog, Flashcard, Seed } from "./types";
 import { apiUrl, readApiJson } from "./apiBase";
 import { isBiblosFlashcard } from "./catalog";
 import { persistCatalogCache } from "./catalogSync";
 import { loadOverride, notifyFlashcardRevision } from "./cardOverrides";
 import { isClevencodeAdmin } from "./userProfile";
-import { toUsfm } from "./youversion/usfm";
+import { createVerseMarkFlashcard } from "./verseCard";
+import { listAllVerseMarks } from "./verseMarks";
+import { formatVerseCardFront, toUsfm } from "./youversion/usfm";
+import { CANON_BOOKS } from "./youversion/canon";
+import { chapterUsfm } from "./youversion/client";
 
 const OUTBOX_KEY = "biblos-verse-create-outbox";
 
@@ -196,6 +200,101 @@ export function enqueuePendingVerseCreatesFromCatalog(catalog: Catalog) {
       if (needsNotionCreate(card)) enqueueVerseCardCreate(card);
     }
   }
+}
+
+function bookTitle(bookId: string): string {
+  const hit = CANON_BOOKS.find((b) => b.id.toUpperCase() === bookId.toUpperCase());
+  return hit?.title ?? bookId;
+}
+
+function upsertCardInCatalog(catalog: Catalog, card: Flashcard): Catalog {
+  const notas = [...(catalog.notas ?? [])];
+  const bucketKey = String(card.cardCategory || "VERSECARD");
+  const bucketId = `bucket-${bucketKey.toLowerCase()}`;
+  let seed = notas.find((item) => item.nota.id === bucketId);
+  if (!seed) {
+    seed = {
+      nota: {
+        id: bucketId,
+        titulo: bucketKey,
+        url: "",
+        criadoEm: card.criadoEm || new Date().toISOString(),
+        cartoes: 0,
+      },
+      materia: { id: `cat-${bucketKey.toLowerCase()}`, nome: bucketKey },
+      disciplina: { id: `disc-${bucketKey.toLowerCase()}`, nome: bucketKey },
+      flashcards: [],
+    };
+    notas.push(seed);
+  }
+  const existing = seed.flashcards.find((item) => item.id === card.id);
+  const flashcards = existing
+    ? seed.flashcards.map((item) =>
+        item.id === card.id
+          ? { ...item, ...card, url: card.url || item.url || "" }
+          : item,
+      )
+    : [card, ...seed.flashcards];
+  const nextSeed: Seed = {
+    ...seed,
+    flashcards,
+    nota: { ...seed.nota, cartoes: flashcards.length },
+  };
+  const nextNotas = notas.map((item) => (item.nota.id === nextSeed.nota.id ? nextSeed : item));
+  const next = { ...catalog, notas: nextNotas };
+  persistCatalogCache(next);
+  return next;
+}
+
+/**
+ * Source de vérité = appareil : assure que chaque surlignage local
+ * a un cartão VerseMark dans le catalogue (pour push Notion).
+ */
+export function ensureLocalMarksInCatalog(catalog: Catalog): Catalog {
+  let next = catalog;
+  const known = new Set<string>();
+  for (const note of next.notas ?? []) {
+    for (const card of note.flashcards ?? []) {
+      if (card.id) known.add(card.id);
+    }
+  }
+  for (const mark of listAllVerseMarks()) {
+    const usfm = `${chapterUsfm(mark.bookId, mark.chapterId)}.${mark.verse}`;
+    const id = `mark-${usfm}`;
+    if (known.has(id)) continue;
+    const frente = formatVerseCardFront(bookTitle(mark.bookId), mark.chapterId, mark.verse);
+    const created = createVerseMarkFlashcard({
+      frente,
+      usfm,
+      color: mark.color,
+    });
+    if (!created.ok) continue;
+    next = upsertCardInCatalog(next, created.card);
+    known.add(created.card.id);
+  }
+  return next;
+}
+
+export type PushMobileResult = PushVerseResult & {
+  catalog: Catalog;
+};
+
+/**
+ * Sync manuel : mobile → Notion uniquement.
+ * Enfile tout ce qui est local sans URL Notion, pousse, attache les URLs.
+ * Ne tire pas le catalogue Notion (l’appareil reste source de vérité).
+ */
+export async function pushMobileCatalogToNotion(catalog: Catalog): Promise<PushMobileResult> {
+  if (!canPushVerseCardsToNotion()) {
+    return { pushed: 0, remaining: 0, updates: [], catalog };
+  }
+  let next = ensureLocalMarksInCatalog(catalog);
+  enqueuePendingVerseCreatesFromCatalog(next);
+  const result = await flushVerseCardCreates();
+  for (const item of result.updates) {
+    next = attachNotionUrlToCatalog(next, item.localId, item.url);
+  }
+  return { ...result, catalog: next };
 }
 
 /** Archive la page Notion d’une VERSECARD / VerseMark (si elle a déjà une URL). Admin seulement. */

@@ -6527,12 +6527,12 @@ body,
 
 .plan-yv-stage {
   flex: 0 0 auto;
-  max-width: min(200px, 68vw);
+  max-width: min(220px, 72vw);
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: 8px;
-  min-height: 36px;
+  min-height: 40px;
   padding: 7px 12px 7px 7px;
   border: 1px solid color-mix(in srgb, var(--line) 85%, transparent);
   border-radius: 999px;
@@ -6547,16 +6547,40 @@ body,
 }
 
 .plan-yv-stage-num {
-  width: 22px;
-  height: 22px;
+  --stage-pct: 0;
+  position: relative;
+  width: 24px;
+  height: 24px;
   display: grid;
   place-items: center;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  background:
+    conic-gradient(
+      from -90deg,
+      color-mix(in srgb, var(--accent) 75%, var(--text)) calc(var(--stage-pct) * 100%),
+      color-mix(in srgb, var(--surface) 70%, transparent) 0
+    );
   color: inherit;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: var(--type-label-weight);
   line-height: 1;
+  isolation: isolate;
+}
+
+.plan-yv-stage-num::after {
+  content: "";
+  position: absolute;
+  inset: 2.5px;
+  border-radius: inherit;
+  background: color-mix(in srgb, var(--bg, #111) 92%, var(--surface));
+  z-index: -1;
+}
+
+.plan-yv-stage-copy {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+  text-align: left;
 }
 
 .plan-yv-stage-name {
@@ -6565,7 +6589,14 @@ body,
   white-space: nowrap;
   font-size: var(--type-caption-size);
   line-height: 1.2;
-  text-align: left;
+}
+
+.plan-yv-stage-prog {
+  font-size: 0.68rem;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  color: color-mix(in srgb, currentColor 72%, transparent);
+  font-variant-numeric: tabular-nums;
 }
 
 .plan-yv-stage.is-active {
@@ -6574,8 +6605,17 @@ body,
   color: var(--bg, #fff);
 }
 
+.plan-yv-stage.is-active .plan-yv-stage-num::after {
+  background: color-mix(in srgb, var(--text) 92%, #000);
+}
+
 .plan-yv-stage.is-active .plan-yv-stage-num {
-  background: color-mix(in srgb, var(--bg, #fff) 18%, transparent);
+  background:
+    conic-gradient(
+      from -90deg,
+      color-mix(in srgb, var(--bg, #fff) 88%, transparent) calc(var(--stage-pct) * 100%),
+      color-mix(in srgb, var(--bg, #fff) 22%, transparent) 0
+    );
   color: var(--bg, #fff);
 }
 
@@ -6583,6 +6623,24 @@ body,
   border-color: color-mix(in srgb, var(--line) 70%, transparent);
   background: color-mix(in srgb, var(--surface) 88%, var(--muted));
   color: color-mix(in srgb, var(--text) 55%, var(--muted));
+}
+
+.plan-yv-progress-block {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.plan-yv-progress-stage-line {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--type-label-size, 0.92rem);
+  font-weight: 650;
+  line-height: 1.25;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .plan-yv-progress-stage {
