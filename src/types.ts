@@ -24,13 +24,30 @@ export type Flashcard = {
   revisadoEm?: string | null;
 };
 
-export type PlanDay = { jour: number; texte: string; defi: string };
+export type PlanDay = {
+  jour: number;
+  texte: string;
+  defi: string;
+  /** Numéro d’étape thématique (Notion `Étape N: …`). */
+  etape?: number;
+};
+
+/** Bloc thématique du plan (ex. Étape 1: Avancer malgré les adversités). */
+export type PlanStage = {
+  id: number;
+  title: string;
+  fromJour: number;
+  toJour: number;
+};
+
 export type ReadingPlan = {
   id: string;
   nome: string;
   theme: string;
   url: string;
   days: PlanDay[];
+  /** Étapes thématiques dérivées du Plan Notion (optionnel). */
+  stages?: PlanStage[];
   /** Propriedade Notion `Devotional` (ex-Description / comme Resumo no StudyOS). */
   description?: string;
   /** Notion Audience: Admin (dono) | Shared (tous). Absent → Shared. */

@@ -1,23 +1,42 @@
-import type { PlanDay } from "./types";
+import type { PlanDay, PlanStage } from "./types";
 import { expandBibleCitations } from "./youversion/bibleRefs";
 import { isPassageRef, toUsfm } from "./youversion/usfm";
+
+function normalizePlanText(raw: string): string {
+  return String(raw || "")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/\r/g, "");
+}
+
+/** En-têtes Notion : `**Étape 1: Titre**` / `Etape 2 — Titre`. */
+const ETAPE_HEADER_RE =
+  /(?:^|\n)\s*\*{0,2}\s*[ÉE]tape\s+(\d+)\s*[:：\-–—]\s*([^*\n]+?)\s*\*{0,2}\s*(?=\n|$)/gi;
+
+/**
+ * Parse le corps / propriété Plan en jours (Texte + Défi) + étapes thématiques.
+ * Norme jours : « Jean 3:16, 18 ; 5:24 » · « Rm 6, Rm 8 » · « Jean 3–4 ».
+ * Norme étapes : « **Étape 1: Avancer malgré les adversités** » puis `Jour N: …`.
+ */
+export function parsePlanStructure(raw: string): { days: PlanDay[]; stages: PlanStage[] } {
+  const text = normalizePlanText(raw);
+  const days = parsePlanDays(text);
+  const stages = attachStagesToDays(text, days);
+  return { days, stages };
+}
 
 /**
  * Parse le corps / propriété Plan en jours (Texte + Défi).
  * Ne garde que les jours avec une vraie référence de verset.
- * Norme : « Jean 3:16, 18 ; 5:24 » · « Rm 6, Rm 8 » · « Jean 3–4 ».
  */
 export function parsePlanDays(raw: string): PlanDay[] {
-  const text = String(raw || "")
-    .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/\r/g, "");
+  const text = normalizePlanText(raw);
 
   const trimmed = text.trim();
   if (trimmed.startsWith("[") || trimmed.startsWith("{")) {
     try {
       const parsed = JSON.parse(trimmed) as
         | PlanDay[]
-        | { days?: PlanDay[]; jours?: PlanDay[] };
+        | { days?: PlanDay[]; jours?: PlanDay[]; stages?: PlanStage[] };
       const rows = Array.isArray(parsed)
         ? parsed
         : Array.isArray(parsed.days)
@@ -37,7 +56,13 @@ export function parsePlanDays(raw: string): PlanDay[] {
         if (!Number.isFinite(jour) || jour < 1 || !texte) continue;
         const passage = joinPassageRefs(texte);
         if (!passage) continue;
-        fromJson.push({ jour, texte: passage, defi: "" });
+        const etapeRaw = Number(
+          (row as { etape?: number; stage?: number; étape?: number }).etape ??
+            (row as { stage?: number }).stage ??
+            (row as { étape?: number }).étape,
+        );
+        const etape = Number.isFinite(etapeRaw) && etapeRaw > 0 ? etapeRaw : undefined;
+        fromJson.push(etape ? { jour, texte: passage, defi: "", etape } : { jour, texte: passage, defi: "" });
       }
       if (fromJson.length) return uniqueByJour(fromJson);
     } catch {
@@ -89,6 +114,93 @@ export function parsePlanDays(raw: string): PlanDay[] {
   return uniqueByJour(days);
 }
 
+/** Associe chaque jour à l’étape Notion qui le précède. */
+export function attachStagesToDays(raw: string, days: PlanDay[]): PlanStage[] {
+  if (!days.length) return [];
+  const text = normalizePlanText(raw);
+  const headers: { id: number; title: string; index: number }[] = [];
+  ETAPE_HEADER_RE.lastIndex = 0;
+  let hm: RegExpExecArray | null;
+  while ((hm = ETAPE_HEADER_RE.exec(text)) !== null) {
+    const id = Number(hm[1]);
+    const title = String(hm[2] || "")
+      .replace(/\*+/g, "")
+      .trim();
+    if (!Number.isFinite(id) || id < 1 || !title) continue;
+    headers.push({ id, title, index: hm.index });
+  }
+
+  if (!headers.length) {
+    return stagesFromDayEtapes(days);
+  }
+
+  for (const day of days) {
+    const jourRe = new RegExp(
+      `(?:^|\\n)\\s*[•*]?\\s*Jour\\s+${day.jour}\\s*[:：]`,
+      "i",
+    );
+    const jm = jourRe.exec(text);
+    const pos = jm ? jm.index : -1;
+    let etape: number | undefined;
+    if (pos >= 0) {
+      for (const h of headers) {
+        if (h.index <= pos) etape = h.id;
+      }
+    }
+    if (etape) day.etape = etape;
+  }
+
+  return headers
+    .map((h) => {
+      const stageDays = days.filter((d) => d.etape === h.id);
+      if (!stageDays.length) return null;
+      return {
+        id: h.id,
+        title: h.title,
+        fromJour: stageDays[0]!.jour,
+        toJour: stageDays[stageDays.length - 1]!.jour,
+      } satisfies PlanStage;
+    })
+    .filter((s): s is PlanStage => Boolean(s))
+    .sort((a, b) => a.id - b.id);
+}
+
+/** Reconstruit les étapes à partir des `etape` déjà présents sur les jours. */
+export function stagesFromDayEtapes(
+  days: PlanDay[],
+  titles?: Map<number, string> | Record<number, string>,
+): PlanStage[] {
+  const titleOf = (id: number) => {
+    if (!titles) return `Étape ${id}`;
+    if (titles instanceof Map) return titles.get(id) || `Étape ${id}`;
+    return titles[id] || `Étape ${id}`;
+  };
+  const byId = new Map<number, PlanDay[]>();
+  for (const day of days) {
+    if (!day.etape) continue;
+    const list = byId.get(day.etape) ?? [];
+    list.push(day);
+    byId.set(day.etape, list);
+  }
+  return [...byId.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([id, list]) => ({
+      id,
+      title: titleOf(id),
+      fromJour: list[0]!.jour,
+      toJour: list[list.length - 1]!.jour,
+    }));
+}
+
+/** Étape du jour sélectionné (ou undefined). */
+export function stageForJour(
+  stages: PlanStage[] | null | undefined,
+  jour: number,
+): PlanStage | undefined {
+  if (!stages?.length || !jour) return undefined;
+  return stages.find((s) => jour >= s.fromJour && jour <= s.toJour);
+}
+
 function uniqueByJour(days: PlanDay[]): PlanDay[] {
   const byJour = new Map<number, PlanDay>();
   for (const day of days) {
@@ -104,9 +216,33 @@ export function sanitizePlanDays(days: PlanDay[] | null | undefined): PlanDay[] 
   for (const day of days) {
     const passage = joinPassageRefs(day.texte) || joinPassageRefs(day.defi);
     if (!passage) continue;
-    out.push({ jour: day.jour, texte: passage, defi: "" });
+    out.push(
+      day.etape
+        ? { jour: day.jour, texte: passage, defi: "", etape: day.etape }
+        : { jour: day.jour, texte: passage, defi: "" },
+    );
   }
   return uniqueByJour(out);
+}
+
+/** Normalise la liste d’étapes du plan (ou la dérive des jours). */
+export function sanitizePlanStages(
+  stages: PlanStage[] | null | undefined,
+  days?: PlanDay[] | null,
+): PlanStage[] {
+  if (stages?.length) {
+    return stages
+      .map((s) => ({
+        id: Number(s.id),
+        title: String(s.title || "").trim() || `Étape ${s.id}`,
+        fromJour: Number(s.fromJour) || 0,
+        toJour: Number(s.toJour) || 0,
+      }))
+      .filter((s) => Number.isFinite(s.id) && s.id > 0 && s.fromJour > 0 && s.toJour >= s.fromJour)
+      .sort((a, b) => a.id - b.id);
+  }
+  if (days?.length) return stagesFromDayEtapes(days);
+  return [];
 }
 
 /** Toutes les références bibliques d’une ligne (norme internationale). */

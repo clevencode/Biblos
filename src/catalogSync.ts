@@ -2,7 +2,7 @@ import type { Catalog, ReadingPlan, Seed } from "./types";
 import { apiUrl, readApiJson } from "./apiBase";
 import { applyRemoteOverride } from "./cardOverrides";
 import { isBiblosFlashcard } from "./catalog";
-import { sanitizePlanDays } from "./plan";
+import { sanitizePlanDays, sanitizePlanStages } from "./plan";
 import { clearPlanLocalState } from "./planProgress";
 import { normalizeCategoria, normalizeStatus } from "./retention";
 import { isClevencodeAdmin } from "./userProfile";
@@ -29,10 +29,14 @@ export function pruneCatalogToVerseCards(catalog: Catalog): Catalog {
       if (isVerseBucketId(note.nota.id)) return note.flashcards.length > 0;
       return note.flashcards.length > 0;
     });
-  const plans = (catalog.plans ?? []).map((plan) => ({
-    ...plan,
-    days: sanitizePlanDays(plan.days),
-  }));
+  const plans = (catalog.plans ?? []).map((plan) => {
+    const days = sanitizePlanDays(plan.days);
+    return {
+      ...plan,
+      days,
+      stages: sanitizePlanStages(plan.stages, days),
+    };
+  });
   return { ...catalog, notas, plans };
 }
 
@@ -209,15 +213,25 @@ function mergePlans(
   for (const plan of incoming) {
     const existing = byId.get(plan.id);
     if (!existing) {
-      byId.set(plan.id, { ...plan, days: sanitizePlanDays(plan.days) });
+      const days = sanitizePlanDays(plan.days);
+      byId.set(plan.id, {
+        ...plan,
+        days,
+        stages: sanitizePlanStages(plan.stages, days),
+      });
       changed = true;
       continue;
     }
     const incomingDays = sanitizePlanDays(plan.days);
+    const mergedDays = incomingDays.length ? incomingDays : sanitizePlanDays(existing.days);
+    const incomingStages = sanitizePlanStages(plan.stages, incomingDays);
     const merged = {
       ...existing,
       ...plan,
-      days: incomingDays.length ? incomingDays : sanitizePlanDays(existing.days),
+      days: mergedDays,
+      stages: incomingStages.length
+        ? incomingStages
+        : sanitizePlanStages(existing.stages, mergedDays),
       description:
         typeof plan.description === "string" && plan.description.trim()
           ? plan.description

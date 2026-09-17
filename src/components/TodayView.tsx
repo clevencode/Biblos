@@ -1,7 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { formatPlanTileDate } from "../calendar";
 import { isPassageRef } from "../youversion/usfm";
-import { extractPassageRef, extractPassageRefs, sanitizePlanDays } from "../plan";
+import {
+  extractPassageRef,
+  extractPassageRefs,
+  sanitizePlanDays,
+  sanitizePlanStages,
+  stageForJour,
+} from "../plan";
 import {
   loadDayNote,
   pullDayNote,
@@ -169,10 +175,33 @@ export function TodayView({
     return sanitizePlanDays(plan.days);
   }, [plan]);
 
+  const stages = useMemo(
+    () => sanitizePlanStages(plan?.stages, days),
+    [plan?.stages, days],
+  );
+
   const scheduleTotal = days.length;
   const scheduleDone = days.filter((day) => progress?.completedDays.includes(day.jour)).length;
   const planComplete = isPlanComplete({ days }, progress);
   const hasDescription = Boolean(plan?.description?.trim());
+  const hasStages = stages.length > 0;
+  const selectedStage = stageForJour(stages, selectedJour) ?? (hasStages ? stages[0]! : undefined);
+  const stageDays = useMemo(() => {
+    if (!hasStages) return days;
+    if (!selectedStage) return [];
+    return days.filter(
+      (day) => day.jour >= selectedStage.fromJour && day.jour <= selectedStage.toJour,
+    );
+  }, [days, hasStages, selectedStage]);
+  const stageDayTotal = stageDays.length;
+  const stageDayIndex = hasStages
+    ? Math.max(0, stageDays.findIndex((day) => day.jour === selectedJour) + 1)
+    : 0;
+  const stageDoneCount = stageDays.filter((day) =>
+    progress?.completedDays.includes(day.jour),
+  ).length;
+  const stageProgressPct =
+    stageDayTotal > 0 ? Math.min(100, (stageDoneCount / stageDayTotal) * 100) : 0;
 
   useEffect(() => {
     if (!days.length) return;
@@ -243,7 +272,20 @@ export function TodayView({
     if (!root) return;
     const selected = root.querySelector<HTMLElement>(".plan-yv-day.is-selected");
     selected?.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
-  }, [screen, selectedJour, days.length]);
+  }, [screen, selectedJour, stageDays.length]);
+
+  useEffect(() => {
+    if (!hasStages || !selectedStage || !stageDays.length) return;
+    if (stageDays.some((day) => day.jour === selectedJour)) return;
+    const unread = stageDays.find((day) => !progress?.completedDays.includes(day.jour));
+    setSelectedJour(unread?.jour ?? stageDays[0]!.jour);
+  }, [
+    hasStages,
+    selectedStage?.id,
+    selectedJour,
+    stageDays,
+    progress?.completedDays,
+  ]);
 
   if (!plan) {
     return (
@@ -287,6 +329,29 @@ export function TodayView({
     passageRefs.length > 0 ? formatReadingTimeLabel(passageRefs) : null;
   const progressPct =
     scheduleTotal > 0 ? Math.min(100, (scheduleDone / scheduleTotal) * 100) : 0;
+  const displayProgressPct = hasStages ? stageProgressPct : progressPct;
+  const displayProgressDone = hasStages ? stageDoneCount : scheduleDone;
+  const displayProgressTotal = hasStages ? stageDayTotal : scheduleTotal;
+  const displayJourIndex = hasStages ? stageDayIndex : selectedIndex;
+
+  function pickStageJour(stage: { fromJour: number; toJour: number }) {
+    const inStage = days.filter(
+      (day) => day.jour >= stage.fromJour && day.jour <= stage.toJour,
+    );
+    const unread = inStage.find((day) => !progress?.completedDays.includes(day.jour));
+    return unread?.jour ?? inStage[0]?.jour ?? stage.fromJour;
+  }
+
+  function selectStage(stage: { fromJour: number; toJour: number }) {
+    const next = pickStageJour(stage);
+    setSelectedJour(next);
+    requestAnimationFrame(() => {
+      const strip = daysStripRef.current;
+      if (!strip) return;
+      const btn = strip.querySelector<HTMLButtonElement>(`button[data-jour="${next}"]`);
+      btn?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+    });
+  }
 
   function flowReturn(): PlanFlowReturn {
     if (screen === "dayNote") return "dayNote";
@@ -520,11 +585,65 @@ export function TodayView({
       </header>
 
       {days.length ? (
-        <section className="plan-yv-timeline" aria-label="Progression du plan">
+        <section
+          className={`plan-yv-timeline${hasStages ? " has-stages" : ""}`}
+          aria-label={hasStages ? "Étapes du plan" : "Progression du plan"}
+        >
+          {hasStages && selectedStage ? (
+            <div className="plan-yv-stage-catalog">
+              <div className="plan-yv-stages" role="tablist" aria-label="Catégories d’étapes">
+                {stages.map((stage) => {
+                  const active = selectedStage.id === stage.id;
+                  const inStage = days.filter(
+                    (d) => d.jour >= stage.fromJour && d.jour <= stage.toJour,
+                  );
+                  const stageDone =
+                    inStage.length > 0 &&
+                    inStage.every((d) => progress?.completedDays.includes(d.jour));
+                  return (
+                    <button
+                      key={stage.id}
+                      type="button"
+                      role="tab"
+                      aria-selected={active}
+                      className={[
+                        "plan-yv-stage",
+                        active ? "is-active" : "",
+                        stageDone ? "is-done" : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
+                      onClick={() => selectStage(stage)}
+                      title={stage.title}
+                      aria-label={`Étape ${stage.id} · ${stage.title}`}
+                    >
+                      <span className="plan-yv-stage-num">{stage.id}</span>
+                      <span className="plan-yv-stage-name">{stage.title}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
+
           <div className="plan-yv-timeline-meta">
             {selectedDay ? (
               <p className="plan-yv-progress">
-                Jour {selectedIndex} sur {scheduleTotal}
+                {hasStages && selectedStage ? (
+                  <>
+                    <span className="plan-yv-progress-stage">{selectedStage.title}</span>
+                    {displayJourIndex > 0 ? (
+                      <>
+                        {" "}
+                        · Jour {displayJourIndex} sur {displayProgressTotal}
+                      </>
+                    ) : null}
+                  </>
+                ) : (
+                  <>
+                    Jour {displayJourIndex} sur {displayProgressTotal}
+                  </>
+                )}
                 {selectedDay.jour === planJour ? (
                   <span className="plan-yv-progress-today"> · Aujourd’hui</span>
                 ) : null}
@@ -532,45 +651,54 @@ export function TodayView({
             ) : null}
           </div>
 
-          {scheduleTotal > 0 ? (
+          {displayProgressTotal > 0 ? (
             <div className="plan-yv-progress-row">
               <div
                 className="plan-yv-timeline-track"
                 role="progressbar"
                 aria-valuemin={0}
-                aria-valuemax={scheduleTotal}
-                aria-valuenow={scheduleDone}
-                aria-label="Lectures terminées"
+                aria-valuemax={displayProgressTotal}
+                aria-valuenow={displayProgressDone}
+                aria-label={
+                  hasStages ? "Lectures terminées dans l’étape" : "Lectures terminées"
+                }
               >
                 <span
                   className="plan-yv-timeline-fill"
-                  style={{ width: `${progressPct}%` }}
+                  style={{ width: `${displayProgressPct}%` }}
                 />
               </div>
               <p className="plan-yv-timeline-count" aria-live="polite">
-                {scheduleDone}/{scheduleTotal} lectures
+                {displayProgressDone}/{displayProgressTotal}
+                {hasStages ? "" : " lect."}
               </p>
             </div>
           ) : null}
 
           <div
             ref={daysStripRef}
-            className={`plan-yv-days${days.length <= 7 ? " is-fit" : ""}`}
+            className={`plan-yv-days${stageDays.length <= 7 ? " is-fit" : ""}`}
             role="listbox"
-            aria-label="Jours du plan"
+            aria-label={
+              selectedStage
+                ? `Jours de l’étape ${selectedStage.id}`
+                : "Jours du plan"
+            }
           >
-            {days.map((day) => {
+            {stageDays.map((day, idx) => {
               const selected = day.jour === selectedDay?.jour;
               const read = progress?.completedDays.includes(day.jour) ?? false;
               const isCurrent = day.jour === planJour;
               const startDate = progress?.startDate;
               const realDate = startDate ? planJourDate(startDate, day.jour) : null;
               const dateLabel = realDate ? formatPlanTileDate(realDate) : "Jour";
+              const tileNum = hasStages ? idx + 1 : day.jour;
               return (
                 <button
                   key={day.jour}
                   type="button"
                   role="option"
+                  data-jour={day.jour}
                   aria-selected={selected}
                   className={[
                     "plan-yv-day",
@@ -582,7 +710,9 @@ export function TodayView({
                     .join(" ")}
                   onClick={() => setSelectedJour(day.jour)}
                   aria-label={[
-                    `Jour ${day.jour}`,
+                    hasStages && selectedStage
+                      ? `Étape ${selectedStage.id}, jour ${tileNum}`
+                      : `Jour ${day.jour}`,
                     realDate ? dateLabel : null,
                     selected ? "sélectionné" : null,
                     isCurrent ? "jour actuel" : null,
@@ -596,7 +726,7 @@ export function TodayView({
                       ✓
                     </span>
                   ) : null}
-                  <span className="plan-yv-day-num">{day.jour}</span>
+                  <span className="plan-yv-day-num">{tileNum}</span>
                   <span className="plan-yv-day-label">{dateLabel}</span>
                 </button>
               );
@@ -612,8 +742,10 @@ export function TodayView({
         >
           <div className="plan-yv-hero-top">
             <p className="plan-yv-hero-eyebrow">
-              Lecture du jour
-              {selectedIndex > 0 ? ` · Jour ${selectedIndex}` : null}
+              {hasStages && selectedStage
+                ? `Étape ${selectedStage.id} · Jour ${displayJourIndex || selectedIndex}`
+                : "Lecture du jour"}
+              {!hasStages && selectedIndex > 0 ? ` · Jour ${selectedIndex}` : null}
             </p>
           </div>
           {passageRefs.length > 0 || passageLabel ? (

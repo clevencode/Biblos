@@ -1,15 +1,8 @@
 import {
-  Monitor,
-  Moon,
-  Settings,
-  Sun,
-  Trash2,
-  type LucideIcon,
-} from "lucide-react";
-import {
   clearOfflineBible,
   isOfflineBibleReady,
 } from "../bibleOffline";
+import { YvIcon } from "./YvIcon";
 import {
   ACTIVITY_UI_ENABLED,
   activityTypeLabel,
@@ -79,11 +72,11 @@ const APP_VERSION = __APP_VERSION__;
 const THEME_OPTIONS: {
   id: ThemePref;
   label: string;
-  Icon: LucideIcon;
+  icon: string;
 }[] = [
-  { id: "light", label: "Clair", Icon: Sun },
-  { id: "dark", label: "Sombre", Icon: Moon },
-  { id: "system", label: "Système", Icon: Monitor },
+  { id: "light", label: "Clair", icon: "light_mode" },
+  { id: "dark", label: "Sombre", icon: "dark_mode" },
+  { id: "system", label: "Système", icon: "desktop_windows" },
 ];
 
 function ProfilePanel({
@@ -341,7 +334,7 @@ export function ProfileView({
             aria-label="Configurer le compte"
             title="Compte"
           >
-            <Settings className="profile-config-icon" aria-hidden />
+            <YvIcon name="settings" className="profile-config-icon" />
           </button>
         ) : null}
       </header>
@@ -443,7 +436,7 @@ export function ProfileView({
               disabled={deleteBusy}
               onClick={() => void confirmDeleteAccount()}
             >
-              <Trash2 className="profile-delete-btn-icon" aria-hidden />
+              <YvIcon name="delete" className="profile-delete-btn-icon" />
               {deleteBusy ? "Suppression…" : "Supprimer mon compte"}
             </button>
           </ProfilePanel>
@@ -493,7 +486,7 @@ export function ProfileView({
               role="radiogroup"
               aria-labelledby="profile-theme-label"
             >
-              {THEME_OPTIONS.map(({ id, label, Icon }) => {
+              {THEME_OPTIONS.map(({ id, label, icon }) => {
                 const on = themePref === id;
                 return (
                   <button
@@ -504,7 +497,7 @@ export function ProfileView({
                     aria-checked={on}
                     onClick={() => onThemePrefChange(id)}
                   >
-                    <Icon className="profile-theme-icon" aria-hidden />
+                    <YvIcon name={icon} className="profile-theme-icon" />
                     <span>{label}</span>
                   </button>
                 );
@@ -579,7 +572,7 @@ export function ProfileView({
                 disabled={offlineClearBusy}
                 onClick={() => void confirmClearOfflineBible()}
               >
-                <Trash2 className="profile-offline-remove-icon" aria-hidden />
+                <YvIcon name="delete" className="profile-offline-remove-icon" />
                 {offlineClearBusy
                   ? "Suppression…"
                   : "Supprimer le téléchargement"}
@@ -621,7 +614,7 @@ export function ProfileView({
                         onReadingHistoryChange?.();
                       }}
                     >
-                      <Trash2 className="profile-clear-history-icon" aria-hidden />
+                      <YvIcon name="delete" className="profile-clear-history-icon" />
                       Effacer l’historique
                     </button>
                   </div>
@@ -670,9 +663,9 @@ export function ProfileView({
                               onReadingHistoryChange?.();
                             }}
                           >
-                            <Trash2
+                            <YvIcon
+                              name="delete"
                               className="profile-history-delete-icon"
-                              aria-hidden
                             />
                           </button>
                         </li>

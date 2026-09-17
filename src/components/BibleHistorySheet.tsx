@@ -1,5 +1,5 @@
 import { useEffect, useId, useState } from "react";
-import { Trash2 } from "lucide-react";
+import { YvIcon } from "./YvIcon";
 import {
   clearBibleReadingHistory,
   formatActivityWhen,
@@ -110,7 +110,7 @@ export function BibleHistorySheet({
             aria-label="Effacer tout l’historique"
             title="Effacer tout"
           >
-            <Trash2 className="bible-search-sheet-clear-all-icon" aria-hidden />
+            <YvIcon name="delete" className="bible-search-sheet-clear-all-icon" />
           </button>
         ) : (
           <span className="bible-search-sheet-spacer" aria-hidden />
@@ -159,7 +159,7 @@ export function BibleHistorySheet({
                     deleteOne(event.id);
                   }}
                 >
-                  <Trash2 className="bible-history-delete-icon" aria-hidden />
+                  <YvIcon name="delete" className="bible-history-delete-icon" />
                 </button>
               </li>
             );

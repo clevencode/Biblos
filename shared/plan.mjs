@@ -1,6 +1,8 @@
 /**
  * Parse reading-plan markdown from Notion (Servir comme Jésus + tabular Plan property).
  * Shared by build-seed, /api/catalog and src/plan.ts.
+ *
+ * Étapes thématiques : `**Étape 1: Titre**` puis `Jour N: …`
  */
 
 function strip(s) {
@@ -88,6 +90,52 @@ function parseCompactRows(markdown) {
   return days;
 }
 
+const ETAPE_HEADER_RE =
+  /(?:^|\n)\s*\*{0,2}\s*[ÉE]tape\s+(\d+)\s*[:：\-–—]\s*([^*\n]+?)\s*\*{0,2}\s*(?=\n|$)/gi;
+
+function attachStagesToDays(markdown, days) {
+  if (!days?.length) return [];
+  const headers = [];
+  ETAPE_HEADER_RE.lastIndex = 0;
+  let hm;
+  while ((hm = ETAPE_HEADER_RE.exec(markdown)) !== null) {
+    const id = Number(hm[1]);
+    const title = String(hm[2] || "")
+      .replace(/\*+/g, "")
+      .trim();
+    if (!Number.isFinite(id) || id < 1 || !title) continue;
+    headers.push({ id, title, index: hm.index });
+  }
+  if (!headers.length) return [];
+
+  for (const day of days) {
+    const jourRe = new RegExp(`(?:^|\\n)\\s*[•*]?\\s*Jour\\s+${day.jour}\\s*[:：]`, "i");
+    const jm = jourRe.exec(markdown);
+    const pos = jm ? jm.index : -1;
+    let etape;
+    if (pos >= 0) {
+      for (const h of headers) {
+        if (h.index <= pos) etape = h.id;
+      }
+    }
+    if (etape) day.etape = etape;
+  }
+
+  return headers
+    .map((h) => {
+      const stageDays = days.filter((d) => d.etape === h.id);
+      if (!stageDays.length) return null;
+      return {
+        id: h.id,
+        title: h.title,
+        fromJour: stageDays[0].jour,
+        toJour: stageDays[stageDays.length - 1].jour,
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.id - b.id);
+}
+
 export function parsePlanDays(markdown) {
   const text = strip(markdown);
   if (!text) return [];
@@ -102,4 +150,13 @@ export function parsePlanDays(markdown) {
   if (fromCompact.length) return fromCompact.sort((a, b) => a.jour - b.jour);
 
   return [];
+}
+
+/** Jours + étapes thématiques Notion. */
+export function parsePlanStructure(markdown) {
+  const text = strip(markdown);
+  if (!text) return { days: [], stages: [] };
+  const days = parsePlanDays(text);
+  const stages = attachStagesToDays(text, days);
+  return { days, stages };
 }

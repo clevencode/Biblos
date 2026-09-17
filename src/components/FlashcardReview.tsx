@@ -7,7 +7,7 @@ import {
   type KeyboardEvent,
   type PointerEvent,
 } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { YvIcon } from "./YvIcon";
 import { dateKey, formatDay, relativeDayLabel, scheduleDayParts, shiftDay, todayKey, weekDaysSunday, weekdayLabel } from "../calendar";
 import {
   RETENTION_LABELS,
@@ -1035,7 +1035,7 @@ export function FlashDeckList({
               disabled={!prevBusyDay}
               onClick={() => goToAdjacentBusyDay(-1)}
             >
-              <ChevronLeft className="flash-day-nav-icon" aria-hidden />
+              <YvIcon name="chevron_left" className="flash-day-nav-icon" />
             </button>
             <div className="flash-day-cards-copy">
               <time dateTime={selectedDay}>{selectedDayTitle}</time>
@@ -1052,7 +1052,7 @@ export function FlashDeckList({
               disabled={!nextBusyAcross}
               onClick={() => goToAdjacentBusyDay(1)}
             >
-              <ChevronRight className="flash-day-nav-icon" aria-hidden />
+              <YvIcon name="chevron_right" className="flash-day-nav-icon" />
             </button>
           </div>
 

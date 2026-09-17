@@ -208,20 +208,24 @@ summary {
 }
 
 .yv-icon {
-  display: inline-block;
-  flex: none;
-  color: inherit;
-  stroke: currentColor;
-  vertical-align: middle;
+  font-family: "Material Symbols Rounded", sans-serif;
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-grid;
+  place-items: center;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  font-feature-settings: "liga";
+  -webkit-font-smoothing: antialiased;
   user-select: none;
   pointer-events: none;
-  overflow: visible;
-}
-
-/* Lucide Play is optically left-heavy inside round CTAs */
-.yv-icon.bible-yv-dock-icon--play[data-lucide="play"],
-.yv-icon.bible-audio-player-icon[data-lucide="play"] {
-  transform: translateX(1.5px);
+  flex: none;
+  color: inherit;
 }
 
 *::-webkit-scrollbar {
@@ -698,9 +702,12 @@ body,
 }
 
 .mode-tab-icon {
+  display: inline-grid;
+  place-items: center;
   flex-shrink: 0;
   width: 24px;
   height: 24px;
+  font-size: 24px;
   color: inherit;
 }
 
@@ -1505,7 +1512,7 @@ body,
 .flash-day-nav-icon {
   width: 1.35rem;
   height: 1.35rem;
-  stroke-width: 2.25;
+  font-size: 1.35rem;
 }
 
 .flash-cal-day {
@@ -2301,6 +2308,7 @@ body,
 .profile-config-icon {
   width: 1.2rem;
   height: 1.2rem;
+  font-size: 1.2rem;
 }
 
 .profile-account-session {
@@ -2535,6 +2543,7 @@ body,
 .profile-theme-icon {
   width: 20px;
   height: 20px;
+  font-size: 20px;
 }
 
 .profile-notif-toggles {
@@ -2694,6 +2703,7 @@ body,
 .profile-clear-history-icon {
   width: 0.95rem;
   height: 0.95rem;
+  font-size: 0.95rem;
 }
 
 .profile-offline-remove-btn {
@@ -2727,6 +2737,7 @@ body,
 .profile-offline-remove-icon {
   width: 1.05rem;
   height: 1.05rem;
+  font-size: 1.05rem;
   flex: none;
 }
 
@@ -2763,6 +2774,7 @@ body,
 .profile-history-delete-icon {
   width: 1rem;
   height: 1rem;
+  font-size: 1rem;
 }
 
 .profile-library-item {
@@ -3284,6 +3296,7 @@ body,
 .profile-delete-btn-icon {
   width: 1.05rem;
   height: 1.05rem;
+  font-size: 1.05rem;
 }
 
 .profile-activity-list {
@@ -5864,6 +5877,7 @@ body,
 .home-notif-icon {
   width: 1.25rem;
   height: 1.25rem;
+  font-size: 1.25rem;
 }
 
 .home-notif-badge {
@@ -6240,6 +6254,7 @@ body,
   flex: none;
   width: 1.05rem;
   height: 1.05rem;
+  font-size: 1.05rem;
   color: var(--muted);
   opacity: 0.7;
 }
@@ -6387,6 +6402,7 @@ body,
 .notif-delete-icon {
   width: 1.15rem;
   height: 1.15rem;
+  font-size: 1.15rem;
   flex: none;
 }
 
@@ -6453,6 +6469,93 @@ body,
   display: grid;
   gap: 12px;
   margin: 2px 0 4px;
+}
+
+.plan-yv-stage-catalog {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.plan-yv-stages {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 0 0 2px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.plan-yv-stages::-webkit-scrollbar {
+  display: none;
+}
+
+.plan-yv-stage {
+  flex: 0 0 auto;
+  max-width: min(200px, 68vw);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 7px 12px 7px 7px;
+  border: 1px solid color-mix(in srgb, var(--line) 85%, transparent);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--font-ui);
+  cursor: pointer;
+  transition:
+    background 160ms ease,
+    color 160ms ease,
+    border-color 160ms ease;
+}
+
+.plan-yv-stage-num {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  color: inherit;
+  font-size: 0.75rem;
+  font-weight: var(--type-label-weight);
+  line-height: 1;
+}
+
+.plan-yv-stage-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--type-caption-size);
+  line-height: 1.2;
+  text-align: left;
+}
+
+.plan-yv-stage.is-active {
+  border-color: var(--text);
+  background: var(--text);
+  color: var(--bg, #fff);
+}
+
+.plan-yv-stage.is-active .plan-yv-stage-num {
+  background: color-mix(in srgb, var(--bg, #fff) 18%, transparent);
+  color: var(--bg, #fff);
+}
+
+.plan-yv-stage.is-done:not(.is-active) {
+  border-color: color-mix(in srgb, var(--line) 70%, transparent);
+  background: color-mix(in srgb, var(--surface) 88%, var(--muted));
+  color: color-mix(in srgb, var(--text) 55%, var(--muted));
+}
+
+.plan-yv-progress-stage {
+  color: color-mix(in srgb, var(--text) 82%, var(--muted));
+}
+
+.plan-yv-timeline.has-stages {
+  gap: 10px;
 }
 
 .plan-yv-days {
@@ -7695,8 +7798,11 @@ ul.plan-yv-day-note-ref {
 }
 
 .bible-yv-tool-icon {
-  width: 22px;
-  height: 22px;
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  font-size: 24px;
 }
 
 .bible-yv-tools-popover {
@@ -7743,8 +7849,9 @@ ul.plan-yv-day-note-ref {
 
 .bible-yv-tools-item-icon {
   flex: none;
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
+  font-size: 20px;
 }
 
 .bible-yv-tools-item.is-ready {
@@ -8041,7 +8148,8 @@ ul.plan-yv-day-note-ref {
   line-height: 0;
 }
 
-.bible-reader--yv .bible-verse-card-icon svg {
+.bible-reader--yv .bible-verse-card-icon .yv-icon {
+  font-size: 0.72em;
   width: 0.72em;
   height: 0.72em;
   min-width: 11px;
@@ -8061,7 +8169,8 @@ ul.plan-yv-day-note-ref {
   opacity: 0.9;
 }
 
-.bible-reader--yv .bible-verse-actions-card-icon svg {
+.bible-reader--yv .bible-verse-actions-card-icon .yv-icon {
+  font-size: 1rem;
   width: 1rem;
   height: 1rem;
 }
@@ -8461,8 +8570,9 @@ ul.plan-yv-day-note-ref {
 
 .bible-reader--yv .bible-verse-cta-icon {
   flex: none;
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
+  font-size: 20px;
   color: color-mix(in srgb, var(--yv-text) 82%, var(--yv-muted));
 }
 
@@ -8869,8 +8979,9 @@ ul.plan-yv-day-note-ref {
 }
 
 .bible-audio-player-icon {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
+  font-size: 32px;
 }
 
 .bible-audio-player-play:active:not(:disabled) {
@@ -9056,6 +9167,7 @@ ul.plan-yv-day-note-ref {
 .bible-search-sheet-clear-all-icon {
   width: 1.15rem;
   height: 1.15rem;
+  font-size: 1.15rem;
 }
 
 .bible-history-row {
@@ -9091,6 +9203,7 @@ ul.plan-yv-day-note-ref {
 .bible-history-delete-icon {
   width: 1.05rem;
   height: 1.05rem;
+  font-size: 1.05rem;
 }
 
 .bible-search-sheet-field {
@@ -9776,20 +9889,23 @@ ul.plan-yv-day-note-ref {
 }
 
 .bible-yv-dock-icon {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
+  font-size: 24px;
   flex: none;
   color: inherit;
 }
 
 .bible-yv-dock-icon--play {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
+  font-size: 24px;
 }
 
 .bible-yv-dock-advance .bible-yv-dock-icon {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
+  font-size: 22px;
 }
 
 .bible-yv-dock-arrow:hover:not(:disabled) {

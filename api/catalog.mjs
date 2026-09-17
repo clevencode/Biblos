@@ -112,10 +112,25 @@ async function fetchBlocksPlain(token, pageId) {
   return lines.join("\n");
 }
 
-export function parsePlanDays(raw) {
-  const text = String(raw || "")
+const ETAPE_HEADER_RE =
+  /(?:^|\n)\s*\*{0,2}\s*[ÉE]tape\s+(\d+)\s*[:：\-–—]\s*([^*\n]+?)\s*\*{0,2}\s*(?=\n|$)/gi;
+
+function normalizePlanText(raw) {
+  return String(raw || "")
     .replace(/<br\s*\/?>/gi, "\n")
     .replace(/\r/g, "");
+}
+
+/** Jours + étapes thématiques (Notion `Étape N: …` + `Jour N: …`). */
+export function parsePlanStructure(raw) {
+  const text = normalizePlanText(raw);
+  const days = parsePlanDays(text);
+  const stages = attachStagesToDays(text, days);
+  return { days, stages };
+}
+
+export function parsePlanDays(raw) {
+  const text = normalizePlanText(raw);
 
   // JSON Notion (array de jours) — sync catalogue sans format « Jour N : ».
   const trimmed = text.trim();
@@ -136,7 +151,9 @@ export function parsePlanDays(raw) {
         if (!Number.isFinite(jour) || jour < 1 || !texte) continue;
         const passage = joinPassageRefsCatalog(texte);
         if (!passage) continue;
-        fromJson.push({ jour, texte: passage, defi: "" });
+        const etapeRaw = Number(row?.etape ?? row?.stage ?? row?.étape);
+        const etape = Number.isFinite(etapeRaw) && etapeRaw > 0 ? etapeRaw : undefined;
+        fromJson.push(etape ? { jour, texte: passage, defi: "", etape } : { jour, texte: passage, defi: "" });
       }
       if (fromJson.length) return uniqueDays(fromJson);
     } catch {
@@ -184,6 +201,49 @@ export function parsePlanDays(raw) {
     days.push({ jour, texte: passage, defi: "" });
   }
   return uniqueDays(days);
+}
+
+function attachStagesToDays(text, days) {
+  if (!days?.length) return [];
+  const headers = [];
+  ETAPE_HEADER_RE.lastIndex = 0;
+  let hm;
+  while ((hm = ETAPE_HEADER_RE.exec(text)) !== null) {
+    const id = Number(hm[1]);
+    const title = String(hm[2] || "")
+      .replace(/\*+/g, "")
+      .trim();
+    if (!Number.isFinite(id) || id < 1 || !title) continue;
+    headers.push({ id, title, index: hm.index });
+  }
+  if (!headers.length) return [];
+
+  for (const day of days) {
+    const jourRe = new RegExp(`(?:^|\\n)\\s*[•*]?\\s*Jour\\s+${day.jour}\\s*[:：]`, "i");
+    const jm = jourRe.exec(text);
+    const pos = jm ? jm.index : -1;
+    let etape;
+    if (pos >= 0) {
+      for (const h of headers) {
+        if (h.index <= pos) etape = h.id;
+      }
+    }
+    if (etape) day.etape = etape;
+  }
+
+  return headers
+    .map((h) => {
+      const stageDays = days.filter((d) => d.etape === h.id);
+      if (!stageDays.length) return null;
+      return {
+        id: h.id,
+        title: h.title,
+        fromJour: stageDays[0].jour,
+        toJour: stageDays[stageDays.length - 1].jour,
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.id - b.id);
 }
 
 function uniqueDays(days) {
@@ -366,8 +426,11 @@ function mapPlanPage(page, bodyText = "", planProp = "", description = "") {
   const planField = richFromProp(findProp(props, "Plan", "Plan [extration ia]")) || planProp;
   const descriptionField =
     description || richFromProp(findProp(props, "Description", "Devotional")).trim();
-  const days = parsePlanDays(bodyText);
-  const merged = days.length ? days : parsePlanDays(`${bodyText}\n${planField}`);
+  const source = bodyText.trim() ? bodyText : `${bodyText}\n${planField}`;
+  const fromBody = parsePlanStructure(bodyText);
+  const fromMerged = fromBody.days.length
+    ? fromBody
+    : parsePlanStructure(source.includes(planField) ? source : `${bodyText}\n${planField}`);
   const audience = audienceFromProps(props);
   const published = isPlanPublished(props);
   return {
@@ -375,7 +438,8 @@ function mapPlanPage(page, bodyText = "", planProp = "", description = "") {
     nome,
     theme,
     url: pageUrl(id),
-    days: merged,
+    days: fromMerged.days,
+    stages: fromMerged.stages,
     description: descriptionField,
     audience,
     published,

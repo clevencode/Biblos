@@ -1,4 +1,4 @@
-import { ChevronRight, Trash2 } from "lucide-react";
+import { YvIcon } from "./YvIcon";
 import { useEffect, useState } from "react";
 import {
   formatNotificationWhen,
@@ -176,7 +176,7 @@ export function NotificationsView({ plans, onBack }: NotificationsViewProps) {
             className="notif-delete-btn"
             onClick={onDeleteSelected}
           >
-            <Trash2 className="notif-delete-icon" aria-hidden />
+            <YvIcon name="delete" className="notif-delete-icon" />
             Supprimer
           </button>
         </div>
@@ -232,7 +232,7 @@ export function NotificationsView({ plans, onBack }: NotificationsViewProps) {
                     </span>
                   ) : null}
                 </span>
-                <ChevronRight className="notif-item-chevron" aria-hidden />
+                <YvIcon name="chevron_right" className="notif-item-chevron" />
               </button>
             </li>
           ))}

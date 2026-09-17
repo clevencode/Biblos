@@ -1,5 +1,5 @@
-import { Bell, BellRing } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { YvIcon } from "./YvIcon";
 import {
   countUnreadAppNotifications,
   syncContextualNotifications,
@@ -103,7 +103,6 @@ export function HomeView({
   }
 
   const hasUnread = unread > 0;
-  const NotifIcon = hasUnread ? BellRing : Bell;
 
   return (
     <div className="home-view">
@@ -123,7 +122,11 @@ export function HomeView({
           title="Notifications"
           onClick={() => setShowNotifications(true)}
         >
-          <NotifIcon className="home-notif-icon" aria-hidden />
+          <YvIcon
+            name={hasUnread ? "notifications_active" : "notifications"}
+            filled={hasUnread}
+            className="home-notif-icon"
+          />
           {hasUnread ? (
             <span className="home-notif-badge" aria-hidden>
               {unread > 9 ? "9+" : unread}

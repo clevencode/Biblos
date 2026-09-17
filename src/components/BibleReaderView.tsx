@@ -8,7 +8,6 @@ import {
   type CSSProperties,
 } from "react";
 import { createPortal, flushSync } from "react-dom";
-import { Layers } from "lucide-react";
 import { YvIcon } from "./YvIcon";
 import {
   adjacentChapter,
@@ -1828,7 +1827,7 @@ export function BibleReaderView({
                   <sup className="bible-verse-num">{verse.number}</sup>
                   {hasFlashcard ? (
                     <span className="bible-verse-card-icon" aria-hidden="true">
-                      <Layers />
+                      <YvIcon name="style" />
                     </span>
                   ) : null}
                   <span className="bible-verse-text">{verse.text}</span>
@@ -1863,7 +1862,7 @@ export function BibleReaderView({
                 : ""}
               {existingVerseCard ? (
                 <span className="bible-verse-actions-card-icon" aria-hidden="true">
-                  <Layers />
+                  <YvIcon name="style" />
                 </span>
               ) : null}
             </p>
