@@ -1,5 +1,5 @@
 export type RetentionMark = "encore" | "facil" | "medio" | "dificil";
-export type CardCategory = "VERSECARD" | "ENSEIGNEMENT";
+export type CardCategory = "VERSECARD" | "VerseMark" | "ENSEIGNEMENT";
 
 export type Materia = {
   id: string;

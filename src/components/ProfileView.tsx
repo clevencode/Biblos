@@ -48,6 +48,8 @@ type ProfileViewProps = {
   activityTick?: number;
   savedVerses?: SavedVerseMark[];
   flashcards?: Flashcard[];
+  notionHealth?: "unknown" | "ok" | "no-token" | "down";
+  onSyncNow?: () => Promise<void> | void;
   onOpenVerse?: (mark: SavedVerseMark) => void;
   onOpenFlashcard?: (cardId: string) => void;
   onOpenReading?: (ref: {
@@ -109,6 +111,8 @@ export function ProfileView({
   activityTick = 0,
   savedVerses = [],
   flashcards = [],
+  notionHealth = "unknown",
+  onSyncNow,
   onOpenVerse,
   onOpenFlashcard,
   onOpenReading,
@@ -134,6 +138,8 @@ export function ProfileView({
   const [adminBusy, setAdminBusy] = useState(false);
   const [adminStatus, setAdminStatus] = useState<string | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
+  const [syncBusy, setSyncBusy] = useState(false);
+  const [syncFlash, setSyncFlash] = useState<string | null>(null);
   const [notifPrefs, setNotifPrefs] = useState<NotificationPrefs>(() =>
     loadNotificationPrefs(),
   );
@@ -304,15 +310,39 @@ export function ProfileView({
   const display = preferredDisplayName(profile);
   const isAdminOwner = isClevencodeAdmin(profile);
   const avatarLetter = (display.trim().charAt(0) || "?").toLocaleUpperCase("fr-FR");
-  const syncHint = profile.notionUrl
-    ? "Synchronisé entre tes appareils"
-    : "Enregistré sur cet appareil";
+  const cloudOk = notionHealth === "ok";
+  const syncHint = isAdminOwner
+    ? cloudOk
+      ? "Notion + clevencode — sync entre appareils"
+      : notionHealth === "no-token"
+        ? "Cloud non configuré sur ce serveur"
+        : notionHealth === "down"
+          ? "Sync cloud indisponible"
+          : "Vérification de la sync…"
+    : profile.notionUrl
+      ? "Profil synchronisé entre tes appareils"
+      : "Enregistré sur cet appareil";
   const ownerHint = "você é o dono do app";
   const subtitleHint = savedFlash
     ? "Nom enregistré"
     : isAdminOwner
       ? ownerHint
       : syncHint;
+
+  async function runSyncNow() {
+    if (!onSyncNow || syncBusy) return;
+    setSyncBusy(true);
+    setSyncFlash(null);
+    try {
+      await onSyncNow();
+      setSyncFlash("À jour");
+      window.setTimeout(() => setSyncFlash(null), 2200);
+    } catch {
+      setSyncFlash("Échec — réessaie");
+    } finally {
+      setSyncBusy(false);
+    }
+  }
 
   return (
     <div className="profile-view">
@@ -476,6 +506,63 @@ export function ProfileView({
               hidden={tab !== "config"}
               className="profile-tab-panel"
             >
+          <ProfilePanel
+            titleId="profile-sync-label"
+            title="Synchronisation"
+            hint={
+              isAdminOwner
+                ? "VERSECARD et VerseMark voyagent via Notion (compte clevencode)."
+                : "Ton profil et ta progression suivent ton compte."
+            }
+          >
+            <ul className="profile-facts">
+              <li>
+                <span className="profile-fact-label">Cloud Notion</span>
+                <span className="profile-fact-value">
+                  {notionHealth === "ok"
+                    ? "Connecté"
+                    : notionHealth === "no-token"
+                      ? "Non configuré"
+                      : notionHealth === "down"
+                        ? "Hors ligne"
+                        : "…"}
+                </span>
+              </li>
+              <li>
+                <span className="profile-fact-label">Appareil</span>
+                <span className="profile-fact-value">
+                  {isAdminOwner
+                    ? "Cartes & surlignages → Notion"
+                    : profile.notionUrl
+                      ? "Profil lié"
+                      : "Local"}
+                </span>
+              </li>
+              <li>
+                <span className="profile-fact-label">Versets marqués</span>
+                <span className="profile-fact-value">{savedVerses.length}</span>
+              </li>
+            </ul>
+            {isAdminOwner && onSyncNow ? (
+              <button
+                type="button"
+                className="profile-sync-btn"
+                disabled={syncBusy || notionHealth === "down"}
+                onClick={() => void runSyncNow()}
+              >
+                <YvIcon name="sync" className="profile-sync-btn-icon" />
+                {syncBusy ? "Synchronisation…" : "Synchroniser maintenant"}
+              </button>
+            ) : null}
+            {syncFlash ? (
+              <p className="profile-id-hint muted" aria-live="polite">
+                {syncFlash}
+              </p>
+            ) : (
+              <p className="profile-id-hint muted">{syncHint}</p>
+            )}
+          </ProfilePanel>
+
           <ProfilePanel
             titleId="profile-theme-label"
             title="Apparence"

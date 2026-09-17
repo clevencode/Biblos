@@ -3,6 +3,8 @@
  * GET /api/catalog?mode=index|full
  */
 import {
+  BIBLECARDS_DB,
+  BIBLECARDS_PAGE_DB,
   PLAN_DB,
   PLAN_PAGE_DB,
   dateKey,
@@ -44,7 +46,7 @@ function envSafe(name) {
   }
 }
 
-async function queryAll(token, databaseIds) {
+async function queryAll(token, databaseIds, filter = null) {
   const ids = (Array.isArray(databaseIds) ? databaseIds : [databaseIds])
     .map((id) => pageUuid(String(id || "").replace(/-/g, "")) || String(id || "").trim())
     .filter(Boolean);
@@ -61,13 +63,15 @@ async function queryAll(token, databaseIds) {
       let cursor;
       let okEndpoint = true;
       do {
+        const payload = {
+          page_size: 100,
+          start_cursor: cursor,
+        };
+        if (filter) payload.filter = filter;
         const { ok, response, detail } = await notionFetch(endpoint, {
           method: "POST",
           headers: notionHeaders(token, { "Content-Type": "application/json" }),
-          body: JSON.stringify({
-            page_size: 100,
-            start_cursor: cursor,
-          }),
+          body: JSON.stringify(payload),
         });
         if (!ok) {
           lastDetail = detail || `Notion query ${response.status}`;
@@ -321,6 +325,35 @@ function extractPassageRefCatalog(raw) {
   return candidate;
 }
 
+function parseMarkMeta(bodyText = "") {
+  const usfmMatch = String(bodyText).match(/usfm:([A-Z0-9.-]+)/i);
+  const colorMatch = String(bodyText).match(/color:(#[0-9a-fA-F]{3,8})/i);
+  return {
+    usfm: usfmMatch?.[1]?.toUpperCase() ?? null,
+    color: colorMatch?.[1]?.toLowerCase() ?? null,
+  };
+}
+
+function stableBiblosCardId(category, frente, bodyText, pageId) {
+  const cat = String(category || "").toUpperCase();
+  const meta = parseMarkMeta(bodyText);
+  let usfm = meta.usfm;
+  if (!usfm) {
+    const fromFrente = String(frente || "")
+      .trim()
+      .toUpperCase()
+      .match(/^([A-Z0-9]{2,3})\.(\d+)(?:\.(\d+))?/);
+    if (fromFrente) {
+      usfm = fromFrente[3]
+        ? `${fromFrente[1]}.${fromFrente[2]}.${fromFrente[3]}`
+        : `${fromFrente[1]}.${fromFrente[2]}`;
+    }
+  }
+  if (usfm && cat === "VERSEMARK") return `mark-${usfm}`;
+  if (usfm && cat === "VERSECARD") return `verse-${usfm}`;
+  return `card-${String(pageId).replace(/-/g, "").slice(0, 16)}`;
+}
+
 function mapCardPage(page, bodyText = "") {
   const props = page.properties ?? {};
   const id = page.id;
@@ -336,14 +369,16 @@ function mapCardPage(page, bodyText = "") {
 
   const heading = bodyText.match(/^#{1,3}\s+(.+)$/m)?.[1]?.trim();
   const rawFrente = heading || (nom !== "CARDS" ? nom : category || "Carte");
+  const catUpper = String(category || "").toUpperCase();
   const frente =
-    String(category || "").toUpperCase() === "VERSECARD"
+    catUpper === "VERSECARD" || catUpper === "VERSEMARK"
       ? String(rawFrente).trim().toUpperCase()
       : rawFrente;
+  const meta = parseMarkMeta(bodyText);
   const verso = bodyText.trim() || frente;
 
   return {
-    id: `card-${String(id).replace(/-/g, "").slice(0, 16)}`,
+    id: stableBiblosCardId(category, frente, bodyText, id),
     frente,
     verso,
     categoria,
@@ -351,6 +386,7 @@ function mapCardPage(page, bodyText = "") {
     url: pageUrl(id),
     lembrete,
     cardCategory: category,
+    color: meta.color,
     criadoEm: criadoEm ? dateKey(criadoEm) : null,
   };
 }
@@ -476,6 +512,9 @@ export function cardsToSeeds(cards) {
 
 export async function buildCatalog(token, { full = false, scope = "shared" } = {}) {
   const planDb = [envSafe("NOTION_PLAN_DB"), PLAN_DB, PLAN_PAGE_DB].filter(Boolean);
+  const cardDb = [envSafe("NOTION_BIBLECARDS_DB"), BIBLECARDS_DB, BIBLECARDS_PAGE_DB].filter(
+    Boolean,
+  );
   const catalogScope = scope === "admin" ? "admin" : "shared";
 
   let planPages = [];
@@ -509,11 +548,41 @@ export async function buildCatalog(token, { full = false, scope = "shared" } = {
     plans.push(mapped);
   }
 
+  let cardPages = [];
+  let cardsOk = true;
+  try {
+    cardPages = await queryAll(token, cardDb, {
+      or: [
+        { property: "Category", select: { equals: "VERSECARD" } },
+        { property: "Category", select: { equals: "VerseMark" } },
+      ],
+    });
+  } catch (err) {
+    cardsOk = false;
+    console.warn("[catalog] BIBLECARDS:", err instanceof Error ? err.message : err);
+  }
+
+  const cards = [];
+  for (const page of cardPages) {
+    const category = page.properties?.Category?.select?.name ?? "";
+    const needBody =
+      full || String(category).toUpperCase() === "VERSEMARK";
+    let body = "";
+    if (needBody) {
+      body = await fetchBlocksPlain(token, page.id);
+      await sleep(60);
+    }
+    cards.push(mapCardPage(page, body));
+  }
+
+  const notas = cardsToSeeds(cards);
+
   return {
-    notas: [],
+    notas,
     plans,
     plansOk,
-    cardCount: 0,
+    cardsOk,
+    cardCount: cards.length,
     planCount: plans.length,
     scope: catalogScope,
   };

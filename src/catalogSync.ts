@@ -6,12 +6,13 @@ import { sanitizePlanDays, sanitizePlanStages } from "./plan";
 import { clearPlanLocalState } from "./planProgress";
 import { normalizeCategoria, normalizeStatus } from "./retention";
 import { isClevencodeAdmin } from "./userProfile";
+import { applyVerseMarksFromCards } from "./verseMarks";
 
 const CATALOG_CACHE_KEY = "biblos-catalog-v1";
 
 function isVerseBucketId(id: string): boolean {
   const key = String(id || "").toLowerCase();
-  return key.includes("versecard") || key.includes("verse");
+  return key.includes("versecard") || key.includes("versemark") || key.includes("verse");
 }
 
 /** Conserve VERSECARD (bucket verse-*) ; drop buckets vides / ENSEIGNEMENT. */
@@ -270,6 +271,8 @@ export function mergeCatalog(
     notas: notesMerge.notes,
     plans: plansMerge.plans,
   });
+  const markCards = catalog.notas.flatMap((note) => note.flashcards ?? []);
+  applyVerseMarksFromCards(markCards);
   const changed =
     notesMerge.changed ||
     plansMerge.changed ||

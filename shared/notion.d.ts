@@ -148,6 +148,9 @@ export function createVerseCard(
     lembrete?: string | null;
     status?: string;
     categoria?: string | null;
+    cardCategory?: string | null;
+    color?: string | null;
+    usfm?: string | null;
   },
 ): Promise<{
   ok: boolean;
@@ -163,6 +166,7 @@ export function createVerseCard(
     url: string;
     lembrete: string | null;
     cardCategory: string;
+    color?: string | null;
     criadoEm: string | null;
   };
 }>;

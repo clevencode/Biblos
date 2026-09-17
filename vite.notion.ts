@@ -155,6 +155,9 @@ async function handleVerseCard(req: IncomingMessage, res: ServerResponse, token:
     lembrete?: string | null;
     status?: string;
     categoria?: string | null;
+    cardCategory?: string | null;
+    color?: string | null;
+    usfm?: string | null;
     url?: string;
     pageId?: string;
   } = {};
@@ -176,6 +179,9 @@ async function handleVerseCard(req: IncomingMessage, res: ServerResponse, token:
     lembrete: body.lembrete,
     status: body.status,
     categoria: body.categoria,
+    cardCategory: body.cardCategory,
+    color: body.color,
+    usfm: body.usfm,
   });
   send(res, result.ok ? 200 : 400, result);
 }

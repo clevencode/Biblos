@@ -233,8 +233,14 @@ type BibleReaderViewProps = {
   themePref?: ThemePref;
   /** Cycle le thème (clair → sombre → système). */
   onCycleTheme?: () => void;
-  /** Activité : verset marqué. */
-  onVerseMarked?: (payload: { color: string; verseCount: number }) => void;
+  /** Activité + sync VerseMark : versets surlignés (color null = effacer). */
+  onVerseMarked?: (payload: {
+    color: string | null;
+    verses: number[];
+    bookId: string;
+    chapterId: string;
+    bookTitle: string;
+  }) => void;
   /** Activité : chapitre lu / ouvert. */
   onBibleRead?: (payload: {
     bookId: string;
@@ -1101,7 +1107,13 @@ export function BibleReaderView({
     if (!selection?.length) return;
     if (!selectedVerses.some((n) => chapterMarks.has(n))) return;
     setChapterMarks(setVerseMarks(bookId, chapterId, selection, next));
-    onVerseMarked?.({ color: next, verseCount: selection.length });
+    onVerseMarked?.({
+      color: next,
+      verses: [...selection],
+      bookId,
+      chapterId,
+      bookTitle: selectedBook?.title ?? bookId,
+    });
   }
 
   function markSelection(hex: string) {
@@ -1109,13 +1121,26 @@ export function BibleReaderView({
     const next = adaptVerseColorForTheme(normalizeVerseColor(hex), uiTheme);
     pickVerseColor(next);
     setChapterMarks(setVerseMarks(bookId, chapterId, selection, next));
-    onVerseMarked?.({ color: next, verseCount: selection.length });
+    onVerseMarked?.({
+      color: next,
+      verses: [...selection],
+      bookId,
+      chapterId,
+      bookTitle: selectedBook?.title ?? bookId,
+    });
     closeCreateCard();
   }
 
   function clearSelectionMarks() {
     if (!selection?.length) return;
     setChapterMarks(setVerseMarks(bookId, chapterId, selection, null));
+    onVerseMarked?.({
+      color: null,
+      verses: [...selection],
+      bookId,
+      chapterId,
+      bookTitle: selectedBook?.title ?? bookId,
+    });
     closeCreateCard();
   }
 

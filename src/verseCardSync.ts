@@ -1,5 +1,5 @@
 /**
- * Sync VERSECARD locaux (Bible) → Notion BIBLECARDS.
+ * Sync VERSECARD / VerseMark locaux (Bible) → Notion BIBLECARDS.
  * Création reste local-first ; seule l’admin clevencode pousse vers Notion.
  * Les autres utilisateurs gardent les cartes dans le stockage local de l’appareil.
  */
@@ -9,10 +9,11 @@ import { isBiblosFlashcard } from "./catalog";
 import { persistCatalogCache } from "./catalogSync";
 import { loadOverride, notifyFlashcardRevision } from "./cardOverrides";
 import { isClevencodeAdmin } from "./userProfile";
+import { toUsfm } from "./youversion/usfm";
 
 const OUTBOX_KEY = "biblos-verse-create-outbox";
 
-/** Seul l’admin propriétaire synchronise les VERSECARD vers Notion. */
+/** Seul l’admin propriétaire synchronise les VERSECARD / VerseMark vers Notion. */
 export function canPushVerseCardsToNotion(): boolean {
   return isClevencodeAdmin();
 }
@@ -24,6 +25,9 @@ export type VerseCreateOutboxItem = {
   lembrete: string | null;
   status: Flashcard["status"];
   categoria: Flashcard["categoria"];
+  cardCategory: string;
+  color: string | null;
+  usfm: string | null;
   at: string;
 };
 
@@ -46,6 +50,21 @@ export function listVerseCreateOutbox(): VerseCreateOutboxItem[] {
   return loadOutbox();
 }
 
+function usfmFromCard(card: Flashcard): string | null {
+  const fromVerso = String(card.verso || "").match(/usfm:([A-Z0-9.-]+)/i);
+  if (fromVerso?.[1]) return fromVerso[1].toUpperCase();
+  const id = String(card.id || "");
+  if (id.startsWith("verse-") || id.startsWith("mark-")) {
+    return id.replace(/^(verse|mark)-/i, "").toUpperCase() || null;
+  }
+  try {
+    const usfm = toUsfm(card.frente || "");
+    return usfm || null;
+  } catch {
+    return null;
+  }
+}
+
 /** Met le flashcard local en file pour création Notion (admin seulement). */
 export function enqueueVerseCardCreate(card: Flashcard) {
   if (!canPushVerseCardsToNotion()) return;
@@ -58,6 +77,9 @@ export function enqueueVerseCardCreate(card: Flashcard) {
     lembrete: card.lembrete ?? null,
     status: card.status,
     categoria: card.categoria,
+    cardCategory: String(card.cardCategory || "VERSECARD"),
+    color: card.color ?? null,
+    usfm: usfmFromCard(card),
     at: new Date().toISOString(),
   };
   writeOutbox([...loadOutbox().filter((item) => item.id !== next.id), next]);
@@ -72,7 +94,7 @@ export function needsNotionCreate(card: Flashcard): boolean {
   return !card.url || !/notion\.(so|com|site)/i.test(card.url);
 }
 
-/** Attache l’URL Notion au cartão local (garde l’id verse-*). */
+/** Attache l’URL Notion au cartão local (garde l’id verse-* / mark-*). */
 export function attachNotionUrlToCatalog(catalog: Catalog, localId: string, url: string): Catalog {
   let changed = false;
   const notas = (catalog.notas ?? []).map((note) => {
@@ -125,6 +147,9 @@ export async function flushVerseCardCreates(): Promise<PushVerseResult> {
           lembrete: override?.lembrete ?? item.lembrete,
           status: override?.status ?? item.status,
           categoria: override?.categoria ?? item.categoria,
+          cardCategory: item.cardCategory,
+          color: item.color,
+          usfm: item.usfm,
         }),
       });
       const parsed = await readApiJson<{
@@ -163,7 +188,7 @@ export async function flushVerseCardCreates(): Promise<PushVerseResult> {
   return { pushed, remaining: kept.length, error, updates };
 }
 
-/** Remplit la file avec les VERSECARD locaux sans URL Notion (admin seulement). */
+/** Remplit la file avec les VERSECARD / VerseMark locaux sans URL Notion (admin seulement). */
 export function enqueuePendingVerseCreatesFromCatalog(catalog: Catalog) {
   if (!canPushVerseCardsToNotion()) return;
   for (const note of catalog.notas ?? []) {
@@ -173,7 +198,7 @@ export function enqueuePendingVerseCreatesFromCatalog(catalog: Catalog) {
   }
 }
 
-/** Archive la page Notion d’une VERSECARD (si elle a déjà une URL). Admin seulement. */
+/** Archive la page Notion d’une VERSECARD / VerseMark (si elle a déjà une URL). Admin seulement. */
 export async function archiveRemoteVerseCard(card: Pick<Flashcard, "id" | "url">): Promise<{
   ok: boolean;
   error?: string;

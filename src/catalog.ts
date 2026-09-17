@@ -24,15 +24,31 @@ export function buildFlashcards(note: Seed): Flashcard[] {
     }));
 }
 
-/** Cartões de estudo no Biblos — VERSECARD créés depuis Lecture. */
+/** Cartões Biblos: VERSECARD (estudo) ou VerseMark (surlignage sync Notion). */
 export function isBiblosFlashcard(card: Pick<Flashcard, "id" | "cardCategory">): boolean {
-  if (String(card.id || "").startsWith("verse-")) return true;
-  return String(card.cardCategory || "").toUpperCase() === "VERSECARD";
+  const id = String(card.id || "");
+  if (id.startsWith("verse-") || id.startsWith("mark-")) return true;
+  const cat = String(card.cardCategory || "").toUpperCase();
+  return cat === "VERSECARD" || cat === "VERSEMARK";
+}
+
+/** Cartes d’étude (révision) — exclut les VerseMark. */
+export function isVerseStudyCard(card: Pick<Flashcard, "id" | "cardCategory">): boolean {
+  const cat = String(card.cardCategory || "").toUpperCase();
+  if (cat === "VERSEMARK") return false;
+  if (String(card.id || "").startsWith("mark-")) return false;
+  return isBiblosFlashcard(card);
+}
+
+/** Surlignages sync Notion (Category = VerseMark). */
+export function isVerseMarkCard(card: Pick<Flashcard, "id" | "cardCategory">): boolean {
+  if (String(card.id || "").startsWith("mark-")) return true;
+  return String(card.cardCategory || "").toUpperCase() === "VERSEMARK";
 }
 
 export function listAllFlashcards(notes: Seed[], cardIds?: string[] | null): Flashcard[] {
   return filterByCardIds(
-    notes.flatMap((note) => buildFlashcards(note)).filter(isBiblosFlashcard),
+    notes.flatMap((note) => buildFlashcards(note)).filter(isVerseStudyCard),
     cardIds,
   );
 }
@@ -79,7 +95,7 @@ export function buildTimeline(notes: Seed[], cardIds?: string[] | null): InboxCa
   const items = notes.flatMap((seed) =>
     buildFlashcards(seed)
       .map(mergeCard)
-      .filter((card) => isBiblosFlashcard(card) && card.status !== "encerrado")
+      .filter((card) => isVerseStudyCard(card) && card.status !== "encerrado")
       .map((card) => ({
         ...card,
         noteId: seed.nota.id,

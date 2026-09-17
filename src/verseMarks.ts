@@ -1,4 +1,6 @@
-import { normalizeVerseColor } from "./verseColors";
+import { isVerseMarkCard } from "./catalog";
+import type { Flashcard } from "./types";
+import { normalizeVerseColor, parseVerseHex } from "./verseColors";
 
 const STORAGE_KEY = "biblos.verseMarks";
 
@@ -107,4 +109,73 @@ export function listAllVerseMarks(): SavedVerseMark[] {
     if (byChapter !== 0) return byChapter;
     return a.verse - b.verse;
   });
+}
+
+/** Parse usfm + color depuis le corps Notion d’un VerseMark. */
+export function parseVerseMarkMeta(verso: string | null | undefined): {
+  usfm: string | null;
+  color: string | null;
+} {
+  const text = String(verso || "");
+  const usfmMatch = text.match(/usfm:([A-Z0-9.-]+)/i);
+  const colorMatch = text.match(/color:(#[0-9a-fA-F]{3,8})/i);
+  const bareHex = parseVerseHex(text.trim().split(/\s+/)[0] || "");
+  return {
+    usfm: usfmMatch?.[1]?.toUpperCase() ?? null,
+    color: colorMatch?.[1]
+      ? normalizeVerseColor(colorMatch[1])
+      : bareHex
+        ? normalizeVerseColor(bareHex)
+        : null,
+  };
+}
+
+/** USFM → book / chapter / verse (ex. JHN.3.16). */
+export function parseUsfmVerseRef(usfm: string): {
+  bookId: string;
+  chapterId: string;
+  verse: number;
+} | null {
+  const raw = String(usfm || "")
+    .trim()
+    .toUpperCase()
+    .replace(/^MARK-/, "")
+    .replace(/^VERSE-/, "");
+  const match = raw.match(/^([A-Z0-9]{2,3})\.(\d+)\.(\d+)/);
+  if (!match) return null;
+  const verse = Number(match[3]);
+  if (!Number.isFinite(verse) || verse < 1) return null;
+  return { bookId: match[1]!, chapterId: match[2]!, verse };
+}
+
+/**
+ * Applique les VerseMark du catalogue Notion sur le store local (multi-appareil).
+ * Ne retire pas les marques locales absentes du remote (merge additif).
+ */
+export function applyVerseMarksFromCards(cards: readonly Flashcard[]): boolean {
+  const marks = cards.filter(isVerseMarkCard);
+  if (!marks.length) return false;
+  const store = readStore();
+  let changed = false;
+  for (const card of marks) {
+    const meta = parseVerseMarkMeta(card.verso);
+    const usfm =
+      meta.usfm ||
+      (String(card.id || "").startsWith("mark-")
+        ? String(card.id).slice(5).toUpperCase()
+        : null);
+    if (!usfm) continue;
+    const ref = parseUsfmVerseRef(usfm);
+    if (!ref) continue;
+    const color = normalizeVerseColor(meta.color || card.color || "#2563eb");
+    const key = chapterKey(ref.bookId, ref.chapterId);
+    const chapter = { ...(store[key] ?? {}) };
+    const verseKey = String(ref.verse);
+    if (chapter[verseKey] === color) continue;
+    chapter[verseKey] = color;
+    store[key] = chapter;
+    changed = true;
+  }
+  if (changed) writeStore(store);
+  return changed;
 }

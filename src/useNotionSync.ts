@@ -88,6 +88,7 @@ export function useNotionSync(options: {
         const result = await pullCatalog(catalogRef.current);
         if (!cancelled && result.ok && result.changed) {
           setCatalog(result.catalog);
+          setRetentionTick((value) => value + 1);
         }
         await flushAdminMessageOutbox();
         await syncUserProfileToNotion();

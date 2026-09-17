@@ -1,5 +1,5 @@
 /**
- * POST /api/verse-card — crée une page VERSECARD dans Notion (push depuis l’app locale).
+ * POST /api/verse-card — crée une page VERSECARD ou VerseMark dans Notion.
  */
 import { createVerseCard, archiveVerseCard } from "../shared/notion.mjs";
 
@@ -31,6 +31,9 @@ export default async function handler(req, res) {
       lembrete: body.lembrete,
       status: body.status,
       categoria: body.categoria,
+      cardCategory: body.cardCategory,
+      color: body.color,
+      usfm: body.usfm,
     });
     res.status(result.ok ? 200 : result.hasToken === false ? 200 : 400).json(result);
   } catch (error) {

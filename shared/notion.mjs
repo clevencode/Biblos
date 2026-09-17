@@ -413,14 +413,32 @@ function humanizeCreateError(statusCode, detail) {
 }
 
 /**
- * Cria VERSECARD em BIBLECARDS (Notion).
+ * Cria VERSECARD ou VerseMark em BIBLECARDS (Notion).
  * Tenta data-source id + page id da database (env NOTION_BIBLECARDS_DB).
+ * VerseMark: corps = usfm:… + color:#hex (sync multi-appareil).
  */
 export async function createVerseCard(token, input = {}) {
   const title = String(input.frente || "")
     .trim()
     .toUpperCase();
-  const body = String(input.verso || "").trim();
+  const categoryRaw = String(input.cardCategory || "VERSECARD").trim();
+  const isMark = /^versemark$/i.test(categoryRaw);
+  const cardCategory = isMark ? "VerseMark" : "VERSECARD";
+  const colorRaw = input.color ? String(input.color).trim().toLowerCase() : "";
+  const colorHex = colorRaw
+    ? colorRaw.startsWith("#")
+      ? colorRaw
+      : `#${colorRaw}`
+    : null;
+  const usfmHint = input.usfm ? String(input.usfm).trim().toUpperCase() : "";
+  let body = String(input.verso || "").trim();
+  if (isMark) {
+    const lines = [];
+    if (usfmHint) lines.push(`usfm:${usfmHint}`);
+    if (colorHex) lines.push(`color:${colorHex}`);
+    if (!lines.length && body) lines.push(body);
+    body = lines.join("\n") || colorHex || "#2563eb";
+  }
   const localId = input.localId ? String(input.localId) : null;
   if (!token) {
     return { ok: false, error: "NOTION_TOKEN em falta", hasToken: false };
@@ -437,11 +455,11 @@ export async function createVerseCard(token, input = {}) {
       criadoEm: dateKey(new Date()),
     });
   const statusName = statusToNotion(input.status || "espera") || "Não iniciada";
-  const repetition = categoriaToNotion(input.categoria);
+  const repetition = isMark ? null : categoriaToNotion(input.categoria);
 
   const properties = {
     Nom: { title: [{ type: "text", text: { content: title.slice(0, 2000) } }] },
-    Category: { select: { name: "VERSECARD" } },
+    Category: { select: { name: cardCategory } },
     Status: { status: { name: statusName } },
     Lembrete: { date: { start: lembrete } },
   };
@@ -499,7 +517,8 @@ export async function createVerseCard(token, input = {}) {
         status: input.status || "espera",
         url: notionPageUrl(id),
         lembrete,
-        cardCategory: "VERSECARD",
+        cardCategory,
+        color: colorHex,
         criadoEm,
       },
     };

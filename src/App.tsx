@@ -13,6 +13,9 @@ import { BibleReaderView } from "./components/BibleReaderView";
 import type { Catalog, CenterMode, Flashcard, ReadingPlan, Seed } from "./types";
 import { appendActivity, recordBibleRead } from "./activityLog";
 import { listAllVerseMarks } from "./verseMarks";
+import { createVerseMarkFlashcard, verseMarkCardId } from "./verseCard";
+import { formatVerseCardFront } from "./youversion/usfm";
+import { chapterUsfm } from "./youversion/client";
 import {
   completeOnboarding,
   isClevencodeAdmin,
@@ -139,6 +142,8 @@ export function App() {
   const splitLayout = useSplitLayout();
   const notesRef = useRef(notes);
   notesRef.current = notes;
+  const catalogRef = useRef(catalog);
+  catalogRef.current = catalog;
   const [cardFocusId, setCardFocusId] = useState<string | null>(null);
   const [cardFocusSeq, setCardFocusSeq] = useState(0);
   /** Ouverture « Voir la carte » depuis Lecture → ← revient à Lecture. */
@@ -351,8 +356,9 @@ export function App() {
     void mode;
     void activityTick;
     void retentionTick;
+    void notes;
     return listAllVerseMarks();
-  }, [mode, activityTick, retentionTick]);
+  }, [mode, activityTick, retentionTick, notes]);
 
   const activeCardsCount = useMemo(
     () => cards.filter((card) => card.status !== "encerrado").length,
@@ -391,7 +397,7 @@ export function App() {
     return latestPlanJour({ ...activePlan, days: planDays }, planProgress);
   }, [activePlan, planProgress, planDays]);
 
-  useNotionSync({
+  const { notionHealth } = useNotionSync({
     catalog,
     setCatalog,
     notesRef,
@@ -628,6 +634,8 @@ export function App() {
   }
 
   function handleFlashcardCreated(card: Flashcard) {
+    let previousUrl = "";
+    let previousColor: string | null | undefined;
     setCatalog((current) => {
       const notas = [...(current.notas ?? [])];
       const bucketKey = String(card.cardCategory || "VERSECARD");
@@ -648,12 +656,23 @@ export function App() {
         };
         notas.push(seed);
       }
-      const exists = seed.flashcards.some((item) => item.id === card.id || item.url === card.url);
-      const flashcards = exists
-        ? seed.flashcards.map((item) =>
-            item.id === card.id || item.url === card.url ? { ...item, ...card } : item,
-          )
-        : [card, ...seed.flashcards];
+      const existing = seed.flashcards.find(
+        (item) => item.id === card.id || (card.url && item.url === card.url),
+      );
+      if (existing) {
+        previousUrl = existing.url || "";
+        previousColor = existing.color;
+      }
+      const merged: Flashcard = existing
+        ? {
+            ...existing,
+            ...card,
+            url: card.url || existing.url || "",
+          }
+        : card;
+      const flashcards = existing
+        ? seed.flashcards.map((item) => (item.id === existing.id ? merged : item))
+        : [merged, ...seed.flashcards];
       const nextSeed: Seed = {
         ...seed,
         flashcards,
@@ -674,21 +693,84 @@ export function App() {
     });
     setRetentionTick((value) => value + 1);
 
-    appendActivity(
-      "flashcard.create",
-      { cardId: card.id, frente: card.frente?.slice(0, 80) ?? "" },
-      profile.id,
-    );
-    setActivityTick((n) => n + 1);
+    if (String(card.cardCategory || "").toUpperCase() !== "VERSEMARK") {
+      appendActivity(
+        "flashcard.create",
+        { cardId: card.id, frente: card.frente?.slice(0, 80) ?? "" },
+        profile.id,
+      );
+      setActivityTick((n) => n + 1);
+    }
 
     void (async () => {
       if (!isClevencodeAdmin(profile)) return;
-      const { syncVerseCardToNotion, attachNotionUrlToCatalog } = await import("./verseCardSync");
-      const result = await syncVerseCardToNotion(card);
+      const { syncVerseCardToNotion, attachNotionUrlToCatalog, archiveRemoteVerseCard } =
+        await import("./verseCardSync");
+      const isMark = String(card.cardCategory || "").toUpperCase() === "VERSEMARK";
+      const colorChanged =
+        isMark &&
+        previousUrl &&
+        previousColor != null &&
+        card.color != null &&
+        previousColor !== card.color;
+      if (colorChanged) {
+        await archiveRemoteVerseCard({ id: card.id, url: previousUrl });
+      }
+      const toSync: Flashcard = colorChanged ? { ...card, url: "" } : { ...card, url: card.url || previousUrl };
+      const result = await syncVerseCardToNotion(toSync);
       if (result.ok && result.url) {
         setCatalog((prev) => attachNotionUrlToCatalog(prev, card.id, result.url!));
       }
     })();
+  }
+
+  function handleVerseMarked(payload: {
+    color: string | null;
+    verses: number[];
+    bookId: string;
+    chapterId: string;
+    bookTitle: string;
+  }) {
+    const { color, verses, bookId, chapterId, bookTitle } = payload;
+    if (!verses.length) return;
+
+    if (color) {
+      appendActivity(
+        "verse.mark",
+        { color, verseCount: verses.length },
+        profile.id,
+      );
+      setActivityTick((n) => n + 1);
+      for (const verse of verses) {
+        const usfm = `${chapterUsfm(bookId, chapterId)}.${verse}`;
+        const frente = formatVerseCardFront(bookTitle, chapterId, verse);
+        const result = createVerseMarkFlashcard({ frente, usfm, color });
+        if (result.ok) handleFlashcardCreated(result.card);
+      }
+      return;
+    }
+
+    for (const verse of verses) {
+      const usfm = `${chapterUsfm(bookId, chapterId)}.${verse}`;
+      const cardId = verseMarkCardId(usfm);
+      let cardToArchive: Flashcard | null = null;
+      for (const note of catalog.notas ?? []) {
+        const hit = (note.flashcards ?? []).find((c) => c.id === cardId);
+        if (hit) {
+          cardToArchive = hit;
+          break;
+        }
+      }
+      setCatalog((current) => removeCardFromCatalog(current, cardId));
+      setRetentionTick((value) => value + 1);
+      if (cardToArchive && isClevencodeAdmin(profile)) {
+        const archived = cardToArchive;
+        void (async () => {
+          const { archiveRemoteVerseCard } = await import("./verseCardSync");
+          await archiveRemoteVerseCard(archived);
+        })();
+      }
+    }
   }
 
   function handleRemoveCard(card: Flashcard) {
@@ -917,14 +999,7 @@ export function App() {
                     onReadingChromeChange={setBibleChromeHidden}
                     themePref={themePref}
                     onCycleTheme={cycleTheme}
-                    onVerseMarked={({ color, verseCount }) => {
-                      appendActivity(
-                        "verse.mark",
-                        { color, verseCount },
-                        profile.id,
-                      );
-                      setActivityTick((n) => n + 1);
-                    }}
+                    onVerseMarked={handleVerseMarked}
                     onBibleRead={(payload) => {
                       const logged = recordBibleRead({
                         ...payload,
@@ -971,6 +1046,34 @@ export function App() {
                     activityTick={activityTick}
                     savedVerses={savedVerses}
                     flashcards={allFlashcards}
+                    notionHealth={notionHealth}
+                    onSyncNow={async () => {
+                      const {
+                        enqueuePendingVerseCreatesFromCatalog,
+                        flushVerseCardCreates,
+                        attachNotionUrlToCatalog,
+                      } = await import("./verseCardSync");
+                      const { pullCatalog } = await import("./catalogSync");
+                      enqueuePendingVerseCreatesFromCatalog(catalogRef.current);
+                      const push = await flushVerseCardCreates();
+                      let base = catalogRef.current;
+                      if (push.updates.length) {
+                        for (const item of push.updates) {
+                          base = attachNotionUrlToCatalog(base, item.localId, item.url);
+                        }
+                        setCatalog(base);
+                        catalogRef.current = base;
+                      }
+                      const pulled = await pullCatalog(base);
+                      if (pulled.ok && pulled.changed) {
+                        setCatalog(pulled.catalog);
+                        catalogRef.current = pulled.catalog;
+                        setRetentionTick((v) => v + 1);
+                      } else if (push.pushed) {
+                        setRetentionTick((v) => v + 1);
+                      }
+                      if (push.error) throw new Error(push.error);
+                    }}
                     onOpenVerse={(mark) => {
                       openPassageInBible(`${mark.bookId}.${mark.chapterId}.${mark.verse}`);
                     }}
