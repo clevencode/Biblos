@@ -7,14 +7,23 @@ type ProfileOnboardingProps = {
     lastName: string;
     preferredName: string;
   }) => void;
+  /** Ferme sans enregistrer (ex. Annuler depuis Marquer). */
+  onCancel?: () => void;
+  /** Contexte d’affichage — le nom n’est demandé qu’au moment de marquer. */
+  variant?: "welcome" | "mark";
 };
 
-export function ProfileOnboarding({ onComplete }: ProfileOnboardingProps) {
+export function ProfileOnboarding({
+  onComplete,
+  onCancel,
+  variant = "welcome",
+}: ProfileOnboardingProps) {
   const formId = useId();
   const nameRef = useRef<HTMLInputElement>(null);
   const [fullName, setFullName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const isMark = variant === "mark";
 
   function submit(event: FormEvent) {
     event.preventDefault();
@@ -37,15 +46,29 @@ export function ProfileOnboarding({ onComplete }: ProfileOnboardingProps) {
   }
 
   return (
-    <div className="profile-onboarding" role="dialog" aria-modal="true" aria-labelledby={`${formId}-title`}>
+    <div
+      className={`profile-onboarding${isMark ? " is-mark-gate" : ""}`}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={`${formId}-title`}
+    >
+      {onCancel ? (
+        <button
+          type="button"
+          className="profile-onboarding-backdrop"
+          aria-label="Fermer"
+          onClick={onCancel}
+        />
+      ) : null}
       <div className="profile-onboarding-card">
         <p className="profile-onboarding-brand">Biblos</p>
         <h1 id={`${formId}-title`} className="profile-onboarding-title type-title">
-          Bienvenue
+          {isMark ? "Marquer un verset" : "Bienvenue"}
         </h1>
         <p className="profile-onboarding-lead muted">
-          Quel est ton nom ? Ton activité sera liée à un identifiant privé, pas
-          à ton nom.
+          {isMark
+            ? "Pour enregistrer un surlignage, indique ton nom. Ton activité reste liée à un identifiant privé."
+            : "Quel est ton nom ? Ton activité sera liée à un identifiant privé, pas à ton nom."}
         </p>
 
         <form className="profile-onboarding-form" onSubmit={submit}>
@@ -77,8 +100,18 @@ export function ProfileOnboarding({ onComplete }: ProfileOnboardingProps) {
             className="profile-onboarding-submit"
             disabled={busy}
           >
-            Continuer
+            {isMark ? "Marquer" : "Continuer"}
           </button>
+          {onCancel ? (
+            <button
+              type="button"
+              className="profile-onboarding-cancel"
+              disabled={busy}
+              onClick={onCancel}
+            >
+              Annuler
+            </button>
+          ) : null}
         </form>
       </div>
     </div>

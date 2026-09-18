@@ -61,6 +61,7 @@ import {
 import { useNarrow, useSplitLayout } from "./layout";
 import { chapterFocusFromRef, isPassageRef } from "./youversion/usfm";
 import { syncNativeChrome } from "./nativeChrome";
+import { consumeShareRefFromUrl } from "./shareVerse";
 import {
   applyTheme,
   loadThemePref,
@@ -150,6 +151,24 @@ export function App() {
   const [cardReturnToBible, setCardReturnToBible] = useState(false);
   const [bibleFocusRef, setBibleFocusRef] = useState<string | null>(null);
   const [bibleFocusSeq, setBibleFocusSeq] = useState(0);
+  const pendingShareRef = useRef<string | null>(null);
+  const shareBooted = useRef(false);
+  const [nameGateOpen, setNameGateOpen] = useState(false);
+  const pendingMarkRef = useRef<{
+    color: string;
+    verses: number[];
+    bookId: string;
+    chapterId: string;
+    bookTitle: string;
+  } | null>(null);
+  const [authorizedMarkSeq, setAuthorizedMarkSeq] = useState(0);
+  const [authorizedMark, setAuthorizedMark] = useState<{
+    color: string;
+    verses: number[];
+    bookId: string;
+    chapterId: string;
+    bookTitle: string;
+  } | null>(null);
   const [planReading, setPlanReading] = useState<PlanReadingSession | null>(null);
   const [dayNoteFocus, setDayNoteFocus] = useState<{ jour: number; seq: number } | null>(null);
   const [planIntroFocus, setPlanIntroFocus] = useState<{ seq: number } | null>(null);
@@ -270,10 +289,30 @@ export function App() {
     openedLogged.current = true;
     appendActivity("app.open", undefined, next.id);
     setActivityTick((n) => n + 1);
-    setMode("home");
+    setNameGateOpen(false);
+
+    const pendingMark = pendingMarkRef.current;
+    pendingMarkRef.current = null;
+    const shared = pendingShareRef.current;
+    if (shared) {
+      pendingShareRef.current = null;
+      setBibleFocusRef(shared);
+      setBibleFocusSeq((value) => value + 1);
+      setMode("bible");
+    }
+    if (pendingMark) {
+      setAuthorizedMark(pendingMark);
+      setAuthorizedMarkSeq((value) => value + 1);
+      setMode("bible");
+    }
     void syncUserProfileToNotion(next).then((result) => {
       applySyncedProfile(result.profile);
     });
+  }
+
+  function cancelNameGate() {
+    pendingMarkRef.current = null;
+    setNameGateOpen(false);
   }
 
   function handleProfileSave(input: {
@@ -470,6 +509,19 @@ export function App() {
     setBibleFocusSeq((value) => value + 1);
     setMode("bible");
   }
+
+  useEffect(() => {
+    if (shareBooted.current) return;
+    shareBooted.current = true;
+    const ref = consumeShareRefFromUrl();
+    if (!ref) return;
+    if (!isProfileOnboarded(profile) && !onboardingDone) {
+      pendingShareRef.current = ref;
+    }
+    openPassageInBible(ref);
+    // Boot-only: capture share deep-link once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function openCardChapter(card: Flashcard) {
     const frente = card.frente?.trim() ?? "";
@@ -785,27 +837,6 @@ export function App() {
     })();
   }
 
-  /** Toggle VERSECARD depuis Lecture (sans confirm — même logique que Démarquer). */
-  function handleFlashcardRemovedFromBible(cardId: string) {
-    let cardToArchive: Flashcard | null = null;
-    for (const note of catalog.notas ?? []) {
-      const hit = (note.flashcards ?? []).find((c) => c.id === cardId);
-      if (hit) {
-        cardToArchive = hit;
-        break;
-      }
-    }
-    setCatalog((current) => removeCardFromCatalog(current, cardId));
-    setRetentionTick((value) => value + 1);
-    if (cardToArchive && isClevencodeAdmin(profile)) {
-      const archived = cardToArchive;
-      void (async () => {
-        const { archiveRemoteVerseCard } = await import("./verseCardSync");
-        await archiveRemoteVerseCard(archived);
-      })();
-    }
-  }
-
   function onTabKey(event: ReactKeyboardEvent<HTMLDivElement>) {
     if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
     event.preventDefault();
@@ -869,8 +900,12 @@ export function App() {
       <a className="skip" href="#workspace">
         Aller au contenu
       </a>
-      {!onboarded ? (
-        <ProfileOnboarding onComplete={finishOnboarding} />
+      {!onboarded && nameGateOpen ? (
+        <ProfileOnboarding
+          variant="mark"
+          onComplete={finishOnboarding}
+          onCancel={cancelNameGate}
+        />
       ) : null}
       {offlineToast ? (
         <div className="offline-toast" role="status" aria-live="polite">
@@ -1024,7 +1059,6 @@ export function App() {
                         : null
                     }
                     onFlashcardCreated={handleFlashcardCreated}
-                    onFlashcardRemoved={handleFlashcardRemovedFromBible}
                     existingVerseCardIds={verseCardIds}
                     existingVerseCardColors={verseCardColors}
                     onUpdateVerseCardColor={handleVerseCardColor}
@@ -1032,6 +1066,14 @@ export function App() {
                     onReadingChromeChange={setBibleChromeHidden}
                     themePref={themePref}
                     onCycleTheme={cycleTheme}
+                    requireNameToMark={!onboarded}
+                    onRequestNameToMark={(payload) => {
+                      pendingMarkRef.current = payload;
+                      setNameGateOpen(true);
+                    }}
+                    authorizedMarkSeq={authorizedMarkSeq}
+                    authorizedMark={authorizedMark}
+                    onAuthorizedMarkConsumed={() => setAuthorizedMark(null)}
                     onVerseMarked={handleVerseMarked}
                     onBibleRead={(payload) => {
                       const logged = recordBibleRead({

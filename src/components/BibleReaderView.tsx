@@ -30,6 +30,7 @@ import { BibleAudioPlayer } from "./BibleAudioPlayer";
 import { BibleHistorySheet } from "./BibleHistorySheet";
 import { BibleSearchSheet } from "./BibleSearchSheet";
 import { CircularColorEditor } from "./CircularColorEditor";
+import { VerseShareSheet } from "./VerseShareSheet";
 import { ACTIVITY_UI_ENABLED } from "../activityLog";
 import {
   bindBibleAudioControls,
@@ -219,8 +220,6 @@ type BibleReaderViewProps = {
   } | null;
   /** Après création d’une VERSECARD (catalogue local). */
   onFlashcardCreated?: (card: Flashcard) => void;
-  /** Retire une VERSECARD (même logique toggle que Démarquer). */
-  onFlashcardRemoved?: (cardId: string) => void;
   /** Ids des VERSECARD déjà enregistrées (ex. verse-HAG.2.10). */
   existingVerseCardIds?: ReadonlySet<string>;
   /** Couleurs actuelles des VERSECARD (id → hex). */
@@ -243,6 +242,26 @@ type BibleReaderViewProps = {
     chapterId: string;
     bookTitle: string;
   }) => void;
+  /** Si true, Marquer demande d’abord le nom (onboarding différé). */
+  requireNameToMark?: boolean;
+  /** Demande le nom avant de marquer ; le marquage reprend via authorizedMark*. */
+  onRequestNameToMark?: (payload: {
+    color: string;
+    verses: number[];
+    bookId: string;
+    chapterId: string;
+    bookTitle: string;
+  }) => void;
+  /** Marquage autorisé après saisie du nom. */
+  authorizedMarkSeq?: number;
+  authorizedMark?: {
+    color: string;
+    verses: number[];
+    bookId: string;
+    chapterId: string;
+    bookTitle: string;
+  } | null;
+  onAuthorizedMarkConsumed?: () => void;
   /** Activité : chapitre lu / ouvert. */
   onBibleRead?: (payload: {
     bookId: string;
@@ -396,7 +415,6 @@ export function BibleReaderView({
   onBack,
   planReading = null,
   onFlashcardCreated,
-  onFlashcardRemoved,
   existingVerseCardIds,
   existingVerseCardColors,
   onUpdateVerseCardColor,
@@ -405,6 +423,11 @@ export function BibleReaderView({
   themePref = "system",
   onCycleTheme,
   onVerseMarked,
+  requireNameToMark = false,
+  onRequestNameToMark,
+  authorizedMarkSeq = 0,
+  authorizedMark = null,
+  onAuthorizedMarkConsumed,
   onBibleRead,
   onReadingHistoryChange,
 }: BibleReaderViewProps) {
@@ -469,6 +492,7 @@ export function BibleReaderView({
   const [offlineProgress, setOfflineProgress] = useState<OfflineDownloadProgress | null>(null);
   const offlineAbortRef = useRef<AbortController | null>(null);
   const [colorEditorOpen, setColorEditorOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [uiTheme, setUiTheme] = useState<ResolvedTheme>(() => resolveTheme());
   const statusId = useId();
   const highlightRef = useRef<HTMLElement | null>(null);
@@ -933,6 +957,7 @@ export function BibleReaderView({
 
   function closeCreateCard() {
     preferJumpFocusRef.current = false;
+    setShareOpen(false);
     setSelection(null);
     setHighlightVerse(null);
     setHighlightVerseEnd(null);
@@ -1030,13 +1055,6 @@ export function BibleReaderView({
     } finally {
       setCardBusy(false);
     }
-  }
-
-  function removeFlashcard() {
-    if (!selectedVerseCardId || cardBusy) return;
-    onFlashcardRemoved?.(selectedVerseCardId);
-    setCardMsg(null);
-    closeCreateCard();
   }
 
   const selectedBook = books.find((b) => b.id.toUpperCase() === bookId.toUpperCase());
@@ -1154,6 +1172,56 @@ export function BibleReaderView({
     closeCreateCard();
   }
 
+  function requestMarkSelection(hex: string) {
+    if (!selection?.length) return;
+    const next = adaptVerseColorForTheme(normalizeVerseColor(hex), uiTheme);
+    if (requireNameToMark && onRequestNameToMark) {
+      onRequestNameToMark({
+        color: next,
+        verses: [...selection],
+        bookId,
+        chapterId,
+        bookTitle: selectedBook?.title ?? bookId,
+      });
+      return;
+    }
+    markSelection(next);
+  }
+
+  useEffect(() => {
+    if (!authorizedMarkSeq || !authorizedMark) return;
+    if (
+      authorizedMark.bookId.toUpperCase() !== bookId.toUpperCase() ||
+      String(authorizedMark.chapterId) !== String(chapterId)
+    ) {
+      onAuthorizedMarkConsumed?.();
+      return;
+    }
+    const verses = authorizedMark.verses.filter((n) => Number.isFinite(n));
+    if (!verses.length) {
+      onAuthorizedMarkConsumed?.();
+      return;
+    }
+    setSelection(verses);
+    const next = adaptVerseColorForTheme(
+      normalizeVerseColor(authorizedMark.color),
+      uiTheme,
+    );
+    pickVerseColor(next);
+    setChapterMarks(setVerseMarks(bookId, chapterId, verses, next));
+    onVerseMarked?.({
+      color: next,
+      verses,
+      bookId,
+      chapterId,
+      bookTitle: authorizedMark.bookTitle || selectedBook?.title || bookId,
+    });
+    closeCreateCard();
+    onAuthorizedMarkConsumed?.();
+    // Boot auth mark once per seq.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authorizedMarkSeq]);
+
   function clearSelectionMarks() {
     if (!selection?.length) return;
     setChapterMarks(setVerseMarks(bookId, chapterId, selection, null));
@@ -1189,7 +1257,8 @@ export function BibleReaderView({
     audioPlayerOpen ||
     searchOpen ||
     historyOpen ||
-    toolsMenuOpen;
+    toolsMenuOpen ||
+    shareOpen;
   const hideChrome = chromeHidden && !forceChrome;
   forceChromeRef.current = forceChrome;
 
@@ -1938,29 +2007,46 @@ export function BibleReaderView({
               Couleur
             </p>
 
-            <div className="bible-verse-color-row">
-              <div className="bible-verse-colors">
-                <button
-                  type="button"
-                  className={`bible-verse-color-picker${selectionHasMark ? " is-marked" : ""}`}
-                  style={
-                    {
-                      ["--swatch" as string]: pickerColor,
-                      ["--swatch-check" as string]: verseSwatchCheckInk(pickerColor),
-                    } as CSSProperties
+            <div className="bible-verse-color-row" role="group" aria-labelledby="bible-verse-color-label">
+              <button
+                type="button"
+                className={`bible-verse-color-picker${selectionHasMark ? " is-marked" : ""}`}
+                style={
+                  {
+                    ["--swatch" as string]: pickerColor,
+                    ["--swatch-check" as string]: verseSwatchCheckInk(pickerColor),
+                  } as CSSProperties
+                }
+                title="Personnaliser la couleur"
+                aria-label={`Couleur ${verseColorHueLabel(pickerColor)} ${formatVerseColorHex(pickerColor)}. Ouvrir l’éditeur`}
+                aria-labelledby="bible-verse-color-label"
+                aria-haspopup="dialog"
+                aria-expanded={colorEditorOpen}
+                onClick={() => setColorEditorOpen(true)}
+              >
+                <span className="bible-verse-color-picker-plus" aria-hidden>
+                  +
+                </span>
+              </button>
+              <button
+                type="button"
+                className={`bible-yv-chip bible-mark-toggle${selectionHasMark ? " is-marked" : ""}`}
+                aria-pressed={selectionHasMark}
+                onClick={() => {
+                  if (selectionHasMark) {
+                    clearSelectionMarks();
+                    return;
                   }
-                  title="Personnaliser la couleur"
-                  aria-label={`Couleur ${verseColorHueLabel(pickerColor)} ${formatVerseColorHex(pickerColor)}. Ouvrir l’éditeur`}
-                  aria-labelledby="bible-verse-color-label"
-                  aria-haspopup="dialog"
-                  aria-expanded={colorEditorOpen}
-                  onClick={() => setColorEditorOpen(true)}
-                >
-                  <span className="bible-verse-color-picker-plus" aria-hidden>
-                    +
-                  </span>
-                </button>
-              </div>
+                  requestMarkSelection(activeVerseColor);
+                }}
+              >
+                {selectionHasMark ? (
+                  <YvIcon name="bookmark_remove" className="bible-verse-cta-icon" />
+                ) : (
+                  <YvIcon name="bookmark" className="bible-verse-cta-icon" />
+                )}
+                <span>{selectionHasMark ? "Démarquer" : "Marquer"}</span>
+              </button>
             </div>
 
             <CircularColorEditor
@@ -1978,67 +2064,63 @@ export function BibleReaderView({
           <div className="bible-verse-action-block">
             <p className="bible-verse-action-label">Actions</p>
             <div className="bible-verse-cta-row">
-              <button
-                type="button"
-                className={`bible-yv-chip bible-mark-toggle${selectionHasMark ? " is-marked" : ""}`}
-                aria-pressed={selectionHasMark}
-                onClick={() => {
-                  if (selectionHasMark) {
-                    clearSelectionMarks();
-                    return;
-                  }
-                  markSelection(activeVerseColor);
-                }}
-              >
-                {selectionHasMark ? (
-                  <YvIcon name="bookmark_remove" className="bible-verse-cta-icon" />
-                ) : (
-                  <YvIcon name="bookmark" className="bible-verse-cta-icon" />
-                )}
-                <span>{selectionHasMark ? "Démarquer" : "Marquer"}</span>
-              </button>
-              <button
-                type="button"
-                className={`bible-yv-chip is-primary bible-make-card${existingVerseCard ? " is-carded" : ""}`}
-                disabled={cardBusy}
-                aria-pressed={existingVerseCard}
-                onClick={() => {
-                  if (existingVerseCard) {
-                    removeFlashcard();
-                    return;
-                  }
-                  void makeFlashcard();
-                }}
-              >
-                {cardBusy ? (
-                  "…"
-                ) : existingVerseCard ? (
-                  <>
-                    <YvIcon name="style" className="bible-verse-cta-icon" />
-                    <span>Retirer carte</span>
-                  </>
-                ) : (
-                  <>
-                    <YvIcon name="style" className="bible-verse-cta-icon" />
-                    <span>Créer flashcard</span>
-                  </>
-                )}
-              </button>
-              {existingVerseCard && selectedVerseCardId && onViewFlashcard ? (
+              {existingVerseCard && selectedVerseCardId ? (
                 <button
                   type="button"
-                  className="bible-yv-chip bible-view-card"
-                  disabled={cardBusy}
-                  onClick={() => onViewFlashcard(selectedVerseCardId)}
+                  className="bible-yv-chip is-primary bible-make-card is-carded bible-view-card"
+                  disabled={cardBusy || !onViewFlashcard}
+                  onClick={() => onViewFlashcard?.(selectedVerseCardId)}
                 >
+                  <YvIcon name="style" className="bible-verse-cta-icon" />
                   <span>Voir</span>
                 </button>
-              ) : null}
+              ) : (
+                <button
+                  type="button"
+                  className="bible-yv-chip is-primary bible-make-card"
+                  disabled={cardBusy}
+                  onClick={() => void makeFlashcard()}
+                >
+                  {cardBusy ? (
+                    "…"
+                  ) : (
+                    <>
+                      <YvIcon name="style" className="bible-verse-cta-icon" />
+                      <span>Transformer en carte</span>
+                    </>
+                  )}
+                </button>
+              )}
+              <button
+                type="button"
+                className="bible-yv-chip bible-share-verse"
+                onClick={() => setShareOpen(true)}
+              >
+                <YvIcon name="ios_share" className="bible-verse-cta-icon" />
+                <span>Partager</span>
+              </button>
             </div>
           </div>
           {cardMsg ? <p className="bible-verse-actions-msg">{cardMsg}</p> : null}
         </div>
       ) : null}
+
+      <VerseShareSheet
+        open={shareOpen && showCreateCard}
+        refLabel={
+          selectedVerses.length
+            ? formatSelectionFront(bookTitle, chapterId, selectedVerses)
+            : ""
+        }
+        verseText={selectedVerseText}
+        usfm={
+          selectedVerses.length
+            ? selectionUsfm(bookId, chapterId, selectedVerses)
+            : chapterUsfm(bookId, chapterId)
+        }
+        accentHex={pickerColor}
+        onClose={() => setShareOpen(false)}
+      />
 
       {pickerOpen ? (
         <div
