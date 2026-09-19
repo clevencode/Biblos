@@ -29,6 +29,11 @@ export function VerseShareSheet({
   const [blob, setBlob] = useState<Blob | null>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -65,14 +70,19 @@ export function VerseShareSheet({
 
   useEffect(() => {
     if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
     };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
   }, [open, onClose]);
 
-  if (!open || typeof document === "undefined") return null;
+  if (!open || !mounted) return null;
 
   async function onShare() {
     if (!blob) return;
@@ -144,38 +154,41 @@ export function VerseShareSheet({
           </button>
         </div>
 
-        <div className="verse-share-sheet-preview">
-          {previewUrl ? (
-            <img src={previewUrl} alt="" className="verse-share-sheet-img" />
-          ) : (
-            <div className="verse-share-sheet-skeleton" aria-busy="true">
-              {busy ? "Préparation…" : "—"}
-            </div>
-          )}
+        <div className="verse-share-sheet-body">
+          <div className="verse-share-sheet-preview">
+            {previewUrl ? (
+              <img src={previewUrl} alt="" className="verse-share-sheet-img" />
+            ) : (
+              <div className="verse-share-sheet-skeleton" aria-busy="true">
+                {busy ? "Préparation…" : "—"}
+              </div>
+            )}
+          </div>
         </div>
 
-        <div className="verse-share-sheet-actions">
-          <button
-            type="button"
-            className="bible-yv-chip verse-share-sheet-copy"
-            disabled={busy || !blob}
-            onClick={() => void onCopyImage()}
-          >
-            <YvIcon name="content_copy" className="bible-verse-cta-icon" />
-            <span>Copier l’image</span>
-          </button>
-          <button
-            type="button"
-            className="bible-yv-chip is-primary verse-share-sheet-share"
-            disabled={busy || !blob}
-            onClick={() => void onShare()}
-          >
-            <YvIcon name="ios_share" className="bible-verse-cta-icon" />
-            <span>Partager</span>
-          </button>
+        <div className="verse-share-sheet-footer">
+          <div className="verse-share-sheet-actions">
+            <button
+              type="button"
+              className="verse-share-sheet-copy"
+              disabled={busy || !blob}
+              onClick={() => void onCopyImage()}
+            >
+              <YvIcon name="content_copy" className="bible-verse-cta-icon" />
+              <span>Copier l’image</span>
+            </button>
+            <button
+              type="button"
+              className="verse-share-sheet-share"
+              disabled={busy || !blob}
+              onClick={() => void onShare()}
+            >
+              <YvIcon name="ios_share" className="bible-verse-cta-icon" />
+              <span>Partager</span>
+            </button>
+          </div>
+          {msg ? <p className="verse-share-sheet-msg">{msg}</p> : null}
         </div>
-
-        {msg ? <p className="verse-share-sheet-msg">{msg}</p> : null}
       </div>
     </div>,
     document.body,

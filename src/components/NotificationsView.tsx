@@ -198,15 +198,12 @@ export function NotificationsView({ plans, onBack }: NotificationsViewProps) {
         <div className="notif-head-copy">
           <h1 className="notif-title type-title">Notifications</h1>
         </div>
-      </header>
-
-      <div className="notif-list-head">
         {unread > 0 ? (
           <button type="button" className="notif-mark-all" onClick={onMarkAll}>
             Tout marquer lu
           </button>
         ) : null}
-      </div>
+      </header>
 
       {items.length ? (
         <ul className="notif-list">

@@ -53,7 +53,7 @@ export function splitFullName(fullName: string): {
 }
 
 /** Nom d’affichage par défaut pour chaque nouvel appareil / visiteur. */
-export const DEFAULT_VISITOR_NAME = "Visitante";
+export const DEFAULT_VISITOR_NAME = "Invité";
 
 export function preferredDisplayName(profile: UserProfile): string {
   const full = joinFullName(profile.firstName, profile.lastName);
@@ -124,7 +124,7 @@ function emptyProfile(): UserProfile {
 }
 
 /**
- * Profil incomplet (ancien flux « Bienvenue ») → Visitante + même id.
+ * Profil incomplet (ancien flux « Bienvenue ») → Invité + même id.
  * Le visiteur personnalise ensuite son nom dans Profil.
  */
 function ensureVisitorDefaults(profile: UserProfile): UserProfile {

@@ -138,6 +138,9 @@ export function ProfileView({
   const [adminBusy, setAdminBusy] = useState(false);
   const [adminStatus, setAdminStatus] = useState<string | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleteAck, setDeleteAck] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [syncBusy, setSyncBusy] = useState(false);
   const [syncFlash, setSyncFlash] = useState<string | null>(null);
   const [notifPrefs, setNotifPrefs] = useState<NotificationPrefs>(() =>
@@ -274,21 +277,41 @@ export function ProfileView({
     );
   }
 
-  async function confirmDeleteAccount() {
+  function openDeleteConfirm() {
     if (deleteBusy) return;
-    const ok = window.confirm(
-      "Attention : supprimer ton compte effacera définitivement toutes tes données sur cet appareil (profil, progression, notes, flashcards, historique, préférences…). Cette action est irréversible.\n\nContinuer ?",
-    );
-    if (!ok) return;
+    setDeleteError(null);
+    setDeleteAck(false);
+    setDeleteConfirmOpen(true);
+  }
+
+  function closeDeleteConfirm() {
+    if (deleteBusy) return;
+    setDeleteConfirmOpen(false);
+    setDeleteAck(false);
+    setDeleteError(null);
+  }
+
+  async function confirmDeleteAccount() {
+    if (deleteBusy || !deleteAck) return;
     setDeleteBusy(true);
+    setDeleteError(null);
     try {
       await wipeLocalUserData();
       window.location.reload();
     } catch {
       setDeleteBusy(false);
-      window.alert("Impossible d’effacer les données. Réessaie.");
+      setDeleteError("Impossible d’effacer les données. Réessaie.");
     }
   }
+
+  useEffect(() => {
+    if (!deleteConfirmOpen) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closeDeleteConfirm();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [deleteConfirmOpen, deleteBusy]);
 
   async function confirmClearOfflineBible() {
     if (offlineClearBusy || !offlineReady) return;
@@ -464,10 +487,10 @@ export function ProfileView({
               type="button"
               className="profile-delete-btn"
               disabled={deleteBusy}
-              onClick={() => void confirmDeleteAccount()}
+              onClick={openDeleteConfirm}
             >
               <YvIcon name="delete" className="profile-delete-btn-icon" />
-              {deleteBusy ? "Suppression…" : "Supprimer mon compte"}
+              Supprimer mon compte
             </button>
           </ProfilePanel>
         </div>
@@ -979,6 +1002,94 @@ export function ProfileView({
       </div>
         </>
       )}
+
+      {deleteConfirmOpen ? (
+        <div
+          className="profile-delete-overlay"
+          role="presentation"
+          onClick={closeDeleteConfirm}
+        >
+          <div
+            className="profile-delete-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="profile-delete-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="profile-delete-dialog-head">
+              <h2 id="profile-delete-title" className="profile-delete-dialog-title">
+                Supprimer ton compte ?
+              </h2>
+              <button
+                type="button"
+                className="profile-delete-dialog-exit"
+                onClick={closeDeleteConfirm}
+                disabled={deleteBusy}
+                aria-label="Fermer"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="profile-delete-dialog-body">
+              <p>
+                Sur <strong>cet appareil</strong>, ces données seront effacées
+                définitivement :
+              </p>
+              <ul className="profile-delete-impact">
+                <li>Profil et préférences</li>
+                <li>Progression et historique</li>
+                <li>Notes et versets marqués</li>
+                <li>Flashcards</li>
+                <li>Bible hors ligne</li>
+              </ul>
+              <p className="profile-delete-dialog-foot muted">
+                Cette action est irréversible. Tu ne pourras pas récupérer ces
+                données ensuite.
+                {profile.notionUrl
+                  ? " Les copies éventuellement synchronisées ailleurs ne sont pas gérées ici."
+                  : null}
+              </p>
+
+              <label className="profile-delete-ack">
+                <input
+                  type="checkbox"
+                  checked={deleteAck}
+                  disabled={deleteBusy}
+                  onChange={(event) => setDeleteAck(event.target.checked)}
+                />
+                <span>Je comprends que cette action est irréversible</span>
+              </label>
+
+              {deleteError ? (
+                <p className="profile-delete-error" role="alert">
+                  {deleteError}
+                </p>
+              ) : null}
+            </div>
+
+            <div className="profile-delete-dialog-actions">
+              <button
+                type="button"
+                className="profile-delete-cancel"
+                onClick={closeDeleteConfirm}
+                disabled={deleteBusy}
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                className="profile-delete-confirm"
+                disabled={deleteBusy || !deleteAck}
+                aria-busy={deleteBusy}
+                onClick={() => void confirmDeleteAccount()}
+              >
+                {deleteBusy ? "Suppression…" : "Supprimer définitivement"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

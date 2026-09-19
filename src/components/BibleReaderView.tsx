@@ -2011,7 +2011,7 @@ export function BibleReaderView({
                   ) : (
                     <>
                       <YvIcon name="style" className="bible-verse-cta-icon" />
-                      <span>Transformer en carte</span>
+                      <span>Flashcard</span>
                     </>
                   )}
                 </button>
