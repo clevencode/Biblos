@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboa
 import seed from "./data/seed.json";
 import { FlashcardDeck } from "./components/FlashcardDeck";
 import { ModeTabIcon } from "./components/ModeTabIcon";
-import { ProfileOnboarding } from "./components/ProfileOnboarding";
 import { ProfileView } from "./components/ProfileView";
 import { PrivacyEntryGate, hasPrivacyAck } from "./components/PrivacyLegal";
 import { ensureNotificationPrefsIfPrivacyAccepted } from "./notificationPrefs";
@@ -17,7 +16,6 @@ import { createVerseMarkFlashcard, verseMarkCardId } from "./verseCard";
 import { formatVerseCardFront } from "./youversion/usfm";
 import { chapterUsfm } from "./youversion/client";
 import {
-  completeOnboarding,
   isClevencodeAdmin,
   isProfileOnboarded,
   loadOrCreateProfile,
@@ -151,24 +149,7 @@ export function App() {
   const [cardReturnToBible, setCardReturnToBible] = useState(false);
   const [bibleFocusRef, setBibleFocusRef] = useState<string | null>(null);
   const [bibleFocusSeq, setBibleFocusSeq] = useState(0);
-  const pendingShareRef = useRef<string | null>(null);
   const shareBooted = useRef(false);
-  const [nameGateOpen, setNameGateOpen] = useState(false);
-  const pendingMarkRef = useRef<{
-    color: string;
-    verses: number[];
-    bookId: string;
-    chapterId: string;
-    bookTitle: string;
-  } | null>(null);
-  const [authorizedMarkSeq, setAuthorizedMarkSeq] = useState(0);
-  const [authorizedMark, setAuthorizedMark] = useState<{
-    color: string;
-    verses: number[];
-    bookId: string;
-    chapterId: string;
-    bookTitle: string;
-  } | null>(null);
   const [planReading, setPlanReading] = useState<PlanReadingSession | null>(null);
   const [dayNoteFocus, setDayNoteFocus] = useState<{ jour: number; seq: number } | null>(null);
   const [planIntroFocus, setPlanIntroFocus] = useState<{ seq: number } | null>(null);
@@ -177,10 +158,6 @@ export function App() {
   const [bibleChromeHidden, setBibleChromeHidden] = useState(false);
   const [themePref, setThemePref] = useState<ThemePref>(() => loadThemePref());
   const [profile, setProfile] = useState<UserProfile>(() => loadOrCreateProfile());
-  /** Empêche le retour de l’écran Bienvenue si un sync stale réécrit le profil. */
-  const [onboardingDone, setOnboardingDone] = useState(() =>
-    isProfileOnboarded(loadOrCreateProfile()),
-  );
   const [activityTick, setActivityTick] = useState(0);
   const [privacyOk, setPrivacyOk] = useState(() => {
     const ok = hasPrivacyAck();
@@ -271,48 +248,6 @@ export function App() {
       appendActivity("theme.change", { pref }, profile.id);
       setActivityTick((n) => n + 1);
     }
-  }
-
-  function finishOnboarding(input: {
-    firstName: string;
-    lastName: string;
-    preferredName: string;
-  }) {
-    const next = completeOnboarding(input);
-    setOnboardingDone(true);
-    setProfile(next);
-    appendActivity(
-      "onboarding.complete",
-      { name: preferredDisplayName(next) },
-      next.id,
-    );
-    openedLogged.current = true;
-    appendActivity("app.open", undefined, next.id);
-    setActivityTick((n) => n + 1);
-    setNameGateOpen(false);
-
-    const pendingMark = pendingMarkRef.current;
-    pendingMarkRef.current = null;
-    const shared = pendingShareRef.current;
-    if (shared) {
-      pendingShareRef.current = null;
-      setBibleFocusRef(shared);
-      setBibleFocusSeq((value) => value + 1);
-      setMode("bible");
-    }
-    if (pendingMark) {
-      setAuthorizedMark(pendingMark);
-      setAuthorizedMarkSeq((value) => value + 1);
-      setMode("bible");
-    }
-    void syncUserProfileToNotion(next).then((result) => {
-      applySyncedProfile(result.profile);
-    });
-  }
-
-  function cancelNameGate() {
-    pendingMarkRef.current = null;
-    setNameGateOpen(false);
   }
 
   function handleProfileSave(input: {
@@ -515,9 +450,6 @@ export function App() {
     shareBooted.current = true;
     const ref = consumeShareRefFromUrl();
     if (!ref) return;
-    if (!isProfileOnboarded(profile) && !onboardingDone) {
-      pendingShareRef.current = ref;
-    }
     openPassageInBible(ref);
     // Boot-only: capture share deep-link once.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -878,8 +810,6 @@ export function App() {
     />
   );
 
-  const onboarded = onboardingDone || isProfileOnboarded(profile);
-
   if (!privacyOk) {
     return (
       <div className={`app biblos-shell${narrow ? " is-narrow" : ""}`}>
@@ -900,13 +830,6 @@ export function App() {
       <a className="skip" href="#workspace">
         Aller au contenu
       </a>
-      {!onboarded && nameGateOpen ? (
-        <ProfileOnboarding
-          variant="mark"
-          onComplete={finishOnboarding}
-          onCancel={cancelNameGate}
-        />
-      ) : null}
       {offlineToast ? (
         <div className="offline-toast" role="status" aria-live="polite">
           <p>Hors ligne — tout reste enregistré sur cet appareil.</p>
@@ -1066,14 +989,6 @@ export function App() {
                     onReadingChromeChange={setBibleChromeHidden}
                     themePref={themePref}
                     onCycleTheme={cycleTheme}
-                    requireNameToMark={!onboarded}
-                    onRequestNameToMark={(payload) => {
-                      pendingMarkRef.current = payload;
-                      setNameGateOpen(true);
-                    }}
-                    authorizedMarkSeq={authorizedMarkSeq}
-                    authorizedMark={authorizedMark}
-                    onAuthorizedMarkConsumed={() => setAuthorizedMark(null)}
                     onVerseMarked={handleVerseMarked}
                     onBibleRead={(payload) => {
                       const logged = recordBibleRead({

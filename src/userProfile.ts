@@ -52,9 +52,12 @@ export function splitFullName(fullName: string): {
   };
 }
 
+/** Nom d’affichage par défaut pour chaque nouvel appareil / visiteur. */
+export const DEFAULT_VISITOR_NAME = "Visitante";
+
 export function preferredDisplayName(profile: UserProfile): string {
   const full = joinFullName(profile.firstName, profile.lastName);
-  return full || "Lecteur";
+  return full || DEFAULT_VISITOR_NAME;
 }
 
 /** Nom d’admin reconnu (insensible à la casse / accents). */
@@ -112,12 +115,34 @@ function emptyProfile(): UserProfile {
   const now = new Date().toISOString();
   return {
     id: newId(),
-    firstName: "",
+    firstName: DEFAULT_VISITOR_NAME,
     lastName: "",
-    preferredName: "",
+    preferredName: DEFAULT_VISITOR_NAME,
     createdAt: now,
-    onboardedAt: null,
+    onboardedAt: now,
   };
+}
+
+/**
+ * Profil incomplet (ancien flux « Bienvenue ») → Visitante + même id.
+ * Le visiteur personnalise ensuite son nom dans Profil.
+ */
+function ensureVisitorDefaults(profile: UserProfile): UserProfile {
+  const hasName = Boolean(cleanName(profile.firstName));
+  const onboarded = Boolean(profile.onboardedAt);
+  if (hasName && onboarded) return profile;
+
+  const firstName = hasName ? cleanName(profile.firstName) : DEFAULT_VISITOR_NAME;
+  const lastName = cleanName(profile.lastName);
+  const next: UserProfile = {
+    ...profile,
+    firstName,
+    lastName,
+    preferredName: joinFullName(firstName, lastName) || DEFAULT_VISITOR_NAME,
+    onboardedAt: profile.onboardedAt || new Date().toISOString(),
+  };
+  writeProfile(next);
+  return next;
 }
 
 function parseProfile(raw: unknown): UserProfile | null {
@@ -150,7 +175,9 @@ export function loadOrCreateProfile(): UserProfile {
     const raw = localStorage.getItem(PROFILE_KEY);
     if (raw) {
       const parsed = parseProfile(JSON.parse(raw) as unknown);
-      if (parsed) return ensureStableAdminIdentity(parsed);
+      if (parsed) {
+        return ensureStableAdminIdentity(ensureVisitorDefaults(parsed));
+      }
     }
   } catch {
     /* ignore */
