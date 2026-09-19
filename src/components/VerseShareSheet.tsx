@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { YvIcon } from "./YvIcon";
 import {
   buildShareText,
-  buildShareUrl,
-  copyShareLink,
+  copyShareImage,
   shareVersePayload,
 } from "../shareVerse";
 import { renderVerseShareCard } from "../shareVerseCard";
@@ -21,7 +21,7 @@ export function VerseShareSheet({
   open,
   refLabel,
   verseText,
-  usfm,
+  usfm: _usfm,
   accentHex,
   onClose,
 }: VerseShareSheetProps) {
@@ -29,7 +29,6 @@ export function VerseShareSheet({
   const [blob, setBlob] = useState<Blob | null>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
-  const shareUrl = buildShareUrl(usfm);
 
   useEffect(() => {
     if (!open) return;
@@ -73,24 +72,25 @@ export function VerseShareSheet({
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!open || typeof document === "undefined") return null;
 
   async function onShare() {
+    if (!blob) return;
     setMsg(null);
     setBusy(true);
     try {
-      const text = buildShareText(refLabel, verseText, shareUrl);
       const result = await shareVersePayload({
         title: refLabel || "Biblos",
-        text,
-        url: shareUrl,
+        text: buildShareText(refLabel),
         file: blob,
       });
       if (result.ok) {
         setMsg(
           result.method === "clipboard"
-            ? "Lien copié"
-            : "Partagé",
+            ? "Image copiée"
+            : result.method === "download"
+              ? "Image téléchargée"
+              : "Partagé",
         );
         return;
       }
@@ -100,18 +100,25 @@ export function VerseShareSheet({
     }
   }
 
-  async function onCopyLink() {
+  async function onCopyImage() {
+    if (!blob) return;
     setMsg(null);
     setBusy(true);
     try {
-      const result = await copyShareLink(shareUrl);
-      setMsg(result.ok ? "Lien copié" : result.error);
+      const result = await copyShareImage(blob);
+      if (result.ok) {
+        setMsg(
+          result.method === "download" ? "Image téléchargée" : "Image copiée",
+        );
+        return;
+      }
+      setMsg(result.error);
     } finally {
       setBusy(false);
     }
   }
 
-  return (
+  return createPortal(
     <div
       className="verse-share-sheet"
       role="dialog"
@@ -147,17 +154,15 @@ export function VerseShareSheet({
           )}
         </div>
 
-        <p className="verse-share-sheet-url muted">{shareUrl}</p>
-
         <div className="verse-share-sheet-actions">
           <button
             type="button"
             className="bible-yv-chip verse-share-sheet-copy"
-            disabled={busy}
-            onClick={() => void onCopyLink()}
+            disabled={busy || !blob}
+            onClick={() => void onCopyImage()}
           >
-            <YvIcon name="link" className="bible-verse-cta-icon" />
-            <span>Copier le lien</span>
+            <YvIcon name="content_copy" className="bible-verse-cta-icon" />
+            <span>Copier l’image</span>
           </button>
           <button
             type="button"
@@ -172,6 +177,7 @@ export function VerseShareSheet({
 
         {msg ? <p className="verse-share-sheet-msg">{msg}</p> : null}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
