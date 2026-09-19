@@ -278,11 +278,14 @@ export async function offlineSearch(
   limit = 40,
   bookOrder?: Map<string, number>,
   bookFilter?: Iterable<string> | null,
-): Promise<{ ok: true; q: string; total: number; results: BibleSearchHit[] } | { ok: false; error: string }> {
+): Promise<
+  | { ok: true; q: string; total: number; results: BibleSearchHit[]; bookCounts: Record<string, number> }
+  | { ok: false; error: string }
+> {
   const query = String(q || "").trim();
   const queryNorm = normalizeSearchText(query);
   if (queryNorm.length < 2) {
-    return { ok: true, q: query, total: 0, results: [] };
+    return { ok: true, q: query, total: 0, results: [], bookCounts: {} };
   }
   if (!(await isOfflineBibleReady())) {
     return { ok: false, error: "Bible hors ligne incomplete" };
