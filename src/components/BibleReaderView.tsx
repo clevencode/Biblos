@@ -30,8 +30,8 @@ import { BibleAudioPlayer } from "./BibleAudioPlayer";
 import { BibleHistorySheet } from "./BibleHistorySheet";
 import { BibleSearchSheet } from "./BibleSearchSheet";
 import { CircularColorEditor } from "./CircularColorEditor";
-import { VerseShareSheet } from "./VerseShareSheet";
 import { ACTIVITY_UI_ENABLED } from "../activityLog";
+import { shareVerseDirect } from "../shareVerse";
 import {
   bindBibleAudioControls,
   clearBibleAudioControls,
@@ -467,7 +467,7 @@ export function BibleReaderView({
   const [offlineProgress, setOfflineProgress] = useState<OfflineDownloadProgress | null>(null);
   const offlineAbortRef = useRef<AbortController | null>(null);
   const [colorEditorOpen, setColorEditorOpen] = useState(false);
-  const [shareOpen, setShareOpen] = useState(false);
+  const [shareBusy, setShareBusy] = useState(false);
   const [uiTheme, setUiTheme] = useState<ResolvedTheme>(() => resolveTheme());
   const statusId = useId();
   const highlightRef = useRef<HTMLElement | null>(null);
@@ -932,7 +932,6 @@ export function BibleReaderView({
 
   function closeCreateCard() {
     preferJumpFocusRef.current = false;
-    setShareOpen(false);
     setSelection(null);
     setHighlightVerse(null);
     setHighlightVerseEnd(null);
@@ -1175,6 +1174,38 @@ export function BibleReaderView({
   }, [selectedVerses, chapterMarks, uiTheme]);
   const pickerColor = selectionMarkColor ?? activeVerseColor;
 
+  async function shareSelection() {
+    if (!selection?.length || !selectedVerseText || shareBusy) return;
+    const title = selectedBook?.title ?? bookId;
+    const refLabel = formatSelectionFront(title, chapterId, selection);
+    const usfm = selectionUsfm(bookId, chapterId, selection);
+    setShareBusy(true);
+    setCardMsg(null);
+    try {
+      const result = await shareVerseDirect({
+        refLabel,
+        verseText: selectedVerseText,
+        usfm,
+        accentHex: pickerColor,
+      });
+      if (result.ok) {
+        setCardMsg(
+          result.method === "clipboard"
+            ? "Image copiée"
+            : result.method === "download"
+              ? "Image téléchargée"
+              : null,
+        );
+        return;
+      }
+      if (!result.cancelled) setCardMsg(result.error);
+    } catch {
+      setCardMsg("Impossible de partager");
+    } finally {
+      setShareBusy(false);
+    }
+  }
+
   const showCreateCard = Boolean(selectedVerses.length && selectedVerseText && !pickerOpen);
   const forceChrome =
     pickerOpen ||
@@ -1182,8 +1213,7 @@ export function BibleReaderView({
     audioPlayerOpen ||
     searchOpen ||
     historyOpen ||
-    toolsMenuOpen ||
-    shareOpen;
+    toolsMenuOpen;
   const hideChrome = chromeHidden && !forceChrome;
   forceChromeRef.current = forceChrome;
 
@@ -2019,33 +2049,23 @@ export function BibleReaderView({
               <button
                 type="button"
                 className="bible-yv-chip bible-share-verse"
-                onClick={() => setShareOpen(true)}
+                disabled={shareBusy || !selectedVerseText}
+                onClick={() => void shareSelection()}
               >
-                <YvIcon name="ios_share" className="bible-verse-cta-icon" />
-                <span>Partager</span>
+                {shareBusy ? (
+                  "…"
+                ) : (
+                  <>
+                    <YvIcon name="ios_share" className="bible-verse-cta-icon" />
+                    <span>Partager</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
           {cardMsg ? <p className="bible-verse-actions-msg">{cardMsg}</p> : null}
         </div>
       ) : null}
-
-      <VerseShareSheet
-        open={shareOpen && showCreateCard}
-        refLabel={
-          selectedVerses.length
-            ? formatSelectionFront(bookTitle, chapterId, selectedVerses)
-            : ""
-        }
-        verseText={selectedVerseText}
-        usfm={
-          selectedVerses.length
-            ? selectionUsfm(bookId, chapterId, selectedVerses)
-            : chapterUsfm(bookId, chapterId)
-        }
-        accentHex={pickerColor}
-        onClose={() => setShareOpen(false)}
-      />
 
       {pickerOpen ? (
         <div

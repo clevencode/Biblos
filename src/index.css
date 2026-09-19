@@ -39,49 +39,48 @@
   --scroll-thumb: rgba(13, 17, 23, 0.16);
   --scroll-thumb-hover: rgba(13, 17, 23, 0.28);
 
-  /* Modern editorial — famílias */
-  --font-ui: "Outfit", "Avenir Next", "Segoe UI", sans-serif;
-  --font-read: "Libre Baskerville", "Source Serif 4", Georgia, "Times New Roman", serif;
-  /* Lecture Bible : humanist sans (corps regular, pas de gras). */
-  --font-bible: "Source Sans 3", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  /* Serif minimalista — uma família para UI, leitura e Bíblia */
+  --font-ui: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --font-read: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --font-bible: "Source Serif 4", Georgia, "Times New Roman", serif;
   --type-bible-weight: 400;
-  --type-bible-lh: 1.7;
-  --type-bible-tracking: 0.01em;
+  --type-bible-lh: 1.72;
+  --type-bible-tracking: 0;
 
-  /* Modern editorial — escala tipográfica (Display → Caption) */
-  --type-display-size: clamp(2.75rem, 8vw, 4rem);
-  --type-display-weight: 700;
-  --type-display-lh: 0.95;
-  --type-display-tracking: -0.04em;
+  /* Escala tipográfica — pesos médios, tracking suave */
+  --type-display-size: clamp(2.5rem, 7vw, 3.6rem);
+  --type-display-weight: 600;
+  --type-display-lh: 1.05;
+  --type-display-tracking: -0.02em;
 
-  --type-headline-size: clamp(1.45rem, 4vw, 1.85rem);
-  --type-headline-weight: 700;
-  --type-headline-lh: 1.15;
-  --type-headline-tracking: -0.03em;
+  --type-headline-size: clamp(1.4rem, 3.6vw, 1.75rem);
+  --type-headline-weight: 600;
+  --type-headline-lh: 1.2;
+  --type-headline-tracking: -0.015em;
 
-  --type-title-size: clamp(1.1rem, 2.5vw, 1.35rem);
+  --type-title-size: clamp(1.08rem, 2.4vw, 1.28rem);
   --type-title-weight: 600;
-  --type-title-lh: 1.25;
-  --type-title-tracking: -0.02em;
+  --type-title-lh: 1.3;
+  --type-title-tracking: -0.01em;
 
-  --type-body-size: 1.1875rem;
+  --type-body-size: 1.125rem;
   --type-body-weight: 400;
   --type-body-lh: 1.7;
   --type-body-tracking: 0;
 
   --type-label-size: 0.8125rem;
-  --type-label-weight: 600;
-  --type-label-lh: 1.2;
-  --type-label-tracking: 0.04em;
+  --type-label-weight: 500;
+  --type-label-lh: 1.25;
+  --type-label-tracking: 0.02em;
 
   --type-caption-size: 0.75rem;
-  --type-caption-weight: 500;
-  --type-caption-lh: 1.35;
+  --type-caption-weight: 400;
+  --type-caption-lh: 1.4;
   --type-caption-tracking: 0.01em;
 
   /* Eyebrow = Caption size + Label rhythm + uppercase (filtres, kickers) */
-  --type-eyebrow-weight: 650;
-  --type-eyebrow-tracking: 0.08em;
+  --type-eyebrow-weight: 500;
+  --type-eyebrow-tracking: 0.06em;
 
   /* Superfícies derivadas (light) */
   --elevated: #ffffff;
@@ -91,7 +90,8 @@
   --sheen: #ffffff;
 
   font-family: var(--font-ui);
-  letter-spacing: -0.01em;
+  font-optical-sizing: auto;
+  letter-spacing: 0;
 }
 
 html[data-theme="dark"] {
@@ -7490,9 +7490,9 @@ ul.plan-yv-hero-title {
 
 .plan-yv-devo-next-ref {
   margin: 0;
-  font-family: "Libre Baskerville", "Source Serif 4", Georgia, serif;
+  font-family: var(--font-read);
   font-size: 1.05rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.02em;
   line-height: 1.35;
   color: var(--text);
@@ -9025,213 +9025,6 @@ ul.plan-yv-day-note-ref {
   color: var(--yv-text);
 }
 
-.verse-share-sheet {
-  position: fixed;
-  inset: 0;
-  z-index: 10000;
-  pointer-events: none;
-}
-
-.verse-share-sheet-backdrop {
-  position: absolute;
-  inset: 0;
-  border: 0;
-  margin: 0;
-  padding: 0;
-  background: color-mix(in srgb, #000 55%, transparent);
-  pointer-events: auto;
-  cursor: pointer;
-}
-
-.verse-share-sheet-panel {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 1;
-  width: 100%;
-  max-width: 100%;
-  max-height: min(90dvh, 100%);
-  margin: 0;
-  padding: 0;
-  border-radius: 16px 16px 0 0;
-  background: var(--panel, var(--bg));
-  box-shadow: 0 -12px 40px color-mix(in srgb, #000 35%, transparent);
-  display: flex;
-  flex-direction: column;
-  pointer-events: auto;
-  animation: verse-share-sheet-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-@keyframes verse-share-sheet-in {
-  from {
-    opacity: 0;
-    transform: translateY(24px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.verse-share-sheet-head {
-  flex: none;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 12px 14px 8px;
-  padding-left: max(14px, env(safe-area-inset-left, 0px));
-  padding-right: max(14px, env(safe-area-inset-right, 0px));
-}
-
-.verse-share-sheet-title {
-  margin: 0;
-  font-family: var(--font-ui);
-  font-size: 1.05rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-}
-
-.verse-share-sheet-close {
-  width: 36px;
-  height: 36px;
-  border: 0;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--text) 8%, transparent);
-  color: var(--text);
-  font-size: 1.35rem;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.verse-share-sheet-close:hover {
-  background: color-mix(in srgb, var(--text) 12%, transparent);
-}
-
-.verse-share-sheet-body {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: auto;
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 4px 14px 10px;
-  padding-left: max(14px, env(safe-area-inset-left, 0px));
-  padding-right: max(14px, env(safe-area-inset-right, 0px));
-}
-
-.verse-share-sheet-preview {
-  flex: none;
-  border-radius: 14px;
-  overflow: hidden;
-  background: #0d1117;
-  aspect-ratio: 1080 / 1350;
-  width: min(52vw, 200px);
-  max-height: min(34dvh, 240px);
-}
-
-.verse-share-sheet-img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.verse-share-sheet-skeleton {
-  display: grid;
-  place-content: center;
-  height: 100%;
-  min-height: 120px;
-  color: color-mix(in srgb, #fff 55%, transparent);
-  font-family: var(--font-ui);
-  font-size: 0.9rem;
-}
-
-.verse-share-sheet-footer {
-  flex: none;
-  padding: 10px 14px calc(12px + env(safe-area-inset-bottom, 0px));
-  padding-left: max(14px, env(safe-area-inset-left, 0px));
-  padding-right: max(14px, env(safe-area-inset-right, 0px));
-  border-top: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
-  background: var(--panel, var(--bg));
-  display: grid;
-  gap: 8px;
-}
-
-.verse-share-sheet-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-.verse-share-sheet-copy,
-.verse-share-sheet-share {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  width: 100%;
-  min-height: 48px;
-  padding: 0 12px;
-  border: 0;
-  border-radius: 12px;
-  font-family: var(--font-ui);
-  font-size: 0.9rem;
-  font-weight: 650;
-  line-height: 1.2;
-  cursor: pointer;
-}
-
-.verse-share-sheet-copy {
-  background: color-mix(in srgb, var(--text) 14%, transparent);
-  color: var(--text);
-}
-
-.verse-share-sheet-copy:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--text) 20%, transparent);
-}
-
-.verse-share-sheet-share {
-  background: var(--accent);
-  color: #fff;
-}
-
-.verse-share-sheet-share:hover:not(:disabled) {
-  filter: brightness(1.06);
-}
-
-.verse-share-sheet-copy .bible-verse-cta-icon,
-.verse-share-sheet-share .bible-verse-cta-icon {
-  flex: none;
-  width: 20px;
-  height: 20px;
-  font-size: 20px;
-  color: inherit;
-}
-
-.verse-share-sheet-copy:disabled,
-.verse-share-sheet-share:disabled {
-  opacity: 0.55;
-  cursor: wait;
-}
-
-.verse-share-sheet-msg {
-  margin: 0;
-  text-align: center;
-  font-size: 0.85rem;
-  color: color-mix(in srgb, var(--muted) 70%, var(--text));
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .verse-share-sheet-panel {
-    animation: none;
-  }
-}
-
 .bible-reader--yv .bible-mark-toggle {
   display: inline-flex;
   align-items: center;
@@ -10310,7 +10103,7 @@ ul.plan-yv-day-note-ref {
 }
 
 .bible-search-sheet-snippet {
-  font-family: "Libre Baskerville", "Source Serif 4", Georgia, serif;
+  font-family: var(--font-read);
   font-size: 0.95rem;
   line-height: 1.45;
   color: var(--text);

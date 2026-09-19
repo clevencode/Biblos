@@ -1,5 +1,7 @@
 /** Partage de versets — image PNG (pas d’OG / aperçu de lien). */
 
+import { renderVerseShareCard } from "./shareVerseCard";
+
 export const SHARE_ORIGIN = "https://www.biblo.digital";
 
 const USFM_PATH_RE = /^\/v\/([A-Za-z0-9]{2,3}(?:\.\d+(?:-\d+)*)+)/i;
@@ -52,12 +54,40 @@ export function consumeShareRefFromUrl(): string | null {
   return ref;
 }
 
-/** Texte court (référence seule) — sans URL, pour accompagner l’image. */
+/** Texte court pour accompagner l’image (référence ; l’URL va dans l’image). */
 export function buildShareText(refLabel: string, verseText = ""): string {
   const ref = String(refLabel || "").trim();
   const body = String(verseText || "").trim();
   if (ref && body) return `${ref}\n\n« ${body} »`;
   return ref || body;
+}
+
+export type ShareVerseDirectInput = {
+  refLabel: string;
+  verseText: string;
+  usfm: string;
+  accentHex?: string | null;
+};
+
+/**
+ * Génère le cartão PNG (lien intégré) et ouvre le partage système.
+ * Pas de sheet intermédiaire.
+ */
+export async function shareVerseDirect(
+  input: ShareVerseDirectInput,
+): Promise<ShareVerseResult> {
+  const shareUrl = buildShareUrl(input.usfm);
+  const blob = await renderVerseShareCard({
+    refLabel: input.refLabel,
+    verseText: input.verseText,
+    accentHex: input.accentHex,
+    shareUrl,
+  });
+  return shareVersePayload({
+    title: input.refLabel.trim() || "Biblos",
+    text: buildShareText(input.refLabel),
+    file: blob,
+  });
 }
 
 export type ShareVersePayload = {

@@ -5,8 +5,17 @@ export type VerseShareCardInput = {
   refLabel: string;
   verseText: string;
   accentHex?: string | null;
+  /** URL de partage affichée dans le bas de l’image (ex. https://www.biblo.digital/v/2TI.1.12). */
+  shareUrl?: string;
   footer?: string;
 };
+
+/** Affiche un lien lisible sur le cartão (sans schéma https://). */
+export function formatShareUrlForCard(url: string): string {
+  return String(url || "")
+    .trim()
+    .replace(/^https?:\/\//i, "");
+}
 
 const W = 1080;
 const H = 1350;
@@ -60,10 +69,10 @@ async function ensureFonts(): Promise<void> {
   if (typeof document === "undefined" || !document.fonts?.load) return;
   try {
     await Promise.all([
-      document.fonts.load("700 64px Outfit"),
-      document.fonts.load("500 36px Outfit"),
-      document.fonts.load("400 48px Libre Baskerville"),
-      document.fonts.load("italic 400 48px Libre Baskerville"),
+      document.fonts.load("600 64px Source Serif 4"),
+      document.fonts.load("500 36px Source Serif 4"),
+      document.fonts.load("400 48px Source Serif 4"),
+      document.fonts.load("italic 400 48px Source Serif 4"),
     ]);
   } catch {
     /* system fallbacks */
@@ -85,7 +94,9 @@ export async function renderVerseShareCard(
   const brand = (input.brand || "Biblos").trim();
   const refLabel = String(input.refLabel || "").trim().toUpperCase();
   const verseText = String(input.verseText || "").trim();
-  const footer = (input.footer || "biblo.digital").trim();
+  const footer = formatShareUrlForCard(
+    input.shareUrl || input.footer || "biblo.digital",
+  );
 
   // Fond sombre sobrio
   const bg = ctx.createLinearGradient(0, 0, 0, H);
@@ -101,19 +112,19 @@ export async function renderVerseShareCard(
 
   // Brand
   ctx.fillStyle = "#F5F2EB";
-  ctx.font = "700 56px Outfit, Avenir Next, Segoe UI, sans-serif";
+  ctx.font = "600 56px Source Serif 4, Georgia, serif";
   ctx.textBaseline = "top";
   ctx.fillText(brand, PAD_X, PAD_TOP + 28);
 
   // Reference
   ctx.fillStyle = accent;
-  ctx.font = "600 34px Outfit, Avenir Next, Segoe UI, sans-serif";
+  ctx.font = "500 34px Source Serif 4, Georgia, serif";
   ctx.fillText(refLabel, PAD_X, PAD_TOP + 110);
 
   // Verse body
   const maxTextWidth = W - PAD_X * 2;
   ctx.fillStyle = "#E8E4DC";
-  ctx.font = "italic 400 46px Libre Baskerville, Georgia, serif";
+  ctx.font = "italic 400 46px Source Serif 4, Georgia, serif";
   const lineHeight = 68;
   let lines = wrapLines(ctx, verseText, maxTextWidth);
   const maxLines = 12;
@@ -136,9 +147,14 @@ export async function renderVerseShareCard(
   ctx.stroke();
 
   ctx.fillStyle = "rgba(245, 242, 235, 0.55)";
-  ctx.font = "500 28px Outfit, Avenir Next, Segoe UI, sans-serif";
+  ctx.font = "400 26px Source Serif 4, Georgia, serif";
   ctx.textBaseline = "alphabetic";
-  ctx.fillText(footer, PAD_X, footerY);
+  const footerMax = W - PAD_X * 2;
+  let footerDraw = footer;
+  while (footerDraw.length > 8 && ctx.measureText(footerDraw).width > footerMax) {
+    footerDraw = `${footerDraw.slice(0, -2)}…`;
+  }
+  ctx.fillText(footerDraw, PAD_X, footerY);
 
   return new Promise((resolve, reject) => {
     canvas.toBlob(
