@@ -3,7 +3,7 @@ import seed from "./data/seed.json";
 import { FlashcardDeck } from "./components/FlashcardDeck";
 import { ModeTabIcon } from "./components/ModeTabIcon";
 import { ProfileView } from "./components/ProfileView";
-import { PrivacyEntryGate, hasPrivacyAck } from "./components/PrivacyLegal";
+import { hasPrivacyAck, savePrivacyAck } from "./components/PrivacyLegal";
 import { ensureNotificationPrefsIfPrivacyAccepted } from "./notificationPrefs";
 import { TodayView } from "./components/TodayView";
 import { HomeView } from "./components/HomeView";
@@ -159,12 +159,13 @@ export function App() {
   const [themePref, setThemePref] = useState<ThemePref>(() => loadThemePref());
   const [profile, setProfile] = useState<UserProfile>(() => loadOrCreateProfile());
   const [activityTick, setActivityTick] = useState(0);
-  const [privacyOk, setPrivacyOk] = useState(() => {
-    const ok = hasPrivacyAck();
-    ensureNotificationPrefsIfPrivacyAccepted(ok);
-    return ok;
-  });
   const openedLogged = useRef(false);
+
+  // Entrée directe : pas d’écran Confidentialité — ack + prefs par défaut au boot.
+  useEffect(() => {
+    if (!hasPrivacyAck()) savePrivacyAck();
+    ensureNotificationPrefsIfPrivacyAccepted(true);
+  }, []);
 
   function applySyncedProfile(remote: UserProfile | undefined) {
     if (!remote) return;
@@ -809,19 +810,6 @@ export function App() {
       onOpenVerse={(reference) => openPassageInBible(reference)}
     />
   );
-
-  if (!privacyOk) {
-    return (
-      <div className={`app biblos-shell${narrow ? " is-narrow" : ""}`}>
-        <PrivacyEntryGate
-          onAccepted={() => {
-            ensureNotificationPrefsIfPrivacyAccepted(true);
-            setPrivacyOk(true);
-          }}
-        />
-      </div>
-    );
-  }
 
   return (
     <div
