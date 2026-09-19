@@ -14,24 +14,24 @@
   --cc-border: var(--cc-line);
   --cc-accent: var(--cc-action);
 
-  /* Tipografia — modern editorial */
+  /* Tipografia — UI sans + leitura serif */
   --cc-font: "Outfit", "Avenir Next", "Segoe UI", sans-serif;
-  --cc-font-read: "Libre Baskerville", "Source Serif 4", Georgia, serif;
-  --cc-tracking-display: -0.04em;
-  --cc-tracking-headline: -0.03em;
+  --cc-font-read: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --cc-tracking-display: -0.03em;
+  --cc-tracking-headline: -0.025em;
   --cc-tracking-title: -0.02em;
   --cc-tracking-body: 0;
-  --cc-tracking-label: 0.04em;
+  --cc-tracking-label: 0.02em;
   --cc-tracking-caption: 0.01em;
-  --cc-tracking-eyebrow: 0.08em;
+  --cc-tracking-eyebrow: 0.06em;
 
-  --cc-type-display: clamp(2.75rem, 8vw, 4rem);
-  --cc-type-headline: clamp(1.45rem, 4vw, 1.85rem);
-  --cc-type-title: clamp(1.1rem, 2.5vw, 1.35rem);
-  --cc-type-body: 1.1875rem;
+  --cc-type-display: clamp(2.5rem, 7vw, 3.6rem);
+  --cc-type-headline: clamp(1.4rem, 3.6vw, 1.75rem);
+  --cc-type-title: clamp(1.1rem, 2.4vw, 1.3rem);
+  --cc-type-body: 1.125rem;
   --cc-type-label: 0.8125rem;
   --cc-type-caption: 0.75rem;
-  --cc-type-eyebrow-weight: 650;
+  --cc-type-eyebrow-weight: 600;
 
   /* Espaço Swiss */
   --cc-space-1: 8px;

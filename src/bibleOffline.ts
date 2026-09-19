@@ -345,8 +345,16 @@ export async function offlineSearch(
       a.chapter - b.chapter ||
       a.verse - b.verse,
   );
+  const bookCounts: Record<string, number> = {};
+  for (const hit of hits) {
+    const book = String(hit.usfm || "")
+      .split(".")[0]
+      ?.toUpperCase();
+    if (!book) continue;
+    bookCounts[book] = (bookCounts[book] || 0) + 1;
+  }
   const results = hits.slice(0, capped).map(({ _rank, _book, ...rest }) => rest);
-  return { ok: true, q: query, total: hits.length, results };
+  return { ok: true, q: query, total: hits.length, results, bookCounts };
 }
 
 async function fetchBookPayload(usfm: string): Promise<S21BookJson> {

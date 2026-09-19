@@ -304,8 +304,14 @@ async function searchVerses(q, limit = 40, bookFilter = null) {
       a.chapter - b.chapter ||
       a.verse - b.verse,
   );
+  const bookCounts = {};
+  for (const hit of hits) {
+    const book = String(hit.usfm).split(".")[0];
+    if (!book) continue;
+    bookCounts[book] = (bookCounts[book] || 0) + 1;
+  }
   const results = hits.slice(0, capped).map(({ _rank, _book, ...rest }) => rest);
-  return { q: query, total: hits.length, results };
+  return { q: query, total: hits.length, results, bookCounts };
 }
 
 async function fetchPassagePayload(usfm) {

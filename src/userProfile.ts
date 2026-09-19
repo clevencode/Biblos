@@ -52,7 +52,7 @@ export function splitFullName(fullName: string): {
   };
 }
 
-/** Nom d’affichage par défaut pour chaque nouvel appareil / visiteur. */
+/** Nom d’affichage de secours (UI) — ne compte pas comme compte réel. */
 export const DEFAULT_VISITOR_NAME = "Invité";
 
 export function preferredDisplayName(profile: UserProfile): string {
@@ -108,38 +108,48 @@ export function ensureStableAdminIdentity(profile: UserProfile): UserProfile {
 }
 
 export function isProfileOnboarded(profile: UserProfile): boolean {
-  return Boolean(profile.onboardedAt && cleanName(profile.firstName));
+  if (!profile.onboardedAt) return false;
+  const name = cleanName(profile.firstName);
+  if (!name) return false;
+  // Placeholders auto (Invité / Visitante) ≠ compte nommé
+  const folded = normalizeIdentityName(name);
+  if (folded === normalizeIdentityName(DEFAULT_VISITOR_NAME) || folded === "visitante") {
+    return false;
+  }
+  return true;
 }
 
 function emptyProfile(): UserProfile {
   const now = new Date().toISOString();
   return {
     id: newId(),
-    firstName: DEFAULT_VISITOR_NAME,
+    firstName: "",
     lastName: "",
-    preferredName: DEFAULT_VISITOR_NAME,
+    preferredName: "",
     createdAt: now,
-    onboardedAt: now,
+    onboardedAt: null,
   };
 }
 
 /**
- * Profil incomplet (ancien flux « Bienvenue ») → Invité + même id.
- * Le visiteur personnalise ensuite son nom dans Profil.
+ * Ancien flux « Visitante/Invité auto » → id conservé, onboarding effacé
+ * pour exiger le nom au premier marquage.
  */
-function ensureVisitorDefaults(profile: UserProfile): UserProfile {
-  const hasName = Boolean(cleanName(profile.firstName));
-  const onboarded = Boolean(profile.onboardedAt);
-  if (hasName && onboarded) return profile;
+function migrateAutoVisitor(profile: UserProfile): UserProfile {
+  const folded = normalizeIdentityName(profile.firstName);
+  const isPlaceholder =
+    !folded ||
+    folded === normalizeIdentityName(DEFAULT_VISITOR_NAME) ||
+    folded === "visitante";
+  if (!isPlaceholder) return profile;
+  if (!profile.onboardedAt && !cleanName(profile.firstName)) return profile;
 
-  const firstName = hasName ? cleanName(profile.firstName) : DEFAULT_VISITOR_NAME;
-  const lastName = cleanName(profile.lastName);
   const next: UserProfile = {
     ...profile,
-    firstName,
-    lastName,
-    preferredName: joinFullName(firstName, lastName) || DEFAULT_VISITOR_NAME,
-    onboardedAt: profile.onboardedAt || new Date().toISOString(),
+    firstName: "",
+    lastName: "",
+    preferredName: "",
+    onboardedAt: null,
   };
   writeProfile(next);
   return next;
@@ -176,7 +186,7 @@ export function loadOrCreateProfile(): UserProfile {
     if (raw) {
       const parsed = parseProfile(JSON.parse(raw) as unknown);
       if (parsed) {
-        return ensureStableAdminIdentity(ensureVisitorDefaults(parsed));
+        return ensureStableAdminIdentity(migrateAutoVisitor(parsed));
       }
     }
   } catch {

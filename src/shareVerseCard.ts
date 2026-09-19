@@ -69,8 +69,8 @@ async function ensureFonts(): Promise<void> {
   if (typeof document === "undefined" || !document.fonts?.load) return;
   try {
     await Promise.all([
-      document.fonts.load("600 64px Source Serif 4"),
-      document.fonts.load("500 36px Source Serif 4"),
+      document.fonts.load("700 64px Outfit"),
+      document.fonts.load("500 36px Outfit"),
       document.fonts.load("400 48px Source Serif 4"),
       document.fonts.load("italic 400 48px Source Serif 4"),
     ]);
@@ -112,13 +112,13 @@ export async function renderVerseShareCard(
 
   // Brand
   ctx.fillStyle = "#F5F2EB";
-  ctx.font = "600 56px Source Serif 4, Georgia, serif";
+  ctx.font = "700 56px Outfit, Avenir Next, Segoe UI, sans-serif";
   ctx.textBaseline = "top";
   ctx.fillText(brand, PAD_X, PAD_TOP + 28);
 
   // Reference
   ctx.fillStyle = accent;
-  ctx.font = "500 34px Source Serif 4, Georgia, serif";
+  ctx.font = "600 34px Outfit, Avenir Next, Segoe UI, sans-serif";
   ctx.fillText(refLabel, PAD_X, PAD_TOP + 110);
 
   // Verse body
@@ -147,7 +147,7 @@ export async function renderVerseShareCard(
   ctx.stroke();
 
   ctx.fillStyle = "rgba(245, 242, 235, 0.55)";
-  ctx.font = "400 26px Source Serif 4, Georgia, serif";
+  ctx.font = "500 26px Outfit, Avenir Next, Segoe UI, sans-serif";
   ctx.textBaseline = "alphabetic";
   const footerMax = W - PAD_X * 2;
   let footerDraw = footer;

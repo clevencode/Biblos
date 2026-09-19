@@ -92,14 +92,15 @@ export function bookIdFromUsfm(usfm: string): string {
 }
 
 export function booksForSearchScope(
-  scope: "all" | "at" | "nt" | "book",
+  scope: "all" | "at" | "nt",
   bookId?: string | null,
 ): string[] | null {
-  if (scope === "all") return null;
-  if (scope === "at") return OT_BOOK_IDS;
-  if (scope === "nt") return NT_BOOK_IDS;
   const id = String(bookId || "")
     .trim()
     .toUpperCase();
-  return id ? [id] : null;
+  if (id) return [id];
+  if (scope === "all") return null;
+  if (scope === "at") return OT_BOOK_IDS;
+  if (scope === "nt") return NT_BOOK_IDS;
+  return null;
 }

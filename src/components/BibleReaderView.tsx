@@ -234,6 +234,26 @@ type BibleReaderViewProps = {
   themePref?: ThemePref;
   /** Cycle le thème (clair → sombre → système). */
   onCycleTheme?: () => void;
+  /** Si true, Marquer demande d’abord le nom (compte créé seulement alors). */
+  requireNameToMark?: boolean;
+  /** Demande le nom avant de marquer ; le marquage reprend via authorizedMark*. */
+  onRequestNameToMark?: (payload: {
+    color: string;
+    verses: number[];
+    bookId: string;
+    chapterId: string;
+    bookTitle: string;
+  }) => void;
+  /** Marquage autorisé après saisie du nom. */
+  authorizedMarkSeq?: number;
+  authorizedMark?: {
+    color: string;
+    verses: number[];
+    bookId: string;
+    chapterId: string;
+    bookTitle: string;
+  } | null;
+  onAuthorizedMarkConsumed?: () => void;
   /** Activité + sync VerseMark : versets surlignés (color null = effacer). */
   onVerseMarked?: (payload: {
     color: string | null;
@@ -402,6 +422,11 @@ export function BibleReaderView({
   onReadingChromeChange,
   themePref = "system",
   onCycleTheme,
+  requireNameToMark = false,
+  onRequestNameToMark,
+  authorizedMarkSeq = 0,
+  authorizedMark = null,
+  onAuthorizedMarkConsumed,
   onVerseMarked,
   onBibleRead,
   onReadingHistoryChange,
@@ -1004,6 +1029,16 @@ export function BibleReaderView({
     try {
       // Même logique que Marquer : une VERSECARD s’appuie sur un verset marqué.
       if (!selection.some((n) => chapterMarks.has(n))) {
+        if (requireNameToMark && onRequestNameToMark) {
+          onRequestNameToMark({
+            color,
+            verses: [...selection],
+            bookId,
+            chapterId,
+            bookTitle: title,
+          });
+          return;
+        }
         setChapterMarks(setVerseMarks(bookId, chapterId, selection, color));
         onVerseMarked?.({
           color,
@@ -1145,6 +1180,55 @@ export function BibleReaderView({
     });
     closeCreateCard();
   }
+
+  function requestMarkSelection(hex: string) {
+    if (!selection?.length) return;
+    const next = adaptVerseColorForTheme(normalizeVerseColor(hex), uiTheme);
+    if (requireNameToMark && onRequestNameToMark) {
+      onRequestNameToMark({
+        color: next,
+        verses: [...selection],
+        bookId,
+        chapterId,
+        bookTitle: selectedBook?.title ?? bookId,
+      });
+      return;
+    }
+    markSelection(next);
+  }
+
+  useEffect(() => {
+    if (!authorizedMarkSeq || !authorizedMark) return;
+    if (
+      authorizedMark.bookId.toUpperCase() !== bookId.toUpperCase() ||
+      String(authorizedMark.chapterId) !== String(chapterId)
+    ) {
+      onAuthorizedMarkConsumed?.();
+      return;
+    }
+    const verses = authorizedMark.verses.filter((n) => Number.isFinite(n));
+    if (!verses.length) {
+      onAuthorizedMarkConsumed?.();
+      return;
+    }
+    setSelection(verses);
+    const next = adaptVerseColorForTheme(
+      normalizeVerseColor(authorizedMark.color),
+      uiTheme,
+    );
+    pickVerseColor(next);
+    setChapterMarks(setVerseMarks(bookId, chapterId, verses, next));
+    onVerseMarked?.({
+      color: next,
+      verses,
+      bookId,
+      chapterId,
+      bookTitle: authorizedMark.bookTitle || selectedBook?.title || bookId,
+    });
+    closeCreateCard();
+    onAuthorizedMarkConsumed?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authorizedMarkSeq]);
 
   function clearSelectionMarks() {
     if (!selection?.length) return;
@@ -1992,7 +2076,7 @@ export function BibleReaderView({
                     clearSelectionMarks();
                     return;
                   }
-                  markSelection(activeVerseColor);
+                  requestMarkSelection(activeVerseColor);
                 }}
               >
                 {selectionHasMark ? (
@@ -2073,30 +2157,42 @@ export function BibleReaderView({
           role="dialog"
           aria-label="Choisir livre, chapitre ou verset"
         >
-          {passageStep !== "book" ? (
-            <div className="bible-yv-pick-sheet-head">
-              {passageStep === "verse" ? (
-                <button
-                  type="button"
-                  className="bible-yv-pick-back"
-                  onClick={() => setPassageStep("chapter")}
-                >
-                  ← Ch. {chapterId}
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  className="bible-yv-pick-back"
-                  onClick={() => setPassageStep("book")}
-                >
-                  ← {bookTitle}
-                </button>
-              )}
-              <span className="bible-yv-pick-hint">
-                {passageStep === "chapter" ? "Chapitre" : "Verset"}
-              </span>
-            </div>
-          ) : null}
+          <div className="bible-yv-pick-sheet-head">
+            {passageStep === "book" ? (
+              <p className="bible-yv-pick-title">{bookTitle}</p>
+            ) : passageStep === "verse" ? (
+              <button
+                type="button"
+                className="bible-yv-pick-back"
+                onClick={() => setPassageStep("chapter")}
+              >
+                ← Ch. {chapterId}
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="bible-yv-pick-back"
+                onClick={() => setPassageStep("book")}
+              >
+                ← {bookTitle}
+              </button>
+            )}
+            <button
+              type="button"
+              className="bible-yv-pick-close"
+              onClick={closePicker}
+              aria-label="Fermer"
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
+                <path
+                  d="M3.2 3.2l7.6 7.6M10.8 3.2l-7.6 7.6"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </button>
+          </div>
           <div
             className={`bible-yv-pick-grid${passageStep === "book" ? " is-books" : ""}`}
             role="listbox"

@@ -39,47 +39,57 @@
   --scroll-thumb: rgba(13, 17, 23, 0.16);
   --scroll-thumb-hover: rgba(13, 17, 23, 0.28);
 
-  /* Serif minimalista — uma família para UI, leitura e Bíblia */
-  --font-ui: "Source Serif 4", Georgia, "Times New Roman", serif;
+  /*
+   * Tipografia por contexto
+   * UI (tabs, botões, labels, títulos de chrome) → sans
+   * Leitura (versículos, body longo, cartão) → serif
+   */
+  --font-ui: "Outfit", "Avenir Next", "Segoe UI", sans-serif;
   --font-read: "Source Serif 4", Georgia, "Times New Roman", serif;
   --font-bible: "Source Serif 4", Georgia, "Times New Roman", serif;
+
+  /* Leitura longa: regular, entrelinha generosa */
   --type-bible-weight: 400;
-  --type-bible-lh: 1.72;
+  --type-bible-lh: 1.7;
   --type-bible-tracking: 0;
 
-  /* Escala tipográfica — pesos médios, tracking suave */
+  /*
+   * Escala (Display → Caption)
+   * Pesos: 400 body · 500 label/caption · 600 títulos
+   * Tracking calibrado para Outfit (UI) + Source Serif (leitura)
+   */
   --type-display-size: clamp(2.5rem, 7vw, 3.6rem);
-  --type-display-weight: 600;
-  --type-display-lh: 1.05;
-  --type-display-tracking: -0.02em;
+  --type-display-weight: 700;
+  --type-display-lh: 1.02;
+  --type-display-tracking: -0.03em;
 
   --type-headline-size: clamp(1.4rem, 3.6vw, 1.75rem);
-  --type-headline-weight: 600;
-  --type-headline-lh: 1.2;
-  --type-headline-tracking: -0.015em;
+  --type-headline-weight: 700;
+  --type-headline-lh: 1.18;
+  --type-headline-tracking: -0.025em;
 
-  --type-title-size: clamp(1.08rem, 2.4vw, 1.28rem);
+  --type-title-size: clamp(1.1rem, 2.4vw, 1.3rem);
   --type-title-weight: 600;
-  --type-title-lh: 1.3;
-  --type-title-tracking: -0.01em;
+  --type-title-lh: 1.28;
+  --type-title-tracking: -0.02em;
 
   --type-body-size: 1.125rem;
   --type-body-weight: 400;
   --type-body-lh: 1.7;
   --type-body-tracking: 0;
+  --type-body-measure: 36rem;
 
   --type-label-size: 0.8125rem;
-  --type-label-weight: 500;
+  --type-label-weight: 600;
   --type-label-lh: 1.25;
   --type-label-tracking: 0.02em;
 
   --type-caption-size: 0.75rem;
-  --type-caption-weight: 400;
-  --type-caption-lh: 1.4;
+  --type-caption-weight: 500;
+  --type-caption-lh: 1.35;
   --type-caption-tracking: 0.01em;
 
-  /* Eyebrow = Caption size + Label rhythm + uppercase (filtres, kickers) */
-  --type-eyebrow-weight: 500;
+  --type-eyebrow-weight: 600;
   --type-eyebrow-tracking: 0.06em;
 
   /* Superfícies derivadas (light) */
@@ -91,7 +101,11 @@
 
   font-family: var(--font-ui);
   font-optical-sizing: auto;
-  letter-spacing: 0;
+  font-kerning: normal;
+  font-synthesis: none;
+  letter-spacing: -0.01em;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 html[data-theme="dark"] {
@@ -131,9 +145,19 @@ html[data-theme="light"] {
   color-scheme: light;
 }
 
-/* Utilitários tipográficos — modern editorial */
-.type-display {
+/* Utilitários tipográficos — UI sans + leitura serif */
+.type-display,
+.type-headline,
+.type-title,
+.type-label,
+.type-caption,
+.type-eyebrow,
+.type-label.is-eyebrow {
   font-family: var(--font-ui);
+  font-synthesis: none;
+}
+
+.type-display {
   font-size: var(--type-display-size);
   font-weight: var(--type-display-weight);
   line-height: var(--type-display-lh);
@@ -142,10 +166,13 @@ html[data-theme="light"] {
 
 .type-display--read {
   font-family: var(--font-read);
+  font-optical-sizing: auto;
+  font-kerning: normal;
+  font-variant-ligatures: common-ligatures;
+  text-rendering: optimizeLegibility;
 }
 
 .type-headline {
-  font-family: var(--font-ui);
   font-size: var(--type-headline-size);
   font-weight: var(--type-headline-weight);
   line-height: var(--type-headline-lh);
@@ -153,7 +180,6 @@ html[data-theme="light"] {
 }
 
 .type-title {
-  font-family: var(--font-ui);
   font-size: var(--type-title-size);
   font-weight: var(--type-title-weight);
   line-height: var(--type-title-lh);
@@ -166,10 +192,15 @@ html[data-theme="light"] {
   font-weight: var(--type-body-weight);
   line-height: var(--type-body-lh);
   letter-spacing: var(--type-body-tracking);
+  max-width: var(--type-body-measure);
+  font-optical-sizing: auto;
+  font-kerning: normal;
+  font-synthesis: none;
+  font-variant-ligatures: common-ligatures;
+  text-rendering: optimizeLegibility;
 }
 
 .type-label {
-  font-family: var(--font-ui);
   font-size: var(--type-label-size);
   font-weight: var(--type-label-weight);
   line-height: var(--type-label-lh);
@@ -177,7 +208,6 @@ html[data-theme="light"] {
 }
 
 .type-caption {
-  font-family: var(--font-ui);
   font-size: var(--type-caption-size);
   font-weight: var(--type-caption-weight);
   line-height: var(--type-caption-lh);
@@ -187,7 +217,6 @@ html[data-theme="light"] {
 
 .type-label.is-eyebrow,
 .type-eyebrow {
-  font-family: var(--font-ui);
   font-size: var(--type-caption-size);
   font-weight: var(--type-eyebrow-weight);
   line-height: var(--type-label-lh);
@@ -267,6 +296,18 @@ body,
   height: 100dvh;
   background: var(--bg);
   color: var(--text);
+}
+
+body {
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  font-optical-sizing: auto;
+  font-kerning: normal;
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .app {
@@ -682,7 +723,7 @@ body,
   padding: 0 6px;
 }
 
-.mode-tabs button {
+.mode-tabs-nav > button {
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -707,13 +748,16 @@ body,
 }
 
 .mode-tab-icon {
-  display: inline-grid;
-  place-items: center;
+  display: block;
   flex-shrink: 0;
-  width: 24px;
-  height: 24px;
-  font-size: 24px;
+  width: 22px;
+  height: 22px;
   color: inherit;
+  overflow: visible;
+}
+
+.mode-tabs-nav > button.is-on .mode-tab-icon {
+  color: var(--text);
 }
 
 .mode-tab-label {
@@ -743,21 +787,21 @@ body,
   pointer-events: none;
 }
 
-.mode-tabs button.is-on .mode-tab-badge {
+.mode-tabs-nav > button.is-on .mode-tab-badge {
   color: var(--text);
 }
 
-.mode-tabs button:hover {
+.mode-tabs-nav > button:hover {
   background: var(--hover);
   color: var(--text);
 }
 
-.mode-tabs button.is-on {
+.mode-tabs-nav > button.is-on {
   color: var(--text);
   background: color-mix(in srgb, var(--text) 8%, transparent);
 }
 
-.mode-tabs button:active {
+.mode-tabs-nav > button:active {
   background: color-mix(in srgb, var(--text) 12%, transparent);
   color: var(--text);
 }
@@ -897,7 +941,7 @@ body,
   gap: 1px;
   font-variant-numeric: tabular-nums;
   font-size: 0.92rem;
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: -0.02em;
   color: var(--text);
   line-height: 1;
@@ -1553,7 +1597,7 @@ body,
 
 .flash-cal-dow {
   font-size: 0.6rem;
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: 0.04em;
   line-height: 1;
   text-transform: lowercase;
@@ -1680,7 +1724,7 @@ body,
   color: var(--accent);
   font: inherit;
   font-size: 0.82rem;
-  font-weight: 650;
+  font-weight: 600;
   cursor: pointer;
   text-align: left;
 }
@@ -1814,7 +1858,7 @@ body,
   flex: 0 0 auto;
   max-width: 42%;
   font-size: 0.72rem;
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: 0.01em;
   color: var(--muted);
   text-align: right;
@@ -1962,7 +2006,7 @@ body,
   margin: 0;
   flex-shrink: 0;
   font-size: 0.7rem;
-  letter-spacing: 0.12em;
+  letter-spacing: var(--type-eyebrow-tracking);
   text-transform: uppercase;
   color: var(--muted);
 }
@@ -2135,7 +2179,7 @@ body,
   font-variant-numeric: tabular-nums;
   font-size: 1.2rem;
   font-weight: 700;
-  letter-spacing: -0.03em;
+  letter-spacing: var(--type-headline-tracking);
   line-height: 1.1;
 }
 
@@ -2357,7 +2401,7 @@ body,
 .profile-head-field input {
   min-height: 42px;
   font-size: 1.05rem;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .profile-section {
@@ -2531,7 +2575,7 @@ body,
   color: var(--text);
   font: inherit;
   font-size: 0.82rem;
-  font-weight: 650;
+  font-weight: 600;
   cursor: pointer;
 }
 
@@ -2593,7 +2637,7 @@ body,
 }
 
 .profile-notif-toggle-label {
-  font-weight: 650;
+  font-weight: 600;
   font-size: 0.95rem;
 }
 
@@ -2726,7 +2770,7 @@ body,
   color: #b42318;
   font: inherit;
   font-size: 0.88rem;
-  font-weight: 650;
+  font-weight: 600;
   cursor: pointer;
 }
 
@@ -2761,7 +2805,7 @@ body,
   color: var(--ink);
   font: inherit;
   font-size: 0.88rem;
-  font-weight: 650;
+  font-weight: 600;
   cursor: pointer;
 }
 
@@ -2857,7 +2901,7 @@ body,
 
 .profile-library-label {
   font-size: 0.9rem;
-  font-weight: 650;
+  font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -3086,7 +3130,7 @@ body,
 .privacy-ack-title {
   margin: 0;
   font-size: 1.05rem;
-  font-weight: 750;
+  font-weight: 700;
   letter-spacing: -0.02em;
 }
 
@@ -3119,7 +3163,7 @@ body,
   display: grid;
   gap: 6px;
   font-size: 0.82rem;
-  font-weight: 650;
+  font-weight: 600;
   color: var(--muted);
 }
 
@@ -3910,7 +3954,7 @@ body,
   color: var(--text);
   font: inherit;
   font-size: 0.74rem;
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: -0.01em;
   cursor: pointer;
   padding: 6px 10px;
@@ -4441,7 +4485,7 @@ body,
   font-family: var(--font-ui);
   font-size: var(--type-caption-size);
   font-weight: var(--type-caption-weight);
-  letter-spacing: 0.12em;
+  letter-spacing: var(--type-eyebrow-tracking);
   text-transform: uppercase;
   color: var(--muted);
   line-height: var(--type-caption-lh);
@@ -4455,7 +4499,7 @@ body,
   text-transform: none;
   letter-spacing: 0.01em;
   font-size: 0.88rem;
-  font-weight: 650;
+  font-weight: 600;
   color: var(--text);
 }
 
@@ -4708,7 +4752,7 @@ body,
   display: block;
   font-size: 0.68rem;
   color: var(--muted);
-  font-weight: 550;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
   line-height: 1;
 }
@@ -5008,7 +5052,7 @@ body,
 }
 
 .nota-resumo-p strong {
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .nota-resumo-p em {
@@ -5170,7 +5214,7 @@ body,
     display: none;
   }
 
-  .mode-tabs button {
+  .mode-tabs-nav > button {
     flex: 1 1 0;
     width: auto;
     min-width: 0;
@@ -5183,12 +5227,12 @@ body,
     -webkit-tap-highlight-color: transparent;
   }
 
-  .mode-tabs button.is-on {
+  .mode-tabs-nav > button.is-on {
     background: color-mix(in srgb, var(--text) 8%, transparent);
     color: var(--text);
   }
 
-  .mode-tabs button:active {
+  .mode-tabs-nav > button:active {
     background: color-mix(in srgb, var(--text) 12%, transparent);
   }
 
@@ -5205,7 +5249,7 @@ body,
     white-space: nowrap;
   }
 
-  .mode-tabs button.is-on .mode-tab-label {
+  .mode-tabs-nav > button.is-on .mode-tab-label {
     color: var(--text);
   }
 
@@ -5292,7 +5336,7 @@ body,
   }
 
   .notif-item {
-    padding: 12px 10px 12px 12px;
+    padding: 14px;
   }
 
   .calendar-view {
@@ -6297,6 +6341,7 @@ body,
   width: 100%;
   max-width: 40rem;
   height: 100%;
+  min-width: 0;
   min-height: 0;
   margin: 0 auto;
   box-sizing: border-box;
@@ -6400,7 +6445,7 @@ body,
 }
 
 .notif-device-label {
-  font-weight: 650;
+  font-weight: 600;
   font-size: 0.95rem;
 }
 
@@ -6453,20 +6498,31 @@ body,
   display: grid;
   align-content: start;
   gap: 10px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
+  box-sizing: border-box;
+}
+
+.notif-list > li {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .notif-item {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   margin: 0;
-  padding: 12px 10px 12px 12px;
+  padding: 14px 14px 14px 14px;
   border: 1px solid color-mix(in srgb, var(--line) 85%, transparent);
   border-radius: 14px;
   background: color-mix(in srgb, var(--panel) 92%, var(--surface));
@@ -6475,6 +6531,7 @@ body,
   font: inherit;
   cursor: pointer;
   box-sizing: border-box;
+  overflow: hidden;
   transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
@@ -6492,7 +6549,8 @@ body,
   display: grid;
   gap: 5px;
   min-width: 0;
-  flex: 1;
+  flex: 1 1 auto;
+  overflow: hidden;
 }
 
 .notif-item-top {
@@ -6500,11 +6558,14 @@ body,
   align-items: baseline;
   justify-content: space-between;
   gap: 10px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .notif-item-title {
   min-width: 0;
-  font-weight: 650;
+  flex: 1 1 auto;
+  font-weight: 600;
   font-size: 0.95rem;
   line-height: 1.25;
   overflow: hidden;
@@ -6525,8 +6586,12 @@ body,
   -webkit-line-clamp: 2;
   line-clamp: 2;
   overflow: hidden;
+  min-width: 0;
+  max-width: 100%;
   font-size: 0.84rem;
   line-height: 1.4;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .notif-item-chevron {
@@ -6670,7 +6735,7 @@ body,
   color: #b42318;
   font: inherit;
   font-size: 0.95rem;
-  font-weight: 650;
+  font-weight: 600;
   cursor: pointer;
 }
 
@@ -6888,14 +6953,14 @@ body,
   text-transform: none;
   letter-spacing: -0.01em;
   font-size: 0.92rem;
-  font-weight: 650;
+  font-weight: 600;
   color: var(--text);
 }
 
 .plan-yv-days-today {
   flex: none;
   font-size: var(--type-caption-size);
-  font-weight: 550;
+  font-weight: 500;
   color: var(--muted);
 }
 
@@ -7029,13 +7094,13 @@ body,
 .plan-yv-day-num {
   font-size: 1.2rem;
   font-weight: 700;
-  letter-spacing: -0.03em;
+  letter-spacing: var(--type-headline-tracking);
   line-height: 1;
 }
 
 .plan-yv-day-label {
   font-size: 0.58rem;
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: 0.02em;
   text-transform: none;
   color: inherit;
@@ -7077,7 +7142,7 @@ body,
   margin: 0;
   flex: none;
   font-size: 0.78rem;
-  font-weight: 650;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
   color: var(--muted);
@@ -7414,7 +7479,7 @@ ul.plan-yv-hero-title {
   margin: 0;
   font-family: var(--font-ui);
   font-size: var(--type-caption-size);
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--muted);
@@ -7482,7 +7547,7 @@ ul.plan-yv-hero-title {
 .plan-yv-devo-next-kicker {
   margin: 0 0 4px;
   font-size: 0.7rem;
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--muted);
@@ -7532,7 +7597,7 @@ ul.plan-yv-day-note-ref {
 
 .plan-yv-devo-empty-copy strong {
   color: var(--text);
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .plan-yv-devo-actions {
@@ -7560,7 +7625,7 @@ ul.plan-yv-day-note-ref {
   color: var(--text);
   font: inherit;
   font-size: 0.95rem;
-  font-weight: 650;
+  font-weight: 600;
   cursor: pointer;
 }
 
@@ -7708,7 +7773,7 @@ ul.plan-yv-day-note-ref {
 
 .theme-schedule-jour {
   font-size: 0.72rem;
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--muted);
@@ -7721,7 +7786,7 @@ ul.plan-yv-day-note-ref {
 .theme-schedule-passage {
   margin: 0;
   font-size: 0.98rem;
-  font-weight: 650;
+  font-weight: 600;
   line-height: 1.35;
 }
 
@@ -7882,7 +7947,7 @@ ul.plan-yv-day-note-ref {
   white-space: nowrap;
   font-family: var(--font-ui);
   font-size: var(--type-caption-size);
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: -0.01em;
   line-height: var(--type-caption-lh);
   color: var(--yv-text);
@@ -8023,7 +8088,7 @@ ul.plan-yv-day-note-ref {
   background: var(--accent);
   color: #fff;
   border-color: var(--accent);
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .bible-reader--yv .bible-field select {
@@ -8054,7 +8119,7 @@ ul.plan-yv-day-note-ref {
   color: var(--yv-text);
   font: inherit;
   font-size: 0.92rem;
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: -0.02em;
   cursor: pointer;
 }
@@ -8073,7 +8138,7 @@ ul.plan-yv-day-note-ref {
   padding: 0 2px;
   color: var(--yv-muted);
   font-size: 0.78rem;
-  font-weight: 650;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.01em;
   text-align: center;
@@ -8303,11 +8368,12 @@ ul.plan-yv-day-note-ref {
 
 .bible-book-name {
   margin: 0;
-  font-family: var(--font-ui);
+  font-family: var(--font-read);
   font-size: var(--type-headline-size);
   font-weight: var(--type-headline-weight);
   letter-spacing: var(--type-headline-tracking);
   line-height: var(--type-headline-lh);
+  font-optical-sizing: auto;
   color: var(--yv-muted);
 }
 
@@ -8318,6 +8384,7 @@ ul.plan-yv-day-note-ref {
   font-weight: var(--type-display-weight);
   line-height: var(--type-display-lh);
   letter-spacing: var(--type-display-tracking);
+  font-optical-sizing: auto;
   color: var(--yv-text);
 }
 
@@ -8441,7 +8508,7 @@ ul.plan-yv-day-note-ref {
   margin: 0;
   font-family: var(--font-ui);
   font-size: 0.68rem;
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   line-height: 1.2;
@@ -8965,7 +9032,7 @@ ul.plan-yv-day-note-ref {
   min-width: 0;
   flex: 1;
   font-size: 0.98rem;
-  font-weight: 750;
+  font-weight: 700;
   letter-spacing: 0.01em;
   text-transform: uppercase;
   color: var(--yv-text);
@@ -9016,7 +9083,7 @@ ul.plan-yv-day-note-ref {
   border: 0;
   background: color-mix(in srgb, var(--text) 9%, transparent);
   color: color-mix(in srgb, var(--yv-text) 88%, var(--yv-muted));
-  font-weight: 650;
+  font-weight: 600;
   box-shadow: none;
 }
 
@@ -9036,7 +9103,7 @@ ul.plan-yv-day-note-ref {
   border: 0;
   background: color-mix(in srgb, var(--text) 9%, transparent);
   color: color-mix(in srgb, var(--yv-text) 88%, var(--yv-muted));
-  font-weight: 650;
+  font-weight: 600;
   box-shadow: none;
 }
 
@@ -9070,7 +9137,7 @@ ul.plan-yv-day-note-ref {
   border-radius: 12px;
   background: var(--accent);
   color: #fff;
-  font-weight: 750;
+  font-weight: 700;
   letter-spacing: 0.01em;
   box-shadow: none;
 }
@@ -9091,7 +9158,7 @@ ul.plan-yv-day-note-ref {
   min-height: 44px;
   padding: 0 12px;
   border-radius: 12px;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .bible-yv-dock {
@@ -9134,14 +9201,24 @@ ul.plan-yv-day-note-ref {
 }
 
 .bible-yv-dock.is-tab-panel .bible-yv-dock-play {
+  flex: none;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
   width: 44px;
   height: 44px;
   min-width: 44px;
+  max-width: 44px;
   min-height: 44px;
-  border-radius: 12px;
+  max-height: 44px;
+  padding: 0;
+  aspect-ratio: 1 / 1;
+  border-radius: 999px;
   background: color-mix(in srgb, var(--text) 8%, transparent);
   box-shadow: none;
   color: var(--text);
+  overflow: hidden;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -9165,24 +9242,30 @@ ul.plan-yv-day-note-ref {
 }
 
 .bible-yv-dock.is-tab-panel .bible-yv-dock-nav {
+  flex: 1 1 auto;
+  width: auto;
+  max-width: 100%;
   height: 44px;
   min-height: 44px;
+  max-height: 44px;
   padding: 0;
   gap: 0;
-  border-radius: 12px;
+  border-radius: 999px;
   background: color-mix(in srgb, var(--text) 8%, transparent);
   border: 0;
   box-shadow: none;
   grid-template-columns: 44px minmax(0, 1fr) 44px;
+  overflow: hidden;
 }
 
 .bible-yv-dock.is-tab-panel .bible-yv-dock-arrow {
   width: 44px;
   height: 44px;
   min-width: 44px;
+  max-width: 44px;
   min-height: 44px;
   max-height: 44px;
-  border-radius: 0;
+  border-radius: 999px;
 }
 
 .bible-yv-dock.is-tab-panel .bible-yv-dock-location {
@@ -9190,7 +9273,7 @@ ul.plan-yv-day-note-ref {
   min-height: 44px;
   max-height: 44px;
   padding: 0 6px;
-  border-radius: 0;
+  border-radius: 999px;
   background: transparent;
   box-shadow: none;
 }
@@ -9209,20 +9292,28 @@ ul.plan-yv-day-note-ref {
   width: 44px;
   height: 44px;
   min-width: 44px;
+  max-width: 44px;
   min-height: 44px;
-  border-radius: 0;
+  max-height: 44px;
+  aspect-ratio: 1;
+  border-radius: 999px;
   box-shadow: none;
-  justify-self: stretch;
+  justify-self: center;
 }
 
 .bible-yv-dock-play {
   flex: none;
+  flex-shrink: 0;
   display: grid;
   place-items: center;
+  box-sizing: border-box;
   width: 44px;
   height: 44px;
   min-width: 44px;
+  max-width: 44px;
   min-height: 44px;
+  max-height: 44px;
+  aspect-ratio: 1;
   margin: 0;
   padding: 0;
   border: 0;
@@ -9233,6 +9324,7 @@ ul.plan-yv-day-note-ref {
   line-height: 1;
   letter-spacing: 0;
   cursor: pointer;
+  overflow: hidden;
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 28%, transparent);
   transition:
     background 0.15s ease,
@@ -9335,7 +9427,7 @@ ul.plan-yv-day-note-ref {
   margin: 0;
   text-align: center;
   font-size: 0.78rem;
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: color-mix(in srgb, var(--text) 65%, var(--muted));
@@ -9356,7 +9448,7 @@ ul.plan-yv-day-note-ref {
 .bible-audio-player-eyebrow {
   margin: 0;
   font-size: 0.72rem;
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--muted);
@@ -9365,8 +9457,8 @@ ul.plan-yv-day-note-ref {
 .bible-audio-player-title {
   margin: 0;
   font-size: clamp(1.55rem, 6vw, 2rem);
-  font-weight: 750;
-  letter-spacing: -0.03em;
+  font-weight: 700;
+  letter-spacing: var(--type-headline-tracking);
   line-height: 1.15;
   color: var(--text);
 }
@@ -9566,7 +9658,7 @@ ul.plan-yv-day-note-ref {
 
 .bible-audio-player-item-title {
   font-size: 0.98rem;
-  font-weight: 650;
+  font-weight: 600;
   color: var(--text);
 }
 
@@ -9596,8 +9688,8 @@ ul.plan-yv-day-note-ref {
   inset: 0;
   z-index: 13;
   display: grid;
-  /* head · campo · filtros · legenda · lista */
-  grid-template-rows: auto auto auto auto minmax(0, 1fr);
+  /* campo+sair · filtros · legenda · lista */
+  grid-template-rows: auto auto auto minmax(0, 1fr);
   gap: 10px;
   padding:
     max(12px, env(safe-area-inset-top, 0px))
@@ -9726,7 +9818,64 @@ ul.plan-yv-day-note-ref {
 }
 
 .bible-search-sheet-field {
-  padding: 4px 0 2px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 2px 0;
+}
+
+.bible-search-sheet-field .bible-search-sheet-input-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.bible-search-sheet-exit {
+  flex-shrink: 0;
+  display: inline-grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: 44px;
+  height: 44px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 7%, transparent);
+  color: color-mix(in srgb, var(--text) 68%, transparent);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    color 0.14s ease,
+    background 0.14s ease,
+    transform 0.14s ease;
+}
+
+.bible-search-sheet-exit svg {
+  display: block;
+  width: 14px;
+  height: 14px;
+}
+
+.bible-search-sheet-exit:hover {
+  color: var(--text);
+  background: color-mix(in srgb, var(--text) 11%, transparent);
+}
+
+.bible-search-sheet-exit:active {
+  background: color-mix(in srgb, var(--text) 15%, transparent);
+  transform: scale(0.94);
+}
+
+.bible-search-sheet-exit:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bible-search-sheet-exit:active {
+    transform: none;
+  }
 }
 
 .bible-search-filters {
@@ -9737,7 +9886,7 @@ ul.plan-yv-day-note-ref {
 
 .bible-search-scope {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6px;
 }
 
@@ -9751,7 +9900,7 @@ ul.plan-yv-day-note-ref {
   color: color-mix(in srgb, var(--text) 72%, var(--muted));
   font: inherit;
   font-size: 0.78rem;
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: 0.02em;
   cursor: pointer;
   box-shadow: none;
@@ -9792,7 +9941,7 @@ ul.plan-yv-day-note-ref {
   color: color-mix(in srgb, var(--text) 70%, var(--muted));
   font: inherit;
   font-size: 0.92rem;
-  font-weight: 650;
+  font-weight: 600;
   text-align: left;
   cursor: pointer;
   box-shadow: none;
@@ -9844,7 +9993,7 @@ ul.plan-yv-day-note-ref {
   margin: 0;
   padding: 0 2px;
   font-size: 0.68rem;
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: color-mix(in srgb, var(--muted) 88%, var(--text));
@@ -9867,7 +10016,7 @@ ul.plan-yv-day-note-ref {
   color: var(--text);
   font: inherit;
   font-size: 0.92rem;
-  font-weight: 650;
+  font-weight: 600;
   line-height: 1.25;
   text-align: left;
   overflow: hidden;
@@ -9971,7 +10120,7 @@ ul.plan-yv-day-note-ref {
   background: none;
   color: var(--accent);
   font: inherit;
-  font-weight: 650;
+  font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 2px;
   cursor: pointer;
@@ -9980,7 +10129,7 @@ ul.plan-yv-day-note-ref {
 .bible-search-sheet-input-wrap {
   position: relative;
   display: grid;
-  grid-template-columns: 40px minmax(0, 1fr) 40px;
+  grid-template-columns: 40px minmax(0, 1fr) 44px;
   align-items: center;
   border: 0;
   border-radius: 12px;
@@ -10019,23 +10168,43 @@ ul.plan-yv-day-note-ref {
 }
 
 .bible-search-sheet-clear {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   margin: 0 auto;
   padding: 0;
   display: grid;
   place-items: center;
   border: 0;
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--text) 6%, transparent);
-  color: color-mix(in srgb, var(--muted) 88%, var(--text));
-  font-size: 1.2rem;
-  line-height: 1;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+  color: color-mix(in srgb, var(--text) 72%, transparent);
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    color 0.14s ease,
+    background 0.14s ease;
+}
+
+.bible-search-sheet-clear svg {
+  display: block;
+  width: 12px;
+  height: 12px;
 }
 
 .bible-search-sheet-clear:hover {
   color: var(--text);
+  background: color-mix(in srgb, var(--text) 12%, transparent);
+}
+
+.bible-search-sheet-clear:active {
+  background: color-mix(in srgb, var(--text) 16%, transparent);
+}
+
+.bible-search-sheet-clear-spacer {
+  width: 32px;
+  height: 32px;
+  margin: 0 auto;
+  pointer-events: none;
 }
 
 .bible-search-sheet-hint {
@@ -10052,7 +10221,7 @@ ul.plan-yv-day-note-ref {
   border: 0;
   background-color: var(--sheet-bg);
   font-size: 0.72rem;
-  font-weight: 550;
+  font-weight: 500;
   letter-spacing: 0.01em;
   line-height: 1.3;
   color: color-mix(in srgb, var(--muted) 88%, var(--text));
@@ -10097,7 +10266,7 @@ ul.plan-yv-day-note-ref {
 
 .bible-search-sheet-ref {
   font-size: 0.82rem;
-  font-weight: 750;
+  font-weight: 700;
   letter-spacing: 0.01em;
   color: color-mix(in srgb, var(--accent) 55%, var(--text));
 }
@@ -10172,14 +10341,14 @@ ul.plan-yv-day-note-ref {
 }
 
 .app.is-bible-mode.is-narrow .bible-yv-pick-sheet.is-book {
-  grid-template-rows: minmax(0, 1fr);
-  gap: 0;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 8px;
 }
 
 .app.is-bible-mode.is-narrow .bible-yv-pick-sheet-head {
   padding:
-    0
-    max(var(--mobile-gutter, 12px), env(safe-area-inset-right, 0px))
+    2px
+    max(calc(var(--mobile-gutter, 12px) - 2px), env(safe-area-inset-right, 0px))
     0
     max(var(--mobile-gutter, 12px), env(safe-area-inset-left, 0px));
 }
@@ -10260,25 +10429,32 @@ ul.plan-yv-day-note-ref {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 10px;
   min-width: 0;
-  min-height: 28px;
+  min-height: 44px;
   padding: 0 2px;
   flex: none;
 }
 
 .bible-yv-pick-title {
   margin: 0;
-  font-size: 0.94rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  min-width: 0;
+  flex: 1;
+  font-family: var(--font-ui);
+  font-size: 1.02rem;
+  font-weight: 600;
+  letter-spacing: -0.022em;
+  line-height: 1.15;
   color: var(--yv-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .bible-yv-pick-step,
 .bible-yv-pick-hint {
   font-size: 0.66rem;
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--yv-muted);
@@ -10290,14 +10466,63 @@ ul.plan-yv-day-note-ref {
   background: transparent;
   color: var(--yv-text);
   font: inherit;
+  font-family: var(--font-ui);
   font-size: 0.88rem;
-  font-weight: 650;
+  font-weight: 600;
   cursor: pointer;
-  max-width: 70%;
+  max-width: calc(100% - 48px);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   text-align: left;
+}
+
+.bible-yv-pick-close {
+  flex-shrink: 0;
+  display: inline-grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: 36px;
+  height: 36px;
+  margin: 0 -2px 0 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 7%, transparent);
+  color: color-mix(in srgb, var(--yv-text) 68%, transparent);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    color 0.14s ease,
+    background 0.14s ease,
+    transform 0.14s ease;
+}
+
+.bible-yv-pick-close svg {
+  display: block;
+  width: 14px;
+  height: 14px;
+}
+
+.bible-yv-pick-close:hover {
+  color: var(--yv-text);
+  background: color-mix(in srgb, var(--text) 11%, transparent);
+}
+
+.bible-yv-pick-close:active {
+  background: color-mix(in srgb, var(--text) 15%, transparent);
+  transform: scale(0.94);
+}
+
+.bible-yv-pick-close:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent, #3b82f6) 55%, transparent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bible-yv-pick-close:active {
+    transform: none;
+  }
 }
 
 .bible-yv-pick-grid {
@@ -10333,7 +10558,7 @@ ul.plan-yv-day-note-ref {
   color: var(--yv-text);
   font: inherit;
   font-size: 0.9rem;
-  font-weight: 650;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   cursor: pointer;
   box-shadow: none;
@@ -10350,7 +10575,7 @@ ul.plan-yv-day-note-ref {
   min-height: 48px;
   padding: 12px 14px;
   font-size: 0.95rem;
-  font-weight: 650;
+  font-weight: 600;
   font-variant-numeric: normal;
   text-align: left;
   line-height: 1.25;
@@ -10375,14 +10600,17 @@ ul.plan-yv-day-note-ref {
 .bible-yv-dock-nav {
   flex: 1 1 auto;
   min-width: 0;
+  width: auto;
+  max-width: 100%;
   height: 44px;
   min-height: 44px;
+  max-height: 44px;
   display: grid;
   grid-template-columns: 44px minmax(0, 1fr) 44px;
   align-items: center;
   gap: 0;
   padding: 0;
-  border-radius: 12px;
+  border-radius: 999px;
   background: color-mix(in srgb, var(--text) 8%, transparent);
   border: 0;
   box-shadow: none;
@@ -10422,9 +10650,11 @@ ul.plan-yv-day-note-ref {
 }
 
 .bible-yv-dock-icon--play {
-  width: 24px;
-  height: 24px;
-  font-size: 24px;
+  width: 22px;
+  height: 22px;
+  font-size: 22px;
+  /* triangle Material: recentre optique dans le cercle */
+  transform: translateX(1px);
 }
 
 .bible-yv-dock-advance .bible-yv-dock-icon {
@@ -10460,7 +10690,7 @@ ul.plan-yv-day-note-ref {
   overflow: hidden;
   font-family: var(--font-ui);
   font-size: 0.92rem;
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: -0.01em;
   line-height: 1.15;
   text-align: center;
@@ -10578,7 +10808,7 @@ ul.plan-yv-day-note-ref {
 
 .bible-version {
   font-size: 0.78rem;
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--muted);
@@ -10659,7 +10889,7 @@ ul.plan-yv-day-note-ref {
 .bible-ref {
   margin: 0;
   font-size: 1.15rem;
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: -0.02em;
 }
 
@@ -10781,7 +11011,7 @@ ul.plan-yv-day-note-ref {
 .flash-ref-label {
   font-family: var(--font-ui);
   font-size: var(--type-caption-size);
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--muted);
