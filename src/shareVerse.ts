@@ -1,6 +1,6 @@
 /** Partage de versets — image PNG (pas d’OG / aperçu de lien). */
 
-import { renderVerseShareCard } from "./shareVerseCard";
+import { formatShareUrlForCard, renderVerseShareCard } from "./shareVerseCard";
 
 export const SHARE_ORIGIN = "https://www.biblo.digital";
 
@@ -54,12 +54,23 @@ export function consumeShareRefFromUrl(): string | null {
   return ref;
 }
 
-/** Texte court pour accompagner l’image (référence ; l’URL va dans l’image). */
-export function buildShareText(refLabel: string, verseText = ""): string {
+/**
+ * Caption pour copie / Web Share :
+ * référence, verset entre guillemets, lien lisible (sans https://).
+ */
+export function buildShareText(
+  refLabel: string,
+  verseText = "",
+  url = "",
+): string {
   const ref = String(refLabel || "").trim();
   const body = String(verseText || "").trim();
-  if (ref && body) return `${ref}\n\n« ${body} »`;
-  return ref || body;
+  const link = formatShareUrlForCard(String(url || "").trim());
+  const parts: string[] = [];
+  if (ref) parts.push(ref);
+  if (body) parts.push(`« ${body} »`);
+  if (link) parts.push(link);
+  return parts.join("\n\n");
 }
 
 export type ShareVerseDirectInput = {
@@ -70,8 +81,8 @@ export type ShareVerseDirectInput = {
 };
 
 /**
- * Génère le cartão PNG (lien intégré) et ouvre le partage système.
- * Pas de sheet intermédiaire.
+ * Génère le cartão PNG et ouvre le partage système
+ * (caption = ref + verset + URL).
  */
 export async function shareVerseDirect(
   input: ShareVerseDirectInput,
@@ -85,14 +96,42 @@ export async function shareVerseDirect(
   });
   return shareVersePayload({
     title: input.refLabel.trim() || "Biblos",
-    text: buildShareText(input.refLabel),
+    text: buildShareText(input.refLabel, input.verseText, shareUrl),
+    url: shareUrl,
     file: blob,
   });
+}
+
+/** Copie le texte du verset (ref + corps + lien) dans le presse-papiers. */
+export async function copyVerseText(input: {
+  refLabel: string;
+  verseText: string;
+  usfm: string;
+}): Promise<ShareVerseResult> {
+  const shareUrl = buildShareUrl(input.usfm);
+  const text = buildShareText(input.refLabel, input.verseText, shareUrl);
+  if (!text) {
+    return { ok: false, error: "Rien à copier" };
+  }
+  try {
+    if (
+      typeof navigator !== "undefined" &&
+      navigator.clipboard &&
+      typeof navigator.clipboard.writeText === "function"
+    ) {
+      await navigator.clipboard.writeText(text);
+      return { ok: true, method: "clipboard" };
+    }
+  } catch {
+    /* fall through */
+  }
+  return { ok: false, error: "Impossible de copier le texte" };
 }
 
 export type ShareVersePayload = {
   title: string;
   text?: string;
+  url?: string;
   file: File | Blob;
 };
 
@@ -122,29 +161,45 @@ function downloadBlob(blob: Blob, filename: string): boolean {
   }
 }
 
-/** Partage uniquement l’image (Web Share files) — pas de lien OG. */
+function canShareData(data: ShareData): boolean {
+  if (typeof navigator === "undefined" || typeof navigator.share !== "function") {
+    return false;
+  }
+  if (typeof navigator.canShare !== "function") return true;
+  try {
+    return navigator.canShare(data);
+  } catch {
+    return false;
+  }
+}
+
+/** Partage l’image PNG (+ caption / URL si le système l’accepte) — pas de lien OG. */
 export async function shareVersePayload(
   payload: ShareVersePayload,
 ): Promise<ShareVerseResult> {
   const title = payload.title.trim() || "Biblos";
   const text = String(payload.text || "").trim();
+  const url = String(payload.url || "").trim();
   const file = toShareFile(payload.file);
   const canShare =
     typeof navigator !== "undefined" && typeof navigator.share === "function";
 
   if (canShare) {
     try {
-      const withText: ShareData = { title, text, files: [file] };
-      const filesOnly: ShareData = { files: [file] };
-      const data =
-        text &&
-        (typeof navigator.canShare !== "function" || navigator.canShare(withText))
-          ? withText
-          : filesOnly;
-      if (
-        typeof navigator.canShare !== "function" ||
-        navigator.canShare(data)
-      ) {
+      const candidates: ShareData[] = [];
+      if (text && url) {
+        candidates.push({ title, text, url, files: [file] });
+      }
+      if (text) {
+        candidates.push({ title, text, files: [file] });
+      }
+      if (url) {
+        candidates.push({ title, url, files: [file] });
+      }
+      candidates.push({ files: [file] });
+
+      const data = candidates.find((item) => canShareData(item));
+      if (data) {
         await navigator.share(data);
         return { ok: true, method: "share" };
       }

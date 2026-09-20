@@ -90,31 +90,39 @@ export function BibleHistorySheet({
       aria-modal="true"
       aria-labelledby={titleId}
     >
-      <header className="bible-search-sheet-head">
-        <button
-          type="button"
-          className="bible-search-sheet-close"
-          onClick={onClose}
-          aria-label="Fermer l’historique"
-        >
-          ↓
-        </button>
+      <header className="bible-search-sheet-head bible-history-sheet-head">
+        <span className="bible-search-sheet-spacer" aria-hidden />
         <p id={titleId} className="bible-search-sheet-title">
           Historique
         </p>
-        {events.length > 0 ? (
+        <div className="bible-history-sheet-actions">
+          {events.length > 0 ? (
+            <button
+              type="button"
+              className="bible-search-sheet-clear-all"
+              onClick={clearAll}
+              aria-label="Effacer tout l’historique"
+              title="Effacer tout"
+            >
+              <YvIcon name="delete" className="bible-search-sheet-clear-all-icon" />
+            </button>
+          ) : null}
           <button
             type="button"
-            className="bible-search-sheet-clear-all"
-            onClick={clearAll}
-            aria-label="Effacer tout l’historique"
-            title="Effacer tout"
+            className="bible-search-sheet-exit"
+            onClick={onClose}
+            aria-label="Fermer l’historique"
           >
-            <YvIcon name="delete" className="bible-search-sheet-clear-all-icon" />
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
+              <path
+                d="M3.2 3.2l7.6 7.6M10.8 3.2l-7.6 7.6"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
+            </svg>
           </button>
-        ) : (
-          <span className="bible-search-sheet-spacer" aria-hidden />
-        )}
+        </div>
       </header>
 
       <div className="bible-search-sheet-meta" aria-live="polite">

@@ -29,9 +29,9 @@ import {
 import { BibleAudioPlayer } from "./BibleAudioPlayer";
 import { BibleHistorySheet } from "./BibleHistorySheet";
 import { BibleSearchSheet } from "./BibleSearchSheet";
+import { BibleShareSheet } from "./BibleShareSheet";
 import { CircularColorEditor } from "./CircularColorEditor";
 import { ACTIVITY_UI_ENABLED } from "../activityLog";
-import { shareVerseDirect } from "../shareVerse";
 import {
   bindBibleAudioControls,
   clearBibleAudioControls,
@@ -485,6 +485,7 @@ export function BibleReaderView({
   const [audioDuration, setAudioDuration] = useState(0);
   const [searchOpen, setSearchOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [shareSheetOpen, setShareSheetOpen] = useState(false);
   const [toolsMenuOpen, setToolsMenuOpen] = useState(false);
   const toolsMenuRef = useRef<HTMLDivElement | null>(null);
   const [offlineReady, setOfflineReady] = useState(false);
@@ -492,7 +493,6 @@ export function BibleReaderView({
   const [offlineProgress, setOfflineProgress] = useState<OfflineDownloadProgress | null>(null);
   const offlineAbortRef = useRef<AbortController | null>(null);
   const [colorEditorOpen, setColorEditorOpen] = useState(false);
-  const [shareBusy, setShareBusy] = useState(false);
   const [uiTheme, setUiTheme] = useState<ResolvedTheme>(() => resolveTheme());
   const statusId = useId();
   const highlightRef = useRef<HTMLElement | null>(null);
@@ -964,6 +964,7 @@ export function BibleReaderView({
     setCardMsg(null);
     setCardColor(loadPreferredVerseColor());
     setColorEditorOpen(false);
+    setShareSheetOpen(false);
   }
 
   async function toggleOfflineBible() {
@@ -1258,37 +1259,12 @@ export function BibleReaderView({
   }, [selectedVerses, chapterMarks, uiTheme]);
   const pickerColor = selectionMarkColor ?? activeVerseColor;
 
-  async function shareSelection() {
-    if (!selection?.length || !selectedVerseText || shareBusy) return;
-    const title = selectedBook?.title ?? bookId;
-    const refLabel = formatSelectionFront(title, chapterId, selection);
-    const usfm = selectionUsfm(bookId, chapterId, selection);
-    setShareBusy(true);
-    setCardMsg(null);
-    try {
-      const result = await shareVerseDirect({
-        refLabel,
-        verseText: selectedVerseText,
-        usfm,
-        accentHex: pickerColor,
-      });
-      if (result.ok) {
-        setCardMsg(
-          result.method === "clipboard"
-            ? "Image copiée"
-            : result.method === "download"
-              ? "Image téléchargée"
-              : null,
-        );
-        return;
-      }
-      if (!result.cancelled) setCardMsg(result.error);
-    } catch {
-      setCardMsg("Impossible de partager");
-    } finally {
-      setShareBusy(false);
-    }
-  }
+  const shareRefLabel =
+    selection?.length
+      ? formatSelectionFront(selectedBook?.title ?? bookId, chapterId, selection)
+      : "";
+  const shareUsfm =
+    selection?.length ? selectionUsfm(bookId, chapterId, selection) : "";
 
   const showCreateCard = Boolean(selectedVerses.length && selectedVerseText && !pickerOpen);
   const forceChrome =
@@ -1297,6 +1273,7 @@ export function BibleReaderView({
     audioPlayerOpen ||
     searchOpen ||
     historyOpen ||
+    shareSheetOpen ||
     toolsMenuOpen;
   const hideChrome = chromeHidden && !forceChrome;
   forceChromeRef.current = forceChrome;
@@ -1708,6 +1685,10 @@ export function BibleReaderView({
         if (planReading) {
           if (event.key === "Escape") {
             event.preventDefault();
+            if (shareSheetOpen) {
+              setShareSheetOpen(false);
+              return;
+            }
             if (pickerOpen) {
               closePicker();
               return;
@@ -1725,7 +1706,8 @@ export function BibleReaderView({
             audioPlayerOpen ||
             searchOpen ||
             toolsMenuOpen ||
-            historyOpen
+            historyOpen ||
+            shareSheetOpen
           ) {
             return;
           }
@@ -1748,6 +1730,10 @@ export function BibleReaderView({
         }
         if (event.key === "Escape") {
           event.preventDefault();
+          if (shareSheetOpen) {
+            setShareSheetOpen(false);
+            return;
+          }
           if (pickerOpen) {
             closePicker();
             return;
@@ -2147,17 +2133,11 @@ export function BibleReaderView({
               <button
                 type="button"
                 className="bible-yv-chip bible-share-verse"
-                disabled={shareBusy || !selectedVerseText}
-                onClick={() => void shareSelection()}
+                disabled={!selectedVerseText}
+                onClick={() => setShareSheetOpen(true)}
               >
-                {shareBusy ? (
-                  "…"
-                ) : (
-                  <>
-                    <YvIcon name="ios_share" className="bible-verse-cta-icon" />
-                    <span>Partager</span>
-                  </>
-                )}
+                <YvIcon name="ios_share" className="bible-verse-cta-icon" />
+                <span>Partager</span>
               </button>
             </div>
           </div>
@@ -2425,6 +2405,15 @@ export function BibleReaderView({
           setPickerOpen(false);
           void loadChapter(hit.usfm.split(".")[0]!, String(hit.chapter), hit.verse);
         }}
+      />
+
+      <BibleShareSheet
+        open={shareSheetOpen}
+        onClose={() => setShareSheetOpen(false)}
+        refLabel={shareRefLabel}
+        verseText={selectedVerseText}
+        usfm={shareUsfm}
+        accentHex={pickerColor}
       />
 
       {ACTIVITY_UI_ENABLED ? (

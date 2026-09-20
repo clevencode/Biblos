@@ -1,0 +1,244 @@
+import { useEffect, useId, useRef, useState } from "react";
+import { YvIcon } from "./YvIcon";
+import {
+  buildShareText,
+  buildShareUrl,
+  copyVerseText,
+  shareVersePayload,
+} from "../shareVerse";
+import { renderVerseShareCard } from "../shareVerseCard";
+
+export type BibleShareSheetProps = {
+  open: boolean;
+  onClose: () => void;
+  refLabel: string;
+  verseText: string;
+  usfm: string;
+  accentHex?: string | null;
+};
+
+export function BibleShareSheet({
+  open,
+  onClose,
+  refLabel,
+  verseText,
+  usfm,
+  accentHex,
+}: BibleShareSheetProps) {
+  const titleId = useId();
+  const blobRef = useRef<Blob | null>(null);
+  const objectUrlRef = useRef<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewBusy, setPreviewBusy] = useState(false);
+  const [previewError, setPreviewError] = useState<string | null>(null);
+  const [copyBusy, setCopyBusy] = useState(false);
+  const [shareBusy, setShareBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
+  useEffect(() => {
+    if (!open) {
+      blobRef.current = null;
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current);
+        objectUrlRef.current = null;
+      }
+      setPreviewUrl(null);
+      setPreviewError(null);
+      setMsg(null);
+      setPreviewBusy(false);
+      setCopyBusy(false);
+      setShareBusy(false);
+      return;
+    }
+
+    let cancelled = false;
+    setPreviewBusy(true);
+    setPreviewError(null);
+    setMsg(null);
+
+    void (async () => {
+      try {
+        const shareUrl = buildShareUrl(usfm);
+        const blob = await renderVerseShareCard({
+          refLabel,
+          verseText,
+          accentHex,
+          shareUrl,
+        });
+        if (cancelled) return;
+        blobRef.current = blob;
+        if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
+        const href = URL.createObjectURL(blob);
+        objectUrlRef.current = href;
+        setPreviewUrl(href);
+      } catch {
+        if (!cancelled) {
+          blobRef.current = null;
+          setPreviewUrl(null);
+          setPreviewError("Impossible de générer l’image");
+        }
+      } finally {
+        if (!cancelled) setPreviewBusy(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, refLabel, verseText, usfm, accentHex]);
+
+  useEffect(() => {
+    return () => {
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current);
+        objectUrlRef.current = null;
+      }
+    };
+  }, []);
+
+  async function handleCopy() {
+    if (copyBusy) return;
+    setCopyBusy(true);
+    setMsg(null);
+    try {
+      const result = await copyVerseText({ refLabel, verseText, usfm });
+      if (result.ok) {
+        setMsg("Texte copié");
+        return;
+      }
+      setMsg(result.error);
+    } catch {
+      setMsg("Impossible de copier le texte");
+    } finally {
+      setCopyBusy(false);
+    }
+  }
+
+  async function handleShare() {
+    if (shareBusy || !blobRef.current) return;
+    setShareBusy(true);
+    setMsg(null);
+    try {
+      const shareUrl = buildShareUrl(usfm);
+      const result = await shareVersePayload({
+        title: refLabel.trim() || "Biblos",
+        text: buildShareText(refLabel, verseText, shareUrl),
+        url: shareUrl,
+        file: blobRef.current,
+      });
+      if (result.ok) {
+        setMsg(
+          result.method === "clipboard"
+            ? "Image copiée"
+            : result.method === "download"
+              ? "Image téléchargée"
+              : null,
+        );
+        return;
+      }
+      if (!result.cancelled) setMsg(result.error);
+    } catch {
+      setMsg("Impossible de partager");
+    } finally {
+      setShareBusy(false);
+    }
+  }
+
+  if (!open) return null;
+
+  const canShare = Boolean(blobRef.current) && !previewBusy && !previewError;
+
+  return (
+    <div
+      className="bible-search-sheet bible-share-sheet"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={titleId}
+    >
+      <header className="bible-search-sheet-head bible-share-sheet-head">
+        <span className="bible-search-sheet-spacer" aria-hidden />
+        <p id={titleId} className="bible-search-sheet-title">
+          Partager
+        </p>
+        <button
+          type="button"
+          className="bible-search-sheet-exit"
+          onClick={onClose}
+          aria-label="Fermer le partage"
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
+            <path
+              d="M3.2 3.2l7.6 7.6M10.8 3.2l-7.6 7.6"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            />
+          </svg>
+        </button>
+      </header>
+
+      <p className="bible-share-sheet-ref">{refLabel}</p>
+
+      <div className="bible-share-sheet-preview" aria-busy={previewBusy || undefined}>
+        {previewBusy ? (
+          <p className="bible-share-sheet-preview-status muted">Préparation…</p>
+        ) : previewError ? (
+          <p className="bible-share-sheet-preview-status" role="alert">
+            {previewError}
+          </p>
+        ) : previewUrl ? (
+          <img
+            className="bible-share-sheet-card"
+            src={previewUrl}
+            alt={`Carte ${refLabel}`}
+          />
+        ) : null}
+      </div>
+
+      <div className="bible-share-sheet-footer">
+        <div className="bible-share-sheet-actions">
+          <button
+            type="button"
+            className="bible-yv-chip bible-share-sheet-copy"
+            disabled={copyBusy || !verseText}
+            onClick={() => void handleCopy()}
+          >
+            {copyBusy ? (
+              "…"
+            ) : (
+              <>
+                <YvIcon name="content_copy" className="bible-verse-cta-icon" />
+                <span>Copier</span>
+              </>
+            )}
+          </button>
+          <button
+            type="button"
+            className="bible-yv-chip is-primary bible-share-sheet-share"
+            disabled={shareBusy || !canShare}
+            onClick={() => void handleShare()}
+          >
+            {shareBusy ? (
+              "…"
+            ) : (
+              <>
+                <YvIcon name="ios_share" className="bible-verse-cta-icon" />
+                <span>Partager</span>
+              </>
+            )}
+          </button>
+        </div>
+        {msg ? <p className="bible-share-sheet-msg">{msg}</p> : null}
+      </div>
+    </div>
+  );
+}
