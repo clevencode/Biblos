@@ -1274,13 +1274,8 @@ export function BibleReaderView({
     return null;
   }, [selectedVerses, chapterMarks, uiTheme]);
   const pickerColor = selectionMarkColor ?? activeVerseColor;
-  const shareAccentHex = useMemo(() => {
-    for (const n of selectedVerses) {
-      const hex = chapterMarks.get(n);
-      if (hex) return normalizeVerseColor(hex);
-    }
-    return normalizeVerseColor(cardColor);
-  }, [selectedVerses, chapterMarks, cardColor]);
+  /** Accent marque (cartão PNG) — or brand, pas la couleur de surlignage. */
+  const shareAccentHex = "#C4A574";
 
   const shareRefLabel =
     selection?.length
