@@ -2113,7 +2113,7 @@ export function BibleReaderView({
               {existingVerseCard && selectedVerseCardId ? (
                 <button
                   type="button"
-                  className="bible-yv-chip is-primary bible-make-card is-carded bible-view-card"
+                  className="bible-yv-chip bible-make-card is-carded bible-view-card"
                   disabled={cardBusy || !onViewFlashcard}
                   onClick={() => onViewFlashcard?.(selectedVerseCardId)}
                 >
@@ -2123,7 +2123,7 @@ export function BibleReaderView({
               ) : (
                 <button
                   type="button"
-                  className="bible-yv-chip is-primary bible-make-card"
+                  className="bible-yv-chip bible-make-card"
                   disabled={cardBusy}
                   onClick={() => void makeFlashcard()}
                 >

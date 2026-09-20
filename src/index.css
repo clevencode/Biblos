@@ -9136,21 +9136,28 @@ ul.plan-yv-day-note-ref {
   align-items: center;
   justify-content: center;
   justify-self: stretch;
-  gap: 6px;
+  gap: 7px;
   min-width: 0;
   min-height: 44px;
-  padding: 0 14px;
+  padding: 0 12px;
   border: 0;
   border-radius: 12px;
-  background: var(--accent);
-  color: #fff;
-  font-weight: 700;
+  background: color-mix(in srgb, var(--text) 9%, transparent);
+  color: color-mix(in srgb, var(--yv-text) 88%, var(--yv-muted));
+  font-weight: 600;
   letter-spacing: 0.01em;
   box-shadow: none;
 }
 
+.bible-reader--yv .bible-make-card:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--text) 12%, transparent);
+  color: var(--yv-text);
+}
+
 .bible-reader--yv .bible-make-card.is-carded {
-  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, #fff 35%, transparent);
+  background: color-mix(in srgb, var(--text) 12%, transparent);
+  color: var(--yv-text);
+  box-shadow: none;
 }
 
 .bible-reader--yv .bible-make-card:disabled {
@@ -9158,7 +9165,7 @@ ul.plan-yv-day-note-ref {
 }
 
 .bible-reader--yv .bible-make-card .bible-verse-cta-icon {
-  color: #fff;
+  color: inherit;
 }
 
 .bible-reader--yv .bible-view-card {
