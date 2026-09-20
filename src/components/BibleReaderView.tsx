@@ -2171,12 +2171,12 @@ export function BibleReaderView({
                     : `Retour à ${bookTitle}`
               }
             >
-              ←
+              <YvIcon name="chevron_left" className="bible-yv-pick-exit-icon" />
             </button>
             {passageStep === "book" ? (
               <div className="bible-yv-pick-search-wrap">
                 <input
-                  type="search"
+                  type="text"
                   className="bible-yv-pick-search"
                   value={bookSearchQuery}
                   placeholder="Rechercher un livre…"
@@ -2187,23 +2187,6 @@ export function BibleReaderView({
                   aria-label="Rechercher un livre"
                   onChange={(event) => setBookSearchQuery(event.target.value)}
                 />
-                {bookSearchQuery ? (
-                  <button
-                    type="button"
-                    className="bible-yv-pick-search-clear"
-                    aria-label="Effacer la recherche"
-                    onClick={() => setBookSearchQuery("")}
-                  >
-                    <svg width="12" height="12" viewBox="0 0 14 14" fill="none" aria-hidden>
-                      <path
-                        d="M3.2 3.2l7.6 7.6M10.8 3.2l-7.6 7.6"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                  </button>
-                ) : null}
               </div>
             ) : (
               <p className="bible-yv-pick-title">

@@ -6,7 +6,7 @@ import {
   copyVerseText,
   shareVersePayload,
 } from "../shareVerse";
-import { formatShareUrlForCard, renderVerseShareCard } from "../shareVerseCard";
+import { renderVerseShareCard } from "../shareVerseCard";
 
 export type BibleShareSheetProps = {
   open: boolean;
@@ -156,7 +156,6 @@ export function BibleShareSheet({
   if (!open) return null;
 
   const canShare = Boolean(blobRef.current) && !previewBusy && !previewError;
-  const shareLink = formatShareUrlForCard(buildShareUrl(usfm));
 
   return (
     <div
@@ -180,7 +179,7 @@ export function BibleShareSheet({
         <span className="bible-search-sheet-spacer" aria-hidden />
       </header>
 
-      <p className="bible-share-sheet-ref">{shareLink}</p>
+      <p className="bible-share-sheet-ref">{refLabel}</p>
 
       <div className="bible-share-sheet-preview" aria-busy={previewBusy || undefined}>
         {previewBusy ? (
@@ -193,7 +192,7 @@ export function BibleShareSheet({
           <img
             className="bible-share-sheet-card"
             src={previewUrl}
-            alt={`Carte ${shareLink || refLabel}`}
+            alt={`Carte ${refLabel}`}
           />
         ) : null}
       </div>

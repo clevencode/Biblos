@@ -56,18 +56,20 @@ export function consumeShareRefFromUrl(): string | null {
 
 /**
  * Caption pour copie / Web Share :
- * lien lisible, verset entre guillemets (sans référence livre/chapitre).
+ * référence, verset, puis lien (le lien n’apparaît pas sur l’image).
  */
 export function buildShareText(
-  _refLabel: string,
+  refLabel: string,
   verseText = "",
   url = "",
 ): string {
+  const ref = String(refLabel || "").trim();
   const body = String(verseText || "").trim();
   const link = formatShareUrlForCard(String(url || "").trim());
   const parts: string[] = [];
-  if (link) parts.push(link);
+  if (ref) parts.push(ref);
   if (body) parts.push(`« ${body} »`);
+  if (link) parts.push(link);
   return parts.join("\n\n");
 }
 

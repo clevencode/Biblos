@@ -5,7 +5,7 @@ export type VerseShareCardInput = {
   refLabel: string;
   verseText: string;
   accentHex?: string | null;
-  /** URL de partage affichée sous la marque (à la place de la référence). */
+  /** URL de partage — utilisée hors image (caption / clipboard). */
   shareUrl?: string;
   footer?: string;
 };
@@ -109,10 +109,8 @@ export async function renderVerseShareCard(
 
   const accent = accentForDarkCard(input.accentHex);
   const brand = (input.brand || "Biblos").trim();
+  const refLabel = String(input.refLabel || "").trim().toUpperCase();
   const verseText = String(input.verseText || "").trim();
-  const link = formatShareUrlForCard(
-    input.shareUrl || input.footer || "biblo.digital",
-  );
 
   // Fond sombre sobrio
   const bg = ctx.createLinearGradient(0, 0, 0, H);
@@ -132,15 +130,15 @@ export async function renderVerseShareCard(
   ctx.textBaseline = "top";
   ctx.fillText(brand, PAD_X, PAD_TOP + 28);
 
-  // Lien de partage (à la place de la référence)
+  // Référence (le lien va seulement dans la caption texte)
   const maxTextWidth = W - PAD_X * 2;
   ctx.fillStyle = accent;
-  ctx.font = "600 30px Outfit, Avenir Next, Segoe UI, sans-serif";
-  let linkDraw = link;
-  while (linkDraw.length > 8 && ctx.measureText(linkDraw).width > maxTextWidth) {
-    linkDraw = `${linkDraw.slice(0, -2)}…`;
+  ctx.font = "600 34px Outfit, Avenir Next, Segoe UI, sans-serif";
+  let refDraw = refLabel;
+  while (refDraw.length > 4 && ctx.measureText(refDraw).width > maxTextWidth) {
+    refDraw = `${refDraw.slice(0, -2)}…`;
   }
-  ctx.fillText(linkDraw, PAD_X, PAD_TOP + 110);
+  if (refDraw) ctx.fillText(refDraw, PAD_X, PAD_TOP + 110);
 
   // Verse body
   ctx.fillStyle = "#E8E4DC";
@@ -157,7 +155,7 @@ export async function renderVerseShareCard(
     y += lineHeight;
   }
 
-  // Pied : règle discrète (le lien est déjà sous la marque)
+  // Pied : règle discrète
   const footerY = H - PAD_BOTTOM;
   ctx.strokeStyle = "rgba(245, 242, 235, 0.14)";
   ctx.lineWidth = 2;
