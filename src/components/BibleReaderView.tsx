@@ -1806,6 +1806,20 @@ export function BibleReaderView({
           </p>
         )}
         <div className="bible-yv-top-tools">
+          {ACTIVITY_UI_ENABLED ? (
+            <button
+              type="button"
+              className="bible-yv-search-btn"
+              aria-label="Historique"
+              title="Historique"
+              onClick={() => {
+                setToolsMenuOpen(false);
+                setHistoryOpen(true);
+              }}
+            >
+              <YvIcon name="history" className="bible-yv-tool-icon" />
+            </button>
+          ) : null}
           <button
             type="button"
             className="bible-yv-search-btn"

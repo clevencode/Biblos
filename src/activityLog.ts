@@ -10,14 +10,13 @@ import {
 const ACTIVITY_KEY = "biblos-activity-v1";
 const MAX_EVENTS = 300;
 
-/** Journal local désactivé — plus de sync Notion d’événements (évite le volume). */
-export const ACTIVITY_TRACKING_ENABLED = false;
+/** Journal local (localStorage) — sync Notion des événements désactivée. */
+export const ACTIVITY_TRACKING_ENABLED = true;
 
 /**
- * Affichage in-app (profil / historique).
- * false = l’utilisateur ne voit pas son activité.
+ * Affichage in-app (profil / historique de lecture).
  */
-export const ACTIVITY_UI_ENABLED = false;
+export const ACTIVITY_UI_ENABLED = true;
 
 export type ActivityType =
   | "app.open"
