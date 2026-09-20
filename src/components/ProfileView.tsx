@@ -400,7 +400,8 @@ export function ProfileView({
             onClick={closeAccountSession}
             aria-label="Retour au profil"
           >
-            ← Compte
+            <YvIcon name="chevron_left" className="flash-list-back-icon" />
+            Compte
           </button>
 
           <ProfilePanel titleId="profile-name-label" title="Identité">

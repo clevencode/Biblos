@@ -1023,6 +1023,29 @@ export function App() {
                               if (!generic(nome)) return nome;
                               return theme || nome || "Plan";
                             })(),
+                            planShareTitle: (() => {
+                              const theme = activePlan.theme?.trim() ?? "";
+                              const nome = activePlan.nome?.trim() ?? "";
+                              const generic = (value: string) => !value || /^plan$/i.test(value);
+                              if (!generic(theme)) return theme;
+                              if (!generic(nome)) return nome;
+                              return theme || nome || "Plan de lecture";
+                            })(),
+                            planDescription: activePlan.description ?? "",
+                            planMeta: (() => {
+                              const dayCount = sanitizePlanDays(activePlan.days).length;
+                              const stageCount = activePlan.stages?.length ?? 0;
+                              const parts: string[] = [];
+                              if (dayCount > 0) {
+                                parts.push(`${dayCount} jour${dayCount > 1 ? "s" : ""}`);
+                              }
+                              if (stageCount > 0) {
+                                parts.push(
+                                  `${stageCount} étape${stageCount > 1 ? "s" : ""}`,
+                                );
+                              }
+                              return parts.join(" · ");
+                            })(),
                             label: currentPlanStep(planReading)?.label ?? "",
                             focusRef: currentPlanStep(planReading)?.focusRef ?? "",
                             isFirst: isFirstPlanStep(planReading),

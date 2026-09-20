@@ -19,6 +19,8 @@ import { isPlanComplete, planJourDate, type PlanProgress } from "../planProgress
 import type { ReadingPlan } from "../types";
 import { loadOrCreateProfile, preferredDisplayName } from "../userProfile";
 import { PlanDescription } from "./PlanDescription";
+import { BibleShareSheet } from "./BibleShareSheet";
+import { YvIcon } from "./YvIcon";
 
 type PlanFlowReturn = "timeline" | "dayNote" | "intro";
 
@@ -168,6 +170,7 @@ export function TodayView({
   const [noteBusy, setNoteBusy] = useState(false);
   const [noteMsg, setNoteMsg] = useState<string | null>(null);
   const [noteSaved, setNoteSaved] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const daysStripRef = useRef<HTMLDivElement>(null);
   const stagesStripRef = useRef<HTMLDivElement>(null);
 
@@ -302,7 +305,8 @@ export function TodayView({
             onClick={() => onSelectGalerie?.()}
             aria-label="Retour aux plans"
           >
-            ← Retour
+            <YvIcon name="chevron_left" className="flash-list-back-icon" />
+            Retour
           </button>
           <h2 className="page-title">Aucun plan</h2>
           <p className="page-session-meta muted">
@@ -314,6 +318,16 @@ export function TodayView({
   }
 
   const planTitle = plan.theme?.trim() || plan.nome;
+  const planShareMeta = (() => {
+    const parts: string[] = [];
+    if (scheduleTotal > 0) {
+      parts.push(`${scheduleTotal} jour${scheduleTotal > 1 ? "s" : ""}`);
+    }
+    if (stages.length > 0) {
+      parts.push(`${stages.length} étape${stages.length > 1 ? "s" : ""}`);
+    }
+    return parts.join(" · ");
+  })();
   const selectedDay = days.find((day) => day.jour === selectedJour) ?? days[0] ?? null;
   const passage = selectedDay?.texte ?? "";
   const passageRefs = extractPassageRefs(passage);
@@ -456,7 +470,8 @@ export function TodayView({
             }}
             aria-label="Retour au plan"
           >
-            ← Retour
+            <YvIcon name="chevron_left" className="flash-list-back-icon" />
+            Retour
           </button>
           <p className="plan-yv-devo-eyebrow">Description · Au démarrage</p>
           <h2 className="plan-yv-devo-title">{planTitle}</h2>
@@ -504,7 +519,8 @@ export function TodayView({
             onClick={leaveDayNote}
             aria-label="Retour au plan"
           >
-            ← Retour
+            <YvIcon name="chevron_left" className="flash-list-back-icon" />
+            Retour
           </button>
           <p className="plan-yv-devo-eyebrow">
             Note du jour
@@ -579,11 +595,32 @@ export function TodayView({
             onClick={() => onSelectGalerie?.()}
             aria-label="Retour aux plans"
           >
-            ←
+            <YvIcon name="chevron_left" className="flash-list-back-icon" />
           </button>
           <h2 className="page-title">{planTitle}</h2>
+          <button
+            type="button"
+            className="plan-yv-share-btn"
+            aria-label="Partager le plan"
+            title="Partager le plan"
+            onClick={() => setShareOpen(true)}
+          >
+            <YvIcon name="ios_share" className="plan-yv-share-icon" />
+          </button>
         </div>
       </header>
+
+      <BibleShareSheet
+        open={shareOpen}
+        onClose={() => setShareOpen(false)}
+        mode="plan"
+        refLabel={planTitle}
+        verseText=""
+        usfm=""
+        planTitle={planTitle}
+        planDescription={plan.description ?? ""}
+        planMeta={planShareMeta}
+      />
 
       {days.length ? (
         <section

@@ -1,6 +1,11 @@
 /** Partage de versets — image PNG (pas d’OG / aperçu de lien). */
 
-import { formatShareUrlForCard, renderVerseShareCard } from "./shareVerseCard";
+import {
+  formatShareUrlForCard,
+  plainShareText,
+  renderPlanShareCard,
+  renderVerseShareCard,
+} from "./shareVerseCard";
 
 export const SHARE_ORIGIN = "https://www.biblo.digital";
 
@@ -12,6 +17,11 @@ export function buildShareUrl(usfm: string): string {
     .replace(/^\/+/, "")
     .toUpperCase();
   return `${SHARE_ORIGIN}/v/${encodeURIComponent(cleaned)}`;
+}
+
+/** Lien d’invitation au plan (app) — pas une ref verset. */
+export function buildPlanShareUrl(): string {
+  return SHARE_ORIGIN;
 }
 
 export function parseShareRefFromLocation(
@@ -71,6 +81,59 @@ export function buildShareText(
   if (body) parts.push(`« ${body} »`);
   if (link) parts.push(link);
   return parts.join("\n\n");
+}
+
+/** Caption plan : titre, intro, lien app. */
+export function buildPlanShareText(input: {
+  title: string;
+  description?: string;
+  meta?: string;
+  url?: string;
+}): string {
+  const title = plainShareText(input.title || "Plan de lecture");
+  const description = plainShareText(input.description || "");
+  const meta = plainShareText(input.meta || "");
+  const link = formatShareUrlForCard(String(input.url || buildPlanShareUrl()).trim());
+  const parts: string[] = [];
+  if (title) parts.push(title);
+  if (meta) parts.push(meta);
+  if (description) {
+    const short =
+      description.length > 420 ? `${description.slice(0, 417).trimEnd()}…` : description;
+    parts.push(short);
+  }
+  if (link) parts.push(link);
+  return parts.join("\n\n");
+}
+
+export type SharePlanInput = {
+  title: string;
+  description?: string;
+  meta?: string;
+  accentHex?: string | null;
+};
+
+export async function renderPlanShareBlob(
+  input: SharePlanInput,
+): Promise<{ blob: Blob; url: string; text: string }> {
+  const url = buildPlanShareUrl();
+  const blob = await renderPlanShareCard({
+    title: input.title,
+    description: input.description,
+    meta: input.meta,
+    accentHex: input.accentHex,
+    shareUrl: url,
+  });
+  return {
+    blob,
+    url,
+    text: buildPlanShareText({
+      title: input.title,
+      description: input.description,
+      meta: input.meta,
+      url,
+    }),
+  };
 }
 
 export type ShareVerseDirectInput = {

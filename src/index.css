@@ -1320,6 +1320,17 @@ body {
   font-weight: 500;
   cursor: pointer;
   line-height: 1.2;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.flash-list-back-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  font-size: 1.25rem;
+  line-height: 1;
+  flex: none;
 }
 
 .flash-list-back:hover {
@@ -1994,6 +2005,14 @@ body {
 .flash-nav-btn:disabled {
   opacity: 0.35;
   cursor: default;
+}
+
+.flash-nav-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  font-size: 1.25rem;
+  line-height: 1;
+  display: block;
 }
 
 .flash-list {
@@ -6816,6 +6835,32 @@ body {
   line-height: 1.2;
 }
 
+.plan-yv-share-btn {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.plan-yv-share-btn:hover {
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+}
+
+.plan-yv-share-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
 .plan-yv-timeline {
   display: grid;
   gap: 16px;
@@ -7996,6 +8041,13 @@ ul.plan-yv-day-note-ref {
   cursor: pointer;
 }
 
+.bible-yv-back-icon {
+  width: 1.35rem;
+  height: 1.35rem;
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
 .bible-yv-back:hover {
   background: color-mix(in srgb, var(--yv-text) 6%, transparent);
 }
@@ -8175,7 +8227,12 @@ ul.plan-yv-day-note-ref {
   cursor: pointer;
 }
 
-.bible-yv-search-btn:hover {
+.bible-yv-search-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.bible-yv-search-btn:hover:not(:disabled) {
   background: color-mix(in srgb, var(--yv-text) 6%, transparent);
 }
 

@@ -154,7 +154,7 @@ export function NotificationsView({ plans, onBack }: NotificationsViewProps) {
             onClick={() => setSelectedId(null)}
             aria-label="Retour à la liste"
           >
-            ←
+            <YvIcon name="chevron_left" className="flash-list-back-icon" />
           </button>
           <div className="notif-head-copy">
             <h1 className="notif-title type-title">
@@ -193,7 +193,7 @@ export function NotificationsView({ plans, onBack }: NotificationsViewProps) {
           onClick={onBack}
           aria-label="Retour"
         >
-          ←
+          <YvIcon name="chevron_left" className="flash-list-back-icon" />
         </button>
         <div className="notif-head-copy">
           <h1 className="notif-title type-title">Notifications</h1>

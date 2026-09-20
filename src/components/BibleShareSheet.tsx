@@ -4,6 +4,7 @@ import {
   buildShareText,
   buildShareUrl,
   copyVerseText,
+  renderPlanShareBlob,
   shareVersePayload,
 } from "../shareVerse";
 import { renderVerseShareCard } from "../shareVerseCard";
@@ -11,22 +12,33 @@ import { renderVerseShareCard } from "../shareVerseCard";
 export type BibleShareSheetProps = {
   open: boolean;
   onClose: () => void;
+  /** `plan` = cartão + texte du plan entier ; `verse` = verset sélectionné. */
+  mode?: "verse" | "plan";
   refLabel: string;
   verseText: string;
   usfm: string;
   accentHex?: string | null;
+  planTitle?: string;
+  planDescription?: string;
+  planMeta?: string;
 };
 
 export function BibleShareSheet({
   open,
   onClose,
+  mode = "verse",
   refLabel,
   verseText,
   usfm,
   accentHex,
+  planTitle = "",
+  planDescription = "",
+  planMeta = "",
 }: BibleShareSheetProps) {
   const titleId = useId();
   const blobRef = useRef<Blob | null>(null);
+  const planTextRef = useRef<string>("");
+  const planUrlRef = useRef<string>("");
   const objectUrlRef = useRef<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewBusy, setPreviewBusy] = useState(false);
@@ -34,6 +46,11 @@ export function BibleShareSheet({
   const [copyBusy, setCopyBusy] = useState(false);
   const [shareBusy, setShareBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+
+  const isPlan = mode === "plan";
+  const displayLabel = isPlan
+    ? planTitle.trim() || refLabel || "Plan de lecture"
+    : refLabel;
 
   useEffect(() => {
     if (!open) return;
@@ -47,6 +64,8 @@ export function BibleShareSheet({
   useEffect(() => {
     if (!open) {
       blobRef.current = null;
+      planTextRef.current = "";
+      planUrlRef.current = "";
       if (objectUrlRef.current) {
         URL.revokeObjectURL(objectUrlRef.current);
         objectUrlRef.current = null;
@@ -67,13 +86,28 @@ export function BibleShareSheet({
 
     void (async () => {
       try {
-        const shareUrl = buildShareUrl(usfm);
-        const blob = await renderVerseShareCard({
-          refLabel,
-          verseText,
-          accentHex,
-          shareUrl,
-        });
+        let blob: Blob;
+        if (isPlan) {
+          const result = await renderPlanShareBlob({
+            title: planTitle || refLabel || "Plan de lecture",
+            description: planDescription,
+            meta: planMeta,
+            accentHex,
+          });
+          blob = result.blob;
+          planTextRef.current = result.text;
+          planUrlRef.current = result.url;
+        } else {
+          const shareUrl = buildShareUrl(usfm);
+          blob = await renderVerseShareCard({
+            refLabel,
+            verseText,
+            accentHex,
+            shareUrl,
+          });
+          planTextRef.current = "";
+          planUrlRef.current = "";
+        }
         if (cancelled) return;
         blobRef.current = blob;
         if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
@@ -94,7 +128,17 @@ export function BibleShareSheet({
     return () => {
       cancelled = true;
     };
-  }, [open, refLabel, verseText, usfm, accentHex]);
+  }, [
+    open,
+    isPlan,
+    refLabel,
+    verseText,
+    usfm,
+    accentHex,
+    planTitle,
+    planDescription,
+    planMeta,
+  ]);
 
   useEffect(() => {
     return () => {
@@ -110,6 +154,24 @@ export function BibleShareSheet({
     setCopyBusy(true);
     setMsg(null);
     try {
+      if (isPlan) {
+        const text = planTextRef.current.trim();
+        if (!text) {
+          setMsg("Rien à copier");
+          return;
+        }
+        if (
+          typeof navigator !== "undefined" &&
+          navigator.clipboard &&
+          typeof navigator.clipboard.writeText === "function"
+        ) {
+          await navigator.clipboard.writeText(text);
+          setMsg("Texte copié");
+          return;
+        }
+        setMsg("Impossible de copier le texte");
+        return;
+      }
       const result = await copyVerseText({ refLabel, verseText, usfm });
       if (result.ok) {
         setMsg("Texte copié");
@@ -128,6 +190,26 @@ export function BibleShareSheet({
     setShareBusy(true);
     setMsg(null);
     try {
+      if (isPlan) {
+        const result = await shareVersePayload({
+          title: planTitle.trim() || "Biblos",
+          text: planTextRef.current,
+          url: planUrlRef.current,
+          file: blobRef.current,
+        });
+        if (result.ok) {
+          setMsg(
+            result.method === "clipboard"
+              ? "Image copiée"
+              : result.method === "download"
+                ? "Image téléchargée"
+                : null,
+          );
+          return;
+        }
+        if (!result.cancelled) setMsg(result.error);
+        return;
+      }
       const shareUrl = buildShareUrl(usfm);
       const result = await shareVersePayload({
         title: refLabel.trim() || "Biblos",
@@ -156,6 +238,9 @@ export function BibleShareSheet({
   if (!open) return null;
 
   const canShare = Boolean(blobRef.current) && !previewBusy && !previewError;
+  const canCopy = isPlan
+    ? Boolean(planTitle.trim() || planDescription.trim() || displayLabel.trim())
+    : Boolean(verseText);
 
   return (
     <div
@@ -174,12 +259,12 @@ export function BibleShareSheet({
           <YvIcon name="chevron_left" className="bible-search-sheet-back-icon" />
         </button>
         <p id={titleId} className="bible-search-sheet-title">
-          Partager
+          {isPlan ? "Partager le plan" : "Partager"}
         </p>
         <span className="bible-search-sheet-spacer" aria-hidden />
       </header>
 
-      <p className="bible-share-sheet-ref">{refLabel}</p>
+      <p className="bible-share-sheet-ref">{displayLabel}</p>
 
       <div className="bible-share-sheet-preview" aria-busy={previewBusy || undefined}>
         {previewBusy ? (
@@ -192,7 +277,7 @@ export function BibleShareSheet({
           <img
             className="bible-share-sheet-card"
             src={previewUrl}
-            alt={`Carte ${refLabel}`}
+            alt={`Carte ${displayLabel}`}
           />
         ) : null}
       </div>
@@ -202,7 +287,7 @@ export function BibleShareSheet({
           <button
             type="button"
             className="bible-yv-chip bible-share-sheet-copy"
-            disabled={copyBusy || !verseText}
+            disabled={copyBusy || !canCopy}
             onClick={() => void handleCopy()}
           >
             {copyBusy ? (

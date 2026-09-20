@@ -10,11 +10,36 @@ export type VerseShareCardInput = {
   footer?: string;
 };
 
+export type PlanShareCardInput = {
+  brand?: string;
+  /** Titre du plan (thème). */
+  title: string;
+  /** Intro / Devotional (texte brut). */
+  description?: string;
+  /** Ex. « 40 jours » / « 4 étapes ». */
+  meta?: string;
+  accentHex?: string | null;
+  shareUrl?: string;
+};
+
 /** Affiche un lien lisible sur le cartão (sans schéma https://). */
 export function formatShareUrlForCard(url: string): string {
   return String(url || "")
     .trim()
     .replace(/^https?:\/\//i, "");
+}
+
+/** Retire markdown / HTML léger pour le canvas. */
+export function plainShareText(raw: string): string {
+  return String(raw || "")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/?[^>]+>/g, "")
+    .replace(/\*\*|__/g, "")
+    .replace(/\*|_|~~|`/g, "")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/\r/g, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 }
 
 const W = 1080;
@@ -156,6 +181,96 @@ export async function renderVerseShareCard(
   }
 
   // Pied : règle discrète
+  const footerY = H - PAD_BOTTOM;
+  ctx.strokeStyle = "rgba(245, 242, 235, 0.14)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(PAD_X, footerY - 36);
+  ctx.lineTo(W - PAD_X, footerY - 36);
+  ctx.stroke();
+
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (blob) resolve(blob);
+        else reject(new Error("Échec de l’export PNG"));
+      },
+      "image/png",
+      0.92,
+    );
+  });
+}
+
+/** Cartão PNG pour partager un plan de lecture (pas un verset). */
+export async function renderPlanShareCard(
+  input: PlanShareCardInput,
+): Promise<Blob> {
+  await ensureFonts();
+
+  const canvas = document.createElement("canvas");
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas indisponible");
+
+  const accent = accentForDarkCard(input.accentHex);
+  const brand = (input.brand || "Biblos").trim();
+  const title = plainShareText(input.title || "Plan de lecture");
+  const description = plainShareText(input.description || "");
+  const meta = plainShareText(input.meta || "");
+
+  const bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, "#141a22");
+  bg.addColorStop(0.55, "#0d1117");
+  bg.addColorStop(1, "#0a0d12");
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.fillStyle = accent;
+  ctx.fillRect(PAD_X, PAD_TOP, 72, 6);
+
+  ctx.fillStyle = "#F5F2EB";
+  ctx.font = "700 56px Outfit, Avenir Next, Segoe UI, sans-serif";
+  ctx.textBaseline = "top";
+  ctx.fillText(brand, PAD_X, PAD_TOP + 28);
+
+  const maxTextWidth = W - PAD_X * 2;
+
+  ctx.fillStyle = accent;
+  ctx.font = "600 28px Outfit, Avenir Next, Segoe UI, sans-serif";
+  ctx.fillText("PLAN DE LECTURE", PAD_X, PAD_TOP + 110);
+
+  ctx.fillStyle = "#F5F2EB";
+  ctx.font = "700 52px Outfit, Avenir Next, Segoe UI, sans-serif";
+  let titleLines = wrapLines(ctx, title, maxTextWidth);
+  titleLines = truncateLines(titleLines, 3);
+  let y = PAD_TOP + 160;
+  for (const line of titleLines) {
+    ctx.fillText(line, PAD_X, y);
+    y += 62;
+  }
+
+  if (meta) {
+    y += 12;
+    ctx.fillStyle = "rgba(245, 242, 235, 0.58)";
+    ctx.font = "500 28px Outfit, Avenir Next, Segoe UI, sans-serif";
+    ctx.fillText(meta, PAD_X, y);
+    y += 48;
+  }
+
+  if (description) {
+    y += 16;
+    ctx.fillStyle = "#E8E4DC";
+    ctx.font = "italic 400 40px Source Serif 4, Georgia, serif";
+    const bodyMax = Math.max(4, Math.floor((H - PAD_BOTTOM - 80 - y) / 58));
+    let bodyLines = wrapLines(ctx, description, maxTextWidth);
+    bodyLines = truncateLines(bodyLines, Math.min(10, bodyMax));
+    for (const line of bodyLines) {
+      ctx.fillText(line, PAD_X, y);
+      y += 58;
+    }
+  }
+
   const footerY = H - PAD_BOTTOM;
   ctx.strokeStyle = "rgba(245, 242, 235, 0.14)";
   ctx.lineWidth = 2;

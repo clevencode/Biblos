@@ -397,7 +397,8 @@ export function FlashcardReview({
         <p className="muted flash-empty">{emptyMessage}</p>
         {onBackToList ? (
           <button type="button" className="flash-list-back flash-review-back" onClick={onBackToList}>
-            ← Retour
+            <YvIcon name="chevron_left" className="flash-list-back-icon" />
+            Retour
           </button>
         ) : null}
       </div>
@@ -498,7 +499,7 @@ export function FlashcardReview({
             disabled={!canGoPrev}
             onClick={() => go(-1)}
           >
-            ←
+            <YvIcon name="chevron_left" className="flash-nav-icon" />
           </button>
 
           <div
@@ -574,7 +575,7 @@ export function FlashcardReview({
             disabled={!canGoNext}
             onClick={() => go(1)}
           >
-            →
+            <YvIcon name="chevron_right" className="flash-nav-icon" />
           </button>
         </div>
 

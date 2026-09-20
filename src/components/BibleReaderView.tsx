@@ -208,6 +208,12 @@ type BibleReaderViewProps = {
   planReading?: {
     /** Nom affiché en haut (thème / titre du plan). */
     planName: string;
+    /** Titre du plan pour Partager (thème). */
+    planShareTitle?: string;
+    /** Intro Notion / Devotional. */
+    planDescription?: string;
+    /** Ex. « 40 jours ». */
+    planMeta?: string;
     label: string;
     /** Référence du pas courant — pour détecter une navigation hors plan. */
     focusRef: string;
@@ -487,6 +493,7 @@ export function BibleReaderView({
   const [searchOpen, setSearchOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [shareSheetOpen, setShareSheetOpen] = useState(false);
+  const [shareMode, setShareMode] = useState<"verse" | "plan">("verse");
   const [toolsMenuOpen, setToolsMenuOpen] = useState(false);
   const toolsMenuRef = useRef<HTMLDivElement | null>(null);
   const [offlineReady, setOfflineReady] = useState(false);
@@ -1142,6 +1149,21 @@ export function BibleReaderView({
           .filter(Boolean)
           .join(" ")
       : "";
+
+  const shareRefLabel = selectedVerses.length
+    ? formatSelectionFront(selectedBook?.title ?? bookId, chapterId, selectedVerses)
+    : "";
+  const shareUsfm = selectedVerses.length
+    ? selectionUsfm(bookId, chapterId, selectedVerses)
+    : "";
+  const shareVerseText = selectedVerseText;
+  const canShareVerse = Boolean(shareUsfm && shareVerseText);
+  const canSharePlan = Boolean(
+    planReading &&
+      (planReading.planShareTitle?.trim() ||
+        planReading.planName?.trim() ||
+        planReading.planDescription?.trim()),
+  );
   const selectedVerseCardId = useMemo(() => {
     if (!selection?.length) return null;
     return verseCardId(selectionUsfm(bookId, chapterId, selection));
@@ -1276,13 +1298,6 @@ export function BibleReaderView({
   const pickerColor = selectionMarkColor ?? activeVerseColor;
   /** Accent marque (cartão PNG) — or brand, pas la couleur de surlignage. */
   const shareAccentHex = "#C4A574";
-
-  const shareRefLabel =
-    selection?.length
-      ? formatSelectionFront(selectedBook?.title ?? bookId, chapterId, selection)
-      : "";
-  const shareUsfm =
-    selection?.length ? selectionUsfm(bookId, chapterId, selection) : "";
 
   const showCreateCard = Boolean(selectedVerses.length && selectedVerseText && !pickerOpen);
   const forceChrome =
@@ -1788,7 +1803,7 @@ export function BibleReaderView({
                   : "Retour au chapitre du plan"
               }
             >
-              ←
+              <YvIcon name="chevron_left" className="bible-yv-back-icon" />
             </button>
             <div className="bible-yv-plan-titles">
               <p className="bible-yv-plan-name" title={planHeaderTitle}>
@@ -1808,6 +1823,22 @@ export function BibleReaderView({
           </p>
         )}
         <div className="bible-yv-top-tools">
+          {planReading ? (
+            <button
+              type="button"
+              className="bible-yv-search-btn"
+              aria-label="Partager le plan"
+              title="Partager le plan"
+              disabled={!canSharePlan}
+              onClick={() => {
+                setToolsMenuOpen(false);
+                setShareMode("plan");
+                setShareSheetOpen(true);
+              }}
+            >
+              <YvIcon name="ios_share" className="bible-yv-tool-icon" />
+            </button>
+          ) : null}
           <button
             type="button"
             className="bible-yv-search-btn"
@@ -2135,8 +2166,11 @@ export function BibleReaderView({
               <button
                 type="button"
                 className="bible-yv-chip bible-share-verse"
-                disabled={!selectedVerseText}
-                onClick={() => setShareSheetOpen(true)}
+                disabled={!canShareVerse}
+                onClick={() => {
+                  setShareMode("verse");
+                  setShareSheetOpen(true);
+                }}
               >
                 <YvIcon name="ios_share" className="bible-verse-cta-icon" />
                 <span>Partager</span>
@@ -2436,10 +2470,18 @@ export function BibleReaderView({
       <BibleShareSheet
         open={shareSheetOpen}
         onClose={() => setShareSheetOpen(false)}
+        mode={shareMode}
         refLabel={shareRefLabel}
-        verseText={selectedVerseText}
+        verseText={shareVerseText}
         usfm={shareUsfm}
         accentHex={shareAccentHex}
+        planTitle={
+          planReading?.planShareTitle?.trim() ||
+          planReading?.planName?.trim() ||
+          ""
+        }
+        planDescription={planReading?.planDescription ?? ""}
+        planMeta={planReading?.planMeta ?? ""}
       />
 
       {ACTIVITY_UI_ENABLED ? (
