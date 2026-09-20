@@ -35,6 +35,23 @@ function normalizeHex(hex: string | null | undefined): string {
   return "#C4A574";
 }
 
+/** Accent lisible sur le fond sombre fixe du cartão (indépendant du thème app). */
+function accentForDarkCard(hex: string | null | undefined): string {
+  const normalized = normalizeHex(hex);
+  const r = Number.parseInt(normalized.slice(1, 3), 16);
+  const g = Number.parseInt(normalized.slice(3, 5), 16);
+  const b = Number.parseInt(normalized.slice(5, 7), 16);
+  const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+  // Trop sombre → or par défaut ; trop clair → légèrement assombri
+  if (luminance < 0.28) return "#C4A574";
+  if (luminance > 0.78) {
+    const darken = (c: number) => Math.max(0, Math.round(c * 0.72));
+    const toHex = (c: number) => darken(c).toString(16).padStart(2, "0");
+    return `#${toHex(r)}${toHex(g)}${toHex(b)}`.toUpperCase();
+  }
+  return normalized;
+}
+
 function wrapLines(
   ctx: CanvasRenderingContext2D,
   text: string,
@@ -90,7 +107,7 @@ export async function renderVerseShareCard(
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Canvas indisponible");
 
-  const accent = normalizeHex(input.accentHex);
+  const accent = accentForDarkCard(input.accentHex);
   const brand = (input.brand || "Biblos").trim();
   const verseText = String(input.verseText || "").trim();
   const link = formatShareUrlForCard(

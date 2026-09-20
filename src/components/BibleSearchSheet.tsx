@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { YvIcon } from "./YvIcon";
 import { searchVerses, type BibleSearchHit } from "../youversion/client";
 import {
   booksForSearchScope,
@@ -309,6 +310,14 @@ export function BibleSearchSheet({ open, onClose, onSelect }: BibleSearchSheetPr
       aria-label="Rechercher"
     >
       <div className="bible-search-sheet-field">
+        <button
+          type="button"
+          className="bible-search-sheet-back"
+          onClick={onClose}
+          aria-label="Fermer la recherche"
+        >
+          <YvIcon name="chevron_left" className="bible-search-sheet-back-icon" />
+        </button>
         <div className="bible-search-sheet-input-wrap">
           <span className="bible-search-sheet-glyph" aria-hidden>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -358,21 +367,6 @@ export function BibleSearchSheet({ open, onClose, onSelect }: BibleSearchSheetPr
             <span className="bible-search-sheet-clear-spacer" aria-hidden />
           )}
         </div>
-        <button
-          type="button"
-          className="bible-search-sheet-exit"
-          onClick={onClose}
-          aria-label="Fermer la recherche"
-        >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
-            <path
-              d="M3.2 3.2l7.6 7.6M10.8 3.2l-7.6 7.6"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-            />
-          </svg>
-        </button>
       </div>
 
       <div

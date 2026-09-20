@@ -437,7 +437,7 @@ export function FlashcardReview({
             onClick={onBackToList}
             aria-label="Retour à la liste"
           >
-            ←
+            <YvIcon name="chevron_left" className="flash-session-back-icon" />
           </button>
         ) : (
           <span className="flash-session-top-slot" aria-hidden="true" />

@@ -166,25 +166,18 @@ export function BibleShareSheet({
       aria-labelledby={titleId}
     >
       <header className="bible-search-sheet-head bible-share-sheet-head">
-        <span className="bible-search-sheet-spacer" aria-hidden />
-        <p id={titleId} className="bible-search-sheet-title">
-          Partager
-        </p>
         <button
           type="button"
-          className="bible-search-sheet-exit"
+          className="bible-search-sheet-back"
           onClick={onClose}
           aria-label="Fermer le partage"
         >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
-            <path
-              d="M3.2 3.2l7.6 7.6M10.8 3.2l-7.6 7.6"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-            />
-          </svg>
+          <YvIcon name="chevron_left" className="bible-search-sheet-back-icon" />
         </button>
+        <p id={titleId} className="bible-search-sheet-title">
+          Partager
+        </p>
+        <span className="bible-search-sheet-spacer" aria-hidden />
       </header>
 
       <p className="bible-share-sheet-ref">{shareLink}</p>
