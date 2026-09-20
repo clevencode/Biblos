@@ -257,37 +257,52 @@ export async function propResumoFull(token, pageId, props) {
 
 /**
  * Propriedade rich_text completa (paginada).
- * A API Notion trunca rich_text nas páginas (~2000 chars) — nunca confiar
- * só no valor inline para Plan / Description / Resumo / Note.
+ * A API Notion trunca rich_text nas páginas (~2000 chars).
+ * Inline curto → completo; inline longo → paginar com limite de segurança.
  */
 export async function propRichTextFull(token, pageId, props, propName) {
   const p = props?.[propName];
   const inline = resumoFromProp(p);
   const propId = String(p?.id ?? "");
-  if (!propId) return inline;
+  // Notion corta ~2000 chars no objeto página — abaixo disso o inline basta.
+  if (!propId || inline.length < 1900) return inline;
   try {
     const segments = [];
     let cursor;
+    let pages = 0;
+    const maxPages = 40;
     do {
+      pages += 1;
+      const encodedId = encodeURIComponent(propId);
       const q = cursor ? `?start_cursor=${encodeURIComponent(cursor)}` : "";
-      const body = await notionGet(token, `/pages/${pageId}/properties/${propId}${q}`);
+      const body = await notionGet(token, `/pages/${pageId}/properties/${encodedId}${q}`);
       if (body.object === "list") {
         for (const item of body.results ?? []) {
           const itemType = String(item.type ?? "");
           if (itemType === "rich_text" && item.rich_text) {
             segments.push(item.rich_text);
+          } else if (itemType === "text" && item.text) {
+            const text = typeof item.text === "string" ? item.text : item.text?.content;
+            if (text) segments.push({ plain_text: text, annotations: {} });
           } else if (typeof item.plain_text === "string" && item.plain_text) {
             segments.push({ plain_text: item.plain_text, annotations: {} });
           }
         }
-        cursor = body.has_more ? body.next_cursor : undefined;
+        const next = body.has_more ? body.next_cursor : null;
+        // Évite boucle infinie si le curseur ne avance pas
+        cursor = next && next !== cursor ? next : undefined;
         continue;
       }
-      if (body.type === "rich_text") return richTextToMarkdown(body.rich_text).trim();
+      if (body.type === "rich_text") return richTextToMarkdown(body.rich_text).trim() || inline;
+      if (body.type === "text") {
+        const text =
+          typeof body.text === "string" ? body.text : body.text?.content || "";
+        return String(text).trim() || inline;
+      }
       break;
-    } while (cursor);
+    } while (cursor && pages < maxPages);
     const full = richTextToMarkdown(segments).trim();
-    return full || inline;
+    return full.length >= inline.length ? full : inline;
   } catch {
     return inline;
   }

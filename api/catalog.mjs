@@ -31,6 +31,11 @@ function richFromProp(prop) {
   if (!prop) return "";
   if (prop.type === "rich_text") return richTextToMarkdown(prop.rich_text).trim();
   if (Array.isArray(prop.rich_text)) return richTextToMarkdown(prop.rich_text).trim();
+  if (prop.type === "text") {
+    if (typeof prop.text === "string") return prop.text.trim();
+    if (prop.text?.content) return String(prop.text.content).trim();
+    return richTextToMarkdown(prop.text).trim();
+  }
   return "";
 }
 
@@ -55,9 +60,11 @@ async function queryAll(token, databaseIds, filter = null) {
   let lastDetail = "";
 
   for (const databaseId of unique) {
+    // Notion-Version 2022-06-28 : data_sources/* → 400 invalid_request_url.
+    // On essaie d’abord /databases (id page DB), puis data_sources (collection).
     const endpoints = [
-      `https://api.notion.com/v1/data_sources/${databaseId}/query`,
       `https://api.notion.com/v1/databases/${databaseId}/query`,
+      `https://api.notion.com/v1/data_sources/${databaseId}/query`,
     ];
     for (const endpoint of endpoints) {
       const results = [];
@@ -460,7 +467,10 @@ function mapPlanPage(page, bodyText = "", planProp = "", description = "") {
   const id = page.id;
   const nome = titleFromProp(props.Nome) || "Plan";
   const theme = themeFromProp(findProp(props, "Thème", "Theme")) || nome;
-  const planField = richFromProp(findProp(props, "Plan", "Plan [extration ia]")) || planProp;
+  const inlinePlan = richFromProp(findProp(props, "Plan", "Plan [extration ia]"));
+  // Preferir texto completo (propPlanFull) — o inline da página é truncado ~2000 chars.
+  const planField =
+    planProp && planProp.length >= inlinePlan.length ? planProp : planProp || inlinePlan;
   const descriptionField =
     description || richFromProp(findProp(props, "Description", "Devotional")).trim();
   const source = bodyText.trim() ? bodyText : `${bodyText}\n${planField}`;
@@ -512,8 +522,9 @@ export function cardsToSeeds(cards) {
 }
 
 export async function buildCatalog(token, { full = false, scope = "shared" } = {}) {
-  const planDb = [envSafe("NOTION_PLAN_DB"), PLAN_DB, PLAN_PAGE_DB].filter(Boolean);
-  const cardDb = [envSafe("NOTION_BIBLECARDS_DB"), BIBLECARDS_DB, BIBLECARDS_PAGE_DB].filter(
+  // Page DB avant collection id (data_source) — /databases répond plus vite.
+  const planDb = [envSafe("NOTION_PLAN_DB"), PLAN_PAGE_DB, PLAN_DB].filter(Boolean);
+  const cardDb = [envSafe("NOTION_BIBLECARDS_DB"), BIBLECARDS_PAGE_DB, BIBLECARDS_DB].filter(
     Boolean,
   );
   const catalogScope = scope === "admin" ? "admin" : "shared";
@@ -573,8 +584,11 @@ export async function buildCatalog(token, { full = false, scope = "shared" } = {
   const cards = [];
   for (const page of cardPages) {
     const category = page.properties?.Category?.select?.name ?? "";
+    // mode=index : jamais fetch des blocs (294+ cartes → rate-limit / timeout,
+    // et le catalogue ne renvoyait jamais les plans). Le titre porte l’USFM.
+    // mode=full : corps VerseMark pour couleur / meta.
     const needBody =
-      full || String(category).toUpperCase() === "VERSEMARK";
+      full && String(category).toUpperCase() === "VERSEMARK";
     let body = "";
     if (needBody) {
       body = await fetchBlocksPlain(token, page.id);
