@@ -327,7 +327,7 @@ export function BibleSearchSheet({ open, onClose, onSelect }: BibleSearchSheetPr
           </span>
           <input
             ref={inputRef}
-            type="search"
+            type="text"
             className="bible-search-sheet-input"
             value={query}
             placeholder="Mot ou expression…"
@@ -344,28 +344,6 @@ export function BibleSearchSheet({ open, onClose, onSelect }: BibleSearchSheetPr
               }
             }}
           />
-          {query ? (
-            <button
-              type="button"
-              className="bible-search-sheet-clear"
-              aria-label="Effacer la recherche"
-              onClick={() => {
-                setQuery("");
-                inputRef.current?.focus();
-              }}
-            >
-              <svg width="12" height="12" viewBox="0 0 14 14" fill="none" aria-hidden>
-                <path
-                  d="M3.2 3.2l7.6 7.6M10.8 3.2l-7.6 7.6"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </button>
-          ) : (
-            <span className="bible-search-sheet-clear-spacer" aria-hidden />
-          )}
         </div>
       </div>
 
