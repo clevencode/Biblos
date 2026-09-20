@@ -3,6 +3,7 @@ import { searchVerses, type BibleSearchHit } from "../youversion/client";
 import {
   booksForSearchScope,
   CANON_BOOKS,
+  type CanonBook,
 } from "../youversion/canon";
 
 export type BibleSearchSheetProps = {
@@ -85,17 +86,28 @@ function bookTitle(bookId: string): string | null {
 }
 
 function scopeHint(scope: SearchScope, bookId: string): string {
-  if (scope === "all") return "Cherche un mot dans toute la Segond 21.";
-  const title = bookTitle(bookId);
-  if (title) return `Cherche dans ${title}.`;
-  if (scope === "at") return "Choisis un livre de l’Ancien Testament.";
-  if (scope === "nt") return "Choisis un livre du Nouveau Testament.";
-  return "Choisis un livre, ou annule le filtre.";
+  if (bookId) {
+    const title = bookTitle(bookId);
+    return title
+      ? `Cherche dans ${title}.`
+      : "Cherche dans ce livre.";
+  }
+  if (scope === "all") return "Cherche un mot, ou choisis un livre.";
+  if (scope === "at") return "Cherche dans l’Ancien Testament, ou choisis un livre.";
+  if (scope === "nt") return "Cherche dans le Nouveau Testament, ou choisis un livre.";
+  return "Cherche un mot ou choisis un livre.";
+}
+
+function booksInScope(scope: SearchScope): CanonBook[] {
+  if (scope === "at") return CANON_BOOKS.filter((b) => b.testament === "at");
+  if (scope === "nt") return CANON_BOOKS.filter((b) => b.testament === "nt");
+  return CANON_BOOKS;
 }
 
 export function BibleSearchSheet({ open, onClose, onSelect }: BibleSearchSheetProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const listRef = useRef<HTMLUListElement | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
   const [query, setQuery] = useState("");
   const [scope, setScope] = useState<SearchScope>("all");
   const [bookId, setBookId] = useState("");
@@ -103,18 +115,18 @@ export function BibleSearchSheet({ open, onClose, onSelect }: BibleSearchSheetPr
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
   const [results, setResults] = useState<BibleSearchHit[]>([]);
+  const [bookCounts, setBookCounts] = useState<Record<string, number>>({});
   const reqGen = useRef(0);
 
-  const filterActive = scope !== "all";
-  const bookReady = scope === "all" || Boolean(bookId);
-  const showBookList = filterActive && !bookId;
+  const showBookBrowser = !bookId;
   const bookFilter = useMemo(
-    () => (bookReady ? booksForSearchScope(scope, bookId) : null),
-    [scope, bookId, bookReady],
+    () => booksForSearchScope(scope, bookId || null),
+    [scope, bookId],
   );
   const activeFilterLabel = bookId
     ? bookTitle(bookId)
     : testamentLabel(scope);
+  const filterChipVisible = scope !== "all" || Boolean(bookId);
 
   const otBooks = useMemo(
     () => CANON_BOOKS.filter((book) => book.testament === "at"),
@@ -124,7 +136,28 @@ export function BibleSearchSheet({ open, onClose, onSelect }: BibleSearchSheetPr
     () => CANON_BOOKS.filter((book) => book.testament === "nt"),
     [],
   );
-  const booksForPanel = scope === "nt" ? ntBooks : otBooks;
+  const scopedBooks = useMemo(() => booksInScope(scope), [scope]);
+
+  const trimmed = query.trim();
+  const hasQuery = trimmed.length >= 2;
+  const matchingBookIds = useMemo(() => {
+    if (!hasQuery) return null;
+    return new Set(
+      Object.entries(bookCounts)
+        .filter(([, n]) => n > 0)
+        .map(([id]) => id.toUpperCase()),
+    );
+  }, [hasQuery, bookCounts]);
+
+  function visibleBooks(books: CanonBook[]): CanonBook[] {
+    if (!matchingBookIds) return books;
+    return books.filter((book) => matchingBookIds.has(book.id.toUpperCase()));
+  }
+
+  const visibleOt = visibleBooks(otBooks);
+  const visibleNt = visibleBooks(ntBooks);
+  const visibleScoped = visibleBooks(scopedBooks);
+  const booksWithHits = matchingBookIds?.size ?? 0;
 
   function clearFilter() {
     setScope("all");
@@ -172,7 +205,7 @@ export function BibleSearchSheet({ open, onClose, onSelect }: BibleSearchSheetPr
         setBookId("");
         return;
       }
-      if (filterActive) {
+      if (scope !== "all") {
         event.preventDefault();
         clearFilter();
         return;
@@ -181,14 +214,15 @@ export function BibleSearchSheet({ open, onClose, onSelect }: BibleSearchSheetPr
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose, filterActive, bookId]);
+  }, [open, onClose, scope, bookId]);
 
   useEffect(() => {
     if (!open) return;
     const q = query.trim();
-    if (q.length < 2 || !bookReady) {
+    if (q.length < 2) {
       setResults([]);
       setTotal(0);
+      setBookCounts({});
       setError(null);
       setBusy(false);
       return;
@@ -204,25 +238,68 @@ export function BibleSearchSheet({ open, onClose, onSelect }: BibleSearchSheetPr
           setError(res.error || "Recherche indisponible");
           setResults([]);
           setTotal(0);
+          setBookCounts({});
           setBusy(false);
           return;
         }
         setResults(res.results ?? []);
         setTotal(res.total ?? res.results?.length ?? 0);
+        const rawCounts = res.bookCounts ?? {};
+        const normalized: Record<string, number> = {};
+        for (const [id, n] of Object.entries(rawCounts)) {
+          const key = String(id || "").toUpperCase();
+          if (!key || !Number.isFinite(n)) continue;
+          normalized[key] = Number(n);
+        }
+        setBookCounts(normalized);
         setBusy(false);
-        listRef.current?.scrollTo({ top: 0 });
+        if (bookId) {
+          listRef.current?.scrollTo({ top: 0 });
+        } else {
+          panelRef.current?.scrollTo({ top: 0 });
+        }
       })();
     }, 280);
     return () => window.clearTimeout(timer);
-  }, [open, query, bookFilter, bookReady]);
+  }, [open, query, bookFilter, bookId]);
 
   if (!open) return null;
 
-  const trimmed = query.trim();
-  const showHint = trimmed.length < 2;
-  const waitingBook = filterActive && !bookId;
-  const showEmpty =
-    !busy && !showHint && !waitingBook && !error && results.length === 0;
+  const showHint = !hasQuery;
+  const showEmptyVerses =
+    !showBookBrowser &&
+    !busy &&
+    hasQuery &&
+    !error &&
+    results.length === 0;
+  const showEmptyBooks =
+    showBookBrowser &&
+    !busy &&
+    hasQuery &&
+    !error &&
+    booksWithHits === 0;
+
+  function renderBookButton(book: CanonBook) {
+    const count = bookCounts[book.id.toUpperCase()] ?? 0;
+    const showCount = hasQuery && !busy;
+    return (
+      <button
+        key={book.id}
+        type="button"
+        role="option"
+        aria-selected={false}
+        className="bible-search-book-option"
+        onClick={() => pickBook(book.id)}
+      >
+        <span className="bible-search-book-option-title">{book.title}</span>
+        {showCount ? (
+          <span className="bible-search-book-option-count" aria-label={`${count} occurrence${count === 1 ? "" : "s"}`}>
+            {count}
+          </span>
+        ) : null}
+      </button>
+    );
+  }
 
   return (
     <div
@@ -252,7 +329,7 @@ export function BibleSearchSheet({ open, onClose, onSelect }: BibleSearchSheetPr
             aria-label="Rechercher un mot"
             onChange={(event) => setQuery(event.target.value)}
             onKeyDown={(event) => {
-              if (event.key === "Enter" && results[0]) {
+              if (event.key === "Enter" && !showBookBrowser && results[0]) {
                 event.preventDefault();
                 onSelect(results[0]);
               }
@@ -318,8 +395,10 @@ export function BibleSearchSheet({ open, onClose, onSelect }: BibleSearchSheetPr
                   on && item.id !== "all"
                     ? bookId
                       ? "Toucher pour changer de livre"
-                      : "Toucher pour annuler le filtre"
-                    : undefined
+                      : "Toucher pour afficher tous les livres"
+                    : item.id === "all"
+                      ? "Tous les livres"
+                      : undefined
                 }
                 onClick={() => toggleScope(item.id)}
               >
@@ -329,7 +408,7 @@ export function BibleSearchSheet({ open, onClose, onSelect }: BibleSearchSheetPr
           })}
         </div>
 
-        {filterActive ? (
+        {filterChipVisible ? (
           <div className="bible-search-filter-chip">
             <span className="bible-search-filter-chip-text">
               Filtre · {activeFilterLabel ?? "Livre"}
@@ -346,112 +425,150 @@ export function BibleSearchSheet({ open, onClose, onSelect }: BibleSearchSheetPr
             </button>
           </div>
         ) : null}
+      </div>
 
-        {showBookList ? (
-          <div
-            className="bible-search-book-panel"
-            role="listbox"
-            aria-label={
-              scope === "nt"
+      <div className="bible-search-sheet-meta" aria-live="polite">
+        {busy ? (
+          <span>Recherche…</span>
+        ) : showHint ? (
+          <span>
+            {showBookBrowser
+              ? scope === "all"
+                ? "Tous les livres · tape un mot pour compter"
+                : `Livres · ${testamentLabel(scope)}`
+              : "Tape un mot (ex. parole, grâce)"}
+          </span>
+        ) : error ? (
+          <span className="bible-search-sheet-error">{error}</span>
+        ) : showBookBrowser ? (
+          <span>
+            {total} résultat{total === 1 ? "" : "s"}
+            {booksWithHits > 0
+              ? ` · ${booksWithHits} livre${booksWithHits === 1 ? "" : "s"}`
+              : ""}
+            {activeFilterLabel && scope !== "all" ? ` · ${activeFilterLabel}` : ""}
+          </span>
+        ) : (
+          <span>
+            {total} résultat{total === 1 ? "" : "s"}
+            {total > results.length ? ` · ${results.length} affichés` : ""}
+            {activeFilterLabel ? ` · ${activeFilterLabel}` : ""}
+          </span>
+        )}
+      </div>
+
+      {showBookBrowser ? (
+        <div
+          ref={panelRef}
+          className="bible-search-book-panel bible-search-book-panel--main"
+          role="listbox"
+          aria-label={
+            scope === "all"
+              ? "Tous les livres"
+              : scope === "nt"
                 ? "Livres du Nouveau Testament"
                 : "Livres de l’Ancien Testament"
-            }
-          >
+          }
+        >
+          {showHint ? (
+            <p className="bible-search-sheet-hint-inline muted">
+              {scopeHint(scope, bookId)}
+            </p>
+          ) : null}
+          {showEmptyBooks ? (
+            <p className="bible-search-sheet-empty">
+              Aucun verset trouvé
+              {scope !== "all" && activeFilterLabel ? ` dans ${activeFilterLabel}` : ""}.
+              {scope !== "all" ? (
+                <>
+                  {" "}
+                  <button
+                    type="button"
+                    className="bible-search-empty-clear"
+                    onClick={clearFilter}
+                  >
+                    Chercher partout
+                  </button>
+                </>
+              ) : null}
+            </p>
+          ) : null}
+          {!showEmptyBooks && scope === "all" ? (
+            <>
+              {visibleOt.length > 0 ? (
+                <div className="bible-search-book-section">
+                  <p className="bible-search-book-section-title">Ancien Testament</p>
+                  <div className="bible-search-book-grid">
+                    {visibleOt.map(renderBookButton)}
+                  </div>
+                </div>
+              ) : null}
+              {visibleNt.length > 0 ? (
+                <div className="bible-search-book-section">
+                  <p className="bible-search-book-section-title">Nouveau Testament</p>
+                  <div className="bible-search-book-grid">
+                    {visibleNt.map(renderBookButton)}
+                  </div>
+                </div>
+              ) : null}
+            </>
+          ) : null}
+          {!showEmptyBooks && scope !== "all" && visibleScoped.length > 0 ? (
             <div className="bible-search-book-section">
               <p className="bible-search-book-section-title">
                 {testamentLabel(scope)}
               </p>
               <div className="bible-search-book-grid">
-                {booksForPanel.map((book) => (
-                  <button
-                    key={book.id}
-                    type="button"
-                    role="option"
-                    aria-selected={false}
-                    className="bible-search-book-option"
-                    onClick={() => pickBook(book.id)}
-                  >
-                    {book.title}
-                  </button>
-                ))}
+                {visibleScoped.map(renderBookButton)}
               </div>
             </div>
-          </div>
-        ) : null}
-      </div>
-
-      {!showBookList ? (
-        <div className="bible-search-sheet-meta" aria-live="polite">
-          {busy ? (
-            <span>Recherche…</span>
-          ) : showHint ? (
-            <span>Tape un mot (ex. parole, grâce)</span>
-          ) : error ? (
-            <span className="bible-search-sheet-error">{error}</span>
-          ) : (
-            <span>
-              {total} résultat{total === 1 ? "" : "s"}
-              {total > results.length ? ` · ${results.length} affichés` : ""}
-              {activeFilterLabel ? ` · ${activeFilterLabel}` : ""}
-            </span>
-          )}
+          ) : null}
         </div>
       ) : (
-        <div className="bible-search-sheet-meta" aria-live="polite">
-          <span>Choisis un livre pour lancer la recherche</span>
-        </div>
-      )}
-
-      <ul
-        ref={listRef}
-        className="bible-search-sheet-list"
-        role="listbox"
-        aria-label="Résultats"
-      >
-        {!showBookList && (showHint || waitingBook) && !busy ? (
-          <li className="bible-search-sheet-empty bible-search-sheet-hint">
-            {scopeHint(scope, bookId)}
-          </li>
-        ) : null}
-        {showEmpty ? (
-          <li className="bible-search-sheet-empty">
-            Aucun verset trouvé
-            {activeFilterLabel ? ` dans ${activeFilterLabel}` : ""}.
-            {filterActive ? (
-              <>
-                {" "}
+        <ul
+          ref={listRef}
+          className="bible-search-sheet-list"
+          role="listbox"
+          aria-label="Résultats"
+        >
+          {showHint && !busy ? (
+            <li className="bible-search-sheet-empty bible-search-sheet-hint">
+              {scopeHint(scope, bookId)}
+            </li>
+          ) : null}
+          {showEmptyVerses ? (
+            <li className="bible-search-sheet-empty">
+              Aucun verset trouvé
+              {activeFilterLabel ? ` dans ${activeFilterLabel}` : ""}.
+              <button
+                type="button"
+                className="bible-search-empty-clear"
+                onClick={() => setBookId("")}
+              >
+                Autres livres
+              </button>
+            </li>
+          ) : null}
+          {results.map((hit) => {
+            const label = `${hit.bookTitle} ${hit.chapter}.${hit.verse}`;
+            return (
+              <li key={hit.usfm}>
                 <button
                   type="button"
-                  className="bible-search-empty-clear"
-                  onClick={clearFilter}
+                  className="bible-search-sheet-item"
+                  role="option"
+                  onClick={() => onSelect(hit)}
                 >
-                  Chercher partout
+                  <span className="bible-search-sheet-ref">{label}</span>
+                  <span className="bible-search-sheet-snippet">
+                    <HighlightSnippet text={hit.snippet} query={trimmed} />
+                  </span>
                 </button>
-              </>
-            ) : null}
-          </li>
-        ) : null}
-        {!showBookList
-          ? results.map((hit) => {
-              const label = `${hit.bookTitle} ${hit.chapter}.${hit.verse}`;
-              return (
-                <li key={hit.usfm}>
-                  <button
-                    type="button"
-                    className="bible-search-sheet-item"
-                    role="option"
-                    onClick={() => onSelect(hit)}
-                  >
-                    <span className="bible-search-sheet-ref">{label}</span>
-                    <span className="bible-search-sheet-snippet">
-                      <HighlightSnippet text={hit.snippet} query={trimmed} />
-                    </span>
-                  </button>
-                </li>
-              );
-            })
-          : null}
-      </ul>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </div>
   );
 }

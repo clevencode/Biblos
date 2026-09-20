@@ -126,11 +126,22 @@ export type BibleSearchHit = {
   snippet: string;
 };
 
+export type BibleSearchResponse = {
+  ok?: boolean;
+  hasKey?: boolean;
+  error?: string;
+  bible?: YouVersionBible;
+  q?: string;
+  total?: number;
+  results?: BibleSearchHit[];
+  bookCounts?: Record<string, number>;
+};
+
 export async function searchVerses(
   q: string,
   limit = 40,
   options?: { books?: string[] | null },
-) {
+): Promise<BibleSearchResponse> {
   const books = options?.books?.length
     ? options.books.map((id) => String(id).toUpperCase()).filter(Boolean)
     : null;
@@ -150,16 +161,12 @@ export async function searchVerses(
         q: local.q,
         total: local.total,
         results: local.results,
+        bookCounts: local.bookCounts,
       };
     }
   }
 
-  return bibleFetch<{
-    bible?: YouVersionBible;
-    q?: string;
-    total?: number;
-    results?: BibleSearchHit[];
-  }>({
+  return bibleFetch<BibleSearchResponse>({
     action: "search",
     q,
     limit,

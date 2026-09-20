@@ -10074,6 +10074,24 @@ ul.plan-yv-day-note-ref {
   scrollbar-width: thin;
 }
 
+.bible-search-book-panel--main {
+  max-height: none;
+  min-height: 0;
+  height: 100%;
+  padding: 2px 0 8px;
+  align-content: start;
+}
+
+.bible-search-sheet-hint-inline {
+  margin: 0 0 4px;
+  padding: 0 2px;
+  font-family: var(--font-ui);
+  font-size: var(--type-caption-size);
+  font-weight: var(--type-caption-weight);
+  line-height: var(--type-caption-lh);
+  color: color-mix(in srgb, var(--muted) 92%, var(--text));
+}
+
 .bible-search-book-section {
   display: grid;
   gap: 8px;
@@ -10101,6 +10119,10 @@ ul.plan-yv-day-note-ref {
   min-height: 44px;
   margin: 0;
   padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   border: 0;
   border-radius: 12px;
   background: color-mix(in srgb, var(--text) 6%, transparent);
@@ -10110,11 +10132,30 @@ ul.plan-yv-day-note-ref {
   font-weight: 600;
   line-height: 1.25;
   text-align: left;
+  cursor: pointer;
+  box-shadow: none;
+}
+
+.bible-search-book-option-title {
+  min-width: 0;
+  flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  cursor: pointer;
-  box-shadow: none;
+}
+
+.bible-search-book-option-count {
+  flex: none;
+  min-width: 1.75rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: color-mix(in srgb, var(--accent) 75%, var(--text));
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.35;
+  text-align: center;
 }
 
 .bible-search-book-option:hover {
@@ -10123,6 +10164,11 @@ ul.plan-yv-day-note-ref {
 
 .bible-search-book-option.is-on {
   background: var(--accent);
+  color: #fff;
+}
+
+.bible-search-book-option.is-on .bible-search-book-option-count {
+  background: color-mix(in srgb, #fff 22%, transparent);
   color: #fff;
 }
 

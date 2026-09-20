@@ -200,7 +200,7 @@ export function BibleShareSheet({
           <img
             className="bible-share-sheet-card"
             src={previewUrl}
-            alt={`Carte ${refLabel}`}
+            alt={`Carte ${shareLink || refLabel}`}
           />
         ) : null}
       </div>

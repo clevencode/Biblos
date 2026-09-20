@@ -5,7 +5,7 @@ export type VerseShareCardInput = {
   refLabel: string;
   verseText: string;
   accentHex?: string | null;
-  /** URL de partage affichée dans le bas de l’image (ex. https://www.biblo.digital/v/2TI.1.12). */
+  /** URL de partage affichée sous la marque (à la place de la référence). */
   shareUrl?: string;
   footer?: string;
 };
@@ -92,9 +92,8 @@ export async function renderVerseShareCard(
 
   const accent = normalizeHex(input.accentHex);
   const brand = (input.brand || "Biblos").trim();
-  const refLabel = String(input.refLabel || "").trim().toUpperCase();
   const verseText = String(input.verseText || "").trim();
-  const footer = formatShareUrlForCard(
+  const link = formatShareUrlForCard(
     input.shareUrl || input.footer || "biblo.digital",
   );
 
@@ -116,13 +115,17 @@ export async function renderVerseShareCard(
   ctx.textBaseline = "top";
   ctx.fillText(brand, PAD_X, PAD_TOP + 28);
 
-  // Reference
+  // Lien de partage (à la place de la référence)
+  const maxTextWidth = W - PAD_X * 2;
   ctx.fillStyle = accent;
-  ctx.font = "600 34px Outfit, Avenir Next, Segoe UI, sans-serif";
-  ctx.fillText(refLabel, PAD_X, PAD_TOP + 110);
+  ctx.font = "600 30px Outfit, Avenir Next, Segoe UI, sans-serif";
+  let linkDraw = link;
+  while (linkDraw.length > 8 && ctx.measureText(linkDraw).width > maxTextWidth) {
+    linkDraw = `${linkDraw.slice(0, -2)}…`;
+  }
+  ctx.fillText(linkDraw, PAD_X, PAD_TOP + 110);
 
   // Verse body
-  const maxTextWidth = W - PAD_X * 2;
   ctx.fillStyle = "#E8E4DC";
   ctx.font = "italic 400 46px Source Serif 4, Georgia, serif";
   const lineHeight = 68;
@@ -137,7 +140,7 @@ export async function renderVerseShareCard(
     y += lineHeight;
   }
 
-  // Footer rule + site
+  // Pied : règle discrète (le lien est déjà sous la marque)
   const footerY = H - PAD_BOTTOM;
   ctx.strokeStyle = "rgba(245, 242, 235, 0.14)";
   ctx.lineWidth = 2;
@@ -145,16 +148,6 @@ export async function renderVerseShareCard(
   ctx.moveTo(PAD_X, footerY - 36);
   ctx.lineTo(W - PAD_X, footerY - 36);
   ctx.stroke();
-
-  ctx.fillStyle = "rgba(245, 242, 235, 0.55)";
-  ctx.font = "500 26px Outfit, Avenir Next, Segoe UI, sans-serif";
-  ctx.textBaseline = "alphabetic";
-  const footerMax = W - PAD_X * 2;
-  let footerDraw = footer;
-  while (footerDraw.length > 8 && ctx.measureText(footerDraw).width > footerMax) {
-    footerDraw = `${footerDraw.slice(0, -2)}…`;
-  }
-  ctx.fillText(footerDraw, PAD_X, footerY);
 
   return new Promise((resolve, reject) => {
     canvas.toBlob(
