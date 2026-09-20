@@ -620,6 +620,7 @@ export function TodayView({
         planTitle={planTitle}
         planDescription={plan.description ?? ""}
         planMeta={planShareMeta}
+        planId={plan.id}
       />
 
       {days.length ? (

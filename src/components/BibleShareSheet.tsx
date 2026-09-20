@@ -21,6 +21,8 @@ export type BibleShareSheetProps = {
   planTitle?: string;
   planDescription?: string;
   planMeta?: string;
+  /** Id du plan dans Biblos (lien ?plan=). */
+  planId?: string | null;
 };
 
 export function BibleShareSheet({
@@ -34,6 +36,7 @@ export function BibleShareSheet({
   planTitle = "",
   planDescription = "",
   planMeta = "",
+  planId = null,
 }: BibleShareSheetProps) {
   const titleId = useId();
   const blobRef = useRef<Blob | null>(null);
@@ -92,6 +95,7 @@ export function BibleShareSheet({
             title: planTitle || refLabel || "Plan de lecture",
             description: planDescription,
             meta: planMeta,
+            planId,
             accentHex,
           });
           blob = result.blob;
@@ -138,6 +142,7 @@ export function BibleShareSheet({
     planTitle,
     planDescription,
     planMeta,
+    planId,
   ]);
 
   useEffect(() => {

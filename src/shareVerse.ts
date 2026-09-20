@@ -19,9 +19,51 @@ export function buildShareUrl(usfm: string): string {
   return `${SHARE_ORIGIN}/v/${encodeURIComponent(cleaned)}`;
 }
 
-/** Lien d’invitation au plan (app) — pas une ref verset. */
-export function buildPlanShareUrl(): string {
+/** Lien app du plan : https://www.biblo.digital/?plan={planId} */
+export function buildPlanShareUrl(planId?: string | null): string {
+  const id = String(planId || "").trim();
+  if (id) return `${SHARE_ORIGIN}/?plan=${encodeURIComponent(id)}`;
   return SHARE_ORIGIN;
+}
+
+const PLAN_PATH_RE = /^\/p\/([A-Za-z0-9._-]+)/i;
+
+export function parsePlanShareFromLocation(
+  loc: Pick<Location, "pathname" | "search"> = window.location,
+): string | null {
+  const pathMatch = loc.pathname.match(PLAN_PATH_RE);
+  if (pathMatch?.[1]) {
+    try {
+      return decodeURIComponent(pathMatch[1]).trim();
+    } catch {
+      return pathMatch[1].trim();
+    }
+  }
+  try {
+    const params = new URLSearchParams(loc.search);
+    const fromQuery = params.get("plan")?.trim();
+    if (fromQuery) return fromQuery;
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
+/** Lit le plan partagé (?plan= / /p/) et nettoie l’URL. */
+export function consumePlanShareFromUrl(): string | null {
+  if (typeof window === "undefined") return null;
+  const planId = parsePlanShareFromLocation(window.location);
+  if (!planId) return null;
+  try {
+    const url = new URL(window.location.href);
+    if (PLAN_PATH_RE.test(url.pathname)) url.pathname = "/";
+    url.searchParams.delete("plan");
+    const qs = url.searchParams.toString();
+    window.history.replaceState(null, "", qs ? `/?${qs}${url.hash}` : `/${url.hash}`);
+  } catch {
+    /* ignore */
+  }
+  return planId;
 }
 
 export function parseShareRefFromLocation(
@@ -110,13 +152,15 @@ export type SharePlanInput = {
   title: string;
   description?: string;
   meta?: string;
+  /** Id local du plan (deep link app). */
+  planId?: string | null;
   accentHex?: string | null;
 };
 
 export async function renderPlanShareBlob(
   input: SharePlanInput,
 ): Promise<{ blob: Blob; url: string; text: string }> {
-  const url = buildPlanShareUrl();
+  const url = buildPlanShareUrl(input.planId);
   const blob = await renderPlanShareCard({
     title: input.title,
     description: input.description,

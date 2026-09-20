@@ -61,7 +61,7 @@ import {
 import { useNarrow, useSplitLayout } from "./layout";
 import { chapterFocusFromRef, isPassageRef } from "./youversion/usfm";
 import { syncNativeChrome } from "./nativeChrome";
-import { consumeShareRefFromUrl } from "./shareVerse";
+import { consumePlanShareFromUrl, consumeShareRefFromUrl } from "./shareVerse";
 import {
   applyTheme,
   loadThemePref,
@@ -152,6 +152,7 @@ export function App() {
   const [bibleFocusRef, setBibleFocusRef] = useState<string | null>(null);
   const [bibleFocusSeq, setBibleFocusSeq] = useState(0);
   const shareBooted = useRef(false);
+  const pendingPlanShareRef = useRef<string | null>(null);
   const [nameGateOpen, setNameGateOpen] = useState(false);
   const pendingMarkRef = useRef<{
     color: string;
@@ -505,12 +506,25 @@ export function App() {
   useEffect(() => {
     if (shareBooted.current) return;
     shareBooted.current = true;
+    pendingPlanShareRef.current = consumePlanShareFromUrl();
     const ref = consumeShareRefFromUrl();
-    if (!ref) return;
-    openPassageInBible(ref);
+    if (ref) openPassageInBible(ref);
     // Boot-only: capture share deep-link once.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    const pending = pendingPlanShareRef.current;
+    if (!pending || !plans.length) return;
+    const needle = pending.replace(/^plan-/i, "").toLowerCase();
+    const match =
+      plans.find((plan) => plan.id === pending) ||
+      plans.find((plan) => plan.id.replace(/^plan-/i, "").toLowerCase() === needle);
+    if (!match) return;
+    pendingPlanShareRef.current = null;
+    pickPlan(match);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [plans]);
 
   function openCardChapter(card: Flashcard) {
     const frente = card.frente?.trim() ?? "";
@@ -1032,6 +1046,7 @@ export function App() {
                               return theme || nome || "Plan de lecture";
                             })(),
                             planDescription: activePlan.description ?? "",
+                            planShareId: activePlan.id,
                             planMeta: (() => {
                               const dayCount = sanitizePlanDays(activePlan.days).length;
                               const stageCount = activePlan.stages?.length ?? 0;

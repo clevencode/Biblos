@@ -212,6 +212,8 @@ type BibleReaderViewProps = {
     planShareTitle?: string;
     /** Intro Notion / Devotional. */
     planDescription?: string;
+    /** Id du plan (deep link app). */
+    planShareId?: string | null;
     /** Ex. « 40 jours ». */
     planMeta?: string;
     label: string;
@@ -2482,6 +2484,7 @@ export function BibleReaderView({
         }
         planDescription={planReading?.planDescription ?? ""}
         planMeta={planReading?.planMeta ?? ""}
+        planId={planReading?.planShareId ?? null}
       />
 
       {ACTIVITY_UI_ENABLED ? (
