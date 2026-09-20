@@ -7,8 +7,8 @@
   --line: #e5e7eb;
   --text: #0d1117;
   --muted: #6b7280;
-  --accent: #2563eb;
-  --accent-soft: #eff6ff;
+  --accent: #c4a574;
+  --accent-soft: #f5efe6;
   --danger: #c4554d;
   --danger-soft: #fdebec;
   --answer: #9f6b32;
@@ -116,8 +116,8 @@ html[data-theme="dark"] {
   --line: #21262d;
   --text: #ffffff;
   --muted: #9ca3af;
-  --accent: #2563eb;
-  --accent-soft: #1a2332;
+  --accent: #c4a574;
+  --accent-soft: #2a241c;
   --danger: #f85149;
   --danger-soft: #3d1f1f;
   --answer: #d4a574;
@@ -2808,7 +2808,7 @@ body {
   padding: 10px 14px;
   border: 1px solid var(--line);
   border-radius: 12px;
-  background: color-mix(in srgb, var(--accent, #2563eb) 10%, var(--panel));
+  background: color-mix(in srgb, var(--accent, #c4a574) 10%, var(--panel));
   color: var(--ink);
   font: inherit;
   font-size: 0.88rem;
@@ -2817,7 +2817,7 @@ body {
 }
 
 .profile-sync-btn:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--accent, #2563eb) 16%, var(--panel));
+  background: color-mix(in srgb, var(--accent, #c4a574) 16%, var(--panel));
 }
 
 .profile-sync-btn:disabled {
@@ -4071,13 +4071,13 @@ body {
 
 .calendar-plan-lu.is-done {
   opacity: 0.75;
-  border-color: var(--accent, #2563eb);
-  color: var(--accent, #2563eb);
+  border-color: var(--accent, #c4a574);
+  color: var(--accent, #c4a574);
 }
 
 .calendar-plan-lire:not(:disabled) {
-  background: var(--accent, #2563eb);
-  border-color: var(--accent, #2563eb);
+  background: var(--accent, #c4a574);
+  border-color: var(--accent, #c4a574);
   color: #fff;
 }
 
@@ -5072,7 +5072,7 @@ body {
 }
 
 .nota-resumo-p a {
-  color: var(--accent, #2563eb);
+  color: var(--accent, #c4a574);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
@@ -8272,7 +8272,7 @@ ul.plan-yv-day-note-ref {
 }
 
 .bible-yv-tools-item.is-ready {
-  color: var(--accent, #2563eb);
+  color: var(--accent, #c4a574);
 }
 
 .bible-yv-tools-item.is-busy {
