@@ -255,13 +255,16 @@ export async function propResumoFull(token, pageId, props) {
   return propRichTextFull(token, pageId, props, "Resumo");
 }
 
-/** Propriedade rich_text longa (paginada) — Devotional / Description / Resumo. */
+/**
+ * Propriedade rich_text completa (paginada).
+ * A API Notion trunca rich_text nas páginas (~2000 chars) — nunca confiar
+ * só no valor inline para Plan / Description / Resumo / Note.
+ */
 export async function propRichTextFull(token, pageId, props, propName) {
   const p = props?.[propName];
   const inline = resumoFromProp(p);
-  if (inline) return inline;
   const propId = String(p?.id ?? "");
-  if (!propId) return "";
+  if (!propId) return inline;
   try {
     const segments = [];
     let cursor;
@@ -283,9 +286,10 @@ export async function propRichTextFull(token, pageId, props, propName) {
       if (body.type === "rich_text") return richTextToMarkdown(body.rich_text).trim();
       break;
     } while (cursor);
-    return richTextToMarkdown(segments).trim();
+    const full = richTextToMarkdown(segments).trim();
+    return full || inline;
   } catch {
-    return "";
+    return inline;
   }
 }
 
@@ -308,6 +312,16 @@ function resolveRichTextPropName(props, ...candidates) {
 /** Description du PLAN DE LECTURE (intro) — pas Note. */
 export async function propDescriptionFull(token, pageId, props) {
   const name = resolveRichTextPropName(props, "Description", "Devotional");
+  if (!name || !props?.[name]) return "";
+  return propRichTextFull(token, pageId, props, name);
+}
+
+/**
+ * Propriété Plan (jours + étapes) — souvent > 2000 chars ;
+ * ex. « Plan [extration ia] ».
+ */
+export async function propPlanFull(token, pageId, props) {
+  const name = resolveRichTextPropName(props, "Plan", "Plan [extration ia]");
   if (!name || !props?.[name]) return "";
   return propRichTextFull(token, pageId, props, name);
 }

@@ -18,6 +18,7 @@ import {
   richTextToMarkdown,
   pageUuid,
   propDescriptionFull,
+  propPlanFull,
 } from "../shared/notion.mjs";
 
 function titleFromProp(prop) {
@@ -533,7 +534,14 @@ export async function buildCatalog(token, { full = false, scope = "shared" } = {
       body = await fetchBlocksPlain(token, page.id);
       await sleep(80);
     }
-    const planProp = richFromProp(findProp(page.properties, "Plan", "Plan [extration ia]"));
+    // Plan = jours/étapes (souvent > 2000 chars → endpoint propriété paginé).
+    let planProp = "";
+    try {
+      planProp = await propPlanFull(token, page.id, page.properties ?? {});
+      await sleep(80);
+    } catch {
+      planProp = richFromProp(findProp(page.properties, "Plan", "Plan [extration ia]"));
+    }
     // Description = intro do plano (uma vez ao iniciar). Note = notes diárias.
     let description = "";
     try {
