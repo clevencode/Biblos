@@ -57,6 +57,7 @@ import {
 import { resolveTheme, themePrefLabel, type ResolvedTheme, type ThemePref } from "../theme";
 import { loadChapterMarks, setVerseMarks } from "../verseMarks";
 import type { Flashcard } from "../types";
+import { parseUsfmLocation } from "../youversion/usfm";
 
 const STORAGE_KEY = "biblos-bible-reader";
 const BOOKS_CACHE_KEY = "biblos-bible-books-s21";
@@ -2465,7 +2466,11 @@ export function BibleReaderView({
         onSelect={(hit) => {
           setSearchOpen(false);
           setPickerOpen(false);
-          void loadChapter(hit.usfm.split(".")[0]!, String(hit.chapter), hit.verse);
+          const loc = parseUsfmLocation(hit.usfm);
+          const bookId = loc?.bookId || hit.usfm.split(".")[0]!;
+          const chapter = loc ? String(loc.chapter) : String(hit.chapter);
+          const verse = loc ? loc.verse : hit.verse;
+          void loadChapter(bookId, chapter, verse, loc?.verseEnd ?? null);
         }}
       />
 

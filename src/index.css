@@ -10594,6 +10594,26 @@ ul.plan-yv-day-note-ref {
   background: color-mix(in srgb, var(--text) 6%, transparent);
 }
 
+.bible-search-jump {
+  margin: 4px 8px 8px;
+  width: calc(100% - 16px);
+  padding: 14px 12px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.bible-search-jump:hover {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.bible-search-jump-kicker {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--accent) 62%, var(--text));
+}
+
 .bible-search-sheet-ref {
   font-size: 0.82rem;
   font-weight: 700;

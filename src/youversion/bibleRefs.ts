@@ -11,7 +11,14 @@
  * - Rm 6, Rm 8
  */
 
-import { foldBookKey, knownBookCode, toUsfm } from "./usfm";
+import {
+  foldBookKey,
+  isPassageRef,
+  knownBookCode,
+  parseUsfmLocation,
+  toUsfm,
+  type ParsedPassage,
+} from "./usfm";
 
 const BOOK =
   "(?:[123]\\s+)?[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'’.\\-]*(?:\\s+[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'’.\\-]*){0,4}";
@@ -47,6 +54,27 @@ function validRef(label: string): boolean {
 }
 
 type Ctx = { book: string | null; chapter: number | null; afterVerse: boolean };
+
+/**
+ * Si la requête de recherche est une référence (Jean 3.16, Jn 3:16, JHN.3.16),
+ * renvoie les passages à ouvrir — sinon une liste vide.
+ */
+export function passageJumpsFromQuery(raw: string): ParsedPassage[] {
+  const cleaned = clean(raw).replace(/\.+$/, "");
+  if (!cleaned || cleaned.length > 80) return [];
+  const seeds = expandBibleCitations(cleaned);
+  if (!seeds.length && isPassageRef(cleaned)) seeds.push(cleaned);
+  const out: ParsedPassage[] = [];
+  const seen = new Set<string>();
+  for (const seed of seeds) {
+    const loc = parseUsfmLocation(toUsfm(seed));
+    if (!loc) continue;
+    if (seen.has(loc.usfm)) continue;
+    seen.add(loc.usfm);
+    out.push(loc);
+  }
+  return out;
+}
 
 /**
  * Développe une chaîne de citations en références atomiques affichables.

@@ -347,13 +347,43 @@ export function formatVerseCardPlainRef(frente: string): string {
   return `${titleCaseWords(parsed.book)} ${parsed.chapter}.${parsed.versePart}`;
 }
 
+export type ParsedPassage = {
+  usfm: string;
+  bookId: string;
+  chapter: number;
+  verse: number | null;
+  verseEnd: number | null;
+};
+
+/** Décompose un USFM (ex. JHN.3.16-18) en livre / chapitre / versets. */
+export function parseUsfmLocation(usfm: string): ParsedPassage | null {
+  const normalized = normalizeUsfm(usfm);
+  const match = normalized.match(
+    /^([A-Z0-9]{2,3})\.(\d+)(?:\.(\d+)(?:-(\d+))?)?$/i,
+  );
+  if (!match) return null;
+  const bookId = match[1]!.toUpperCase();
+  const chapter = Number(match[2]);
+  const verse = match[3] ? Number(match[3]) : null;
+  const verseEnd = match[4] ? Number(match[4]) : null;
+  if (!Number.isFinite(chapter) || chapter < 1) return null;
+  if (verse != null && (!Number.isFinite(verse) || verse < 1)) return null;
+  if (verseEnd != null && (!Number.isFinite(verseEnd) || verseEnd < 1)) return null;
+  const usfmOut =
+    verse == null
+      ? `${bookId}.${chapter}`
+      : verseEnd != null && verseEnd !== verse
+        ? `${bookId}.${chapter}.${verse}-${verseEnd}`
+        : `${bookId}.${chapter}.${verse}`;
+  return { usfm: usfmOut, bookId, chapter, verse, verseEnd };
+}
+
 /** Référence chapitre seule (ex. « JEAN 3.16 » → « JHN.3 ») pour Lecture. */
 export function chapterFocusFromRef(reference: string): string | null {
   if (!isPassageRef(reference)) return null;
-  const usfm = toUsfm(reference);
-  const [book, chapter] = usfm.split(".");
-  if (!book || !chapter) return null;
-  return `${book}.${chapter}`;
+  const parsed = parseUsfmLocation(toUsfm(reference));
+  if (!parsed) return null;
+  return `${parsed.bookId}.${parsed.chapter}`;
 }
 
 /** True se o texto é uma referência de passagem com livro bíblico conhecido. */

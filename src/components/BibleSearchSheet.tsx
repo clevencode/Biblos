@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { YvIcon } from "./YvIcon";
 import { searchVerses, type BibleSearchHit } from "../youversion/client";
+import { passageJumpsFromQuery } from "../youversion/bibleRefs";
 import {
   booksForSearchScope,
   CANON_BOOKS,
   type CanonBook,
 } from "../youversion/canon";
+import type { ParsedPassage } from "../youversion/usfm";
 
 export type BibleSearchSheetProps = {
   open: boolean;
@@ -82,7 +84,7 @@ function testamentLabel(scope: SearchScope): string | null {
 }
 
 function bookTitle(bookId: string): string | null {
-  const book = CANON_BOOKS.find((item) => item.id === bookId);
+  const book = CANON_BOOKS.find((item) => item.id === bookId.toUpperCase());
   return book?.title ?? null;
 }
 
@@ -93,10 +95,30 @@ function scopeHint(scope: SearchScope, bookId: string): string {
       ? `Cherche dans ${title}.`
       : "Cherche dans ce livre.";
   }
-  if (scope === "all") return "Cherche un mot, ou choisis un livre.";
+  if (scope === "all") return "Cherche un mot, une référence (Jean 3.16), ou choisis un livre.";
   if (scope === "at") return "Cherche dans l’Ancien Testament, ou choisis un livre.";
   if (scope === "nt") return "Cherche dans le Nouveau Testament, ou choisis un livre.";
-  return "Cherche un mot ou choisis un livre.";
+  return "Cherche un mot, une référence, ou choisis un livre.";
+}
+
+function jumpLabel(jump: ParsedPassage): string {
+  const book = bookTitle(jump.bookId) ?? jump.bookId;
+  if (jump.verse == null) return `${book} ${jump.chapter}`;
+  if (jump.verseEnd != null && jump.verseEnd !== jump.verse) {
+    return `${book} ${jump.chapter}.${jump.verse}-${jump.verseEnd}`;
+  }
+  return `${book} ${jump.chapter}.${jump.verse}`;
+}
+
+function jumpToHit(jump: ParsedPassage): BibleSearchHit {
+  return {
+    usfm: jump.usfm,
+    bookTitle: bookTitle(jump.bookId) ?? jump.bookId,
+    chapter: jump.chapter,
+    verse: jump.verse ?? 0,
+    text: "",
+    snippet: "",
+  };
 }
 
 function booksInScope(scope: SearchScope): CanonBook[] {
@@ -140,6 +162,8 @@ export function BibleSearchSheet({ open, onClose, onSelect }: BibleSearchSheetPr
   const scopedBooks = useMemo(() => booksInScope(scope), [scope]);
 
   const trimmed = query.trim();
+  const jumps = useMemo(() => passageJumpsFromQuery(trimmed), [trimmed]);
+  const isJumpQuery = jumps.length > 0;
   const hasQuery = trimmed.length >= 2;
   const matchingBookIds = useMemo(() => {
     if (!hasQuery) return null;
@@ -220,7 +244,7 @@ export function BibleSearchSheet({ open, onClose, onSelect }: BibleSearchSheetPr
   useEffect(() => {
     if (!open) return;
     const q = query.trim();
-    if (q.length < 2) {
+    if (q.length < 2 || passageJumpsFromQuery(q).length > 0) {
       setResults([]);
       setTotal(0);
       setBookCounts({});
@@ -330,15 +354,21 @@ export function BibleSearchSheet({ open, onClose, onSelect }: BibleSearchSheetPr
             type="text"
             className="bible-search-sheet-input"
             value={query}
-            placeholder="Mot ou expression…"
+            placeholder="Mot, expression ou référence…"
             autoComplete="off"
             autoCorrect="off"
             spellCheck={false}
             enterKeyHint="search"
-            aria-label="Rechercher un mot"
+            aria-label="Rechercher un mot ou une référence"
             onChange={(event) => setQuery(event.target.value)}
             onKeyDown={(event) => {
-              if (event.key === "Enter" && !showBookBrowser && results[0]) {
+              if (event.key !== "Enter") return;
+              if (jumps[0]) {
+                event.preventDefault();
+                onSelect(jumpToHit(jumps[0]));
+                return;
+              }
+              if (!showBookBrowser && results[0]) {
                 event.preventDefault();
                 onSelect(results[0]);
               }
@@ -402,11 +432,17 @@ export function BibleSearchSheet({ open, onClose, onSelect }: BibleSearchSheetPr
       <div className="bible-search-sheet-meta" aria-live="polite">
         {busy ? (
           <span>Recherche…</span>
+        ) : isJumpQuery ? (
+          <span>
+            {jumps.length === 1
+              ? "Touche Entrée pour ouvrir le passage"
+              : `${jumps.length} passages · Entrée ouvre le premier`}
+          </span>
         ) : showHint ? (
           <span>
             {showBookBrowser
               ? scope === "all"
-                ? "Tous les livres · tape un mot pour compter"
+                ? "Tous les livres · mot ou référence (Jean 3.16)"
                 : `Livres · ${testamentLabel(scope)}`
               : "Tape un mot (ex. parole, grâce)"}
           </span>
@@ -429,7 +465,38 @@ export function BibleSearchSheet({ open, onClose, onSelect }: BibleSearchSheetPr
         )}
       </div>
 
-      {showBookBrowser ? (
+      {isJumpQuery ? (
+        <ul
+          className="bible-search-sheet-list"
+          role="listbox"
+          aria-label="Passages"
+        >
+          {jumps.map((jump, index) => {
+            const label = jumpLabel(jump);
+            return (
+              <li key={jump.usfm}>
+                <button
+                  type="button"
+                  className="bible-search-sheet-item bible-search-jump"
+                  role="option"
+                  aria-selected={index === 0}
+                  onClick={() => onSelect(jumpToHit(jump))}
+                >
+                  <span className="bible-search-jump-kicker">
+                    {index === 0 ? "Aller au passage" : "Ouvrir aussi"}
+                  </span>
+                  <span className="bible-search-sheet-ref">{label}</span>
+                  <span className="bible-search-sheet-snippet">
+                    {jump.verse == null
+                      ? "Ouvre ce chapitre"
+                      : "Ouvre ce verset dans la lecture"}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      ) : showBookBrowser ? (
         <div
           ref={panelRef}
           className="bible-search-book-panel bible-search-book-panel--main"
