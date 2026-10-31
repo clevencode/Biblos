@@ -18,5 +18,5 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src", "shared/notion.mjs"]
+  "include": ["src", "data/bible/s21/manifest.json", "shared/notion.mjs"]
 }

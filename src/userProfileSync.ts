@@ -158,6 +158,7 @@ export async function syncUserProfileToNotion(
  */
 export function startPresenceAndUsageSync(
   onProfile?: (profile: UserProfile) => void,
+  options?: { pauseWhile?: () => boolean },
 ): () => void {
   if (typeof window === "undefined") return () => undefined;
 
@@ -167,9 +168,14 @@ export function startPresenceAndUsageSync(
     });
   };
 
+  const pushIfAllowed = (presence: PresenceStatus) => {
+    if (options?.pauseWhile?.()) return;
+    push(presence);
+  };
+
   const onVisibility = () => {
     if (document.visibilityState === "visible") {
-      push("Online");
+      pushIfAllowed("Online");
     } else {
       push("Offline");
     }
@@ -179,11 +185,12 @@ export function startPresenceAndUsageSync(
     push("Offline");
   };
 
-  push(document.visibilityState === "visible" ? "Online" : "Offline");
+  pushIfAllowed(document.visibilityState === "visible" ? "Online" : "Offline");
   document.addEventListener("visibilitychange", onVisibility);
   window.addEventListener("pagehide", onPageHide);
 
   const heartbeat = window.setInterval(() => {
+    if (options?.pauseWhile?.()) return;
     if (document.visibilityState === "visible") {
       push("Online");
     }

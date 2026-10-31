@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type Dispatch, type MutableRefObject, type SetStateAction } from "react";
+import { Capacitor } from "@capacitor/core";
 import { listInboxSyncCards, listScopedFlashcards } from "./catalog";
 import { pullCatalog, persistCatalogCache } from "./catalogSync";
 import {
@@ -26,6 +27,15 @@ const INBOX_RECONCILE_MS = 25_000;
 
 const FLASHCARD_SYNC_MODES: CenterMode[] = ["cards"];
 
+function cloudSyncDeferred(modeRef: MutableRefObject<CenterMode>): boolean {
+  return Capacitor.isNativePlatform() && modeRef.current === "bible";
+}
+
+function cloudSyncPaused(): boolean {
+  if (typeof navigator !== "undefined" && navigator.onLine === false) return true;
+  return false;
+}
+
 /**
  * Polling Notion + révisions locales.
  * Catalogue via /api/catalog ; Description du plan actif via /api/description-sync
@@ -36,11 +46,14 @@ export function useNotionSync(options: {
   setCatalog: Dispatch<SetStateAction<Catalog>>;
   notesRef: MutableRefObject<Seed[]>;
   setRetentionTick: Dispatch<SetStateAction<number>>;
+  /** Ref estável — evita rearmar timers a cada troca de aba. */
+  modeRef: MutableRefObject<CenterMode>;
   mode: CenterMode;
   cardIds?: string[] | null;
   activePlan?: ReadingPlan | null;
 }): { notionHealth: "unknown" | "ok" | "no-token" | "down" } {
-  const { catalog, setCatalog, notesRef, setRetentionTick, mode, cardIds, activePlan } = options;
+  const { catalog, setCatalog, notesRef, setRetentionTick, modeRef, mode, cardIds, activePlan } =
+    options;
 
   const [notionHealth, setNotionHealth] = useState<"unknown" | "ok" | "no-token" | "down">("unknown");
   const catalogRef = useRef(catalog);
@@ -49,6 +62,7 @@ export function useNotionSync(options: {
   useEffect(() => subscribeFlashcardRevision(() => setRetentionTick((value) => value + 1)), [setRetentionTick]);
 
   useEffect(() => {
+    if (cloudSyncDeferred(modeRef) || cloudSyncPaused()) return;
     void (async () => {
       let base = ensureLocalMarksInCatalog(catalogRef.current);
       if (base !== catalogRef.current) {
@@ -70,14 +84,14 @@ export function useNotionSync(options: {
       await flushAdminMessageOutbox();
       await syncUserProfileToNotion();
     })();
-  }, [setCatalog]);
+  }, [setCatalog, modeRef]);
 
   useEffect(() => {
     let cancelled = false;
     let busy = false;
 
     async function syncCatalog() {
-      if (busy || cancelled) return;
+      if (busy || cancelled || cloudSyncDeferred(modeRef) || cloudSyncPaused()) return;
       busy = true;
       try {
         let base = ensureLocalMarksInCatalog(catalogRef.current);
@@ -120,7 +134,7 @@ export function useNotionSync(options: {
       window.clearInterval(timer);
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [setCatalog]);
+  }, [setCatalog, modeRef]);
 
   useEffect(() => {
     if (!activePlan?.url) return;
@@ -128,7 +142,15 @@ export function useNotionSync(options: {
     let busy = false;
 
     async function syncDescription() {
-      if (busy || cancelled || document.visibilityState === "hidden") return;
+      if (
+        busy ||
+        cancelled ||
+        document.visibilityState === "hidden" ||
+        cloudSyncDeferred(modeRef) ||
+        cloudSyncPaused()
+      ) {
+        return;
+      }
       busy = true;
       try {
         const result = await pullPlanDescription(catalogRef.current.plans, activePlan);
@@ -155,14 +177,22 @@ export function useNotionSync(options: {
       window.clearInterval(timer);
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [activePlan?.id, activePlan?.url, setCatalog]);
+  }, [activePlan?.id, activePlan?.url, setCatalog, modeRef]);
 
   useEffect(() => {
     let cancelled = false;
     let busy = false;
 
     async function reconcileInbox() {
-      if (busy || cancelled || document.visibilityState === "hidden") return;
+      if (
+        busy ||
+        cancelled ||
+        document.visibilityState === "hidden" ||
+        cloudSyncDeferred(modeRef) ||
+        cloudSyncPaused()
+      ) {
+        return;
+      }
       busy = true;
       try {
         const candidates = listInboxSyncCards(notesRef.current, []);
@@ -193,7 +223,7 @@ export function useNotionSync(options: {
       window.removeEventListener("online", onVisibility);
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [notesRef, setCatalog]);
+  }, [notesRef, setCatalog, modeRef]);
 
   useEffect(() => {
     let cancelled = false;

@@ -108,7 +108,7 @@ function writeOutbox(items: FlashcardOutboxItem[]) {
   localStorage.setItem(OUTBOX_KEY, JSON.stringify(items));
 }
 
-/** Fila durável StudyOS → Notion (sobrevive a fechar o PWA). */
+/** Fila durável local → Notion (sobrevive a fechar o app). */
 export function upsertOutbox(item: Omit<FlashcardOutboxItem, "at"> & { at?: string }) {
   const next: FlashcardOutboxItem = {
     id: item.id,

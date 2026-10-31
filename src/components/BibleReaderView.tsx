@@ -44,6 +44,7 @@ import {
   isOfflineBibleReady,
   type OfflineDownloadProgress,
 } from "../bibleOffline";
+import { ensureBibleIndexedFromBundle, useLocalBundledBible } from "../bibleEngine";
 import {
   adaptVerseColorForTheme,
   formatVerseColorHex,
@@ -724,6 +725,11 @@ export function BibleReaderView({
     void isOfflineBibleReady().then((ready) => {
       if (!cancelled) setOfflineReady(ready);
     });
+    if (useLocalBundledBible()) {
+      void ensureBibleIndexedFromBundle().then(() => {
+        if (!cancelled) void isOfflineBibleReady().then(setOfflineReady);
+      });
+    }
     return () => {
       cancelled = true;
       offlineAbortRef.current?.abort();
@@ -994,6 +1000,8 @@ export function BibleReaderView({
   }
 
   async function toggleOfflineBible() {
+    if (useLocalBundledBible()) return;
+
     if (offlineBusy) {
       offlineAbortRef.current?.abort();
       return;
@@ -1365,6 +1373,7 @@ export function BibleReaderView({
                 <span>{themeLabel}</span>
               </button>
             ) : null}
+            {!useLocalBundledBible() ? (
             <button
               type="button"
               role="menuitem"
@@ -1394,6 +1403,7 @@ export function BibleReaderView({
                     : "Télécharger hors ligne"}
               </span>
             </button>
+            ) : null}
             {ACTIVITY_UI_ENABLED ? (
               <button
                 type="button"

@@ -1,4 +1,5 @@
 import { apiUrl } from "../apiBase";
+import { localS21BooksResponse, useLocalBundledBible } from "../bibleEngine";
 import { toUsfm } from "./usfm";
 import {
   getOfflineMeta,
@@ -60,13 +61,9 @@ async function bibleFetch<T extends object>(
 }
 
 export async function fetchBooks() {
-  const network = await bibleFetch<{
-    bible?: YouVersionBible;
-    books?: YouVersionBook[];
-    usingFallback?: boolean;
-    fallbackReason?: string | null;
-  }>({ action: "books" });
-  if (network.ok && network.books?.length) return network;
+  if (useLocalBundledBible()) {
+    return localS21BooksResponse();
+  }
 
   const meta = await getOfflineMeta();
   if (meta?.books?.length) {
@@ -84,6 +81,15 @@ export async function fetchBooks() {
       fallbackReason: "offline",
     };
   }
+
+  const network = await bibleFetch<{
+    bible?: YouVersionBible;
+    books?: YouVersionBook[];
+    usingFallback?: boolean;
+    fallbackReason?: string | null;
+  }>({ action: "books" });
+  if (network.ok && network.books?.length) return network;
+
   return network;
 }
 
@@ -103,6 +109,14 @@ export async function fetchPassage(reference: string, _bibleId?: number) {
       },
       usingFallback: false,
       passage: local.passage,
+    };
+  }
+
+  if (useLocalBundledBible()) {
+    return {
+      ok: false,
+      hasKey: true,
+      error: local.error ?? "Passage introuvable",
     };
   }
 
@@ -164,6 +178,21 @@ export async function searchVerses(
         bookCounts: local.bookCounts,
       };
     }
+    if (useLocalBundledBible()) {
+      return {
+        ok: false,
+        hasKey: true,
+        error: local.error ?? "Index biblique en cours…",
+      };
+    }
+  }
+
+  if (useLocalBundledBible()) {
+    return {
+      ok: false,
+      hasKey: true,
+      error: "Index biblique en cours…",
+    };
   }
 
   return bibleFetch<BibleSearchResponse>({

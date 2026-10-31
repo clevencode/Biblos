@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { startTransition, useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { Capacitor } from "@capacitor/core";
 import seed from "./data/seed.json";
 import { FlashcardDeck } from "./components/FlashcardDeck";
 import { ModeTabIcon } from "./components/ModeTabIcon";
@@ -131,6 +132,21 @@ export function App() {
   const notes = catalog.notas;
   const plans = catalog.plans;
   const [mode, setMode] = useState<CenterMode>(() => resolveInitialMode(initialUi));
+  const modeRef = useRef(mode);
+  modeRef.current = mode;
+  const [bibleMounted, setBibleMounted] = useState(
+    () => resolveInitialMode(initialUi) === "bible",
+  );
+  useEffect(() => {
+    if (mode === "bible") setBibleMounted(true);
+  }, [mode]);
+
+  const selectMode = useCallback((next: CenterMode, opts?: { planDay?: boolean }) => {
+    startTransition(() => {
+      if (opts?.planDay === false) setPlanDay(false);
+      setMode(next);
+    });
+  }, []);
   /** Sous l’onglet Plan : détail du jour vs liste. */
   const [planDay, setPlanDay] = useState(
     () => initialUi.mode === "today" && initialUi.home === false,
@@ -206,7 +222,9 @@ export function App() {
 
   useEffect(() => {
     if (!isProfileOnboarded(profile)) return undefined;
-    const stopPresence = startPresenceAndUsageSync((next) => applySyncedProfile(next));
+    const stopPresence = startPresenceAndUsageSync((next) => applySyncedProfile(next), {
+      pauseWhile: () => Capacitor.isNativePlatform() && modeRef.current === "bible",
+    });
     const stopUsage = startAppUsageTracking(() => {
       void syncUserProfileToNotion(undefined, { presence: "Online" }).then((result) => {
         applySyncedProfile(result.profile);
@@ -296,7 +314,7 @@ export function App() {
     if (pendingMark) {
       setAuthorizedMark(pendingMark);
       setAuthorizedMarkSeq((value) => value + 1);
-      setMode("bible");
+      selectMode("bible");
     }
     void syncUserProfileToNotion(next).then((result) => {
       applySyncedProfile(result.profile);
@@ -370,7 +388,7 @@ export function App() {
       });
     }
     setCardReturnToBible(true);
-    setMode("cards");
+    selectMode("cards");
     setCardFocusId(cardId);
     setCardFocusSeq((value) => value + 1);
   }
@@ -378,7 +396,7 @@ export function App() {
   function returnFromVerseFlashcard() {
     setCardReturnToBible(false);
     setCardFocusId(null);
-    setMode("bible");
+    selectMode("bible");
   }
   const allFlashcards = useMemo(
     () => listAllFlashcards(notes, null).map(mergeCard),
@@ -406,7 +424,7 @@ export function App() {
       setHomeUnread(countUnreadAppNotifications());
     }, 15_000);
     return () => window.clearInterval(id);
-  }, [plans, planProgressTick, mode]);
+  }, [plans, planProgressTick]);
 
   const planProgress = useMemo(() => {
     if (!activePlan) return null;
@@ -434,6 +452,7 @@ export function App() {
     setCatalog,
     notesRef,
     setRetentionTick,
+    modeRef,
     mode,
     cardIds: scopedCardIds,
     activePlan,
@@ -456,11 +475,13 @@ export function App() {
   }, [planId, plans]);
 
   useEffect(() => {
-    writeUi({
+    const session: UiSession = {
       home: mode === "today" ? !planDay : undefined,
       mode,
       planId: activePlan?.id,
-    });
+    };
+    const id = window.setTimeout(() => writeUi(session), 200);
+    return () => window.clearTimeout(id);
   }, [activePlan?.id, mode, planDay]);
 
   useEffect(() => {
@@ -481,17 +502,17 @@ export function App() {
 
   function goGalerie() {
     setPlanDay(false);
-    setMode("today");
+    selectMode("today");
   }
 
   function goHome() {
-    setMode("home");
+    selectMode("home");
   }
 
   function pickPlan(plan: ReadingPlan) {
     setPlanId(plan.id);
     setPlanDay(true);
-    setMode("today");
+    selectMode("today");
   }
 
   function openPassageInBible(reference: string, opts?: { keepPlanReading?: boolean }) {
@@ -500,7 +521,7 @@ export function App() {
     if (!opts?.keepPlanReading) setPlanReading(null);
     setBibleFocusRef(ref);
     setBibleFocusSeq((value) => value + 1);
-    setMode("bible");
+    selectMode("bible");
   }
 
   useEffect(() => {
@@ -572,7 +593,7 @@ export function App() {
 
   function restorePlanFlow(returnTo: PlanReadingReturnTo, jour: number) {
     setPlanDay(true);
-    setMode("today");
+    selectMode("today");
     if (returnTo === "dayNote") {
       setDayNoteFocus({ jour, seq: Date.now() });
       setPlanIntroFocus(null);
@@ -592,7 +613,7 @@ export function App() {
   function exitPlanReading() {
     if (!planReading) {
       setPlanDay(true);
-      setMode("today");
+      selectMode("today");
       setPlanResumeSeq((value) => value + 1);
       return;
     }
@@ -630,7 +651,7 @@ export function App() {
           restorePlanFlow("dayNote", jour);
         } else if (!alreadySeen && !noteAlready) {
           setPlanDay(true);
-          setMode("today");
+          selectMode("today");
           setPlanIntroFocus(null);
           setDayNoteFocus({ jour: current.jour, seq: Date.now() });
         } else {
@@ -847,7 +868,7 @@ export function App() {
     const index = Math.max(0, items.indexOf(mode));
     const next = items[(index + (event.key === "ArrowRight" ? 1 : -1) + items.length) % items.length];
     if (next === "today") setPlanDay(false);
-    setMode(next);
+    selectMode(next);
     document.getElementById(`tab-${next}`)?.focus();
   }
 
@@ -948,8 +969,7 @@ export function App() {
                       title={item.label}
                       tabIndex={on ? 0 : -1}
                       onClick={() => {
-                        if (item.id === "today") setPlanDay(false);
-                        setMode(item.id);
+                        selectMode(item.id, { planDay: item.id === "today" ? false : undefined });
                       }}
                     >
                       <ModeTabIcon name={item.id} active={on} />
@@ -1006,13 +1026,14 @@ export function App() {
                   hidden={mode !== "bible"}
                   className="pane-body"
                 >
+                  {bibleMounted ? (
                   <BibleReaderView
                     initialRef="Jean 3.16"
                     focusRef={bibleFocusRef}
                     focusSeq={bibleFocusSeq}
                     active={mode === "bible"}
                     onBack={planReading ? exitPlanReading : () => {
-                      if (planDay) setMode("today");
+                      if (planDay) selectMode("today");
                       else goHome();
                     }}
                     planReading={
@@ -1100,6 +1121,7 @@ export function App() {
                       setActivityTick((n) => n + 1);
                     }}
                   />
+                  ) : null}
                 </div>
                 <div
                   id="panel-cards"

@@ -278,7 +278,7 @@ export async function flushFlashcardQueue(): Promise<{ flushed: number; remainin
 
 /**
  * Se há dirty sem outbox (sessão antiga), promove o override local para a fila durável.
- * Evita o PWA ficar para sempre a ignorar o Notion noutro aparelho.
+ * Evita o app ficar para sempre a ignorar o Notion noutro aparelho.
  */
 export function promoteDirtyOverridesToOutbox(
   cards: Array<{ id: string; url: string }>,

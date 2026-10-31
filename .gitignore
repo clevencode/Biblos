@@ -51,4 +51,6 @@ android/local.properties
 *.sln
 *.sw?
 
+public/bible/
+
 .vercel

@@ -1,9 +1,11 @@
 /**
  * Bible S21 hors ligne — IndexedDB (~6 Mo, 66 livres).
- * Téléchargement via /api/youversion?action=book&usfm=…
+ * Mobile : assets embarqués (/bible/s21/…) ; web : fallback /api/youversion.
  */
 
+import { Capacitor } from "@capacitor/core";
 import { apiUrl } from "./apiBase";
+import { fetchBundledBookJson } from "./bibleS21Canon";
 import type {
   BibleSearchHit,
   YouVersionBook,
@@ -138,6 +140,25 @@ async function putMeta(meta: OfflineBibleMeta): Promise<void> {
   }
 }
 
+/** Livro: IndexedDB → assets embarquados (mobile) → null. Grava no IDB quando lê do bundle. */
+export async function resolveS21Book(usfm: string): Promise<S21BookJson | null> {
+  const key = String(usfm || "")
+    .trim()
+    .toUpperCase()
+    .split(".")[0];
+  if (!key) return null;
+  const cached = await getOfflineBook(key);
+  if (cached) return cached;
+  if (Capacitor.isNativePlatform()) {
+    const bundled = await fetchBundledBookJson(key);
+    if (bundled) {
+      await putBook(key, bundled);
+      return bundled;
+    }
+  }
+  return null;
+}
+
 export async function getOfflineBook(usfm: string): Promise<S21BookJson | null> {
   const key = String(usfm || "")
     .trim()
@@ -221,7 +242,7 @@ export async function offlinePassage(
 ): Promise<{ ok: true; passage: YouVersionPassage } | { ok: false; error: string }> {
   const usfm = toUsfm(reference);
   const ref = parseUsfmRef(usfm);
-  const bookJson = await getOfflineBook(ref.book);
+  const bookJson = await resolveS21Book(ref.book);
   if (!bookJson) {
     return { ok: false, error: "Livre hors ligne introuvable" };
   }
@@ -361,7 +382,16 @@ export async function offlineSearch(
 }
 
 async function fetchBookPayload(usfm: string): Promise<S21BookJson> {
-  const qs = new URLSearchParams({ action: "book", usfm });
+  const key = String(usfm || "")
+    .trim()
+    .toUpperCase()
+    .split(".")[0];
+  if (Capacitor.isNativePlatform()) {
+    const bundled = await fetchBundledBookJson(key);
+    if (bundled) return bundled;
+    throw new Error(`Livre introuvable dans le bundle (${key})`);
+  }
+  const qs = new URLSearchParams({ action: "book", usfm: key });
   const res = await fetch(apiUrl(`/api/youversion?${qs.toString()}`));
   const json = (await res.json()) as {
     ok?: boolean;
@@ -369,9 +399,69 @@ async function fetchBookPayload(usfm: string): Promise<S21BookJson> {
     book?: S21BookJson;
   };
   if (!json.ok || !json.book?.chapters) {
-    throw new Error(json.error || `Échec téléchargement ${usfm}`);
+    throw new Error(json.error || `Échec téléchargement ${key}`);
   }
   return json.book;
+}
+
+/**
+ * Indexa os 66 livros a partir dos JSON embarcados (APK) — sem rede.
+ */
+export async function seedOfflineBibleFromBundledAssets(
+  bookList: YouVersionBook[],
+  onProgress?: (done: number, total: number, usfm: string) => void,
+): Promise<OfflineBibleMeta> {
+  const list = bookList.filter((b) => b?.id);
+  if (!list.length) throw new Error("Liste de livres vide");
+
+  const total = list.length;
+  let done = 0;
+  const concurrency = 2;
+  let cursor = 0;
+
+  const yieldMain = () =>
+    new Promise<void>((resolve) => {
+      if (typeof requestIdleCallback === "function") {
+        requestIdleCallback(() => resolve(), { timeout: 48 });
+      } else {
+        setTimeout(resolve, 0);
+      }
+    });
+
+  async function worker() {
+    while (cursor < list.length) {
+      const index = cursor++;
+      const book = list[index]!;
+      const usfm = book.id.toUpperCase();
+      const json = await fetchBundledBookJson(usfm);
+      if (!json) throw new Error(`Asset manquant: ${usfm}`);
+      await putBook(usfm, json);
+      done += 1;
+      onProgress?.(done, total, usfm);
+      await putMeta({
+        key: META_KEY,
+        complete: false,
+        count: done,
+        total,
+        at: Date.now(),
+        books: bookList,
+      });
+      await yieldMain();
+    }
+  }
+
+  await Promise.all(Array.from({ length: Math.min(concurrency, list.length) }, () => worker()));
+
+  const meta: OfflineBibleMeta = {
+    key: META_KEY,
+    complete: true,
+    count: done,
+    total,
+    at: Date.now(),
+    books: bookList,
+  };
+  await putMeta(meta);
+  return meta;
 }
 
 /**

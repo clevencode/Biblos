@@ -2,6 +2,7 @@ import {
   clearOfflineBible,
   isOfflineBibleReady,
 } from "../bibleOffline";
+import { ensureBibleIndexedFromBundle, useLocalBundledBible } from "../bibleEngine";
 import { YvIcon } from "./YvIcon";
 import {
   ACTIVITY_UI_ENABLED,
@@ -123,6 +124,7 @@ export function ProfileView({
   const [accountSession, setAccountSession] = useState(false);
   const [offlineReady, setOfflineReady] = useState(false);
   const [offlineClearBusy, setOfflineClearBusy] = useState(false);
+  const bundledBible = useLocalBundledBible();
   const [fullName, setFullName] = useState(() =>
     joinFullName(profile.firstName, profile.lastName),
   );
@@ -193,10 +195,18 @@ export function ProfileView({
     void isOfflineBibleReady().then((ready) => {
       if (!cancelled) setOfflineReady(ready);
     });
+    if (!bundledBible) {
+      return () => {
+        cancelled = true;
+      };
+    }
+    void ensureBibleIndexedFromBundle().then(() => {
+      if (!cancelled) void isOfflineBibleReady().then(setOfflineReady);
+    });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [bundledBible]);
 
   useEffect(() => {
     setActivities(listActivityForUser(profile.id, 12));
@@ -316,15 +326,18 @@ export function ProfileView({
   async function confirmClearOfflineBible() {
     if (offlineClearBusy || !offlineReady) return;
     const ok = window.confirm(
-      "Supprimer la Bible hors ligne (~6 Mo) de cet appareil ?",
+      bundledBible
+        ? "Supprimer l’index local de recherche (~6 Mo) ? La lecture Segond 21 reste incluse."
+        : "Supprimer la Bible hors ligne (~6 Mo) de cet appareil ?",
     );
     if (!ok) return;
     setOfflineClearBusy(true);
     try {
       await clearOfflineBible();
       setOfflineReady(false);
+      if (bundledBible) void ensureBibleIndexedFromBundle();
     } catch {
-      window.alert("Impossible de supprimer la Bible hors ligne. Réessaie.");
+      window.alert("Impossible de supprimer l’index local. Réessaie.");
     } finally {
       setOfflineClearBusy(false);
     }
@@ -673,10 +686,22 @@ export function ProfileView({
                 <span className="profile-fact-label">Traduction</span>
                 <span className="profile-fact-value">Segond 21</span>
               </li>
+              {bundledBible ? (
+                <li>
+                  <span className="profile-fact-label">Texte</span>
+                  <span className="profile-fact-value">Incluse dans l’app</span>
+                </li>
+              ) : null}
               <li>
-                <span className="profile-fact-label">Hors ligne</span>
+                <span className="profile-fact-label">
+                  {bundledBible ? "Index recherche" : "Hors ligne"}
+                </span>
                 <span className="profile-fact-value">
-                  {offlineReady ? "Disponible" : "Non téléchargée"}
+                  {offlineReady
+                    ? "Prêt"
+                    : bundledBible
+                      ? "Préparation…"
+                      : "Non téléchargée"}
                 </span>
               </li>
             </ul>
@@ -690,8 +715,14 @@ export function ProfileView({
                 <YvIcon name="delete" className="profile-offline-remove-icon" />
                 {offlineClearBusy
                   ? "Suppression…"
-                  : "Supprimer le téléchargement"}
+                  : bundledBible
+                    ? "Supprimer l’index local"
+                    : "Supprimer le téléchargement"}
               </button>
+            ) : bundledBible ? (
+              <p className="profile-id-hint muted">
+                L’index pour la recherche se prépare en arrière-plan (sans réseau).
+              </p>
             ) : (
               <p className="profile-id-hint muted">
                 Télécharge la Bible depuis Lecture pour l’utiliser hors ligne.
@@ -1042,7 +1073,7 @@ export function ProfileView({
                 <li>Progression et historique</li>
                 <li>Notes et versets marqués</li>
                 <li>Flashcards</li>
-                <li>Bible hors ligne</li>
+                <li>Bible Segond 21 (locale sur mobile)</li>
               </ul>
               <p className="profile-delete-dialog-foot muted">
                 Cette action est irréversible. Tu ne pourras pas récupérer ces
