@@ -41,6 +41,11 @@ type ApiResult<T> = T & {
   error?: string;
 };
 
+function canReachYouVersionApi(): boolean {
+  if (useLocalBundledBible()) return false;
+  return typeof navigator === "undefined" || navigator.onLine !== false;
+}
+
 async function bibleFetch<T extends object>(
   params: Record<string, string | number | undefined>,
 ): Promise<ApiResult<T>> {
@@ -82,6 +87,13 @@ export async function fetchBooks() {
     };
   }
 
+  if (!canReachYouVersionApi()) {
+    return {
+      ok: false,
+      error: "Hors ligne — ouvre la Bible ou installe les livres locaux.",
+    };
+  }
+
   const network = await bibleFetch<{
     bible?: YouVersionBible;
     books?: YouVersionBook[];
@@ -117,6 +129,14 @@ export async function fetchPassage(reference: string, _bibleId?: number) {
       ok: false,
       hasKey: true,
       error: local.error ?? "Passage introuvable",
+    };
+  }
+
+  if (!canReachYouVersionApi()) {
+    return {
+      ok: false,
+      hasKey: true,
+      error: local.error ?? "Hors ligne — texte non disponible sans cache local.",
     };
   }
 
@@ -192,6 +212,14 @@ export async function searchVerses(
       ok: false,
       hasKey: true,
       error: "Index biblique en cours…",
+    };
+  }
+
+  if (!canReachYouVersionApi()) {
+    return {
+      ok: false,
+      hasKey: true,
+      error: "Hors ligne — recherche indisponible sans index local.",
     };
   }
 

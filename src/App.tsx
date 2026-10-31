@@ -1,4 +1,4 @@
-import { startTransition, useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { Capacitor } from "@capacitor/core";
 import seed from "./data/seed.json";
 import { FlashcardDeck } from "./components/FlashcardDeck";
@@ -140,12 +140,19 @@ export function App() {
   useEffect(() => {
     if (mode === "bible") setBibleMounted(true);
   }, [mode]);
+  const [homeMounted, setHomeMounted] = useState(
+    () => resolveInitialMode(initialUi) === "home",
+  );
+  const [profileMounted, setProfileMounted] = useState(
+    () => resolveInitialMode(initialUi) === "profile",
+  );
+  useEffect(() => {
+    if (mode === "home") setHomeMounted(true);
+    if (mode === "profile") setProfileMounted(true);
+  }, [mode]);
 
-  const selectMode = useCallback((next: CenterMode, opts?: { planDay?: boolean }) => {
-    startTransition(() => {
-      if (opts?.planDay === false) setPlanDay(false);
-      setMode(next);
-    });
+  const selectMode = useCallback((next: CenterMode) => {
+    setMode((prev) => (prev === next ? prev : next));
   }, []);
   /** Sous l’onglet Plan : détail du jour vs liste. */
   const [planDay, setPlanDay] = useState(
@@ -193,7 +200,6 @@ export function App() {
   const [planIntroFocus, setPlanIntroFocus] = useState<{ seq: number } | null>(null);
   const [planResumeSeq, setPlanResumeSeq] = useState(0);
   const [retentionTick, setRetentionTick] = useState(0);
-  const [bibleChromeHidden, setBibleChromeHidden] = useState(false);
   const [themePref, setThemePref] = useState<ThemePref>(() => loadThemePref());
   const [profile, setProfile] = useState<UserProfile>(() => loadOrCreateProfile());
   const [activityTick, setActivityTick] = useState(0);
@@ -403,12 +409,10 @@ export function App() {
     [notes, retentionTick],
   );
   const savedVerses = useMemo(() => {
-    void mode;
     void activityTick;
     void retentionTick;
-    void notes;
     return listAllVerseMarks();
-  }, [mode, activityTick, retentionTick, notes]);
+  }, [activityTick, retentionTick]);
 
   const activeCardsCount = useMemo(
     () => cards.filter((card) => card.status !== "encerrado").length,
@@ -483,10 +487,6 @@ export function App() {
     const id = window.setTimeout(() => writeUi(session), 200);
     return () => window.clearTimeout(id);
   }, [activePlan?.id, mode, planDay]);
-
-  useEffect(() => {
-    if (mode !== "bible") setBibleChromeHidden(false);
-  }, [mode]);
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
@@ -867,7 +867,6 @@ export function App() {
     const items = modes.map((item) => item.id);
     const index = Math.max(0, items.indexOf(mode));
     const next = items[(index + (event.key === "ArrowRight" ? 1 : -1) + items.length) % items.length];
-    if (next === "today") setPlanDay(false);
     selectMode(next);
     document.getElementById(`tab-${next}`)?.focus();
   }
@@ -896,6 +895,7 @@ export function App() {
       profile={profile}
       plans={plans}
       progressTick={planProgressTick}
+      active={mode === "home"}
       onOpenPlan={pickPlan}
       onBrowsePlans={goGalerie}
       onOpenVerse={(reference) => openPassageInBible(reference)}
@@ -906,7 +906,7 @@ export function App() {
 
   return (
     <div
-      className={`app biblos-shell${narrow ? " is-narrow" : ""}${mode === "bible" ? " is-bible-mode" : ""}${bibleChromeHidden ? " is-bible-chrome-hidden" : ""}`}
+      className={`app biblos-shell${narrow ? " is-narrow" : ""}${mode === "bible" ? " is-bible-mode" : ""}`}
     >
       <a className="skip" href="#workspace">
         Aller au contenu
@@ -968,9 +968,7 @@ export function App() {
                       }
                       title={item.label}
                       tabIndex={on ? 0 : -1}
-                      onClick={() => {
-                        selectMode(item.id, { planDay: item.id === "today" ? false : undefined });
-                      }}
+                      onClick={() => selectMode(item.id)}
                     >
                       <ModeTabIcon name={item.id} active={on} />
                       <span className="mode-tab-label">{item.label}</span>
@@ -999,7 +997,7 @@ export function App() {
                   hidden={mode !== "home"}
                   className="pane-body"
                 >
-                  {homePanel}
+                  {homeMounted ? homePanel : null}
                 </div>
                 <div
                   id="panel-today"
@@ -1098,7 +1096,6 @@ export function App() {
                     existingVerseCardColors={verseCardColors}
                     onUpdateVerseCardColor={handleVerseCardColor}
                     onViewFlashcard={openVerseFlashcard}
-                    onReadingChromeChange={setBibleChromeHidden}
                     themePref={themePref}
                     onCycleTheme={cycleTheme}
                     requireNameToMark={!onboarded}
@@ -1131,7 +1128,6 @@ export function App() {
                   className="pane-body"
                 >
                   <FlashcardDeck
-                    key={activePlan?.id ?? "none"}
                     cards={cards}
                     active={mode === "cards"}
                     selectedId={cardFocusId}
@@ -1149,8 +1145,10 @@ export function App() {
                   hidden={mode !== "profile"}
                   className="pane-body"
                 >
+                  {profileMounted ? (
                   <ProfileView
                     profile={profile}
+                    active={mode === "profile"}
                     themePref={themePref}
                     onThemePrefChange={setThemePreference}
                     onProfileSave={handleProfileSave}
@@ -1188,6 +1186,7 @@ export function App() {
                       setActivityTick((n) => n + 1);
                     }}
                   />
+                  ) : null}
                 </div>
               </div>
             </section>

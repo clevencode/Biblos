@@ -39,6 +39,8 @@ import { PrivacyPolicyPanels } from "./PrivacyLegal";
 
 type ProfileViewProps = {
   profile: UserProfile;
+  /** Indexação offline e trabalho pesado só com aba visível. */
+  active?: boolean;
   themePref: ThemePref;
   onThemePrefChange: (pref: ThemePref) => void;
   onProfileSave: (input: {
@@ -106,6 +108,7 @@ function ProfilePanel({
 
 export function ProfileView({
   profile,
+  active = true,
   themePref,
   onThemePrefChange,
   onProfileSave,
@@ -191,6 +194,7 @@ export function ProfileView({
   }
 
   useEffect(() => {
+    if (!active) return;
     let cancelled = false;
     void isOfflineBibleReady().then((ready) => {
       if (!cancelled) setOfflineReady(ready);
@@ -206,7 +210,7 @@ export function ProfileView({
     return () => {
       cancelled = true;
     };
-  }, [bundledBible]);
+  }, [bundledBible, active]);
 
   useEffect(() => {
     setActivities(listActivityForUser(profile.id, 12));

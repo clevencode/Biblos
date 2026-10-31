@@ -3,6 +3,7 @@
  * Hors ligne : file locale, flush dès que le réseau revient.
  */
 import { apiUrl } from "./apiBase";
+import { isNotionClientSyncEnabled } from "./notionClientSync";
 import { preferredDisplayName, type UserProfile } from "./userProfile";
 
 export type AdminMessageCategoryId =
@@ -145,6 +146,9 @@ export async function flushAdminMessageOutbox(): Promise<{
   sent: number;
   remaining: number;
 }> {
+  if (!isNotionClientSyncEnabled()) {
+    return { sent: 0, remaining: loadOutbox().length };
+  }
   if (typeof navigator !== "undefined" && navigator.onLine === false) {
     return { sent: 0, remaining: loadOutbox().length };
   }

@@ -16,6 +16,7 @@ import {
   flushVerseCardCreates,
 } from "./verseCardSync";
 import { syncUserProfileToNotion } from "./userProfileSync";
+import { isNotionClientSyncEnabled } from "./notionClientSync";
 import { flushAdminMessageOutbox } from "./adminMessage";
 import { DESCRIPTION_PULL_MS, pullPlanDescription } from "./planDescriptionSync";
 import type { Catalog, CenterMode, ReadingPlan, Seed } from "./types";
@@ -32,6 +33,7 @@ function cloudSyncDeferred(modeRef: MutableRefObject<CenterMode>): boolean {
 }
 
 function cloudSyncPaused(): boolean {
+  if (!isNotionClientSyncEnabled()) return true;
   if (typeof navigator !== "undefined" && navigator.onLine === false) return true;
   return false;
 }
@@ -226,6 +228,10 @@ export function useNotionSync(options: {
   }, [notesRef, setCatalog, modeRef]);
 
   useEffect(() => {
+    if (!isNotionClientSyncEnabled()) {
+      setNotionHealth("no-token");
+      return;
+    }
     let cancelled = false;
     async function check() {
       const health = await probeNotionSyncHealth();
@@ -256,7 +262,7 @@ export function useNotionSync(options: {
     const cards = scopedSyncCards;
 
     async function pullFromNotion() {
-      if (busy || cancelled || document.visibilityState === "hidden") return;
+      if (busy || cancelled || document.visibilityState === "hidden" || cloudSyncPaused()) return;
       busy = true;
       try {
         await flushFlashcardQueue();

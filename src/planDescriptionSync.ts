@@ -1,5 +1,6 @@
 import type { ReadingPlan } from "./types";
 import { apiUrl, readApiJson } from "./apiBase";
+import { isNotionClientSyncEnabled } from "./notionClientSync";
 
 const DESCRIPTION_PULL_MS = 20_000;
 
@@ -29,6 +30,7 @@ export async function pullPlanDescription(
   plan: ReadingPlan | null | undefined,
 ): Promise<{ plans: ReadingPlan[]; changed: boolean; error?: string }> {
   if (!plan?.url) return { plans, changed: false };
+  if (!isNotionClientSyncEnabled()) return { plans, changed: false };
   try {
     const response = await fetch(
       apiUrl(`/api/description-sync?url=${encodeURIComponent(plan.url)}`),

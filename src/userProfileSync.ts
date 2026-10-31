@@ -4,6 +4,7 @@
  * Pas de journal d’activité événementiel vers Notion.
  */
 import { apiUrl } from "./apiBase";
+import { isNotionClientSyncEnabled } from "./notionClientSync";
 import {
   getTimeSpentMinutes,
   markTimeSpentSynced,
@@ -54,6 +55,12 @@ async function pushUserProfileOnce(
   profile: UserProfile | undefined,
   options?: { presence?: PresenceStatus },
 ): Promise<ProfilePushResult> {
+  if (!isNotionClientSyncEnabled()) {
+    const local = ensureStableAdminIdentity(
+      profile?.onboardedAt ? profile : loadOrCreateProfile(),
+    );
+    return { ok: false, skipped: true, profile: local };
+  }
   // Toujours relire le stockage après une éventuelle file d’attente :
   // un sync antérieur (ex. online) ne doit pas écraser un onboarding tout juste sauvé.
   let current = ensureStableAdminIdentity(
@@ -161,6 +168,7 @@ export function startPresenceAndUsageSync(
   options?: { pauseWhile?: () => boolean },
 ): () => void {
   if (typeof window === "undefined") return () => undefined;
+  if (!isNotionClientSyncEnabled()) return () => undefined;
 
   const push = (presence: PresenceStatus) => {
     void syncUserProfileToNotion(undefined, { presence }).then((result) => {

@@ -44,7 +44,7 @@ import {
   isOfflineBibleReady,
   type OfflineDownloadProgress,
 } from "../bibleOffline";
-import { ensureBibleIndexedFromBundle, useLocalBundledBible } from "../bibleEngine";
+import { localS21Books, useLocalBundledBible } from "../bibleEngine";
 import {
   adaptVerseColorForTheme,
   formatVerseColorHex,
@@ -452,7 +452,12 @@ export function BibleReaderView({
   const [passage, setPassage] = useState<YouVersionPassage | null>(null);
   const [, setBible] = useState<YouVersionBible | null>(() => readBooksCache()?.bible ?? null);
   const [, setBibleId] = useState<number | null>(LSG_BIBLE_ID);
-  const [books, setBooks] = useState<YouVersionBook[]>(() => readBooksCache()?.books ?? []);
+  const [books, setBooks] = useState<YouVersionBook[]>(() => {
+    const cached = readBooksCache()?.books;
+    if (cached?.length) return cached;
+    if (useLocalBundledBible()) return localS21Books();
+    return [];
+  });
   const [bookId, setBookId] = useState(initialParts.bookId);
   const [chapterId, setChapterId] = useState(initialParts.chapterId);
   const [highlightVerse, setHighlightVerse] = useState<number | null>(
@@ -471,6 +476,8 @@ export function BibleReaderView({
   const [selection, setSelection] = useState<VerseSelection | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  /** Spinner só após ~120 ms — leitura local parece instantânea. */
+  const [loadingUi, setLoadingUi] = useState(false);
   const [fontSize, setFontSize] = useState(() => {
     const n = Number(prefs.fontSize);
     return Number.isFinite(n) ? clampFontSize(n) : FONT_DEFAULT;
@@ -725,16 +732,26 @@ export function BibleReaderView({
     void isOfflineBibleReady().then((ready) => {
       if (!cancelled) setOfflineReady(ready);
     });
-    if (useLocalBundledBible()) {
-      void ensureBibleIndexedFromBundle().then(() => {
-        if (!cancelled) void isOfflineBibleReady().then(setOfflineReady);
-      });
-    }
     return () => {
       cancelled = true;
       offlineAbortRef.current?.abort();
     };
   }, []);
+
+  useEffect(() => {
+    if (!loading) {
+      setLoadingUi(false);
+      return;
+    }
+    const id = window.setTimeout(() => setLoadingUi(true), 120);
+    return () => window.clearTimeout(id);
+  }, [loading]);
+
+  useEffect(() => {
+    if (active) return;
+    loadGen.current += 1;
+    setLoading(false);
+  }, [active]);
 
   useEffect(() => {
     const sync = () => setUiTheme(resolveTheme());
@@ -787,7 +804,7 @@ export function BibleReaderView({
   }, [bookId, chapterId]);
 
   useEffect(() => {
-    if (!books.length) return;
+    if (!active || !books.length) return;
     const known = books.some((b) => b.id.toUpperCase() === bookId.toUpperCase());
     if (known) return;
     const fallback = books[0]!;
@@ -796,14 +813,15 @@ export function BibleReaderView({
   }, [books, bookId]);
 
   useEffect(() => {
+    if (!active) return;
     if (booted.current) return;
     booted.current = true;
     void loadChapter(initialParts.bookId, initialParts.chapterId, initialParts.verse ?? null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [active]);
 
   useEffect(() => {
-    if (!focusSeq || !focusRef?.trim()) return;
+    if (!focusSeq || !focusRef?.trim() || !active) return;
     const parts = parseUsfmParts(focusRef);
     if (!isUsfmBookId(parts.bookId)) return;
     const start = parts.verse ?? planReading?.verseStart ?? null;
@@ -818,7 +836,7 @@ export function BibleReaderView({
           : null;
     void loadChapter(parts.bookId, parts.chapterId, start, end);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [focusSeq, focusRef]);
+  }, [focusSeq, focusRef, active]);
 
   useEffect(() => {
     if (!pickerOpen) return;
@@ -867,31 +885,33 @@ export function BibleReaderView({
     setLoading(true);
     setError(null);
     const usfm = chapterUsfm(nextBook, nextChapter);
-    const result = await fetchPassage(usfm);
-    if (gen !== loadGen.current) return;
-    setLoading(false);
-    if (!result.ok || !result.passage) {
-      // Garde le texte précédent en cas de rate limit / erreur transitoire
-      setError(result.error ?? "Passage introuvable");
-      return;
+    try {
+      const result = await fetchPassage(usfm);
+      if (gen !== loadGen.current) return;
+      if (!result.ok || !result.passage) {
+        setError(result.error ?? "Passage introuvable");
+        return;
+      }
+      setPassage(result.passage);
+      setError(null);
+      if (result.bibleId) setBibleId(result.bibleId);
+      if (result.bible) setBible(result.bible);
+      const bookTitle =
+        books.find((b) => b.id.toUpperCase() === nextBook.toUpperCase())?.title ||
+        nextBook;
+      const label =
+        verse != null
+          ? `${bookTitle} ${nextChapter}.${verse}`
+          : `${bookTitle} ${nextChapter}`;
+      onBibleRead?.({
+        bookId: nextBook,
+        chapterId: nextChapter,
+        verse,
+        label,
+      });
+    } finally {
+      if (gen === loadGen.current) setLoading(false);
     }
-    setPassage(result.passage);
-    setError(null);
-    if (result.bibleId) setBibleId(result.bibleId);
-    if (result.bible) setBible(result.bible);
-    const bookTitle =
-      books.find((b) => b.id.toUpperCase() === nextBook.toUpperCase())?.title ||
-      nextBook;
-    const label =
-      verse != null
-        ? `${bookTitle} ${nextChapter}.${verse}`
-        : `${bookTitle} ${nextChapter}`;
-    onBibleRead?.({
-      bookId: nextBook,
-      chapterId: nextChapter,
-      verse,
-      label,
-    });
   }
 
   function goAdjacent(delta: -1 | 1) {
@@ -1869,7 +1889,7 @@ export function BibleReaderView({
       </header>
 
       <div id={statusId} className="sr-only" aria-live="polite">
-        {loading ? "Chargement du chapitre…" : error ? error : locationLabel}
+        {loadingUi ? "Ouverture du chapitre…" : error ? error : locationLabel}
       </div>
 
       {error ? (
@@ -1889,7 +1909,7 @@ export function BibleReaderView({
       <article
         ref={passageScrollRef}
         className="bible-passage"
-        aria-busy={loading}
+        aria-busy={loadingUi}
         style={{ ["--verse-tint" as string]: actionTone.tint }}
         onClick={(event) => {
           if (pickerOpen) {
@@ -1914,8 +1934,8 @@ export function BibleReaderView({
           <p className="bible-chapter-num">{chapterId}</p>
         </header>
 
-        {loading && !passage ? (
-          <p className="bible-yv-muted bible-loading">Chargement du texte…</p>
+        {loadingUi && !passage ? (
+          <p className="bible-yv-muted bible-loading">Ouverture du texte…</p>
         ) : null}
 
         {passage?.verses?.length ? (
@@ -2039,7 +2059,7 @@ export function BibleReaderView({
           </div>
         ) : passage?.content ? (
           <p className="bible-text">{passage.content}</p>
-        ) : !loading ? (
+        ) : !loadingUi ? (
           <p className="bible-yv-muted">Choisis un livre et un chapitre pour lire.</p>
         ) : null}
       </article>
@@ -2317,12 +2337,12 @@ export function BibleReaderView({
                   })}
           </div>
           {passageStep === "book" && !books.length ? (
-            <p className="bible-yv-pick-loading bible-yv-muted">Chargement des livres…</p>
+            <p className="bible-yv-pick-loading bible-yv-muted">Préparation de la liste…</p>
           ) : null}
-          {passageStep === "verse" && loading ? (
-            <p className="bible-yv-pick-loading bible-yv-muted">Chargement…</p>
+          {passageStep === "verse" && loadingUi ? (
+            <p className="bible-yv-pick-loading bible-yv-muted">Ouverture…</p>
           ) : null}
-          {passageStep === "verse" && !loading && !verseOptions.length ? (
+          {passageStep === "verse" && !loadingUi && !verseOptions.length ? (
             <p className="bible-yv-pick-loading bible-yv-muted">Aucun verset</p>
           ) : null}
         </div>

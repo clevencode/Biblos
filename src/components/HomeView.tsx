@@ -21,6 +21,8 @@ type HomeViewProps = {
   profile: UserProfile;
   plans: ReadingPlan[];
   progressTick?: number;
+  /** Evita fetch do versículo do dia enquanto a aba está oculta. */
+  active?: boolean;
   onOpenPlan: (plan: ReadingPlan) => void;
   onBrowsePlans: () => void;
   onOpenVerse: (reference: string) => void;
@@ -57,6 +59,7 @@ export function HomeView({
   profile,
   plans,
   progressTick = 0,
+  active = true,
   onOpenPlan,
   onBrowsePlans,
   onOpenVerse,
@@ -79,6 +82,7 @@ export function HomeView({
   }, [plans, progressTick, showNotifications]);
 
   useEffect(() => {
+    if (!active) return;
     let cancelled = false;
     void fetchPassage(verseMeta.reference).then((result) => {
       if (cancelled || !result.ok || !result.passage) return;
@@ -91,7 +95,7 @@ export function HomeView({
     return () => {
       cancelled = true;
     };
-  }, [verseMeta.reference]);
+  }, [verseMeta.reference, active]);
 
   if (showNotifications) {
     return (

@@ -7,6 +7,7 @@
  * 2) pull Notion → overrides (excepto dirty/outbox)
  */
 import { apiUrl, readApiJson } from "./apiBase";
+import { isNotionClientSyncEnabled } from "./notionClientSync";
 import type { Flashcard, Seed } from "./types";
 import {
   applyRemoteOverride,
@@ -61,6 +62,9 @@ export async function syncFlashcard(input: {
   if (!canSync(input.url)) {
     // Cartão local (Bible → app) — sem página Notion; override já está no aparelho.
     if (input.id) removeOutbox(input.id);
+    return { ok: true, localOnly: true };
+  }
+  if (!isNotionClientSyncEnabled()) {
     return { ok: true, localOnly: true };
   }
   try {
@@ -199,6 +203,9 @@ export async function pullFlashcardStates(
   cards: Array<{ id: string; url: string }>,
   options?: { persist?: boolean; notes?: Seed[] },
 ): Promise<FlashcardPullResult> {
+  if (!isNotionClientSyncEnabled()) {
+    return { updated: 0, ok: true, notes: options?.notes };
+  }
   const pendingIds = new Set(listOutbox().map((item) => item.id));
   const syncable = cards.filter(
     (card) => canSync(card.url) && !isDirty(card.id) && !pendingIds.has(card.id),
@@ -252,6 +259,9 @@ export async function pullFlashcardStates(
 
 /** Descarrega outbox local (+ fila Vite em dev) para o Notion. */
 export async function flushFlashcardQueue(): Promise<{ flushed: number; remaining: number }> {
+  if (!isNotionClientSyncEnabled()) {
+    return { flushed: 0, remaining: listOutbox().length };
+  }
   const pending = listOutbox();
   let flushed = 0;
   for (const item of pending) {

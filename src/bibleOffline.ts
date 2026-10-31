@@ -140,22 +140,33 @@ async function putMeta(meta: OfflineBibleMeta): Promise<void> {
   }
 }
 
-/** Livro: IndexedDB → assets embarquados (mobile) → null. Grava no IDB quando lê do bundle. */
+/** Livro: assets embarquados (mobile) → IndexedDB → null. Grava no IDB em background. */
 export async function resolveS21Book(usfm: string): Promise<S21BookJson | null> {
   const key = String(usfm || "")
     .trim()
     .toUpperCase()
     .split(".")[0];
   if (!key) return null;
-  const cached = await getOfflineBook(key);
-  if (cached) return cached;
+
   if (Capacitor.isNativePlatform()) {
     const bundled = await fetchBundledBookJson(key);
     if (bundled) {
-      await putBook(key, bundled);
+      void putBook(key, bundled).catch(() => undefined);
       return bundled;
     }
   }
+
+  const cached = await getOfflineBook(key);
+  if (cached) return cached;
+
+  if (!Capacitor.isNativePlatform()) {
+    const bundled = await fetchBundledBookJson(key);
+    if (bundled) {
+      void putBook(key, bundled).catch(() => undefined);
+      return bundled;
+    }
+  }
+
   return null;
 }
 
