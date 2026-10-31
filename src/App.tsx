@@ -71,17 +71,17 @@ import {
   watchSystemTheme,
   type ThemePref,
 } from "./theme";
+import {
+  ALL_SHELL_TABS,
+  coerceShellMode,
+  DEFAULT_SHELL_MODE,
+  isShellTabEnabled,
+  visibleShellTabs,
+} from "./appShellConfig";
 
 const UI_KEY = "biblos-ui";
 const seedCatalog = hydrateCatalogFromCache(seed as Catalog);
-
-const modes: { id: CenterMode; label: string }[] = [
-  { id: "home", label: "Accueil" },
-  { id: "today", label: "Plan" },
-  { id: "bible", label: "Bible" },
-  { id: "cards", label: "Cartes" },
-  { id: "profile", label: "Profil" },
-];
+const shellTabs = visibleShellTabs();
 
 type UiSession = {
   home?: boolean;
@@ -116,14 +116,14 @@ function writeUi(session: UiSession) {
 }
 
 function isMode(value: unknown): value is CenterMode {
-  return modes.some((item) => item.id === value);
+  return ALL_SHELL_TABS.some((item) => item.id === value);
 }
 
 function resolveInitialMode(session: UiSession): CenterMode {
   const value = session.mode as string | undefined;
-  if (value === "calendar" || value === "inbox") return "cards";
-  if (isMode(value)) return value;
-  return "home";
+  if (value === "calendar" || value === "inbox") return coerceShellMode("cards");
+  if (isMode(value)) return coerceShellMode(value);
+  return DEFAULT_SHELL_MODE;
 }
 
 export function App() {
@@ -141,18 +141,19 @@ export function App() {
     if (mode === "bible") setBibleMounted(true);
   }, [mode]);
   const [homeMounted, setHomeMounted] = useState(
-    () => resolveInitialMode(initialUi) === "home",
+    () => isShellTabEnabled("home") && resolveInitialMode(initialUi) === "home",
   );
   const [profileMounted, setProfileMounted] = useState(
-    () => resolveInitialMode(initialUi) === "profile",
+    () => isShellTabEnabled("profile") && resolveInitialMode(initialUi) === "profile",
   );
   useEffect(() => {
-    if (mode === "home") setHomeMounted(true);
-    if (mode === "profile") setProfileMounted(true);
+    if (isShellTabEnabled("home") && mode === "home") setHomeMounted(true);
+    if (isShellTabEnabled("profile") && mode === "profile") setProfileMounted(true);
   }, [mode]);
 
   const selectMode = useCallback((next: CenterMode) => {
-    setMode((prev) => (prev === next ? prev : next));
+    const target = coerceShellMode(next);
+    setMode((prev) => (prev === target ? prev : target));
   }, []);
   /** Sous l’onglet Plan : détail du jour vs liste. */
   const [planDay, setPlanDay] = useState(
@@ -380,7 +381,17 @@ export function App() {
     return colors;
   }, [notes, retentionTick]);
 
+  const allFlashcards = useMemo(
+    () => listAllFlashcards(notes, null).map(mergeCard),
+    [notes, retentionTick],
+  );
+
   function openVerseFlashcard(cardId: string) {
+    if (!isShellTabEnabled("cards")) {
+      const card = allFlashcards.find((item) => item.id === cardId);
+      if (card) openCardChapter(card);
+      return;
+    }
     if (activePlan?.cardIds?.length && !activePlan.cardIds.includes(cardId)) {
       setCatalog((current) => {
         const plans = (current.plans ?? []).map((plan) =>
@@ -404,10 +415,7 @@ export function App() {
     setCardFocusId(null);
     selectMode("bible");
   }
-  const allFlashcards = useMemo(
-    () => listAllFlashcards(notes, null).map(mergeCard),
-    [notes, retentionTick],
-  );
+
   const savedVerses = useMemo(() => {
     void activityTick;
     void retentionTick;
@@ -422,6 +430,7 @@ export function App() {
   const [homeUnread, setHomeUnread] = useState(0);
 
   useEffect(() => {
+    if (!isShellTabEnabled("home")) return;
     syncContextualNotifications(plans);
     setHomeUnread(countUnreadAppNotifications());
     const id = window.setInterval(() => {
@@ -506,7 +515,7 @@ export function App() {
   }
 
   function goHome() {
-    selectMode("home");
+    selectMode(isShellTabEnabled("home") ? "home" : "today");
   }
 
   function pickPlan(plan: ReadingPlan) {
@@ -864,7 +873,7 @@ export function App() {
   function onTabKey(event: ReactKeyboardEvent<HTMLDivElement>) {
     if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
     event.preventDefault();
-    const items = modes.map((item) => item.id);
+    const items = shellTabs.map((item) => item.id);
     const index = Math.max(0, items.indexOf(mode));
     const next = items[(index + (event.key === "ArrowRight" ? 1 : -1) + items.length) % items.length];
     selectMode(next);
@@ -890,7 +899,7 @@ export function App() {
     />
   );
 
-  const homePanel = (
+  const homePanel = isShellTabEnabled("home") ? (
     <HomeView
       profile={profile}
       plans={plans}
@@ -900,7 +909,7 @@ export function App() {
       onBrowsePlans={goGalerie}
       onOpenVerse={(reference) => openPassageInBible(reference)}
     />
-  );
+  ) : null;
 
   const onboarded = onboardingDone || isProfileOnboarded(profile);
 
@@ -948,7 +957,7 @@ export function App() {
                 aria-label="Vues"
                 onKeyDown={onTabKey}
               >
-                {modes.map((item) => {
+                {shellTabs.map((item) => {
                   const on = mode === item.id;
                   return (
                     <button
@@ -960,9 +969,13 @@ export function App() {
                       aria-selected={on}
                       aria-controls={`panel-${item.id}`}
                       aria-label={
-                        item.id === "cards" && activeCardsCount
+                        isShellTabEnabled("cards") &&
+                        item.id === "cards" &&
+                        activeCardsCount
                           ? `${item.label}, ${activeCardsCount} carte${activeCardsCount === 1 ? "" : "s"} active${activeCardsCount === 1 ? "" : "s"}`
-                          : item.id === "home" && homeUnread
+                          : isShellTabEnabled("home") &&
+                              item.id === "home" &&
+                              homeUnread
                             ? `${item.label}, ${homeUnread} notification${homeUnread === 1 ? "" : "s"}`
                             : item.label
                       }
@@ -972,12 +985,14 @@ export function App() {
                     >
                       <ModeTabIcon name={item.id} active={on} />
                       <span className="mode-tab-label">{item.label}</span>
-                      {item.id === "cards" && activeCardsCount ? (
+                      {isShellTabEnabled("cards") &&
+                      item.id === "cards" &&
+                      activeCardsCount ? (
                         <span className="mode-tab-badge" aria-hidden="true">
                           {activeCardsCount}
                         </span>
                       ) : null}
-                      {item.id === "home" && homeUnread > 0 ? (
+                      {isShellTabEnabled("home") && item.id === "home" && homeUnread > 0 ? (
                         <span className="mode-tab-badge" aria-hidden="true">
                           {homeUnread > 9 ? "9+" : homeUnread}
                         </span>
@@ -990,6 +1005,7 @@ export function App() {
 
             <section className="graph-pane" aria-label="Contenu">
               <div className="graph-pane-body">
+                {isShellTabEnabled("home") ? (
                 <div
                   id="panel-home"
                   role="tabpanel"
@@ -999,6 +1015,7 @@ export function App() {
                 >
                   {homeMounted ? homePanel : null}
                 </div>
+                ) : null}
                 <div
                   id="panel-today"
                   role="tabpanel"
@@ -1120,6 +1137,7 @@ export function App() {
                   />
                   ) : null}
                 </div>
+                {isShellTabEnabled("cards") ? (
                 <div
                   id="panel-cards"
                   role="tabpanel"
@@ -1138,6 +1156,8 @@ export function App() {
                     onBackFromFocus={cardReturnToBible ? returnFromVerseFlashcard : undefined}
                   />
                 </div>
+                ) : null}
+                {isShellTabEnabled("profile") ? (
                 <div
                   id="panel-profile"
                   role="tabpanel"
@@ -1188,6 +1208,7 @@ export function App() {
                   />
                   ) : null}
                 </div>
+                ) : null}
               </div>
             </section>
           </div>

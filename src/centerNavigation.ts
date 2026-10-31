@@ -5,7 +5,7 @@ import type { CenterMode } from "./types";
  *
  * Coesão: regras de negócio do shell ficam aqui, não espalhadas nos handlers de UI.
  * - `planDay` (detalhe do dia vs galeria) só muda por fluxos explícitos (galeria, Escape, pick plan).
- * - A tab bar do shell permanece sempre utilizável; chrome imersivo é só do leitor (BibleReaderView).
+ * - Tab bar efectiva: ver `appShellConfig.ts` (ENABLED_SHELL_TAB_IDS).
  */
 
 export type CenterNavigationState = {
