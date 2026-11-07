@@ -19,6 +19,7 @@ export type BibleReadingPrefs = {
   bookId?: string;
   chapterId?: string;
   fontSize?: number;
+  textVersion?: "s21" | "ht98";
 };
 
 export type CatalogSource = "seed" | "cache" | "idb" | "network";

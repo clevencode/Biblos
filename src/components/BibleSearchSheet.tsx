@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { BibleSearchHighlight } from "./BibleSearchHighlight";
 import { YvIcon } from "./YvIcon";
-import { searchVerses, type BibleSearchHit } from "../youversion/client";
+import type { BibleSearchHit } from "../youversion/client";
+import { searchVersesForVersion } from "../bible/passageForVersion";
+import type { BibleTextVersionId } from "../bible/bibleVersions";
 import { passageJumpsFromQuery } from "../youversion/bibleRefs";
 import {
   booksForSearchScope,
@@ -14,6 +16,7 @@ export type BibleSearchSheetProps = {
   open: boolean;
   onClose: () => void;
   onSelect: (hit: BibleSearchHit) => void;
+  textVersion?: BibleTextVersionId;
 };
 
 type SearchScope = "all" | "at" | "nt";
@@ -74,7 +77,12 @@ function booksInScope(scope: SearchScope): CanonBook[] {
   return CANON_BOOKS;
 }
 
-export function BibleSearchSheet({ open, onClose, onSelect }: BibleSearchSheetProps) {
+export function BibleSearchSheet({
+  open,
+  onClose,
+  onSelect,
+  textVersion = "s21",
+}: BibleSearchSheetProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const listRef = useRef<HTMLUListElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
@@ -164,9 +172,9 @@ export function BibleSearchSheet({ open, onClose, onSelect }: BibleSearchSheetPr
       inputRef.current?.focus();
       inputRef.current?.select();
     }, 40);
-    void searchVerses("aa", 1);
+    void searchVersesForVersion(textVersion, "aa", 1);
     return () => window.clearTimeout(id);
-  }, [open]);
+  }, [open, textVersion]);
 
   useEffect(() => {
     if (!open) return;
@@ -204,7 +212,7 @@ export function BibleSearchSheet({ open, onClose, onSelect }: BibleSearchSheetPr
     setError(null);
     const timer = window.setTimeout(() => {
       void (async () => {
-        const res = await searchVerses(q, 40, { books: bookFilter });
+        const res = await searchVersesForVersion(textVersion, q, 40, { books: bookFilter });
         if (gen !== reqGen.current) return;
         if (!res.ok) {
           setError(res.error || "Recherche indisponible");
@@ -233,7 +241,7 @@ export function BibleSearchSheet({ open, onClose, onSelect }: BibleSearchSheetPr
       })();
     }, 280);
     return () => window.clearTimeout(timer);
-  }, [open, query, bookFilter, bookId]);
+  }, [open, query, bookFilter, bookId, textVersion]);
 
   if (!open) return null;
 

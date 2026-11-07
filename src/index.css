@@ -9365,6 +9365,64 @@ ul.plan-yv-day-note-ref {
   color: var(--yv-muted);
 }
 
+.bible-yv-tools-version {
+  display: grid;
+  gap: 8px;
+  margin: 2px 0 4px;
+  padding: 8px 10px 10px;
+  border-top: 1px solid color-mix(in srgb, var(--yv-text) 10%, transparent);
+}
+
+.bible-yv-tools-version-label {
+  color: var(--yv-muted);
+  font-size: 0.82rem;
+}
+
+.bible-yv-tools-version-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.bible-yv-tools-version-chip {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 36px;
+  margin: 0;
+  padding: 0 12px;
+  border: 1px solid color-mix(in srgb, var(--yv-text) 14%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--yv-text) 4%, transparent);
+  color: var(--yv-text);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.bible-yv-tools-version-chip:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--yv-text) 8%, transparent);
+}
+
+.bible-yv-tools-version-chip.is-on {
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: color-mix(in srgb, var(--accent) 82%, var(--yv-text));
+}
+
+.bible-yv-tools-version-chip:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.bible-yv-tools-version-msg {
+  margin: 0 10px 4px;
+  font-size: 0.8rem;
+  color: var(--danger, #b42318);
+}
+
 .bible-yv-tools-font {
   display: flex;
   align-items: center;

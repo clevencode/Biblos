@@ -12,12 +12,18 @@ import { YvIcon } from "./YvIcon";
 import {
   adjacentChapter,
   chapterUsfm,
-  fetchPassage,
   parseUsfmParts,
   LSG_BIBLE_ID,
   type BibleSearchHit,
   type YouVersionPassage,
 } from "../youversion/client";
+import {
+  BIBLE_TEXT_VERSIONS,
+  readBibleTextVersionPref,
+  type BibleTextVersionId,
+} from "../bible/bibleVersions";
+import { fetchPassageForVersion, versionedBibleId } from "../bible/passageForVersion";
+import { HT1998_BIBLE_META, ht1998Books } from "../bible/ht1998";
 import {
   fetchBibleAudioCatalog,
   loadAudioPositions,
@@ -218,6 +224,7 @@ type ReaderPrefs = {
   bookId?: string;
   chapterId?: string;
   fontSize?: number;
+  textVersion?: BibleTextVersionId;
 };
 
 type BibleReaderViewProps = {
@@ -436,7 +443,7 @@ export function BibleReaderView({
 
   const [passage, setPassage] = useState<YouVersionPassage | null>(null);
   const {
-    books,
+    books: catalogBooks,
     bible,
     setBible,
     catalogSource,
@@ -448,6 +455,23 @@ export function BibleReaderView({
     refreshCatalog,
     resolveBookTitle,
   } = useBibleCatalog();
+  const [textVersion, setTextVersion] = useState<BibleTextVersionId>(() => {
+    const fromPrefs = readPrefs().textVersion;
+    if (fromPrefs === "ht98" || fromPrefs === "s21") return fromPrefs;
+    return readBibleTextVersionPref();
+  });
+  const [htBooks, setHtBooks] = useState<typeof catalogBooks | null>(null);
+  const [htCatalogLoading, setHtCatalogLoading] = useState(false);
+  const [htCatalogError, setHtCatalogError] = useState<string | null>(null);
+  const textVersionRef = useRef<BibleTextVersionId>(textVersion);
+  const books =
+    textVersion === "ht98" ? (htBooks ?? []) : catalogBooks;
+  const pickerCatalogReady =
+    textVersion === "ht98"
+      ? Boolean(htBooks?.length) && !htCatalogLoading
+      : isLocalReady;
+  const pickerCatalogLoading =
+    textVersion === "ht98" ? htCatalogLoading || !htBooks?.length : isLoadingLocal;
   const {
     cloudSync,
     setCatalogHydrating,
@@ -490,7 +514,7 @@ export function BibleReaderView({
   const discoveryListScrollRaf = useRef(0);
   const discoveryVerseScrollRaf = useRef<Record<string, number>>({});
   const passageDiscoveryEnabled =
-    pickerOpen && passageStep === "book" && isLocalReady && !isLoadingLocal;
+    pickerOpen && passageStep === "book" && pickerCatalogReady && !pickerCatalogLoading;
   const { result: passageDiscovery, busy: passageDiscoveryBusy } = usePassageDiscovery(
     bookSearchQuery,
     books,
@@ -772,8 +796,39 @@ export function BibleReaderView({
   }, []);
 
   useEffect(() => {
-    setBibleId(bible.id ?? LSG_BIBLE_ID);
-  }, [bible.id]);
+    textVersionRef.current = textVersion;
+  }, [textVersion]);
+
+  useEffect(() => {
+    if (textVersion !== "ht98") return;
+    let cancelled = false;
+    setHtCatalogLoading(true);
+    setHtCatalogError(null);
+    void ht1998Books()
+      .then((list) => {
+        if (!cancelled) setHtBooks(list);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setHtCatalogError(
+            err instanceof Error ? err.message : "Version haïtienne indisponible",
+          );
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setHtCatalogLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [textVersion]);
+
+  useEffect(() => {
+    const id =
+      textVersion === "ht98" ? HT1998_BIBLE_META.id : (bible.id ?? LSG_BIBLE_ID);
+    setBibleId(id);
+    if (textVersion === "ht98") setBible(HT1998_BIBLE_META);
+  }, [bible.id, setBible, textVersion]);
 
   useEffect(() => {
     setCatalogHydrating(isHydrating);
@@ -787,12 +842,13 @@ export function BibleReaderView({
   }, [isNetworkRefresh, registerCloudSync]);
 
   useEffect(() => {
+    const base = { ...readPrefs(), fontSize, textVersion };
     if (isUsfmBookId(bookId)) {
-      writePrefs({ bookId, chapterId, fontSize });
+      writePrefs({ ...base, bookId, chapterId });
       return;
     }
-    writePrefs({ fontSize });
-  }, [bookId, chapterId, fontSize]);
+    writePrefs(base);
+  }, [bookId, chapterId, fontSize, textVersion]);
 
   useEffect(() => {
     setChapterMarks(loadChapterMarks(bookId, chapterId));
@@ -912,7 +968,7 @@ export function BibleReaderView({
     setError(null);
     setPassageErrorKind("generic");
     try {
-      const result = await fetchPassage(usfm);
+      const result = await fetchPassageForVersion(textVersionRef.current, usfm);
       if (gen !== loadGen.current) return;
       if (!result.ok || !result.passage) {
         const errMsg = result.error ?? "Passage introuvable";
@@ -928,7 +984,8 @@ export function BibleReaderView({
       setPassage(result.passage);
       setError(null);
       setPassageErrorKind("generic");
-      if (result.bibleId) setBibleId(result.bibleId);
+      if (result.bibleId != null) setBibleId(result.bibleId);
+      else setBibleId(versionedBibleId(textVersionRef.current));
       if (result.bible) setBible(result.bible);
       const bookTitle =
         books.find((b) => b.id.toUpperCase() === nextBook.toUpperCase())?.title ||
@@ -1032,7 +1089,7 @@ export function BibleReaderView({
   }
 
   function togglePicker() {
-    if (!isLocalReady || isLoadingLocal) return;
+    if (!pickerCatalogReady || pickerCatalogLoading) return;
     setPickerOpen((open) => {
       const next = !open;
       if (next) {
@@ -1044,7 +1101,7 @@ export function BibleReaderView({
   }
 
   function openPassagePicker(step: "book" | "chapter") {
-    if (!isLocalReady || isLoadingLocal) return;
+    if (!pickerCatalogReady || pickerCatalogLoading) return;
     setToolsMenuOpen(false);
     setPassageStep(step);
     pendingVerseStep.current = false;
@@ -1054,7 +1111,7 @@ export function BibleReaderView({
   function renderTopPassageNav(extraClass = "", rollOpen = false) {
     const compactBar = extraClass.includes("is-plan-inline");
     const showChapterStep = !planReading || compactBar;
-    const chipLoading = isLoadingLocal || !isLocalReady;
+    const chipLoading = pickerCatalogLoading || !pickerCatalogReady;
 
     return (
       <nav
@@ -1123,7 +1180,7 @@ export function BibleReaderView({
   }
 
   function renderPassageRoll(extraClass = "") {
-    const rollOpen = pickerOpen && isLocalReady && !isLoadingLocal;
+    const rollOpen = pickerOpen && pickerCatalogReady && !pickerCatalogLoading;
     return (
       <div
         ref={passageRollRef}
@@ -1606,6 +1663,39 @@ export function BibleReaderView({
     };
   }, [toolsMenuOpen]);
 
+  async function switchTextVersion(next: BibleTextVersionId) {
+    if (next === textVersion) return;
+    setTextVersion(next);
+    writePrefs({ ...readPrefs(), textVersion: next, bookId, chapterId, fontSize });
+    if (next === "ht98") {
+      setHtCatalogLoading(true);
+      setHtCatalogError(null);
+      try {
+        const list = await ht1998Books();
+        setHtBooks(list);
+        const exists = list.some((b) => b.id.toUpperCase() === bookId.toUpperCase());
+        void loadChapter(
+          exists ? bookId : (list[0]?.id ?? "GEN"),
+          exists ? chapterId : "1",
+          null,
+        );
+      } catch (err) {
+        setHtCatalogError(
+          err instanceof Error ? err.message : "Version haïtienne indisponible",
+        );
+      } finally {
+        setHtCatalogLoading(false);
+      }
+      return;
+    }
+    const exists = catalogBooks.some((b) => b.id.toUpperCase() === bookId.toUpperCase());
+    void loadChapter(
+      exists ? bookId : (catalogBooks[0]?.id ?? "GEN"),
+      exists ? chapterId : "1",
+      null,
+    );
+  }
+
   function renderTopToolsMenu() {
     const themeLabel = themePrefLabel(themePref);
     return (
@@ -1638,6 +1728,34 @@ export function BibleReaderView({
               <YvIcon name="search" className="bible-yv-tools-item-icon" />
               <span>Recherche</span>
             </button>
+            <div
+              className="bible-yv-tools-version"
+              role="group"
+              aria-label="Version de la Bible"
+            >
+              <span className="bible-yv-tools-version-label">Version</span>
+              <div className="bible-yv-tools-version-options">
+                {BIBLE_TEXT_VERSIONS.map((version) => (
+                  <button
+                    key={version.id}
+                    type="button"
+                    className={`bible-yv-tools-version-chip${textVersion === version.id ? " is-on" : ""}${
+                      htCatalogLoading && version.id === "ht98" ? " is-busy" : ""
+                    }`}
+                    disabled={htCatalogLoading && version.id === "ht98"}
+                    aria-pressed={textVersion === version.id}
+                    onClick={() => void switchTextVersion(version.id)}
+                  >
+                    {version.abbreviation}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {htCatalogError ? (
+              <p className="bible-yv-tools-version-msg" role="alert">
+                {htCatalogError}
+              </p>
+            ) : null}
             {onCycleTheme ? (
               <button
                 type="button"
@@ -1655,7 +1773,7 @@ export function BibleReaderView({
                 <span>{themeLabel}</span>
               </button>
             ) : null}
-            {!useLocalBundledBible() ? (
+            {textVersion === "s21" && !useLocalBundledBible() ? (
             <button
               type="button"
               role="menuitem"
@@ -1815,7 +1933,8 @@ export function BibleReaderView({
   }, [audioPlaying, audioSyncVerse]);
 
   const bookAudio = audioByUsfm[bookId.toUpperCase()] ?? null;
-  const canPlayBookAudio = Boolean(bookAudio?.audioUrl || chapterSyncPack);
+  const canPlayBookAudio =
+    textVersion === "s21" && Boolean(bookAudio?.audioUrl || chapterSyncPack);
 
   async function playChapterSyncedAudio() {
     if (!chapterSyncPack || !chapterAudioStorageKey) return false;
@@ -2701,6 +2820,7 @@ export function BibleReaderView({
       })()}
 
       <BibleSearchSheet
+        textVersion={textVersion}
         open={searchOpen}
         onClose={() => setSearchOpen(false)}
         onSelect={(hit) => {
