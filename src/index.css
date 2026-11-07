@@ -8055,10 +8055,37 @@ ul.plan-yv-day-note-ref {
 
 .app.is-bible-mode.is-narrow .bible-reader--yv {
   --yv-dock-hide-y: calc(100% + var(--mobile-tabbar-h, 58px) + 14px + env(safe-area-inset-bottom, 0px));
+  --bible-passage-bar-h: var(--mobile-touch, 44px);
   /* Bandeau livre/chapitre (position absolute) — réserve dans .bible-passage */
   --bible-top-chrome: calc(
-    max(6px, env(safe-area-inset-top, 0px)) + 6px + 40px + 1px + 6px
+    max(8px, env(safe-area-inset-top, 0px)) + 8px + var(--bible-passage-bar-h) + 1px + 8px
   );
+}
+
+.app.is-bible-mode.is-narrow .bible-yv-top-passage-bar {
+  min-height: var(--bible-passage-bar-h);
+  grid-template-columns: var(--bible-passage-bar-h) minmax(0, 1fr) var(--bible-passage-bar-h);
+}
+
+.app.is-bible-mode.is-narrow .bible-yv-top-passage-arrow {
+  width: var(--bible-passage-bar-h);
+  min-width: var(--bible-passage-bar-h);
+  height: var(--bible-passage-bar-h);
+  min-height: var(--bible-passage-bar-h);
+}
+
+.app.is-bible-mode.is-narrow .bible-yv-top-passage-divider {
+  height: 28px;
+}
+
+.app.is-bible-mode.is-narrow .bible-yv-passage-chip {
+  min-height: calc(var(--bible-passage-bar-h) - 6px);
+  padding-block: 9px;
+}
+
+.app.is-bible-mode.is-narrow .bible-yv-top {
+  padding-top: max(8px, env(safe-area-inset-top, 0px));
+  padding-bottom: 8px;
 }
 
 .bible-yv-top {
