@@ -8615,25 +8615,264 @@ ul.plan-yv-day-note-ref {
   line-height: 1;
 }
 
-.bible-yv-catalog-offline {
+@keyframes bible-yv-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.bible-yv-passage-chip-skeleton {
+  display: inline-block;
+  flex: 1;
+  min-height: 28px;
+  border-radius: 8px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--text) 5%, var(--panel)) 25%,
+    color-mix(in srgb, var(--text) 9%, var(--panel)) 50%,
+    color-mix(in srgb, var(--text) 5%, var(--panel)) 75%
+  );
+  background-size: 200% 100%;
+  animation: bible-yv-shimmer 1.5s ease-in-out infinite;
+}
+
+.bible-yv-passage-chip-skeleton.is-book {
+  min-width: 5.5rem;
+  max-width: 7.5rem;
+}
+
+.bible-yv-passage-chip-skeleton.is-chapter {
+  min-width: 3.25rem;
+  max-width: 4rem;
+  flex: 0 1 auto;
+}
+
+.bible-yv-top-passage-bar.is-hydrating {
+  pointer-events: none;
+}
+
+.bible-yv-sync-indicator {
+  position: relative;
   display: grid;
   place-items: center;
   width: 32px;
   height: 32px;
   flex: none;
-  color: color-mix(in srgb, var(--yv-muted) 92%, var(--yv-text));
+  color: color-mix(in srgb, var(--yv-muted) 88%, var(--yv-text));
+}
+
+.bible-yv-sync-indicator.is-ambient .bible-yv-sync-indicator-icon {
+  animation: bible-yv-cloud-breathe 1.8s ease-in-out infinite;
+}
+
+.bible-yv-sync-indicator-dot {
+  position: absolute;
+  right: 4px;
+  top: 5px;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--accent);
+  opacity: 0;
+  transform: scale(0.6);
+  pointer-events: none;
+}
+
+.bible-yv-sync-indicator.is-syncing .bible-yv-sync-indicator-dot {
+  opacity: 0.92;
+  animation: bible-yv-sync-dot 1.6s ease-in-out infinite;
+}
+
+.bible-yv-sync-indicator.is-synced {
+  opacity: 0.72;
+  color: color-mix(in srgb, var(--accent) 55%, var(--yv-muted));
+}
+
+.bible-yv-sync-indicator.is-offline {
   opacity: 0.88;
 }
 
-.bible-yv-catalog-offline-icon {
+.bible-yv-sync-indicator-icon {
   width: 1.15rem;
   height: 1.15rem;
   font-size: 1.15rem;
   line-height: 1;
 }
 
+@keyframes bible-yv-cloud-breathe {
+  0%,
+  100% {
+    opacity: 0.72;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes bible-yv-sync-dot {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.75);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 .bible-yv-top.is-catalog-offline .bible-yv-passage-chip-value {
   opacity: 1;
+}
+
+.bible-reader--yv .bible-passage {
+  position: relative;
+}
+
+.bible-reader--yv .bible-passage.is-chapter-opening::before,
+.bible-reader--yv .bible-passage.is-chapter-reload::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 3;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--accent) 55%, transparent),
+    transparent
+  );
+  background-size: 45% 100%;
+  background-repeat: no-repeat;
+  animation: bible-yv-chapter-progress 1.35s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.bible-reader--yv .bible-passage.is-chapter-reload .bible-verses,
+.bible-reader--yv .bible-passage.is-chapter-reload .bible-text,
+.bible-reader--yv .bible-passage.is-chapter-reload .bible-passage-head {
+  opacity: 0.58;
+  transition: opacity 0.18s ease;
+}
+
+@keyframes bible-yv-chapter-progress {
+  0% {
+    background-position: -40% 0;
+  }
+  100% {
+    background-position: 140% 0;
+  }
+}
+
+.bible-chapter-loading {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  padding: 0.35rem 0 2rem;
+}
+
+.bible-chapter-loading-lead {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: color-mix(in srgb, var(--yv-muted) 92%, var(--yv-text));
+}
+
+.bible-chapter-loading-verses {
+  display: flex;
+  flex-direction: column;
+  gap: 0.72rem;
+}
+
+.bible-chapter-loading-verse {
+  display: grid;
+  grid-template-columns: 1.35rem 1fr;
+  gap: 0.55rem;
+  align-items: start;
+}
+
+.bible-chapter-loading-verse.is-gap {
+  margin-top: 0.35rem;
+}
+
+.bible-chapter-loading-num,
+.bible-chapter-loading-line {
+  display: block;
+  border-radius: 6px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--text) 4%, var(--panel)) 20%,
+    color-mix(in srgb, var(--text) 9%, var(--panel)) 50%,
+    color-mix(in srgb, var(--text) 4%, var(--panel)) 80%
+  );
+  background-size: 200% 100%;
+  animation: bible-yv-shimmer 1.55s ease-in-out infinite;
+}
+
+.bible-chapter-loading-num {
+  width: 1.1rem;
+  height: 0.72rem;
+  margin-top: 0.35rem;
+  border-radius: 4px;
+  opacity: 0.85;
+}
+
+.bible-chapter-loading-line {
+  height: 0.82rem;
+  width: 100%;
+  max-width: 100%;
+}
+
+.bible-chapter-loading-line.is-medium {
+  width: 88%;
+}
+
+.bible-chapter-loading-line.is-short {
+  width: 62%;
+}
+
+.bible-offline-chapter-gate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin: 48px auto 32px;
+  max-width: 22rem;
+  text-align: center;
+  padding: 20px 16px;
+}
+
+.bible-offline-chapter-gate-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  font-size: 2.5rem;
+  color: color-mix(in srgb, var(--accent) 45%, var(--yv-muted));
+}
+
+.bible-offline-chapter-gate-title {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 1.05rem;
+  font-weight: 650;
+  color: var(--yv-text);
+}
+
+.bible-offline-chapter-gate-lead {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.bible-offline-chapter-gate-cta {
+  margin-top: 4px;
 }
 
 .bible-yv-top-tools {
@@ -11170,6 +11409,20 @@ ul.plan-yv-day-note-ref {
 
   .bible-yv-passage-chip.is-open .bible-yv-passage-chip-caret {
     transition: none;
+  }
+
+  .bible-yv-passage-chip-skeleton {
+    animation: none;
+    background: color-mix(in srgb, var(--text) 7%, var(--panel));
+  }
+
+  .bible-yv-sync-indicator.is-ambient .bible-yv-sync-indicator-icon,
+  .bible-yv-sync-indicator.is-syncing .bible-yv-sync-indicator-dot,
+  .bible-chapter-loading-num,
+  .bible-chapter-loading-line,
+  .bible-reader--yv .bible-passage.is-chapter-opening::before,
+  .bible-reader--yv .bible-passage.is-chapter-reload::before {
+    animation: none;
   }
 
   .bible-reader--yv.is-chrome-hidden .bible-yv-dock {

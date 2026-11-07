@@ -10,6 +10,7 @@ import "@fontsource/source-serif-4/400-italic.css";
 import { Component, StrictMode, type ErrorInfo, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
+import { AppReadinessProvider } from "./context/AppReadinessContext";
 import { AuthProvider } from "./hooks/useAuth";
 import { isFirebaseConfigured, listMissingFirebaseEnvKeys } from "./firebase/config";
 import { getFirestoreDbReady } from "./firebase/firestore";
@@ -43,7 +44,9 @@ async function boot() {
     <StrictMode>
       <BootErrorBoundary>
         <AuthProvider>
-          <App />
+          <AppReadinessProvider>
+            <App />
+          </AppReadinessProvider>
         </AuthProvider>
       </BootErrorBoundary>
     </StrictMode>,

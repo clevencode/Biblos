@@ -12,6 +12,7 @@ import { isFirebaseSignedIn, loadOrCreateProfile } from "./userProfile";
 import { runUserCloudSync } from "./firebase/syncSession";
 import { ensureLocalMarksInCatalog } from "./verseLocalCatalog";
 import type { Catalog, CenterMode, ReadingPlan } from "./types";
+import { useAppReadinessOptional } from "./context/AppReadinessContext";
 import { apiUrl } from "./apiBase";
 
 const CATALOG_PULL_MS = 45_000;
@@ -49,18 +50,28 @@ export function useCmsSync(options: {
   activePlan?: ReadingPlan | null;
 }): { cmsHealth: "unknown" | "ok" | "no-token" | "down" } {
   const { catalog, setCatalog, modeRef, activePlan } = options;
+  const readiness = useAppReadinessOptional();
   const [cmsHealth, setCmsHealth] = useState<"unknown" | "ok" | "no-token" | "down">("unknown");
   const catalogRef = useRef(catalog);
   catalogRef.current = catalog;
+
+  const setCmsPulling = (value: boolean) => {
+    readiness?.setCmsPulling(value);
+  };
 
   useEffect(() => {
     if (cmsPaused()) return;
     void pullRemoteAppNotifications();
     const profile = loadOrCreateProfile();
     if (isFirebaseSignedIn(profile)) {
-      void runUserCloudSync({ push: false, pull: true });
+      readiness?.registerCloudSync(true);
+      void runUserCloudSync({ push: false, pull: true })
+        .then((r) => {
+          if (r.ok) readiness?.markCloudSyncSuccess();
+        })
+        .finally(() => readiness?.registerCloudSync(false));
     }
-  }, []);
+  }, [readiness]);
 
   useEffect(() => {
     let cancelled = false;
@@ -69,6 +80,7 @@ export function useCmsSync(options: {
     async function syncCatalog() {
       if (busy || cancelled || cmsDeferred(modeRef) || cmsPaused()) return;
       busy = true;
+      setCmsPulling(true);
       try {
         const result = await pullCatalog(catalogRef.current);
         if (!cancelled && result.ok) {
@@ -76,9 +88,11 @@ export function useCmsSync(options: {
           if (result.changed || merged !== result.catalog) {
             setCatalog(merged);
           }
+          readiness?.markCloudSyncSuccess();
         }
       } finally {
         busy = false;
+        setCmsPulling(false);
       }
     }
 

@@ -28,6 +28,15 @@ import { BibleHistorySheet } from "./BibleHistorySheet";
 import { BibleSearchSheet } from "./BibleSearchSheet";
 import { BibleShareSheet } from "./BibleShareSheet";
 import { BiblePassageScrollPicker } from "./BiblePassageScrollPicker";
+import { BiblePassageChip } from "./BiblePassageChip";
+import { BibleSyncIndicator } from "./BibleSyncIndicator";
+import { BibleOfflineChapterGate } from "./BibleOfflineChapterGate";
+import { BibleChapterLoadingPlaceholder } from "./BibleChapterLoadingPlaceholder";
+import {
+  classifyPassageLoadError,
+  type PassageLoadErrorKind,
+} from "../bible/passageLoadError";
+import { useAppReadiness } from "../context/AppReadinessContext";
 import { CircularColorEditor } from "./CircularColorEditor";
 import { ACTIVITY_UI_ENABLED } from "../activityLog";
 import {
@@ -421,9 +430,19 @@ export function BibleReaderView({
     setBible,
     catalogSource,
     isOffline: catalogOffline,
+    isHydrating,
+    isLocalReady,
+    isLoadingLocal,
+    isNetworkRefresh,
     refreshCatalog,
     resolveBookTitle,
   } = useBibleCatalog();
+  const {
+    cloudSync,
+    setCatalogHydrating,
+    setCatalogLocalReady,
+    registerCloudSync,
+  } = useAppReadiness();
   const [, setBibleId] = useState<number | null>(() => bible.id ?? LSG_BIBLE_ID);
   const [bookId, setBookId] = useState(initialParts.bookId);
   const [chapterId, setChapterId] = useState(initialParts.chapterId);
@@ -442,6 +461,8 @@ export function BibleReaderView({
   const preferJumpFocusRef = useRef(false);
   const [selection, setSelection] = useState<VerseSelection | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [passageErrorKind, setPassageErrorKind] =
+    useState<PassageLoadErrorKind>("generic");
   const [loading, setLoading] = useState(false);
   /** Spinner só após ~120 ms — leitura local parece instantânea. */
   const [loadingUi, setLoadingUi] = useState(false);
@@ -738,6 +759,17 @@ export function BibleReaderView({
   }, [bible.id]);
 
   useEffect(() => {
+    setCatalogHydrating(isHydrating);
+    setCatalogLocalReady(isLocalReady);
+  }, [isHydrating, isLocalReady, setCatalogHydrating, setCatalogLocalReady]);
+
+  useEffect(() => {
+    if (!isNetworkRefresh) return;
+    registerCloudSync(true);
+    return () => registerCloudSync(false);
+  }, [isNetworkRefresh, registerCloudSync]);
+
+  useEffect(() => {
     if (isUsfmBookId(bookId)) {
       writePrefs({ bookId, chapterId, fontSize });
       return;
@@ -853,18 +885,32 @@ export function BibleReaderView({
     // Navigation / deep-link : surligne et scroll, sans ouvrir le panneau Marquer.
     setSelection(null);
     setCardMsg(null);
+    const usfm = chapterUsfm(nextBook, nextChapter);
+    const samePassage =
+      passage?.id?.toUpperCase() === usfm.toUpperCase();
+    if (!samePassage) {
+      setPassage(null);
+    }
     setLoading(true);
     setError(null);
-    const usfm = chapterUsfm(nextBook, nextChapter);
+    setPassageErrorKind("generic");
     try {
       const result = await fetchPassage(usfm);
       if (gen !== loadGen.current) return;
       if (!result.ok || !result.passage) {
-        setError(result.error ?? "Passage introuvable");
+        const errMsg = result.error ?? "Passage introuvable";
+        setError(errMsg);
+        setPassageErrorKind(
+          classifyPassageLoadError(errMsg, {
+            offline: catalogOffline,
+            offlineIndexReady: offlineReady,
+          }),
+        );
         return;
       }
       setPassage(result.passage);
       setError(null);
+      setPassageErrorKind("generic");
       if (result.bibleId) setBibleId(result.bibleId);
       if (result.bible) setBible(result.bible);
       const bookTitle =
@@ -938,6 +984,7 @@ export function BibleReaderView({
   }
 
   function togglePicker() {
+    if (!isLocalReady || isLoadingLocal) return;
     setPickerOpen((open) => {
       const next = !open;
       if (next) {
@@ -950,6 +997,7 @@ export function BibleReaderView({
   }
 
   function openPassagePicker(step: "book" | "chapter") {
+    if (!isLocalReady || isLoadingLocal) return;
     setToolsMenuOpen(false);
     setPassageStep(step);
     if (step === "book") setBookSearchQuery("");
@@ -960,6 +1008,7 @@ export function BibleReaderView({
   function renderTopPassageNav(extraClass = "", rollOpen = false) {
     const compactBar = extraClass.includes("is-plan-inline");
     const showChapterStep = !planReading || compactBar;
+    const chipLoading = isLoadingLocal || !isLocalReady;
 
     return (
       <nav
@@ -969,7 +1018,7 @@ export function BibleReaderView({
         <div
           className={`bible-yv-top-passage-bar${compactBar ? " is-compact" : ""}${
             rollOpen ? " is-roll-head" : pickerOpen ? " is-picker-open" : ""
-          }`}
+          }${chipLoading ? " is-hydrating" : ""}`}
         >
           {showChapterStep ? (
             <button
@@ -979,50 +1028,34 @@ export function BibleReaderView({
                 if (pickerOpen) setPassageStep("chapter");
                 goAdjacent(-1);
               }}
-              disabled={!canPrev || loading}
+              disabled={!canPrev || loading || chipLoading}
               aria-label="Chapitre précédent"
             >
               <YvIcon name="chevron_left" className="bible-yv-top-passage-arrow-icon" />
             </button>
           ) : null}
           <div className="bible-yv-top-passage-segments">
-            <button
-              type="button"
-              className={`bible-yv-passage-chip is-book${
-                pickerOpen && passageStep === "book" ? " is-open" : ""
-              }`}
-              onClick={() => openPassagePicker("book")}
-              aria-expanded={pickerOpen && passageStep === "book"}
-              aria-haspopup="dialog"
-              aria-label={`Choisir un livre · ${bookTitle}`}
+            <BiblePassageChip
+              variant="book"
+              label={bookTitle}
+              loading={chipLoading}
+              open={pickerOpen && passageStep === "book"}
+              disabled={chipLoading || loading}
+              ariaLabel={`Choisir un livre · ${bookTitle}`}
               title={bookTitle}
-            >
-              <span className="bible-yv-passage-chip-value">{bookTitle}</span>
-              <YvIcon
-                name="keyboard_arrow_down"
-                opsz={20}
-                className="bible-yv-passage-chip-caret"
-              />
-            </button>
+              onClick={() => openPassagePicker("book")}
+            />
             <span className="bible-yv-top-passage-divider" aria-hidden />
-            <button
-              type="button"
-              className={`bible-yv-passage-chip is-chapter${
-                pickerOpen && passageStep === "chapter" ? " is-open" : ""
-              }`}
-              onClick={() => openPassagePicker("chapter")}
-              aria-expanded={pickerOpen && passageStep === "chapter"}
-              aria-haspopup="dialog"
-              aria-label={`Choisir un chapitre · ${chapterId}`}
+            <BiblePassageChip
+              variant="chapter"
+              label={chapterId}
+              loading={chipLoading}
+              open={pickerOpen && passageStep === "chapter"}
+              disabled={chipLoading || loading}
+              ariaLabel={`Choisir un chapitre · ${chapterId}`}
               title={`Chapitre ${chapterId}`}
-            >
-              <span className="bible-yv-passage-chip-value">{chapterId}</span>
-              <YvIcon
-                name="keyboard_arrow_down"
-                opsz={20}
-                className="bible-yv-passage-chip-caret"
-              />
-            </button>
+              onClick={() => openPassagePicker("chapter")}
+            />
           </div>
           {showChapterStep ? (
             <button
@@ -1032,7 +1065,7 @@ export function BibleReaderView({
                 if (pickerOpen) setPassageStep("chapter");
                 goAdjacent(1);
               }}
-              disabled={!canNext || loading}
+              disabled={!canNext || loading || chipLoading}
               aria-label="Chapitre suivant"
             >
               <YvIcon name="chevron_right" className="bible-yv-top-passage-arrow-icon" />
@@ -1044,11 +1077,13 @@ export function BibleReaderView({
   }
 
   function renderPassageRoll(extraClass = "") {
-    const rollOpen = pickerOpen;
+    const rollOpen = pickerOpen && isLocalReady && !isLoadingLocal;
     return (
       <div
         ref={passageRollRef}
-        className={`bible-yv-passage-roll${rollOpen ? " is-open" : ""}`}
+        className={`bible-yv-passage-roll${rollOpen ? " is-open" : ""}${
+          isHydrating ? " is-hydrating" : ""
+        }`}
       >
         {renderTopPassageNav(extraClass, rollOpen)}
         <BiblePassageScrollPicker
@@ -1227,7 +1262,7 @@ export function BibleReaderView({
   const canPrev = Boolean(adjacentChapter(books, bookId, chapterId, -1));
   const canNext = Boolean(adjacentChapter(books, bookId, chapterId, 1));
   const bookTitle = resolveBookTitle(bookId);
-  const showCatalogOfflineHint = catalogOffline && catalogSource !== "network";
+  const catalogOfflineHint = catalogOffline && catalogSource !== "network";
   const locationLabel = selection?.length
     ? `${bookTitle} ${chapterId}.${formatVerseList(selection)}`
     : `${bookTitle} ${chapterId}`;
@@ -2034,7 +2069,7 @@ export function BibleReaderView({
       tabIndex={-1}
     >
       <header
-        className={`bible-yv-top${planReading ? " is-plan" : " is-free"}${pickerOpen ? " is-passage-picker-open" : ""}${showCatalogOfflineHint ? " is-catalog-offline" : ""}`}
+        className={`bible-yv-top${planReading ? " is-plan" : " is-free"}${pickerOpen ? " is-passage-picker-open" : ""}${catalogOfflineHint ? " is-catalog-offline" : ""}`}
         aria-label="Navigation biblique"
       >
         {planReading ? (
@@ -2062,16 +2097,10 @@ export function BibleReaderView({
           renderPassageRoll()
         )}
         <div className="bible-yv-top-tools">
-          {showCatalogOfflineHint ? (
-            <span
-              className="bible-yv-catalog-offline"
-              role="status"
-              aria-label="Catalogue local — hors ligne"
-              title="Catalogue local — hors ligne"
-            >
-              <YvIcon name="cloud_off" className="bible-yv-catalog-offline-icon" />
-            </span>
-          ) : null}
+          <BibleSyncIndicator
+            cloudSync={cloudSync}
+            catalogOffline={catalogOfflineHint}
+          />
           {planReading ? (
             <button
               type="button"
@@ -2096,7 +2125,7 @@ export function BibleReaderView({
         {loadingUi ? "Ouverture du chapitre…" : error ? error : locationLabel}
       </div>
 
-      {error ? (
+      {error && passageErrorKind !== "offline_not_cached" ? (
         <div className="bible-yv-error-bar" role="alert">
           <p className="bible-yv-error">{error}</p>
           <button
@@ -2112,8 +2141,14 @@ export function BibleReaderView({
 
       <article
         ref={passageScrollRef}
-        className="bible-passage"
-        aria-busy={loadingUi}
+        className={[
+          "bible-passage",
+          loadingUi && passage ? " is-chapter-loading is-chapter-reload" : "",
+          (loading || loadingUi) && !passage ? " is-chapter-opening" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+        aria-busy={loading || loadingUi}
         style={{ ["--verse-tint" as string]: actionTone.tint }}
         onClick={(event) => {
           if (pickerOpen) {
@@ -2138,11 +2173,17 @@ export function BibleReaderView({
           <p className="bible-chapter-num">{chapterId}</p>
         </header>
 
-        {loadingUi && !passage ? (
-          <p className="bible-yv-muted bible-loading">Ouverture du texte…</p>
-        ) : null}
-
-        {passage?.verses?.length ? (
+        {passageErrorKind === "offline_not_cached" && !useLocalBundledBible() ? (
+          <BibleOfflineChapterGate
+            onDownload={() => void toggleOfflineBible()}
+            offlineBusy={offlineBusy}
+          />
+        ) : (loading || loadingUi) && !passage ? (
+          <BibleChapterLoadingPlaceholder
+            bookTitle={bookTitle}
+            chapterId={chapterId}
+          />
+        ) : passage?.verses?.length ? (
           <div
             className={[
               "bible-verses",
@@ -2266,7 +2307,7 @@ export function BibleReaderView({
           </div>
         ) : passage?.content ? (
           <p className="bible-text">{passage.content}</p>
-        ) : !loadingUi ? (
+        ) : !loadingUi && !loading ? (
           <p className="bible-yv-muted">Choisis un livre et un chapitre pour lire.</p>
         ) : null}
       </article>
