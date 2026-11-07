@@ -1,5 +1,8 @@
 import { YvIcon } from "./YvIcon";
-import type { DiscoveryBookHit, DiscoveryJump, PassageDiscoverySections } from "../bible/passageDiscovery/types";
+import type { DiscoveryJump, PassageDiscoverySections } from "../bible/passageDiscovery/types";
+import type { BibleSearchHit } from "../youversion/client";
+import { BiblePassageDiscoveryBookRow } from "./BiblePassageDiscoveryBookRow";
+import type { DiscoveryBookHit } from "../bible/passageDiscovery/types";
 
 type BiblePassageDiscoveryListProps = {
   sections: PassageDiscoverySections;
@@ -7,50 +10,26 @@ type BiblePassageDiscoveryListProps = {
   busy: boolean;
   contentError: string | null;
   hasQuery: boolean;
+  searchQuery: string;
   bookId: string;
   loading: boolean;
+  expandedBookId: string | null;
+  anchorVerseUsfm: string | null;
+  verseScrollByBook: Record<string, number>;
+  onExpandedBookChange: (id: string | null) => void;
+  onVerseListScroll: (bookId: string, scrollTop: number) => void;
   onPickBook: (id: string) => void;
   onPickJump: (jump: DiscoveryJump) => void;
+  onPickVerse: (hit: BibleSearchHit) => void;
 };
-
-function renderBook(
-  hit: DiscoveryBookHit,
-  bookId: string,
-  loading: boolean,
-  onPickBook: (id: string) => void,
-) {
-  const on = hit.id.toUpperCase() === bookId.toUpperCase();
-  const showCount = hit.count != null && hit.count > 0;
-  return (
-    <button
-      key={hit.id}
-      id={`bible-pick-book-${hit.id}`}
-      type="button"
-      role="option"
-      aria-selected={on}
-      className={`bible-yv-pick-cell is-book${on ? " is-on" : ""}`}
-      onClick={() => onPickBook(hit.id)}
-      disabled={loading}
-    >
-      <span className="bible-yv-pick-cell-label">{hit.title}</span>
-      {showCount ? (
-        <span
-          className="bible-yv-pick-cell-count"
-          aria-label={`${hit.count} occurrence${hit.count === 1 ? "" : "s"}`}
-        >
-          {hit.count}
-        </span>
-      ) : null}
-    </button>
-  );
-}
 
 function renderSection(
   label: string,
   hits: DiscoveryBookHit[],
-  bookId: string,
-  loading: boolean,
-  onPickBook: (id: string) => void,
+  props: Omit<
+    BiblePassageDiscoveryListProps,
+    "sections" | "jumps" | "busy" | "contentError"
+  >,
 ) {
   if (!hits.length) return null;
   return (
@@ -58,7 +37,23 @@ function renderSection(
       <p className="bible-yv-pick-section-label" role="presentation">
         {label}
       </p>
-      {hits.map((hit) => renderBook(hit, bookId, loading, onPickBook))}
+      {hits.map((hit) => (
+        <BiblePassageDiscoveryBookRow
+          key={hit.id}
+          hit={hit}
+          searchQuery={props.searchQuery}
+          hasQuery={props.hasQuery}
+          currentBookId={props.bookId}
+          loading={props.loading}
+          expanded={props.expandedBookId?.toUpperCase() === hit.id.toUpperCase()}
+          anchorVerseUsfm={props.anchorVerseUsfm}
+          verseScrollTop={props.verseScrollByBook[hit.id.toUpperCase()] ?? 0}
+          onToggleExpand={props.onExpandedBookChange}
+          onVerseListScroll={props.onVerseListScroll}
+          onPickBook={props.onPickBook}
+          onPickVerse={props.onPickVerse}
+        />
+      ))}
     </div>
   );
 }
@@ -69,12 +64,34 @@ export function BiblePassageDiscoveryList({
   busy,
   contentError,
   hasQuery,
+  searchQuery,
   bookId,
   loading,
+  expandedBookId,
+  anchorVerseUsfm,
+  verseScrollByBook,
+  onExpandedBookChange,
+  onVerseListScroll,
   onPickBook,
   onPickJump,
+  onPickVerse,
 }: BiblePassageDiscoveryListProps) {
   const totalBooks = sections.at.length + sections.nt.length;
+
+  const sectionProps = {
+    searchQuery,
+    hasQuery,
+    bookId,
+    loading,
+    expandedBookId,
+    anchorVerseUsfm,
+    verseScrollByBook,
+    onExpandedBookChange,
+    onVerseListScroll,
+    onPickBook,
+    onPickJump,
+    onPickVerse,
+  };
 
   return (
     <>
@@ -109,8 +126,8 @@ export function BiblePassageDiscoveryList({
 
       {totalBooks > 0 ? (
         <>
-          {renderSection("Ancien Testament", sections.at, bookId, loading, onPickBook)}
-          {renderSection("Nouveau Testament", sections.nt, bookId, loading, onPickBook)}
+          {renderSection("Ancien Testament", sections.at, sectionProps)}
+          {renderSection("Nouveau Testament", sections.nt, sectionProps)}
         </>
       ) : !busy && hasQuery && !jumps.length ? (
         <p className="bible-yv-pick-loading bible-yv-muted bible-yv-pick-roll-empty">

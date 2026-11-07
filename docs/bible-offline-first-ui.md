@@ -32,7 +32,7 @@ Núcleo em `src/bible/passageDiscovery/` (puro) + `usePassageDiscovery` + `Bible
 |--------|----------------|
 | Query vazia | 66 livros em **Ancien Testament** / **Nouveau Testament** |
 | Nome de livre | Filtro por título (síncrono) + fusão com hits de texto |
-| Mot (≥2 car.) | `searchVerses` → `bookCounts` apenas; badge de ocorrências |
+| Mot (≥2 car.) | `bookCounts` + dépliant → versets; toque abre passagem; **session** (`PassageDiscoverySession`) guarda query, scroll, livro expandido e último verseto — só o X limpa |
 | Référence (ex. Jean 3.16) | Ligne «Aller à…» → `loadChapter` directo |
 
 O sheet `BibleSearchSheet` mantém-se para versículos detalhados; o picker só sugere **livros** ou **saut**.
@@ -69,3 +69,4 @@ Chrome da Bíblia:
 9. **«1 Rois»** — filtre titre, un ou deux livres mis en évidence.
 10. **«amour»** — avec index IDB ou API : plusieurs livres + compteurs ; hors ligne sans index : message + titres si match.
 11. **«Jean 3.16»** — pas de grille livres ; bouton Aller à Jean 3.16 ouvre le passage.
+12. **Retour recherche** — après un verset : rouvrir le picker retrouve mot, dépliant, scroll et verset ancré ; seul le **X** réinitialise.

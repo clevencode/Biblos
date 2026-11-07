@@ -1,6 +1,7 @@
-import { forwardRef } from "react";
+import { forwardRef, useLayoutEffect, useRef } from "react";
+import type { PassageDiscoverySession } from "../bible/passageDiscovery/session";
 import { YvIcon } from "./YvIcon";
-import type { YouVersionBook } from "../youversion/client";
+import type { BibleSearchHit, YouVersionBook } from "../youversion/client";
 import { BiblePassageDiscoveryList } from "./BiblePassageDiscoveryList";
 import type { DiscoveryJump, PassageDiscoveryResult } from "../bible/passageDiscovery/types";
 
@@ -16,6 +17,10 @@ type BiblePassageScrollPickerProps = {
   books: YouVersionBook[];
   discovery: PassageDiscoveryResult;
   discoveryBusy: boolean;
+  discoverySession: PassageDiscoverySession;
+  onDiscoveryListScroll: (scrollTop: number) => void;
+  onDiscoveryExpandedBookChange: (bookId: string | null) => void;
+  onDiscoveryVerseListScroll: (bookId: string, scrollTop: number) => void;
   chapters: string[];
   verseOptions: number[];
   loading: boolean;
@@ -24,8 +29,10 @@ type BiblePassageScrollPickerProps = {
   verseSelected: (n: number) => boolean;
   onBack: () => void;
   onSearchChange: (value: string) => void;
+  onSearchClear: () => void;
   onPickBook: (id: string) => void;
   onPickJump: (jump: DiscoveryJump) => void;
+  onPickVerse: (hit: BibleSearchHit) => void;
   onPickChapter: (id: string) => void;
   onJumpVerse: (n: number) => void;
 };
@@ -42,6 +49,10 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
       books,
       discovery,
       discoveryBusy,
+      discoverySession,
+      onDiscoveryListScroll,
+      onDiscoveryExpandedBookChange,
+      onDiscoveryVerseListScroll,
       chapters,
       verseOptions,
       loading,
@@ -50,13 +61,30 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
       verseSelected,
       onBack,
       onSearchChange,
+      onSearchClear,
       onPickBook,
       onPickJump,
+      onPickVerse,
       onPickChapter,
       onJumpVerse,
     },
     ref,
   ) {
+    const gridRef = useRef<HTMLDivElement>(null);
+    const restoredListScrollRef = useRef(false);
+
+    useLayoutEffect(() => {
+      if (!open) {
+        restoredListScrollRef.current = false;
+        return;
+      }
+      if (step !== "book" || restoredListScrollRef.current) return;
+      const el = gridRef.current;
+      if (!el) return;
+      el.scrollTop = discoverySession.listScrollTop;
+      restoredListScrollRef.current = true;
+    }, [open, step]);
+
     if (!open) return null;
 
     const ariaLabel =
@@ -67,6 +95,13 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
           : `Versets du chapitre ${chapterId}`;
 
     const hasQuery = Boolean(bookSearchQuery.trim());
+
+    function handlePickVerse(hit: BibleSearchHit) {
+      if (gridRef.current) {
+        onDiscoveryListScroll(gridRef.current.scrollTop);
+      }
+      onPickVerse(hit);
+    }
 
     return (
       <div
@@ -91,6 +126,16 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
               aria-label="Rechercher un livre, un mot ou une référence"
               onChange={(event) => onSearchChange(event.target.value)}
             />
+            {hasQuery ? (
+              <button
+                type="button"
+                className="bible-yv-pick-search-clear"
+                onClick={onSearchClear}
+                aria-label="Effacer la recherche"
+              >
+                <YvIcon name="close" opsz={20} className="bible-yv-pick-search-clear-icon" />
+              </button>
+            ) : null}
           </div>
         ) : step === "verse" ? (
           <div className="bible-yv-pick-roll-subhead">
@@ -117,7 +162,16 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
             <span className="bible-yv-pick-roll-subhead-label">{bookTitle}</span>
           </div>
         ) : null}
-        <div className={`bible-yv-pick-grid${step === "book" ? " is-books" : ""}`} role="listbox">
+        <div
+          ref={step === "book" ? gridRef : undefined}
+          className={`bible-yv-pick-grid${step === "book" ? " is-books" : ""}`}
+          role="listbox"
+          onScroll={
+            step === "book"
+              ? (event) => onDiscoveryListScroll(event.currentTarget.scrollTop)
+              : undefined
+          }
+        >
           {step === "book" ? (
             <BiblePassageDiscoveryList
               sections={discovery.sections}
@@ -125,10 +179,17 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
               busy={discoveryBusy}
               contentError={discovery.contentError}
               hasQuery={hasQuery}
+              searchQuery={bookSearchQuery}
               bookId={bookId}
               loading={loading}
+              expandedBookId={discoverySession.expandedBookId}
+              anchorVerseUsfm={discoverySession.anchorVerseUsfm}
+              verseScrollByBook={discoverySession.verseScrollByBook}
+              onExpandedBookChange={onDiscoveryExpandedBookChange}
+              onVerseListScroll={onDiscoveryVerseListScroll}
               onPickBook={onPickBook}
               onPickJump={onPickJump}
+              onPickVerse={handlePickVerse}
             />
           ) : step === "chapter"
             ? chapters.map((id) => {

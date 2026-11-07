@@ -15,6 +15,7 @@ import {
   fetchPassage,
   parseUsfmParts,
   LSG_BIBLE_ID,
+  type BibleSearchHit,
   type YouVersionPassage,
 } from "../youversion/client";
 import {
@@ -34,6 +35,10 @@ import { BibleOfflineChapterGate } from "./BibleOfflineChapterGate";
 import { BibleChapterLoadingPlaceholder } from "./BibleChapterLoadingPlaceholder";
 import { usePassageDiscovery } from "../hooks/usePassageDiscovery";
 import type { DiscoveryJump } from "../bible/passageDiscovery/types";
+import {
+  EMPTY_PASSAGE_DISCOVERY_SESSION,
+  type PassageDiscoverySession,
+} from "../bible/passageDiscovery/session";
 import {
   classifyPassageLoadError,
   type PassageLoadErrorKind,
@@ -475,6 +480,11 @@ export function BibleReaderView({
   const [pickerOpen, setPickerOpen] = useState(false);
   const [passageStep, setPassageStep] = useState<"book" | "chapter" | "verse">("book");
   const [bookSearchQuery, setBookSearchQuery] = useState("");
+  const [discoverySession, setDiscoverySession] = useState<PassageDiscoverySession>(
+    () => ({ ...EMPTY_PASSAGE_DISCOVERY_SESSION }),
+  );
+  const discoveryListScrollRaf = useRef(0);
+  const discoveryVerseScrollRaf = useRef<Record<string, number>>({});
   const passageDiscoveryEnabled =
     pickerOpen && passageStep === "book" && isLocalReady && !isLoadingLocal;
   const { result: passageDiscovery, busy: passageDiscoveryBusy } = usePassageDiscovery(
@@ -985,10 +995,40 @@ export function BibleReaderView({
     setPickerOpen(false);
   }
 
+  function patchDiscoverySession(patch: Partial<PassageDiscoverySession>) {
+    setDiscoverySession((prev) => ({ ...prev, ...patch }));
+  }
+
+  function setDiscoveryListScroll(scrollTop: number) {
+    if (discoveryListScrollRaf.current) {
+      cancelAnimationFrame(discoveryListScrollRaf.current);
+    }
+    discoveryListScrollRaf.current = requestAnimationFrame(() => {
+      patchDiscoverySession({ listScrollTop: scrollTop });
+    });
+  }
+
+  function setDiscoveryVerseListScroll(bookId: string, scrollTop: number) {
+    const id = String(bookId || "").toUpperCase();
+    if (!id) return;
+    const prevRaf = discoveryVerseScrollRaf.current[id];
+    if (prevRaf) cancelAnimationFrame(prevRaf);
+    discoveryVerseScrollRaf.current[id] = requestAnimationFrame(() => {
+      setDiscoverySession((prev) => ({
+        ...prev,
+        verseScrollByBook: { ...prev.verseScrollByBook, [id]: scrollTop },
+      }));
+    });
+  }
+
+  function clearBookSearch() {
+    setBookSearchQuery("");
+    setDiscoverySession({ ...EMPTY_PASSAGE_DISCOVERY_SESSION });
+  }
+
   function closePicker() {
     setPickerOpen(false);
     setPassageStep("book");
-    setBookSearchQuery("");
     pendingVerseStep.current = false;
   }
 
@@ -998,7 +1038,6 @@ export function BibleReaderView({
       const next = !open;
       if (next) {
         setPassageStep("book");
-        setBookSearchQuery("");
         pendingVerseStep.current = false;
       }
       return next;
@@ -1009,7 +1048,6 @@ export function BibleReaderView({
     if (!isLocalReady || isLoadingLocal) return;
     setToolsMenuOpen(false);
     setPassageStep(step);
-    if (step === "book") setBookSearchQuery("");
     pendingVerseStep.current = false;
     setPickerOpen(true);
   }
@@ -1105,6 +1143,12 @@ export function BibleReaderView({
           books={books}
           discovery={passageDiscovery}
           discoveryBusy={passageDiscoveryBusy}
+          discoverySession={discoverySession}
+          onDiscoveryListScroll={setDiscoveryListScroll}
+          onDiscoveryExpandedBookChange={(bookId) =>
+            patchDiscoverySession({ expandedBookId: bookId })
+          }
+          onDiscoveryVerseListScroll={setDiscoveryVerseListScroll}
           chapters={chapters}
           verseOptions={verseOptions}
           loading={loading}
@@ -1113,8 +1157,10 @@ export function BibleReaderView({
           verseSelected={(n) => verseInSelection(selection, n)}
           onBack={handlePickBack}
           onSearchChange={setBookSearchQuery}
+          onSearchClear={clearBookSearch}
           onPickBook={pickBook}
           onPickJump={pickDiscoveryJump}
+          onPickVerse={pickVerseSearchHit}
           onPickChapter={pickChapter}
           onJumpVerse={jumpToVerse}
         />
@@ -1136,15 +1182,29 @@ export function BibleReaderView({
 
   function pickBook(nextBook: string) {
     pendingVerseStep.current = false;
-    setBookSearchQuery("");
     setPassageStep("chapter");
     if (nextBook.toUpperCase() === bookId.toUpperCase()) return;
     void loadChapter(nextBook, "1", null);
   }
 
+  function pickVerseSearchHit(hit: BibleSearchHit) {
+    const parts = parseUsfmParts(hit.usfm);
+    pendingVerseStep.current = false;
+    patchDiscoverySession({
+      expandedBookId: parts.bookId.toUpperCase(),
+      anchorVerseUsfm: hit.usfm.toUpperCase(),
+    });
+    setPickerOpen(false);
+    setPassageStep("book");
+    void loadChapter(parts.bookId, String(hit.chapter), hit.verse, null);
+  }
+
   function pickDiscoveryJump(jump: DiscoveryJump) {
     pendingVerseStep.current = jump.passage.verse != null;
-    setBookSearchQuery("");
+    patchDiscoverySession({
+      expandedBookId: jump.passage.bookId.toUpperCase(),
+      anchorVerseUsfm: jump.passage.usfm || null,
+    });
     setPickerOpen(false);
     setPassageStep("book");
     const chapter = String(jump.passage.chapter);
