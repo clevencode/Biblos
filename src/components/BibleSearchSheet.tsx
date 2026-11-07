@@ -291,10 +291,7 @@ export function BibleSearchSheet({ open, onClose, onSelect }: BibleSearchSheetPr
         </button>
         <div className="bible-search-sheet-input-wrap">
           <span className="bible-search-sheet-glyph" aria-hidden>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" strokeWidth="2" />
-              <path d="M16 16l4.5 4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            </svg>
+            <YvIcon name="search" opsz={20} className="bible-search-sheet-search-icon" />
           </span>
           <input
             ref={inputRef}

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { YvIcon } from "./YvIcon";
 import { loadPlanProgress, progressCounts } from "../planProgress";
 import { planCoverStyle, planTitle } from "../planTheme";
 import type { ReadingPlan } from "../types";
@@ -265,7 +266,11 @@ export function PlanGallery({
                   </span>
                   <span className="plan-card-cta">
                     {action}
-                    <span aria-hidden="true">›</span>
+                    <YvIcon
+                      name="chevron_right"
+                      opsz={20}
+                      className="plan-card-cta-icon"
+                    />
                   </span>
                 </button>
               );

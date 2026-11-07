@@ -3,7 +3,7 @@ import {
   isOfflineBibleReady,
 } from "../bibleOffline";
 import { ensureBibleIndexedFromBundle, useLocalBundledBible } from "../bibleEngine";
-import { YvIcon } from "./YvIcon";
+import { YvIcon, type BiblosIconName } from "./YvIcon";
 import {
   ACTIVITY_UI_ENABLED,
   activityTypeLabel,
@@ -83,7 +83,7 @@ const APP_VERSION = __APP_VERSION__;
 const THEME_OPTIONS: {
   id: ThemePref;
   label: string;
-  icon: string;
+  icon: BiblosIconName;
 }[] = [
   { id: "light", label: "Clair", icon: "light_mode" },
   { id: "dark", label: "Sombre", icon: "dark_mode" },

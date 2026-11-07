@@ -216,7 +216,11 @@ export function HomeView({
                     </span>
                     <span className="plan-card-cta">
                       Continuer
-                      <span aria-hidden="true">›</span>
+                      <YvIcon
+                        name="chevron_right"
+                        opsz={20}
+                        className="plan-card-cta-icon"
+                      />
                     </span>
                   </button>
                 </li>

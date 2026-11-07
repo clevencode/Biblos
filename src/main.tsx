@@ -1,5 +1,4 @@
 import { Capacitor } from "@capacitor/core";
-import "@fontsource-variable/material-symbols-rounded/full.css";
 import "@fontsource/outfit/400.css";
 import "@fontsource/outfit/500.css";
 import "@fontsource/outfit/600.css";

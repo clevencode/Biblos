@@ -242,24 +242,22 @@ summary {
 }
 
 .yv-icon {
-  font-family: "Material Symbols Rounded Variable", "Material Symbols Rounded", sans-serif;
-  font-weight: normal;
-  font-style: normal;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 1em;
+  height: 1em;
   font-size: 24px;
-  line-height: 1;
-  letter-spacing: normal;
-  text-transform: none;
-  display: inline-grid;
-  place-items: center;
-  white-space: nowrap;
-  word-wrap: normal;
-  direction: ltr;
-  font-feature-settings: "liga";
-  -webkit-font-smoothing: antialiased;
+  line-height: 0;
+  color: inherit;
   user-select: none;
   pointer-events: none;
-  flex: none;
-  color: inherit;
+}
+
+.yv-icon svg {
+  width: 100%;
+  height: 100%;
 }
 
 *::-webkit-scrollbar {
@@ -749,12 +747,8 @@ body {
 }
 
 .mode-tab-icon {
-  display: block;
   flex-shrink: 0;
-  width: 22px;
-  height: 22px;
   color: inherit;
-  overflow: visible;
 }
 
 .mode-tabs-nav > button.is-on .mode-tab-icon {
@@ -5374,8 +5368,7 @@ body {
   }
 
   .mode-tab-icon {
-    width: 24px;
-    height: 24px;
+    font-size: 24px;
   }
 
   .mode-tab-badge {
@@ -6152,6 +6145,11 @@ body {
     color-mix(in srgb, var(--accent) 80%, #60a5fa),
     var(--accent)
   );
+}
+
+.plan-card-cta-icon {
+  font-size: 14px;
+  opacity: 0.92;
 }
 
 .plan-card-cta {
@@ -11754,6 +11752,10 @@ ul.plan-yv-day-note-ref {
   place-items: center;
   color: color-mix(in srgb, var(--muted) 88%, var(--text));
   pointer-events: none;
+}
+
+.bible-search-sheet-search-icon {
+  font-size: 18px;
 }
 
 .bible-search-sheet-input {
