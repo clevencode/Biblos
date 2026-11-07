@@ -14,9 +14,10 @@
   --cc-border: var(--cc-line);
   --cc-accent: var(--cc-action);
 
-  /* Tipografia — UI sans + leitura serif */
-  --cc-font: "Outfit", "Avenir Next", "Segoe UI", sans-serif;
-  --cc-font-read: "Source Serif 4", Georgia, "Times New Roman", serif;
+  /* Tipografia — UI sans + leitura serif (OFL) */
+  --cc-font: "Outfit Variable", "Outfit", system-ui, sans-serif;
+  --cc-font-read: "Source Serif 4 Variable", "Source Serif 4", Georgia, serif;
+  --cc-font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
   --cc-tracking-display: -0.03em;
   --cc-tracking-headline: -0.025em;
   --cc-tracking-title: -0.02em;

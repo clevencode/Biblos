@@ -40,13 +40,15 @@
   --scroll-thumb-hover: rgba(13, 17, 23, 0.28);
 
   /*
-   * Tipografia por contexto
-   * UI (tabs, botões, labels, títulos de chrome) → sans
-   * Leitura (versículos, body longo, cartão) → serif
+   * Tipografia (OFL, Google Fonts via Fontsource)
+   * UI → Outfit Variable — traços arredondados, par com coolicons line/round
+   * Leitura / Bible → Source Serif 4 Variable — conforto em textos longos
+   * Código → JetBrains Mono Variable
    */
-  --font-ui: "Outfit", "Avenir Next", "Segoe UI", sans-serif;
-  --font-read: "Source Serif 4", Georgia, "Times New Roman", serif;
-  --font-bible: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --font-ui: "Outfit Variable", "Outfit", system-ui, sans-serif;
+  --font-read: "Source Serif 4 Variable", "Source Serif 4", Georgia, serif;
+  --font-bible: "Source Serif 4 Variable", "Source Serif 4", Georgia, serif;
+  --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
 
   /* Leitura longa: regular, entrelinha generosa */
   --type-bible-weight: 400;
@@ -5144,7 +5146,7 @@ body {
 }
 
 .nota-resumo-p code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 0.88em;
 }
 
