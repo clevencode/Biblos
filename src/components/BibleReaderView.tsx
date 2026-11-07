@@ -1555,7 +1555,9 @@ export function BibleReaderView({
   /** Accent marque (cartão PNG) — or brand, pas la couleur de surlignage. */
   const shareAccentHex = "#C4A574";
 
-  const showCreateCard = Boolean(selectedVerses.length && selectedVerseText && !pickerOpen);
+  const showCreateCard = Boolean(
+    selectedVerses.length && selectedVerseText && !pickerOpen && !shareSheetOpen,
+  );
   const forceChrome =
     pickerOpen ||
     showCreateCard ||
@@ -2086,7 +2088,7 @@ export function BibleReaderView({
   return (
     <section
       ref={readerRef}
-      className={`bible-reader bible-reader--yv${hideChrome ? " is-chrome-hidden" : ""}${showCreateCard ? " has-verse-actions" : ""}${headCompact ? " is-head-compact" : ""}${pickerOpen ? " is-passage-roll-open" : ""}${compactToolsMenu ? " is-compact-tools" : ""}${toolsMenuOpen ? " is-tools-menu-open" : ""}`}
+      className={`bible-reader bible-reader--yv${hideChrome ? " is-chrome-hidden" : ""}${showCreateCard ? " has-verse-actions" : ""}${shareSheetOpen ? " is-share-open" : ""}${headCompact ? " is-head-compact" : ""}${pickerOpen ? " is-passage-roll-open" : ""}${compactToolsMenu ? " is-compact-tools" : ""}${toolsMenuOpen ? " is-tools-menu-open" : ""}`}
       style={{ ["--bible-font-size" as string]: `${fontSize}px` }}
       onKeyDown={(event) => {
         if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement) {
@@ -2222,7 +2224,7 @@ export function BibleReaderView({
       </div>
 
       <div
-        className={`bible-yv-read-surface${pickerOpen || toolsMenuOpen ? " is-overlay-occluding" : ""}`}
+        className={`bible-yv-read-surface${pickerOpen || toolsMenuOpen || shareSheetOpen ? " is-overlay-occluding" : ""}`}
       >
         {pickerOpen ? (
           <button
@@ -2264,8 +2266,8 @@ export function BibleReaderView({
           .filter(Boolean)
           .join(" ")}
         aria-busy={loading || loadingUi}
-        aria-hidden={pickerOpen || toolsMenuOpen || undefined}
-        inert={pickerOpen || toolsMenuOpen || undefined}
+        aria-hidden={pickerOpen || toolsMenuOpen || shareSheetOpen || undefined}
+        inert={pickerOpen || toolsMenuOpen || shareSheetOpen || undefined}
         style={{ ["--verse-tint" as string]: actionTone.tint }}
         onClick={(event) => {
           const target = event.target;

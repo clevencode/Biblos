@@ -108,7 +108,7 @@ export function consumeShareRefFromUrl(): string | null {
 
 /**
  * Caption pour copie / Web Share :
- * référence, verset, puis lien (le lien n’apparaît pas sur l’image).
+ * référence, verset, puis lien (texte unifié ici uniquement — sur l’image, verset et lien sont séparés).
  */
 export function buildShareText(
   refLabel: string,

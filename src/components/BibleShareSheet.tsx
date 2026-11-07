@@ -248,28 +248,35 @@ export function BibleShareSheet({
     : Boolean(verseText);
 
   return (
-    <div
-      className="bible-search-sheet bible-share-sheet"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby={titleId}
-    >
-      <header className="bible-search-sheet-head bible-share-sheet-head">
-        <button
-          type="button"
-          className="bible-search-sheet-back"
-          onClick={onClose}
-          aria-label="Fermer le partage"
-        >
-          <YvIcon name="chevron_left" className="bible-search-sheet-back-icon" />
-        </button>
-        <p id={titleId} className="bible-search-sheet-title">
-          {isPlan ? "Partager le plan" : "Partager"}
-        </p>
-        <span className="bible-search-sheet-spacer" aria-hidden />
-      </header>
-
-      <p className="bible-share-sheet-ref">{displayLabel}</p>
+    <>
+      <button
+        type="button"
+        className="bible-share-sheet-scrim"
+        aria-label="Fermer le partage"
+        onClick={onClose}
+      />
+      <div
+        className="bible-share-sheet is-popup"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+      >
+        <header className="bible-share-sheet-head">
+          <div className="bible-share-sheet-head-copy">
+            <p id={titleId} className="bible-share-sheet-title">
+              {isPlan ? "Partager le plan" : "Partager"}
+            </p>
+            <p className="bible-share-sheet-ref">{displayLabel}</p>
+          </div>
+          <button
+            type="button"
+            className="bible-share-sheet-close"
+            onClick={onClose}
+            aria-label="Fermer"
+          >
+            <YvIcon name="close" className="bible-share-sheet-close-icon" />
+          </button>
+        </header>
 
       <div className="bible-share-sheet-preview" aria-busy={previewBusy || undefined}>
         {previewBusy ? (
@@ -322,6 +329,7 @@ export function BibleShareSheet({
         </div>
         {msg ? <p className="bible-share-sheet-msg">{msg}</p> : null}
       </div>
-    </div>
+      </div>
+    </>
   );
 }
