@@ -2,9 +2,11 @@ import type { IconComponent } from "@coolicons/react/line/round";
 import {
   Bell,
   BellDot,
+  Book,
   Bookmark,
   BookmarkMinus,
   Check,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   CircleCheck,
@@ -13,6 +15,7 @@ import {
   Download,
   Highlighter,
   History,
+  ListOrdered,
   Menu,
   Monitor,
   Moon,
@@ -22,6 +25,8 @@ import {
   Search,
   Settings,
   Share,
+  SkipBack,
+  SkipForward,
   Sun,
   SunMoon,
   Trash,
@@ -41,7 +46,12 @@ export type BiblosIconName =
   | "ios_share"
   | "chevron_left"
   | "chevron_right"
+  | "keyboard_arrow_down"
   | "menu"
+  | "menu_book"
+  | "format_list_numbered"
+  | "skip_previous"
+  | "skip_next"
   | "search"
   | "light_mode"
   | "dark_mode"
@@ -75,7 +85,12 @@ export const ICON_REGISTRY: Record<BiblosIconName, IconEntry> = {
   ios_share: { line: Share },
   chevron_left: { line: ChevronLeft },
   chevron_right: { line: ChevronRight },
+  keyboard_arrow_down: { line: ChevronDown },
   menu: { line: Menu },
+  menu_book: { line: Book },
+  format_list_numbered: { line: ListOrdered },
+  skip_previous: { line: SkipBack },
+  skip_next: { line: SkipForward },
   search: { line: Search },
   light_mode: { line: Sun },
   dark_mode: { line: Moon },

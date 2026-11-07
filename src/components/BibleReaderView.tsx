@@ -33,11 +33,9 @@ import {
 } from "../youversion/audio";
 import { BibleAudioFloat } from "./BibleAudioFloat";
 import { BibleHistorySheet } from "./BibleHistorySheet";
-import { BibleSearchSheet } from "./BibleSearchSheet";
 import { BibleShareSheet } from "./BibleShareSheet";
 import { BiblePassageScrollPicker } from "./BiblePassageScrollPicker";
 import { BiblePassageChip } from "./BiblePassageChip";
-import { BibleSyncIndicator } from "./BibleSyncIndicator";
 import { BibleOfflineChapterGate } from "./BibleOfflineChapterGate";
 import { BibleChapterLoadingPlaceholder } from "./BibleChapterLoadingPlaceholder";
 import { usePassageDiscovery } from "../hooks/usePassageDiscovery";
@@ -82,7 +80,6 @@ import {
 import { resolveTheme, themePrefLabel, type ResolvedTheme, type ThemePref } from "../theme";
 import { loadChapterMarks, setVerseMarks } from "../verseMarks";
 import type { Flashcard } from "../types";
-import { parseUsfmLocation } from "../youversion/usfm";
 import {
   buildVerseAudioCues,
   chapterAudioSyncPack,
@@ -92,6 +89,8 @@ import {
 } from "../bibleChapterAudioSync";
 
 const STORAGE_KEY = BIBLE_READER_PREFS_KEY;
+/** Panneau verset : pas de Flashcard tant que l’onglet Cartes est désactivé. */
+const VERSE_SUITE_FLASHCARDS_ENABLED = false;
 const FONT_MIN = 15;
 const FONT_MAX = 28;
 const FONT_DEFAULT = 19;
@@ -448,7 +447,6 @@ export function BibleReaderView({
     books: catalogBooks,
     bible,
     setBible,
-    catalogSource,
     isOffline: catalogOffline,
     isHydrating,
     isLocalReady,
@@ -474,12 +472,8 @@ export function BibleReaderView({
       : isLocalReady;
   const pickerCatalogLoading =
     textVersion === "ht98" ? htCatalogLoading || !htBooks?.length : isLoadingLocal;
-  const {
-    cloudSync,
-    setCatalogHydrating,
-    setCatalogLocalReady,
-    registerCloudSync,
-  } = useAppReadiness();
+  const { setCatalogHydrating, setCatalogLocalReady, registerCloudSync } =
+    useAppReadiness();
   const [, setBibleId] = useState<number | null>(() => bible.id ?? LSG_BIBLE_ID);
   const [bookId, setBookId] = useState(initialParts.bookId);
   const [chapterId, setChapterId] = useState(initialParts.chapterId);
@@ -539,7 +533,6 @@ export function BibleReaderView({
   const [audioDuration, setAudioDuration] = useState(0);
   const [chapterTranscript, setChapterTranscript] = useState<ChapterTranscript | null>(null);
   const [audioSyncVerse, setAudioSyncVerse] = useState<number | null>(null);
-  const [searchOpen, setSearchOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [shareSheetOpen, setShareSheetOpen] = useState(false);
   const [shareMode, setShareMode] = useState<"verse" | "plan">("verse");
@@ -1136,7 +1129,7 @@ export function BibleReaderView({
               disabled={!canPrev || loading || chipLoading}
               aria-label="Chapitre précédent"
             >
-              <YvIcon name="chevron_left" className="bible-yv-top-passage-arrow-icon" />
+              <YvIcon name="skip_previous" className="bible-yv-top-passage-arrow-icon" />
             </button>
           ) : null}
           <div className="bible-yv-top-passage-segments">
@@ -1173,7 +1166,7 @@ export function BibleReaderView({
               disabled={!canNext || loading || chipLoading}
               aria-label="Chapitre suivant"
             >
-              <YvIcon name="chevron_right" className="bible-yv-top-passage-arrow-icon" />
+              <YvIcon name="skip_next" className="bible-yv-top-passage-arrow-icon" />
             </button>
           ) : null}
         </div>
@@ -1408,7 +1401,12 @@ export function BibleReaderView({
   const canPrev = Boolean(adjacentChapter(books, bookId, chapterId, -1));
   const canNext = Boolean(adjacentChapter(books, bookId, chapterId, 1));
   const bookTitle = resolveBookTitle(bookId);
-  const catalogOfflineHint = catalogOffline && catalogSource !== "network";
+  /** Offline de navegador — não depende só da fonte do catálogo (evita salto de chrome). */
+  const catalogOfflineHint = catalogOffline;
+  const showOfflineChapterGate =
+    passageErrorKind === "offline_not_cached" &&
+    !useLocalBundledBible() &&
+    !(passage?.verses?.length);
   const locationLabel = selection?.length
     ? `${bookTitle} ${chapterId}.${formatVerseList(selection)}`
     : `${bookTitle} ${chapterId}`;
@@ -1640,7 +1638,6 @@ export function BibleReaderView({
   const forceChrome =
     pickerOpen ||
     showCreateCard ||
-    searchOpen ||
     historyOpen ||
     shareSheetOpen ||
     toolsMenuOpen;
@@ -1718,18 +1715,6 @@ export function BibleReaderView({
             role="menu"
             aria-label="Menu Bible"
           >
-            <button
-              type="button"
-              role="menuitem"
-              className="bible-yv-tools-item"
-              onClick={() => {
-                setToolsMenuOpen(false);
-                setSearchOpen(true);
-              }}
-            >
-              <YvIcon name="search" className="bible-yv-tools-item-icon" />
-              <span>Recherche</span>
-            </button>
             <div
               className="bible-yv-tools-version"
               role="group"
@@ -2251,7 +2236,6 @@ export function BibleReaderView({
           if (
             pickerOpen ||
             showCreateCard ||
-            searchOpen ||
             toolsMenuOpen ||
             historyOpen ||
             shareSheetOpen
@@ -2330,10 +2314,6 @@ export function BibleReaderView({
           renderPassageRoll()
         )}
         <div className="bible-yv-top-tools">
-          <BibleSyncIndicator
-            cloudSync={cloudSync}
-            catalogOffline={catalogOfflineHint}
-          />
           {planReading ? (
             <button
               type="button"
@@ -2360,7 +2340,7 @@ export function BibleReaderView({
 
       <div
         className={`bible-yv-read-surface${
-          pickerOpen || toolsMenuOpen || searchOpen || historyOpen
+          pickerOpen || toolsMenuOpen || historyOpen
             ? " is-overlay-occluding"
             : ""
         }`}
@@ -2418,7 +2398,7 @@ export function BibleReaderView({
           <p className="bible-chapter-num">{chapterId}</p>
         </header>
 
-        {passageErrorKind === "offline_not_cached" && !useLocalBundledBible() ? (
+        {showOfflineChapterGate ? (
           <BibleOfflineChapterGate
             onDownload={() => void toggleOfflineBible()}
             offlineBusy={offlineBusy}
@@ -2670,37 +2650,39 @@ export function BibleReaderView({
               Suite
             </p>
             <div
-              className="bible-verse-cta-row"
+              className={`bible-verse-cta-row${VERSE_SUITE_FLASHCARDS_ENABLED ? "" : " is-single"}`}
               role="group"
               aria-labelledby="bible-verse-actions-label"
             >
-              {existingVerseCard && selectedVerseCardId ? (
-                <button
-                  type="button"
-                  className="bible-yv-chip bible-make-card is-carded bible-view-card"
-                  disabled={cardBusy || !onViewFlashcard}
-                  onClick={() => onViewFlashcard?.(selectedVerseCardId)}
-                >
-                  <YvIcon name="style" className="bible-verse-cta-icon" />
-                  <span>Voir</span>
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  className="bible-yv-chip bible-make-card"
-                  disabled={cardBusy}
-                  onClick={() => void makeFlashcard()}
-                >
-                  {cardBusy ? (
-                    "…"
-                  ) : (
-                    <>
-                      <YvIcon name="style" className="bible-verse-cta-icon" />
-                      <span>Flashcard</span>
-                    </>
-                  )}
-                </button>
-              )}
+              {VERSE_SUITE_FLASHCARDS_ENABLED ? (
+                existingVerseCard && selectedVerseCardId ? (
+                  <button
+                    type="button"
+                    className="bible-yv-chip bible-make-card is-carded bible-view-card"
+                    disabled={cardBusy || !onViewFlashcard}
+                    onClick={() => onViewFlashcard?.(selectedVerseCardId)}
+                  >
+                    <YvIcon name="style" className="bible-verse-cta-icon" />
+                    <span>Voir</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="bible-yv-chip bible-make-card"
+                    disabled={cardBusy}
+                    onClick={() => void makeFlashcard()}
+                  >
+                    {cardBusy ? (
+                      "…"
+                    ) : (
+                      <>
+                        <YvIcon name="style" className="bible-verse-cta-icon" />
+                        <span>Flashcard</span>
+                      </>
+                    )}
+                  </button>
+                )
+              ) : null}
               <button
                 type="button"
                 className="bible-yv-chip bible-share-verse"
@@ -2825,21 +2807,6 @@ export function BibleReaderView({
       </footer>
         );
       })()}
-
-      <BibleSearchSheet
-        textVersion={textVersion}
-        open={searchOpen}
-        onClose={() => setSearchOpen(false)}
-        onSelect={(hit) => {
-          setSearchOpen(false);
-          setPickerOpen(false);
-          const loc = parseUsfmLocation(hit.usfm);
-          const bookId = loc?.bookId || hit.usfm.split(".")[0]!;
-          const chapter = loc ? String(loc.chapter) : String(hit.chapter);
-          const verse = loc ? loc.verse : hit.verse;
-          void loadChapter(bookId, chapter, verse, loc?.verseEnd ?? null);
-        }}
-      />
 
       <BibleShareSheet
         open={shareSheetOpen}

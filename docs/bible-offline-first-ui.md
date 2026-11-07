@@ -49,17 +49,19 @@ Fases (`AppReadinessContext`):
 
 Chrome da Bíblia:
 
-- Chips com **skeleton** (`BiblePassageChip`) — sem caret órfão durante `isLoadingLocal`.
+- Chips com **shimmer in-place** (`BiblePassageChip.is-hydrating`) — botão + caret fixos, sem troca por `span` skeleton.
 - Picker desactivado até `isLocalReady`.
-- `BibleSyncIndicator`: `cloud_sync` com pulso suave (nuvem), `cloud_done`, `cloud_off` — sem rotação agressiva.
+- Cabeçalho **sem** indicador nuvem/sync (toast global `Hors ligne` + ícone offline só se reactivado).
+- Classe `is-catalog-offline` segue **evento offline do navegador**, não só a fonte do catálogo em rede.
 - Capítulo: regra **120 ms** — skeleton de versículos (`BibleChapterLoadingPlaceholder`) ao mudar passagem; recarregar o mesmo capítulo escurece ligeiramente o texto + barra de progresso no topo do artigo.
 - Limpar `passage` quando o USFM muda, para o header e o corpo não divergirem.
-- Offline sem IDB: `BibleOfflineChapterGate` + CTA téléchargement.
+- Offline sem IDB: `BibleOfflineChapterGate` + CTA téléchargement (só sem versículos em memória; texto já lido permanece ao falhar recarga).
+- Gate e `BibleChapterLoadingPlaceholder` com **min-height** alinhado para evitar salto entre estados.
 
 ## QA manual (homologação)
 
 1. **Modo avião extremo** — fechar app, ativar modo avião, abrir leitor: barra com título do livro (francês) + capítulo + chevrons; picker com 66 livros.
-2. **Transição abrupta** — online → offline durante leitura: sem desaparecimento do texto da barra; ícone offline pode surgir.
+2. **Transição abrupta** — online → offline durante leitura: sem desaparecimento do texto da barra nem do capítulo em cache; hamburger e chips estáveis (sem dot «live»).
 3. **Min-width** — livros curtos (ex. Job): chip livro com largura mínima, caret separado do rótulo.
 4. **Picker pergaminho** — roll aberto; barra `is-roll-head` visível durante todos os passos (livro/capítulo/versículo).
 5. **Skeleton** — cold start no tab Bíblia: shimmer nos chips &lt;100 ms, depois títulos estáveis.

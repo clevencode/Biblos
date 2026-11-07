@@ -21,29 +21,29 @@ export function BiblePassageChip({
   title,
   onClick,
 }: BiblePassageChipProps) {
-  const showSkeleton = loading || !String(label || "").trim();
-
-  if (showSkeleton) {
-    return (
-      <span
-        className={`bible-yv-passage-chip-skeleton is-${variant}`}
-        aria-hidden
-      />
-    );
-  }
+  const trimmed = String(label || "").trim();
+  const showSkeleton = loading || !trimmed;
+  /** Placeholder invisível — largura estável (livro/capítulo) enquanto hidrata. */
+  const placeholder = variant === "chapter" ? "00" : "Livre";
+  const visibleLabel = showSkeleton ? placeholder : trimmed;
+  const kindIcon = variant === "book" ? "menu_book" : "format_list_numbered";
 
   return (
     <button
       type="button"
-      className={`bible-yv-passage-chip is-${variant}${open ? " is-open" : ""}`}
+      className={`bible-yv-passage-chip is-${variant}${open ? " is-open" : ""}${
+        showSkeleton ? " is-hydrating" : ""
+      }`}
       onClick={onClick}
-      disabled={disabled}
+      disabled={disabled || showSkeleton}
       aria-expanded={open}
       aria-haspopup="dialog"
+      aria-busy={showSkeleton || undefined}
       aria-label={ariaLabel}
-      title={title}
+      title={showSkeleton ? undefined : title}
     >
-      <span className="bible-yv-passage-chip-value">{label}</span>
+      <YvIcon name={kindIcon} opsz={20} className="bible-yv-passage-chip-kind" />
+      <span className="bible-yv-passage-chip-value">{visibleLabel}</span>
       <YvIcon
         name="keyboard_arrow_down"
         opsz={20}
