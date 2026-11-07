@@ -4,6 +4,11 @@ import { YvIcon } from "./YvIcon";
 import type { BibleSearchHit, YouVersionBook } from "../youversion/client";
 import { BiblePassageDiscoveryList } from "./BiblePassageDiscoveryList";
 import { BiblePickGridSkeleton } from "./BiblePickGridSkeleton";
+import {
+  buildChapterPickerSkeleton,
+  buildVersePickerSkeleton,
+} from "../bible/viewState/pickerViewState";
+import type { PassageSkeletonSchema } from "../bible/viewState/types";
 import type { DiscoveryJump, PassageDiscoveryResult } from "../bible/passageDiscovery/types";
 
 export type PassagePickStep = "book" | "chapter" | "verse";
@@ -26,6 +31,7 @@ type BiblePassageScrollPickerProps = {
   verseOptions: number[];
   loading: boolean;
   loadingUi: boolean;
+  passageSchema: PassageSkeletonSchema | null;
   highlightVerse: number | null;
   verseSelected: (n: number) => boolean;
   onBack: () => void;
@@ -58,6 +64,7 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
       verseOptions,
       loading,
       loadingUi,
+      passageSchema,
       highlightVerse,
       verseSelected,
       onBack,
@@ -96,7 +103,14 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
           : `Versets du chapitre ${chapterId}`;
 
     const hasQuery = Boolean(bookSearchQuery.trim());
-    const verseGridSkeletonCount = Math.min(50, Math.max(verseOptions.length, 24));
+    const verseGridSchema =
+      passageSchema && loadingUi
+        ? buildVersePickerSkeleton(passageSchema.usfm, passageSchema.gridVerseSlots)
+        : buildVersePickerSkeleton(
+            `${bookId}.${chapterId}`,
+            Math.min(50, Math.max(verseOptions.length, 24)),
+          );
+    const chapterGridSchema = buildChapterPickerSkeleton(bookId);
 
     function handlePickVerse(hit: BibleSearchHit) {
       if (gridRef.current) {
@@ -212,14 +226,11 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
                   );
                 })
               : (
-                <BiblePickGridSkeleton count={20} role="presentation" />
+                <BiblePickGridSkeleton schema={chapterGridSchema} role="presentation" />
               )
             : loadingUi
               ? (
-                <BiblePickGridSkeleton
-                  count={verseGridSkeletonCount}
-                  role="presentation"
-                />
+                <BiblePickGridSkeleton schema={verseGridSchema} role="presentation" />
               )
               : verseOptions.map((n) => {
                 const on = highlightVerse === n || verseSelected(n);

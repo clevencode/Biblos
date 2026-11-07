@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { deriveAudioViewState } from "../bible/viewState/audioViewState";
 import { YvIcon } from "./YvIcon";
 
 function formatAudioClock(seconds: number): string {
@@ -39,6 +40,18 @@ export function BibleAudioFloat({
   const progress =
     safeDuration > 0 ? Math.min(1, Math.max(0, displayTime / safeDuration)) : 0;
   const progressVisible = playing || seeking;
+  const audioState = useMemo(
+    () =>
+      deriveAudioViewState({
+        hasAudio,
+        playing,
+        busy,
+        currentTime: displayTime,
+        duration: safeDuration,
+      }),
+    [hasAudio, playing, busy, displayTime, safeDuration],
+  );
+  const showSpinner = audioState.status === "buffering";
 
   useEffect(() => {
     if (seeking) return;
@@ -60,7 +73,7 @@ export function BibleAudioFloat({
         aria-label={playing ? "Pause" : "Lecture"}
         aria-controls={progressVisible ? "bible-audio-progress" : undefined}
       >
-        {busy ? (
+        {showSpinner ? (
           <span className="bible-yv-dock-play-spinner" aria-hidden />
         ) : playing ? (
           <YvIcon name="pause" filled className="bible-yv-dock-icon bible-yv-dock-icon--play" />

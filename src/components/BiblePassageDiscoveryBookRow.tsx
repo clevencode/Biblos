@@ -4,6 +4,7 @@ import { YvIcon } from "./YvIcon";
 import type { DiscoveryBookHit } from "../bible/passageDiscovery/types";
 import { useBookVerseDiscovery } from "../hooks/useBookVerseDiscovery";
 import type { BibleSearchHit } from "../youversion/client";
+import { buildDiscoveryVerseRowId } from "../bible/viewState/pickerViewState";
 
 type BiblePassageDiscoveryBookRowProps = {
   hit: DiscoveryBookHit;
@@ -119,7 +120,7 @@ export function BiblePassageDiscoveryBookRow({
                 aria-hidden
               >
                 {Array.from({ length: 5 }, (_, i) => (
-                  <li key={i}>
+                  <li key={buildDiscoveryVerseRowId(hit.id, i)}>
                     <div className="bible-yv-pick-verse-hit is-loading">
                       <span className="bible-yv-pick-verse-hit-ref is-opaque">
                         {i + 1}.{i + 1}

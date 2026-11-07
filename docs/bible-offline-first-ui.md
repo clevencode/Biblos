@@ -37,6 +37,22 @@ Núcleo em `src/bible/passageDiscovery/` (puro) + `usePassageDiscovery` + `Bible
 
 O sheet `BibleSearchSheet` mantém-se para versículos detalhados; o picker só sugere **livros** ou **saut**.
 
+## ViewState (anti layout shift)
+
+| Módulo | Papel |
+|--------|--------|
+| `src/bible/viewState/*` | Contratos `PassageViewState`, `CatalogViewState`, `pickerViewState`, `audioViewState` |
+| `src/bible/passageRepository.ts` | I/O + `performance.mark` (`passage-layout-*`, `passage-idb-read-*`, `passage-viewstate-emit`) |
+| `src/hooks/usePassageViewModel.ts` | UDF: `NAVIGATE` → loading com **schema dimensional** (sem `passage = null`) |
+| IDB `chapter_layout` (v2) | `verseCount` / `contentCharLength` por capítulo, indexado com cada livro |
+
+Regras:
+
+- UI reage só a **ViewState**, não a modelos crus do IDB.
+- Mudança de capítulo: `isOpening` + skeleton com IDs estáveis (`skeleton:USFM:vN`); reload do mesmo USFM: `stalePassage` + `is-chapter-reload` (sem desmontar versos).
+- Picker: grelhas skeleton com `slotIds` fixos; painel com `min-height` + `contain: layout`.
+- Testes: `npm run test:passage-viewstate`.
+
 ## Predictable State UI
 
 Fases (`AppReadinessContext`):
@@ -53,8 +69,8 @@ Chrome da Bíblia:
 - Picker desactivado até `isLocalReady`.
 - Cabeçalho **sem** indicador nuvem/sync (toast global `Hors ligne` + ícone offline só se reactivado).
 - Classe `is-catalog-offline` segue **evento offline do navegador**, não só a fonte do catálogo em rede.
-- Capítulo: regra **120 ms** — skeleton de versículos (`BibleChapterLoadingPlaceholder`) ao mudar passagem; recarregar o mesmo capítulo escurece ligeiramente o texto + barra de progresso no topo do artigo.
-- Limpar `passage` quando o USFM muda, para o header e o corpo não divergirem.
+- Capítulo: regra **120 ms** — skeleton com métricas do `PassageSkeletonSchema`; recarregar o mesmo capítulo mantém versos (`stalePassage`) + barra no topo.
+- **Não** limpar passage na navegação: o ViewModel emite `loading` com schema de destino.
 - Offline sem IDB: `BibleOfflineChapterGate` + CTA téléchargement (só sem versículos em memória; texto já lido permanece ao falhar recarga).
 - Gate e `BibleChapterLoadingPlaceholder` com **min-height** alinhado para evitar salto entre estados.
 

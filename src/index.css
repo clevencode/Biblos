@@ -8250,6 +8250,15 @@ ul.plan-yv-day-note-ref {
   opacity: 1;
   transform: scaleY(1);
   pointer-events: auto;
+  contain: layout style;
+}
+
+.bible-yv-passage-scroll-panel .bible-yv-pick-grid {
+  contain: layout;
+}
+
+.app.is-bible-mode.is-narrow .bible-yv-audio-float.is-playing {
+  contain: layout size;
 }
 
 .bible-yv-passage-scroll-edge {
@@ -9075,6 +9084,7 @@ ul.plan-yv-day-note-ref {
 
 .bible-reader--yv .bible-passage {
   position: relative;
+  contain: layout style;
 }
 
 .bible-reader--yv .bible-passage.is-chapter-opening::before,

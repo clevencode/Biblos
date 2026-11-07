@@ -1,6 +1,10 @@
+import type { GridSkeletonSchema } from "../bible/viewState/pickerViewState";
+
 type BiblePickGridSkeletonProps = {
-  count: number;
+  count?: number;
   from?: number;
+  slotIds?: readonly string[];
+  schema?: GridSkeletonSchema;
   className?: string;
   role?: string;
   "aria-label"?: string;
@@ -8,29 +12,32 @@ type BiblePickGridSkeletonProps = {
 
 /** Grille chapitre/verset — numéros opaques, hauteur stable (pas d’effondrement du panneau). */
 export function BiblePickGridSkeleton({
-  count,
+  count = 24,
   from = 1,
+  slotIds,
+  schema,
   className = "",
   role,
   "aria-label": ariaLabel,
 }: BiblePickGridSkeletonProps) {
-  const n = Math.max(1, Math.min(count, 60));
+  const ids =
+    schema?.slotIds ??
+    slotIds ??
+    Array.from({ length: Math.max(1, Math.min(count, 60)) }, (_, i) => `pick-skel:${from + i}`);
+  const labels = ids.map((_, i) => String(from + i));
   return (
     <>
-      {Array.from({ length: n }, (_, i) => {
-        const label = String(from + i);
-        return (
-          <div
-            key={label}
-            className={`bible-yv-pick-cell is-loading${className ? ` ${className}` : ""}`}
-            role={role}
-            aria-hidden={role ? undefined : true}
-            aria-label={ariaLabel}
-          >
-            {label}
-          </div>
-        );
-      })}
+      {ids.map((id, i) => (
+        <div
+          key={id}
+          className={`bible-yv-pick-cell is-loading${className ? ` ${className}` : ""}`}
+          role={role}
+          aria-hidden={role ? undefined : true}
+          aria-label={ariaLabel}
+        >
+          {labels[i]}
+        </div>
+      ))}
     </>
   );
 }

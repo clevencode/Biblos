@@ -8,12 +8,14 @@ import {
   type CatalogSource,
 } from "../bible/bibleCatalogRepository";
 import type { YouVersionBible, YouVersionBook } from "../youversion/client";
+import type { CatalogViewState } from "../bible/viewState/catalogViewState";
 
 const HYDRATE_MAX_MS = 100;
 
 export type UseBibleCatalogResult = {
   books: YouVersionBook[];
   bible: YouVersionBible;
+  viewState: CatalogViewState;
   setBible: (b: YouVersionBible | null) => void;
   catalogSource: CatalogSource;
   isOffline: boolean;
@@ -100,9 +102,21 @@ export function useBibleCatalog(): UseBibleCatalogResult {
     [books],
   );
 
+  const viewState: CatalogViewState = isHydrating
+    ? { status: "loading", books, bible, source: catalogSource }
+    : {
+        status: "ready",
+        books,
+        bible,
+        source: catalogSource,
+        isOffline,
+        isNetworkRefresh,
+      };
+
   return {
     books,
     bible,
+    viewState,
     setBible,
     catalogSource,
     isOffline,

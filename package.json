@@ -20,6 +20,7 @@
     "bible:study:strong": "node scripts/export-strong-lexicon.mjs",
     "bible:study:stage": "node scripts/stage-study-assets.mjs",
     "test:reminder": "npx --yes tsx scripts/test-reading-reminder.ts",
+    "test:passage-viewstate": "npx --yes tsx scripts/test-passage-viewstate.ts",
     "sync:cards": "node scripts/sync-flashcards.mjs --apply",
     "sync:cards:dry": "node scripts/sync-flashcards.mjs --dry-run"
   },

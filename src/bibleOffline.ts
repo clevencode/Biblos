@@ -15,9 +15,10 @@ import type {
 import { toUsfm } from "./youversion/usfm";
 
 const DB_NAME = "biblos-s21-offline";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE_BOOKS = "books";
 const STORE_META = "meta";
+const STORE_CHAPTER_LAYOUT = "chapter_layout";
 const META_KEY = "s21";
 export const OFFLINE_BOOK_TOTAL = 66;
 
@@ -47,6 +48,19 @@ export type OfflineDownloadProgress = {
   usfm: string;
 };
 
+export type ChapterLayoutRow = {
+  key: string;
+  bookId: string;
+  chapterId: string;
+  verseCount: number;
+  contentCharLength: number;
+  indexedAt: number;
+};
+
+export function chapterLayoutKey(bookId: string, chapterId: string): string {
+  return `${String(bookId || "").toUpperCase()}.${String(chapterId || "1")}`;
+}
+
 function cleanVerseText(text: string): string {
   return String(text || "")
     .replace(/''/g, "'")
@@ -75,6 +89,9 @@ function openDb(): Promise<IDBDatabase> {
       }
       if (!db.objectStoreNames.contains(STORE_META)) {
         db.createObjectStore(STORE_META, { keyPath: "key" });
+      }
+      if (!db.objectStoreNames.contains(STORE_CHAPTER_LAYOUT)) {
+        db.createObjectStore(STORE_CHAPTER_LAYOUT, { keyPath: "key" });
       }
     };
   });
@@ -118,11 +135,48 @@ export async function isOfflineBibleReady(): Promise<boolean> {
   return Boolean(meta?.complete && (meta.count ?? 0) >= OFFLINE_BOOK_TOTAL);
 }
 
+function chapterLayoutsFromBook(book: S21BookJson): ChapterLayoutRow[] {
+  const bookId = String(book.book || book.usfm || "")
+    .trim()
+    .toUpperCase();
+  if (!bookId) return [];
+  const at = Date.now();
+  return (book.chapters ?? []).map((ch) => {
+    const chapterId = String(ch.chapter);
+    const verses = (ch.verses ?? []).filter((v) => v.text);
+    const contentCharLength = verses.reduce((acc, v) => acc + String(v.text).length, 0);
+    return {
+      key: chapterLayoutKey(bookId, chapterId),
+      bookId,
+      chapterId,
+      verseCount: Math.max(verses.length, 1),
+      contentCharLength: Math.max(contentCharLength, verses.length * 40),
+      indexedAt: at,
+    };
+  });
+}
+
+async function putChapterLayouts(rows: ChapterLayoutRow[]): Promise<void> {
+  if (!rows.length) return;
+  const db = await openDb();
+  try {
+    const tx = db.transaction(STORE_CHAPTER_LAYOUT, "readwrite");
+    const store = tx.objectStore(STORE_CHAPTER_LAYOUT);
+    for (const row of rows) store.put(row);
+    await idbTxDone(tx);
+  } finally {
+    db.close();
+  }
+}
+
 async function putBook(usfm: string, book: S21BookJson): Promise<void> {
   const db = await openDb();
   try {
-    const tx = db.transaction(STORE_BOOKS, "readwrite");
+    const tx = db.transaction([STORE_BOOKS, STORE_CHAPTER_LAYOUT], "readwrite");
     tx.objectStore(STORE_BOOKS).put({ usfm, book });
+    const layouts = chapterLayoutsFromBook(book);
+    const layoutStore = tx.objectStore(STORE_CHAPTER_LAYOUT);
+    for (const row of layouts) layoutStore.put(row);
     await idbTxDone(tx);
   } finally {
     db.close();
@@ -196,13 +250,65 @@ export async function getOfflineBook(usfm: string): Promise<S21BookJson | null> 
 export async function clearOfflineBible(): Promise<void> {
   const db = await openDb();
   try {
-    const tx = db.transaction([STORE_BOOKS, STORE_META], "readwrite");
+    const tx = db.transaction([STORE_BOOKS, STORE_META, STORE_CHAPTER_LAYOUT], "readwrite");
     tx.objectStore(STORE_BOOKS).clear();
     tx.objectStore(STORE_META).clear();
+    if (tx.objectStoreNames.contains(STORE_CHAPTER_LAYOUT)) {
+      tx.objectStore(STORE_CHAPTER_LAYOUT).clear();
+    }
     await idbTxDone(tx);
   } finally {
     db.close();
   }
+}
+
+export async function getChapterLayout(
+  bookId: string,
+  chapterId: string,
+): Promise<ChapterLayoutRow | null> {
+  const key = chapterLayoutKey(bookId, chapterId);
+  try {
+    const db = await openDb();
+    try {
+      const tx = db.transaction(STORE_CHAPTER_LAYOUT, "readonly");
+      const row = await idbReq(
+        tx.objectStore(STORE_CHAPTER_LAYOUT).get(key) as IDBRequest<ChapterLayoutRow | undefined>,
+      );
+      await idbTxDone(tx);
+      return row ?? null;
+    } finally {
+      db.close();
+    }
+  } catch {
+    return null;
+  }
+}
+
+/** Lecture hors-ligne du JSON livre — dérive les métriques si le store layout est vide. */
+export async function resolveChapterVerseCount(
+  bookId: string,
+  chapterId: string,
+): Promise<{ verseCount: number; contentCharLength: number } | null> {
+  const cached = await getChapterLayout(bookId, chapterId);
+  if (cached) {
+    return {
+      verseCount: cached.verseCount,
+      contentCharLength: cached.contentCharLength,
+    };
+  }
+  const bookJson = await resolveS21Book(bookId);
+  if (!bookJson) return null;
+  const chapter = Number(chapterId);
+  const found = (bookJson.chapters ?? []).find((item) => Number(item.chapter) === chapter);
+  if (!found) return null;
+  const verses = (found.verses ?? []).filter((v) => v.text);
+  if (!verses.length) return null;
+  const contentCharLength = verses.reduce((acc, v) => acc + String(v.text).length, 0);
+  void putChapterLayouts(chapterLayoutsFromBook(bookJson)).catch(() => undefined);
+  return {
+    verseCount: verses.length,
+    contentCharLength: Math.max(contentCharLength, verses.length * 40),
+  };
 }
 
 function parseUsfmRef(usfm: string) {
