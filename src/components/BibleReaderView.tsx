@@ -2262,51 +2262,62 @@ export function BibleReaderView({
       </article>
 
       {showCreateCard ? (
-        <div
-          className={`bible-verse-actions${narrowChrome ? " is-tab-chrome" : ""}`}
-          role="region"
-          aria-label="Actions du verset"
-          style={
-            {
-              ["--verse-tint" as string]: actionTone.tint,
-              ["--verse-action-fill" as string]: actionTone.fill,
-              ["--verse-action-ink" as string]: actionTone.ink,
-            } as CSSProperties
-          }
-        >
-          <div className="bible-verse-actions-head">
-            <p className="bible-verse-actions-ref">
-              {selectedVerses.length
-                ? formatSelectionFront(bookTitle, chapterId, selectedVerses)
-                : ""}
-              {existingVerseCard ? (
-                <span className="bible-verse-actions-card-icon" aria-hidden="true">
-                  <YvIcon name="style" />
-                </span>
-              ) : null}
-            </p>
-            <button
-              type="button"
-              className="bible-verse-actions-close"
-              onClick={closeCreateCard}
-              aria-label="Fermer"
-            >
-              ×
-            </button>
-          </div>
-          {selectedVerses.length > 1 ? (
-            <p className="bible-verse-actions-hint muted">
-              {selectedVerses.length} versets · tape un verset pour ajouter ou retirer
-            </p>
-          ) : (
-            <p className="bible-verse-actions-hint muted">
-              Tape d&apos;autres versets pour ajouter à la sélection
-            </p>
-          )}
+        <>
+          <button
+            type="button"
+            className="bible-verse-actions-scrim"
+            aria-label="Fermer le panneau"
+            onClick={closeCreateCard}
+          />
+          <div
+            className={`bible-verse-actions${narrowChrome ? " is-tab-chrome" : ""}`}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Actions du verset"
+            style={
+              {
+                ["--verse-tint" as string]: actionTone.tint,
+                ["--verse-action-fill" as string]: actionTone.fill,
+                ["--verse-action-ink" as string]: actionTone.ink,
+              } as CSSProperties
+            }
+          >
+            <div className="bible-verse-actions-head">
+              <div className="bible-verse-actions-title">
+                <p className="bible-verse-actions-ref">
+                  {selectedVerses.length
+                    ? formatSelectionFront(bookTitle, chapterId, selectedVerses)
+                    : ""}
+                  {existingVerseCard ? (
+                    <span className="bible-verse-actions-card-icon" aria-hidden="true">
+                      <YvIcon name="style" />
+                    </span>
+                  ) : null}
+                </p>
+                {selectedVerses.length > 1 ? (
+                  <p className="bible-verse-actions-hint">
+                    {selectedVerses.length} versets · tape pour ajouter ou retirer
+                  </p>
+                ) : (
+                  <p className="bible-verse-actions-hint">
+                    Tape d&apos;autres versets pour compléter la sélection
+                  </p>
+                )}
+              </div>
+              <button
+                type="button"
+                className="bible-verse-actions-close"
+                onClick={closeCreateCard}
+                aria-label="Fermer"
+              >
+                <YvIcon name="close" className="bible-verse-actions-close-icon" />
+              </button>
+            </div>
 
+            <div className="bible-verse-actions-body">
           <div className="bible-verse-action-block">
             <p className="bible-verse-action-label" id="bible-verse-color-label">
-              Couleur
+              Marquer
             </p>
 
             <div className="bible-verse-color-row" role="group" aria-labelledby="bible-verse-color-label">
@@ -2363,9 +2374,15 @@ export function BibleReaderView({
             />
           </div>
 
-          <div className="bible-verse-action-block">
-            <p className="bible-verse-action-label">Actions</p>
-            <div className="bible-verse-cta-row">
+          <div className="bible-verse-action-block is-actions">
+            <p className="bible-verse-action-label" id="bible-verse-actions-label">
+              Suite
+            </p>
+            <div
+              className="bible-verse-cta-row"
+              role="group"
+              aria-labelledby="bible-verse-actions-label"
+            >
               {existingVerseCard && selectedVerseCardId ? (
                 <button
                   type="button"
@@ -2407,8 +2424,10 @@ export function BibleReaderView({
               </button>
             </div>
           </div>
+            </div>
           {cardMsg ? <p className="bible-verse-actions-msg">{cardMsg}</p> : null}
         </div>
+        </>
       ) : null}
 
       {pickerOpen ? (
