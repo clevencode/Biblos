@@ -8688,6 +8688,11 @@ ul.plan-yv-day-note-ref {
   color: var(--yv-muted);
 }
 
+.bible-reader--yv .bible-verse.is-audio-active:not(.is-selected) {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--accent) 62%, transparent);
+}
+
 .bible-reader--yv .bible-verse.is-in-range,
 .bible-reader--yv .bible-verse.is-focus {
   opacity: 1;
