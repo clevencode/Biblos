@@ -39,6 +39,9 @@ import { PrivacyPolicyPanels } from "./PrivacyLegal";
 
 type ProfileViewProps = {
   profile: UserProfile;
+  signedIn?: boolean;
+  accountReady?: boolean;
+  onRequestSignIn?: () => void;
   /** Indexação offline e trabalho pesado só com aba visível. */
   active?: boolean;
   themePref: ThemePref;
@@ -111,6 +114,9 @@ function ProfilePanel({
 
 export function ProfileView({
   profile,
+  signedIn = false,
+  accountReady = false,
+  onRequestSignIn,
   active = true,
   themePref,
   onThemePrefChange,
@@ -246,6 +252,10 @@ export function ProfileView({
   }
 
   function openAccountSession() {
+    if (!signedIn) {
+      onRequestSignIn?.();
+      return;
+    }
     setAccountSession(true);
     if (!joinFullName(profile.firstName, profile.lastName)) {
       startEditName();
@@ -266,6 +276,10 @@ export function ProfileView({
 
   async function submitAdminMessage(event: FormEvent) {
     event.preventDefault();
+    if (!accountReady) {
+      onRequestSignIn?.();
+      return;
+    }
     if (adminBusy) return;
     const body = adminMessage.trim();
     if (!adminCategory) {
@@ -354,9 +368,14 @@ export function ProfileView({
   }
 
   const cmsHealth = cmsHealthProp ?? notionHealthProp ?? "unknown";
-  const display = preferredDisplayName(profile);
+  const display =
+    signedIn && preferredDisplayName(profile)
+      ? preferredDisplayName(profile)
+      : "Compte";
   const isAdminOwner = isClevencodeAdmin(profile);
-  const avatarLetter = (display.trim().charAt(0) || "?").toLocaleUpperCase("fr-FR");
+  const avatarLetter = signedIn
+    ? (display.trim().charAt(0) || "?").toLocaleUpperCase("fr-FR")
+    : "…";
   const cloudOk = cmsHealth === "ok";
   const syncHint = cloudOk
     ? "Contenu (plans) à jour · activité sur Firebase"
@@ -366,13 +385,21 @@ export function ProfileView({
         ? "Contenu indisponible (hors ligne ou API)"
         : "Vérification du contenu…";
   const ownerHint = "você é o dono do app";
-  const subtitleHint = savedFlash
-    ? "Nom enregistré"
-    : isAdminOwner
-      ? ownerHint
-      : syncHint;
+  const subtitleHint = !signedIn
+    ? "Connecte-toi pour synchroniser"
+    : savedFlash
+      ? "Nom enregistré"
+      : !accountReady
+        ? "Choisis ton nom pour finir l’inscription"
+        : isAdminOwner
+          ? ownerHint
+          : syncHint;
 
   async function runSyncNow() {
+    if (!signedIn) {
+      onRequestSignIn?.();
+      return;
+    }
     if (!onSyncNow || syncBusy) return;
     setSyncBusy(true);
     setSyncFlash(null);
@@ -389,6 +416,17 @@ export function ProfileView({
 
   return (
     <div className="profile-view">
+      {!signedIn && onRequestSignIn ? (
+        <section className="profile-sign-in-banner" aria-label="Connexion">
+          <p className="muted">
+            Lecture et plans disponibles sans compte. Connexion Google pour sauvegarder
+            ta progression.
+          </p>
+          <button type="button" className="auth-google-btn" onClick={onRequestSignIn}>
+            Se connecter
+          </button>
+        </section>
+      ) : null}
       <header className="profile-head">
         <span className="profile-avatar" aria-hidden>
           <span className="profile-avatar-letter">{avatarLetter}</span>

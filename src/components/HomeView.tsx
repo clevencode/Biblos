@@ -12,7 +12,11 @@ import {
 } from "../planProgress";
 import { planCoverStyle, planTitle } from "../planTheme";
 import type { ReadingPlan } from "../types";
-import { preferredDisplayName, type UserProfile } from "../userProfile";
+import {
+  isFirebaseSignedIn,
+  preferredDisplayName,
+  type UserProfile,
+} from "../userProfile";
 import { fetchPassage } from "../youversion/client";
 import { getVerseOfDay } from "../verseOfDay";
 import { NotificationsView } from "./NotificationsView";
@@ -64,7 +68,9 @@ export function HomeView({
   onBrowsePlans,
   onOpenVerse,
 }: HomeViewProps) {
-  const name = preferredDisplayName(profile);
+  const signedIn = isFirebaseSignedIn(profile);
+  const displayName = preferredDisplayName(profile);
+  const headline = signedIn && displayName ? displayName : "Bienvenue";
   const greeting = greetingForHour(new Date().getHours());
   const verseMeta = useMemo(() => getVerseOfDay(), []);
   const [verseText, setVerseText] = useState(verseMeta.fallback);
@@ -113,7 +119,7 @@ export function HomeView({
       <header className="home-head">
         <div className="home-head-copy">
           <p className="home-greeting type-caption">{greeting}</p>
-          <h1 className="home-name type-headline">{name}</h1>
+          <h1 className="home-name type-headline">{headline}</h1>
         </div>
         <button
           type="button"

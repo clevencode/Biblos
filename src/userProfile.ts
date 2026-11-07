@@ -61,12 +61,8 @@ export function splitFullName(fullName: string): {
   };
 }
 
-/** Nom d’affichage de secours (UI) — ne compte pas comme compte réel. */
-export const DEFAULT_VISITOR_NAME = "Invité";
-
 export function preferredDisplayName(profile: UserProfile): string {
-  const full = joinFullName(profile.firstName, profile.lastName);
-  return full || DEFAULT_VISITOR_NAME;
+  return joinFullName(profile.firstName, profile.lastName);
 }
 
 /** Nom d’admin reconnu (insensible à la casse / accents). */
@@ -133,14 +129,7 @@ export function ensureStableAdminIdentity(profile: UserProfile): UserProfile {
 export function isProfileOnboarded(profile: UserProfile): boolean {
   if (!isFirebaseSignedIn(profile)) return false;
   if (!profile.onboardedAt) return false;
-  const name = cleanName(profile.firstName);
-  if (!name) return false;
-  // Placeholders auto (Invité / Visitante) ≠ compte nommé
-  const folded = normalizeIdentityName(name);
-  if (folded === normalizeIdentityName(DEFAULT_VISITOR_NAME) || folded === "visitante") {
-    return false;
-  }
-  return true;
+  return Boolean(cleanName(profile.firstName));
 }
 
 function emptyProfile(): UserProfile {
@@ -153,30 +142,6 @@ function emptyProfile(): UserProfile {
     createdAt: now,
     onboardedAt: null,
   };
-}
-
-/**
- * Ancien flux « Visitante/Invité auto » → id conservé, onboarding effacé
- * pour exiger le nom au premier marquage.
- */
-function migrateAutoVisitor(profile: UserProfile): UserProfile {
-  const folded = normalizeIdentityName(profile.firstName);
-  const isPlaceholder =
-    !folded ||
-    folded === normalizeIdentityName(DEFAULT_VISITOR_NAME) ||
-    folded === "visitante";
-  if (!isPlaceholder) return profile;
-  if (!profile.onboardedAt && !cleanName(profile.firstName)) return profile;
-
-  const next: UserProfile = {
-    ...profile,
-    firstName: "",
-    lastName: "",
-    preferredName: "",
-    onboardedAt: null,
-  };
-  writeProfile(next);
-  return next;
 }
 
 function parseProfile(raw: unknown): UserProfile | null {
@@ -292,7 +257,7 @@ export function loadOrCreateProfile(): UserProfile {
     if (raw) {
       const parsed = parseProfile(JSON.parse(raw) as unknown);
       if (parsed) {
-        return ensureStableAdminIdentity(migrateAutoVisitor(parsed));
+        return ensureStableAdminIdentity(parsed);
       }
     }
   } catch {

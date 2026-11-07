@@ -3,7 +3,8 @@ import { Capacitor } from "@capacitor/core";
 import seed from "./data/seed.json";
 import { FlashcardDeck } from "./components/FlashcardDeck";
 import { ModeTabIcon } from "./components/ModeTabIcon";
-import { AuthGate } from "./components/AuthGate";
+import { FirebaseConfigGate } from "./components/FirebaseConfigGate";
+import { SignInModal } from "./components/SignInModal";
 import { ProfileOnboarding } from "./components/ProfileOnboarding";
 import { useAuth } from "./hooks/useAuth";
 import { useUserCloudSync } from "./hooks/useUserCloudSync";
@@ -25,6 +26,7 @@ import {
   applyFirebaseAuthUser,
   clearFirebaseFromProfile,
   completeOnboarding,
+  isFirebaseSignedIn,
   isProfileOnboarded,
   loadOrCreateProfile,
   preferredDisplayName,
@@ -198,6 +200,8 @@ export function App() {
     chapterId: string;
     bookTitle: string;
   } | null>(null);
+  const [signInOpen, setSignInOpen] = useState(false);
+  const pendingAfterAccountRef = useRef<(() => void) | null>(null);
   const [onboardingDone, setOnboardingDone] = useState(() =>
     isProfileOnboarded(loadOrCreateProfile()),
   );
@@ -211,6 +215,61 @@ export function App() {
   useUserCloudSync(profile);
   const [activityTick, setActivityTick] = useState(0);
   const openedLogged = useRef(false);
+
+  const accountReady =
+    Boolean(firebaseUser) && isProfileOnboarded(profile);
+
+  function ensureAccountReady(run: () => void): boolean {
+    if (!firebaseUser) {
+      pendingAfterAccountRef.current = run;
+      setSignInOpen(true);
+      return false;
+    }
+    if (!isProfileOnboarded(profile)) {
+      pendingAfterAccountRef.current = run;
+      return false;
+    }
+    run();
+    return true;
+  }
+
+  function requestAccountForMark(payload: {
+    color: string;
+    verses: number[];
+    bookId: string;
+    chapterId: string;
+    bookTitle: string;
+  }) {
+    pendingMarkRef.current = payload;
+    if (!firebaseUser) {
+      setSignInOpen(true);
+      return;
+    }
+    if (!isProfileOnboarded(profile)) {
+      setNameGateOpen(true);
+      return;
+    }
+    setAuthorizedMark(payload);
+    setAuthorizedMarkSeq((value) => value + 1);
+    selectMode("bible");
+  }
+
+  useEffect(() => {
+    if (!firebaseUser) return;
+    if (pendingMarkRef.current && !isProfileOnboarded(profile)) {
+      setNameGateOpen(true);
+    }
+    const pending = pendingAfterAccountRef.current;
+    if (pending && isProfileOnboarded(profile)) {
+      pendingAfterAccountRef.current = null;
+      pending();
+    }
+  }, [
+    firebaseUser?.uid,
+    profile.onboardedAt,
+    profile.firstName,
+    profile.firebaseUid,
+  ]);
 
   useEffect(() => {
     if (!firebaseUser?.uid) return;
@@ -266,6 +325,7 @@ export function App() {
     }
     function onOnline() {
       setOfflineToast(false);
+      if (!isFirebaseSignedIn(loadOrCreateProfile())) return;
       void runUserCloudSync({ push: true, pull: true, presence: "Online" }).then(() => {
         applySyncedProfile(loadOrCreateProfile());
       });
@@ -346,6 +406,9 @@ export function App() {
       setAuthorizedMarkSeq((value) => value + 1);
       selectMode("bible");
     }
+    const pending = pendingAfterAccountRef.current;
+    pendingAfterAccountRef.current = null;
+    pending?.();
     void syncUserProfileToCloud(next).then((result) => {
       applySyncedProfile(result.profile);
     });
@@ -721,20 +784,24 @@ export function App() {
 
   function handleMarkRead(jour: number) {
     if (!activePlan) return;
-    markDayRead(activePlan.id, jour);
-    setPlanProgressTick((value) => value + 1);
-    appendActivity(
-      "plan.day_read",
-      { planId: activePlan.id, jour },
-      profile.id,
-    );
-    setActivityTick((n) => n + 1);
+    ensureAccountReady(() => {
+      markDayRead(activePlan.id, jour);
+      setPlanProgressTick((value) => value + 1);
+      appendActivity(
+        "plan.day_read",
+        { planId: activePlan.id, jour },
+        profile.id,
+      );
+      setActivityTick((n) => n + 1);
+    });
   }
 
   function handleRestartPlan() {
     if (!activePlan) return;
-    resetPlanProgress(activePlan.id);
-    setPlanProgressTick((value) => value + 1);
+    ensureAccountReady(() => {
+      resetPlanProgress(activePlan.id);
+      setPlanProgressTick((value) => value + 1);
+    });
   }
 
   function handleFlashcardCreated(card: Flashcard) {
@@ -837,10 +904,12 @@ export function App() {
   }
 
   function handleRemoveCard(card: Flashcard) {
-    const label = card.frente?.trim() || "cette carte";
-    if (!window.confirm(`Supprimer « ${label} » ?`)) return;
-    setCatalog((current) => removeCardFromCatalog(current, card.id));
-    setRetentionTick((value) => value + 1);
+    ensureAccountReady(() => {
+      const label = card.frente?.trim() || "cette carte";
+      if (!window.confirm(`Supprimer « ${label} » ?`)) return;
+      setCatalog((current) => removeCardFromCatalog(current, card.id));
+      setRetentionTick((value) => value + 1);
+    });
   }
 
   function onTabKey(event: ReactKeyboardEvent<HTMLDivElement>) {
@@ -889,7 +958,7 @@ export function App() {
     Boolean(firebaseUser) && !onboarded && !nameGateOpen;
 
   return (
-    <AuthGate>
+    <FirebaseConfigGate>
       <div
         className={`app biblos-shell${narrow ? " is-narrow" : ""}${mode === "bible" ? " is-bible-mode" : ""}`}
       >
@@ -1099,11 +1168,8 @@ export function App() {
                     onViewFlashcard={openVerseFlashcard}
                     themePref={themePref}
                     onCycleTheme={cycleTheme}
-                    requireNameToMark={!onboarded}
-                    onRequestNameToMark={(payload) => {
-                      pendingMarkRef.current = payload;
-                      setNameGateOpen(true);
-                    }}
+                    requireNameToMark={!accountReady}
+                    onRequestNameToMark={requestAccountForMark}
                     authorizedMarkSeq={authorizedMarkSeq}
                     authorizedMark={authorizedMark}
                     onAuthorizedMarkConsumed={() => setAuthorizedMark(null)}
@@ -1152,15 +1218,24 @@ export function App() {
                   {profileMounted ? (
                   <ProfileView
                     profile={profile}
+                    signedIn={Boolean(firebaseUser)}
+                    accountReady={accountReady}
+                    onRequestSignIn={() => setSignInOpen(true)}
                     active={mode === "profile"}
                     themePref={themePref}
                     onThemePrefChange={setThemePreference}
-                    onProfileSave={handleProfileSave}
+                    onProfileSave={(input) => {
+                      ensureAccountReady(() => handleProfileSave(input));
+                    }}
                     activityTick={activityTick}
                     savedVerses={savedVerses}
                     flashcards={allFlashcards}
                     cmsHealth={cmsHealth}
                     onSyncNow={async () => {
+                      if (!accountReady) {
+                        setSignInOpen(true);
+                        throw new Error("Connexion requise");
+                      }
                       const { pullCatalog } = await import("./catalogSync");
                       const cloud = await runUserCloudSync({
                         push: true,
@@ -1212,6 +1287,7 @@ export function App() {
         </div>
       </main>
     </div>
-    </AuthGate>
+      <SignInModal open={signInOpen} onClose={() => setSignInOpen(false)} />
+    </FirebaseConfigGate>
   );
 }
