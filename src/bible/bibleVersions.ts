@@ -30,6 +30,7 @@ export function isBibleTextVersionId(value: unknown): value is BibleTextVersionI
 
 export function readBibleTextVersionPref(): BibleTextVersionId {
   const prefs = readReadingPrefs();
+  if (String(prefs.textVersion || "") === "sg1910") return "s21";
   return isBibleTextVersionId(prefs.textVersion) ? prefs.textVersion : "s21";
 }
 

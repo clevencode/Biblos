@@ -9,9 +9,12 @@ import {
   offlineSearch,
 } from "../bibleOffline";
 
+export type StrongVerseSegment = { text: string; strong?: string };
+
 export type YouVersionVerse = {
   number: number;
   text: string;
+  strongSegments?: StrongVerseSegment[] | null;
 };
 
 export type YouVersionPassage = {

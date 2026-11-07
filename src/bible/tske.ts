@@ -1,0 +1,120 @@
+import { parseUsfmLocation, toUsfm, type ParsedPassage } from "../youversion/usfm";
+import { CANON_BOOKS } from "../youversion/canon";
+import { passageJumpsFromQuery } from "../youversion/bibleRefs";
+
+export type TskeVerseBlock = {
+  heading?: string;
+  body?: string;
+  refs: TskeRef[];
+};
+
+export type TskeRef = {
+  label: string;
+  usfm: string | null;
+};
+
+type TskeChapterJson = Record<
+  string,
+  { heading?: string; body?: string; refs?: string[] }
+>;
+
+const chapterCache = new Map<string, TskeChapterJson>();
+
+function chapterUrl(bookId: string, chapter: number): string {
+  return `/bible/study/tske/${encodeURIComponent(bookId)}.${chapter}.json`;
+}
+
+function bookTitle(bookId: string): string {
+  const book = CANON_BOOKS.find((b) => b.id === bookId.toUpperCase());
+  return book?.title ?? bookId;
+}
+
+function formatJump(jump: ParsedPassage): string {
+  const title = bookTitle(jump.bookId);
+  if (jump.verse == null) return `${title} ${jump.chapter}`;
+  if (jump.verseEnd != null && jump.verseEnd !== jump.verse) {
+    return `${title} ${jump.chapter}.${jump.verse}-${jump.verseEnd}`;
+  }
+  return `${title} ${jump.chapter}.${jump.verse}`;
+}
+
+function jumpsFromChunk(
+  chunk: string,
+  lineBook: string,
+  contextChapter: number,
+): ParsedPassage[] {
+  const trimmed = String(chunk || "").trim();
+  if (!trimmed) return [];
+  const direct = passageJumpsFromQuery(trimmed);
+  if (direct.length) return direct;
+  if (/^\d{1,3}:\d/.test(trimmed)) {
+    const loc = parseUsfmLocation(toUsfm(`${lineBook} ${trimmed}`));
+    return loc ? [loc] : [];
+  }
+  if (/^\d{1,3}[,.]\s*\d/.test(trimmed)) {
+    const loc = parseUsfmLocation(
+      toUsfm(`${lineBook} ${contextChapter}.${trimmed.replace(",", ".")}`),
+    );
+    return loc ? [loc] : [];
+  }
+  return [];
+}
+
+export function parseTskeBody(body: string, contextBook: string, contextChapter: number): TskeRef[] {
+  const out: TskeRef[] = [];
+  const seen = new Set<string>();
+  for (const line of String(body || "").split("\n")) {
+    let lineBook = contextBook;
+    for (const part of line.split(";")) {
+      const piece = part.trim();
+      if (!piece) continue;
+      if (piece.endsWith(":") && !/\d:\d/.test(piece)) continue;
+      if (/^Reciprocal:/i.test(piece)) continue;
+      if (/^Heb\./i.test(piece)) continue;
+      if (/^Or,/i.test(piece)) continue;
+      const jumps = jumpsFromChunk(piece, lineBook, contextChapter);
+      if (!jumps.length) continue;
+      lineBook = jumps[jumps.length - 1]!.bookId;
+      for (const jump of jumps) {
+        const key = jump.usfm;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        out.push({ label: formatJump(jump), usfm: key });
+      }
+    }
+  }
+  return out;
+}
+
+export async function loadTskeChapter(
+  bookId: string,
+  chapter: number,
+): Promise<TskeChapterJson | null> {
+  const book = String(bookId || "").trim().toUpperCase();
+  const ch = Number(chapter);
+  if (!book || !Number.isFinite(ch) || ch < 0) return null;
+  const key = `${book}.${ch}`;
+  if (chapterCache.has(key)) return chapterCache.get(key)!;
+  const res = await fetch(chapterUrl(book, ch));
+  if (!res.ok) return null;
+  const json = (await res.json()) as TskeChapterJson;
+  chapterCache.set(key, json);
+  return json;
+}
+
+export async function fetchTskeForVerse(
+  bookId: string,
+  chapter: number,
+  verse: number,
+): Promise<TskeVerseBlock | null> {
+  const data = await loadTskeChapter(bookId, chapter);
+  if (!data) return null;
+  const block = data[String(verse)];
+  if (!block) return null;
+  const refs = parseTskeBody(block.body ?? "", bookId, chapter);
+  return {
+    heading: block.heading,
+    body: block.body,
+    refs,
+  };
+}

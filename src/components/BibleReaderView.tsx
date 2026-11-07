@@ -19,6 +19,7 @@ import {
 } from "../youversion/client";
 import {
   BIBLE_TEXT_VERSIONS,
+  isBibleTextVersionId,
   readBibleTextVersionPref,
   type BibleTextVersionId,
 } from "../bible/bibleVersions";
@@ -118,6 +119,7 @@ const CHROME_SHOW_ACCUM_PX = 10;
 const CHROME_HIDE_LOCK_MS = 200;
 const CHROME_SHOW_LOCK_MS = 120;
 const CHROME_TOP_SAFE_PX = 12;
+
 const CHROME_NEAR_END_PX = 72;
 const CHROME_MIN_SCROLLABLE_PX = 140;
 const CHROME_PROGRAMMATIC_LOCK_MS = 320;
@@ -457,7 +459,7 @@ export function BibleReaderView({
   } = useBibleCatalog();
   const [textVersion, setTextVersion] = useState<BibleTextVersionId>(() => {
     const fromPrefs = readPrefs().textVersion;
-    if (fromPrefs === "ht98" || fromPrefs === "s21") return fromPrefs;
+    if (isBibleTextVersionId(fromPrefs)) return fromPrefs;
     return readBibleTextVersionPref();
   });
   const [htBooks, setHtBooks] = useState<typeof catalogBooks | null>(null);
@@ -1744,6 +1746,7 @@ export function BibleReaderView({
                     }`}
                     disabled={htCatalogLoading && version.id === "ht98"}
                     aria-pressed={textVersion === version.id}
+                    title={version.title}
                     onClick={() => void switchTextVersion(version.id)}
                   >
                     {version.abbreviation}
@@ -2356,7 +2359,11 @@ export function BibleReaderView({
       </div>
 
       <div
-        className={`bible-yv-read-surface${pickerOpen || toolsMenuOpen ? " is-overlay-occluding" : ""}`}
+        className={`bible-yv-read-surface${
+          pickerOpen || toolsMenuOpen || searchOpen || historyOpen
+            ? " is-overlay-occluding"
+            : ""
+        }`}
       >
         {pickerOpen ? (
           <button

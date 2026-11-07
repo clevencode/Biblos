@@ -52,5 +52,6 @@ android/local.properties
 *.sw?
 
 public/bible/
+data/bible/study/
 
 .vercel
