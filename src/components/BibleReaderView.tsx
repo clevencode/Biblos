@@ -978,6 +978,100 @@ export function BibleReaderView({
     });
   }
 
+  function openPassagePicker(step: "book" | "chapter") {
+    setToolsMenuOpen(false);
+    setPassageStep(step);
+    if (step === "book") setBookSearchQuery("");
+    pendingVerseStep.current = false;
+    setPickerOpen(true);
+  }
+
+  function renderTopPassageNav(extraClass = "") {
+    const compactBar = extraClass.includes("is-plan-inline");
+    const showChapterStep = !planReading || compactBar;
+
+    return (
+      <nav
+        className={`bible-yv-compact-ref bible-yv-top-passage${extraClass}`.trim()}
+        aria-label="Livre et chapitre"
+      >
+        <div
+          className={`bible-yv-top-passage-bar${compactBar ? " is-compact" : ""}${
+            pickerOpen ? " is-picker-open" : ""
+          }`}
+        >
+          {showChapterStep ? (
+            <button
+              type="button"
+              className="bible-yv-top-passage-arrow"
+              onClick={() => {
+                if (pickerOpen) setPassageStep("chapter");
+                goAdjacent(-1);
+              }}
+              disabled={!canPrev || loading}
+              aria-label="Chapitre précédent"
+            >
+              <YvIcon name="chevron_left" className="bible-yv-top-passage-arrow-icon" />
+            </button>
+          ) : null}
+          <div className="bible-yv-top-passage-segments">
+            <button
+              type="button"
+              className={`bible-yv-passage-chip is-book${
+                pickerOpen && passageStep === "book" ? " is-open" : ""
+              }`}
+              onClick={() => openPassagePicker("book")}
+              aria-expanded={pickerOpen && passageStep === "book"}
+              aria-haspopup="dialog"
+              aria-label={`Choisir un livre · ${bookTitle}`}
+              title={bookTitle}
+            >
+              <span className="bible-yv-passage-chip-value">{bookTitle}</span>
+              <YvIcon
+                name="keyboard_arrow_down"
+                opsz={20}
+                className="bible-yv-passage-chip-caret"
+              />
+            </button>
+            <span className="bible-yv-top-passage-divider" aria-hidden />
+            <button
+              type="button"
+              className={`bible-yv-passage-chip is-chapter${
+                pickerOpen && passageStep === "chapter" ? " is-open" : ""
+              }`}
+              onClick={() => openPassagePicker("chapter")}
+              aria-expanded={pickerOpen && passageStep === "chapter"}
+              aria-haspopup="dialog"
+              aria-label={`Choisir un chapitre · ${chapterId}`}
+              title={`Chapitre ${chapterId}`}
+            >
+              <span className="bible-yv-passage-chip-value">{chapterId}</span>
+              <YvIcon
+                name="keyboard_arrow_down"
+                opsz={20}
+                className="bible-yv-passage-chip-caret"
+              />
+            </button>
+          </div>
+          {showChapterStep ? (
+            <button
+              type="button"
+              className="bible-yv-top-passage-arrow"
+              onClick={() => {
+                if (pickerOpen) setPassageStep("chapter");
+                goAdjacent(1);
+              }}
+              disabled={!canNext || loading}
+              aria-label="Chapitre suivant"
+            >
+              <YvIcon name="chevron_right" className="bible-yv-top-passage-arrow-icon" />
+            </button>
+          ) : null}
+        </div>
+      </nav>
+    );
+  }
+
   function handlePickBack() {
     if (passageStep === "verse") {
       setPassageStep("chapter");
@@ -1367,15 +1461,27 @@ export function BibleReaderView({
         <button
           type="button"
           className={`bible-yv-tools-menu-btn${toolsMenuOpen ? " is-on" : ""}`}
-          aria-label="Options de lecture"
+          aria-label="Menu"
           aria-haspopup="menu"
           aria-expanded={toolsMenuOpen}
           onClick={() => setToolsMenuOpen((open) => !open)}
         >
-          <YvIcon name="more_horiz" className="bible-yv-tool-icon" />
+          <YvIcon name="menu" className="bible-yv-tool-icon" />
         </button>
         {toolsMenuOpen ? (
-          <div className="bible-yv-tools-popover" role="menu" aria-label="Options de lecture">
+          <div className="bible-yv-tools-popover" role="menu" aria-label="Menu Bible">
+            <button
+              type="button"
+              role="menuitem"
+              className="bible-yv-tools-item"
+              onClick={() => {
+                setToolsMenuOpen(false);
+                setSearchOpen(true);
+              }}
+            >
+              <YvIcon name="search" className="bible-yv-tools-item-icon" />
+              <span>Recherche</span>
+            </button>
             {onCycleTheme ? (
               <button
                 type="button"
@@ -1842,18 +1948,11 @@ export function BibleReaderView({
               <p className="bible-yv-plan-name" title={planHeaderTitle}>
                 {planHeaderTitle}
               </p>
-              {headCompact && onPlanStep ? (
-                <p className="bible-yv-plan-chapter" aria-hidden="true">
-                  {chapterLabel}
-                </p>
-              ) : null}
+              {headCompact && onPlanStep ? renderTopPassageNav(" is-plan-inline") : null}
             </div>
           </div>
         ) : (
-          <p className="bible-yv-compact-ref" aria-hidden="true">
-            <span className="bible-yv-compact-book">{bookTitle}</span>
-            <span className="bible-yv-compact-num">{chapterId}</span>
-          </p>
+          renderTopPassageNav()
         )}
         <div className="bible-yv-top-tools">
           {planReading ? (
@@ -1872,18 +1971,6 @@ export function BibleReaderView({
               <YvIcon name="ios_share" className="bible-yv-tool-icon" />
             </button>
           ) : null}
-          <button
-            type="button"
-            className="bible-yv-search-btn"
-            aria-label="Rechercher"
-            title="Rechercher"
-            onClick={() => {
-              setToolsMenuOpen(false);
-              setSearchOpen(true);
-            }}
-          >
-            <YvIcon name="search" className="bible-yv-tool-icon" />
-          </button>
           {renderTopToolsMenu()}
         </div>
       </header>

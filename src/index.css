@@ -8006,7 +8006,7 @@ ul.plan-yv-day-note-ref {
   min-width: 0;
   flex: 1;
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 0.35em;
   overflow: hidden;
   opacity: 0;
@@ -8015,30 +8015,164 @@ ul.plan-yv-day-note-ref {
   transition: opacity var(--yv-chrome-ms) var(--yv-chrome-ease);
 }
 
-.bible-reader--yv.is-head-compact .bible-yv-compact-ref {
+.bible-reader--yv.is-head-compact .bible-yv-compact-ref,
+.app.is-bible-mode.is-narrow .bible-reader--yv .bible-yv-top-passage {
   opacity: 1;
+  pointer-events: auto;
 }
 
-.bible-yv-compact-book {
+.bible-yv-top-passage-bar {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) 36px;
+  align-items: stretch;
+  width: 100%;
+  max-width: min(100%, 22rem);
+  min-height: 40px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+  overflow: hidden;
+}
+
+.bible-yv-top-passage-bar.is-compact {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: min(100%, 14rem);
+}
+
+.bible-yv-top-passage-bar.is-compact .bible-yv-top-passage-segments {
+  padding: 0 2px;
+}
+
+.bible-yv-top-passage-bar.is-picker-open {
+  background: color-mix(in srgb, var(--text) 11%, transparent);
+}
+
+.bible-yv-top-passage-segments {
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+  height: 100%;
+}
+
+.bible-yv-top-passage-divider {
+  flex: none;
+  align-self: center;
+  width: 1px;
+  height: 22px;
+  background: color-mix(in srgb, var(--yv-text) 14%, transparent);
+}
+
+.bible-yv-top-passage-arrow {
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  min-width: 36px;
+  height: 40px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: color-mix(in srgb, var(--yv-text) 82%, transparent);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.bible-yv-top-passage-arrow:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--text) 10%, transparent);
+  color: var(--yv-text);
+}
+
+.bible-yv-top-passage-arrow:disabled {
+  opacity: 0.32;
+  cursor: default;
+}
+
+.bible-yv-top-passage-arrow-icon {
+  width: 20px;
+  height: 20px;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.bible-yv-passage-chip {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  line-height: 1.15;
+  text-align: left;
+  color: inherit;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease;
+}
+
+.bible-yv-passage-chip-value {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-family: var(--font-ui);
-  font-size: var(--type-label-size);
-  font-weight: var(--type-label-weight);
-  letter-spacing: var(--type-label-tracking);
-  line-height: var(--type-label-lh);
-  color: var(--yv-muted);
 }
 
-.bible-yv-compact-num {
+.bible-yv-passage-chip-caret {
   flex: none;
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+  line-height: 1;
+  color: color-mix(in srgb, var(--yv-text) 58%, transparent);
+}
+
+.bible-yv-passage-chip.is-book .bible-yv-passage-chip-value {
+  font-family: var(--font-ui);
+  font-size: var(--type-label-size);
+  font-weight: 600;
+  letter-spacing: var(--type-label-tracking);
+  line-height: var(--type-label-lh);
+  color: var(--yv-text);
+}
+
+.bible-yv-passage-chip.is-chapter {
+  flex: 0 1 auto;
+  max-width: none;
+  min-width: 2.75rem;
+  padding-inline: 10px;
+}
+
+.bible-yv-passage-chip.is-chapter .bible-yv-passage-chip-value {
   font-family: var(--font-ui);
   font-size: var(--type-title-size);
   font-weight: var(--type-title-weight);
   letter-spacing: var(--type-title-tracking);
   line-height: 1;
   color: var(--yv-text);
+}
+
+.bible-yv-passage-chip:hover,
+.bible-yv-passage-chip.is-open {
+  background: color-mix(in srgb, var(--yv-text) 6%, transparent);
+}
+
+.bible-yv-passage-chip:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  outline-offset: 1px;
+}
+
+.bible-yv-top-passage.is-plan-inline {
+  flex: none;
+  opacity: 1;
+  pointer-events: auto;
+  margin-top: 2px;
 }
 
 .bible-yv-top-plan {
@@ -8343,7 +8477,7 @@ ul.plan-yv-day-note-ref {
   top: calc(100% + 6px);
   right: 0;
   z-index: 40;
-  min-width: 13.5rem;
+  min-width: min(16.5rem, calc(100vw - 2rem));
   padding: 6px;
   border: 1px solid color-mix(in srgb, var(--yv-text) 12%, transparent);
   border-radius: 14px;
