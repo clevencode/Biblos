@@ -12,12 +12,10 @@ import { YvIcon } from "./YvIcon";
 import {
   adjacentChapter,
   chapterUsfm,
-  fetchBooks,
   fetchPassage,
   parseUsfmParts,
   LSG_BIBLE_ID,
-  type YouVersionBible,
-  type YouVersionBook,
+  type BibleSearchHit,
   type YouVersionPassage,
 } from "../youversion/client";
 import {
@@ -30,6 +28,22 @@ import { BibleAudioPlayer } from "./BibleAudioPlayer";
 import { BibleHistorySheet } from "./BibleHistorySheet";
 import { BibleSearchSheet } from "./BibleSearchSheet";
 import { BibleShareSheet } from "./BibleShareSheet";
+import { BiblePassageScrollPicker } from "./BiblePassageScrollPicker";
+import { BiblePassageChip } from "./BiblePassageChip";
+import { BibleSyncIndicator } from "./BibleSyncIndicator";
+import { BibleOfflineChapterGate } from "./BibleOfflineChapterGate";
+import { BibleChapterLoadingPlaceholder } from "./BibleChapterLoadingPlaceholder";
+import { usePassageDiscovery } from "../hooks/usePassageDiscovery";
+import type { DiscoveryJump } from "../bible/passageDiscovery/types";
+import {
+  EMPTY_PASSAGE_DISCOVERY_SESSION,
+  type PassageDiscoverySession,
+} from "../bible/passageDiscovery/session";
+import {
+  classifyPassageLoadError,
+  type PassageLoadErrorKind,
+} from "../bible/passageLoadError";
+import { useAppReadiness } from "../context/AppReadinessContext";
 import { CircularColorEditor } from "./CircularColorEditor";
 import { ACTIVITY_UI_ENABLED } from "../activityLog";
 import {
@@ -44,7 +58,9 @@ import {
   isOfflineBibleReady,
   type OfflineDownloadProgress,
 } from "../bibleOffline";
-import { localS21Books, useLocalBundledBible } from "../bibleEngine";
+import { BIBLE_READER_PREFS_KEY } from "../bible/bibleCatalogRepository";
+import { useBibleCatalog } from "../hooks/useBibleCatalog";
+import { useLocalBundledBible } from "../bibleEngine";
 import {
   adaptVerseColorForTheme,
   formatVerseColorHex,
@@ -67,8 +83,7 @@ import {
   type ChapterTranscript,
 } from "../bibleChapterAudioSync";
 
-const STORAGE_KEY = "biblos-bible-reader";
-const BOOKS_CACHE_KEY = "biblos-bible-books-s21";
+const STORAGE_KEY = BIBLE_READER_PREFS_KEY;
 const FONT_MIN = 15;
 const FONT_MAX = 28;
 const FONT_DEFAULT = 19;
@@ -313,47 +328,6 @@ function writePrefs(prefs: ReaderPrefs) {
   }
 }
 
-function readBooksCache(): { bible: YouVersionBible; books: YouVersionBook[] } | null {
-  try {
-    const raw = localStorage.getItem(BOOKS_CACHE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as { bible?: YouVersionBible; books?: YouVersionBook[]; at?: number };
-    if (!parsed?.books?.length) return null;
-    if (parsed.at && Date.now() - parsed.at > 7 * 86_400_000) return null;
-    return {
-      bible: parsed.bible ?? {
-        id: LSG_BIBLE_ID,
-        abbreviation: "S21",
-        title: "Segond 21",
-        languageCode: "fr",
-      },
-      books: parsed.books,
-    };
-  } catch {
-    return null;
-  }
-}
-
-function writeBooksCache(bible: YouVersionBible | null, books: YouVersionBook[]) {
-  try {
-    localStorage.setItem(
-      BOOKS_CACHE_KEY,
-      JSON.stringify({
-        at: Date.now(),
-        bible: bible ?? {
-          id: LSG_BIBLE_ID,
-          abbreviation: "S21",
-          title: "Segond 21",
-          languageCode: "fr",
-        },
-        books,
-      }),
-    );
-  } catch {
-    /* private mode */
-  }
-}
-
 function isLikelyVerseTitle(text: string, number: number): boolean {
   if (number !== 1) return false;
   const t = text.trim();
@@ -375,7 +349,11 @@ function overlayReserve(scroller: HTMLElement, reader: HTMLElement): { top: numb
     }
   }
   let bottom = 16;
-  const selectors = [".bible-verse-actions", ".bible-yv-dock", ".bible-yv-pick-sheet"];
+  const selectors = [
+    ".bible-verse-actions",
+    ".bible-yv-dock",
+    ".bible-yv-passage-scroll-panel.is-open",
+  ];
   for (const sel of selectors) {
     const el = reader.querySelector(sel);
     if (!el || !(el instanceof HTMLElement)) continue;
@@ -453,14 +431,26 @@ export function BibleReaderView({
   );
 
   const [passage, setPassage] = useState<YouVersionPassage | null>(null);
-  const [, setBible] = useState<YouVersionBible | null>(() => readBooksCache()?.bible ?? null);
-  const [, setBibleId] = useState<number | null>(LSG_BIBLE_ID);
-  const [books, setBooks] = useState<YouVersionBook[]>(() => {
-    const cached = readBooksCache()?.books;
-    if (cached?.length) return cached;
-    if (useLocalBundledBible()) return localS21Books();
-    return [];
-  });
+  const {
+    books,
+    bible,
+    setBible,
+    catalogSource,
+    isOffline: catalogOffline,
+    isHydrating,
+    isLocalReady,
+    isLoadingLocal,
+    isNetworkRefresh,
+    refreshCatalog,
+    resolveBookTitle,
+  } = useBibleCatalog();
+  const {
+    cloudSync,
+    setCatalogHydrating,
+    setCatalogLocalReady,
+    registerCloudSync,
+  } = useAppReadiness();
+  const [, setBibleId] = useState<number | null>(() => bible.id ?? LSG_BIBLE_ID);
   const [bookId, setBookId] = useState(initialParts.bookId);
   const [chapterId, setChapterId] = useState(initialParts.chapterId);
   const [highlightVerse, setHighlightVerse] = useState<number | null>(
@@ -478,6 +468,8 @@ export function BibleReaderView({
   const preferJumpFocusRef = useRef(false);
   const [selection, setSelection] = useState<VerseSelection | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [passageErrorKind, setPassageErrorKind] =
+    useState<PassageLoadErrorKind>("generic");
   const [loading, setLoading] = useState(false);
   /** Spinner só após ~120 ms — leitura local parece instantânea. */
   const [loadingUi, setLoadingUi] = useState(false);
@@ -488,6 +480,18 @@ export function BibleReaderView({
   const [pickerOpen, setPickerOpen] = useState(false);
   const [passageStep, setPassageStep] = useState<"book" | "chapter" | "verse">("book");
   const [bookSearchQuery, setBookSearchQuery] = useState("");
+  const [discoverySession, setDiscoverySession] = useState<PassageDiscoverySession>(
+    () => ({ ...EMPTY_PASSAGE_DISCOVERY_SESSION }),
+  );
+  const discoveryListScrollRaf = useRef(0);
+  const discoveryVerseScrollRaf = useRef<Record<string, number>>({});
+  const passageDiscoveryEnabled =
+    pickerOpen && passageStep === "book" && isLocalReady && !isLoadingLocal;
+  const { result: passageDiscovery, busy: passageDiscoveryBusy } = usePassageDiscovery(
+    bookSearchQuery,
+    books,
+    passageDiscoveryEnabled,
+  );
   const [narrowChrome, setNarrowChrome] = useState(false);
   const [cardBusy, setCardBusy] = useState(false);
   const [cardMsg, setCardMsg] = useState<string | null>(null);
@@ -521,6 +525,7 @@ export function BibleReaderView({
   const statusId = useId();
   const highlightRef = useRef<HTMLElement | null>(null);
   const dockLocationRef = useRef<HTMLButtonElement | null>(null);
+  const passageRollRef = useRef<HTMLDivElement | null>(null);
   const passageScrollRef = useRef<HTMLElement | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioBookRef = useRef<string>("");
@@ -769,31 +774,19 @@ export function BibleReaderView({
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      const cached = readBooksCache();
-      if (cached && !cancelled) {
-        setBooks(cached.books);
-        setBible(cached.bible);
-        setBibleId(cached.bible.id);
-      }
-      const result = await fetchBooks();
-      if (cancelled) return;
-      if (result.ok && result.books?.length) {
-        setBooks(result.books);
-        if (result.bible) {
-          setBible(result.bible);
-          setBibleId(result.bible.id);
-        }
-        writeBooksCache(result.bible ?? null, result.books);
-      } else if (result.error && !cached?.books.length) {
-        setError(result.error);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    setBibleId(bible.id ?? LSG_BIBLE_ID);
+  }, [bible.id]);
+
+  useEffect(() => {
+    setCatalogHydrating(isHydrating);
+    setCatalogLocalReady(isLocalReady);
+  }, [isHydrating, isLocalReady, setCatalogHydrating, setCatalogLocalReady]);
+
+  useEffect(() => {
+    if (!isNetworkRefresh) return;
+    registerCloudSync(true);
+    return () => registerCloudSync(false);
+  }, [isNetworkRefresh, registerCloudSync]);
 
   useEffect(() => {
     if (isUsfmBookId(bookId)) {
@@ -808,13 +801,14 @@ export function BibleReaderView({
   }, [bookId, chapterId]);
 
   useEffect(() => {
-    if (!active || !books.length) return;
+    if (!active) return;
     const known = books.some((b) => b.id.toUpperCase() === bookId.toUpperCase());
     if (known) return;
-    const fallback = books[0]!;
+    const fallback = books[0];
+    if (!fallback) return;
     void loadChapter(fallback.id, fallback.chapters?.[0]?.id ?? "1", null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [books, bookId]);
+  }, [books, bookId, active]);
 
   useEffect(() => {
     if (!active) return;
@@ -844,8 +838,32 @@ export function BibleReaderView({
 
   useEffect(() => {
     if (!pickerOpen) return;
-    const id = window.setTimeout(() => dockLocationRef.current?.focus(), 0);
+    const id = window.setTimeout(() => {
+      if (passageStep === "book") {
+        const input = passageRollRef.current?.querySelector(
+          ".bible-yv-pick-search",
+        ) as HTMLInputElement | null;
+        input?.focus();
+        return;
+      }
+      dockLocationRef.current?.focus();
+    }, 0);
     return () => window.clearTimeout(id);
+  }, [pickerOpen, passageStep]);
+
+  useEffect(() => {
+    if (!pickerOpen) return;
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (target instanceof Element && target.closest(".bible-yv-dock")) return;
+      const roll = passageRollRef.current;
+      if (!roll) return;
+      if (roll.contains(target)) return;
+      closePicker();
+    };
+    document.addEventListener("pointerdown", onPointerDown, true);
+    return () => document.removeEventListener("pointerdown", onPointerDown, true);
   }, [pickerOpen]);
 
   useEffect(() => {
@@ -886,18 +904,32 @@ export function BibleReaderView({
     // Navigation / deep-link : surligne et scroll, sans ouvrir le panneau Marquer.
     setSelection(null);
     setCardMsg(null);
+    const usfm = chapterUsfm(nextBook, nextChapter);
+    const samePassage =
+      passage?.id?.toUpperCase() === usfm.toUpperCase();
+    if (!samePassage) {
+      setPassage(null);
+    }
     setLoading(true);
     setError(null);
-    const usfm = chapterUsfm(nextBook, nextChapter);
+    setPassageErrorKind("generic");
     try {
       const result = await fetchPassage(usfm);
       if (gen !== loadGen.current) return;
       if (!result.ok || !result.passage) {
-        setError(result.error ?? "Passage introuvable");
+        const errMsg = result.error ?? "Passage introuvable";
+        setError(errMsg);
+        setPassageErrorKind(
+          classifyPassageLoadError(errMsg, {
+            offline: catalogOffline,
+            offlineIndexReady: offlineReady,
+          }),
+        );
         return;
       }
       setPassage(result.passage);
       setError(null);
+      setPassageErrorKind("generic");
       if (result.bibleId) setBibleId(result.bibleId);
       if (result.bible) setBible(result.bible);
       const bookTitle =
@@ -963,19 +995,49 @@ export function BibleReaderView({
     setPickerOpen(false);
   }
 
+  function patchDiscoverySession(patch: Partial<PassageDiscoverySession>) {
+    setDiscoverySession((prev) => ({ ...prev, ...patch }));
+  }
+
+  function setDiscoveryListScroll(scrollTop: number) {
+    if (discoveryListScrollRaf.current) {
+      cancelAnimationFrame(discoveryListScrollRaf.current);
+    }
+    discoveryListScrollRaf.current = requestAnimationFrame(() => {
+      patchDiscoverySession({ listScrollTop: scrollTop });
+    });
+  }
+
+  function setDiscoveryVerseListScroll(bookId: string, scrollTop: number) {
+    const id = String(bookId || "").toUpperCase();
+    if (!id) return;
+    const prevRaf = discoveryVerseScrollRaf.current[id];
+    if (prevRaf) cancelAnimationFrame(prevRaf);
+    discoveryVerseScrollRaf.current[id] = requestAnimationFrame(() => {
+      setDiscoverySession((prev) => ({
+        ...prev,
+        verseScrollByBook: { ...prev.verseScrollByBook, [id]: scrollTop },
+      }));
+    });
+  }
+
+  function clearBookSearch() {
+    setBookSearchQuery("");
+    setDiscoverySession({ ...EMPTY_PASSAGE_DISCOVERY_SESSION });
+  }
+
   function closePicker() {
     setPickerOpen(false);
     setPassageStep("book");
-    setBookSearchQuery("");
     pendingVerseStep.current = false;
   }
 
   function togglePicker() {
+    if (!isLocalReady || isLoadingLocal) return;
     setPickerOpen((open) => {
       const next = !open;
       if (next) {
         setPassageStep("book");
-        setBookSearchQuery("");
         pendingVerseStep.current = false;
       }
       return next;
@@ -983,16 +1045,17 @@ export function BibleReaderView({
   }
 
   function openPassagePicker(step: "book" | "chapter") {
+    if (!isLocalReady || isLoadingLocal) return;
     setToolsMenuOpen(false);
     setPassageStep(step);
-    if (step === "book") setBookSearchQuery("");
     pendingVerseStep.current = false;
     setPickerOpen(true);
   }
 
-  function renderTopPassageNav(extraClass = "") {
+  function renderTopPassageNav(extraClass = "", rollOpen = false) {
     const compactBar = extraClass.includes("is-plan-inline");
     const showChapterStep = !planReading || compactBar;
+    const chipLoading = isLoadingLocal || !isLocalReady;
 
     return (
       <nav
@@ -1001,8 +1064,8 @@ export function BibleReaderView({
       >
         <div
           className={`bible-yv-top-passage-bar${compactBar ? " is-compact" : ""}${
-            pickerOpen ? " is-picker-open" : ""
-          }`}
+            rollOpen ? " is-roll-head" : pickerOpen ? " is-picker-open" : ""
+          }${chipLoading ? " is-hydrating" : ""}`}
         >
           {showChapterStep ? (
             <button
@@ -1012,50 +1075,34 @@ export function BibleReaderView({
                 if (pickerOpen) setPassageStep("chapter");
                 goAdjacent(-1);
               }}
-              disabled={!canPrev || loading}
+              disabled={!canPrev || loading || chipLoading}
               aria-label="Chapitre précédent"
             >
               <YvIcon name="chevron_left" className="bible-yv-top-passage-arrow-icon" />
             </button>
           ) : null}
           <div className="bible-yv-top-passage-segments">
-            <button
-              type="button"
-              className={`bible-yv-passage-chip is-book${
-                pickerOpen && passageStep === "book" ? " is-open" : ""
-              }`}
-              onClick={() => openPassagePicker("book")}
-              aria-expanded={pickerOpen && passageStep === "book"}
-              aria-haspopup="dialog"
-              aria-label={`Choisir un livre · ${bookTitle}`}
+            <BiblePassageChip
+              variant="book"
+              label={bookTitle}
+              loading={chipLoading}
+              open={pickerOpen && passageStep === "book"}
+              disabled={chipLoading || loading}
+              ariaLabel={`Choisir un livre · ${bookTitle}`}
               title={bookTitle}
-            >
-              <span className="bible-yv-passage-chip-value">{bookTitle}</span>
-              <YvIcon
-                name="keyboard_arrow_down"
-                opsz={20}
-                className="bible-yv-passage-chip-caret"
-              />
-            </button>
+              onClick={() => openPassagePicker("book")}
+            />
             <span className="bible-yv-top-passage-divider" aria-hidden />
-            <button
-              type="button"
-              className={`bible-yv-passage-chip is-chapter${
-                pickerOpen && passageStep === "chapter" ? " is-open" : ""
-              }`}
-              onClick={() => openPassagePicker("chapter")}
-              aria-expanded={pickerOpen && passageStep === "chapter"}
-              aria-haspopup="dialog"
-              aria-label={`Choisir un chapitre · ${chapterId}`}
+            <BiblePassageChip
+              variant="chapter"
+              label={chapterId}
+              loading={chipLoading}
+              open={pickerOpen && passageStep === "chapter"}
+              disabled={chipLoading || loading}
+              ariaLabel={`Choisir un chapitre · ${chapterId}`}
               title={`Chapitre ${chapterId}`}
-            >
-              <span className="bible-yv-passage-chip-value">{chapterId}</span>
-              <YvIcon
-                name="keyboard_arrow_down"
-                opsz={20}
-                className="bible-yv-passage-chip-caret"
-              />
-            </button>
+              onClick={() => openPassagePicker("chapter")}
+            />
           </div>
           {showChapterStep ? (
             <button
@@ -1065,7 +1112,7 @@ export function BibleReaderView({
                 if (pickerOpen) setPassageStep("chapter");
                 goAdjacent(1);
               }}
-              disabled={!canNext || loading}
+              disabled={!canNext || loading || chipLoading}
               aria-label="Chapitre suivant"
             >
               <YvIcon name="chevron_right" className="bible-yv-top-passage-arrow-icon" />
@@ -1073,6 +1120,51 @@ export function BibleReaderView({
           ) : null}
         </div>
       </nav>
+    );
+  }
+
+  function renderPassageRoll(extraClass = "") {
+    const rollOpen = pickerOpen && isLocalReady && !isLoadingLocal;
+    return (
+      <div
+        ref={passageRollRef}
+        className={`bible-yv-passage-roll${rollOpen ? " is-open" : ""}${
+          isHydrating ? " is-hydrating" : ""
+        }`}
+      >
+        {renderTopPassageNav(extraClass, rollOpen)}
+        <BiblePassageScrollPicker
+          open={rollOpen}
+          step={passageStep}
+          bookId={bookId}
+          bookTitle={bookTitle}
+          chapterId={chapterId}
+          bookSearchQuery={bookSearchQuery}
+          books={books}
+          discovery={passageDiscovery}
+          discoveryBusy={passageDiscoveryBusy}
+          discoverySession={discoverySession}
+          onDiscoveryListScroll={setDiscoveryListScroll}
+          onDiscoveryExpandedBookChange={(bookId) =>
+            patchDiscoverySession({ expandedBookId: bookId })
+          }
+          onDiscoveryVerseListScroll={setDiscoveryVerseListScroll}
+          chapters={chapters}
+          verseOptions={verseOptions}
+          loading={loading}
+          loadingUi={loadingUi}
+          highlightVerse={highlightVerse}
+          verseSelected={(n) => verseInSelection(selection, n)}
+          onBack={handlePickBack}
+          onSearchChange={setBookSearchQuery}
+          onSearchClear={clearBookSearch}
+          onPickBook={pickBook}
+          onPickJump={pickDiscoveryJump}
+          onPickVerse={pickVerseSearchHit}
+          onPickChapter={pickChapter}
+          onJumpVerse={jumpToVerse}
+        />
+      </div>
     );
   }
 
@@ -1090,10 +1182,40 @@ export function BibleReaderView({
 
   function pickBook(nextBook: string) {
     pendingVerseStep.current = false;
-    setBookSearchQuery("");
     setPassageStep("chapter");
     if (nextBook.toUpperCase() === bookId.toUpperCase()) return;
     void loadChapter(nextBook, "1", null);
+  }
+
+  function pickVerseSearchHit(hit: BibleSearchHit) {
+    const parts = parseUsfmParts(hit.usfm);
+    pendingVerseStep.current = false;
+    patchDiscoverySession({
+      expandedBookId: parts.bookId.toUpperCase(),
+      anchorVerseUsfm: hit.usfm.toUpperCase(),
+    });
+    setPickerOpen(false);
+    setPassageStep("book");
+    void loadChapter(parts.bookId, String(hit.chapter), hit.verse, null);
+  }
+
+  function pickDiscoveryJump(jump: DiscoveryJump) {
+    pendingVerseStep.current = jump.passage.verse != null;
+    patchDiscoverySession({
+      expandedBookId: jump.passage.bookId.toUpperCase(),
+      anchorVerseUsfm: jump.passage.usfm || null,
+    });
+    setPickerOpen(false);
+    setPassageStep("book");
+    const chapter = String(jump.passage.chapter);
+    const verse = jump.passage.verse;
+    const verseEnd = jump.passage.verseEnd;
+    void loadChapter(
+      jump.passage.bookId,
+      chapter,
+      verse,
+      verse != null && verseEnd != null && verseEnd !== verse ? verseEnd : null,
+    );
   }
 
   function pickChapter(nextChapter: string) {
@@ -1137,13 +1259,12 @@ export function BibleReaderView({
 
     let list = books;
     if (!list.length) {
-      const result = await fetchBooks();
-      if (!result.ok || !result.books?.length) {
-        setError(result.error || "Impossible de préparer le téléchargement.");
+      const hydrated = await refreshCatalog();
+      list = hydrated.books;
+      if (!list.length) {
+        setError("Impossible de préparer le téléchargement.");
         return;
       }
-      list = result.books;
-      setBooks(list);
     }
 
     const ac = new AbortController();
@@ -1155,6 +1276,7 @@ export function BibleReaderView({
       await downloadOfflineBible(list, (p) => setOfflineProgress({ ...p }), ac.signal);
       setOfflineReady(true);
       setOfflineProgress(null);
+      await refreshCatalog();
     } catch (err) {
       if ((err as Error)?.name !== "AbortError") {
         setError(
@@ -1227,7 +1349,8 @@ export function BibleReaderView({
 
   const canPrev = Boolean(adjacentChapter(books, bookId, chapterId, -1));
   const canNext = Boolean(adjacentChapter(books, bookId, chapterId, 1));
-  const bookTitle = selectedBook?.title ?? bookId;
+  const bookTitle = resolveBookTitle(bookId);
+  const catalogOfflineHint = catalogOffline && catalogSource !== "network";
   const locationLabel = selection?.length
     ? `${bookTitle} ${chapterId}.${formatVerseList(selection)}`
     : `${bookTitle} ${chapterId}`;
@@ -1955,7 +2078,7 @@ export function BibleReaderView({
   return (
     <section
       ref={readerRef}
-      className={`bible-reader bible-reader--yv${hideChrome ? " is-chrome-hidden" : ""}${showCreateCard ? " has-verse-actions" : ""}${headCompact ? " is-head-compact" : ""}`}
+      className={`bible-reader bible-reader--yv${hideChrome ? " is-chrome-hidden" : ""}${showCreateCard ? " has-verse-actions" : ""}${headCompact ? " is-head-compact" : ""}${pickerOpen ? " is-passage-roll-open" : ""}`}
       style={{ ["--bible-font-size" as string]: `${fontSize}px` }}
       onKeyDown={(event) => {
         if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement) {
@@ -2034,7 +2157,7 @@ export function BibleReaderView({
       tabIndex={-1}
     >
       <header
-        className={`bible-yv-top${planReading ? " is-plan" : " is-free"}`}
+        className={`bible-yv-top${planReading ? " is-plan" : " is-free"}${pickerOpen ? " is-passage-picker-open" : ""}${catalogOfflineHint ? " is-catalog-offline" : ""}`}
         aria-label="Navigation biblique"
       >
         {planReading ? (
@@ -2055,13 +2178,17 @@ export function BibleReaderView({
               <p className="bible-yv-plan-name" title={planHeaderTitle}>
                 {planHeaderTitle}
               </p>
-              {headCompact && onPlanStep ? renderTopPassageNav(" is-plan-inline") : null}
+              {headCompact && onPlanStep ? renderPassageRoll(" is-plan-inline") : null}
             </div>
           </div>
         ) : (
-          renderTopPassageNav()
+          renderPassageRoll()
         )}
         <div className="bible-yv-top-tools">
+          <BibleSyncIndicator
+            cloudSync={cloudSync}
+            catalogOffline={catalogOfflineHint}
+          />
           {planReading ? (
             <button
               type="button"
@@ -2086,7 +2213,7 @@ export function BibleReaderView({
         {loadingUi ? "Ouverture du chapitre…" : error ? error : locationLabel}
       </div>
 
-      {error ? (
+      {error && passageErrorKind !== "offline_not_cached" ? (
         <div className="bible-yv-error-bar" role="alert">
           <p className="bible-yv-error">{error}</p>
           <button
@@ -2102,8 +2229,14 @@ export function BibleReaderView({
 
       <article
         ref={passageScrollRef}
-        className="bible-passage"
-        aria-busy={loadingUi}
+        className={[
+          "bible-passage",
+          loadingUi && passage ? " is-chapter-loading is-chapter-reload" : "",
+          (loading || loadingUi) && !passage ? " is-chapter-opening" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+        aria-busy={loading || loadingUi}
         style={{ ["--verse-tint" as string]: actionTone.tint }}
         onClick={(event) => {
           if (pickerOpen) {
@@ -2128,11 +2261,17 @@ export function BibleReaderView({
           <p className="bible-chapter-num">{chapterId}</p>
         </header>
 
-        {loadingUi && !passage ? (
-          <p className="bible-yv-muted bible-loading">Ouverture du texte…</p>
-        ) : null}
-
-        {passage?.verses?.length ? (
+        {passageErrorKind === "offline_not_cached" && !useLocalBundledBible() ? (
+          <BibleOfflineChapterGate
+            onDownload={() => void toggleOfflineBible()}
+            offlineBusy={offlineBusy}
+          />
+        ) : (loading || loadingUi) && !passage ? (
+          <BibleChapterLoadingPlaceholder
+            bookTitle={bookTitle}
+            chapterId={chapterId}
+          />
+        ) : passage?.verses?.length ? (
           <div
             className={[
               "bible-verses",
@@ -2256,7 +2395,7 @@ export function BibleReaderView({
           </div>
         ) : passage?.content ? (
           <p className="bible-text">{passage.content}</p>
-        ) : !loadingUi ? (
+        ) : !loadingUi && !loading ? (
           <p className="bible-yv-muted">Choisis un livre et un chapitre pour lire.</p>
         ) : null}
       </article>
@@ -2428,140 +2567,6 @@ export function BibleReaderView({
           {cardMsg ? <p className="bible-verse-actions-msg">{cardMsg}</p> : null}
         </div>
         </>
-      ) : null}
-
-      {pickerOpen ? (
-        <div
-          className={`bible-yv-pick-sheet is-${passageStep}${narrowChrome ? " is-tab-chrome" : ""}`}
-          role="dialog"
-          aria-label="Choisir livre, chapitre ou verset"
-        >
-          <div className="bible-yv-pick-sheet-head">
-            <button
-              type="button"
-              className="bible-yv-pick-exit"
-              onClick={handlePickBack}
-              aria-label={
-                passageStep === "book"
-                  ? "Fermer"
-                  : passageStep === "verse"
-                    ? `Retour au chapitre ${chapterId}`
-                    : `Retour à ${bookTitle}`
-              }
-            >
-              <YvIcon name="chevron_left" className="bible-yv-pick-exit-icon" />
-            </button>
-            {passageStep === "book" ? (
-              <div className="bible-yv-pick-search-wrap">
-                <input
-                  type="text"
-                  className="bible-yv-pick-search"
-                  value={bookSearchQuery}
-                  placeholder="Rechercher un livre…"
-                  autoComplete="off"
-                  autoCorrect="off"
-                  spellCheck={false}
-                  enterKeyHint="search"
-                  aria-label="Rechercher un livre"
-                  onChange={(event) => setBookSearchQuery(event.target.value)}
-                />
-              </div>
-            ) : (
-              <p className="bible-yv-pick-title">
-                {passageStep === "verse" ? `Ch. ${chapterId}` : bookTitle}
-              </p>
-            )}
-          </div>
-          <div
-            className={`bible-yv-pick-grid${passageStep === "book" ? " is-books" : ""}`}
-            role="listbox"
-          >
-            {passageStep === "book"
-              ? (() => {
-                  const q = bookSearchQuery
-                    .trim()
-                    .normalize("NFD")
-                    .replace(/[\u0300-\u036f]/g, "")
-                    .toLowerCase();
-                  const filtered = q
-                    ? books.filter((book) => {
-                        const title = String(book.title || "")
-                          .normalize("NFD")
-                          .replace(/[\u0300-\u036f]/g, "")
-                          .toLowerCase();
-                        const id = String(book.id || "").toLowerCase();
-                        return title.includes(q) || id.includes(q);
-                      })
-                    : books;
-                  if (!filtered.length) {
-                    return (
-                      <p className="bible-yv-pick-loading bible-yv-muted">
-                        Aucun livre trouvé
-                      </p>
-                    );
-                  }
-                  return filtered.map((book) => {
-                    const on = book.id.toUpperCase() === bookId.toUpperCase();
-                    return (
-                      <button
-                        key={book.id}
-                        id={`bible-pick-book-${book.id}`}
-                        type="button"
-                        role="option"
-                        aria-selected={on}
-                        className={`bible-yv-pick-cell is-book${on ? " is-on" : ""}`}
-                        onClick={() => pickBook(book.id)}
-                        disabled={loading}
-                      >
-                        {book.title}
-                      </button>
-                    );
-                  });
-                })()
-              : passageStep === "chapter"
-                ? chapters.map((id) => {
-                    const on = id === chapterId;
-                    return (
-                      <button
-                        key={id}
-                        type="button"
-                        role="option"
-                        aria-selected={on}
-                        className={`bible-yv-pick-cell${on ? " is-on" : ""}`}
-                        onClick={() => pickChapter(id)}
-                        disabled={loading}
-                      >
-                        {id}
-                      </button>
-                    );
-                  })
-                : verseOptions.map((n) => {
-                    const on = highlightVerse === n || verseInSelection(selection, n);
-                    return (
-                      <button
-                        key={n}
-                        type="button"
-                        role="option"
-                        aria-selected={on}
-                        className={`bible-yv-pick-cell${on ? " is-on" : ""}`}
-                        onClick={() => jumpToVerse(n)}
-                        disabled={loading}
-                      >
-                        {n}
-                      </button>
-                    );
-                  })}
-          </div>
-          {passageStep === "book" && !books.length ? (
-            <p className="bible-yv-pick-loading bible-yv-muted">Préparation de la liste…</p>
-          ) : null}
-          {passageStep === "verse" && loadingUi ? (
-            <p className="bible-yv-pick-loading bible-yv-muted">Ouverture…</p>
-          ) : null}
-          {passageStep === "verse" && !loadingUi && !verseOptions.length ? (
-            <p className="bible-yv-pick-loading bible-yv-muted">Aucun verset</p>
-          ) : null}
-        </div>
       ) : null}
 
       {(() => {

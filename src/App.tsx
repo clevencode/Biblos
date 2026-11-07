@@ -7,6 +7,7 @@ import { FirebaseConfigGate } from "./components/FirebaseConfigGate";
 import { SignInModal } from "./components/SignInModal";
 import { ProfileOnboarding } from "./components/ProfileOnboarding";
 import { useAuth } from "./hooks/useAuth";
+import { useAppReadiness } from "./context/AppReadinessContext";
 import { useUserCloudSync } from "./hooks/useUserCloudSync";
 import { runUserCloudSync } from "./firebase/syncSession";
 import { ProfileView } from "./components/ProfileView";
@@ -139,7 +140,12 @@ function resolveInitialMode(session: UiSession): CenterMode {
 }
 
 export function App() {
-  const { user: firebaseUser, signOut: signOutGoogle } = useAuth();
+  const { user: firebaseUser, signOut: signOutGoogle, loading: authLoading } = useAuth();
+  const { setAuthLoading } = useAppReadiness();
+
+  useEffect(() => {
+    setAuthLoading(authLoading);
+  }, [authLoading, setAuthLoading]);
   const initialUi = readUi();
   const [catalog, setCatalog] = useState<Catalog>(() => seedCatalog);
   const notes = catalog.notas;
