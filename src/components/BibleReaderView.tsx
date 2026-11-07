@@ -303,6 +303,8 @@ type BibleReaderViewProps = {
   }) => void;
   /** Historique de lecture modifié (suppression). */
   onReadingHistoryChange?: () => void;
+  /** Mobile : hamburger à droite (outils Bible uniquement). */
+  compactToolsMenu?: boolean;
 };
 
 /** Ids USFM (JHN, 1SA) — ignore un livre fantôme type VERSECARD. */
@@ -421,6 +423,7 @@ export function BibleReaderView({
   onVerseMarked,
   onBibleRead,
   onReadingHistoryChange,
+  compactToolsMenu = false,
 }: BibleReaderViewProps) {
   const prefs = readPrefs();
   const prefsBookOk = isUsfmBookId(prefs.bookId || "");
@@ -957,6 +960,7 @@ export function BibleReaderView({
   }
 
   function selectVerse(number: number) {
+    if (pickerOpen || toolsMenuOpen) return;
     // Side-effects fora do updater (React pode correr updaters na fase de render).
     preferJumpFocusRef.current = false;
     const current = selection;
@@ -1596,7 +1600,11 @@ export function BibleReaderView({
           <YvIcon name="menu" className="bible-yv-tool-icon" />
         </button>
         {toolsMenuOpen ? (
-          <div className="bible-yv-tools-popover" role="menu" aria-label="Menu Bible">
+          <div
+            className="bible-yv-tools-popover"
+            role="menu"
+            aria-label="Menu Bible"
+          >
             <button
               type="button"
               role="menuitem"
@@ -2078,7 +2086,7 @@ export function BibleReaderView({
   return (
     <section
       ref={readerRef}
-      className={`bible-reader bible-reader--yv${hideChrome ? " is-chrome-hidden" : ""}${showCreateCard ? " has-verse-actions" : ""}${headCompact ? " is-head-compact" : ""}${pickerOpen ? " is-passage-roll-open" : ""}`}
+      className={`bible-reader bible-reader--yv${hideChrome ? " is-chrome-hidden" : ""}${showCreateCard ? " has-verse-actions" : ""}${headCompact ? " is-head-compact" : ""}${pickerOpen ? " is-passage-roll-open" : ""}${compactToolsMenu ? " is-compact-tools" : ""}${toolsMenuOpen ? " is-tools-menu-open" : ""}`}
       style={{ ["--bible-font-size" as string]: `${fontSize}px` }}
       onKeyDown={(event) => {
         if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement) {
@@ -2157,7 +2165,7 @@ export function BibleReaderView({
       tabIndex={-1}
     >
       <header
-        className={`bible-yv-top${planReading ? " is-plan" : " is-free"}${pickerOpen ? " is-passage-picker-open" : ""}${catalogOfflineHint ? " is-catalog-offline" : ""}`}
+        className={`bible-yv-top${planReading ? " is-plan" : " is-free"}${pickerOpen ? " is-passage-picker-open" : ""}${catalogOfflineHint ? " is-catalog-offline" : ""}${compactToolsMenu ? " is-compact-tools" : ""}`}
         aria-label="Navigation biblique"
       >
         {planReading ? (
@@ -2213,21 +2221,40 @@ export function BibleReaderView({
         {loadingUi ? "Ouverture du chapitre…" : error ? error : locationLabel}
       </div>
 
-      {error && passageErrorKind !== "offline_not_cached" ? (
-        <div className="bible-yv-error-bar" role="alert">
-          <p className="bible-yv-error">{error}</p>
+      <div
+        className={`bible-yv-read-surface${pickerOpen || toolsMenuOpen ? " is-overlay-occluding" : ""}`}
+      >
+        {pickerOpen ? (
           <button
             type="button"
-            className="bible-yv-chip"
-            onClick={() => void loadChapter(bookId, chapterId, highlightVerse)}
-            disabled={loading}
-          >
-            Réessayer
-          </button>
-        </div>
-      ) : null}
+            className="bible-yv-passage-roll-scrim"
+            aria-label="Fermer le choix de passage"
+            onClick={closePicker}
+          />
+        ) : toolsMenuOpen ? (
+          <button
+            type="button"
+            className="bible-yv-passage-roll-scrim is-tools"
+            aria-label="Fermer le menu"
+            onClick={() => setToolsMenuOpen(false)}
+          />
+        ) : null}
 
-      <article
+        {error && passageErrorKind !== "offline_not_cached" ? (
+          <div className="bible-yv-error-bar" role="alert">
+            <p className="bible-yv-error">{error}</p>
+            <button
+              type="button"
+              className="bible-yv-chip"
+              onClick={() => void loadChapter(bookId, chapterId, highlightVerse)}
+              disabled={loading || pickerOpen}
+            >
+              Réessayer
+            </button>
+          </div>
+        ) : null}
+
+        <article
         ref={passageScrollRef}
         className={[
           "bible-passage",
@@ -2237,12 +2264,10 @@ export function BibleReaderView({
           .filter(Boolean)
           .join(" ")}
         aria-busy={loading || loadingUi}
+        aria-hidden={pickerOpen || toolsMenuOpen || undefined}
+        inert={pickerOpen || toolsMenuOpen || undefined}
         style={{ ["--verse-tint" as string]: actionTone.tint }}
         onClick={(event) => {
-          if (pickerOpen) {
-            closePicker();
-            return;
-          }
           const target = event.target;
           if (
             showCreateCard &&
@@ -2399,6 +2424,7 @@ export function BibleReaderView({
           <p className="bible-yv-muted">Choisis un livre et un chapitre pour lire.</p>
         ) : null}
       </article>
+      </div>
 
       {showCreateCard ? (
         <>

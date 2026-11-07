@@ -73,6 +73,7 @@ import {
   syncContextualNotifications,
 } from "./appNotifications";
 import { useNarrow, useSplitLayout } from "./layout";
+import { BIBLE_COMPACT_TOOLS_MENU } from "./bible/bibleChromeLayout";
 import { chapterFocusFromRef, isPassageRef } from "./youversion/usfm";
 import { syncNativeChrome } from "./nativeChrome";
 import { consumePlanShareFromUrl, consumeShareRefFromUrl } from "./shareVerse";
@@ -163,11 +164,11 @@ export function App() {
     () => isShellTabEnabled("home") && resolveInitialMode(initialUi) === "home",
   );
   const [profileMounted, setProfileMounted] = useState(
-    () => isShellTabEnabled("profile") && resolveInitialMode(initialUi) === "profile",
+    () => resolveInitialMode(initialUi) === "profile",
   );
   useEffect(() => {
     if (isShellTabEnabled("home") && mode === "home") setHomeMounted(true);
-    if (isShellTabEnabled("profile") && mode === "profile") setProfileMounted(true);
+    if (mode === "profile") setProfileMounted(true);
   }, [mode]);
 
   const selectMode = useCallback((next: CenterMode) => {
@@ -183,6 +184,7 @@ export function App() {
   const [offlineToast, setOfflineToast] = useState(false);
   const offlineToastSeen = useRef(false);
   const narrow = useNarrow();
+  const bibleCompactTools = BIBLE_COMPACT_TOOLS_MENU && narrow && mode === "bible";
   const splitLayout = useSplitLayout();
   const notesRef = useRef(notes);
   notesRef.current = notes;
@@ -970,6 +972,7 @@ export function App() {
       onOpenPlan={pickPlan}
       onBrowsePlans={goGalerie}
       onOpenVerse={(reference) => openPassageInBible(reference)}
+      onOpenProfile={() => selectMode("profile")}
     />
   ) : null;
 
@@ -980,7 +983,7 @@ export function App() {
   return (
     <FirebaseConfigGate>
       <div
-        className={`app biblos-shell${narrow ? " is-narrow" : ""}${mode === "bible" ? " is-bible-mode" : ""}`}
+        className={`app biblos-shell${narrow ? " is-narrow" : ""}${mode === "bible" ? " is-bible-mode" : ""}${bibleCompactTools ? " is-bible-compact-tools" : ""}`}
       >
         <a className="skip" href="#workspace">
           Aller au contenu
@@ -1201,6 +1204,7 @@ export function App() {
                     onReadingHistoryChange={() => {
                       setActivityTick((n) => n + 1);
                     }}
+                    compactToolsMenu={bibleCompactTools}
                   />
                   ) : null}
                 </div>
@@ -1224,14 +1228,16 @@ export function App() {
                   />
                 </div>
                 ) : null}
-                {isShellTabEnabled("profile") ? (
                 <div
                   id="panel-profile"
-                  role="tabpanel"
-                  aria-labelledby="tab-profile"
+                  role="region"
+                  aria-labelledby="profile-shell-title"
                   hidden={mode !== "profile"}
                   className="pane-body"
                 >
+                  <h2 id="profile-shell-title" className="sr-only">
+                    Profil
+                  </h2>
                   {profileMounted ? (
                   <ProfileView
                     profile={profile}
@@ -1297,7 +1303,6 @@ export function App() {
                   />
                   ) : null}
                 </div>
-                ) : null}
               </div>
             </section>
           </div>
