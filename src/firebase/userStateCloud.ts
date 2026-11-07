@@ -12,6 +12,24 @@ import {
   importPlanProgressStore,
   type PlanProgress,
 } from "../planProgress";
+import {
+  exportDayNoteStore,
+  importDayNoteStore,
+  type DayNoteRecord,
+} from "../planDayNote";
+import {
+  exportUserFlashcardsFromCatalog,
+  importUserFlashcardsFromCloud,
+  loadCatalogFromCache,
+} from "../catalogSync";
+import type { Flashcard } from "../types";
+import {
+  exportVerseMarkRemoved,
+  exportVerseMarkStore,
+  exportVerseMarkTouched,
+  importVerseMarkStore,
+  type VerseMarkStore,
+} from "../verseMarks";
 import { isFirebaseSignedIn, loadOrCreateProfile } from "../userProfile";
 import { getFirebaseAuth } from "./app";
 import { getFirestoreDbReady } from "./firestore";
@@ -30,6 +48,11 @@ type UserStatePayload = {
   updatedAt: string;
   planProgress: Record<string, PlanProgress>;
   flashcardOverrides: Record<string, CardOverride>;
+  verseMarks?: VerseMarkStore;
+  verseMarkTouched?: Record<string, string>;
+  verseMarkRemoved?: Record<string, string>;
+  dayNotes?: Record<string, DayNoteRecord>;
+  userFlashcards?: Flashcard[];
 };
 
 function readMeta(): UserStateMeta {
@@ -65,12 +88,49 @@ function currentUid(): string | null {
 }
 
 function buildLocalPayload(): UserStatePayload {
+  const catalog = loadCatalogFromCache();
   return {
     schemaVersion: USER_STATE_SCHEMA_VERSION,
     updatedAt: new Date().toISOString(),
     planProgress: exportPlanProgressStore(),
     flashcardOverrides: exportCardOverrides(),
+    verseMarks: exportVerseMarkStore(),
+    verseMarkTouched: exportVerseMarkTouched(),
+    verseMarkRemoved: exportVerseMarkRemoved(),
+    dayNotes: exportDayNoteStore(),
+    userFlashcards: catalog ? exportUserFlashcardsFromCatalog(catalog) : [],
   };
+}
+
+function applyRemoteUserState(data: Partial<UserStatePayload>): boolean {
+  let changed = false;
+  if (data.planProgress && typeof data.planProgress === "object") {
+    importPlanProgressStore(data.planProgress, true);
+    changed = true;
+  }
+  if (data.flashcardOverrides && typeof data.flashcardOverrides === "object") {
+    importCardOverrides(data.flashcardOverrides, true);
+    changed = true;
+  }
+  if (data.verseMarks && typeof data.verseMarks === "object") {
+    if (
+      importVerseMarkStore(
+        data.verseMarks,
+        data.verseMarkTouched ?? {},
+        data.verseMarkRemoved ?? {},
+        true,
+      )
+    ) {
+      changed = true;
+    }
+  }
+  if (data.dayNotes && typeof data.dayNotes === "object") {
+    if (importDayNoteStore(data.dayNotes, true)) changed = true;
+  }
+  if (Array.isArray(data.userFlashcards) && data.userFlashcards.length) {
+    if (importUserFlashcardsFromCloud(data.userFlashcards)) changed = true;
+  }
+  return changed;
 }
 
 export async function pushUserStateToCloud(): Promise<{ ok: boolean; error?: string }> {
@@ -83,9 +143,22 @@ export async function pushUserStateToCloud(): Promise<{ ok: boolean; error?: str
   const db = await getFirestoreDbReady();
   if (!db) return { ok: false, error: "Firestore indisponible" };
 
+  const stateRef = doc(db, userPrivateStatePath(uid));
+  try {
+    const remoteSnap = await getDoc(stateRef);
+    if (remoteSnap.exists()) {
+      const remote = remoteSnap.data() as Partial<UserStatePayload>;
+      if (applyRemoteUserState(remote) && typeof window !== "undefined") {
+        window.dispatchEvent(new Event("biblos-user-state-pulled"));
+      }
+    }
+  } catch {
+    /* push best-effort même si lecture distante échoue */
+  }
+
   const payload = buildLocalPayload();
   try {
-    await setDoc(doc(db, userPrivateStatePath(uid)), payload, { merge: true });
+    await setDoc(stateRef, payload, { merge: true });
     writeMeta({
       lastPushedAt: payload.updatedAt,
       serverUpdatedAt: payload.updatedAt,
@@ -128,28 +201,17 @@ export async function pullUserStateFromCloud(): Promise<{
       return { ok: true, applied: false };
     }
 
-    if (data.planProgress && typeof data.planProgress === "object") {
-      importPlanProgressStore(
-        data.planProgress as Record<string, PlanProgress>,
-        true,
-      );
-    }
-    if (data.flashcardOverrides && typeof data.flashcardOverrides === "object") {
-      importCardOverrides(
-        data.flashcardOverrides as Record<string, CardOverride>,
-        true,
-      );
-    }
+    const applied = applyRemoteUserState(data);
 
     const pulledAt = new Date().toISOString();
     writeMeta({
       lastPulledAt: pulledAt,
       serverUpdatedAt: remoteUpdated,
     });
-    if (typeof window !== "undefined") {
+    if (applied && typeof window !== "undefined") {
       window.dispatchEvent(new Event("biblos-user-state-pulled"));
     }
-    return { ok: true, applied: true };
+    return { ok: true, applied };
   } catch (error) {
     return {
       ok: false,

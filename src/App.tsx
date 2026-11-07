@@ -40,7 +40,13 @@ import {
   planCardIds,
 } from "./catalog";
 import { mergeCard } from "./cardOverrides";
-import { hydrateCatalogFromCache, persistCatalogCache, removeCardFromCatalog } from "./catalogSync";
+import {
+  hydrateCatalogFromCache,
+  loadCatalogFromCache,
+  persistCatalogCache,
+  removeCardFromCatalog,
+} from "./catalogSync";
+import { ensureLocalMarksInCatalog } from "./verseLocalCatalog";
 import {
   calendarJour,
   ensurePlanStart,
@@ -342,6 +348,14 @@ export function App() {
     function onStatePulled() {
       setPlanProgressTick((v) => v + 1);
       setRetentionTick((v) => v + 1);
+      const cached = loadCatalogFromCache();
+      if (cached) {
+        setCatalog(() => {
+          const merged = ensureLocalMarksInCatalog(cached);
+          catalogRef.current = merged;
+          return merged;
+        });
+      }
     }
     window.addEventListener("biblos-user-state-pulled", onStatePulled);
     return () => window.removeEventListener("biblos-user-state-pulled", onStatePulled);

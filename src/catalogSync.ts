@@ -1,4 +1,4 @@
-import type { Catalog, ReadingPlan, Seed } from "./types";
+import type { Catalog, Flashcard, ReadingPlan, Seed } from "./types";
 import { apiUrl, readApiJson } from "./apiBase";
 import { isNotionCmsPullEnabled } from "./contentCms";
 import { applyRemoteOverride } from "./cardOverrides";
@@ -8,6 +8,9 @@ import { clearPlanLocalState } from "./planProgress";
 import { normalizeCategoria, normalizeStatus } from "./retention";
 import { isClevencodeAdmin } from "./userProfile";
 import { applyVerseMarksFromCards } from "./verseMarks";
+import { upsertUserFlashcardInCatalog } from "./verseLocalCatalog";
+
+const CATALOG_USER_REVISION = "biblos-catalog-user-revision";
 
 const CATALOG_CACHE_KEY = "biblos-catalog-v1";
 
@@ -72,9 +75,79 @@ export function hydrateCatalogFromCache(catalog: Catalog): Catalog {
 export function persistCatalogCache(catalog: Catalog) {
   try {
     localStorage.setItem(CATALOG_CACHE_KEY, JSON.stringify(catalog));
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event(CATALOG_USER_REVISION));
+    }
   } catch {
     /* quota / private mode */
   }
+}
+
+export function loadCatalogFromCache(): Catalog | null {
+  try {
+    const raw = localStorage.getItem(CATALOG_CACHE_KEY);
+    if (!raw) return null;
+    const cached = JSON.parse(raw) as Catalog;
+    if (!cached || !Array.isArray(cached.notas)) return null;
+    return pruneCatalogToVerseCards(cached);
+  } catch {
+    return null;
+  }
+}
+
+export function exportUserFlashcardsFromCatalog(catalog: Catalog): Flashcard[] {
+  const seen = new Set<string>();
+  const out: Flashcard[] = [];
+  for (const note of catalog.notas ?? []) {
+    for (const card of note.flashcards ?? []) {
+      if (!isBiblosFlashcard(card) || !card.id || seen.has(card.id)) continue;
+      seen.add(card.id);
+      out.push(card);
+    }
+  }
+  return out;
+}
+
+/** Fusionne les cartes utilisateur (LWW via `criadoEm`). */
+export function importUserFlashcardsFromCloud(cards: Flashcard[]): boolean {
+  if (!Array.isArray(cards) || !cards.length) return false;
+  let catalog = loadCatalogFromCache();
+  if (!catalog) return false;
+  let changed = false;
+
+  const findCard = (id: string): Flashcard | undefined => {
+    for (const note of catalog!.notas ?? []) {
+      const hit = (note.flashcards ?? []).find((c) => c.id === id);
+      if (hit) return hit;
+    }
+    return undefined;
+  };
+
+  for (const remote of cards) {
+    if (!remote?.id || !isBiblosFlashcard(remote)) continue;
+    const local = findCard(remote.id);
+    const localAt = local?.criadoEm || "";
+    const remoteAt = remote.criadoEm || "";
+    if (local && localAt && remoteAt && localAt > remoteAt) continue;
+    const next = upsertUserFlashcardInCatalog(catalog, {
+      ...local,
+      ...remote,
+      url: remote.url || local?.url || "",
+    });
+    if (next !== catalog) {
+      catalog = next;
+      changed = true;
+    }
+  }
+
+  if (changed) persistCatalogCache(catalog);
+  return changed;
+}
+
+export function subscribeUserCatalogRevision(onChange: () => void): () => void {
+  if (typeof window === "undefined") return () => undefined;
+  window.addEventListener(CATALOG_USER_REVISION, onChange);
+  return () => window.removeEventListener(CATALOG_USER_REVISION, onChange);
 }
 
 /** Enlève un flashcard du catalogue local (liste, inbox, calendrier). */

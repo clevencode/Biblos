@@ -8,6 +8,7 @@ import { pullCatalog, persistCatalogCache } from "./catalogSync";
 import { isNotionCmsPullEnabled } from "./contentCms";
 import { DESCRIPTION_PULL_MS, pullPlanDescription } from "./planDescriptionSync";
 import { pullRemoteAppNotifications } from "./appNotifications";
+import { isFirebaseSignedIn, loadOrCreateProfile } from "./userProfile";
 import { runUserCloudSync } from "./firebase/syncSession";
 import { ensureLocalMarksInCatalog } from "./verseLocalCatalog";
 import type { Catalog, CenterMode, ReadingPlan } from "./types";
@@ -55,7 +56,10 @@ export function useCmsSync(options: {
   useEffect(() => {
     if (cmsPaused()) return;
     void pullRemoteAppNotifications();
-    void runUserCloudSync({ push: false, pull: true });
+    const profile = loadOrCreateProfile();
+    if (isFirebaseSignedIn(profile)) {
+      void runUserCloudSync({ push: false, pull: true });
+    }
   }, []);
 
   useEffect(() => {

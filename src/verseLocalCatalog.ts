@@ -14,7 +14,8 @@ function bookTitle(bookId: string): string {
   return hit?.title ?? bookId;
 }
 
-function upsertCardInCatalog(catalog: Catalog, card: Flashcard): Catalog {
+/** Insère ou met à jour une carte utilisateur (VerseMark / VERSECARD) sans persister. */
+export function upsertUserFlashcardInCatalog(catalog: Catalog, card: Flashcard): Catalog {
   const notas = [...(catalog.notas ?? [])];
   const bucketKey = String(card.cardCategory || "VERSECARD");
   const bucketId = `bucket-${bucketKey.toLowerCase()}`;
@@ -46,7 +47,11 @@ function upsertCardInCatalog(catalog: Catalog, card: Flashcard): Catalog {
     nota: { ...seed.nota, cartoes: flashcards.length },
   };
   const nextNotas = notas.map((item) => (item.nota.id === nextSeed.nota.id ? nextSeed : item));
-  const next = { ...catalog, notas: nextNotas };
+  return { ...catalog, notas: nextNotas };
+}
+
+function upsertCardInCatalog(catalog: Catalog, card: Flashcard): Catalog {
+  const next = upsertUserFlashcardInCatalog(catalog, card);
   persistCatalogCache(next);
   return next;
 }

@@ -3,6 +3,7 @@
  */
 import { flushAdminMessageOutbox } from "../adminMessage";
 import { flushActivityOutbox, pullActivityFromCloud } from "../activitySync";
+import { pullUserProfileFromCloud } from "./profileCloud";
 import { syncUserProfileToCloud } from "../userProfileSync";
 import type { PresenceStatus } from "../userProfileSync";
 import { pullUserStateFromCloud, pushUserStateToCloud } from "./userStateCloud";
@@ -49,6 +50,8 @@ export async function runUserCloudSync(options?: {
   }
 
   if (pull) {
+    const pullProfile = await pullUserProfileFromCloud();
+    if (pullProfile.error) errors.push(pullProfile.error);
     const pullState = await pullUserStateFromCloud();
     if (pullState.error) errors.push(pullState.error);
     const pullAct = await pullActivityFromCloud();

@@ -1,6 +1,9 @@
 import { useEffect, useRef } from "react";
 import { subscribeFlashcardRevision } from "../cardOverrides";
+import { subscribeUserCatalogRevision } from "../catalogSync";
+import { subscribeDayNoteRevision } from "../planDayNote";
 import { subscribePlanProgressRevision } from "../planProgress";
+import { subscribeVerseMarksRevision } from "../verseMarks";
 import { runUserCloudSync } from "../firebase/syncSession";
 import { isProfileOnboarded, type UserProfile } from "../userProfile";
 
@@ -20,17 +23,23 @@ export function useUserCloudSync(profile: UserProfile): void {
     void runUserCloudSync({ push: true, pull: true, presence: "Online" });
 
     const periodic = window.setInterval(() => {
-      void runUserCloudSync({ push: true, pull: false, presence: "Online" });
+      void runUserCloudSync({ push: true, pull: true, presence: "Online" });
     }, PERIODIC_PUSH_MS);
 
     const onOnline = () => {
       void runUserCloudSync({ push: true, pull: true, presence: "Online" });
     };
+    const onVisible = () => {
+      if (document.visibilityState !== "visible") return;
+      void runUserCloudSync({ push: true, pull: true, presence: "Online" });
+    };
     window.addEventListener("online", onOnline);
+    document.addEventListener("visibilitychange", onVisible);
 
     return () => {
       window.clearInterval(periodic);
       window.removeEventListener("online", onOnline);
+      document.removeEventListener("visibilitychange", onVisible);
       void runUserCloudSync({ push: true, pull: false, presence: "Offline" });
     };
   }, [onboarded, profile.firebaseUid]);
@@ -48,9 +57,15 @@ export function useUserCloudSync(profile: UserProfile): void {
 
     const stopCards = subscribeFlashcardRevision(schedulePush);
     const stopPlans = subscribePlanProgressRevision(schedulePush);
+    const stopMarks = subscribeVerseMarksRevision(schedulePush);
+    const stopNotes = subscribeDayNoteRevision(schedulePush);
+    const stopCatalog = subscribeUserCatalogRevision(schedulePush);
     return () => {
       stopCards();
       stopPlans();
+      stopMarks();
+      stopNotes();
+      stopCatalog();
       if (pushTimer.current) {
         window.clearTimeout(pushTimer.current);
         pushTimer.current = null;

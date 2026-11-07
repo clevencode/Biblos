@@ -7,8 +7,15 @@ export type DayNoteRecord = {
 };
 
 const STORE_KEY = "biblos-day-notes-v1";
+const REVISION_EVENT = "biblos-day-notes-revision";
 
 type Store = Record<string, DayNoteRecord>;
+
+function notifyDayNoteRevision() {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event(REVISION_EVENT));
+  }
+}
 
 function noteKey(planId: string, jour: number): string {
   return `${planId}:${jour}`;
@@ -28,9 +35,45 @@ function readStore(): Store {
 function writeStore(store: Store) {
   try {
     localStorage.setItem(STORE_KEY, JSON.stringify(store));
+    notifyDayNoteRevision();
   } catch {
     /* private mode */
   }
+}
+
+export function exportDayNoteStore(): Store {
+  return readStore();
+}
+
+/** Garde la note la plus récente par clé `planId:jour`. */
+export function importDayNoteStore(incoming: Store, merge = true): boolean {
+  if (!incoming || typeof incoming !== "object") return false;
+  const store = merge ? { ...readStore() } : {};
+  let changed = false;
+  for (const [key, remote] of Object.entries(incoming)) {
+    if (!key || !remote?.updatedAt) continue;
+    const local = store[key];
+    if (local?.updatedAt && local.updatedAt >= remote.updatedAt) continue;
+    store[key] = {
+      text: String(remote.text ?? local?.text ?? ""),
+      notionUrl:
+        remote.notionUrl !== undefined ? remote.notionUrl : (local?.notionUrl ?? null),
+      updatedAt: remote.updatedAt,
+    };
+    changed = true;
+  }
+  if (changed) writeStore(store);
+  return changed;
+}
+
+export function subscribeDayNoteRevision(onChange: () => void): () => void {
+  if (typeof window === "undefined") return () => undefined;
+  window.addEventListener(REVISION_EVENT, onChange);
+  window.addEventListener("storage", onChange);
+  return () => {
+    window.removeEventListener(REVISION_EVENT, onChange);
+    window.removeEventListener("storage", onChange);
+  };
 }
 
 export function loadDayNote(planId: string, jour: number): DayNoteRecord | null {
