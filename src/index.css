@@ -8250,6 +8250,103 @@ ul.plan-yv-day-note-ref {
   text-align: center;
 }
 
+.bible-yv-pick-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.bible-yv-pick-section-label {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 0;
+  padding: 6px 6px 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--yv-muted) 88%, var(--yv-text));
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  backdrop-filter: blur(6px);
+}
+
+.bible-yv-pick-jumps {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.bible-yv-pick-jump {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 32%, var(--yv-line));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 10%, var(--panel));
+  color: var(--yv-text);
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.bible-yv-pick-jump:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 16%, var(--panel));
+}
+
+.bible-yv-pick-jump:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.bible-yv-pick-jump-icon {
+  flex: none;
+  opacity: 0.88;
+}
+
+.bible-yv-pick-jump-label {
+  min-width: 0;
+}
+
+.bible-yv-pick-cell.is-book {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.bible-yv-pick-cell-label {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.bible-yv-pick-cell-count {
+  flex: none;
+  min-width: 1.75rem;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color: color-mix(in srgb, var(--yv-muted) 35%, var(--yv-text));
+  background: color-mix(in srgb, var(--text) 8%, var(--panel));
+}
+
+.bible-yv-pick-discovery-busy,
+.bible-yv-pick-discovery-hint {
+  margin: 0 6px 8px;
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
 .bible-yv-passage-chip.is-open .bible-yv-passage-chip-caret {
   transform: rotate(180deg);
   transition: transform 0.3s ease;

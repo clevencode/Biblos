@@ -24,6 +24,19 @@ BibleReaderView / BiblePassageScrollPicker
 
 A UI **nunca** inicia com `books: []`. Títulos no header usam `resolveBookDisplay()` (lista atual → seed → canon → id).
 
+## Barre universelle (picker — livre)
+
+Núcleo em `src/bible/passageDiscovery/` (puro) + `usePassageDiscovery` + `BiblePassageDiscoveryList`.
+
+| Entrada | Comportamento |
+|--------|----------------|
+| Query vazia | 66 livros em **Ancien Testament** / **Nouveau Testament** |
+| Nome de livre | Filtro por título (síncrono) + fusão com hits de texto |
+| Mot (≥2 car.) | `searchVerses` → `bookCounts` apenas; badge de ocorrências |
+| Référence (ex. Jean 3.16) | Ligne «Aller à…» → `loadChapter` directo |
+
+O sheet `BibleSearchSheet` mantém-se para versículos detalhados; o picker só sugere **livros** ou **saut**.
+
 ## Predictable State UI
 
 Fases (`AppReadinessContext`):
@@ -52,3 +65,7 @@ Chrome da Bíblia:
 5. **Skeleton** — cold start no tab Bíblia: shimmer nos chips &lt;100 ms, depois títulos estáveis.
 6. **Capítulo lento** — throttle rede: skeleton de versículos ou barra superior; sem texto de outro livro.
 7. **Capítulo não indexado** — offline + sem IDB: ecrã gate + botão de download.
+8. **Picker sans texte** — deux sections AT / NT, ordre canon.
+9. **«1 Rois»** — filtre titre, un ou deux livres mis en évidence.
+10. **«amour»** — avec index IDB ou API : plusieurs livres + compteurs ; hors ligne sans index : message + titres si match.
+11. **«Jean 3.16»** — pas de grille livres ; bouton Aller à Jean 3.16 ouvre le passage.

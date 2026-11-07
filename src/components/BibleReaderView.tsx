@@ -32,6 +32,8 @@ import { BiblePassageChip } from "./BiblePassageChip";
 import { BibleSyncIndicator } from "./BibleSyncIndicator";
 import { BibleOfflineChapterGate } from "./BibleOfflineChapterGate";
 import { BibleChapterLoadingPlaceholder } from "./BibleChapterLoadingPlaceholder";
+import { usePassageDiscovery } from "../hooks/usePassageDiscovery";
+import type { DiscoveryJump } from "../bible/passageDiscovery/types";
 import {
   classifyPassageLoadError,
   type PassageLoadErrorKind,
@@ -473,6 +475,13 @@ export function BibleReaderView({
   const [pickerOpen, setPickerOpen] = useState(false);
   const [passageStep, setPassageStep] = useState<"book" | "chapter" | "verse">("book");
   const [bookSearchQuery, setBookSearchQuery] = useState("");
+  const passageDiscoveryEnabled =
+    pickerOpen && passageStep === "book" && isLocalReady && !isLoadingLocal;
+  const { result: passageDiscovery, busy: passageDiscoveryBusy } = usePassageDiscovery(
+    bookSearchQuery,
+    books,
+    passageDiscoveryEnabled,
+  );
   const [narrowChrome, setNarrowChrome] = useState(false);
   const [cardBusy, setCardBusy] = useState(false);
   const [cardMsg, setCardMsg] = useState<string | null>(null);
@@ -1094,6 +1103,8 @@ export function BibleReaderView({
           chapterId={chapterId}
           bookSearchQuery={bookSearchQuery}
           books={books}
+          discovery={passageDiscovery}
+          discoveryBusy={passageDiscoveryBusy}
           chapters={chapters}
           verseOptions={verseOptions}
           loading={loading}
@@ -1103,6 +1114,7 @@ export function BibleReaderView({
           onBack={handlePickBack}
           onSearchChange={setBookSearchQuery}
           onPickBook={pickBook}
+          onPickJump={pickDiscoveryJump}
           onPickChapter={pickChapter}
           onJumpVerse={jumpToVerse}
         />
@@ -1128,6 +1140,22 @@ export function BibleReaderView({
     setPassageStep("chapter");
     if (nextBook.toUpperCase() === bookId.toUpperCase()) return;
     void loadChapter(nextBook, "1", null);
+  }
+
+  function pickDiscoveryJump(jump: DiscoveryJump) {
+    pendingVerseStep.current = jump.passage.verse != null;
+    setBookSearchQuery("");
+    setPickerOpen(false);
+    setPassageStep("book");
+    const chapter = String(jump.passage.chapter);
+    const verse = jump.passage.verse;
+    const verseEnd = jump.passage.verseEnd;
+    void loadChapter(
+      jump.passage.bookId,
+      chapter,
+      verse,
+      verse != null && verseEnd != null && verseEnd !== verse ? verseEnd : null,
+    );
   }
 
   function pickChapter(nextChapter: string) {
