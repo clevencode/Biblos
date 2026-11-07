@@ -24,7 +24,7 @@ import {
   saveAudioPosition,
   type BibleAudioEpisode,
 } from "../youversion/audio";
-import { BibleAudioPlayer } from "./BibleAudioPlayer";
+import { BibleAudioFloat } from "./BibleAudioFloat";
 import { BibleHistorySheet } from "./BibleHistorySheet";
 import { BibleSearchSheet } from "./BibleSearchSheet";
 import { BibleShareSheet } from "./BibleShareSheet";
@@ -508,7 +508,6 @@ export function BibleReaderView({
   const [audioPodcast, setAudioPodcast] = useState("Bible | Podcast.s21");
   const [audioPlaying, setAudioPlaying] = useState(false);
   const [audioBusy, setAudioBusy] = useState(false);
-  const [audioPlayerOpen, setAudioPlayerOpen] = useState(false);
   const [audioActiveUsfm, setAudioActiveUsfm] = useState<string | null>(null);
   const [audioTime, setAudioTime] = useState(0);
   const [audioDuration, setAudioDuration] = useState(0);
@@ -533,7 +532,6 @@ export function BibleReaderView({
   const passageScrollRef = useRef<HTMLElement | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioBookRef = useRef<string>("");
-  const audioPlayerOpenRef = useRef(false);
   const audioSyncScrollVerseRef = useRef<number | null>(null);
   const lastScrollTop = useRef(0);
   const scrollAcc = useRef(0);
@@ -592,10 +590,6 @@ export function BibleReaderView({
       cancelled = true;
     };
   }, []);
-
-  useEffect(() => {
-    audioPlayerOpenRef.current = audioPlayerOpen;
-  }, [audioPlayerOpen]);
 
   useEffect(() => {
     const audio = audioRef.current ?? new Audio();
@@ -725,7 +719,6 @@ export function BibleReaderView({
     const audio = audioRef.current;
     if (!audio) return;
     const usfm = bookId.toUpperCase();
-    if (audioPlayerOpenRef.current) return;
     if (audioBookRef.current === usfm) return;
     if (!audio.paused) {
       audio.pause();
@@ -1588,7 +1581,6 @@ export function BibleReaderView({
   const forceChrome =
     pickerOpen ||
     showCreateCard ||
-    audioPlayerOpen ||
     searchOpen ||
     historyOpen ||
     shareSheetOpen ||
@@ -1824,11 +1816,6 @@ export function BibleReaderView({
 
   const bookAudio = audioByUsfm[bookId.toUpperCase()] ?? null;
   const canPlayBookAudio = Boolean(bookAudio?.audioUrl || chapterSyncPack);
-  const bookOrder = useMemo(
-    () => books.map((b) => b.id.toUpperCase()),
-    [books],
-  );
-  const playingUsfm = audioActiveUsfm ?? (audioBookRef.current || null);
 
   async function playChapterSyncedAudio() {
     if (!chapterSyncPack || !chapterAudioStorageKey) return false;
@@ -1942,13 +1929,19 @@ export function BibleReaderView({
     await playUsfmAudio(usfm);
   }
 
-  function openAudioPlayer() {
+  function handleAudioTransport() {
     const usfm = bookId.toUpperCase();
     setAudioActiveUsfm(audioBookRef.current || usfm);
-    setAudioPlayerOpen(true);
     if (!canPlayBookAudio && !audioByUsfm[usfm]) return;
     const audio = audioRef.current;
-    if (audio && audioBookRef.current === usfm && !audio.paused) return;
+    if (
+      audio &&
+      audioBookRef.current === usfm &&
+      (audio.src || audio.currentSrc)
+    ) {
+      void toggleBookAudio();
+      return;
+    }
     void playUsfmAudio(usfm);
   }
 
@@ -1959,12 +1952,6 @@ export function BibleReaderView({
     audio.currentTime = Math.min(Math.max(0, seconds), Math.max(0, max));
     setAudioTime(audio.currentTime);
     if (audioBookRef.current) saveAudioPosition(audioBookRef.current, audio.currentTime);
-  }
-
-  function skipAudio(delta: number) {
-    const audio = audioRef.current;
-    if (!audio) return;
-    seekAudio((audio.currentTime || 0) + delta);
   }
 
   function setReadingChrome(hidden: boolean, force = false) {
@@ -2142,7 +2129,6 @@ export function BibleReaderView({
           if (
             pickerOpen ||
             showCreateCard ||
-            audioPlayerOpen ||
             searchOpen ||
             toolsMenuOpen ||
             historyOpen ||
@@ -2625,44 +2611,15 @@ export function BibleReaderView({
                 : "Chapitre"
         }
       >
-        <button
-          type="button"
-          className={`bible-yv-dock-play${audioPlaying ? " is-playing" : ""}${audioBusy ? " is-busy" : ""}${audioPlayerOpen ? " is-open" : ""}`}
-          onClick={() => {
-            if (audioPlayerOpen) {
-              void toggleBookAudio();
-              return;
-            }
-            openAudioPlayer();
-          }}
-          disabled={!canPlayBookAudio || audioBusy}
-          aria-pressed={audioPlaying}
-          aria-expanded={audioPlayerOpen}
-          aria-label={
-            !canPlayBookAudio
-              ? `Audio indisponible pour ${bookTitle}`
-              : audioPlayerOpen
-                ? audioPlaying
-                  ? `Pause · ${bookTitle}`
-                  : `Lecture · ${bookTitle}`
-                : `Ouvrir le lecteur · ${bookTitle}`
-          }
-          title={
-            !canPlayBookAudio
-              ? "Audio du livre bientôt disponible"
-              : audioPlayerOpen
-                ? audioPlaying
-                  ? "Pause"
-                  : "Lecture"
-                : "Écouter le livre"
-          }
-        >
-          {audioPlaying ? (
-            <YvIcon name="pause" filled className="bible-yv-dock-icon bible-yv-dock-icon--play" />
-          ) : (
-            <YvIcon name="play_arrow" filled className="bible-yv-dock-icon bible-yv-dock-icon--play" />
-          )}
-        </button>
+        <BibleAudioFloat
+          hasAudio={canPlayBookAudio}
+          playing={audioPlaying}
+          busy={audioBusy}
+          currentTime={audioTime}
+          duration={audioDuration}
+          onTogglePlay={() => handleAudioTransport()}
+          onSeek={(seconds) => seekAudio(seconds)}
+        />
         {hideDockPassageNav ? null : (
         <div className={`bible-yv-dock-nav${planReading && onPlanStep ? " bible-yv-dock-nav--plan" : ""}`}>
           <button
@@ -2742,23 +2699,6 @@ export function BibleReaderView({
       </footer>
         );
       })()}
-
-      <BibleAudioPlayer
-        open={audioPlayerOpen}
-        onClose={() => setAudioPlayerOpen(false)}
-        podcastTitle={audioPodcast}
-        booksByUsfm={audioByUsfm}
-        bookOrder={bookOrder}
-        activeUsfm={playingUsfm}
-        playing={audioPlaying}
-        busy={audioBusy}
-        currentTime={audioTime}
-        duration={audioDuration}
-        onTogglePlay={() => void toggleBookAudio()}
-        onPlayUsfm={(usfm) => void playUsfmAudio(usfm)}
-        onSeek={(seconds) => seekAudio(seconds)}
-        onSkip={(delta) => skipAudio(delta)}
-      />
 
       <BibleSearchSheet
         open={searchOpen}

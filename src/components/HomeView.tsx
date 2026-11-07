@@ -30,7 +30,6 @@ type HomeViewProps = {
   onOpenPlan: (plan: ReadingPlan) => void;
   onBrowsePlans: () => void;
   onOpenVerse: (reference: string) => void;
-  onOpenProfile?: () => void;
 };
 
 type InProgressItem = {
@@ -68,7 +67,6 @@ export function HomeView({
   onOpenPlan,
   onBrowsePlans,
   onOpenVerse,
-  onOpenProfile,
 }: HomeViewProps) {
   const signedIn = isFirebaseSignedIn(profile);
   const displayName = preferredDisplayName(profile);
@@ -121,30 +119,9 @@ export function HomeView({
       <header className="home-head">
         <div className="home-head-copy">
           <p className="home-greeting type-caption">{greeting}</p>
-          {onOpenProfile ? (
-            <button
-              type="button"
-              className="home-name-btn type-headline"
-              onClick={onOpenProfile}
-            >
-              {headline}
-            </button>
-          ) : (
-            <h1 className="home-name type-headline">{headline}</h1>
-          )}
+          <h1 className="home-name type-headline">{headline}</h1>
         </div>
         <div className="home-head-actions">
-        {onOpenProfile ? (
-          <button
-            type="button"
-            className="home-profile-btn"
-            aria-label="Profil"
-            title="Profil"
-            onClick={onOpenProfile}
-          >
-            <YvIcon name="person" className="home-profile-icon" />
-          </button>
-        ) : null}
         <button
           type="button"
           className={`home-notif-btn${hasUnread ? " is-on" : ""}`}

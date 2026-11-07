@@ -135,7 +135,7 @@ function isMode(value: unknown): value is CenterMode {
 
 function resolveInitialMode(session: UiSession): CenterMode {
   const value = session.mode as string | undefined;
-  if (value === "calendar" || value === "inbox") return coerceShellMode("cards");
+  if (value === "calendar" || value === "inbox") return DEFAULT_SHELL_MODE;
   if (isMode(value)) return coerceShellMode(value);
   return DEFAULT_SHELL_MODE;
 }
@@ -972,7 +972,6 @@ export function App() {
       onOpenPlan={pickPlan}
       onBrowsePlans={goGalerie}
       onOpenVerse={(reference) => openPassageInBible(reference)}
-      onOpenProfile={() => selectMode("profile")}
     />
   ) : null;
 
@@ -1230,8 +1229,8 @@ export function App() {
                 ) : null}
                 <div
                   id="panel-profile"
-                  role="region"
-                  aria-labelledby="profile-shell-title"
+                  role="tabpanel"
+                  aria-labelledby="tab-profile"
                   hidden={mode !== "profile"}
                   className="pane-body"
                 >
