@@ -38,3 +38,14 @@ export function readFirebaseWebConfig(): FirebaseWebConfig | null {
 export function isFirebaseConfigured(): boolean {
   return readFirebaseWebConfig() !== null;
 }
+
+/** Vérifie la config au boot (sans exposer les secrets). */
+export function listMissingFirebaseEnvKeys(): string[] {
+  const keys = [
+    "VITE_FIREBASE_API_KEY",
+    "VITE_FIREBASE_AUTH_DOMAIN",
+    "VITE_FIREBASE_PROJECT_ID",
+    "VITE_FIREBASE_APP_ID",
+  ] as const;
+  return keys.filter((key) => !String(import.meta.env[key] ?? "").trim());
+}

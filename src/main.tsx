@@ -11,6 +11,8 @@ import { Component, StrictMode, type ErrorInfo, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
 import { AuthProvider } from "./hooks/useAuth";
+import { isFirebaseConfigured, listMissingFirebaseEnvKeys } from "./firebase/config";
+import { getFirestoreDbReady } from "./firebase/firestore";
 import { ensureBibleIndexedFromBundle } from "./bibleEngine";
 import { ensureCleanSlate } from "./cleanSlate";
 import { syncNativeChrome } from "./nativeChrome";
@@ -23,6 +25,15 @@ void syncNativeChrome(applyTheme());
 async function boot() {
   const reloading = await ensureCleanSlate();
   if (reloading) return;
+
+  if (!isFirebaseConfigured()) {
+    const missing = listMissingFirebaseEnvKeys();
+    if (missing.length) {
+      console.warn("[biblos] Firebase : variables manquantes →", missing.join(", "));
+    }
+  } else {
+    void getFirestoreDbReady();
+  }
 
   if (Capacitor.isNativePlatform()) {
     scheduleIdle(() => void ensureBibleIndexedFromBundle(), 8000);

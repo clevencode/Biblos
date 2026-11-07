@@ -132,9 +132,35 @@ export function listOutbox(): FlashcardOutboxItem[] {
   return loadOutbox();
 }
 
+export function exportCardOverrides(): Record<string, CardOverride> {
+  return loadAll();
+}
+
 function sameOverride(a: CardOverride | undefined, b: CardOverride): boolean {
   if (!a) return false;
   return a.categoria === b.categoria && a.status === b.status && (a.lembrete ?? null) === (b.lembrete ?? null);
+}
+
+/** Applique les overrides distants en respectant les cartes dirty (session). */
+export function importCardOverrides(
+  incoming: Record<string, CardOverride>,
+  respectDirty = true,
+): void {
+  if (!incoming || typeof incoming !== "object") return;
+  const dirty = loadDirty();
+  const map = loadAll();
+  let changed = false;
+  for (const [id, remote] of Object.entries(incoming)) {
+    if (!id || !remote) continue;
+    if (respectDirty && dirty.has(id)) continue;
+    if (sameOverride(map[id], remote)) continue;
+    map[id] = { ...map[id], ...remote };
+    changed = true;
+  }
+  if (changed) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(map));
+    notifyFlashcardRevision();
+  }
 }
 
 export function loadOverride(id: string): CardOverride | undefined {

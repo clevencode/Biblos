@@ -10,7 +10,7 @@ import {
   type UserProfile,
 } from "../userProfile";
 import { getFirebaseAuth } from "./app";
-import { firestoreUserRoot, getFirestoreDb } from "./firestore";
+import { firestoreUserRoot, getFirestoreDbReady } from "./firestore";
 
 const OUTBOX_KEY = "biblos-admin-message-outbox-v1";
 
@@ -43,7 +43,7 @@ function writeOutbox(items: SupportOutboxItem[]): void {
 }
 
 async function postSupportMessage(item: SupportOutboxItem): Promise<AdminMessageResult> {
-  const db = getFirestoreDb();
+  const db = await getFirestoreDbReady();
   const auth = getFirebaseAuth()?.currentUser;
   if (!db || !auth) {
     return { ok: false, error: "Connexion requise" };

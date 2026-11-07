@@ -3,7 +3,7 @@
  */
 import { doc, setDoc } from "firebase/firestore";
 import { getFirebaseAuth } from "./app";
-import { firestoreUserRoot, getFirestoreDb } from "./firestore";
+import { firestoreUserRoot, getFirestoreDbReady } from "./firestore";
 import {
   CLEVENCODE_ADMIN_USER_ID,
   ensureStableAdminIdentity,
@@ -49,7 +49,7 @@ export async function pushUserProfileToCloud(
     return { ok: false, skipped: true, error: "session invalide", profile: current };
   }
 
-  const db = getFirestoreDb();
+  const db = await getFirestoreDbReady();
   if (!db) {
     return { ok: false, skipped: true, error: "Firestore indisponible", profile: current };
   }

@@ -6,6 +6,8 @@ import { ModeTabIcon } from "./components/ModeTabIcon";
 import { AuthGate } from "./components/AuthGate";
 import { ProfileOnboarding } from "./components/ProfileOnboarding";
 import { useAuth } from "./hooks/useAuth";
+import { useUserCloudSync } from "./hooks/useUserCloudSync";
+import { runUserCloudSync } from "./firebase/syncSession";
 import { ProfileView } from "./components/ProfileView";
 import { hasPrivacyAck, savePrivacyAck } from "./components/PrivacyLegal";
 import { ensureNotificationPrefsIfPrivacyAccepted } from "./notificationPrefs";
@@ -32,7 +34,6 @@ import {
 } from "./userProfile";
 import { syncUserProfileToNotion, startPresenceAndUsageSync } from "./userProfileSync";
 import { startAppUsageTracking } from "./appUsage";
-import { flushAdminMessageOutbox } from "./adminMessage";
 import {
   listAllFlashcards,
   planCardIds,
@@ -208,6 +209,7 @@ export function App() {
   const [retentionTick, setRetentionTick] = useState(0);
   const [themePref, setThemePref] = useState<ThemePref>(() => loadThemePref());
   const [profile, setProfile] = useState<UserProfile>(() => loadOrCreateProfile());
+  useUserCloudSync(profile);
   const [activityTick, setActivityTick] = useState(0);
   const openedLogged = useRef(false);
 
@@ -265,9 +267,10 @@ export function App() {
     }
     function onOnline() {
       setOfflineToast(false);
-      void flushAdminMessageOutbox();
-      void syncUserProfileToNotion(undefined, { presence: "Online" }).then((result) => {
-        applySyncedProfile(result.profile);
+      void runUserCloudSync({ push: true, pull: true, presence: "Online" }).then(() => {
+        void syncUserProfileToNotion(undefined, { presence: "Online" }).then((result) => {
+          applySyncedProfile(result.profile);
+        });
       });
     }
     window.addEventListener("offline", onOffline);
@@ -276,6 +279,15 @@ export function App() {
       window.removeEventListener("offline", onOffline);
       window.removeEventListener("online", onOnline);
     };
+  }, []);
+
+  useEffect(() => {
+    function onStatePulled() {
+      setPlanProgressTick((v) => v + 1);
+      setRetentionTick((v) => v + 1);
+    }
+    window.addEventListener("biblos-user-state-pulled", onStatePulled);
+    return () => window.removeEventListener("biblos-user-state-pulled", onStatePulled);
   }, []);
 
   useEffect(() => {
@@ -1199,17 +1211,19 @@ export function App() {
                     cmsHealth={cmsHealth}
                     onSyncNow={async () => {
                       const { pullCatalog } = await import("./catalogSync");
-                      const { flushActivityOutbox, pullAdminActivityFromNotion } =
-                        await import("./activitySync");
-                      await flushActivityOutbox();
-                      await pullAdminActivityFromNotion();
+                      const cloud = await runUserCloudSync({
+                        push: true,
+                        pull: true,
+                        presence: "Online",
+                      });
+                      if (cloud.errors.length) throw new Error(cloud.errors[0]);
                       const result = await pullCatalog(catalogRef.current);
                       if (result.changed) {
                         setCatalog(result.catalog);
                         catalogRef.current = result.catalog;
-                        setRetentionTick((v) => v + 1);
                       }
-                      await syncUserProfileToNotion(undefined, { presence: "Online" });
+                      setPlanProgressTick((v) => v + 1);
+                      setRetentionTick((v) => v + 1);
                     }}
                     onOpenVerse={(mark) => {
                       openPassageInBible(`${mark.bookId}.${mark.chapterId}.${mark.verse}`);

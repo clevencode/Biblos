@@ -8,7 +8,7 @@ import { pullCatalog, persistCatalogCache } from "./catalogSync";
 import { isNotionCmsPullEnabled } from "./contentCms";
 import { DESCRIPTION_PULL_MS, pullPlanDescription } from "./planDescriptionSync";
 import { pullRemoteAppNotifications } from "./appNotifications";
-import { flushActivityOutbox, pullAdminActivityFromNotion } from "./activitySync";
+import { runUserCloudSync } from "./firebase/syncSession";
 import type { Catalog, CenterMode, ReadingPlan } from "./types";
 import { apiUrl } from "./apiBase";
 
@@ -54,8 +54,7 @@ export function useCmsSync(options: {
   useEffect(() => {
     if (cmsPaused()) return;
     void pullRemoteAppNotifications();
-    void pullAdminActivityFromNotion();
-    void flushActivityOutbox();
+    void runUserCloudSync({ push: false, pull: true });
   }, []);
 
   useEffect(() => {

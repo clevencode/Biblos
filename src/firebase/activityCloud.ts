@@ -18,7 +18,7 @@ import {
   resolveActivityUserId,
 } from "../activityLog";
 import { getFirebaseAuth } from "./app";
-import { firestoreUserRoot, getFirestoreDb } from "./firestore";
+import { firestoreUserRoot, getFirestoreDbReady } from "./firestore";
 import { isFirebaseSignedIn, loadOrCreateProfile } from "../userProfile";
 
 const OUTBOX_KEY = "biblos-activity-outbox-v1";
@@ -88,7 +88,7 @@ async function writeEventToFirestore(
   uid: string,
   item: ActivityOutboxItem,
 ): Promise<boolean> {
-  const db = getFirestoreDb();
+  const db = await getFirestoreDbReady();
   if (!db) return false;
   const type = item.type.trim() as ActivityType;
   if (!ACTIVITY_TYPES.has(type)) return false;
@@ -178,7 +178,7 @@ export async function pullActivityFromCloud(limitCount = 120): Promise<{
 }> {
   const uid = currentFirestoreUid();
   if (!uid) return { ok: true, merged: 0 };
-  const db = getFirestoreDb();
+  const db = await getFirestoreDbReady();
   if (!db) return { ok: false, merged: 0, error: "Firestore indisponible" };
   if (typeof navigator !== "undefined" && navigator.onLine === false) {
     return { ok: false, merged: 0, error: "offline" };

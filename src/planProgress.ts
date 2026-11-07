@@ -3,6 +3,7 @@ import { clearDayNotesForPlan } from "./planDayNote";
 import type { ReadingPlan } from "./types";
 
 const KEY = "biblos-plan-progress";
+const REVISION_EVENT = "biblos-plan-progress-revision";
 
 export type PlanProgress = {
   startDate: string;
@@ -25,9 +26,60 @@ function readStore(): Store {
 function writeStore(store: Store) {
   try {
     localStorage.setItem(KEY, JSON.stringify(store));
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event(REVISION_EVENT));
+    }
   } catch {
     /* private mode */
   }
+}
+
+export function subscribePlanProgressRevision(onChange: () => void): () => void {
+  if (typeof window === "undefined") return () => undefined;
+  window.addEventListener(REVISION_EVENT, onChange);
+  window.addEventListener("storage", onChange);
+  return () => {
+    window.removeEventListener(REVISION_EVENT, onChange);
+    window.removeEventListener("storage", onChange);
+  };
+}
+
+export function exportPlanProgressStore(): Record<string, PlanProgress> {
+  return readStore();
+}
+
+/** Fusionne les jours complétés par plan (multi-appareil). */
+export function importPlanProgressStore(
+  incoming: Record<string, PlanProgress>,
+  merge = true,
+): void {
+  if (!incoming || typeof incoming !== "object") return;
+  if (!merge) {
+    writeStore(incoming);
+    return;
+  }
+  const store = readStore();
+  for (const [planId, remote] of Object.entries(incoming)) {
+    if (!planId || !remote?.startDate) continue;
+    const local = store[planId];
+    if (!local) {
+      store[planId] = {
+        startDate: remote.startDate,
+        completedDays: [...(remote.completedDays ?? [])].sort((a, b) => a - b),
+      };
+      continue;
+    }
+    const days = new Set([
+      ...local.completedDays,
+      ...(remote.completedDays ?? []),
+    ]);
+    store[planId] = {
+      startDate:
+        local.startDate <= remote.startDate ? local.startDate : remote.startDate,
+      completedDays: [...days].sort((a, b) => a - b),
+    };
+  }
+  writeStore(store);
 }
 
 export function loadPlanProgress(planId: string): PlanProgress | null {
