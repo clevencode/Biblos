@@ -7,7 +7,7 @@ import {
   useState,
   type CSSProperties,
 } from "react";
-import { createPortal, flushSync } from "react-dom";
+import { flushSync } from "react-dom";
 import { YvIcon } from "./YvIcon";
 import {
   adjacentChapter,
@@ -370,11 +370,7 @@ function overlayReserve(scroller: HTMLElement, reader: HTMLElement): { top: numb
   let bottom = 16;
   const selectors = [".bible-verse-actions", ".bible-yv-dock", ".bible-yv-pick-sheet"];
   for (const sel of selectors) {
-    const el =
-      sel === ".bible-yv-dock"
-        ? reader.querySelector(sel) ??
-          document.querySelector(".mode-tabs-bible-tools .bible-yv-dock")
-        : reader.querySelector(sel);
+    const el = reader.querySelector(sel);
     if (!el || !(el instanceof HTMLElement)) continue;
     if (sel === ".bible-yv-dock" && chromeHidden) continue;
     const r = el.getBoundingClientRect();
@@ -485,7 +481,7 @@ export function BibleReaderView({
   const [pickerOpen, setPickerOpen] = useState(false);
   const [passageStep, setPassageStep] = useState<"book" | "chapter" | "verse">("book");
   const [bookSearchQuery, setBookSearchQuery] = useState("");
-  const [tabDockHost, setTabDockHost] = useState<HTMLElement | null>(null);
+  const [narrowChrome, setNarrowChrome] = useState(false);
   const [cardBusy, setCardBusy] = useState(false);
   const [cardMsg, setCardMsg] = useState<string | null>(null);
   const [cardColor, setCardColor] = useState(() => loadPreferredVerseColor());
@@ -538,15 +534,11 @@ export function BibleReaderView({
 
   useLayoutEffect(() => {
     if (!active) {
-      setTabDockHost(null);
+      setNarrowChrome(false);
       return;
     }
     const mq = window.matchMedia("(max-width: 860px)");
-    const sync = () => {
-      setTabDockHost(
-        mq.matches ? document.getElementById("bible-chrome-dock") : null,
-      );
-    };
+    const sync = () => setNarrowChrome(mq.matches);
     sync();
     mq.addEventListener("change", sync);
     return () => mq.removeEventListener("change", sync);
@@ -2153,7 +2145,7 @@ export function BibleReaderView({
 
       {showCreateCard ? (
         <div
-          className={`bible-verse-actions${tabDockHost ? " is-tab-chrome" : ""}`}
+          className={`bible-verse-actions${narrowChrome ? " is-tab-chrome" : ""}`}
           role="region"
           aria-label="Actions du verset"
           style={
@@ -2303,7 +2295,7 @@ export function BibleReaderView({
 
       {pickerOpen ? (
         <div
-          className={`bible-yv-pick-sheet is-${passageStep}${tabDockHost ? " is-tab-chrome" : ""}`}
+          className={`bible-yv-pick-sheet is-${passageStep}${narrowChrome ? " is-tab-chrome" : ""}`}
           role="dialog"
           aria-label="Choisir livre, chapitre ou verset"
         >
@@ -2436,12 +2428,21 @@ export function BibleReaderView({
       ) : null}
 
       {(() => {
-        const dock = (
+        const hideDockPassageNav = Boolean(narrowChrome && !planReading);
+        return (
       <footer
-        className={`bible-yv-dock${planReading ? " is-plan" : ""}${showCreateCard ? " has-verse-actions" : ""}${audioPlaying ? " is-playing" : ""}${tabDockHost ? " is-tab-panel" : ""}`}
+        className={`bible-yv-dock${planReading ? " is-plan" : ""}${showCreateCard ? " has-verse-actions" : ""}${audioPlaying ? " is-playing" : ""}${narrowChrome ? " is-floating" : ""}${hideDockPassageNav ? " is-play-only" : ""}`}
         aria-hidden={hideChrome || undefined}
         inert={hideChrome || undefined}
-        aria-label={planReading ? "Lecture du plan" : pickerOpen ? "Choisir livre et passage" : "Chapitre"}
+        aria-label={
+          hideDockPassageNav
+            ? "Lecteur audio"
+            : planReading
+              ? "Lecture du plan"
+              : pickerOpen
+                ? "Choisir livre et passage"
+                : "Chapitre"
+        }
       >
         <button
           type="button"
@@ -2481,6 +2482,7 @@ export function BibleReaderView({
             <YvIcon name="play_arrow" filled className="bible-yv-dock-icon bible-yv-dock-icon--play" />
           )}
         </button>
+        {hideDockPassageNav ? null : (
         <div className={`bible-yv-dock-nav${planReading && onPlanStep ? " bible-yv-dock-nav--plan" : ""}`}>
           <button
             type="button"
@@ -2555,9 +2557,9 @@ export function BibleReaderView({
             </button>
           )}
         </div>
+        )}
       </footer>
         );
-        return tabDockHost ? createPortal(dock, tabDockHost) : dock;
       })()}
 
       <BibleAudioPlayer
