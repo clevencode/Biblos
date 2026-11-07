@@ -8313,10 +8313,10 @@ ul.plan-yv-day-note-ref {
   margin: 0;
   flex: 1;
   min-width: 0;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 6px;
   padding: 6px 8px;
   border: 0;
   border-radius: 0;
@@ -8339,11 +8339,16 @@ ul.plan-yv-day-note-ref {
 
 .bible-yv-passage-chip-caret {
   flex: none;
+  flex-shrink: 0;
   width: 18px;
   height: 18px;
   font-size: 18px;
   line-height: 1;
   color: color-mix(in srgb, var(--yv-text) 58%, transparent);
+}
+
+.bible-yv-passage-chip.is-book {
+  min-width: 5.5rem;
 }
 
 .bible-yv-passage-chip.is-book .bible-yv-passage-chip-value {
@@ -8358,7 +8363,7 @@ ul.plan-yv-day-note-ref {
 .bible-yv-passage-chip.is-chapter {
   flex: 0 1 auto;
   max-width: none;
-  min-width: 2.75rem;
+  min-width: 3.25rem;
   padding-inline: 10px;
 }
 
@@ -8608,6 +8613,27 @@ ul.plan-yv-day-note-ref {
   letter-spacing: 0.01em;
   text-align: center;
   line-height: 1;
+}
+
+.bible-yv-catalog-offline {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  color: color-mix(in srgb, var(--yv-muted) 92%, var(--yv-text));
+  opacity: 0.88;
+}
+
+.bible-yv-catalog-offline-icon {
+  width: 1.15rem;
+  height: 1.15rem;
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.bible-yv-top.is-catalog-offline .bible-yv-passage-chip-value {
+  opacity: 1;
 }
 
 .bible-yv-top-tools {

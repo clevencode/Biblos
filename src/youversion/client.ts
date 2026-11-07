@@ -1,4 +1,5 @@
 import { apiUrl } from "../apiBase";
+import { buildS21BookList, S21_BIBLE_META } from "../bibleS21Canon";
 import { localS21BooksResponse, useLocalBundledBible } from "../bibleEngine";
 import { toUsfm } from "./usfm";
 import {
@@ -89,8 +90,12 @@ export async function fetchBooks() {
 
   if (!canReachYouVersionApi()) {
     return {
-      ok: false,
-      error: "Hors ligne — ouvre la Bible ou installe les livres locaux.",
+      ok: true,
+      hasKey: true,
+      bible: S21_BIBLE_META,
+      books: buildS21BookList(),
+      usingFallback: true,
+      fallbackReason: "seed",
     };
   }
 
@@ -102,7 +107,17 @@ export async function fetchBooks() {
   }>({ action: "books" });
   if (network.ok && network.books?.length) return network;
 
-  return network;
+  if (network.books?.length) return network;
+
+  return {
+    ok: true,
+    hasKey: network.hasKey,
+    bible: S21_BIBLE_META,
+    books: buildS21BookList(),
+    usingFallback: true,
+    fallbackReason: "seed",
+    error: network.error,
+  };
 }
 
 export async function fetchPassage(reference: string, _bibleId?: number) {

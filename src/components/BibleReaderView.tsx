@@ -12,12 +12,9 @@ import { YvIcon } from "./YvIcon";
 import {
   adjacentChapter,
   chapterUsfm,
-  fetchBooks,
   fetchPassage,
   parseUsfmParts,
   LSG_BIBLE_ID,
-  type YouVersionBible,
-  type YouVersionBook,
   type YouVersionPassage,
 } from "../youversion/client";
 import {
@@ -45,7 +42,9 @@ import {
   isOfflineBibleReady,
   type OfflineDownloadProgress,
 } from "../bibleOffline";
-import { localS21Books, useLocalBundledBible } from "../bibleEngine";
+import { BIBLE_READER_PREFS_KEY } from "../bible/bibleCatalogRepository";
+import { useBibleCatalog } from "../hooks/useBibleCatalog";
+import { useLocalBundledBible } from "../bibleEngine";
 import {
   adaptVerseColorForTheme,
   formatVerseColorHex,
@@ -68,8 +67,7 @@ import {
   type ChapterTranscript,
 } from "../bibleChapterAudioSync";
 
-const STORAGE_KEY = "biblos-bible-reader";
-const BOOKS_CACHE_KEY = "biblos-bible-books-s21";
+const STORAGE_KEY = BIBLE_READER_PREFS_KEY;
 const FONT_MIN = 15;
 const FONT_MAX = 28;
 const FONT_DEFAULT = 19;
@@ -314,47 +312,6 @@ function writePrefs(prefs: ReaderPrefs) {
   }
 }
 
-function readBooksCache(): { bible: YouVersionBible; books: YouVersionBook[] } | null {
-  try {
-    const raw = localStorage.getItem(BOOKS_CACHE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as { bible?: YouVersionBible; books?: YouVersionBook[]; at?: number };
-    if (!parsed?.books?.length) return null;
-    if (parsed.at && Date.now() - parsed.at > 7 * 86_400_000) return null;
-    return {
-      bible: parsed.bible ?? {
-        id: LSG_BIBLE_ID,
-        abbreviation: "S21",
-        title: "Segond 21",
-        languageCode: "fr",
-      },
-      books: parsed.books,
-    };
-  } catch {
-    return null;
-  }
-}
-
-function writeBooksCache(bible: YouVersionBible | null, books: YouVersionBook[]) {
-  try {
-    localStorage.setItem(
-      BOOKS_CACHE_KEY,
-      JSON.stringify({
-        at: Date.now(),
-        bible: bible ?? {
-          id: LSG_BIBLE_ID,
-          abbreviation: "S21",
-          title: "Segond 21",
-          languageCode: "fr",
-        },
-        books,
-      }),
-    );
-  } catch {
-    /* private mode */
-  }
-}
-
 function isLikelyVerseTitle(text: string, number: number): boolean {
   if (number !== 1) return false;
   const t = text.trim();
@@ -458,14 +415,16 @@ export function BibleReaderView({
   );
 
   const [passage, setPassage] = useState<YouVersionPassage | null>(null);
-  const [, setBible] = useState<YouVersionBible | null>(() => readBooksCache()?.bible ?? null);
-  const [, setBibleId] = useState<number | null>(LSG_BIBLE_ID);
-  const [books, setBooks] = useState<YouVersionBook[]>(() => {
-    const cached = readBooksCache()?.books;
-    if (cached?.length) return cached;
-    if (useLocalBundledBible()) return localS21Books();
-    return [];
-  });
+  const {
+    books,
+    bible,
+    setBible,
+    catalogSource,
+    isOffline: catalogOffline,
+    refreshCatalog,
+    resolveBookTitle,
+  } = useBibleCatalog();
+  const [, setBibleId] = useState<number | null>(() => bible.id ?? LSG_BIBLE_ID);
   const [bookId, setBookId] = useState(initialParts.bookId);
   const [chapterId, setChapterId] = useState(initialParts.chapterId);
   const [highlightVerse, setHighlightVerse] = useState<number | null>(
@@ -775,31 +734,8 @@ export function BibleReaderView({
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      const cached = readBooksCache();
-      if (cached && !cancelled) {
-        setBooks(cached.books);
-        setBible(cached.bible);
-        setBibleId(cached.bible.id);
-      }
-      const result = await fetchBooks();
-      if (cancelled) return;
-      if (result.ok && result.books?.length) {
-        setBooks(result.books);
-        if (result.bible) {
-          setBible(result.bible);
-          setBibleId(result.bible.id);
-        }
-        writeBooksCache(result.bible ?? null, result.books);
-      } else if (result.error && !cached?.books.length) {
-        setError(result.error);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    setBibleId(bible.id ?? LSG_BIBLE_ID);
+  }, [bible.id]);
 
   useEffect(() => {
     if (isUsfmBookId(bookId)) {
@@ -814,13 +750,14 @@ export function BibleReaderView({
   }, [bookId, chapterId]);
 
   useEffect(() => {
-    if (!active || !books.length) return;
+    if (!active) return;
     const known = books.some((b) => b.id.toUpperCase() === bookId.toUpperCase());
     if (known) return;
-    const fallback = books[0]!;
+    const fallback = books[0];
+    if (!fallback) return;
     void loadChapter(fallback.id, fallback.chapters?.[0]?.id ?? "1", null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [books, bookId]);
+  }, [books, bookId, active]);
 
   useEffect(() => {
     if (!active) return;
@@ -1199,13 +1136,12 @@ export function BibleReaderView({
 
     let list = books;
     if (!list.length) {
-      const result = await fetchBooks();
-      if (!result.ok || !result.books?.length) {
-        setError(result.error || "Impossible de préparer le téléchargement.");
+      const hydrated = await refreshCatalog();
+      list = hydrated.books;
+      if (!list.length) {
+        setError("Impossible de préparer le téléchargement.");
         return;
       }
-      list = result.books;
-      setBooks(list);
     }
 
     const ac = new AbortController();
@@ -1217,6 +1153,7 @@ export function BibleReaderView({
       await downloadOfflineBible(list, (p) => setOfflineProgress({ ...p }), ac.signal);
       setOfflineReady(true);
       setOfflineProgress(null);
+      await refreshCatalog();
     } catch (err) {
       if ((err as Error)?.name !== "AbortError") {
         setError(
@@ -1289,7 +1226,8 @@ export function BibleReaderView({
 
   const canPrev = Boolean(adjacentChapter(books, bookId, chapterId, -1));
   const canNext = Boolean(adjacentChapter(books, bookId, chapterId, 1));
-  const bookTitle = selectedBook?.title ?? bookId;
+  const bookTitle = resolveBookTitle(bookId);
+  const showCatalogOfflineHint = catalogOffline && catalogSource !== "network";
   const locationLabel = selection?.length
     ? `${bookTitle} ${chapterId}.${formatVerseList(selection)}`
     : `${bookTitle} ${chapterId}`;
@@ -2096,7 +2034,7 @@ export function BibleReaderView({
       tabIndex={-1}
     >
       <header
-        className={`bible-yv-top${planReading ? " is-plan" : " is-free"}${pickerOpen ? " is-passage-picker-open" : ""}`}
+        className={`bible-yv-top${planReading ? " is-plan" : " is-free"}${pickerOpen ? " is-passage-picker-open" : ""}${showCatalogOfflineHint ? " is-catalog-offline" : ""}`}
         aria-label="Navigation biblique"
       >
         {planReading ? (
@@ -2124,6 +2062,16 @@ export function BibleReaderView({
           renderPassageRoll()
         )}
         <div className="bible-yv-top-tools">
+          {showCatalogOfflineHint ? (
+            <span
+              className="bible-yv-catalog-offline"
+              role="status"
+              aria-label="Catalogue local — hors ligne"
+              title="Catalogue local — hors ligne"
+            >
+              <YvIcon name="cloud_off" className="bible-yv-catalog-offline-icon" />
+            </span>
+          ) : null}
           {planReading ? (
             <button
               type="button"
