@@ -23,6 +23,10 @@ const config: CapacitorConfig = {
       smallIcon: "ic_launcher",
       iconColor: "#FFFFFF",
     },
+    FirebaseAuthentication: {
+      skipNativeAuth: false,
+      providers: ["google.com"],
+    },
   },
 };
 

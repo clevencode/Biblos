@@ -10,6 +10,7 @@ import "@fontsource/source-serif-4/400-italic.css";
 import { Component, StrictMode, type ErrorInfo, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
+import { AuthProvider } from "./hooks/useAuth";
 import { ensureBibleIndexedFromBundle } from "./bibleEngine";
 import { ensureCleanSlate } from "./cleanSlate";
 import { syncNativeChrome } from "./nativeChrome";
@@ -30,7 +31,9 @@ async function boot() {
   createRoot(document.getElementById("root")!).render(
     <StrictMode>
       <BootErrorBoundary>
-        <App />
+        <AuthProvider>
+          <App />
+        </AuthProvider>
       </BootErrorBoundary>
     </StrictMode>,
   );

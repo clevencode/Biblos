@@ -2,6 +2,7 @@
  * POST /api/admin-message — message utilisateur → NOTION_MESSAGES_DB.
  */
 import { createAdminMessage } from "../shared/notion.mjs";
+import { assertFirebaseCaller } from "../shared/requireFirebaseUser.mjs";
 
 export default async function handler(req, res) {
   try {
@@ -19,6 +20,13 @@ export default async function handler(req, res) {
     }
 
     const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body || {};
+    const gate = await assertFirebaseCaller(req, body, {
+      requireUserIdMatch: true,
+    });
+    if (!gate.ok) {
+      res.status(gate.status).json({ ok: false, error: gate.error });
+      return;
+    }
     const result = await createAdminMessage(token, {
       localId: body.localId || body.id,
       userId: body.userId,

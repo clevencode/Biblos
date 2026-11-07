@@ -3,7 +3,9 @@ import { Capacitor } from "@capacitor/core";
 import seed from "./data/seed.json";
 import { FlashcardDeck } from "./components/FlashcardDeck";
 import { ModeTabIcon } from "./components/ModeTabIcon";
+import { AuthGate } from "./components/AuthGate";
 import { ProfileOnboarding } from "./components/ProfileOnboarding";
+import { useAuth } from "./hooks/useAuth";
 import { ProfileView } from "./components/ProfileView";
 import { hasPrivacyAck, savePrivacyAck } from "./components/PrivacyLegal";
 import { ensureNotificationPrefsIfPrivacyAccepted } from "./notificationPrefs";
@@ -18,6 +20,8 @@ import { createVerseMarkFlashcard, verseMarkCardId } from "./verseCard";
 import { formatVerseCardFront } from "./youversion/usfm";
 import { chapterUsfm } from "./youversion/client";
 import {
+  applyFirebaseAuthUser,
+  clearFirebaseFromProfile,
   completeOnboarding,
   isClevencodeAdmin,
   isProfileOnboarded,
@@ -127,6 +131,7 @@ function resolveInitialMode(session: UiSession): CenterMode {
 }
 
 export function App() {
+  const { user: firebaseUser, signOut: signOutGoogle } = useAuth();
   const initialUi = readUi();
   const [catalog, setCatalog] = useState<Catalog>(() => seedCatalog);
   const notes = catalog.notas;
@@ -205,6 +210,15 @@ export function App() {
   const [profile, setProfile] = useState<UserProfile>(() => loadOrCreateProfile());
   const [activityTick, setActivityTick] = useState(0);
   const openedLogged = useRef(false);
+
+  useEffect(() => {
+    if (!firebaseUser?.uid) return;
+    const merged = applyFirebaseAuthUser(firebaseUser);
+    setProfile(merged);
+    if (isProfileOnboarded(merged)) {
+      setOnboardingDone(true);
+    }
+  }, [firebaseUser?.uid, firebaseUser?.email, firebaseUser?.displayName]);
 
   // Entrée directe : pas d’écran Confidentialité — ack + prefs par défaut au boot.
   useEffect(() => {
@@ -912,21 +926,32 @@ export function App() {
   ) : null;
 
   const onboarded = onboardingDone || isProfileOnboarded(profile);
+  const showWelcomeOnboarding =
+    Boolean(firebaseUser) && !onboarded && !nameGateOpen;
 
   return (
-    <div
-      className={`app biblos-shell${narrow ? " is-narrow" : ""}${mode === "bible" ? " is-bible-mode" : ""}`}
-    >
-      <a className="skip" href="#workspace">
-        Aller au contenu
-      </a>
-      {!onboarded && nameGateOpen ? (
-        <ProfileOnboarding
-          variant="mark"
-          onComplete={finishOnboarding}
-          onCancel={cancelNameGate}
-        />
-      ) : null}
+    <AuthGate>
+      <div
+        className={`app biblos-shell${narrow ? " is-narrow" : ""}${mode === "bible" ? " is-bible-mode" : ""}`}
+      >
+        <a className="skip" href="#workspace">
+          Aller au contenu
+        </a>
+        {showWelcomeOnboarding ? (
+          <ProfileOnboarding
+            variant="welcome"
+            initialFullName={firebaseUser?.displayName?.trim() || ""}
+            onComplete={finishOnboarding}
+          />
+        ) : null}
+        {!onboarded && nameGateOpen ? (
+          <ProfileOnboarding
+            variant="mark"
+            initialFullName={profile.preferredName || firebaseUser?.displayName || ""}
+            onComplete={finishOnboarding}
+            onCancel={cancelNameGate}
+          />
+        ) : null}
       {offlineToast ? (
         <div className="offline-toast" role="status" aria-live="polite">
           <p>Hors ligne — tout reste enregistré sur cet appareil.</p>
@@ -1205,6 +1230,11 @@ export function App() {
                     onReadingHistoryChange={() => {
                       setActivityTick((n) => n + 1);
                     }}
+                    onSignOut={async () => {
+                      await signOutGoogle();
+                      clearFirebaseFromProfile();
+                      window.location.reload();
+                    }}
                   />
                   ) : null}
                 </div>
@@ -1215,5 +1245,6 @@ export function App() {
         </div>
       </main>
     </div>
+    </AuthGate>
   );
 }

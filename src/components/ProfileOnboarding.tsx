@@ -11,16 +11,19 @@ type ProfileOnboardingProps = {
   onCancel?: () => void;
   /** Contexte d’affichage — le nom n’est demandé qu’au moment de marquer. */
   variant?: "welcome" | "mark";
+  /** Préremplissage (ex. displayName Google). */
+  initialFullName?: string;
 };
 
 export function ProfileOnboarding({
   onComplete,
   onCancel,
   variant = "welcome",
+  initialFullName = "",
 }: ProfileOnboardingProps) {
   const formId = useId();
   const nameRef = useRef<HTMLInputElement>(null);
-  const [fullName, setFullName] = useState("");
+  const [fullName, setFullName] = useState(initialFullName);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const isMark = variant === "mark";
@@ -68,7 +71,7 @@ export function ProfileOnboarding({
         <p className="profile-onboarding-lead muted">
           {isMark
             ? "Pour enregistrer un surlignage, indique ton nom. Ton activité reste liée à un identifiant privé."
-            : "Quel est ton nom ? Ton activité sera liée à un identifiant privé, pas à ton nom."}
+            : "Confirme ou ajuste ton nom. Ton compte Google synchronise tes données entre appareils."}
         </p>
 
         <form className="profile-onboarding-form" onSubmit={submit}>

@@ -3707,6 +3707,35 @@ body {
   cursor: wait;
 }
 
+.auth-google-btn {
+  margin-top: 4px;
+  min-height: 48px;
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+  border-radius: 999px;
+  background: var(--elevated);
+  color: var(--text);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 1px 2px color-mix(in srgb, #000 8%, transparent);
+}
+
+.auth-google-btn:disabled {
+  opacity: 0.72;
+  cursor: wait;
+}
+
+.auth-google-icon {
+  display: inline-flex;
+  flex: none;
+}
+
 .profile-onboarding-cancel {
   min-height: 44px;
   border: 0;

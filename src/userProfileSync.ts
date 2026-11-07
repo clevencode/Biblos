@@ -4,6 +4,7 @@
  * Pas de journal d’activité événementiel vers Notion.
  */
 import { apiUrl } from "./apiBase";
+import { authHeaders } from "./firebase/auth";
 import { isNotionClientSyncEnabled } from "./notionClientSync";
 import {
   getTimeSpentMinutes,
@@ -79,7 +80,7 @@ async function pushUserProfileOnce(
   try {
     const response = await fetch(apiUrl("/api/user-profile"), {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: await authHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify({
         localId: isClevencodeAdmin(current)
           ? CLEVENCODE_ADMIN_USER_ID

@@ -3,6 +3,7 @@
  * Hors ligne : file locale, flush dès que le réseau revient.
  */
 import { apiUrl } from "./apiBase";
+import { authHeaders } from "./firebase/auth";
 import { isNotionClientSyncEnabled } from "./notionClientSync";
 import { preferredDisplayName, type UserProfile } from "./userProfile";
 
@@ -106,7 +107,7 @@ async function postAdminMessage(
 ): Promise<AdminMessageResult & { status?: number }> {
   const response = await fetch(apiUrl("/api/admin-message"), {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: await authHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({
       localId: item.localId,
       userId: item.userId,

@@ -843,7 +843,7 @@ export async function findPageByLocalId(token, databaseId, localId) {
  * Déduplique via LocalId = UUID local.
  * Admin clevencode : LocalId stable partagé (tous appareils → une seule ligne).
  */
-const CLEVENCODE_ADMIN_USER_ID = "biblos-admin-clevencode";
+export const CLEVENCODE_ADMIN_USER_ID = "biblos-admin-clevencode";
 const CLEVENCODE_ADMIN_NAME = "clevencode";
 
 function normalizeIdentityName(value) {

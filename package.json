@@ -22,6 +22,7 @@
     "setup:user-dbs": "node scripts/setup-user-notion-dbs.mjs"
   },
   "dependencies": {
+    "@capacitor-firebase/authentication": "^8.6.0",
     "@capacitor/android": "^8.5.1",
     "@capacitor/cli": "^8.5.1",
     "@capacitor/core": "^8.5.1",
@@ -31,6 +32,8 @@
     "@fontsource/outfit": "^5.3.0",
     "@fontsource/source-serif-4": "^5.3.1",
     "capacitor-music-controls-plugin": "^8.0.0",
+    "firebase": "^12.19.0",
+    "firebase-admin": "^14.5.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },

@@ -61,6 +61,7 @@ type ProfileViewProps = {
     verse?: number | null;
   }) => void;
   onReadingHistoryChange?: () => void;
+  onSignOut?: () => Promise<void> | void;
 };
 
 type ProfileTabId = "config" | "library" | "help" | "about";
@@ -121,6 +122,7 @@ export function ProfileView({
   onOpenFlashcard,
   onOpenReading,
   onReadingHistoryChange,
+  onSignOut,
 }: ProfileViewProps) {
   const [tab, setTab] = useState<ProfileTabId>("config");
   /** Toujours false au montage — le panneau Profil est monté avant l’onboarding. */
@@ -311,6 +313,7 @@ export function ProfileView({
     setDeleteError(null);
     try {
       await wipeLocalUserData();
+      if (onSignOut) await onSignOut();
       window.location.reload();
     } catch {
       setDeleteBusy(false);
@@ -496,6 +499,20 @@ export function ProfileView({
           </ProfilePanel>
 
           <ProfilePanel titleId="profile-delete-label" title="Compte">
+            {profile.email ? (
+              <p className="profile-section-hint muted">
+                Connecté avec Google ({profile.email})
+              </p>
+            ) : null}
+            {onSignOut ? (
+              <button
+                type="button"
+                className="profile-save-btn is-ghost profile-signout-btn"
+                onClick={() => void onSignOut()}
+              >
+                Se déconnecter
+              </button>
+            ) : null}
             <p className="profile-delete-warn">
               Supprimer ton compte effacera <strong>toutes tes données</strong>{" "}
               sur cet appareil : profil, progression, notes, flashcards et

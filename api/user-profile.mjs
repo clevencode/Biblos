@@ -2,6 +2,7 @@
  * POST /api/user-profile — upsert du profil local dans Notion (NOTION_PROFILE_DB).
  */
 import { upsertUserProfile } from "../shared/notion.mjs";
+import { assertFirebaseCaller } from "../shared/requireFirebaseUser.mjs";
 
 export default async function handler(req, res) {
   try {
@@ -19,6 +20,13 @@ export default async function handler(req, res) {
     }
 
     const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body || {};
+    const gate = await assertFirebaseCaller(req, body, {
+      requireLocalIdMatch: true,
+    });
+    if (!gate.ok) {
+      res.status(gate.status).json({ ok: false, error: gate.error });
+      return;
+    }
     const result = await upsertUserProfile(token, {
       localId: body.localId || body.id,
       firstName: body.firstName,

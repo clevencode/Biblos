@@ -1,9 +1,12 @@
-/** Profil utilisateur local — identité stable (UUID) + noms d’affichage. */
+/** Profil utilisateur local — identité stable (Firebase uid) + noms d’affichage. */
+
+import { CLEVENCODE_ADMIN_EMAIL } from "./firebase/config";
+import type { FirebaseAuthUser } from "./firebase/auth";
 
 const PROFILE_KEY = "biblos-user-profile";
 
 export type UserProfile = {
-  /** Identifiant stable (ne change pas si le nom change). */
+  /** Identifiant stable sync Notion (souvent = firebaseUid ou id admin). */
   id: string;
   firstName: string;
   lastName: string;
@@ -13,6 +16,12 @@ export type UserProfile = {
   onboardedAt: string | null;
   /** URL Notion après sync cloud (optionnel). */
   notionUrl?: string | null;
+  /** UID Firebase Auth (obligatoire pour un compte actif). */
+  firebaseUid?: string | null;
+  email?: string | null;
+  photoURL?: string | null;
+  /** Ancien uuid local avant liaison Google (optionnel). */
+  legacyLocalId?: string | null;
 };
 
 function newId(): string {
@@ -91,9 +100,23 @@ export function isClevencodeAdminName(
 }
 
 /** Detecte le propriétaire de l’app via le nom complet / prénom. */
+export function isClevencodeAdminEmail(email: string | null | undefined): boolean {
+  const needle = CLEVENCODE_ADMIN_EMAIL.trim().toLowerCase();
+  if (!needle) return false;
+  return String(email ?? "")
+    .trim()
+    .toLowerCase() === needle;
+}
+
 export function isClevencodeAdmin(profile?: UserProfile | null): boolean {
   const p = profile ?? loadOrCreateProfile();
+  if (isClevencodeAdminEmail(p.email)) return true;
   return isClevencodeAdminName(p.firstName, p.lastName, p.preferredName);
+}
+
+/** Compte connecté via Firebase Google. */
+export function isFirebaseSignedIn(profile: UserProfile): boolean {
+  return Boolean(profile.firebaseUid?.trim());
 }
 
 /**
@@ -108,6 +131,7 @@ export function ensureStableAdminIdentity(profile: UserProfile): UserProfile {
 }
 
 export function isProfileOnboarded(profile: UserProfile): boolean {
+  if (!isFirebaseSignedIn(profile)) return false;
   if (!profile.onboardedAt) return false;
   const name = cleanName(profile.firstName);
   if (!name) return false;
@@ -177,7 +201,89 @@ function parseProfile(raw: unknown): UserProfile | null {
       typeof data.notionUrl === "string" && data.notionUrl.trim()
         ? data.notionUrl.trim()
         : null,
+    firebaseUid:
+      typeof data.firebaseUid === "string" && data.firebaseUid.trim()
+        ? data.firebaseUid.trim()
+        : null,
+    email:
+      typeof data.email === "string" && data.email.trim() ? data.email.trim() : null,
+    photoURL:
+      typeof data.photoURL === "string" && data.photoURL.trim()
+        ? data.photoURL.trim()
+        : null,
+    legacyLocalId:
+      typeof data.legacyLocalId === "string" && data.legacyLocalId.trim()
+        ? data.legacyLocalId.trim()
+        : null,
   };
+}
+
+function namesFromGoogleUser(user: FirebaseAuthUser): {
+  firstName: string;
+  lastName: string;
+} {
+  const display = cleanName(user.displayName || "");
+  if (!display) return { firstName: "", lastName: "" };
+  return splitFullName(display);
+}
+
+function resolveProfileIdAfterFirebase(
+  profile: UserProfile,
+  uid: string,
+  email: string | null,
+): string {
+  if (isClevencodeAdminEmail(email) || isClevencodeAdmin(profile)) {
+    return CLEVENCODE_ADMIN_USER_ID;
+  }
+  return uid;
+}
+
+/**
+ * Fusionne le compte Google avec le profil local (conserve legacyLocalId).
+ */
+export function applyFirebaseAuthUser(user: FirebaseAuthUser): UserProfile {
+  const current = loadOrCreateProfile();
+  const legacy =
+    current.legacyLocalId ||
+    (current.firebaseUid && current.firebaseUid !== user.uid ? null : current.id) ||
+    (current.id && current.id !== user.uid && current.id !== CLEVENCODE_ADMIN_USER_ID
+      ? current.id
+      : null);
+  const googleNames = namesFromGoogleUser(user);
+  const email = user.email?.trim() || current.email || null;
+  const next: UserProfile = {
+    ...current,
+    firebaseUid: user.uid,
+    email,
+    photoURL: user.photoURL?.trim() || current.photoURL || null,
+    legacyLocalId: legacy,
+    firstName: current.firstName || googleNames.firstName,
+    lastName: current.lastName || googleNames.lastName,
+    preferredName:
+      current.preferredName ||
+      joinFullName(
+        current.firstName || googleNames.firstName,
+        current.lastName || googleNames.lastName,
+      ),
+  };
+  next.id = resolveProfileIdAfterFirebase(next, user.uid, email);
+  writeProfile(next);
+  return ensureStableAdminIdentity(next);
+}
+
+/** Efface les champs Firebase tout en conservant le profil local. */
+export function clearFirebaseFromProfile(): UserProfile {
+  const current = loadOrCreateProfile();
+  const next: UserProfile = {
+    ...current,
+    firebaseUid: null,
+    email: null,
+    photoURL: null,
+    onboardedAt: null,
+    id: newId(),
+  };
+  writeProfile(next);
+  return next;
 }
 
 export function loadOrCreateProfile(): UserProfile {
