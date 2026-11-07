@@ -51,6 +51,8 @@ type ProfileViewProps = {
   activityTick?: number;
   savedVerses?: SavedVerseMark[];
   flashcards?: Flashcard[];
+  cmsHealth?: "unknown" | "ok" | "no-token" | "down";
+  /** @deprecated Utiliser cmsHealth */
   notionHealth?: "unknown" | "ok" | "no-token" | "down";
   onSyncNow?: () => Promise<void> | void;
   onOpenVerse?: (mark: SavedVerseMark) => void;
@@ -116,7 +118,8 @@ export function ProfileView({
   activityTick = 0,
   savedVerses = [],
   flashcards = [],
-  notionHealth = "unknown",
+  cmsHealth: cmsHealthProp,
+  notionHealth: notionHealthProp,
   onSyncNow,
   onOpenVerse,
   onOpenFlashcard,
@@ -350,21 +353,18 @@ export function ProfileView({
     }
   }
 
+  const cmsHealth = cmsHealthProp ?? notionHealthProp ?? "unknown";
   const display = preferredDisplayName(profile);
   const isAdminOwner = isClevencodeAdmin(profile);
   const avatarLetter = (display.trim().charAt(0) || "?").toLocaleUpperCase("fr-FR");
-  const cloudOk = notionHealth === "ok";
-  const syncHint = isAdminOwner
-    ? cloudOk
-    ? "Notion + clevencode — cet appareil prime"
-    : notionHealth === "no-token"
-        ? "Cloud non configuré sur ce serveur"
-        : notionHealth === "down"
-          ? "Sync cloud indisponible"
-          : "Vérification de la sync…"
-    : profile.notionUrl
-      ? "Profil synchronisé entre tes appareils"
-      : "Enregistré sur cet appareil";
+  const cloudOk = cmsHealth === "ok";
+  const syncHint = cloudOk
+    ? "Contenu (plans) à jour · activité sur Firebase"
+    : cmsHealth === "no-token"
+      ? "CMS Notion non configuré sur le serveur"
+      : cmsHealth === "down"
+        ? "Contenu indisponible (hors ligne ou API)"
+        : "Vérification du contenu…";
   const ownerHint = "você é o dono do app";
   const subtitleHint = savedFlash
     ? "Nom enregistré"
@@ -567,22 +567,18 @@ export function ProfileView({
           <ProfilePanel
             titleId="profile-sync-label"
             title="Synchronisation"
-            hint={
-              isAdminOwner
-                ? "Cet appareil est la source de vérité : sync envoie au Notion ce qui manque."
-                : "Ton profil et ta progression suivent ton compte."
-            }
+            hint="Plans et annonces depuis Notion (CMS). Ton activité et ton profil sont sur Firebase."
           >
             <ul className="profile-facts">
               <li>
-                <span className="profile-fact-label">Cloud Notion</span>
+                <span className="profile-fact-label">Contenu (plans)</span>
                 <span className="profile-fact-value">
-                  {notionHealth === "ok"
-                    ? "Connecté"
-                    : notionHealth === "no-token"
+                  {cmsHealth === "ok"
+                    ? "À jour"
+                    : cmsHealth === "no-token"
                       ? "Non configuré"
-                      : notionHealth === "down"
-                        ? "Hors ligne"
+                      : cmsHealth === "down"
+                        ? "Indisponible"
                         : "…"}
                 </span>
               </li>
@@ -597,19 +593,15 @@ export function ProfileView({
               <li>
                 <span className="profile-fact-label">Appareil</span>
                 <span className="profile-fact-value">
-                  {isAdminOwner
-                    ? "Mobile → Notion (si absent)"
-                    : profile.notionUrl
-                      ? "Profil lié"
-                      : "Local"}
+                  {profile.firebaseUid ? "Firebase + local" : "Local"}
                 </span>
               </li>
             </ul>
-            {isAdminOwner && onSyncNow ? (
+            {onSyncNow ? (
               <button
                 type="button"
                 className="profile-sync-btn"
-                disabled={syncBusy || notionHealth === "down"}
+                disabled={syncBusy || cmsHealth === "down"}
                 onClick={() => void runSyncNow()}
               >
                 <YvIcon name="sync" className="profile-sync-btn-icon" />

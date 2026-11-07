@@ -1,5 +1,5 @@
 /**
- * Temps passé dans l’app (foreground) — seul métrique de « track » user → Notion.
+ * Temps passé dans l’app (foreground) — synchronisé vers Firestore avec le profil.
  */
 
 const STORE_KEY = "biblos-app-usage-v1";

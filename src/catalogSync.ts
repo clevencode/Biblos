@@ -1,6 +1,6 @@
 import type { Catalog, ReadingPlan, Seed } from "./types";
 import { apiUrl, readApiJson } from "./apiBase";
-import { isNotionClientSyncEnabled } from "./notionClientSync";
+import { isNotionCmsPullEnabled } from "./contentCms";
 import { applyRemoteOverride } from "./cardOverrides";
 import { isBiblosFlashcard } from "./catalog";
 import { sanitizePlanDays, sanitizePlanStages } from "./plan";
@@ -289,7 +289,7 @@ export function mergeCatalog(
 }
 
 export async function pullCatalog(current: Catalog): Promise<{ catalog: Catalog; changed: boolean; ok: boolean }> {
-  if (!isNotionClientSyncEnabled()) {
+  if (!isNotionCmsPullEnabled()) {
     return { catalog: current, changed: false, ok: true };
   }
   try {

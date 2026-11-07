@@ -1,9 +1,9 @@
 /**
- * Sync cliente ↔ Notion (API Vercel). Desligado para testes mobile offline.
- * Repor `true` antes de release / push produção.
+ * @deprecated Importar depuis `contentCms.ts`.
  */
-export const NOTION_CLIENT_SYNC_ENABLED = false;
-
-export function isNotionClientSyncEnabled(): boolean {
-  return NOTION_CLIENT_SYNC_ENABLED;
-}
+export {
+  NOTION_CMS_PULL_ENABLED as NOTION_CLIENT_SYNC_ENABLED,
+  isNotionClientSyncEnabled,
+  isNotionCmsPullEnabled,
+  isNotionAppWriteEnabled,
+} from "./contentCms";

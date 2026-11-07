@@ -40,7 +40,7 @@ type ActivityStore = {
   events: ActivityEvent[];
 };
 
-const ACTIVITY_TYPES = new Set<ActivityType>([
+export const ACTIVITY_TYPES = new Set<ActivityType>([
   "app.open",
   "onboarding.complete",
   "plan.day_read",
@@ -151,7 +151,9 @@ export function appendActivity(
   const store = readStore();
   store.events = [event, ...store.events].slice(0, MAX_EVENTS);
   writeStore(store);
-  // Plus de sync Notion des événements d’activité (profil = nom + temps + présence).
+  void import("./activitySync").then(({ scheduleActivitySync }) => {
+    scheduleActivitySync(event);
+  });
   return event;
 }
 

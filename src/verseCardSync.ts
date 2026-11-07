@@ -5,7 +5,7 @@
  */
 import type { Catalog, Flashcard, Seed } from "./types";
 import { apiUrl, readApiJson } from "./apiBase";
-import { isNotionClientSyncEnabled } from "./notionClientSync";
+import { isNotionAppWriteEnabled } from "./contentCms";
 import { isBiblosFlashcard } from "./catalog";
 import { persistCatalogCache } from "./catalogSync";
 import { loadOverride, notifyFlashcardRevision } from "./cardOverrides";
@@ -20,7 +20,7 @@ const OUTBOX_KEY = "biblos-verse-create-outbox";
 
 /** Seul l’admin propriétaire synchronise les VERSECARD / VerseMark vers Notion. */
 export function canPushVerseCardsToNotion(): boolean {
-  return isClevencodeAdmin();
+  return isNotionAppWriteEnabled() && isClevencodeAdmin();
 }
 
 export type VerseCreateOutboxItem = {
@@ -128,7 +128,7 @@ export type PushVerseResult = {
 
 /** Pousse la file verse → Notion (un par un). Admin seulement. */
 export async function flushVerseCardCreates(): Promise<PushVerseResult> {
-  if (!isNotionClientSyncEnabled()) {
+  if (!isNotionAppWriteEnabled()) {
     return { pushed: 0, remaining: 0, updates: [] };
   }
   if (!canPushVerseCardsToNotion()) {

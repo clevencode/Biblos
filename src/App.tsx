@@ -58,7 +58,7 @@ import {
   type PlanReadingReturnTo,
   type PlanReadingSession,
 } from "./planReading";
-import { useNotionSync } from "./useNotionSync";
+import { useCmsSync } from "./useCmsSync";
 import {
   countUnreadAppNotifications,
   syncContextualNotifications,
@@ -474,14 +474,10 @@ export function App() {
     return latestPlanJour({ ...activePlan, days: planDays }, planProgress);
   }, [activePlan, planProgress, planDays]);
 
-  const { notionHealth } = useNotionSync({
+  const { cmsHealth } = useCmsSync({
     catalog,
     setCatalog,
-    notesRef,
-    setRetentionTick,
     modeRef,
-    mode,
-    cardIds: scopedCardIds,
     activePlan,
   });
 
@@ -1200,14 +1196,20 @@ export function App() {
                     activityTick={activityTick}
                     savedVerses={savedVerses}
                     flashcards={allFlashcards}
-                    notionHealth={notionHealth}
+                    cmsHealth={cmsHealth}
                     onSyncNow={async () => {
-                      const { pushMobileCatalogToNotion } = await import("./verseCardSync");
-                      const result = await pushMobileCatalogToNotion(catalogRef.current);
-                      setCatalog(result.catalog);
-                      catalogRef.current = result.catalog;
-                      setRetentionTick((v) => v + 1);
-                      if (result.error) throw new Error(result.error);
+                      const { pullCatalog } = await import("./catalogSync");
+                      const { flushActivityOutbox, pullAdminActivityFromNotion } =
+                        await import("./activitySync");
+                      await flushActivityOutbox();
+                      await pullAdminActivityFromNotion();
+                      const result = await pullCatalog(catalogRef.current);
+                      if (result.changed) {
+                        setCatalog(result.catalog);
+                        catalogRef.current = result.catalog;
+                        setRetentionTick((v) => v + 1);
+                      }
+                      await syncUserProfileToNotion(undefined, { presence: "Online" });
                     }}
                     onOpenVerse={(mark) => {
                       openPassageInBible(`${mark.bookId}.${mark.chapterId}.${mark.verse}`);
