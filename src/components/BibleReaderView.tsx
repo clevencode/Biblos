@@ -984,13 +984,17 @@ export function BibleReaderView({
 
   function openPassagePicker(step: "book" | "chapter") {
     setToolsMenuOpen(false);
+    if (pickerOpen && passageStep === step) {
+      closePicker();
+      return;
+    }
     setPassageStep(step);
     if (step === "book") setBookSearchQuery("");
     pendingVerseStep.current = false;
     setPickerOpen(true);
   }
 
-  function renderTopPassageNav(extraClass = "") {
+  function renderTopPassageNav(extraClass = "", rollOpen = false) {
     const compactBar = extraClass.includes("is-plan-inline");
     const showChapterStep = !planReading || compactBar;
 
@@ -1001,7 +1005,7 @@ export function BibleReaderView({
       >
         <div
           className={`bible-yv-top-passage-bar${compactBar ? " is-compact" : ""}${
-            pickerOpen ? " is-picker-open" : ""
+            rollOpen ? " is-roll-head" : ""
           }`}
         >
           {showChapterStep ? (
@@ -1088,6 +1092,143 @@ export function BibleReaderView({
     closePicker();
   }
 
+  /** Mobile : panneau « rouleau » sous la pilule — même largeur, pas d’écran plein. */
+  function renderHeaderPassageRoll() {
+    return (
+      <div
+        className={`bible-yv-pick-sheet is-header-roll is-${passageStep}`}
+        role="dialog"
+        aria-modal="false"
+        aria-label={
+          passageStep === "book"
+            ? "Liste des livres"
+            : passageStep === "chapter"
+              ? `Chapitres de ${bookTitle}`
+              : `Versets du chapitre ${chapterId}`
+        }
+      >
+        {passageStep === "book" ? (
+          <div className="bible-yv-pick-roll-search">
+            <YvIcon name="search" opsz={20} className="bible-yv-pick-roll-search-icon" />
+            <input
+              type="search"
+              className="bible-yv-pick-search"
+              value={bookSearchQuery}
+              placeholder="Rechercher…"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
+              enterKeyHint="search"
+              aria-label="Rechercher un livre"
+              onChange={(event) => setBookSearchQuery(event.target.value)}
+            />
+          </div>
+        ) : passageStep === "verse" ? (
+          <div className="bible-yv-pick-roll-subhead">
+            <button
+              type="button"
+              className="bible-yv-pick-roll-back"
+              onClick={handlePickBack}
+              aria-label={`Retour aux chapitres de ${bookTitle}`}
+            >
+              <YvIcon name="chevron_left" className="bible-yv-pick-exit-icon" />
+            </button>
+            <span className="bible-yv-pick-roll-subhead-label">Verset</span>
+          </div>
+        ) : null}
+        <div
+          className={`bible-yv-pick-grid${passageStep === "book" ? " is-books" : ""}`}
+        >
+          {passageStep === "book"
+            ? (() => {
+                const q = bookSearchQuery
+                  .trim()
+                  .normalize("NFD")
+                  .replace(/[\u0300-\u036f]/g, "")
+                  .toLowerCase();
+                const filtered = q
+                  ? books.filter((book) => {
+                      const title = String(book.title || "")
+                        .normalize("NFD")
+                        .replace(/[\u0300-\u036f]/g, "")
+                        .toLowerCase();
+                      const id = String(book.id || "").toLowerCase();
+                      return title.includes(q) || id.includes(q);
+                    })
+                  : books;
+                if (!filtered.length) {
+                  return (
+                    <p className="bible-yv-pick-loading bible-yv-muted bible-yv-pick-roll-empty">
+                      Aucun livre trouvé
+                    </p>
+                  );
+                }
+                return filtered.map((book) => {
+                  const on = book.id.toUpperCase() === bookId.toUpperCase();
+                  return (
+                    <button
+                      key={book.id}
+                      id={`bible-pick-book-${book.id}`}
+                      type="button"
+                      role="option"
+                      aria-selected={on}
+                      className={`bible-yv-pick-cell is-book${on ? " is-on" : ""}`}
+                      onClick={() => pickBook(book.id)}
+                      disabled={loading}
+                    >
+                      {book.title}
+                    </button>
+                  );
+                });
+              })()
+            : passageStep === "chapter"
+              ? chapters.map((id) => {
+                  const on = id === chapterId;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      role="option"
+                      aria-selected={on}
+                      className={`bible-yv-pick-cell${on ? " is-on" : ""}`}
+                      onClick={() => pickChapter(id)}
+                      disabled={loading}
+                    >
+                      {id}
+                    </button>
+                  );
+                })
+              : verseOptions.map((n) => {
+                  const on = highlightVerse === n || verseInSelection(selection, n);
+                  return (
+                    <button
+                      key={n}
+                      type="button"
+                      role="option"
+                      aria-selected={on}
+                      className={`bible-yv-pick-cell${on ? " is-on" : ""}`}
+                      onClick={() => jumpToVerse(n)}
+                      disabled={loading}
+                    >
+                      {n}
+                    </button>
+                  );
+                })}
+        </div>
+        {passageStep === "book" && !books.length ? (
+          <p className="bible-yv-pick-loading bible-yv-muted bible-yv-pick-roll-empty">
+            Préparation de la liste…
+          </p>
+        ) : null}
+        {passageStep === "verse" && loadingUi ? (
+          <p className="bible-yv-pick-loading bible-yv-muted bible-yv-pick-roll-empty">
+            Ouverture…
+          </p>
+        ) : null}
+      </div>
+    );
+  }
+
   function pickBook(nextBook: string) {
     pendingVerseStep.current = false;
     setBookSearchQuery("");
@@ -1102,6 +1243,7 @@ export function BibleReaderView({
       return;
     }
     pendingVerseStep.current = true;
+    closePicker();
     void loadChapter(bookId, nextChapter, null);
   }
 
@@ -2058,6 +2200,11 @@ export function BibleReaderView({
               {headCompact && onPlanStep ? renderTopPassageNav(" is-plan-inline") : null}
             </div>
           </div>
+        ) : narrowChrome ? (
+          <div className={`bible-yv-passage-roll${pickerOpen ? " is-open" : ""}`}>
+            {renderTopPassageNav("", pickerOpen)}
+            {pickerOpen ? renderHeaderPassageRoll() : null}
+          </div>
         ) : (
           renderTopPassageNav()
         )}
@@ -2411,9 +2558,9 @@ export function BibleReaderView({
         </div>
       ) : null}
 
-      {pickerOpen ? (
+      {pickerOpen && !narrowChrome ? (
         <div
-          className={`bible-yv-pick-sheet is-${passageStep}${narrowChrome ? " is-tab-chrome" : ""}`}
+          className={`bible-yv-pick-sheet is-${passageStep}`}
           role="dialog"
           aria-label="Choisir livre, chapitre ou verset"
         >

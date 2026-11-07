@@ -22,7 +22,9 @@ export type ChapterAudioSyncPack = {
   transcriptUrl: string;
 };
 
-/** Pilote sync texte ↔ audio (transcription Gladia). */
+/** Pilote sync texte ↔ audio (transcription Gladia) — désactivé par défaut. */
+export const CHAPTER_AUDIO_SYNC_ENABLED = false;
+
 const CHAPTER_SYNC_PACKS: Record<string, Record<string, ChapterAudioSyncPack>> = {
   JHN: {
     "1": {
@@ -36,6 +38,7 @@ export function chapterAudioSyncPack(
   bookId: string,
   chapterId: string,
 ): ChapterAudioSyncPack | null {
+  if (!CHAPTER_AUDIO_SYNC_ENABLED) return null;
   const book = CHAPTER_SYNC_PACKS[bookId.toUpperCase()];
   if (!book) return null;
   return book[chapterId] ?? null;
