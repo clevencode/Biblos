@@ -11,12 +11,13 @@ export const ALL_SHELL_TABS: ShellTabDef[] = [
 ];
 
 /**
- * Refatoração shell: só Plan + Bible na tab bar.
- * Home, Cartes e Profil desativados (sem painel nem navegação).
+ * Tab bar: Accueil, Plan, Bible, Profil (Cartes opcional via flag).
  */
 export const ENABLED_SHELL_TAB_IDS: ReadonlySet<CenterMode> = new Set([
+  "home",
   "today",
   "bible",
+  "profile",
 ]);
 
 export const DEFAULT_SHELL_MODE: CenterMode = "today";
