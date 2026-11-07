@@ -1,7 +1,6 @@
 /** Partage de versets — image PNG (pas d’OG / aperçu de lien). */
 
 import {
-  formatShareUrlForCard,
   plainShareText,
   renderPlanShareCard,
   renderVerseShareCard,
@@ -106,9 +105,23 @@ export function consumeShareRefFromUrl(): string | null {
   return ref;
 }
 
+/** Versets sélectionnés : numérotation + paragraphes pour partage / clipboard. */
+export function formatSelectedVersesForShare(
+  verses: ReadonlyArray<{ number: number; text: string }>,
+): string {
+  return verses
+    .map((verse) => {
+      const clean = String(verse.text || "").trim();
+      return clean ? `[${verse.number}] ${clean}` : "";
+    })
+    .filter(Boolean)
+    .join("\n\n");
+}
+
 /**
  * Caption pour copie / Web Share :
- * référence, verset, puis lien (texte unifié ici uniquement — sur l’image, verset et lien sont séparés).
+ * référence, texte intégral (avec sauts), URL complète — jamais tronqué.
+ * Le PNG reste visuel (sans URL brute).
  */
 export function buildShareText(
   refLabel: string,
@@ -117,15 +130,15 @@ export function buildShareText(
 ): string {
   const ref = String(refLabel || "").trim();
   const body = String(verseText || "").trim();
-  const link = formatShareUrlForCard(String(url || "").trim());
+  const link = String(url || "").trim();
   const parts: string[] = [];
   if (ref) parts.push(ref);
-  if (body) parts.push(`« ${body} »`);
-  if (link) parts.push(link);
+  if (body) parts.push(`«\n${body}\n»`);
+  if (link) parts.push(`Lire dans l’app : ${link}`);
   return parts.join("\n\n");
 }
 
-/** Caption plan : titre, intro, lien app. */
+/** Caption plan : titre, intro, lien app (URL complète — parité verset). */
 export function buildPlanShareText(input: {
   title: string;
   description?: string;
@@ -135,7 +148,7 @@ export function buildPlanShareText(input: {
   const title = plainShareText(input.title || "Plan de lecture");
   const description = plainShareText(input.description || "");
   const meta = plainShareText(input.meta || "");
-  const link = formatShareUrlForCard(String(input.url || buildPlanShareUrl()).trim());
+  const link = String(input.url || buildPlanShareUrl()).trim();
   const parts: string[] = [];
   if (title) parts.push(title);
   if (meta) parts.push(meta);
@@ -144,8 +157,33 @@ export function buildPlanShareText(input: {
       description.length > 420 ? `${description.slice(0, 417).trimEnd()}…` : description;
     parts.push(short);
   }
-  if (link) parts.push(link);
+  if (link) parts.push(`Lire dans l’app : ${link}`);
   return parts.join("\n\n");
+}
+
+/** Alias explicite pour le sous-système Partager. */
+export function buildPlanShareCaption(input: {
+  title: string;
+  description?: string;
+  meta?: string;
+  planId?: string | null;
+}): string {
+  const url = buildPlanShareUrl(input.planId);
+  return buildPlanShareText({
+    title: input.title,
+    description: input.description,
+    meta: input.meta,
+    url,
+  });
+}
+
+/** Caption verset : ref + corps + deep link. */
+export function buildVerseShareCaption(
+  refLabel: string,
+  verseText: string,
+  usfm: string,
+): string {
+  return buildShareText(refLabel, verseText, buildShareUrl(usfm));
 }
 
 export type SharePlanInput = {
@@ -209,30 +247,96 @@ export async function shareVerseDirect(
   });
 }
 
+function copyTextWithExecCommand(text: string): boolean {
+  if (typeof document === "undefined") return false;
+  const field = document.createElement("textarea");
+  field.value = text;
+  field.setAttribute("readonly", "");
+  field.style.position = "fixed";
+  field.style.left = "-9999px";
+  field.style.top = "0";
+  document.body.appendChild(field);
+  field.focus();
+  field.select();
+  field.setSelectionRange(0, text.length);
+  let ok = false;
+  try {
+    ok = document.execCommand("copy");
+  } catch {
+    ok = false;
+  } finally {
+    field.remove();
+  }
+  return ok;
+}
+
+function clipboardFailureMessage(err: unknown): string {
+  const name = err instanceof DOMException ? err.name : "";
+  if (name === "NotAllowedError") {
+    return "Accès au presse-papiers refusé";
+  }
+  if (typeof window !== "undefined" && !window.isSecureContext) {
+    return "Presse-papiers indisponible (connexion sécurisée requise)";
+  }
+  return "Presse-papiers non disponible";
+}
+
+/** Écriture texte : API Clipboard puis execCommand (geste utilisateur). */
+export async function writeTextToClipboard(text: string): Promise<ShareVerseResult> {
+  const value = String(text || "").trim();
+  if (!value) {
+    return { ok: false, error: "Rien à copier" };
+  }
+
+  if (
+    typeof navigator !== "undefined" &&
+    navigator.clipboard &&
+    typeof navigator.clipboard.writeText === "function"
+  ) {
+    try {
+      await navigator.clipboard.writeText(value);
+      return { ok: true, method: "clipboard" };
+    } catch (err) {
+      if (copyTextWithExecCommand(value)) {
+        return { ok: true, method: "clipboard" };
+      }
+      return { ok: false, error: clipboardFailureMessage(err) };
+    }
+  }
+
+  if (copyTextWithExecCommand(value)) {
+    return { ok: true, method: "clipboard" };
+  }
+
+  return { ok: false, error: clipboardFailureMessage(undefined) };
+}
+
+export type CopyShareCaptionInput =
+  | { mode: "verse"; refLabel: string; verseText: string; usfm: string }
+  | { mode: "plan"; captionText: string };
+
+/** Point d’entrée unique : Copier dans le sheet Partager. */
+export async function copyShareCaption(
+  input: CopyShareCaptionInput,
+): Promise<ShareVerseResult> {
+  if (input.mode === "plan") {
+    return writeTextToClipboard(input.captionText);
+  }
+  const caption = buildVerseShareCaption(
+    input.refLabel,
+    input.verseText,
+    input.usfm,
+  );
+  return writeTextToClipboard(caption);
+}
+
 /** Copie le texte du verset (ref + corps + lien) dans le presse-papiers. */
 export async function copyVerseText(input: {
   refLabel: string;
   verseText: string;
   usfm: string;
 }): Promise<ShareVerseResult> {
-  const shareUrl = buildShareUrl(input.usfm);
-  const text = buildShareText(input.refLabel, input.verseText, shareUrl);
-  if (!text) {
-    return { ok: false, error: "Rien à copier" };
-  }
-  try {
-    if (
-      typeof navigator !== "undefined" &&
-      navigator.clipboard &&
-      typeof navigator.clipboard.writeText === "function"
-    ) {
-      await navigator.clipboard.writeText(text);
-      return { ok: true, method: "clipboard" };
-    }
-  } catch {
-    /* fall through */
-  }
-  return { ok: false, error: "Impossible de copier le texte" };
+  return copyShareCaption({ mode: "verse", ...input });
 }
 
 export type ShareVersePayload = {

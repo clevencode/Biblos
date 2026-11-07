@@ -1,9 +1,10 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { YvIcon } from "./YvIcon";
 import {
+  buildPlanShareCaption,
   buildShareText,
   buildShareUrl,
-  copyVerseText,
+  copyShareCaption,
   renderPlanShareBlob,
   shareVersePayload,
 } from "../shareVerse";
@@ -159,30 +160,29 @@ export function BibleShareSheet({
     setCopyBusy(true);
     setMsg(null);
     try {
-      if (isPlan) {
-        const text = planTextRef.current.trim();
-        if (!text) {
-          setMsg("Rien à copier");
-          return;
-        }
-        if (
-          typeof navigator !== "undefined" &&
-          navigator.clipboard &&
-          typeof navigator.clipboard.writeText === "function"
-        ) {
-          await navigator.clipboard.writeText(text);
-          setMsg("Texte copié");
-          return;
-        }
-        setMsg("Impossible de copier le texte");
-        return;
-      }
-      const result = await copyVerseText({ refLabel, verseText, usfm });
+      const result = isPlan
+        ? await copyShareCaption({
+            mode: "plan",
+            captionText:
+              planTextRef.current.trim() ||
+              buildPlanShareCaption({
+                title: planTitle || refLabel || "Plan de lecture",
+                description: planDescription,
+                meta: planMeta,
+                planId,
+              }),
+          })
+        : await copyShareCaption({
+            mode: "verse",
+            refLabel,
+            verseText,
+            usfm,
+          });
       if (result.ok) {
         setMsg("Texte copié");
         return;
       }
-      setMsg(result.error);
+      setMsg(result.error || "Impossible de copier le texte");
     } catch {
       setMsg("Impossible de copier le texte");
     } finally {
@@ -244,8 +244,13 @@ export function BibleShareSheet({
 
   const canShare = Boolean(blobRef.current) && !previewBusy && !previewError;
   const canCopy = isPlan
-    ? Boolean(planTitle.trim() || planDescription.trim() || displayLabel.trim())
-    : Boolean(verseText);
+    ? Boolean(
+        planTitle.trim() ||
+          planDescription.trim() ||
+          planMeta.trim() ||
+          displayLabel.trim(),
+      )
+    : Boolean(verseText.trim() || refLabel.trim());
 
   return (
     <>

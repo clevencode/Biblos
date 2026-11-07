@@ -72,3 +72,37 @@ Chrome da Bíblia:
 12. **Retour recherche** — après un verset : rouvrir le picker retrouve mot, dépliant, scroll et verset ancré ; seul le **X** réinitialise.
 13. **Picker ouvert** — texte biblique `inert` + scrim : pas de sélection de verset ; tap sur le fond ou Échap ferme le panneau.
 14. **Lecture mobile** — tab bar toujours visible (Accueil, Plan, Bible, Cartes) ; hamburger à droite = outils Bible seulement. Texte `inert` + scrim tant que le menu ou le picker est ouvert. Désactiver le hamburger compact : `VITE_BIBLE_UNIFIED_NAV=0`. Profil via Accueil (icône / titre).
+
+## Sous-système Partager (versets)
+
+### Séparation des responsabilités
+
+| Canal | Rôle |
+|--------|------|
+| **PNG** (`shareVerseCard.ts`) | Appel visuel : ref, texte avec retours à la ligne, marque en pied — **sans URL** |
+| **Texte** (`buildShareText` dans `shareVerse.ts`) | Fidélité intégrale : référence, corps avec `[n]` et `\n\n`, URL complète `Lire dans l’app : …` |
+
+### Sélection multi-versets
+
+`formatSelectedVersesForShare` (`shareVerse.ts`) : chaque verset → `[numéro] texte`, blocs séparés par `\n\n` (utilisé dans `BibleReaderView`).
+
+### Contraintes canvas
+
+- Largeur fixe : **1080px** (`VERSE_SHARE_CARD_WIDTH`).
+- Hauteur adaptative jusqu’au plafond **`VERSE_SHARE_MAX_HEIGHT` (2400px)** ; au-delà : clip + dégradé de continuation (anti-OOM / anti-spaghetti dans les feeds).
+- Pied : signature de marque centrée (défaut « Biblos »), pas de lien brut.
+- Le plafond PNG **ne tronque pas** le texte du clipboard.
+
+### Copier (clipboard)
+
+- Point d’entrée unique : `copyShareCaption` → `writeTextToClipboard` (API Clipboard, repli `execCommand`).
+- Verse : `buildVerseShareCaption` ; plan : `buildPlanShareCaption` / `buildPlanShareText` (URL **https** complète).
+
+**QA Copier**
+
+1. **Desktop** — sélectionner 1 verset → Partager → Copier : presse-papiers = ref + `« … »` + `Lire dans l’app : https://www.biblo.digital/v/…`.
+2. **Multi-versets** — caption avec `[n]` et paragraphes `\n\n` intacts (pas de fusion en une ligne).
+3. **Plan** — Partager le plan → Copier : titre, meta, intro, URL complète (même formule que verset).
+4. **PNG long** — passage >2400px : image tronquée avec fade ; clipboard **complet**.
+5. **Échec** — message distinct : vide (`Rien à copier`), refus (`Accès au presse-papiers refusé`), HTTP non sécurisé.
+6. **Android** (futur) — si l’API échoue après repli, envisager `@capacitor/clipboard`.

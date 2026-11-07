@@ -52,6 +52,7 @@ import {
   syncBibleAudioControls,
 } from "../bibleAudioControls";
 import { createVerseFlashcard, verseCardId } from "../verseCard";
+import { formatSelectedVersesForShare } from "../shareVerse";
 import {
   clearOfflineBible,
   downloadOfflineBible,
@@ -1399,11 +1400,9 @@ export function BibleReaderView({
   const selectedVerses = selection ?? EMPTY_VERSES;
   const selectedVerseText =
     selectedVerses.length && passage?.verses
-      ? passage.verses
-          .filter((item) => selectedVerses.includes(item.number))
-          .map((item) => item.text.trim())
-          .filter(Boolean)
-          .join(" ")
+      ? formatSelectedVersesForShare(
+          passage.verses.filter((item) => selectedVerses.includes(item.number)),
+        )
       : "";
 
   const shareRefLabel = selectedVerses.length

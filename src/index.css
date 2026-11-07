@@ -5219,56 +5219,28 @@ body {
     order: 1;
   }
 
-  /* Tab bar flottante (pilule) — toujours au-dessus du contenu, safe-area. */
-  .note-shell .mode-tabs {
-    order: 2;
-    flex: none;
-    position: fixed;
-    left: 50%;
-    right: auto;
-    bottom: calc(var(--mobile-tabbar-float-gap) + env(safe-area-inset-bottom, 0px));
-    z-index: 24;
-    width: min(
-      calc(100vw - 2 * max(var(--mobile-float-inset-x), env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px)) - 8px),
-      20.5rem
-    );
-    max-width: calc(100vw - 48px);
-    margin: 0;
-    padding: var(--mobile-tabbar-pad) 8px;
-    border: 1px solid color-mix(in srgb, var(--line) 65%, transparent);
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--elevated, var(--panel)) 96%, transparent);
-    backdrop-filter: blur(20px) saturate(1.12);
-    -webkit-backdrop-filter: blur(20px) saturate(1.12);
-    contain: layout style;
-    overflow: hidden;
-    box-shadow:
-      0 0 0 1px color-mix(in srgb, #fff 42%, transparent) inset,
-      0 8px 24px color-mix(in srgb, #000 11%, transparent);
-    transform: translate3d(-50%, 0, 0);
-    opacity: 1;
-    pointer-events: auto;
-    transition:
-      transform 180ms cubic-bezier(0.4, 0, 0.2, 1),
-      opacity 160ms cubic-bezier(0.4, 0, 0.2, 1),
-      box-shadow 180ms ease;
-    will-change: transform, opacity;
+  /*
+   * Chrome mobile — « ghost container » (layout ≠ paint) + pilule découplée.
+   * A: .note-shell-main garde le padding structurel ; parents transparents.
+   * B: .mode-tabs = positionnement ; .mode-tabs-nav = identité visuelle pilule.
+   */
+  .workspace.is-mobile-vista .note-shell,
+  .workspace.is-mobile-vista .note-shell-main {
+    background: transparent;
+    border: none;
+    box-shadow: none;
   }
 
-  /*
-    Chrome flottant — on garde le padding structurel sur .note-shell-main
-    (--mobile-bottom-chrome) et on peint le fond dans la zone via bleed sur .graph-pane
-    (margin négatif + padding), sans barre opaque pleine largeur.
-  */
   .workspace.is-mobile-vista .note-shell-main {
     padding-bottom: var(--mobile-bottom-chrome);
-    background: transparent;
   }
 
   .workspace.is-mobile-vista .graph-pane {
     position: relative;
     z-index: 0;
     background: transparent;
+    border: none;
+    box-shadow: none;
     margin-bottom: calc(-1 * var(--mobile-bottom-chrome));
     padding-bottom: var(--mobile-bottom-chrome);
     box-sizing: border-box;
@@ -5276,6 +5248,7 @@ body {
 
   .workspace.is-mobile-vista .graph-pane-body {
     min-height: 100%;
+    background: var(--bg);
     scroll-padding-bottom: var(--mobile-bottom-chrome);
   }
 
@@ -5284,14 +5257,65 @@ body {
     background: var(--bg);
   }
 
-  .app.is-bible-mode.is-narrow .workspace.is-mobile-vista .graph-pane,
+  .app.is-bible-mode.is-narrow .workspace.is-mobile-vista .graph-pane-body,
   .app.is-bible-mode.is-narrow .workspace.is-mobile-vista .pane-body,
+  .app.is-bible-mode.is-narrow #panel-bible,
   .app.is-bible-mode.is-narrow #panel-bible .bible-reader--yv {
     background: var(--yv-bg);
   }
 
+  /* C (lite): bande safe-area / overscroll = même teinte que la Bible */
+  html:has(.app.is-bible-mode.is-narrow),
+  html:has(.app.is-bible-mode.is-narrow) body {
+    background-color: var(--yv-bg, var(--bg));
+  }
+
+  /* Tab bar : coque fantasma (viewport-relative) */
   .note-shell .mode-tabs {
-    z-index: 24;
+    order: 2;
+    flex: none;
+    position: fixed;
+    left: 50%;
+    right: auto;
+    bottom: calc(var(--mobile-tabbar-float-gap) + env(safe-area-inset-bottom, 0px));
+    z-index: 50;
+    width: min(
+      calc(100vw - 2 * max(var(--mobile-float-inset-x), env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px)) - 8px),
+      20.5rem
+    );
+    max-width: calc(100vw - 48px);
+    margin: 0;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    box-shadow: none;
+    contain: none;
+    overflow: visible;
+    transform: translate3d(-50%, 0, 0);
+    opacity: 1;
+    pointer-events: none;
+    transition:
+      transform 180ms cubic-bezier(0.4, 0, 0.2, 1),
+      opacity 160ms cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform, opacity;
+  }
+
+  .note-shell .mode-tabs-nav {
+    pointer-events: auto;
+    min-height: var(--mobile-tabbar-h);
+    padding: var(--mobile-tabbar-pad) 8px;
+    border: 1px solid color-mix(in srgb, var(--line) 65%, transparent);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--elevated, var(--panel)) 96%, transparent);
+    backdrop-filter: blur(20px) saturate(1.12);
+    -webkit-backdrop-filter: blur(20px) saturate(1.12);
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, #fff 42%, transparent) inset,
+      0 8px 24px color-mix(in srgb, #000 11%, transparent);
+    transition: box-shadow 180ms ease;
   }
 
   /* Chrome imersivo lecture = .bible-reader (is-chrome-hidden) ; tab bar reste visible. */
@@ -5311,9 +5335,8 @@ body {
     align-items: center;
     justify-content: center;
     gap: 0;
-    min-height: var(--mobile-tabbar-h);
+    min-height: 0;
     border-right: 0;
-    background-clip: padding-box;
   }
 
   .mode-tabs-nav {
@@ -5323,6 +5346,7 @@ body {
     justify-content: space-between;
     gap: 2px;
     min-width: 0;
+    width: 100%;
     padding: 0 4px;
     overflow-x: auto;
     overscroll-behavior-x: contain;

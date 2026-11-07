@@ -5,7 +5,7 @@ export type VerseShareCardInput = {
   refLabel: string;
   verseText: string;
   accentHex?: string | null;
-  /** Lien verset sur l’image (pied) ; corps = texte seul. Copie = ref + verset + lien. */
+  /** URL (caption clipboard / Web Share uniquement — pas sur le PNG). */
   shareUrl?: string;
   footer?: string;
 };
@@ -59,11 +59,12 @@ const VERSE_LINE_HEIGHT = 66;
 const REF_FONT_PX = 32;
 const REF_LINE_HEIGHT = 42;
 const BRAND_FONT_PX = 52;
-const LINK_FONT_PX = 26;
-const LINK_LINE_HEIGHT = 36;
+const FOOTER_BRAND_FONT_PX = 26;
 const PARA_GAP = 22;
-/** Limite pratique navigateur / PNG (hauteur totale du canvas). */
-const MAX_CARD_HEIGHT = 16_000;
+/** Teto prod : feeds sociais + anti-OOM sur mobile. */
+export const VERSE_SHARE_MAX_HEIGHT = 2400;
+const FADE_OVERLAY_H = 132;
+const FOOTER_SIGNATURE_H = 56;
 
 function normalizeHex(hex: string | null | undefined): string {
   const raw = String(hex || "").trim();
@@ -168,7 +169,7 @@ async function ensureVerseCardFonts(): Promise<void> {
     await Promise.all([
       document.fonts.load(`700 ${BRAND_FONT_PX}px Outfit`),
       document.fonts.load(`600 ${REF_FONT_PX}px Outfit`),
-      document.fonts.load(`400 ${LINK_FONT_PX}px Outfit`),
+      document.fonts.load(`600 ${FOOTER_BRAND_FONT_PX}px Outfit`),
       document.fonts.load(`italic 400 ${VERSE_FONT_PX}px Source Serif 4`),
     ]);
   } catch {
@@ -190,15 +191,10 @@ async function ensurePlanCardFonts(): Promise<void> {
   }
 }
 
-function measureVerseCardHeight(
-  refLines: string[],
-  verseLines: string[],
-  linkLines: string[],
-): number {
+function measureVerseCardHeight(refLines: string[], verseLines: string[]): number {
   const afterBrand = PAD_TOP + 34 + BRAND_FONT_PX + GAP_AFTER_BRAND;
   const refBlock = refLines.length ? blockHeight(refLines, REF_LINE_HEIGHT) : 0;
   const bodyBlock = blockHeight(verseLines, VERSE_LINE_HEIGHT);
-  const linkBlock = linkLines.length ? blockHeight(linkLines, LINK_LINE_HEIGHT, 0) : 0;
   const bottom =
     afterBrand +
     refBlock +
@@ -206,9 +202,61 @@ function measureVerseCardHeight(
     bodyBlock +
     GAP_BODY_FOOTER +
     FOOTER_RULE_OFFSET +
-    (linkLines.length ? linkBlock : 0) +
+    FOOTER_SIGNATURE_H +
     PAD_BOTTOM;
-  return Math.min(MAX_CARD_HEIGHT, Math.ceil(bottom));
+  return Math.ceil(bottom);
+}
+
+function clipLinesToMaxHeight(
+  lines: string[],
+  lineHeight: number,
+  maxHeight: number,
+  paraGap = PARA_GAP,
+): { lines: string[]; truncated: boolean } {
+  if (maxHeight <= 0) return { lines: [], truncated: lines.length > 0 };
+  let used = 0;
+  const kept: string[] = [];
+  for (const line of lines) {
+    const step = line === "" ? paraGap : lineHeight;
+    if (kept.length && used + step > maxHeight) {
+      return { lines: kept, truncated: true };
+    }
+    kept.push(line);
+    used += step;
+  }
+  return { lines: kept, truncated: false };
+}
+
+function drawContinuationFade(ctx: CanvasRenderingContext2D, height: number): void {
+  const fadeTop = Math.max(0, height - FADE_OVERLAY_H);
+  const gradient = ctx.createLinearGradient(0, fadeTop, 0, height - 40);
+  gradient.addColorStop(0, "rgba(13, 17, 23, 0)");
+  gradient.addColorStop(0.5, "rgba(13, 17, 23, 0.65)");
+  gradient.addColorStop(1, "rgba(10, 13, 18, 1)");
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, fadeTop, W, FADE_OVERLAY_H);
+}
+
+function drawBrandFooter(
+  ctx: CanvasRenderingContext2D,
+  height: number,
+  label: string,
+): void {
+  const ruleY = height - PAD_BOTTOM - FOOTER_SIGNATURE_H;
+  ctx.strokeStyle = "rgba(245, 242, 235, 0.14)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(PAD_X, ruleY);
+  ctx.lineTo(W - PAD_X, ruleY);
+  ctx.stroke();
+
+  ctx.save();
+  ctx.font = `600 ${FOOTER_BRAND_FONT_PX}px Outfit, Avenir Next, Segoe UI, sans-serif`;
+  ctx.fillStyle = "rgba(245, 242, 235, 0.42)";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(label.toUpperCase(), W / 2, ruleY + FOOTER_RULE_OFFSET + 14);
+  ctx.restore();
 }
 
 function drawWrappedBlock(
@@ -240,7 +288,7 @@ export async function renderVerseShareCard(
   const brand = (input.brand || "Biblos").trim();
   const refLabel = String(input.refLabel || "").trim().toUpperCase();
   const verseText = String(input.verseText || "").trim();
-  const linkDraw = formatShareUrlForCard(String(input.shareUrl || "").trim());
+  const footerBrand = (input.footer || brand).trim();
   const maxTextWidth = W - PAD_X * 2;
 
   const measureCanvas = document.createElement("canvas");
@@ -250,15 +298,35 @@ export async function renderVerseShareCard(
   if (!measureCtx) throw new Error("Canvas indisponible");
 
   measureCtx.font = `italic 400 ${VERSE_FONT_PX}px Source Serif 4, Georgia, serif`;
-  const verseLines = wrapParagraphs(measureCtx, verseText, maxTextWidth);
+  const verseLinesFull = wrapParagraphs(measureCtx, verseText, maxTextWidth);
 
   measureCtx.font = `600 ${REF_FONT_PX}px Outfit, Avenir Next, Segoe UI, sans-serif`;
   const refLines = refLabel ? wrapLines(measureCtx, refLabel, maxTextWidth) : [];
 
-  measureCtx.font = `400 ${LINK_FONT_PX}px Outfit, Avenir Next, Segoe UI, sans-serif`;
-  const linkLines = linkDraw ? wrapLines(measureCtx, linkDraw, maxTextWidth) : [];
+  const naturalH = measureVerseCardHeight(refLines, verseLinesFull);
+  const capped = naturalH > VERSE_SHARE_MAX_HEIGHT;
+  const H = capped ? VERSE_SHARE_MAX_HEIGHT : naturalH;
 
-  const H = measureVerseCardHeight(refLines, verseLines, linkLines);
+  const headerEnd =
+    PAD_TOP +
+    34 +
+    BRAND_FONT_PX +
+    GAP_AFTER_BRAND +
+    (refLines.length ? blockHeight(refLines, REF_LINE_HEIGHT) + GAP_REF_BODY : 0);
+  const bodyBudget = Math.max(
+    0,
+    H -
+      headerEnd -
+      GAP_BODY_FOOTER -
+      FOOTER_RULE_OFFSET -
+      FOOTER_SIGNATURE_H -
+      PAD_BOTTOM,
+  );
+  const { lines: verseLines, truncated } = clipLinesToMaxHeight(
+    verseLinesFull,
+    VERSE_LINE_HEIGHT,
+    bodyBudget,
+  );
 
   const canvas = document.createElement("canvas");
   canvas.width = W;
@@ -288,21 +356,13 @@ export async function renderVerseShareCard(
 
   ctx.fillStyle = "#E8E4DC";
   ctx.font = `italic 400 ${VERSE_FONT_PX}px Source Serif 4, Georgia, serif`;
-  y = drawWrappedBlock(ctx, verseLines, PAD_X, y, VERSE_LINE_HEIGHT);
+  drawWrappedBlock(ctx, verseLines, PAD_X, y, VERSE_LINE_HEIGHT);
 
-  const ruleY = y + GAP_BODY_FOOTER;
-  ctx.strokeStyle = "rgba(245, 242, 235, 0.14)";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(PAD_X, ruleY);
-  ctx.lineTo(W - PAD_X, ruleY);
-  ctx.stroke();
-
-  if (linkLines.length) {
-    ctx.fillStyle = "rgba(245, 242, 235, 0.52)";
-    ctx.font = `400 ${LINK_FONT_PX}px Outfit, Avenir Next, Segoe UI, sans-serif`;
-    drawWrappedBlock(ctx, linkLines, PAD_X, ruleY + FOOTER_RULE_OFFSET, LINK_LINE_HEIGHT, 0);
+  if (truncated || capped) {
+    drawContinuationFade(ctx, H);
   }
+
+  drawBrandFooter(ctx, H, footerBrand);
 
   return new Promise((resolve, reject) => {
     canvas.toBlob(
