@@ -1,13 +1,11 @@
 /**
  * Profil utilisateur → Firestore (présence + temps d’usage).
- * Notion n’est plus une destination pour les données app.
  */
 import {
   pushUserProfileToCloud,
   type PresenceStatus,
   type ProfileCloudResult,
 } from "./firebase/profileCloud";
-import { isNotionCmsPullEnabled } from "./contentCms";
 import type { UserProfile } from "./userProfile";
 
 export type { PresenceStatus };
@@ -16,7 +14,7 @@ type ProfilePushResult = ProfileCloudResult;
 
 let inflight: Promise<ProfilePushResult> | null = null;
 
-export async function syncUserProfileToNotion(
+export async function syncUserProfileToCloud(
   profile?: UserProfile,
   options?: { presence?: PresenceStatus },
 ): Promise<ProfilePushResult> {
@@ -37,9 +35,6 @@ export async function syncUserProfileToNotion(
   return run;
 }
 
-/** @deprecated Alias explicite. */
-export const syncUserProfileToCloud = syncUserProfileToNotion;
-
 export function startPresenceAndUsageSync(
   onProfile?: (profile: UserProfile) => void,
   options?: { pauseWhile?: () => boolean },
@@ -47,7 +42,7 @@ export function startPresenceAndUsageSync(
   if (typeof window === "undefined") return () => undefined;
 
   const push = (presence: PresenceStatus) => {
-    void syncUserProfileToNotion(undefined, { presence }).then((result) => {
+    void syncUserProfileToCloud(undefined, { presence }).then((result) => {
       if (result.profile) onProfile?.(result.profile);
     });
   };
@@ -84,9 +79,4 @@ export function startPresenceAndUsageSync(
     window.clearInterval(heartbeat);
     push("Offline");
   };
-}
-
-/** Indique si le pull CMS Notion est actif (séparé du profil Firebase). */
-export function isCloudProfileSyncAvailable(): boolean {
-  return isNotionCmsPullEnabled();
 }

@@ -97,7 +97,7 @@ function onVisibility(): void {
 
 /**
  * Démarre le compteur foreground. `syncFn` appelé périodiquement si des minutes
- * non synchronisées existent (ex. syncUserProfileToNotion).
+ * non synchronisées existent (ex. syncUserProfileToCloud).
  */
 export function startAppUsageTracking(syncFn?: () => void): () => void {
   if (typeof window === "undefined") return () => undefined;

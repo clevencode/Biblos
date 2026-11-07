@@ -9,6 +9,7 @@ import { isNotionCmsPullEnabled } from "./contentCms";
 import { DESCRIPTION_PULL_MS, pullPlanDescription } from "./planDescriptionSync";
 import { pullRemoteAppNotifications } from "./appNotifications";
 import { runUserCloudSync } from "./firebase/syncSession";
+import { ensureLocalMarksInCatalog } from "./verseLocalCatalog";
 import type { Catalog, CenterMode, ReadingPlan } from "./types";
 import { apiUrl } from "./apiBase";
 
@@ -66,8 +67,11 @@ export function useCmsSync(options: {
       busy = true;
       try {
         const result = await pullCatalog(catalogRef.current);
-        if (!cancelled && result.ok && result.changed) {
-          setCatalog(result.catalog);
+        if (!cancelled && result.ok) {
+          const merged = ensureLocalMarksInCatalog(result.catalog);
+          if (result.changed || merged !== result.catalog) {
+            setCatalog(merged);
+          }
         }
       } finally {
         busy = false;
@@ -155,24 +159,4 @@ export function useCmsSync(options: {
   }, []);
 
   return { cmsHealth };
-}
-
-/** @deprecated Utiliser useCmsSync. */
-export function useNotionSync(options: {
-  catalog: Catalog;
-  setCatalog: Dispatch<SetStateAction<Catalog>>;
-  notesRef: MutableRefObject<unknown>;
-  setRetentionTick: Dispatch<SetStateAction<number>>;
-  modeRef: MutableRefObject<CenterMode>;
-  mode: CenterMode;
-  cardIds?: string[] | null;
-  activePlan?: ReadingPlan | null;
-}): { notionHealth: "unknown" | "ok" | "no-token" | "down" } {
-  const { cmsHealth } = useCmsSync({
-    catalog: options.catalog,
-    setCatalog: options.setCatalog,
-    modeRef: options.modeRef,
-    activePlan: options.activePlan,
-  });
-  return { notionHealth: cmsHealth };
 }

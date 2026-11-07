@@ -1,9 +1,8 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { loadEnv, type Plugin } from "vite";
-import { runFlashcardSync, type SyncBody } from "./server/notionFlashcardSync.ts";
 import { handleYouVersion } from "./api/youversion.mjs";
 import { handleBibleAudio } from "./api/bible-audio.mjs";
-import { fetchNotionDescription, createVerseCard, archiveVerseCard, fetchPlanDayNote, upsertPlanDayNote, upsertUserProfile, createAdminMessage, createActivityEvent, upsertAdminPersonalNote, listPublishedNotifications } from "./shared/notion.mjs";
+import { fetchNotionDescription, listPublishedNotifications } from "./shared/notion.mjs";
 
 function readBody(req: IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -31,30 +30,6 @@ function queryParam(req: IncomingMessage, key: string): string {
     return parsed.searchParams.get(key) || "";
   } catch {
     return "";
-  }
-}
-
-async function handle(req: IncomingMessage, res: ServerResponse, token: string) {
-  try {
-    let body: SyncBody | null = null;
-    if (req.method === "POST") {
-      try {
-        body = JSON.parse(await readBody(req)) as SyncBody;
-      } catch {
-        send(res, 400, { synced: false, error: "JSON inválido" });
-        return;
-      }
-    }
-    const result = await runFlashcardSync(req.method ?? "GET", body, token, {
-      useQueue: true,
-      allowPersist: true,
-    });
-    send(res, result.status, result.body);
-  } catch (error) {
-    console.error("[flashcard-sync]", error);
-    if (!res.headersSent) {
-      send(res, 500, { synced: false, error: "erro interno no sync Notion" });
-    }
   }
 }
 
@@ -86,35 +61,6 @@ async function handleCatalog(req: IncomingMessage, res: ServerResponse, token: s
   }
 }
 
-async function handleActivity(req: IncomingMessage, res: ServerResponse, token: string) {
-  if (req.method === "OPTIONS") {
-    res.statusCode = 204;
-    res.end();
-    return;
-  }
-  if (req.method === "GET") {
-    const userId = queryParam(req, "userId");
-    const limit = Number(queryParam(req, "limit")) || 80;
-    const { listActivityEvents } = await import("./shared/notion.mjs");
-    const result = await listActivityEvents(token, { userId, limit });
-    send(res, result.ok || result.hasToken === false ? 200 : 400, result);
-    return;
-  }
-  if (req.method !== "POST") {
-    send(res, 405, { ok: false, error: "méthode invalide" });
-    return;
-  }
-  let body: Record<string, unknown> = {};
-  try {
-    body = JSON.parse(await readBody(req)) as Record<string, unknown>;
-  } catch {
-    send(res, 400, { ok: false, error: "JSON inválido" });
-    return;
-  }
-  const result = await createActivityEvent(token, body);
-  send(res, result.ok || result.hasToken === false ? 200 : 400, result);
-}
-
 async function handleDescriptionSync(req: IncomingMessage, res: ServerResponse, token: string) {
   if (req.method === "OPTIONS") {
     res.statusCode = 204;
@@ -138,165 +84,6 @@ async function handleDescriptionSync(req: IncomingMessage, res: ServerResponse, 
   send(res, 200, result);
 }
 
-async function handleVerseCard(req: IncomingMessage, res: ServerResponse, token: string) {
-  if (req.method === "OPTIONS") {
-    res.statusCode = 204;
-    res.end();
-    return;
-  }
-  if (req.method !== "POST" && req.method !== "DELETE") {
-    send(res, 405, { ok: false, error: "méthode invalide" });
-    return;
-  }
-  let body: {
-    frente?: string;
-    verso?: string;
-    localId?: string;
-    lembrete?: string | null;
-    status?: string;
-    categoria?: string | null;
-    cardCategory?: string | null;
-    color?: string | null;
-    usfm?: string | null;
-    url?: string;
-    pageId?: string;
-  } = {};
-  try {
-    body = JSON.parse(await readBody(req)) as typeof body;
-  } catch {
-    send(res, 400, { ok: false, error: "JSON inválido" });
-    return;
-  }
-  if (req.method === "DELETE") {
-    const result = await archiveVerseCard(token, body.url || body.pageId || "");
-    send(res, result.ok ? 200 : 400, result);
-    return;
-  }
-  const result = await createVerseCard(token, {
-    frente: body.frente ?? "",
-    verso: body.verso ?? "",
-    localId: body.localId,
-    lembrete: body.lembrete,
-    status: body.status,
-    categoria: body.categoria,
-    cardCategory: body.cardCategory,
-    color: body.color,
-    usfm: body.usfm,
-  });
-  send(res, result.ok ? 200 : 400, result);
-}
-
-async function handlePlanDayNote(req: IncomingMessage, res: ServerResponse, token: string) {
-  if (req.method === "OPTIONS") {
-    res.statusCode = 204;
-    res.end();
-    return;
-  }
-  if (req.method === "GET") {
-    const result = await fetchPlanDayNote(token, {
-      planUrl: queryParam(req, "planUrl") || queryParam(req, "url"),
-      planPageId: queryParam(req, "planPageId"),
-      jour: queryParam(req, "jour"),
-      pageId: queryParam(req, "pageId"),
-      noteUrl: queryParam(req, "noteUrl"),
-    });
-    send(res, result.ok || result.hasToken === false ? 200 : 400, result);
-    return;
-  }
-  if (req.method !== "POST") {
-    send(res, 405, { ok: false, error: "méthode invalide" });
-    return;
-  }
-  let body: {
-    planUrl?: string;
-    url?: string;
-    planPageId?: string;
-    jour?: number | string;
-    body?: string;
-    text?: string;
-    pageId?: string;
-    noteUrl?: string;
-  } = {};
-  try {
-    body = JSON.parse(await readBody(req)) as typeof body;
-  } catch {
-    send(res, 400, { ok: false, error: "JSON inválido" });
-    return;
-  }
-  const result = await upsertPlanDayNote(token, {
-    planUrl: body.planUrl || body.url || "",
-    planPageId: body.planPageId || "",
-    jour: body.jour,
-    body: body.body ?? body.text ?? "",
-    pageId: body.pageId || "",
-    noteUrl: body.noteUrl || "",
-  });
-  send(res, result.ok || result.hasToken === false ? 200 : 400, result);
-}
-
-async function handleUserProfile(req: IncomingMessage, res: ServerResponse, token: string) {
-  if (req.method === "OPTIONS") {
-    res.statusCode = 204;
-    res.end();
-    return;
-  }
-  if (req.method !== "POST") {
-    send(res, 405, { ok: false, error: "méthode invalide" });
-    return;
-  }
-  let body: Record<string, unknown> = {};
-  try {
-    body = JSON.parse(await readBody(req)) as Record<string, unknown>;
-  } catch {
-    send(res, 400, { ok: false, error: "JSON inválido" });
-    return;
-  }
-  const result = await upsertUserProfile(token, body);
-  send(res, result.ok || result.hasToken === false ? 200 : 400, result);
-}
-
-async function handleAdminMessage(req: IncomingMessage, res: ServerResponse, token: string) {
-  if (req.method === "OPTIONS") {
-    res.statusCode = 204;
-    res.end();
-    return;
-  }
-  if (req.method !== "POST") {
-    send(res, 405, { ok: false, error: "méthode invalide" });
-    return;
-  }
-  let body: Record<string, unknown> = {};
-  try {
-    body = JSON.parse(await readBody(req)) as Record<string, unknown>;
-  } catch {
-    send(res, 400, { ok: false, error: "JSON inválido" });
-    return;
-  }
-  const result = await createAdminMessage(token, body);
-  send(res, result.ok || result.hasToken === false ? 200 : 400, result);
-}
-
-async function handleAdminNote(req: IncomingMessage, res: ServerResponse, token: string) {
-  if (req.method === "OPTIONS") {
-    res.statusCode = 204;
-    res.end();
-    return;
-  }
-  if (req.method !== "POST") {
-    send(res, 405, { ok: false, error: "méthode invalide" });
-    return;
-  }
-  let body: Record<string, unknown> = {};
-  try {
-    body = JSON.parse(await readBody(req)) as Record<string, unknown>;
-  } catch {
-    send(res, 400, { ok: false, error: "JSON inválido" });
-    return;
-  }
-  const result = await upsertAdminPersonalNote(token, body);
-  send(res, result.ok || result.hasToken === false ? 200 : 400, result);
-}
-
 async function handleNotifications(req: IncomingMessage, res: ServerResponse, token: string) {
   if (req.method === "OPTIONS") {
     res.statusCode = 204;
@@ -317,19 +104,12 @@ export function notionFlashcardPlugin(mode: string): Plugin {
   const token = env.NOTION_TOKEN || "";
   if (env.NOTION_BIBLECARDS_DB) process.env.NOTION_BIBLECARDS_DB = env.NOTION_BIBLECARDS_DB;
   if (env.NOTION_PLAN_DB) process.env.NOTION_PLAN_DB = env.NOTION_PLAN_DB;
-  if (env.NOTION_ADMIN_DB) process.env.NOTION_ADMIN_DB = env.NOTION_ADMIN_DB;
   if (env.NOTION_NOTIFICATIONS_DB) process.env.NOTION_NOTIFICATIONS_DB = env.NOTION_NOTIFICATIONS_DB;
-  if (env.NOTION_PROFILE_DB) process.env.NOTION_PROFILE_DB = env.NOTION_PROFILE_DB;
-  if (env.NOTION_MESSAGES_DB) process.env.NOTION_MESSAGES_DB = env.NOTION_MESSAGES_DB;
-  if (env.NOTION_ACTIVITY_DB) process.env.NOTION_ACTIVITY_DB = env.NOTION_ACTIVITY_DB;
   if (env.NOTION_TOKEN) process.env.NOTION_TOKEN = env.NOTION_TOKEN;
 
   const mount = (server: {
     middlewares: { use: (path: string, fn: (req: IncomingMessage, res: ServerResponse) => void) => void };
   }) => {
-    server.middlewares.use("/api/flashcard-sync", (req, res) => {
-      void handle(req, res, token);
-    });
     server.middlewares.use("/api/catalog", (req, res) => {
       void handleCatalog(req, res, token);
     });
@@ -342,30 +122,12 @@ export function notionFlashcardPlugin(mode: string): Plugin {
     server.middlewares.use("/api/description-sync", (req, res) => {
       void handleDescriptionSync(req, res, token);
     });
-    server.middlewares.use("/api/verse-card", (req, res) => {
-      void handleVerseCard(req, res, token);
-    });
-    server.middlewares.use("/api/plan-day-note", (req, res) => {
-      void handlePlanDayNote(req, res, token);
-    });
-    server.middlewares.use("/api/user-profile", (req, res) => {
-      void handleUserProfile(req, res, token);
-    });
-    server.middlewares.use("/api/admin-message", (req, res) => {
-      void handleAdminMessage(req, res, token);
-    });
-    server.middlewares.use("/api/activity", (req, res) => {
-      void handleActivity(req, res, token);
-    });
-    server.middlewares.use("/api/admin-note", (req, res) => {
-      void handleAdminNote(req, res, token);
-    });
     server.middlewares.use("/api/notifications", (req, res) => {
       void handleNotifications(req, res, token);
     });
   };
   return {
-    name: "notion-flashcard-sync",
+    name: "notion-cms-dev",
     configureServer: mount,
     configurePreviewServer: mount,
   };

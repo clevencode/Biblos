@@ -1,10 +1,10 @@
 /**
- * Sync activité → Firestore (remplace Notion ACTIVITY_DB).
+ * Sync activité → Firestore.
  */
 import type { ActivityEvent } from "./activityLog";
 import {
   flushActivityOutboxToCloud,
-  pullActivityFromCloud,
+  pullActivityFromCloud as pullActivityFromFirestore,
   scheduleActivityCloudSync,
 } from "./firebase/activityCloud";
 
@@ -25,15 +25,15 @@ export async function flushActivityOutbox(): Promise<{
   return flushActivityOutboxToCloud();
 }
 
-export async function pullAdminActivityFromNotion(): Promise<{
+export async function pullActivityFromCloud(): Promise<{
   ok: boolean;
   merged: number;
   error?: string;
 }> {
-  return pullActivityFromCloud();
+  return pullActivityFromFirestore();
 }
 
-export async function syncAdminActivityAcrossDevices(): Promise<void> {
+export async function syncUserActivityAcrossDevices(): Promise<void> {
   await flushActivityOutbox();
   await pullActivityFromCloud();
 }

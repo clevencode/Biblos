@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { useAuth } from "../hooks/useAuth";
+import { listMissingFirebaseEnvKeys } from "../firebase/config";
 
 type AuthGateProps = {
   children?: ReactNode;
@@ -11,16 +12,24 @@ export function AuthGate({ children }: AuthGateProps) {
   const [busy, setBusy] = useState(false);
 
   if (!configured) {
+    const missing = listMissingFirebaseEnvKeys();
     return (
       <div className="profile-onboarding" role="alert">
         <div className="profile-onboarding-card">
           <p className="profile-onboarding-brand">Biblos</p>
           <h1 className="profile-onboarding-title type-title">Configuration</h1>
           <p className="profile-onboarding-lead muted">
-            Variables Firebase manquantes. Ajoute les clés{" "}
-            <code>VITE_FIREBASE_*</code> dans ton fichier <code>.env</code> (voir{" "}
-            <code>.env.example</code>).
+            Le minimum pour Auth + Firestore est{" "}
+            <code>API_KEY</code>, <code>AUTH_DOMAIN</code>,{" "}
+            <code>PROJECT_ID</code> et <code>APP_ID</code> (préfixe{" "}
+            <code>VITE_FIREBASE_</code> dans <code>.env</code>). Redémarre{" "}
+            <code>npm run dev</code> après modification.
           </p>
+          {missing.length ? (
+            <p className="profile-onboarding-error" role="status">
+              Manquant : {missing.map((k) => k.replace("VITE_", "")).join(", ")}
+            </p>
+          ) : null}
         </div>
       </div>
     );

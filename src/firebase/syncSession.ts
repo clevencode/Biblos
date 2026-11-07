@@ -2,8 +2,8 @@
  * Point d’entrée unique pour sync Firebase (bonne pratique : une session, push puis pull).
  */
 import { flushAdminMessageOutbox } from "../adminMessage";
-import { flushActivityOutbox, pullAdminActivityFromNotion } from "../activitySync";
-import { syncUserProfileToNotion } from "../userProfileSync";
+import { flushActivityOutbox, pullActivityFromCloud } from "../activitySync";
+import { syncUserProfileToCloud } from "../userProfileSync";
 import type { PresenceStatus } from "../userProfileSync";
 import { pullUserStateFromCloud, pushUserStateToCloud } from "./userStateCloud";
 
@@ -30,7 +30,7 @@ export async function runUserCloudSync(options?: {
   let messages = false;
 
   if (push) {
-    const profileResult = await syncUserProfileToNotion(undefined, {
+    const profileResult = await syncUserProfileToCloud(undefined, {
       presence: options?.presence ?? "Online",
     });
     profile = Boolean(profileResult.ok);
@@ -51,7 +51,7 @@ export async function runUserCloudSync(options?: {
   if (pull) {
     const pullState = await pullUserStateFromCloud();
     if (pullState.error) errors.push(pullState.error);
-    const pullAct = await pullAdminActivityFromNotion();
+    const pullAct = await pullActivityFromCloud();
     if (pullAct.error) errors.push(pullAct.error);
     if (pullState.applied) state = true;
     if (pullAct.merged > 0) activity = true;

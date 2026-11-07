@@ -10,7 +10,7 @@ import {
 const ACTIVITY_KEY = "biblos-activity-v1";
 const MAX_EVENTS = 300;
 
-/** Journal local (localStorage) — sync Notion des événements désactivée. */
+/** Journal local (localStorage) ; flush vers Firestore via activitySync. */
 export const ACTIVITY_TRACKING_ENABLED = true;
 
 /**

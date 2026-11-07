@@ -1,9 +1,6 @@
 /**
- * Overlay local dos cartões (localStorage + dirty em sessionStorage).
- * Fonte de verdade runtime:
- * 1. seed.json — catálogo build-time
- * 2. este overlay — edições locais (dirty ganha ao pull Notion)
- * 3. Notion — remoto via flashcardSync HTTP
+ * Overlay local des cartões (localStorage + dirty sessionStorage).
+ * Sync multi-appareil via Firestore (`users/{uid}/private/state`).
  */
 import type { Flashcard, RetentionMark } from "./types";
 import { todayKey } from "./calendar";

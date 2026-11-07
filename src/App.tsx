@@ -25,14 +25,13 @@ import {
   applyFirebaseAuthUser,
   clearFirebaseFromProfile,
   completeOnboarding,
-  isClevencodeAdmin,
   isProfileOnboarded,
   loadOrCreateProfile,
   preferredDisplayName,
   saveUserProfile,
   type UserProfile,
 } from "./userProfile";
-import { syncUserProfileToNotion, startPresenceAndUsageSync } from "./userProfileSync";
+import { syncUserProfileToCloud, startPresenceAndUsageSync } from "./userProfileSync";
 import { startAppUsageTracking } from "./appUsage";
 import {
   listAllFlashcards,
@@ -249,7 +248,7 @@ export function App() {
       pauseWhile: () => Capacitor.isNativePlatform() && modeRef.current === "bible",
     });
     const stopUsage = startAppUsageTracking(() => {
-      void syncUserProfileToNotion(undefined, { presence: "Online" }).then((result) => {
+      void syncUserProfileToCloud(undefined, { presence: "Online" }).then((result) => {
         applySyncedProfile(result.profile);
       });
     });
@@ -268,9 +267,7 @@ export function App() {
     function onOnline() {
       setOfflineToast(false);
       void runUserCloudSync({ push: true, pull: true, presence: "Online" }).then(() => {
-        void syncUserProfileToNotion(undefined, { presence: "Online" }).then((result) => {
-          applySyncedProfile(result.profile);
-        });
+        applySyncedProfile(loadOrCreateProfile());
       });
     }
     window.addEventListener("offline", onOffline);
@@ -349,7 +346,7 @@ export function App() {
       setAuthorizedMarkSeq((value) => value + 1);
       selectMode("bible");
     }
-    void syncUserProfileToNotion(next).then((result) => {
+    void syncUserProfileToCloud(next).then((result) => {
       applySyncedProfile(result.profile);
     });
   }
@@ -376,7 +373,7 @@ export function App() {
       next.id,
     );
     setActivityTick((n) => n + 1);
-    void syncUserProfileToNotion(next).then((result) => {
+    void syncUserProfileToCloud(next).then((result) => {
       applySyncedProfile(result.profile);
     });
   }
@@ -741,8 +738,6 @@ export function App() {
   }
 
   function handleFlashcardCreated(card: Flashcard) {
-    let previousUrl = "";
-    let previousColor: string | null | undefined;
     setCatalog((current) => {
       const notas = [...(current.notas ?? [])];
       const bucketKey = String(card.cardCategory || "VERSECARD");
@@ -766,10 +761,6 @@ export function App() {
       const existing = seed.flashcards.find(
         (item) => item.id === card.id || (card.url && item.url === card.url),
       );
-      if (existing) {
-        previousUrl = existing.url || "";
-        previousColor = existing.color;
-      }
       const merged: Flashcard = existing
         ? {
             ...existing,
@@ -809,26 +800,6 @@ export function App() {
       setActivityTick((n) => n + 1);
     }
 
-    void (async () => {
-      if (!isClevencodeAdmin(profile)) return;
-      const { syncVerseCardToNotion, attachNotionUrlToCatalog, archiveRemoteVerseCard } =
-        await import("./verseCardSync");
-      const isMark = String(card.cardCategory || "").toUpperCase() === "VERSEMARK";
-      const colorChanged =
-        isMark &&
-        previousUrl &&
-        previousColor != null &&
-        card.color != null &&
-        previousColor !== card.color;
-      if (colorChanged) {
-        await archiveRemoteVerseCard({ id: card.id, url: previousUrl });
-      }
-      const toSync: Flashcard = colorChanged ? { ...card, url: "" } : { ...card, url: card.url || previousUrl };
-      const result = await syncVerseCardToNotion(toSync);
-      if (result.ok && result.url) {
-        setCatalog((prev) => attachNotionUrlToCatalog(prev, card.id, result.url!));
-      }
-    })();
   }
 
   function handleVerseMarked(payload: {
@@ -860,23 +831,8 @@ export function App() {
     for (const verse of verses) {
       const usfm = `${chapterUsfm(bookId, chapterId)}.${verse}`;
       const cardId = verseMarkCardId(usfm);
-      let cardToArchive: Flashcard | null = null;
-      for (const note of catalog.notas ?? []) {
-        const hit = (note.flashcards ?? []).find((c) => c.id === cardId);
-        if (hit) {
-          cardToArchive = hit;
-          break;
-        }
-      }
       setCatalog((current) => removeCardFromCatalog(current, cardId));
       setRetentionTick((value) => value + 1);
-      if (cardToArchive && isClevencodeAdmin(profile)) {
-        const archived = cardToArchive;
-        void (async () => {
-          const { archiveRemoteVerseCard } = await import("./verseCardSync");
-          await archiveRemoteVerseCard(archived);
-        })();
-      }
     }
   }
 
@@ -885,11 +841,6 @@ export function App() {
     if (!window.confirm(`Supprimer « ${label} » ?`)) return;
     setCatalog((current) => removeCardFromCatalog(current, card.id));
     setRetentionTick((value) => value + 1);
-    void (async () => {
-      if (!isClevencodeAdmin(profile)) return;
-      const { archiveRemoteVerseCard } = await import("./verseCardSync");
-      await archiveRemoteVerseCard(card);
-    })();
   }
 
   function onTabKey(event: ReactKeyboardEvent<HTMLDivElement>) {
