@@ -1,6 +1,17 @@
 import { useEffect, useState } from "react";
 import { YvIcon } from "./YvIcon";
 
+function formatAudioClock(seconds: number): string {
+  if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
+  const total = Math.floor(seconds);
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  if (h > 0) return `${h}:${pad(m)}:${pad(s)}`;
+  return `${m}:${pad(s)}`;
+}
+
 export type BibleAudioFloatProps = {
   hasAudio: boolean;
   playing: boolean;
@@ -49,7 +60,9 @@ export function BibleAudioFloat({
         aria-label={playing ? "Pause" : "Lecture"}
         aria-controls={progressVisible ? "bible-audio-progress" : undefined}
       >
-        {playing ? (
+        {busy ? (
+          <span className="bible-yv-dock-play-spinner" aria-hidden />
+        ) : playing ? (
           <YvIcon name="pause" filled className="bible-yv-dock-icon bible-yv-dock-icon--play" />
         ) : (
           <YvIcon name="play_arrow" filled className="bible-yv-dock-icon bible-yv-dock-icon--play" />
@@ -60,31 +73,40 @@ export function BibleAudioFloat({
         aria-hidden={progressVisible ? undefined : true}
         inert={progressVisible ? undefined : true}
       >
-        <input
-          id="bible-audio-progress"
-          type="range"
-          className="bible-yv-audio-float-range"
-          min={0}
-          max={safeDuration || 1}
-          step={1}
-          value={Math.min(displayTime, safeDuration || 1)}
-          disabled={!hasAudio || safeDuration <= 0 || !progressVisible}
-          tabIndex={progressVisible ? 0 : -1}
-          aria-label="Progression"
-          aria-valuemin={0}
-          aria-valuemax={safeDuration || 0}
-          aria-valuenow={Math.floor(displayTime)}
-          style={{ ["--seek-progress" as string]: String(progress) }}
-          onPointerDown={() => setSeeking(true)}
-          onPointerUp={(event) => {
-            const value = Number((event.target as HTMLInputElement).value);
-            setSeeking(false);
-            onSeek(value);
-          }}
-          onChange={(event) => {
-            setSeekValue(Number(event.target.value));
-          }}
-        />
+        <div className="bible-yv-audio-float-track-inner">
+          <input
+            id="bible-audio-progress"
+            type="range"
+            className="bible-yv-audio-float-range"
+            min={0}
+            max={safeDuration || 1}
+            step={1}
+            value={Math.min(displayTime, safeDuration || 1)}
+            disabled={!hasAudio || safeDuration <= 0 || !progressVisible}
+            tabIndex={progressVisible ? 0 : -1}
+            aria-label="Progression"
+            aria-valuemin={0}
+            aria-valuemax={safeDuration || 0}
+            aria-valuenow={Math.floor(displayTime)}
+            style={{ ["--seek-progress" as string]: String(progress) }}
+            onPointerDown={() => setSeeking(true)}
+            onPointerUp={(event) => {
+              const value = Number((event.target as HTMLInputElement).value);
+              setSeeking(false);
+              onSeek(value);
+            }}
+            onChange={(event) => {
+              setSeekValue(Number(event.target.value));
+            }}
+          />
+          <p className="bible-yv-audio-float-times" aria-hidden>
+            <span>{formatAudioClock(displayTime)}</span>
+            <span className="bible-yv-audio-float-times-sep" aria-hidden>
+              /
+            </span>
+            <span>{safeDuration > 0 ? formatAudioClock(safeDuration) : "—"}</span>
+          </p>
+        </div>
       </div>
     </div>
   );

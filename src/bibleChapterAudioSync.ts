@@ -22,15 +22,8 @@ export type ChapterAudioSyncPack = {
   transcriptUrl: string;
 };
 
-/** Pilote sync texte ↔ audio (transcription Gladia). */
-const CHAPTER_SYNC_PACKS: Record<string, Record<string, ChapterAudioSyncPack>> = {
-  JHN: {
-    "1": {
-      audioUrl: "/s21-audio-sync/jhn/Jean_Chapitre_1.mp3",
-      transcriptUrl: "/s21-audio-sync/jhn/1.transcript.json",
-    },
-  },
-};
+/** Pilote sync texte ↔ audio (transcription Gladia) — désactivé ; lecture via Anchor RSS. */
+const CHAPTER_SYNC_PACKS: Record<string, Record<string, ChapterAudioSyncPack>> = {};
 
 export function chapterAudioSyncPack(
   bookId: string,

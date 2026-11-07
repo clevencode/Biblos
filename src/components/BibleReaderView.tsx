@@ -80,14 +80,6 @@ import {
 import { resolveTheme, themePrefLabel, type ResolvedTheme, type ThemePref } from "../theme";
 import { loadChapterMarks, setVerseMarks } from "../verseMarks";
 import type { Flashcard } from "../types";
-import {
-  buildVerseAudioCues,
-  chapterAudioSyncPack,
-  fetchChapterTranscript,
-  verseAtTime,
-  type ChapterTranscript,
-} from "../bibleChapterAudioSync";
-
 const STORAGE_KEY = BIBLE_READER_PREFS_KEY;
 /** Panneau verset : pas de Flashcard tant que l’onglet Cartes est désactivé. */
 const VERSE_SUITE_FLASHCARDS_ENABLED = false;
@@ -531,8 +523,6 @@ export function BibleReaderView({
   const [audioActiveUsfm, setAudioActiveUsfm] = useState<string | null>(null);
   const [audioTime, setAudioTime] = useState(0);
   const [audioDuration, setAudioDuration] = useState(0);
-  const [chapterTranscript, setChapterTranscript] = useState<ChapterTranscript | null>(null);
-  const [audioSyncVerse, setAudioSyncVerse] = useState<number | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [shareSheetOpen, setShareSheetOpen] = useState(false);
   const [shareMode, setShareMode] = useState<"verse" | "plan">("verse");
@@ -551,7 +541,6 @@ export function BibleReaderView({
   const passageScrollRef = useRef<HTMLElement | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioBookRef = useRef<string>("");
-  const audioSyncScrollVerseRef = useRef<number | null>(null);
   const lastScrollTop = useRef(0);
   const scrollAcc = useRef(0);
   const chromeHiddenRef = useRef(false);
@@ -624,8 +613,6 @@ export function BibleReaderView({
     };
     const onEnded = () => {
       setAudioPlaying(false);
-      setAudioSyncVerse(null);
-      audioSyncScrollVerseRef.current = null;
       if (audioBookRef.current) saveAudioPosition(audioBookRef.current, 0);
       setAudioTime(0);
       void clearBibleAudioControls();
@@ -1871,113 +1858,13 @@ export function BibleReaderView({
     lastAppliedVerseScroll.current = key;
   }, [active, loading, passage?.id, highlightVerse, selection, showCreateCard, pickerOpen, planReading?.label]);
 
-  const chapterSyncPack = chapterAudioSyncPack(bookId, chapterId);
-  const chapterAudioStorageKey = chapterSyncPack
-    ? `${bookId.toUpperCase()}.${chapterId}`
-    : null;
-
-  useEffect(() => {
-    if (!chapterSyncPack) {
-      setChapterTranscript(null);
-      setAudioSyncVerse(null);
-      audioSyncScrollVerseRef.current = null;
-      return;
-    }
-    let cancelled = false;
-    void fetchChapterTranscript(chapterSyncPack.transcriptUrl).then((doc) => {
-      if (!cancelled) setChapterTranscript(doc);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [bookId, chapterId, chapterSyncPack?.transcriptUrl]);
-
-  const verseAudioCues = useMemo(() => {
-    if (!chapterTranscript?.segments?.length || !passage?.verses?.length) return [];
-    return buildVerseAudioCues(passage.verses, chapterTranscript);
-  }, [chapterTranscript, passage?.verses]);
-
-  useEffect(() => {
-    if (!audioPlaying || !verseAudioCues.length) {
-      setAudioSyncVerse(null);
-      return;
-    }
-    const v = verseAtTime(verseAudioCues, audioTime);
-    setAudioSyncVerse((prev) => (prev === v ? prev : v));
-  }, [audioPlaying, audioTime, verseAudioCues]);
-
-  useEffect(() => {
-    if (!audioPlaying || audioSyncVerse == null) return;
-    if (audioSyncScrollVerseRef.current === audioSyncVerse) return;
-    audioSyncScrollVerseRef.current = audioSyncVerse;
-    const root = passageScrollRef.current;
-    const reader = readerRef.current;
-    if (!root || !reader) return;
-    const verseEl = root.querySelector(`[data-verse="${audioSyncVerse}"]`);
-    if (!(verseEl instanceof HTMLElement)) return;
-    requestAnimationFrame(() => {
-      alignVerseInScroller(root, reader, verseEl, "nearest");
-    });
-  }, [audioPlaying, audioSyncVerse]);
-
   const bookAudio = audioByUsfm[bookId.toUpperCase()] ?? null;
-  const canPlayBookAudio =
-    textVersion === "s21" && Boolean(bookAudio?.audioUrl || chapterSyncPack);
-
-  async function playChapterSyncedAudio() {
-    if (!chapterSyncPack || !chapterAudioStorageKey) return false;
-    const audio = audioRef.current;
-    if (!audio) return false;
-
-    try {
-      setAudioBusy(true);
-      setAudioActiveUsfm(bookId.toUpperCase());
-      audioSyncScrollVerseRef.current = null;
-      if (audioBookRef.current !== chapterAudioStorageKey) {
-        if (audioBookRef.current && Number.isFinite(audio.currentTime)) {
-          saveAudioPosition(audioBookRef.current, audio.currentTime);
-        }
-        audio.src = chapterSyncPack.audioUrl;
-        audioBookRef.current = chapterAudioStorageKey;
-        setAudioTime(0);
-        setAudioDuration(0);
-        const resume = loadAudioPositions()[chapterAudioStorageKey];
-        if (resume && resume > 2) {
-          const onMeta = () => {
-            audio.currentTime = Math.min(resume, Math.max(0, (audio.duration || resume) - 1));
-            setAudioTime(audio.currentTime);
-            audio.removeEventListener("loadedmetadata", onMeta);
-          };
-          audio.addEventListener("loadedmetadata", onMeta);
-        }
-      }
-      if ("mediaSession" in navigator) {
-        navigator.mediaSession.metadata = new MediaMetadata({
-          title: `${bookTitle} ${chapterId}`,
-          artist: audioPodcast,
-          album: "Segond 21 · sync test",
-        });
-      }
-      await audio.play();
-      return true;
-    } catch {
-      setAudioPlaying(false);
-      setError("Audio indisponible pour le moment.");
-      return false;
-    } finally {
-      setAudioBusy(false);
-    }
-  }
+  const canPlayBookAudio = textVersion === "s21" && Boolean(bookAudio?.audioUrl);
 
   async function playUsfmAudio(targetUsfm: string) {
     const usfm = targetUsfm.toUpperCase();
     const audio = audioRef.current;
     if (!audio) return;
-
-    if (usfm === bookId.toUpperCase() && chapterSyncPack) {
-      await playChapterSyncedAudio();
-      return;
-    }
 
     const episode = audioByUsfm[usfm];
     if (!episode?.audioUrl) return;
@@ -1990,8 +1877,6 @@ export function BibleReaderView({
     try {
       setAudioBusy(true);
       setAudioActiveUsfm(usfm);
-      setAudioSyncVerse(null);
-      audioSyncScrollVerseRef.current = null;
       if (audioBookRef.current !== usfm || !String(audio.src || "").includes(episode.audioUrl)) {
         if (audioBookRef.current && Number.isFinite(audio.currentTime)) {
           saveAudioPosition(audioBookRef.current, audio.currentTime);
@@ -2209,7 +2094,7 @@ export function BibleReaderView({
   return (
     <section
       ref={readerRef}
-      className={`bible-reader bible-reader--yv${hideChrome ? " is-chrome-hidden" : ""}${showCreateCard ? " has-verse-actions" : ""}${shareSheetOpen ? " is-share-open" : ""}${headCompact ? " is-head-compact" : ""}${pickerOpen ? " is-passage-roll-open" : ""}${compactToolsMenu ? " is-compact-tools" : ""}${toolsMenuOpen ? " is-tools-menu-open" : ""}`}
+      className={`bible-reader bible-reader--yv${hideChrome ? " is-chrome-hidden" : ""}${audioPlaying ? " is-audio-playing" : ""}${showCreateCard ? " has-verse-actions" : ""}${shareSheetOpen ? " is-share-open" : ""}${headCompact ? " is-head-compact" : ""}${pickerOpen ? " is-passage-roll-open" : ""}${compactToolsMenu ? " is-compact-tools" : ""}${toolsMenuOpen ? " is-tools-menu-open" : ""}`}
       style={{ ["--bible-font-size" as string]: `${fontSize}px` }}
       onKeyDown={(event) => {
         if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement) {
@@ -2478,8 +2363,6 @@ export function BibleReaderView({
               const selEdge = selectionEdgeClass(selection, verse.number);
               const hasFlashcard = chapterCardVerses.has(verse.number);
               const titleLike = isLikelyVerseTitle(verse.text, verse.number);
-              const audioActive =
-                audioPlaying && audioSyncVerse === verse.number && !selection?.length;
               return (
                 <button
                   key={verse.number}
@@ -2491,7 +2374,6 @@ export function BibleReaderView({
                     selected ? "is-selected" : "",
                     markDisplay ? "is-marked" : "",
                     hasFlashcard ? "has-card" : "",
-                    audioActive ? "is-audio-active" : "",
                     selEdge,
                     titleLike ? "is-title" : "",
                   ]
@@ -2707,8 +2589,8 @@ export function BibleReaderView({
         return (
       <footer
         className={`bible-yv-dock${planReading ? " is-plan" : ""}${showCreateCard ? " has-verse-actions" : ""}${audioPlaying ? " is-playing" : ""}${narrowChrome ? " is-floating" : ""}${hideDockPassageNav ? " is-play-only" : ""}`}
-        aria-hidden={hideChrome || undefined}
-        inert={hideChrome || undefined}
+        aria-hidden={hideChrome && !hideDockPassageNav ? true : undefined}
+        inert={hideChrome && !hideDockPassageNav ? true : undefined}
         aria-label={
           hideDockPassageNav
             ? "Lecteur audio"

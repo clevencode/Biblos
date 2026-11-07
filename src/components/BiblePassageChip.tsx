@@ -22,10 +22,11 @@ export function BiblePassageChip({
   onClick,
 }: BiblePassageChipProps) {
   const trimmed = String(label || "").trim();
-  const showSkeleton = loading || !trimmed;
-  /** Placeholder invisível — largura estável (livro/capítulo) enquanto hidrata. */
-  const placeholder = variant === "chapter" ? "00" : "Livre";
-  const visibleLabel = showSkeleton ? placeholder : trimmed;
+  const showSkeleton =
+    loading || (variant === "book" && !trimmed) || (variant === "chapter" && !trimmed);
+  /** Placeholder tabular — largura estável (livre/capítulo) enquanto hidrata. */
+  const placeholder = variant === "chapter" ? "88" : "Livre";
+  const visibleLabel = showSkeleton ? (trimmed || placeholder) : trimmed;
   const kindIcon = variant === "book" ? "menu_book" : "format_list_numbered";
 
   return (

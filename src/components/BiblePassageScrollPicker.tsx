@@ -3,6 +3,7 @@ import type { PassageDiscoverySession } from "../bible/passageDiscovery/session"
 import { YvIcon } from "./YvIcon";
 import type { BibleSearchHit, YouVersionBook } from "../youversion/client";
 import { BiblePassageDiscoveryList } from "./BiblePassageDiscoveryList";
+import { BiblePickGridSkeleton } from "./BiblePickGridSkeleton";
 import type { DiscoveryJump, PassageDiscoveryResult } from "../bible/passageDiscovery/types";
 
 export type PassagePickStep = "book" | "chapter" | "verse";
@@ -95,6 +96,7 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
           : `Versets du chapitre ${chapterId}`;
 
     const hasQuery = Boolean(bookSearchQuery.trim());
+    const verseGridSkeletonCount = Math.min(50, Math.max(verseOptions.length, 24));
 
     function handlePickVerse(hit: BibleSearchHit) {
       if (gridRef.current) {
@@ -192,23 +194,34 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
               onPickVerse={handlePickVerse}
             />
           ) : step === "chapter"
-            ? chapters.map((id) => {
-                const on = id === chapterId;
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    role="option"
-                    aria-selected={on}
-                    className={`bible-yv-pick-cell${on ? " is-on" : ""}`}
-                    onClick={() => onPickChapter(id)}
-                    disabled={loading}
-                  >
-                    {id}
-                  </button>
-                );
-              })
-            : verseOptions.map((n) => {
+            ? chapters.length
+              ? chapters.map((id) => {
+                  const on = id === chapterId;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      role="option"
+                      aria-selected={on}
+                      className={`bible-yv-pick-cell${on ? " is-on" : ""}`}
+                      onClick={() => onPickChapter(id)}
+                      disabled={loading}
+                    >
+                      {id}
+                    </button>
+                  );
+                })
+              : (
+                <BiblePickGridSkeleton count={20} role="presentation" />
+              )
+            : loadingUi
+              ? (
+                <BiblePickGridSkeleton
+                  count={verseGridSkeletonCount}
+                  role="presentation"
+                />
+              )
+              : verseOptions.map((n) => {
                 const on = highlightVerse === n || verseSelected(n);
                 return (
                   <button
@@ -231,7 +244,9 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
           </p>
         ) : null}
         {step === "verse" && loadingUi ? (
-          <p className="bible-yv-pick-loading bible-yv-muted bible-yv-pick-roll-empty">Ouverture…</p>
+          <p className="bible-yv-pick-roll-status bible-yv-muted" role="status">
+            Ouverture du chapitre…
+          </p>
         ) : null}
         {step === "verse" && !loadingUi && !verseOptions.length ? (
           <p className="bible-yv-pick-loading bible-yv-muted bible-yv-pick-roll-empty">Aucun verset</p>

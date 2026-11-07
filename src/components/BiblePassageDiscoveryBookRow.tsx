@@ -110,9 +110,26 @@ export function BiblePassageDiscoveryBookRow({
           aria-label={`Versets dans ${hit.title}`}
         >
           {busy ? (
-            <p className="bible-yv-pick-verse-panel-busy bible-yv-muted" role="status">
-              Chargement des versets…
-            </p>
+            <>
+              <p className="bible-yv-pick-verse-panel-busy bible-yv-muted" role="status">
+                Chargement des versets…
+              </p>
+              <ul
+                className="bible-yv-pick-verse-hits is-loading"
+                aria-hidden
+              >
+                {Array.from({ length: 5 }, (_, i) => (
+                  <li key={i}>
+                    <div className="bible-yv-pick-verse-hit is-loading">
+                      <span className="bible-yv-pick-verse-hit-ref is-opaque">
+                        {i + 1}.{i + 1}
+                      </span>
+                      <span className="bible-yv-pick-verse-hit-snippet is-loading-line" />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </>
           ) : error ? (
             <p className="bible-yv-pick-verse-panel-error bible-yv-muted" role="status">
               {error}

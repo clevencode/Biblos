@@ -31,7 +31,7 @@ export function BibleChapterLoadingPlaceholder({
             key={i}
             className={`bible-chapter-loading-verse${i % 4 === 3 ? " is-gap" : ""}`}
           >
-            <span className="bible-chapter-loading-num" />
+            <span className="bible-chapter-loading-num is-opaque">{i + 1}</span>
             <span
               className={[
                 "bible-chapter-loading-line",
