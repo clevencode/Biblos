@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState, type RefObject } from "react";
 import { YvIcon } from "./YvIcon";
 import {
   buildPlanShareCaption,
@@ -13,6 +13,8 @@ import { renderVerseShareCard } from "../shareVerseCard";
 export type BibleShareSheetProps = {
   open: boolean;
   onClose: () => void;
+  /** Racine lecture : synchronise la réserve de scroll du passage avec la hauteur du sheet. */
+  layoutRootRef?: RefObject<HTMLElement | null>;
   /** `plan` = cartão + texte du plan entier ; `verse` = verset sélectionné. */
   mode?: "verse" | "plan";
   refLabel: string;
@@ -38,8 +40,10 @@ export function BibleShareSheet({
   planDescription = "",
   planMeta = "",
   planId = null,
+  layoutRootRef,
 }: BibleShareSheetProps) {
   const titleId = useId();
+  const sheetRef = useRef<HTMLDivElement | null>(null);
   const blobRef = useRef<Blob | null>(null);
   const planTextRef = useRef<string>("");
   const planUrlRef = useRef<string>("");
@@ -55,6 +59,26 @@ export function BibleShareSheet({
   const displayLabel = isPlan
     ? planTitle.trim() || refLabel || "Plan de lecture"
     : refLabel;
+
+  useLayoutEffect(() => {
+    const root = layoutRootRef?.current;
+    const sheet = sheetRef.current;
+    if (!root) return;
+    if (!open || !sheet) {
+      root.style.removeProperty("--bible-share-sheet-measured-h");
+      return;
+    }
+    const apply = () => {
+      root.style.setProperty("--bible-share-sheet-measured-h", `${sheet.offsetHeight}px`);
+    };
+    apply();
+    const ro = new ResizeObserver(apply);
+    ro.observe(sheet);
+    return () => {
+      ro.disconnect();
+      root.style.removeProperty("--bible-share-sheet-measured-h");
+    };
+  }, [open, layoutRootRef, previewUrl, previewBusy, previewError, msg, isPlan]);
 
   useEffect(() => {
     if (!open) return;
@@ -253,17 +277,11 @@ export function BibleShareSheet({
     : Boolean(verseText.trim() || refLabel.trim());
 
   return (
-    <>
-      <button
-        type="button"
-        className="bible-share-sheet-scrim"
-        aria-label="Fermer le partage"
-        onClick={onClose}
-      />
       <div
-        className="bible-share-sheet is-popup"
+        ref={sheetRef}
+        className="bible-share-sheet is-sheet"
         role="dialog"
-        aria-modal="true"
+        aria-modal="false"
         aria-labelledby={titleId}
       >
         <header className="bible-share-sheet-head">
@@ -335,6 +353,5 @@ export function BibleShareSheet({
         {msg ? <p className="bible-share-sheet-msg">{msg}</p> : null}
       </div>
       </div>
-    </>
   );
 }

@@ -544,6 +544,7 @@ export function BibleReaderView({
   const forceChromeRef = useRef(false);
   const scrollRaf = useRef(0);
   const readerRef = useRef<HTMLElement | null>(null);
+  const verseActionsSheetRef = useRef<HTMLDivElement | null>(null);
   const pendingVerseStep = useRef(false);
   const pendingScrollVerse = useRef<PendingVerseScroll | null>(null);
   const verseScrollSeq = useRef(0);
@@ -961,7 +962,7 @@ export function BibleReaderView({
   }
 
   function selectVerse(number: number) {
-    if (pickerOpen || toolsMenuOpen) return;
+    if (pickerOpen || toolsMenuOpen || shareSheetOpen) return;
     // Side-effects fora do updater (React pode correr updaters na fase de render).
     preferJumpFocusRef.current = false;
     const current = selection;
@@ -1557,6 +1558,33 @@ export function BibleReaderView({
   const showCreateCard = Boolean(
     selectedVerses.length && selectedVerseText && !pickerOpen && !shareSheetOpen,
   );
+
+  useLayoutEffect(() => {
+    const reader = readerRef.current;
+    const sheet = verseActionsSheetRef.current;
+    if (!reader) return;
+    if (!showCreateCard || !sheet) {
+      reader.style.removeProperty("--verse-actions-sheet-h");
+      return;
+    }
+    const apply = () => {
+      reader.style.setProperty("--verse-actions-sheet-h", `${sheet.offsetHeight}px`);
+    };
+    apply();
+    const ro = new ResizeObserver(apply);
+    ro.observe(sheet);
+    return () => {
+      ro.disconnect();
+      reader.style.removeProperty("--verse-actions-sheet-h");
+    };
+  }, [
+    showCreateCard,
+    selectedVerses.length,
+    cardMsg,
+    selectionHasMark,
+    existingVerseCard,
+    narrowChrome,
+  ]);
   const forceChrome =
     pickerOpen ||
     showCreateCard ||
@@ -2223,7 +2251,7 @@ export function BibleReaderView({
       </div>
 
       <div
-        className={`bible-yv-read-surface${pickerOpen || toolsMenuOpen || shareSheetOpen ? " is-overlay-occluding" : ""}`}
+        className={`bible-yv-read-surface${pickerOpen || toolsMenuOpen ? " is-overlay-occluding" : ""}`}
       >
         {pickerOpen ? (
           <button
@@ -2265,19 +2293,10 @@ export function BibleReaderView({
           .filter(Boolean)
           .join(" ")}
         aria-busy={loading || loadingUi}
-        aria-hidden={pickerOpen || toolsMenuOpen || shareSheetOpen || undefined}
-        inert={pickerOpen || toolsMenuOpen || shareSheetOpen || undefined}
+        aria-hidden={pickerOpen || toolsMenuOpen || undefined}
+        inert={pickerOpen || toolsMenuOpen || undefined}
         style={{ ["--verse-tint" as string]: actionTone.tint }}
-        onClick={(event) => {
-          const target = event.target;
-          if (
-            showCreateCard &&
-            target instanceof Element &&
-            !target.closest(".bible-verse, .bible-verse-actions")
-          ) {
-            closeCreateCard();
-            return;
-          }
+        onClick={() => {
           // Tap to reveal chrome (YouVersion).
           if (chromeHiddenRef.current) setReadingChrome(false, true);
         }}
@@ -2428,17 +2447,11 @@ export function BibleReaderView({
       </div>
 
       {showCreateCard ? (
-        <>
-          <button
-            type="button"
-            className="bible-verse-actions-scrim"
-            aria-label="Fermer le panneau"
-            onClick={closeCreateCard}
-          />
           <div
-            className={`bible-verse-actions${narrowChrome ? " is-tab-chrome" : ""}`}
+            ref={verseActionsSheetRef}
+            className={`bible-verse-actions is-sheet${narrowChrome ? " is-tab-chrome" : ""}`}
             role="dialog"
-            aria-modal="true"
+            aria-modal="false"
             aria-label="Actions du verset"
             style={
               {
@@ -2593,7 +2606,6 @@ export function BibleReaderView({
             </div>
           {cardMsg ? <p className="bible-verse-actions-msg">{cardMsg}</p> : null}
         </div>
-        </>
       ) : null}
 
       {(() => {
@@ -2764,6 +2776,7 @@ export function BibleReaderView({
 
       <BibleShareSheet
         open={shareSheetOpen}
+        layoutRootRef={readerRef}
         onClose={() => setShareSheetOpen(false)}
         mode={shareMode}
         refLabel={shareRefLabel}

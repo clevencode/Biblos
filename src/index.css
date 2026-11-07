@@ -5174,21 +5174,20 @@ body {
     --mobile-touch: 44px;
     --mobile-tab-min: 48px;
     --mobile-chrome-gap: 10px;
-    /* Chrome inferior partilhado (tabs + safe-area) — evita números mágicos */
-    --mobile-float-inset-x: 20px;
-    --shell-float-gap: 12px;
-    --mobile-tabbar-float-gap: 16px;
-    --mobile-tabbar-pad: 5px;
+    /* Chrome inferior: altura da tab bar + safe-area (barra ancorada, sem flutuação) */
+    --mobile-float-inset-x: var(--mobile-gutter);
+    --shell-float-gap: 8px;
+    --mobile-tabbar-pad: 6px;
     --mobile-tabbar-h: 52px;
-    --mobile-bottom-chrome: calc(
-      var(--mobile-tabbar-h) + var(--mobile-tabbar-float-gap) + env(safe-area-inset-bottom, 0px)
-    );
+    --mobile-bottom-chrome: calc(var(--mobile-tabbar-h) + env(safe-area-inset-bottom, 0px));
     --bible-fab-lift: 58px;
     --bible-dock-lift: calc(var(--mobile-bottom-chrome) + var(--bible-fab-lift));
     --bible-passage-clearance: calc(var(--bible-dock-lift) + 10px);
     --bible-actions-lift: calc(var(--bible-dock-lift) + var(--shell-float-gap));
     --bible-pick-lift: var(--mobile-bottom-chrome);
-    --bible-verse-sheet-clearance: calc(var(--bible-dock-lift) + var(--shell-float-gap) + 12rem);
+    /* Fallbacks avant mesure ResizeObserver (contenu sans scroll interne). */
+    --bible-verse-actions-sheet-fallback: 20.5rem;
+    --bible-share-sheet-fallback: 24rem;
     --panel-gutter: var(--mobile-gutter);
   }
 
@@ -5220,102 +5219,65 @@ body {
   }
 
   /*
-   * Chrome mobile — « ghost container » (layout ≠ paint) + pilule découplée.
-   * A: .note-shell-main garde le padding structurel ; parents transparents.
-   * B: .mode-tabs = positionnement ; .mode-tabs-nav = identité visuelle pilule.
+   * Tab bar mobile — barra ancorada (full width, fluxo do shell).
+   * --mobile-bottom-chrome : reserva para scroll, docks e popups Bible.
    */
-  .workspace.is-mobile-vista .note-shell,
-  .workspace.is-mobile-vista .note-shell-main {
-    background: transparent;
-    border: none;
-    box-shadow: none;
-  }
-
-  .workspace.is-mobile-vista .note-shell-main {
-    padding-bottom: var(--mobile-bottom-chrome);
-  }
-
-  .workspace.is-mobile-vista .graph-pane {
-    position: relative;
-    z-index: 0;
-    background: transparent;
-    border: none;
-    box-shadow: none;
-    margin-bottom: calc(-1 * var(--mobile-bottom-chrome));
-    padding-bottom: var(--mobile-bottom-chrome);
-    box-sizing: border-box;
-  }
-
   .workspace.is-mobile-vista .graph-pane-body {
-    min-height: 100%;
-    background: var(--bg);
     scroll-padding-bottom: var(--mobile-bottom-chrome);
   }
 
-  .workspace.is-mobile-vista .pane-body {
-    min-height: 100%;
-    background: var(--bg);
-  }
-
-  .app.is-bible-mode.is-narrow .workspace.is-mobile-vista .graph-pane-body,
-  .app.is-bible-mode.is-narrow .workspace.is-mobile-vista .pane-body,
   .app.is-bible-mode.is-narrow #panel-bible,
   .app.is-bible-mode.is-narrow #panel-bible .bible-reader--yv {
     background: var(--yv-bg);
   }
 
-  /* C (lite): bande safe-area / overscroll = même teinte que la Bible */
   html:has(.app.is-bible-mode.is-narrow),
   html:has(.app.is-bible-mode.is-narrow) body {
     background-color: var(--yv-bg, var(--bg));
   }
 
-  /* Tab bar : coque fantasma (viewport-relative) */
   .note-shell .mode-tabs {
     order: 2;
     flex: none;
-    position: fixed;
-    left: 50%;
+    position: relative;
+    left: auto;
     right: auto;
-    bottom: calc(var(--mobile-tabbar-float-gap) + env(safe-area-inset-bottom, 0px));
-    z-index: 50;
-    width: min(
-      calc(100vw - 2 * max(var(--mobile-float-inset-x), env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px)) - 8px),
-      20.5rem
-    );
-    max-width: calc(100vw - 48px);
+    bottom: auto;
+    z-index: 8;
+    width: 100%;
+    max-width: none;
     margin: 0;
-    padding: 0;
-    border: none;
+    min-height: var(--mobile-tabbar-h);
+    padding: var(--mobile-tabbar-pad) var(--mobile-gutter)
+      max(var(--mobile-tabbar-pad), env(safe-area-inset-bottom, 0px));
+    padding-left: max(var(--mobile-gutter), env(safe-area-inset-left, 0px));
+    padding-right: max(var(--mobile-gutter), env(safe-area-inset-right, 0px));
+    border: 0;
+    border-top: 1px solid var(--line);
     border-radius: 0;
-    background: transparent;
+    background: var(--panel);
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
     box-shadow: none;
-    contain: none;
-    overflow: visible;
-    transform: translate3d(-50%, 0, 0);
+    transform: none;
     opacity: 1;
-    pointer-events: none;
+    pointer-events: auto;
     transition:
-      transform 180ms cubic-bezier(0.4, 0, 0.2, 1),
-      opacity 160ms cubic-bezier(0.4, 0, 0.2, 1);
+      transform 160ms cubic-bezier(0.4, 0, 0.2, 1),
+      opacity 140ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .app.is-bible-mode.is-narrow .note-shell .mode-tabs {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: auto;
     will-change: transform, opacity;
   }
 
-  .note-shell .mode-tabs-nav {
-    pointer-events: auto;
-    min-height: var(--mobile-tabbar-h);
-    padding: var(--mobile-tabbar-pad) 8px;
-    border: 1px solid color-mix(in srgb, var(--line) 65%, transparent);
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--elevated, var(--panel)) 96%, transparent);
-    backdrop-filter: blur(20px) saturate(1.12);
-    -webkit-backdrop-filter: blur(20px) saturate(1.12);
-    box-shadow:
-      0 0 0 1px color-mix(in srgb, #fff 42%, transparent) inset,
-      0 8px 24px color-mix(in srgb, #000 11%, transparent);
-    transition: box-shadow 180ms ease;
+  .app.is-bible-mode.is-narrow .note-shell-main > .graph-pane {
+    padding-bottom: 0;
   }
 
   /* Chrome imersivo lecture = .bible-reader (is-chrome-hidden) ; tab bar reste visible. */
@@ -5332,22 +5294,33 @@ body {
 
   .mode-tabs {
     flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    gap: 0;
-    min-height: 0;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: 4px;
+    min-height: var(--mobile-tabbar-h);
     border-right: 0;
+  }
+
+  .note-shell .mode-tabs-nav {
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    box-shadow: none;
   }
 
   .mode-tabs-nav {
     flex-direction: row;
-    flex: 1 1 auto;
+    flex: 1;
     align-items: stretch;
-    justify-content: space-between;
+    justify-content: space-around;
     gap: 2px;
     min-width: 0;
-    width: 100%;
-    padding: 0 4px;
+    width: auto;
+    padding: 0 2px;
     overflow-x: auto;
     overscroll-behavior-x: contain;
     scrollbar-width: none;
@@ -5367,21 +5340,19 @@ body {
     padding: 7px 10px 6px;
     flex-direction: column;
     gap: 4px;
-    border-radius: 999px;
+    border-radius: 6px;
     -webkit-tap-highlight-color: transparent;
     transition:
       background 0.14s ease,
-      color 0.14s ease,
-      transform 0.12s ease;
+      color 0.14s ease;
   }
 
   .mode-tabs-nav > button.is-on {
-    background: color-mix(in srgb, var(--text) 9%, transparent);
+    background: color-mix(in srgb, var(--text) 8%, transparent);
     color: var(--text);
   }
 
   .mode-tabs-nav > button:active {
-    transform: scale(0.97);
     background: color-mix(in srgb, var(--text) 12%, transparent);
   }
 
@@ -5400,7 +5371,6 @@ body {
 
   .mode-tabs-nav > button.is-on .mode-tab-label {
     color: var(--text);
-    font-weight: 650;
   }
 
   .mode-tab-icon {
@@ -5416,18 +5386,6 @@ body {
     line-height: 16px;
     font-size: 0.56rem;
   }
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
 
   /* Página: tabs + nota. Vistas: tabs + cartões/inbox/calendário/mapa. */
   .workspace.is-mobile-page .note-shell {
@@ -9490,13 +9448,47 @@ ul.plan-yv-day-note-ref {
 }
 
 .bible-reader--yv.has-verse-actions .bible-passage {
-  padding-bottom: calc(280px + env(safe-area-inset-bottom, 0px));
-  scroll-padding-bottom: calc(248px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(
+    var(--verse-actions-sheet-h, var(--bible-verse-actions-sheet-fallback, 20.5rem)) + 16px +
+      env(safe-area-inset-bottom, 0px)
+  );
+  scroll-padding-bottom: calc(
+    var(--verse-actions-sheet-h, var(--bible-verse-actions-sheet-fallback, 20.5rem)) + 12px +
+      env(safe-area-inset-bottom, 0px)
+  );
 }
 
 .app.is-bible-mode.is-narrow .bible-reader--yv.has-verse-actions .bible-passage {
-  padding-bottom: var(--bible-verse-sheet-clearance, calc(300px + env(safe-area-inset-bottom, 0px)));
-  scroll-padding-bottom: var(--bible-verse-sheet-clearance, calc(268px + env(safe-area-inset-bottom, 0px)));
+  padding-bottom: calc(
+    var(--verse-actions-sheet-h, var(--bible-verse-actions-sheet-fallback, 20.5rem)) +
+      var(--mobile-bottom-chrome) + 8px
+  );
+  scroll-padding-bottom: calc(
+    var(--verse-actions-sheet-h, var(--bible-verse-actions-sheet-fallback, 20.5rem)) +
+      var(--mobile-bottom-chrome) + 8px
+  );
+}
+
+.bible-reader--yv.is-share-open .bible-passage {
+  padding-bottom: calc(
+    var(--bible-share-sheet-measured-h, var(--bible-share-sheet-fallback, 24rem)) + 16px +
+      env(safe-area-inset-bottom, 0px)
+  );
+  scroll-padding-bottom: calc(
+    var(--bible-share-sheet-measured-h, var(--bible-share-sheet-fallback, 24rem)) + 12px +
+      env(safe-area-inset-bottom, 0px)
+  );
+}
+
+.app.is-bible-mode.is-narrow .bible-reader--yv.is-share-open .bible-passage {
+  padding-bottom: calc(
+    var(--bible-share-sheet-measured-h, var(--bible-share-sheet-fallback, 24rem)) +
+      var(--mobile-bottom-chrome) + 8px
+  );
+  scroll-padding-bottom: calc(
+    var(--bible-share-sheet-measured-h, var(--bible-share-sheet-fallback, 24rem)) +
+      var(--mobile-bottom-chrome) + 8px
+  );
 }
 
 .bible-reader--yv .bible-passage-head {
@@ -9584,6 +9576,17 @@ ul.plan-yv-day-note-ref {
   color: color-mix(in srgb, var(--yv-text) 72%, var(--yv-muted));
 }
 
+/* Panneau verset : assombrir seulement les versets non sélectionnés (pas l’écran). */
+.bible-reader--yv.has-verse-actions .bible-verses.is-dimming .bible-verse:not(.is-selected) {
+  opacity: 0.36;
+  color: color-mix(in srgb, var(--yv-text) 68%, var(--yv-muted));
+}
+
+.bible-reader--yv.has-verse-actions .bible-verses.is-dimming .bible-verse.is-selected {
+  opacity: 1;
+  color: var(--yv-text);
+}
+
 /* YouVersion-like: no blue boxes — included = normal text, others = faded */
 .bible-reader--yv .bible-verses.is-passage-focus .bible-verse:not(.is-in-range):not(.is-selected):not(.is-marked) {
   opacity: 0.32;
@@ -9654,23 +9657,10 @@ ul.plan-yv-day-note-ref {
   margin-top: 0;
 }
 
-.bible-reader--yv .bible-verse-actions-scrim {
-  position: absolute;
-  inset: 0;
-  z-index: 4;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  background: color-mix(in srgb, #000 12%, transparent);
-  cursor: default;
-  animation: bible-scrim-in 160ms ease;
-}
-
 .bible-reader--yv .bible-verse-actions-title {
   min-width: 0;
   display: grid;
-  gap: 4px;
-  padding-right: 4px;
+  gap: 8px;
 }
 
 .bible-reader--yv .bible-verse-actions-hint {
@@ -9699,7 +9689,7 @@ ul.plan-yv-day-note-ref {
 
 .bible-reader--yv .bible-verse-action-label {
   margin: 0;
-  padding-inline: 2px;
+  padding-inline: 0;
   font-family: var(--font-ui);
   font-size: 0.68rem;
   font-weight: 600;
@@ -9800,45 +9790,97 @@ ul.plan-yv-day-note-ref {
 
 .bible-reader--yv .bible-verse-actions {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: calc(78px + env(safe-area-inset-bottom, 0px));
-  z-index: 12;
-  width: min(100% - 32px, 22.5rem);
-  margin: 0 auto;
-  padding: 16px 18px 18px;
-  border: 1px solid color-mix(in srgb, var(--yv-text) 9%, transparent);
-  border-radius: 20px;
+  z-index: 20;
+  box-sizing: border-box;
   background: var(--elevated, var(--panel));
-  display: grid;
-  gap: 14px;
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, #fff 35%, transparent) inset,
-    0 18px 44px color-mix(in srgb, #000 16%, transparent),
-    0 4px 14px color-mix(in srgb, #000 7%, transparent);
-  animation: bible-popup-in 200ms cubic-bezier(0.34, 1.12, 0.64, 1);
+  color: var(--yv-text);
 }
 
-.bible-reader--yv .bible-verse-actions.is-tab-chrome {
-  border-radius: 18px;
+.bible-reader--yv .bible-verse-actions.is-sheet {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  height: auto;
+  max-height: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 4px
+    max(var(--mobile-gutter, 16px), env(safe-area-inset-right, 0px))
+    16px
+    max(var(--mobile-gutter, 16px), env(safe-area-inset-left, 0px));
+  border: 0;
+  border-top: 1px solid color-mix(in srgb, var(--yv-line, var(--line)) 88%, transparent);
+  border-radius: 16px 16px 0 0;
+  box-shadow:
+    0 -10px 36px color-mix(in srgb, #000 10%, transparent),
+    0 -1px 0 color-mix(in srgb, var(--yv-text) 6%, transparent);
+  animation: bible-sheet-up 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  overflow: visible;
+}
+
+.bible-reader--yv .bible-verse-actions.is-sheet::before {
+  content: "";
+  display: block;
+  width: 2.75rem;
+  height: 4px;
+  margin: 6px auto 14px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--yv-text) 14%, transparent);
+  flex: none;
+}
+
+.bible-reader--yv .bible-verse-actions.is-sheet .bible-verse-actions-body {
+  overflow: visible;
+  gap: 18px;
+  padding-top: 2px;
+  padding-bottom: 4px;
+}
+
+.bible-reader--yv .bible-verse-actions.is-sheet .bible-verse-actions-head,
+.bible-reader--yv .bible-verse-actions.is-sheet .bible-verse-actions-body,
+.bible-reader--yv .bible-verse-actions.is-sheet .bible-verse-actions-msg {
+  flex: none;
+}
+
+.bible-reader--yv .bible-verse-actions.is-sheet > .bible-verse-actions-head {
+  gap: 12px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid color-mix(in srgb, var(--yv-line, var(--line)) 55%, transparent);
+}
+
+.bible-reader--yv .bible-verse-actions.is-sheet .bible-verse-action-block {
+  gap: 10px;
+}
+
+.bible-reader--yv .bible-verse-actions.is-sheet .bible-verse-color-row {
+  gap: 12px;
+  padding: 8px;
+}
+
+.bible-reader--yv .bible-verse-actions.is-sheet .bible-verse-cta-row {
+  gap: 12px;
 }
 
 .bible-reader--yv .bible-verse-actions-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  padding-top: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  column-gap: 12px;
+  row-gap: 0;
 }
 
 .bible-reader--yv .bible-verse-color-row {
   display: flex;
   flex-wrap: nowrap;
   align-items: stretch;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
   min-height: 48px;
-  padding: 8px;
+  padding: 6px;
   border-radius: 14px;
   background: color-mix(in srgb, var(--yv-text) 6%, transparent);
   box-sizing: border-box;
@@ -9875,25 +9917,12 @@ ul.plan-yv-day-note-ref {
   width: 32px;
   height: 32px;
   min-height: 32px;
-  margin: 0 2px 0 0;
+  margin: 0;
   border-radius: 999px;
   border: 0;
-  border-right: 0;
   box-shadow: inset 0 0 0 1px color-mix(in srgb, #000 16%, transparent);
   overflow: visible;
   transition: filter 0.12s ease, transform 0.12s ease;
-}
-
-.bible-reader--yv .bible-verse-color-row .bible-verse-color-picker::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  right: -4px;
-  width: 1px;
-  height: 18px;
-  transform: translateY(-50%);
-  background: color-mix(in srgb, var(--yv-text) 14%, transparent);
-  pointer-events: none;
 }
 
 .bible-reader--yv .bible-verse-color-row .bible-verse-color-picker:active {
@@ -10241,12 +10270,12 @@ ul.plan-yv-day-note-ref {
   flex: none;
   width: 40px;
   height: 40px;
-  margin: -4px -6px 0 0;
+  margin: 0;
   display: grid;
   place-items: center;
-  border: 0;
+  border: 1px solid color-mix(in srgb, var(--yv-text) 9%, transparent);
   border-radius: 12px;
-  background: color-mix(in srgb, var(--yv-text) 6%, transparent);
+  background: color-mix(in srgb, var(--yv-text) 5%, transparent);
   color: color-mix(in srgb, var(--yv-muted) 55%, var(--yv-text));
   cursor: pointer;
 }
@@ -10978,39 +11007,68 @@ ul.plan-yv-day-note-ref {
   justify-self: end;
 }
 
-.bible-share-sheet-scrim {
-  position: absolute;
-  inset: 0;
-  z-index: 25;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  background: color-mix(in srgb, #000 12%, transparent);
-  cursor: default;
-  animation: bible-scrim-in 160ms ease;
-}
-
 .bible-share-sheet {
-  --bible-share-max-h: min(72dvh, 26rem);
   position: absolute;
   z-index: 26;
+  box-sizing: border-box;
+  color: var(--yv-text, var(--text));
+  background: var(--elevated, var(--panel));
+}
+
+.bible-share-sheet.is-sheet {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  max-width: none;
+  height: auto;
+  max-height: none;
+  margin: 0;
   display: flex;
   flex-direction: column;
   gap: 14px;
-  width: min(calc(100% - 32px), 22.5rem);
-  max-height: var(--bible-share-max-h);
-  margin: 0 auto;
-  padding: 16px 18px 18px;
-  border: 1px solid color-mix(in srgb, var(--yv-text, var(--text)) 9%, transparent);
-  border-radius: 20px;
-  background: var(--elevated, var(--panel));
-  color: var(--yv-text, var(--text));
-  overflow: hidden;
+  padding: 4px
+    max(var(--mobile-gutter, 16px), env(safe-area-inset-right, 0px))
+    16px
+    max(var(--mobile-gutter, 16px), env(safe-area-inset-left, 0px));
+  border: 0;
+  border-top: 1px solid color-mix(in srgb, var(--yv-line, var(--line)) 88%, transparent);
+  border-radius: 16px 16px 0 0;
+  overflow: visible;
   box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--sheen, #fff) 35%, transparent) inset,
-    0 18px 44px color-mix(in srgb, #000 16%, transparent),
-    0 4px 14px color-mix(in srgb, #000 7%, transparent);
-  animation: bible-popup-in 220ms cubic-bezier(0.34, 1.1, 0.64, 1);
+    0 -10px 36px color-mix(in srgb, #000 10%, transparent),
+    0 -1px 0 color-mix(in srgb, var(--yv-text, var(--text)) 6%, transparent);
+  animation: bible-sheet-up 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.bible-share-sheet.is-sheet::before {
+  content: "";
+  display: block;
+  width: 2.75rem;
+  height: 4px;
+  margin: 6px auto 14px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--yv-text, var(--text)) 14%, transparent);
+  flex: none;
+}
+
+.bible-share-sheet.is-sheet .bible-share-sheet-head {
+  padding-bottom: 4px;
+  border-bottom: 1px solid color-mix(in srgb, var(--yv-line, var(--line)) 55%, transparent);
+}
+
+.bible-share-sheet.is-sheet .bible-share-sheet-preview {
+  overflow: visible;
+  padding: 4px 0;
+}
+
+.bible-share-sheet.is-sheet .bible-share-sheet-card {
+  display: block;
+  width: 100%;
+  max-width: 14.5rem;
+  max-height: 11.5rem;
+  margin: 0 auto;
+  object-fit: contain;
 }
 
 .bible-share-sheet-head {
@@ -11180,25 +11238,9 @@ ul.plan-yv-day-note-ref {
   transform: translate3d(0, 10px, 0);
 }
 
-.bible-reader--yv .bible-share-sheet.is-popup {
-  left: 0;
-  right: 0;
-  bottom: calc(78px + env(safe-area-inset-bottom, 0px));
-}
-
-.app.is-bible-mode.is-narrow .bible-share-sheet.is-popup {
-  --bible-share-max-h: min(
-    26rem,
-    calc(
-      100dvh - var(--mobile-bottom-chrome) - var(--shell-float-gap, 12px)
-        - max(10px, env(safe-area-inset-top, 0px)) - 12px
-    )
-  );
-  bottom: calc(var(--mobile-bottom-chrome) + var(--shell-float-gap, 12px));
-  left: max(var(--mobile-float-inset-x, var(--mobile-gutter, 12px)), env(safe-area-inset-left, 0px));
-  right: max(var(--mobile-float-inset-x, var(--mobile-gutter, 12px)), env(safe-area-inset-right, 0px));
-  width: auto;
-  max-width: min(22.5rem, calc(100vw - 48px));
+.app.is-bible-mode.is-narrow .bible-reader--yv .bible-verse-actions.is-sheet,
+.app.is-bible-mode.is-narrow .bible-reader--yv .bible-share-sheet.is-sheet {
+  bottom: var(--mobile-bottom-chrome);
 }
 
 .bible-search-sheet-close {
@@ -11907,25 +11949,19 @@ ul.plan-yv-day-note-ref {
   transform: translate3d(0, 10px, 0);
 }
 
-.app.is-bible-mode.is-narrow .bible-reader--yv .bible-verse-actions {
-  bottom: calc(var(--mobile-bottom-chrome) + var(--shell-float-gap, 12px) + 4px);
-  left: max(var(--mobile-float-inset-x, var(--mobile-gutter, 12px)), env(safe-area-inset-left, 0px));
-  right: max(var(--mobile-float-inset-x, var(--mobile-gutter, 12px)), env(safe-area-inset-right, 0px));
-  width: auto;
-  max-width: min(22.5rem, calc(100vw - 48px));
-  margin: 0 auto;
-  border-radius: 20px;
-  padding: 16px 18px 18px;
-  gap: 14px;
-  z-index: 25;
+.app.is-bible-mode.is-narrow .bible-reader--yv .bible-verse-actions.is-sheet {
+  padding-bottom: 14px;
 }
 
-.bible-reader--yv .bible-verse-actions-scrim {
-  z-index: 24;
-}
-
-.app.is-bible-mode.is-narrow .bible-reader--yv .bible-verse-cta-row {
-  gap: 12px;
+@keyframes bible-sheet-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 100%, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
 }
 
 @keyframes bible-popup-in {
@@ -11950,9 +11986,7 @@ ul.plan-yv-day-note-ref {
 
 @media (prefers-reduced-motion: reduce) {
   .bible-reader--yv .bible-verse-actions,
-  .bible-reader--yv .bible-verse-actions-scrim,
-  .bible-share-sheet,
-  .bible-share-sheet-scrim {
+  .bible-share-sheet {
     animation: none;
   }
 }
