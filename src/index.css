@@ -6219,6 +6219,52 @@ body {
   margin: 0;
 }
 
+.home-name-btn {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.home-name-btn:hover {
+  color: var(--accent);
+}
+
+.home-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+
+.home-profile-btn {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.home-profile-btn:hover {
+  background: var(--hover);
+}
+
+.home-profile-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  font-size: 1.25rem;
+}
+
 .home-notif-btn {
   flex: none;
   position: relative;
@@ -9114,6 +9160,20 @@ ul.plan-yv-day-note-ref {
   margin-left: auto;
 }
 
+.bible-reader--yv.is-compact-tools .bible-yv-top.is-compact-tools {
+  gap: 8px;
+}
+
+.bible-reader--yv.is-compact-tools .bible-yv-passage-roll {
+  flex: 1 1 auto;
+  max-width: none;
+  min-width: 0;
+}
+
+.bible-yv-passage-roll-scrim.is-tools {
+  z-index: 3;
+}
+
 .bible-yv-search-btn {
   width: 40px;
   height: 36px;
@@ -9187,6 +9247,10 @@ ul.plan-yv-day-note-ref {
   right: 0;
   z-index: 40;
   min-width: min(16.5rem, calc(100vw - 2rem));
+  max-height: min(74vh, 28rem);
+  overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   padding: 6px;
   border: 1px solid color-mix(in srgb, var(--yv-text) 12%, transparent);
   border-radius: 14px;
@@ -9269,6 +9333,35 @@ ul.plan-yv-day-note-ref {
 
 .bible-yv-muted {
   color: var(--yv-muted);
+}
+
+.bible-yv-read-surface {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+
+.bible-yv-passage-roll-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  cursor: default;
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+  backdrop-filter: blur(0.5px);
+}
+
+.bible-reader--yv.is-passage-roll-open .bible-yv-read-surface.is-overlay-occluding .bible-passage,
+.bible-reader--yv.is-tools-menu-open .bible-yv-read-surface.is-overlay-occluding .bible-passage {
+  pointer-events: none;
+  user-select: none;
+  opacity: 0.62;
+  transition: opacity 0.2s ease;
 }
 
 .bible-reader--yv .bible-passage {
@@ -11654,6 +11747,11 @@ ul.plan-yv-day-note-ref {
   .bible-reader--yv .bible-passage.is-chapter-opening::before,
   .bible-reader--yv .bible-passage.is-chapter-reload::before {
     animation: none;
+  }
+
+  .bible-reader--yv.is-passage-roll-open .bible-yv-read-surface.is-overlay-occluding .bible-passage,
+  .bible-reader--yv.is-tools-menu-open .bible-yv-read-surface.is-overlay-occluding .bible-passage {
+    transition: none;
   }
 
   .bible-reader--yv.is-chrome-hidden .bible-yv-dock {

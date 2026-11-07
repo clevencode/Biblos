@@ -11,13 +11,13 @@ export const ALL_SHELL_TABS: ShellTabDef[] = [
 ];
 
 /**
- * Tab bar: Accueil, Plan, Bible, Profil (Cartes opcional via flag).
+ * Tab bar mobile : Accueil, Plan, Bible, Cartes (profil via Accueil).
  */
 export const ENABLED_SHELL_TAB_IDS: ReadonlySet<CenterMode> = new Set([
   "home",
   "today",
   "bible",
-  "profile",
+  "cards",
 ]);
 
 export const DEFAULT_SHELL_MODE: CenterMode = "today";
@@ -32,5 +32,6 @@ export function visibleShellTabs(): ShellTabDef[] {
 
 export function coerceShellMode(mode: CenterMode): CenterMode {
   if (isShellTabEnabled(mode)) return mode;
+  if (mode === "profile") return mode;
   return DEFAULT_SHELL_MODE;
 }
