@@ -1,5 +1,6 @@
 import { YvIcon } from "./YvIcon";
 import type { DiscoveryJump, PassageDiscoverySections } from "../bible/passageDiscovery/types";
+import type { BibleTextVersionId } from "../bible/bibleVersions";
 import type { BibleSearchHit } from "../youversion/client";
 import { BiblePassageDiscoveryBookRow } from "./BiblePassageDiscoveryBookRow";
 import type { DiscoveryBookHit } from "../bible/passageDiscovery/types";
@@ -9,6 +10,7 @@ type BiblePassageDiscoveryListProps = {
   jumps: DiscoveryJump[];
   busy: boolean;
   contentError: string | null;
+  textVersion: BibleTextVersionId;
   hasQuery: boolean;
   searchQuery: string;
   bookId: string;
@@ -43,6 +45,7 @@ function renderSection(
           hit={hit}
           searchQuery={props.searchQuery}
           hasQuery={props.hasQuery}
+          textVersion={props.textVersion}
           currentBookId={props.bookId}
           loading={props.loading}
           expanded={props.expandedBookId?.toUpperCase() === hit.id.toUpperCase()}
@@ -63,6 +66,7 @@ export function BiblePassageDiscoveryList({
   jumps,
   busy,
   contentError,
+  textVersion,
   hasQuery,
   searchQuery,
   bookId,
@@ -81,6 +85,7 @@ export function BiblePassageDiscoveryList({
   const sectionProps = {
     searchQuery,
     hasQuery,
+    textVersion,
     bookId,
     loading,
     expandedBookId,

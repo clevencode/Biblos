@@ -38,7 +38,7 @@ export function BibleChapterLoadingPlaceholder({
       aria-busy="true"
       aria-label={`${lead} ${bookTitle} ${chapterId}`}
     >
-      <p className="bible-chapter-loading-lead">{lead}</p>
+      <p className="bible-chapter-loading-lead sr-only">{lead}</p>
       <div className="bible-chapter-loading-verses" aria-hidden="true">
         {Array.from({ length: lineTotal }, (_, i) => {
           const verseNum = i + 1;

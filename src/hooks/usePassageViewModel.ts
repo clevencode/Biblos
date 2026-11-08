@@ -65,7 +65,6 @@ export function usePassageViewModel(options: UsePassageViewModelOptions) {
   useEffect(() => {
     if (active) return;
     loadGen.current += 1;
-    dispatch({ type: "RESET" });
   }, [active]);
 
   const passage = displayPassageFromViewState(viewState);

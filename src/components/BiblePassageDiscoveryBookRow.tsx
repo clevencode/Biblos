@@ -3,6 +3,7 @@ import { BibleSearchHighlight } from "./BibleSearchHighlight";
 import { YvIcon } from "./YvIcon";
 import type { DiscoveryBookHit } from "../bible/passageDiscovery/types";
 import { useBookVerseDiscovery } from "../hooks/useBookVerseDiscovery";
+import type { BibleTextVersionId } from "../bible/bibleVersions";
 import type { BibleSearchHit } from "../youversion/client";
 import { buildDiscoveryVerseRowId } from "../bible/viewState/pickerViewState";
 
@@ -10,6 +11,7 @@ type BiblePassageDiscoveryBookRowProps = {
   hit: DiscoveryBookHit;
   searchQuery: string;
   hasQuery: boolean;
+  textVersion: BibleTextVersionId;
   currentBookId: string;
   loading: boolean;
   expanded: boolean;
@@ -25,6 +27,7 @@ export function BiblePassageDiscoveryBookRow({
   hit,
   searchQuery,
   hasQuery,
+  textVersion,
   currentBookId,
   loading,
   expanded,
@@ -43,6 +46,7 @@ export function BiblePassageDiscoveryBookRow({
   const { hits, total, busy, error } = useBookVerseDiscovery(
     searchQuery,
     expanded && expandable ? hit.id : null,
+    textVersion,
   );
 
   useLayoutEffect(() => {

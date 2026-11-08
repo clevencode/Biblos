@@ -11,6 +11,7 @@ import {
 import { PASSAGE_LOADING_COPY } from "../bible/viewState/loadingConstants";
 import type { PassagePickerChrome } from "../bible/viewState/passagePickerChrome";
 import type { DiscoveryJump, PassageDiscoveryResult } from "../bible/passageDiscovery/types";
+import type { BibleTextVersionId } from "../bible/bibleVersions";
 
 export type PassagePickStep = "book" | "chapter" | "verse";
 
@@ -24,6 +25,7 @@ type BiblePassageScrollPickerProps = {
   books: YouVersionBook[];
   discovery: PassageDiscoveryResult;
   discoveryBusy: boolean;
+  textVersion: BibleTextVersionId;
   discoverySession: PassageDiscoverySession;
   onDiscoveryListScroll: (scrollTop: number) => void;
   onDiscoveryExpandedBookChange: (bookId: string | null) => void;
@@ -55,6 +57,7 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
       books,
       discovery,
       discoveryBusy,
+      textVersion,
       discoverySession,
       onDiscoveryListScroll,
       onDiscoveryExpandedBookChange,
@@ -192,6 +195,7 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
               jumps={discovery.jumps}
               busy={discoveryBusy}
               contentError={discovery.contentError}
+              textVersion={textVersion}
               hasQuery={hasQuery}
               searchQuery={bookSearchQuery}
               bookId={bookId}

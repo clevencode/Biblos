@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { YouVersionBook } from "../youversion/client";
-import { searchVerses } from "../youversion/client";
+import { searchVersesForVersion } from "../bible/passageForVersion";
+import type { BibleTextVersionId } from "../bible/bibleVersions";
 import {
   buildDiscoveryJumps,
   buildPassageDiscoveryResult,
@@ -15,6 +16,7 @@ export function usePassageDiscovery(
   query: string,
   books: YouVersionBook[],
   enabled: boolean,
+  textVersion: BibleTextVersionId,
 ): { result: PassageDiscoveryResult; busy: boolean } {
   const [result, setResult] = useState<PassageDiscoveryResult>(() =>
     discoverPassageSync(query, books),
@@ -48,7 +50,7 @@ export function usePassageDiscovery(
     setBusy(true);
     const timer = window.setTimeout(() => {
       void (async () => {
-        const res = await searchVerses(trimmed, 1);
+        const res = await searchVersesForVersion(textVersion, trimmed, 1);
         if (gen !== reqGen.current) return;
 
         const contentError = res.ok ? null : res.error ?? "Recherche indisponible";
@@ -67,7 +69,7 @@ export function usePassageDiscovery(
     return () => {
       window.clearTimeout(timer);
     };
-  }, [query, books, enabled]);
+  }, [query, books, enabled, textVersion]);
 
   return { result, busy };
 }

@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { searchVerses, type BibleSearchHit } from "../youversion/client";
+import { searchVersesForVersion } from "../bible/passageForVersion";
+import type { BibleTextVersionId } from "../bible/bibleVersions";
+import type { BibleSearchHit } from "../youversion/client";
 
 const VERSE_HIT_LIMIT = 48;
 const MIN_QUERY = 2;
@@ -7,6 +9,7 @@ const MIN_QUERY = 2;
 export function useBookVerseDiscovery(
   query: string,
   bookId: string | null,
+  textVersion: BibleTextVersionId,
 ): { hits: BibleSearchHit[]; total: number; busy: boolean; error: string | null } {
   const [hits, setHits] = useState<BibleSearchHit[]>([]);
   const [total, setTotal] = useState(0);
@@ -29,7 +32,9 @@ export function useBookVerseDiscovery(
     setError(null);
 
     void (async () => {
-      const res = await searchVerses(trimmed, VERSE_HIT_LIMIT, { books: [bookId] });
+      const res = await searchVersesForVersion(textVersion, trimmed, VERSE_HIT_LIMIT, {
+        books: [bookId],
+      });
       if (gen !== reqGen.current) return;
 
       if (!res.ok) {
@@ -45,7 +50,7 @@ export function useBookVerseDiscovery(
       setError(null);
       setBusy(false);
     })();
-  }, [query, bookId]);
+  }, [query, bookId, textVersion]);
 
   return { hits, total, busy, error };
 }

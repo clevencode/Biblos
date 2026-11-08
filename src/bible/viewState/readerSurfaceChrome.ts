@@ -27,23 +27,33 @@ export type OverlayDismissTarget = "picker" | "tools" | "history" | "share";
 
 export const OVERLAY_DISMISS_SWALLOW_MS = 480;
 
+/** Roll do picker — única fonte (catálogo liberado + picker aberto). */
+export function passagePickerRollOpen(
+  pickerOpen: boolean,
+  pickerPanelOpenAllowed: boolean,
+): boolean {
+  return pickerOpen && pickerPanelOpenAllowed;
+}
+
 export function readerSurfaceChrome(
   input: ReaderSurfaceChromeInput,
 ): ReaderSurfaceChrome {
-  const passagePickerRollOpen =
-    input.pickerOpen && input.pickerPanelOpenAllowed;
+  const rollOpen = passagePickerRollOpen(
+    input.pickerOpen,
+    input.pickerPanelOpenAllowed,
+  );
   const passageInputBlocked =
-    passagePickerRollOpen ||
+    rollOpen ||
     input.toolsMenuOpen ||
     input.historyOpen ||
     input.shareSheetOpen;
   const passageSurfaceScrimOpen =
-    passagePickerRollOpen || input.historyOpen || input.shareSheetOpen;
+    rollOpen || input.historyOpen || input.shareSheetOpen;
   const toolsMenuPassThroughDismiss =
     input.toolsMenuOpen && !passageSurfaceScrimOpen;
 
   return {
-    passagePickerRollOpen,
+    passagePickerRollOpen: rollOpen,
     passageInputBlocked,
     passageSurfaceScrimOpen,
     toolsMenuPassThroughDismiss,
@@ -51,11 +61,11 @@ export function readerSurfaceChrome(
       passageInputBlocked ||
       input.pickerOpen ||
       input.verseActionsOpen,
-    rootClassPassageRollOpen: passagePickerRollOpen,
+    rootClassPassageRollOpen: rollOpen,
     scrimIsTools:
       input.toolsMenuOpen &&
-      (passagePickerRollOpen || input.historyOpen || input.shareSheetOpen),
-    scrimIsPickerDismiss: passagePickerRollOpen,
+      (rollOpen || input.historyOpen || input.shareSheetOpen),
+    scrimIsPickerDismiss: rollOpen,
   };
 }
 

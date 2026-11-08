@@ -26,7 +26,7 @@ type Ht1998Book = {
   chapters: Ht1998Chapter[];
 };
 
-type Ht1998Root = {
+export type Ht1998Root = {
   abbreviation?: string;
   title?: string;
   languageCode?: string;
@@ -36,6 +36,11 @@ type Ht1998Root = {
 let cachedRoot: Ht1998Root | null = null;
 let inflight: Promise<Ht1998Root> | null = null;
 let cachedBooks: YouVersionBook[] | null = null;
+
+export function invalidateHt1998CatalogCache() {
+  cachedRoot = null;
+  cachedBooks = null;
+}
 
 function cleanVerseText(text: string): string {
   return String(text || "")
@@ -56,6 +61,12 @@ export async function loadHt1998Root(): Promise<Ht1998Root> {
   if (cachedRoot) return cachedRoot;
   if (!inflight) {
     inflight = (async () => {
+      const { readHt1998OfflineRoot } = await import("./ht1998Offline");
+      const offline = await readHt1998OfflineRoot();
+      if (offline) {
+        cachedRoot = offline;
+        return offline;
+      }
       const res = await fetch(HT1998_JSON_URL);
       if (!res.ok) throw new Error("Traduction haïtienne indisponible");
       const json = (await res.json()) as Ht1998Root;

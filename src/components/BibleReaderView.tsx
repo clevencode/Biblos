@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useId,
   useLayoutEffect,
@@ -23,7 +24,16 @@ import {
   type BibleTextVersionId,
 } from "../bible/bibleVersions";
 import { versionedBibleId } from "../bible/passageForVersion";
-import { HT1998_BIBLE_META, ht1998Books } from "../bible/ht1998";
+import {
+  HT1998_BIBLE_META,
+  ht1998Books,
+  invalidateHt1998CatalogCache,
+} from "../bible/ht1998";
+import {
+  clearHt1998Offline,
+  downloadHt1998Offline,
+  isHt1998OfflineReady,
+} from "../bible/ht1998Offline";
 import {
   fetchBibleAudioCatalog,
   loadAudioPositions,
@@ -56,6 +66,7 @@ import {
   pickerVerseNumberOptions,
   planReaderOnStep,
   planStepProgressLabel,
+  passagePickerRollOpen,
   readerSurfaceChrome,
   showOfflineChapterGate,
 } from "../bible/viewState";
@@ -76,7 +87,10 @@ import {
   isOfflineBibleReady,
   type OfflineDownloadProgress,
 } from "../bibleOffline";
-import { BIBLE_READER_PREFS_KEY } from "../bible/bibleCatalogRepository";
+import {
+  BIBLE_READER_PREFS_KEY,
+  resolveBookDisplay,
+} from "../bible/bibleCatalogRepository";
 import { useBibleCatalog } from "../hooks/useBibleCatalog";
 import { useLocalBundledBible } from "../bibleEngine";
 import {
@@ -459,7 +473,6 @@ export function BibleReaderView({
     viewState: catalogViewState,
     isNetworkRefresh,
     refreshCatalog,
-    resolveBookTitle,
   } = useBibleCatalog();
   const [textVersion, setTextVersion] = useState<BibleTextVersionId>(() => {
     const fromPrefs = readPrefs().textVersion;
@@ -472,6 +485,10 @@ export function BibleReaderView({
   const textVersionRef = useRef<BibleTextVersionId>(textVersion);
   const books =
     textVersion === "ht98" ? (htBooks ?? []) : catalogBooks;
+  const resolveBookTitleActive = useCallback(
+    (id: string) => resolveBookDisplay(id, books),
+    [books],
+  );
   const { setCatalogHydrating, setCatalogLocalReady, registerCloudSync } =
     useAppReadiness();
   const [, setBibleId] = useState<number | null>(() => bible.id ?? LSG_BIBLE_ID);
@@ -543,6 +560,7 @@ export function BibleReaderView({
   }
 
   const [offlineReady, setOfflineReady] = useState(false);
+  const [htOfflineReady, setHtOfflineReady] = useState(false);
   const {
     passage,
     error: passageLoadError,
@@ -556,8 +574,8 @@ export function BibleReaderView({
     textVersion,
     books,
     catalogOffline,
-    offlineReady,
-    resolveBookTitle,
+    offlineReady: textVersion === "ht98" ? htOfflineReady : offlineReady,
+    resolveBookTitle: resolveBookTitleActive,
     onResolved: (outcome) => {
       if (outcome.bible) setBible(outcome.bible);
       if (outcome.bibleId) setBibleId(outcome.bibleId);
@@ -589,13 +607,19 @@ export function BibleReaderView({
     ],
   );
 
+  const passageRollOpen = useMemo(
+    () => passagePickerRollOpen(pickerOpen, pickerChrome.pickerPanelOpenAllowed),
+    [pickerOpen, pickerChrome.pickerPanelOpenAllowed],
+  );
+
   const passageDiscoveryEnabled =
-    pickerOpen && passageStep === "book" && pickerChrome.pickerPanelOpenAllowed;
+    passageRollOpen && passageStep === "book";
 
   const { result: passageDiscovery, busy: passageDiscoveryBusy } = usePassageDiscovery(
     bookSearchQuery,
     books,
     passageDiscoveryEnabled,
+    textVersion,
   );
 
   const pickerPassageChrome = useMemo(
@@ -824,11 +848,17 @@ export function BibleReaderView({
     void isOfflineBibleReady().then((ready) => {
       if (!cancelled) setOfflineReady(ready);
     });
+    void isHt1998OfflineReady().then((ready) => {
+      if (!cancelled) setHtOfflineReady(ready);
+    });
     return () => {
       cancelled = true;
       offlineAbortRef.current?.abort();
     };
   }, []);
+
+  const versionOfflineReady =
+    textVersion === "ht98" ? htOfflineReady : offlineReady;
 
   useEffect(() => {
     const sync = () => setUiTheme(resolveTheme());
@@ -912,11 +942,34 @@ export function BibleReaderView({
 
   useEffect(() => {
     if (!active) return;
-    if (booted.current) return;
-    booted.current = true;
-    void loadChapter(initialParts.bookId, initialParts.chapterId, initialParts.verse ?? null);
+    if (presentation.inFlight) return;
+    if (passage?.verses?.length || passage?.content) return;
+    if (!isUsfmBookId(bookId)) return;
+    if (!booted.current) {
+      booted.current = true;
+      void loadChapter(
+        initialParts.bookId,
+        initialParts.chapterId,
+        initialParts.verse ?? null,
+      );
+      return;
+    }
+    void loadChapter(
+      bookId,
+      chapterId,
+      highlightVerse ?? null,
+      highlightVerseEnd ?? null,
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active]);
+  }, [
+    active,
+    bookId,
+    chapterId,
+    presentation.inFlight,
+    passage?.id,
+    passage?.verses?.length,
+    passage?.content,
+  ]);
 
   useEffect(() => {
     if (!focusSeq || !focusRef?.trim() || !active) return;
@@ -1114,7 +1167,11 @@ export function BibleReaderView({
       >
         <div
           className={`bible-yv-top-passage-bar${compactBar ? " is-compact" : ""}${
-            rollOpen ? " is-roll-head" : pickerOpen ? " is-picker-open" : ""
+            rollOpen
+              ? " is-roll-head is-roll-chrome-active"
+              : pickerOpen
+                ? " is-roll-chrome-active"
+                : ""
           }${pickerChrome.chipsHydrating ? " is-hydrating" : ""}`}
         >
           {showChapterStep ? (
@@ -1136,7 +1193,7 @@ export function BibleReaderView({
               variant="book"
               label={bookTitle}
               loading={pickerChrome.chipsHydrating}
-              open={pickerOpen && passageStep === "book"}
+              open={passageRollOpen && passageStep === "book"}
               disabled={pickerChrome.controlsDisabled}
               ariaLabel={`Choisir un livre · ${bookTitle}`}
               title={bookTitle}
@@ -1147,7 +1204,7 @@ export function BibleReaderView({
               variant="chapter"
               label={chapterId}
               loading={pickerChrome.chipsHydrating}
-              open={pickerOpen && passageStep === "chapter"}
+              open={passageRollOpen && passageStep === "chapter"}
               disabled={pickerChrome.controlsDisabled}
               ariaLabel={`Choisir un chapitre · ${chapterId}`}
               title={`Chapitre ${chapterId}`}
@@ -1174,7 +1231,7 @@ export function BibleReaderView({
   }
 
   function renderPassageRoll(extraClass = "") {
-    const rollOpen = pickerOpen && pickerChrome.pickerPanelOpenAllowed;
+    const rollOpen = passageRollOpen;
     return (
       <div
         ref={passageRollRef}
@@ -1204,6 +1261,7 @@ export function BibleReaderView({
           books={books}
           discovery={passageDiscovery}
           discoveryBusy={passageDiscoveryBusy}
+          textVersion={textVersion}
           discoverySession={discoverySession}
           onDiscoveryListScroll={setDiscoveryListScroll}
           onDiscoveryExpandedBookChange={(bookId) =>
@@ -1300,12 +1358,52 @@ export function BibleReaderView({
   }
 
   async function toggleOfflineBible() {
-    if (useLocalBundledBible()) return;
+    if (useLocalBundledBible() && textVersion === "s21") return;
 
     if (offlineBusy) {
       offlineAbortRef.current?.abort();
       return;
     }
+
+    if (textVersion === "ht98") {
+      if (htOfflineReady) {
+        const ok = window.confirm(
+          "Supprimer la Bible haïtienne hors ligne (~8 Mo) de cet appareil ?",
+        );
+        if (!ok) return;
+        await clearHt1998Offline();
+        invalidateHt1998CatalogCache();
+        setHtOfflineReady(false);
+        setOfflineProgress(null);
+        return;
+      }
+
+      const ac = new AbortController();
+      offlineAbortRef.current = ac;
+      setOfflineBusy(true);
+      setOfflineProgress({ done: 0, total: 2, usfm: "" });
+      setPassageUiError(null);
+      try {
+        await downloadHt1998Offline(
+          (p) => setOfflineProgress({ done: p.done, total: p.total, usfm: "" }),
+          ac.signal,
+        );
+        invalidateHt1998CatalogCache();
+        setHtOfflineReady(true);
+        setOfflineProgress(null);
+      } catch (err) {
+        if ((err as Error)?.name !== "AbortError") {
+          setPassageUiError(
+            err instanceof Error ? err.message : "Échec du téléchargement HAT98.",
+          );
+        }
+      } finally {
+        setOfflineBusy(false);
+        offlineAbortRef.current = null;
+      }
+      return;
+    }
+
     if (offlineReady) {
       const ok = window.confirm(
         "Supprimer la Bible hors ligne (~6 Mo) de cet appareil ?",
@@ -1409,7 +1507,7 @@ export function BibleReaderView({
 
   const canPrev = Boolean(adjacentChapter(books, bookId, chapterId, -1));
   const canNext = Boolean(adjacentChapter(books, bookId, chapterId, 1));
-  const bookTitle = resolveBookTitle(bookId);
+  const bookTitle = resolveBookTitleActive(bookId);
   /** Offline de navegador — não depende só da fonte do catálogo (evita salto de chrome). */
   const catalogOfflineHint = catalogOffline;
   const localBundledBible = useLocalBundledBible();
@@ -1724,8 +1822,32 @@ export function BibleReaderView({
     };
   }, [toolsMenuOpen]);
 
+  function stopBibleAudio() {
+    const audio = audioRef.current;
+    if (audio) {
+      if (
+        !audio.paused &&
+        audioBookRef.current &&
+        Number.isFinite(audio.currentTime)
+      ) {
+        saveAudioPosition(audioBookRef.current, audio.currentTime);
+      }
+      if (!audio.paused) audio.pause();
+      audio.removeAttribute("src");
+      audio.load();
+    }
+    audioBookRef.current = "";
+    setAudioActiveUsfm(null);
+    setAudioPlaying(false);
+    setAudioBusy(false);
+    setAudioTime(0);
+    setAudioDuration(0);
+    void clearBibleAudioControls();
+  }
+
   async function switchTextVersion(next: BibleTextVersionId) {
     if (next === textVersion) return;
+    stopBibleAudio();
     setTextVersion(next);
     writePrefs({ ...readPrefs(), textVersion: next, bookId, chapterId, fontSize });
     if (next === "ht98") {
@@ -1757,10 +1879,13 @@ export function BibleReaderView({
     );
   }
 
-  function renderTopToolsMenu() {
+  function renderTopToolsMenu(placement: "header" | "float" = "header") {
     const themeLabel = themePrefLabel(themePref);
     return (
-      <div className="bible-yv-tools-menu" ref={toolsMenuRef}>
+      <div
+        className={`bible-yv-tools-menu${placement === "float" ? " is-float-br" : ""}`}
+        ref={toolsMenuRef}
+      >
         <button
           type="button"
           className={`bible-yv-tools-menu-btn${toolsMenuOpen ? " is-on" : ""}`}
@@ -1823,37 +1948,39 @@ export function BibleReaderView({
                 <span>{themeLabel}</span>
               </button>
             ) : null}
-            {textVersion === "s21" && !useLocalBundledBible() ? (
+            {textVersion === "s21" && useLocalBundledBible() ? null : (
             <button
               type="button"
               role="menuitem"
-              className={`bible-yv-tools-item${offlineReady ? " is-ready" : ""}${offlineBusy ? " is-busy" : ""}`}
+              className={`bible-yv-tools-item${versionOfflineReady ? " is-ready" : ""}${offlineBusy ? " is-busy" : ""}`}
               onClick={() => {
                 if (!offlineBusy) setToolsMenuOpen(false);
                 void toggleOfflineBible();
               }}
               aria-label={
                 offlineBusy
-                  ? `Téléchargement… ${offlineProgress?.done ?? 0}/${offlineProgress?.total ?? 66} (toucher pour annuler)`
-                  : offlineReady
+                  ? `Téléchargement… ${offlineProgress?.done ?? 0}/${offlineProgress?.total ?? (textVersion === "ht98" ? 2 : 66)} (toucher pour annuler)`
+                  : versionOfflineReady
                     ? "Bible hors ligne disponible (toucher pour supprimer)"
-                    : "Télécharger la Bible hors ligne (~6 Mo)"
+                    : textVersion === "ht98"
+                      ? "Télécharger la Bible haïtienne hors ligne (~8 Mo)"
+                      : "Télécharger la Bible hors ligne (~6 Mo)"
               }
             >
-              {offlineReady ? (
+              {versionOfflineReady ? (
                 <YvIcon name="check_circle" filled className="bible-yv-tools-item-icon" />
               ) : (
                 <YvIcon name="download" className="bible-yv-tools-item-icon" />
               )}
               <span>
                 {offlineBusy
-                  ? `Téléchargement… ${offlineProgress?.done ?? 0}/${offlineProgress?.total ?? 66}`
-                  : offlineReady
+                  ? `Téléchargement… ${offlineProgress?.done ?? 0}/${offlineProgress?.total ?? (textVersion === "ht98" ? 2 : 66)}`
+                  : versionOfflineReady
                     ? "Bible hors ligne"
                     : "Télécharger hors ligne"}
               </span>
             </button>
-            ) : null}
+            )}
             {ACTIVITY_UI_ENABLED ? (
               <button
                 type="button"
@@ -2255,7 +2382,7 @@ export function BibleReaderView({
       tabIndex={-1}
     >
       <header
-        className={`bible-yv-top${planReading ? " is-plan" : " is-free"}${pickerOpen ? " is-passage-picker-open" : ""}${catalogOfflineHint ? " is-catalog-offline" : ""}${compactToolsMenu ? " is-compact-tools" : ""}`}
+        className={`bible-yv-top${planReading ? " is-plan" : " is-free"}${surfaceChrome.rootClassPassageRollOpen ? " is-passage-roll-open" : ""}${catalogOfflineHint ? " is-catalog-offline" : ""}${compactToolsMenu ? " is-compact-tools" : ""}`}
         aria-label="Navigation biblique"
       >
         {planReading ? (
@@ -2294,7 +2421,7 @@ export function BibleReaderView({
               <YvIcon name="ios_share" className="bible-yv-tool-icon" />
             </button>
           ) : null}
-          {renderTopToolsMenu()}
+          {!compactToolsMenu ? renderTopToolsMenu("header") : null}
         </div>
       </header>
 
@@ -2347,13 +2474,16 @@ export function BibleReaderView({
         ) : null}
 
         {error && passageErrorKind !== "offline_not_cached" ? (
-          <div className="bible-yv-error-bar" role="alert">
-            <p className="bible-yv-error">{error}</p>
+          <div className="bible-yv-error-bar" role="alert" aria-live="assertive">
+            <p className="bible-yv-error" id={error ? `${statusId}-error` : undefined}>
+              {error}
+            </p>
             <button
               type="button"
               className="bible-yv-chip"
               onClick={() => retryChapter(bookId, chapterId)}
               disabled={presentation.inFlight || pickerOpen}
+              aria-describedby={`${statusId}-error`}
             >
               Réessayer
             </button>
@@ -2524,7 +2654,8 @@ export function BibleReaderView({
           </div>
         ) : passage?.content ? (
           <p className="bible-text">{passage.content}</p>
-        ) : !presentation.ariaBusy ? (
+        ) : presentation.isOpening || presentation.inFlight ? null : !presentation.ariaBusy &&
+            !isUsfmBookId(bookId) ? (
           <p className="bible-yv-muted">{PASSAGE_LOADING_COPY.emptyPassage}</p>
         ) : null}
       </article>
@@ -2693,6 +2824,8 @@ export function BibleReaderView({
           {cardMsg ? <p className="bible-verse-actions-msg">{cardMsg}</p> : null}
         </div>
       ) : null}
+
+      {compactToolsMenu ? renderTopToolsMenu("float") : null}
 
       {(() => {
         const compactDock = compactViewport || narrowChrome;

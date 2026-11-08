@@ -65,6 +65,7 @@ Selectors puros em `src/bible/viewState/selectors.ts` e `bibleChrome.ts` — a U
 | `passagePickerChrome` | `BiblePassageScrollPicker` | `inFlight`, `showDeferredUi`, `schema` para skeleton de versos |
 | `mergeBibleReaderErrors` | barra de erro | prioridade: falha de passagem → erro de chrome (offline/áudio) |
 | `readerSurfaceChrome` | `BibleReaderView` (superfície) | `inert`/scrim, `is-passage-roll-open`, `forceChromeVisible` |
+| `passagePickerRollOpen` | chips, roll, discovery, header | `pickerOpen && pickerPanelOpenAllowed` — única fonte (não combinar flags locais) |
 | `overlayDismissTarget` | dismiss scrim / swallow | ordem: picker → menu → history → share |
 | `pickerVerseNumberOptions` | passo versículo no picker | grelha alinhada ao `PassageSkeletonSchema` de destino |
 | `planReaderOnStep` / `planStepProgressLabel` | dock/plan | passo activo vs capítulo livre |
@@ -93,6 +94,10 @@ Chrome da Bíblia:
 - Offline sem IDB: `BibleOfflineChapterGate` + CTA téléchargement (só sem versículos em memória; texto já lido permanece ao falhar recarga).
 - Gate e `BibleChapterLoadingPlaceholder` com **min-height** alinhado para evitar salto entre estados.
 
+### Painéis flutuantes (CSS)
+
+No `.bible-reader--yv`, partilhar `--yv-overlay-surface`, `--yv-overlay-border` entre picker, menu tools e sheets (UI plana : `--yv-overlay-shadow: none`, contorno `--stroke-elevated` / `--yv-overlay-border`). Escala `--bible-z-*` para scrim, chrome elevado, popover e sheet.
+
 ## QA manual (homologação)
 
 1. **Modo avião extremo** — fechar app, ativar modo avião, abrir leitor: barra com título do livro (francês) + capítulo + chevrons; picker com 66 livros.
@@ -108,7 +113,7 @@ Chrome da Bíblia:
 11. **«Jean 3.16»** — pas de grille livres ; bouton Aller à Jean 3.16 ouvre le passage.
 12. **Retour recherche** — après un verset : rouvrir le picker retrouve mot, dépliant, scroll et verset ancré ; seul le **X** réinitialise.
 13. **Picker ouvert** — texte biblique `inert` + scrim : pas de sélection de verset ; tap sur le fond ou Échap ferme le panneau.
-14. **Lecture mobile** — tab bar toujours visible (Accueil, Plan, Bible, Cartes) ; hamburger à droite = outils Bible seulement. Texte `inert` + scrim tant que le menu ou le picker est ouvert. Désactiver le hamburger compact : `VITE_BIBLE_UNIFIED_NAV=0`. Profil via Accueil (icône / titre).
+14. **Lecture mobile** — tab bar toujours visible (Accueil, Plan, Bible, Cartes) ; hamburger en **FAB bas-droite** (même ligne que le play audio à gauche) = outils Bible seulement. Texte `inert` + scrim tant que le menu ou le picker est ouvert. Désactiver le hamburger compact : `VITE_BIBLE_UNIFIED_NAV=0`. Profil via Accueil (icône / titre).
 
 ## Sous-système Partager (versets)
 
