@@ -8202,8 +8202,16 @@ ul.plan-yv-day-note-ref {
 .bible-reader--yv .bible-yv-top:has(.bible-yv-passage-roll.is-open),
 .bible-yv-top.is-passage-picker-open {
   overflow: visible;
-  z-index: 8;
+  z-index: 12;
   contain: none;
+}
+
+.bible-yv-passage-roll.is-open .bible-yv-passage-scroll-panel.is-open {
+  z-index: 2;
+}
+
+.bible-yv-passage-roll-scrim.is-picker-dismiss {
+  z-index: 5;
 }
 
 .bible-yv-passage-roll .bible-yv-top-passage {
@@ -8645,7 +8653,18 @@ ul.plan-yv-day-note-ref {
   transition: transform 0.3s ease;
 }
 
-.bible-yv-top-passage.is-plan-inline .bible-yv-passage-roll {
+.bible-yv-passage-roll.is-plan-chrome {
+  flex: 1;
+  min-width: 0;
+}
+
+.bible-yv-top.is-plan .bible-yv-plan-exit {
+  flex: none;
+  align-self: center;
+}
+
+.bible-yv-top-passage.is-plan-inline .bible-yv-passage-roll,
+.bible-yv-top-passage.is-plan-chrome .bible-yv-passage-roll {
   max-width: min(100%, 14rem);
 }
 
@@ -8817,6 +8836,13 @@ ul.plan-yv-day-note-ref {
 .bible-yv-passage-chip.is-hydrating .bible-yv-passage-chip-caret,
 .bible-yv-passage-chip.is-hydrating .bible-yv-passage-chip-kind {
   opacity: 0.42;
+}
+
+.bible-yv-top-passage.is-plan-chrome {
+  flex: 1;
+  opacity: 1;
+  pointer-events: auto;
+  min-width: 0;
 }
 
 .bible-yv-top-passage.is-plan-inline {
@@ -9278,7 +9304,7 @@ ul.plan-yv-day-note-ref {
 }
 
 .bible-yv-passage-roll-scrim.is-tools {
-  z-index: 3;
+  z-index: 7;
 }
 
 .bible-yv-search-btn {
@@ -9519,11 +9545,12 @@ ul.plan-yv-day-note-ref {
 .bible-yv-passage-roll-scrim {
   position: absolute;
   inset: 0;
-  z-index: 4;
+  z-index: 8;
   margin: 0;
   padding: 0;
   border: 0;
   cursor: default;
+  pointer-events: auto;
   background: color-mix(in srgb, var(--text) 6%, transparent);
   backdrop-filter: blur(0.5px);
 }
@@ -12737,12 +12764,50 @@ ul.plan-yv-day-note-ref {
 }
 
 .bible-yv-dock-location.is-static {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
   cursor: default;
-  padding: 8px 4px;
-  white-space: nowrap;
+  padding: 4px 6px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.bible-yv-dock-location.is-static .bible-yv-dock-location-text {
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.bible-yv-dock-plan-progress {
+  font-size: 0.68rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: color-mix(in srgb, var(--yv-muted, var(--muted)) 55%, var(--text));
+  line-height: 1.1;
+}
+
+.bible-yv-dock-location.is-off-step .bible-yv-dock-location-text {
+  opacity: 0.55;
+}
+
+.bible-yv-dock-plan-resync {
+  margin: 0;
+  padding: 2px 6px;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent);
+  font-size: 0.65rem;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  white-space: nowrap;
 }
 
 .bible-yv-dock-nav--plan {
@@ -12751,7 +12816,6 @@ ul.plan-yv-day-note-ref {
 
 .bible-yv-dock-nav--plan .bible-yv-dock-location {
   pointer-events: auto;
-  cursor: pointer;
 }
 
 .bible-yv-dock-advance {

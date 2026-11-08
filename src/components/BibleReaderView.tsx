@@ -251,6 +251,8 @@ type BibleReaderViewProps = {
     focusRef: string;
     isFirst: boolean;
     isLast: boolean;
+    stepIndex: number;
+    stepCount: number;
     verseStart?: number | null;
     verseEnd?: number | null;
     onPrev: () => void;
@@ -515,6 +517,42 @@ export function BibleReaderView({
   const [shareMode, setShareMode] = useState<"verse" | "plan">("verse");
   const [toolsMenuOpen, setToolsMenuOpen] = useState(false);
   const toolsMenuRef = useRef<HTMLDivElement | null>(null);
+  const overlayDismissSwallowRef = useRef(false);
+  const overlayDismissSwallowTimerRef = useRef<number | undefined>(undefined);
+
+  function markOverlayDismissSwallow() {
+    overlayDismissSwallowRef.current = true;
+    window.clearTimeout(overlayDismissSwallowTimerRef.current);
+    overlayDismissSwallowTimerRef.current = window.setTimeout(() => {
+      overlayDismissSwallowRef.current = false;
+    }, 480);
+  }
+
+  function takeOverlayDismissSwallow(): boolean {
+    if (!overlayDismissSwallowRef.current) return false;
+    overlayDismissSwallowRef.current = false;
+    window.clearTimeout(overlayDismissSwallowTimerRef.current);
+    return true;
+  }
+
+  function dismissPassageSurfaceOverlay() {
+    markOverlayDismissSwallow();
+    if (pickerOpen) {
+      closePicker();
+      return;
+    }
+    if (toolsMenuOpen) {
+      setToolsMenuOpen(false);
+      return;
+    }
+    if (historyOpen) {
+      setHistoryOpen(false);
+      return;
+    }
+    if (shareSheetOpen) {
+      setShareSheetOpen(false);
+    }
+  }
   const [offlineReady, setOfflineReady] = useState(false);
   const {
     passage,
@@ -575,6 +613,16 @@ export function BibleReaderView({
     () => passagePickerChromeFromPresentation(presentation, activeSchema),
     [presentation, activeSchema],
   );
+
+  const passagePickerRollOpen =
+    pickerOpen && pickerChrome.pickerPanelOpenAllowed;
+
+  /** Bloqueia interação na passagem (inert, pointer-events) — inclui o picker. */
+  const passageInputBlocked =
+    passagePickerRollOpen || toolsMenuOpen || historyOpen || shareSheetOpen;
+
+  /** Scrim na `read-surface` (dismiss); o picker no header fica acima do scrim `.is-picker-dismiss`. */
+  const passageSurfaceScrimOpen = passageInputBlocked;
 
   const surfaceError = useMemo(
     () =>
@@ -936,6 +984,9 @@ export function BibleReaderView({
       const roll = passageRollRef.current;
       if (!roll) return;
       if (roll.contains(target)) return;
+      event.preventDefault();
+      event.stopPropagation();
+      markOverlayDismissSwallow();
       closePicker();
     };
     document.addEventListener("pointerdown", onPointerDown, true);
@@ -989,7 +1040,8 @@ export function BibleReaderView({
   }
 
   function selectVerse(number: number) {
-    if (pickerOpen || toolsMenuOpen || shareSheetOpen) return;
+    if (takeOverlayDismissSwallow()) return;
+    if (pickerOpen || toolsMenuOpen || shareSheetOpen || historyOpen) return;
     // Side-effects fora do updater (React pode correr updaters na fase de render).
     preferJumpFocusRef.current = false;
     const current = selection;
@@ -1065,18 +1117,6 @@ export function BibleReaderView({
     pendingVerseStep.current = false;
   }
 
-  function togglePicker() {
-    if (!pickerChrome.pickerPanelOpenAllowed) return;
-    setPickerOpen((open) => {
-      const next = !open;
-      if (next) {
-        setPassageStep("book");
-        pendingVerseStep.current = false;
-      }
-      return next;
-    });
-  }
-
   function openPassagePicker(step: "book" | "chapter") {
     if (!pickerChrome.pickerPanelOpenAllowed) return;
     setToolsMenuOpen(false);
@@ -1086,8 +1126,8 @@ export function BibleReaderView({
   }
 
   function renderTopPassageNav(extraClass = "", rollOpen = false) {
-    const compactBar = extraClass.includes("is-plan-inline");
-    const showChapterStep = !planReading || compactBar;
+    const compactBar = extraClass.includes("is-plan-chrome");
+    const showChapterStep = true;
     return (
       <nav
         className={`bible-yv-compact-ref bible-yv-top-passage${extraClass}`.trim()}
@@ -1162,6 +1202,17 @@ export function BibleReaderView({
         className={`bible-yv-passage-roll${rollOpen ? " is-open" : ""}${
           pickerChrome.chipsHydrating ? " is-hydrating" : ""
         }`}
+        onPointerDownCapture={(event) => {
+          if (!overlayDismissSwallowRef.current) return;
+          event.preventDefault();
+          event.stopPropagation();
+          takeOverlayDismissSwallow();
+        }}
+        onClickCapture={(event) => {
+          if (!takeOverlayDismissSwallow()) return;
+          event.preventDefault();
+          event.stopPropagation();
+        }}
       >
         {renderTopPassageNav(extraClass, rollOpen)}
         <BiblePassageScrollPicker
@@ -1389,7 +1440,6 @@ export function BibleReaderView({
   const locationLabel = selection?.length
     ? `${bookTitle} ${chapterId}.${formatVerseList(selection)}`
     : `${bookTitle} ${chapterId}`;
-  const chapterLabel = `${bookTitle} ${chapterId}`;
   const onPlanStep = Boolean(
     planReading &&
       (() => {
@@ -1400,11 +1450,10 @@ export function BibleReaderView({
         );
       })(),
   );
-  const planHeaderTitle = planReading
-    ? onPlanStep
-      ? planReading.planName
-      : chapterLabel
-    : "";
+  const planStepProgress =
+    planReading && planReading.stepCount > 1
+      ? `${planReading.stepIndex + 1}/${planReading.stepCount}`
+      : null;
 
   function handlePlanBack() {
     if (!planReading) {
@@ -1628,15 +1677,23 @@ export function BibleReaderView({
     const onPointer = (event: PointerEvent) => {
       const root = toolsMenuRef.current;
       if (!root || !(event.target instanceof Node)) return;
-      if (!root.contains(event.target)) setToolsMenuOpen(false);
+      if (!root.contains(event.target)) {
+        event.preventDefault();
+        event.stopPropagation();
+        markOverlayDismissSwallow();
+        setToolsMenuOpen(false);
+      }
     };
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setToolsMenuOpen(false);
+      if (event.key === "Escape") {
+        markOverlayDismissSwallow();
+        setToolsMenuOpen(false);
+      }
     };
-    window.addEventListener("pointerdown", onPointer);
+    window.addEventListener("pointerdown", onPointer, true);
     window.addEventListener("keydown", onKey);
     return () => {
-      window.removeEventListener("pointerdown", onPointer);
+      window.removeEventListener("pointerdown", onPointer, true);
       window.removeEventListener("keydown", onKey);
     };
   }, [toolsMenuOpen]);
@@ -2176,26 +2233,21 @@ export function BibleReaderView({
         aria-label="Navigation biblique"
       >
         {planReading ? (
-          <div className="bible-yv-top-plan">
+          <>
             <button
               type="button"
-              className="bible-yv-back"
+              className="bible-yv-back bible-yv-plan-exit"
               onClick={handlePlanBack}
               aria-label={
                 onPlanStep
                   ? "Quitter la lecture du plan"
-                  : "Retour au chapitre du plan"
+                  : "Retour au passage du plan"
               }
             >
               <YvIcon name="chevron_left" className="bible-yv-back-icon" />
             </button>
-            <div className="bible-yv-plan-titles">
-              <p className="bible-yv-plan-name" title={planHeaderTitle}>
-                {planHeaderTitle}
-              </p>
-              {headCompact && onPlanStep ? renderPassageRoll(" is-plan-inline") : null}
-            </div>
-          </div>
+            {renderPassageRoll(" is-plan-chrome")}
+          </>
         ) : (
           renderPassageRoll()
         )}
@@ -2226,24 +2278,29 @@ export function BibleReaderView({
 
       <div
         className={`bible-yv-read-surface${
-          pickerOpen || toolsMenuOpen || historyOpen
-            ? " is-overlay-occluding"
-            : ""
+          passageInputBlocked ? " is-overlay-occluding" : ""
         }`}
+        onClickCapture={(event) => {
+          if (!takeOverlayDismissSwallow()) return;
+          event.preventDefault();
+          event.stopPropagation();
+        }}
       >
-        {pickerOpen ? (
+        {passageSurfaceScrimOpen ? (
           <button
             type="button"
-            className="bible-yv-passage-roll-scrim"
-            aria-label="Fermer le choix de passage"
-            onClick={closePicker}
-          />
-        ) : toolsMenuOpen ? (
-          <button
-            type="button"
-            className="bible-yv-passage-roll-scrim is-tools"
-            aria-label="Fermer le menu"
-            onClick={() => setToolsMenuOpen(false)}
+            className={`bible-yv-passage-roll-scrim${
+              toolsMenuOpen ? " is-tools" : ""
+            }${passagePickerRollOpen ? " is-picker-dismiss" : ""}`}
+            aria-label="Fermer"
+            onPointerDown={(event) => {
+              event.preventDefault();
+            }}
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              dismissPassageSurfaceOverlay();
+            }}
           />
         ) : null}
 
@@ -2271,8 +2328,8 @@ export function BibleReaderView({
           .filter(Boolean)
           .join(" ")}
         aria-busy={presentation.ariaBusy}
-        aria-hidden={pickerOpen || toolsMenuOpen || undefined}
-        inert={pickerOpen || toolsMenuOpen || undefined}
+        aria-hidden={passageInputBlocked || undefined}
+        inert={passageInputBlocked || undefined}
         style={
           {
             ["--verse-tint" as string]: actionTone.tint,
@@ -2280,6 +2337,8 @@ export function BibleReaderView({
           } as CSSProperties
         }
         onClick={() => {
+          if (takeOverlayDismissSwallow()) return;
+          if (passageInputBlocked) return;
           // Tap to reveal chrome (YouVersion).
           if (chromeHiddenRef.current) setReadingChrome(false, true);
         }}
@@ -2613,78 +2672,53 @@ export function BibleReaderView({
           onSeek={(seconds) => seekAudio(seconds)}
         />
         {planReading ? (
-        <div className={`bible-yv-dock-nav${onPlanStep ? " bible-yv-dock-nav--plan" : ""}`}>
+        <div className="bible-yv-dock-nav bible-yv-dock-nav--plan">
           <button
             type="button"
             className="bible-yv-dock-arrow"
-            onClick={() => {
-              if (planReading && onPlanStep) {
-                planReading.onPrev();
-                return;
-              }
-              if (pickerOpen) setPassageStep("chapter");
-              goAdjacent(-1);
-            }}
-            disabled={
-              planReading && onPlanStep
-                ? planReading.isFirst
-                : !canPrev || presentation.inFlight
-            }
-            aria-label={
-              planReading && onPlanStep
-                ? "Passage précédent du plan"
-                : "Chapitre précédent"
-            }
+            onClick={() => planReading.onPrev()}
+            disabled={planReading.isFirst || presentation.inFlight}
+            aria-label="Passage précédent du plan"
           >
             <YvIcon name="chevron_left" className="bible-yv-dock-icon" />
           </button>
+          <div
+            className={`bible-yv-dock-location is-static${onPlanStep ? "" : " is-off-step"}`}
+            title={planReading.planName}
+          >
+            <span className="bible-yv-dock-location-text">{planReading.label}</span>
+            {planStepProgress ? (
+              <span className="bible-yv-dock-plan-progress" aria-hidden>
+                {planStepProgress}
+              </span>
+            ) : null}
+            {!onPlanStep ? (
+              <button
+                type="button"
+                className="bible-yv-dock-plan-resync"
+                onClick={() => handlePlanBack()}
+              >
+                Revenir au passage
+              </button>
+            ) : null}
+          </div>
           <button
             type="button"
-            className={`bible-yv-dock-location${pickerOpen ? " is-open" : ""}`}
-            onClick={togglePicker}
-            aria-expanded={pickerOpen}
+            className={`bible-yv-dock-advance${planReading.isLast ? " is-complete" : ""}`}
+            onClick={() => planReading.onAdvance()}
+            disabled={presentation.inFlight}
             aria-label={
-              pickerOpen
-                ? `Fermer le choix · ${locationLabel}`
-                : `Choisir un passage · ${locationLabel}`
+              planReading.isLast
+                ? "Conclure la lecture du jour"
+                : "Passage suivant du plan"
             }
-            title={chapterLabel}
           >
-            <span className="bible-yv-dock-location-text">
-              {chapterLabel}
-            </span>
-          </button>
-          {onPlanStep ? (
-            <button
-              type="button"
-              className={`bible-yv-dock-advance${planReading.isLast ? " is-complete" : ""}`}
-              onClick={planReading.onAdvance}
-              aria-label={
-                planReading.isLast
-                  ? "Conclure la lecture du jour"
-                  : "Passage suivant du plan"
-              }
-            >
-              {planReading.isLast ? (
-                <YvIcon name="check" className="bible-yv-dock-icon" />
-              ) : (
-                <YvIcon name="chevron_right" className="bible-yv-dock-icon" />
-              )}
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="bible-yv-dock-arrow"
-              onClick={() => {
-                if (pickerOpen) setPassageStep("chapter");
-                goAdjacent(1);
-              }}
-              disabled={!canNext || presentation.inFlight}
-              aria-label="Chapitre suivant"
-            >
+            {planReading.isLast ? (
+              <YvIcon name="check" className="bible-yv-dock-icon" />
+            ) : (
               <YvIcon name="chevron_right" className="bible-yv-dock-icon" />
-            </button>
-          )}
+            )}
+          </button>
         </div>
         ) : null}
       </footer>

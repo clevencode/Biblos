@@ -1174,6 +1174,8 @@ export function App() {
                             focusRef: currentPlanStep(planReading)?.focusRef ?? "",
                             isFirst: isFirstPlanStep(planReading),
                             isLast: isLastPlanStep(planReading),
+                            stepIndex: planReading.index,
+                            stepCount: planReading.steps.length,
                             verseStart: currentPlanStep(planReading)?.verseStart ?? null,
                             verseEnd: currentPlanStep(planReading)?.verseEnd ?? null,
                             onPrev: planReadingPrev,
