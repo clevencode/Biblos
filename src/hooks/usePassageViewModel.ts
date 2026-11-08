@@ -10,9 +10,9 @@ import {
   isPassageLoading,
   passageReducer,
 } from "../bible/viewState/passageReducer";
+import { PASSAGE_LOADING_DEFER_MS } from "../bible/viewState/loadingConstants";
+import { passagePresentation } from "../bible/viewState/selectors";
 import type { PassageSkeletonSchema } from "../bible/viewState/types";
-
-const LOADING_UI_DELAY_MS = 120;
 
 export type PassageLoadOutcome = {
   bookId: string;
@@ -58,7 +58,7 @@ export function usePassageViewModel(options: UsePassageViewModelOptions) {
       setLoadingUi(false);
       return;
     }
-    const id = window.setTimeout(() => setLoadingUi(true), LOADING_UI_DELAY_MS);
+    const id = window.setTimeout(() => setLoadingUi(true), PASSAGE_LOADING_DEFER_MS);
     return () => window.clearTimeout(id);
   }, [loading]);
 
@@ -78,11 +78,11 @@ export function usePassageViewModel(options: UsePassageViewModelOptions) {
   const activeSchema: PassageSkeletonSchema | null =
     viewState.status === "idle" ? viewState.schema : viewState.schema;
 
-  const isReloading =
-    viewState.status === "loading" && viewState.reload && Boolean(viewState.stalePassage);
-
-  const isOpening =
-    viewState.status === "loading" && !viewState.stalePassage;
+  const presentation = passagePresentation({
+    viewState,
+    loading,
+    showDeferredUi: loadingUi,
+  });
 
   const loadChapter = useCallback(
     async (
@@ -108,6 +108,7 @@ export function usePassageViewModel(options: UsePassageViewModelOptions) {
         bookTitle,
         catalogOffline,
         offlineIndexReady: offlineReady,
+        schema,
       });
 
       if (gen !== loadGen.current) return;
@@ -158,13 +159,10 @@ export function usePassageViewModel(options: UsePassageViewModelOptions) {
   return {
     viewState,
     passage,
-    loading,
-    loadingUi,
     error,
     passageErrorKind,
     activeSchema,
-    isReloading,
-    isOpening,
+    presentation,
     loadChapter,
     retryChapter,
     currentUsfm: (bookId: string, chapterId: string) => chapterUsfm(bookId, chapterId),

@@ -37,6 +37,7 @@ export function useBibleCatalog(): UseBibleCatalogResult {
   const [isHydrating, setIsHydrating] = useState(true);
 
   const isLocalReady = !isHydrating && books.length > 0;
+  /** @deprecated Prefer `viewState.status === "loading"` */
   const isLoadingLocal = isHydrating;
 
   const applyHydration = useCallback((h: CatalogHydration) => {

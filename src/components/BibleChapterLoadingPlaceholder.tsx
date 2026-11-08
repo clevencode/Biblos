@@ -1,10 +1,14 @@
+import { PASSAGE_LOADING_COPY } from "../bible/viewState/loadingConstants";
+import {
+  passageChapterLoadingLead,
+  type PassagePresentation,
+} from "../bible/viewState/selectors";
 import { skeletonVerseSlotIds, type PassageSkeletonSchema } from "../bible/viewState/types";
 
 type BibleChapterLoadingPlaceholderProps = {
   bookTitle: string;
   chapterId: string;
-  /** Rechargement du même chapitre (texte encore en mémoire côté état). */
-  reload?: boolean;
+  presentation?: Pick<PassagePresentation, "isReloading">;
   lineCount?: number;
   schema?: PassageSkeletonSchema;
 };
@@ -14,13 +18,14 @@ const SKELETON_LINES_DEFAULT = 9;
 export function BibleChapterLoadingPlaceholder({
   bookTitle,
   chapterId,
-  reload = false,
+  presentation,
   lineCount = SKELETON_LINES_DEFAULT,
   schema,
 }: BibleChapterLoadingPlaceholderProps) {
-  const lead = reload
-    ? "Mise à jour du chapitre…"
-    : "Ouverture du chapitre…";
+  const reload = presentation?.isReloading ?? false;
+  const lead = presentation
+    ? passageChapterLoadingLead(presentation)
+    : PASSAGE_LOADING_COPY.openingChapter;
 
   const slotIds = schema ? skeletonVerseSlotIds(schema) : null;
   const lineTotal = Math.max(1, Math.min(lineCount, slotIds?.length ?? lineCount));

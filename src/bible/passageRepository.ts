@@ -50,13 +50,16 @@ export async function loadPassageViewState(input: {
   bookTitle: string;
   catalogOffline: boolean;
   offlineIndexReady: boolean;
+  schema?: PassageSkeletonSchema;
 }): Promise<PassageViewState> {
   const usfm = chapterUsfm(input.bookId, input.chapterId);
-  const schema = await resolvePassageLayout({
-    bookId: input.bookId,
-    chapterId: input.chapterId,
-    bookTitle: input.bookTitle,
-  });
+  const schema =
+    input.schema ??
+    (await resolvePassageLayout({
+      bookId: input.bookId,
+      chapterId: input.chapterId,
+      bookTitle: input.bookTitle,
+    }));
 
   perfMark("passage-idb-read-start");
   try {

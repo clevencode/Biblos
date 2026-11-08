@@ -53,6 +53,20 @@ Regras:
 - Picker: grelhas skeleton com `slotIds` fixos; painel com `min-height` + `contain: layout`.
 - Testes: `npm run test:passage-viewstate`.
 
+## Camada de apresentação (chrome)
+
+Selectors puros em `src/bible/viewState/selectors.ts` e `bibleChrome.ts` — a UI **não** combina flags locais (`isHydrating`, `isLoadingLocal`, `loading` + `loadingUi`) à mão.
+
+| Selector / helper | Consumidor | O que deriva |
+|-------------------|------------|----------------|
+| `passagePresentation` | `usePassageViewModel` → `BibleReaderView` | `ariaBusy`, `statusLine`, `showOpeningSkeleton` (após 120 ms), `isOpening` / `isReloading` |
+| `passageLiveStatusLabel` / `PASSAGE_LOADING_COPY` | live region + placeholders | textos FR únicos |
+| `biblePickerChrome` | `BibleReaderView` (chips + roll) | `chipsHydrating`, `pickerPanelOpenAllowed`, `controlsDisabled` |
+| `passagePickerChrome` | `BiblePassageScrollPicker` | `inFlight`, `showDeferredUi`, `schema` para skeleton de versos |
+| `mergeBibleReaderErrors` | barra de erro | prioridade: falha de passagem → erro de chrome (offline/áudio) |
+
+Catálogo: preferir `useBibleCatalog().viewState.status` (`CatalogViewState`) em vez de `isLoadingLocal` / `isLocalReady` isolados.
+
 ## Predictable State UI
 
 Fases (`AppReadinessContext`):
@@ -66,10 +80,10 @@ Fases (`AppReadinessContext`):
 Chrome da Bíblia:
 
 - Chips com **shimmer in-place** (`BiblePassageChip.is-hydrating`) — botão + caret fixos, sem troca por `span` skeleton.
-- Picker desactivado até `isLocalReady`.
+- Picker desactivado até `biblePickerChrome.pickerPanelOpenAllowed` (catálogo S21 `ready` ou HT98 com livros).
 - Cabeçalho **sem** indicador nuvem/sync (toast global `Hors ligne` + ícone offline só se reactivado).
 - Classe `is-catalog-offline` segue **evento offline do navegador**, não só a fonte do catálogo em rede.
-- Capítulo: regra **120 ms** — skeleton com métricas do `PassageSkeletonSchema`; recarregar o mesmo capítulo mantém versos (`stalePassage`) + barra no topo.
+- Capítulo: **0–120 ms** — só reserva dimensional (`PassageSkeletonSchema` + barra `is-chapter-opening`); **após 120 ms** (`showOpeningSkeleton`) — skeleton com números opacos; reload mantém versos (`stalePassage`) + `is-chapter-reload`.
 - **Não** limpar passage na navegação: o ViewModel emite `loading` com schema de destino.
 - Offline sem IDB: `BibleOfflineChapterGate` + CTA téléchargement (só sem versículos em memória; texto já lido permanece ao falhar recarga).
 - Gate e `BibleChapterLoadingPlaceholder` com **min-height** alinhado para evitar salto entre estados.

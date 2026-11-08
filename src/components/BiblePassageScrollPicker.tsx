@@ -8,7 +8,8 @@ import {
   buildChapterPickerSkeleton,
   buildVersePickerSkeleton,
 } from "../bible/viewState/pickerViewState";
-import type { PassageSkeletonSchema } from "../bible/viewState/types";
+import { PASSAGE_LOADING_COPY } from "../bible/viewState/loadingConstants";
+import type { PassagePickerChrome } from "../bible/viewState/passagePickerChrome";
 import type { DiscoveryJump, PassageDiscoveryResult } from "../bible/passageDiscovery/types";
 
 export type PassagePickStep = "book" | "chapter" | "verse";
@@ -29,9 +30,7 @@ type BiblePassageScrollPickerProps = {
   onDiscoveryVerseListScroll: (bookId: string, scrollTop: number) => void;
   chapters: string[];
   verseOptions: number[];
-  loading: boolean;
-  loadingUi: boolean;
-  passageSchema: PassageSkeletonSchema | null;
+  passageChrome: PassagePickerChrome;
   highlightVerse: number | null;
   verseSelected: (n: number) => boolean;
   onBack: () => void;
@@ -62,9 +61,7 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
       onDiscoveryVerseListScroll,
       chapters,
       verseOptions,
-      loading,
-      loadingUi,
-      passageSchema,
+      passageChrome,
       highlightVerse,
       verseSelected,
       onBack,
@@ -103,8 +100,9 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
           : `Versets du chapitre ${chapterId}`;
 
     const hasQuery = Boolean(bookSearchQuery.trim());
+    const { inFlight, showDeferredUi, schema: passageSchema } = passageChrome;
     const verseGridSchema =
-      passageSchema && loadingUi
+      passageSchema && showDeferredUi
         ? buildVersePickerSkeleton(passageSchema.usfm, passageSchema.gridVerseSlots)
         : buildVersePickerSkeleton(
             `${bookId}.${chapterId}`,
@@ -197,7 +195,7 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
               hasQuery={hasQuery}
               searchQuery={bookSearchQuery}
               bookId={bookId}
-              loading={loading}
+              loading={inFlight}
               expandedBookId={discoverySession.expandedBookId}
               anchorVerseUsfm={discoverySession.anchorVerseUsfm}
               verseScrollByBook={discoverySession.verseScrollByBook}
@@ -219,7 +217,7 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
                       aria-selected={on}
                       className={`bible-yv-pick-cell${on ? " is-on" : ""}`}
                       onClick={() => onPickChapter(id)}
-                      disabled={loading}
+                      disabled={inFlight}
                     >
                       {id}
                     </button>
@@ -228,7 +226,7 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
               : (
                 <BiblePickGridSkeleton schema={chapterGridSchema} role="presentation" />
               )
-            : loadingUi
+            : showDeferredUi
               ? (
                 <BiblePickGridSkeleton schema={verseGridSchema} role="presentation" />
               )
@@ -242,7 +240,7 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
                     aria-selected={on}
                     className={`bible-yv-pick-cell${on ? " is-on" : ""}`}
                     onClick={() => onJumpVerse(n)}
-                    disabled={loading}
+                    disabled={inFlight}
                   >
                     {n}
                   </button>
@@ -251,15 +249,15 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
         </div>
         {step === "book" && !books.length ? (
           <p className="bible-yv-pick-loading bible-yv-muted bible-yv-pick-roll-empty">
-            Préparation de la liste…
+            {PASSAGE_LOADING_COPY.pickerPreparingBooks}
           </p>
         ) : null}
-        {step === "verse" && loadingUi ? (
+        {step === "verse" && showDeferredUi ? (
           <p className="bible-yv-pick-roll-status bible-yv-muted" role="status">
-            Ouverture du chapitre…
+            {PASSAGE_LOADING_COPY.pickerVerseOpening}
           </p>
         ) : null}
-        {step === "verse" && !loadingUi && !verseOptions.length ? (
+        {step === "verse" && !showDeferredUi && !verseOptions.length ? (
           <p className="bible-yv-pick-loading bible-yv-muted bible-yv-pick-roll-empty">Aucun verset</p>
         ) : null}
         <div className="bible-yv-passage-scroll-edge" aria-hidden />

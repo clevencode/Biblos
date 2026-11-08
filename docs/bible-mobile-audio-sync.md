@@ -65,7 +65,10 @@ Saída: `.../Jean/transcripts/Jean_Chapitre_1.{txt,srt,transcript.json}`
 | Token | Uso |
 |-------|-----|
 | `--mobile-bottom-chrome` | Tab bar + safe-area |
-| `--bible-fab-lift` | Espaço do FAB play (~58px) |
+| `--bible-audio-float-inset-x` | Margem esquerda do play (gutter + safe-area) |
+| `--bible-audio-float-bottom` | Distância tab bar → FAB (`--bible-play-float-gap` 16px) |
+| `--bible-audio-play-size` | Diâmetro do botão play (46px) |
+| `--bible-fab-lift` | Reserva de scroll com pilula expandida (58px) |
 | `--bible-dock-lift` | Padding inferior do texto |
 | `--bible-top-chrome` | Altura do header livro/capítulo |
 | `--bible-pick-lift` | Sheet picker até às tabs (sem faixa tools) |

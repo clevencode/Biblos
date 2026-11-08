@@ -10,6 +10,7 @@ import {
   passageReducer,
 } from "../src/bible/viewState/passageReducer.ts";
 import { buildGridSkeletonSlotIds } from "../src/bible/viewState/pickerViewState.ts";
+import { passagePresentation } from "../src/bible/viewState/selectors.ts";
 import type { YouVersionPassage } from "../src/youversion/client.ts";
 
 const jhn1 = buildPassageSkeletonSchema({
@@ -57,5 +58,36 @@ assert.equal(displayPassageFromViewState(state), null);
 const slots = buildGridSkeletonSlotIds("skeleton-verse:JHN.2", 25);
 assert.equal(slots.slotIds.length, 25);
 assert.equal(slots.slotIds[0], "skeleton-verse:JHN.2:1");
+
+const openingFast = passagePresentation({
+  viewState: { status: "loading", schema: jhn2, reload: false, stalePassage: null },
+  loading: true,
+  showDeferredUi: false,
+});
+assert.equal(openingFast.isOpening, true);
+assert.equal(openingFast.showOpeningSkeleton, false);
+assert.equal(openingFast.statusLine, "idle");
+
+const openingDeferred = passagePresentation({
+  viewState: { status: "loading", schema: jhn2, reload: false, stalePassage: null },
+  loading: true,
+  showDeferredUi: true,
+});
+assert.equal(openingDeferred.showOpeningSkeleton, true);
+assert.equal(openingDeferred.statusLine, "opening");
+
+const reloading = passagePresentation({
+  viewState: {
+    status: "loading",
+    schema: jhn1,
+    reload: true,
+    stalePassage: sample,
+  },
+  loading: true,
+  showDeferredUi: false,
+});
+assert.equal(reloading.isReloading, true);
+assert.equal(reloading.showOpeningSkeleton, false);
+assert.equal(reloading.statusLine, "reload");
 
 console.log("passage-viewstate: ok");
