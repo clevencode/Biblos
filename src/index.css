@@ -8266,8 +8266,8 @@ ul.plan-yv-day-note-ref {
   contain: layout;
 }
 
-.app.is-bible-mode.is-narrow .bible-yv-audio-float.is-playing {
-  contain: layout size;
+.app.is-bible-mode.is-narrow .bible-yv-audio-player.is-expanded {
+  contain: layout style;
 }
 
 .bible-yv-passage-scroll-edge {
@@ -8708,8 +8708,8 @@ ul.plan-yv-day-note-ref {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 5px 10px;
+  gap: 4px;
+  padding: 5px 8px 5px 10px;
   border: 0;
   border-radius: 999px;
   background: transparent;
@@ -8754,7 +8754,7 @@ ul.plan-yv-day-note-ref {
 }
 
 .bible-yv-passage-chip.is-book {
-  min-width: 6.5rem;
+  min-width: 5.25rem;
 }
 
 .bible-yv-passage-chip.is-book .bible-yv-passage-chip-value {
@@ -8769,8 +8769,8 @@ ul.plan-yv-day-note-ref {
 .bible-yv-passage-chip.is-chapter {
   flex: 0 1 auto;
   max-width: none;
-  min-width: 4.25rem;
-  padding-inline: 8px 10px;
+  min-width: 2.75rem;
+  padding-inline: 8px 6px;
 }
 
 .bible-yv-passage-chip.is-chapter .bible-yv-passage-chip-value {
@@ -10563,6 +10563,15 @@ ul.plan-yv-day-note-ref {
   font-weight: 600;
 }
 
+.bible-yv-dock.is-play-only .bible-yv-dock-nav {
+  display: none;
+}
+
+.bible-yv-dock.is-play-only {
+  width: auto;
+  justify-content: flex-start;
+}
+
 .bible-yv-dock {
   position: absolute;
   left: 0;
@@ -10617,19 +10626,30 @@ ul.plan-yv-day-note-ref {
   pointer-events: auto;
 }
 
-.app.is-bible-mode.is-narrow .bible-yv-dock.is-floating.is-play-only {
-  position: fixed;
-  left: var(--bible-audio-float-inset-x);
-  right: auto;
-  bottom: var(--bible-audio-float-bottom);
-  z-index: 20;
-  align-items: flex-end;
-  max-width: calc(100vw - var(--bible-audio-float-inset-x) - var(--mobile-gutter, 12px));
-  pointer-events: none;
-}
+@media (max-width: 860px) {
+  .app.is-bible-mode .bible-yv-dock.is-play-only {
+    position: fixed;
+    left: var(--bible-audio-float-inset-x);
+    right: auto;
+    bottom: var(--bible-audio-float-bottom);
+    z-index: 50;
+    align-items: center;
+    width: auto;
+    max-width: calc(
+      100vw - var(--bible-audio-float-inset-x) -
+        max(var(--mobile-gutter, 12px), env(safe-area-inset-right, 0px))
+    );
+    margin: 0;
+    pointer-events: none;
+  }
 
-.app.is-bible-mode.is-narrow .bible-yv-dock.is-floating.is-play-only .bible-yv-audio-float {
-  pointer-events: auto;
+  .app.is-bible-mode.is-narrow .bible-yv-dock.is-floating.is-play-only {
+    position: fixed;
+  }
+
+  .app.is-bible-mode .bible-yv-dock.is-play-only .bible-yv-audio-player {
+    pointer-events: auto;
+  }
 }
 
 .app.is-bible-mode.is-narrow .bible-yv-dock.is-floating.is-play-only .bible-yv-dock-play {
@@ -10690,12 +10710,20 @@ ul.plan-yv-day-note-ref {
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 16%, transparent);
 }
 
-.app.is-bible-mode.is-narrow .bible-yv-dock.is-floating.is-play-only .bible-yv-dock-play {
+.app.is-bible-mode.is-narrow .bible-yv-dock.is-play-only .bible-yv-audio-player .bible-yv-dock-play {
   background: var(--accent);
   color: #fff;
+  box-shadow: none;
+}
+
+.app.is-bible-mode.is-narrow .bible-yv-dock.is-play-only .bible-yv-audio-player:not(.is-expanded) {
   box-shadow:
     0 2px 6px color-mix(in srgb, var(--accent) 32%, transparent),
     0 10px 24px color-mix(in srgb, #000 14%, transparent);
+}
+
+.app.is-bible-mode.is-narrow .bible-yv-dock.is-play-only .bible-yv-audio-player:not(.is-expanded) .bible-yv-dock-play {
+  box-shadow: none;
 }
 
 .app.is-bible-mode.is-narrow
@@ -10852,81 +10880,101 @@ ul.plan-yv-day-note-ref {
     0 0 0 2px color-mix(in srgb, var(--accent) 22%, transparent);
 }
 
-/* —— Lecture audio (contrôles suspendus dans le dock) —— */
-.bible-yv-audio-float {
+/* —— Lecture audio (pilule play + barre unique) —— */
+.bible-yv-audio-player {
+  --audio-player-strip-w: min(15.5rem, 52vw);
   flex: none;
-  display: flex;
-  align-items: center;
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
   gap: 0;
-  min-width: 0;
+  min-width: var(--bible-audio-play-size, 46px);
   min-height: var(--bible-audio-play-size, 46px);
-  transform-origin: left bottom;
-  transition: gap 260ms cubic-bezier(0.22, 1, 0.36, 1);
+  max-width: 100%;
+  border-radius: 999px;
+  -webkit-tap-highlight-color: transparent;
+  background: color-mix(in srgb, var(--elevated, var(--panel)) 88%, var(--accent) 12%);
+  box-shadow:
+    0 2px 6px color-mix(in srgb, var(--accent) 22%, transparent),
+    0 10px 24px color-mix(in srgb, #000 12%, transparent);
+  overflow: hidden;
+  transition:
+    box-shadow 260ms ease,
+    background 200ms ease;
 }
 
-.bible-yv-audio-float.is-playing {
-  gap: 10px;
+.bible-yv-audio-player:not(.is-expanded) {
+  background: transparent;
+  box-shadow: none;
 }
 
-.bible-yv-audio-float-track {
-  display: grid;
-  grid-template-columns: 0fr;
-  align-items: center;
-  flex: 0 1 auto;
+.bible-yv-audio-player-play {
+  flex: none;
+  align-self: center;
+}
+
+.bible-yv-audio-player-strip {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  flex: 0 0 auto;
+  width: 0;
   min-width: 0;
+  max-width: 0;
+  padding: 0;
   opacity: 0;
   overflow: hidden;
   pointer-events: none;
   transition:
-    grid-template-columns 280ms cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 200ms ease;
+    max-width 280ms cubic-bezier(0.22, 1, 0.36, 1),
+    width 280ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 200ms ease,
+    padding 280ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.bible-yv-audio-float.is-playing .bible-yv-audio-float-track {
-  grid-template-columns: 1fr;
-  flex: 1 1 auto;
-  width: 100%;
+.bible-yv-audio-player.is-expanded .bible-yv-audio-player-strip {
+  width: var(--audio-player-strip-w);
+  max-width: var(--audio-player-strip-w);
+  padding: 4px 10px 4px 2px;
   opacity: 1;
   pointer-events: auto;
 }
 
-.bible-yv-audio-float-track-inner {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 7.25rem;
-  width: 100%;
+.app.is-bible-mode.is-narrow .bible-yv-audio-player-range {
+  height: 22px;
 }
 
-.bible-yv-audio-float-track-inner > .bible-yv-audio-float-range {
+.bible-yv-audio-player-range {
+  width: 100%;
   min-width: 0;
 }
 
-.bible-yv-audio-float-times {
+.bible-yv-audio-player-times {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 4px;
+  gap: 6px;
   margin: 0;
   padding: 0 1px;
   font-size: 0.66rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  line-height: 1.15;
+  line-height: 1.1;
   color: color-mix(in srgb, var(--yv-muted, var(--muted)) 28%, var(--text));
   user-select: none;
+  white-space: nowrap;
 }
 
-.bible-yv-audio-float-times-sep {
+.bible-yv-audio-player-times-sep {
   flex: none;
   opacity: 0.5;
   font-weight: 500;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .bible-yv-audio-float,
-  .bible-yv-audio-float-track,
-  .app.is-bible-mode.is-narrow .bible-yv-dock.is-floating.is-play-only .bible-yv-audio-float {
+  .bible-yv-audio-player,
+  .bible-yv-audio-player-strip {
     transition: none;
   }
 
@@ -10995,42 +11043,12 @@ ul.plan-yv-day-note-ref {
   box-shadow: 0 1px 4px color-mix(in srgb, #000 18%, transparent);
 }
 
-.app.is-bible-mode.is-narrow .bible-yv-dock.is-floating .bible-yv-audio-float {
+.app.is-bible-mode.is-narrow .bible-yv-dock.is-floating:not(.is-play-only) .bible-yv-audio-player {
   pointer-events: auto;
 }
 
-.app.is-bible-mode.is-narrow .bible-yv-dock.is-floating.is-play-only .bible-yv-audio-float {
-  flex: 0 1 auto;
-  align-self: flex-end;
-  border-radius: 999px;
-  transition:
-    gap 260ms cubic-bezier(0.22, 1, 0.36, 1),
-    padding 260ms cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 260ms ease,
-    background 200ms ease;
-}
-
-.app.is-bible-mode.is-narrow
-  .bible-yv-dock.is-floating.is-play-only
-  .bible-yv-audio-float.is-playing {
-  align-items: center;
-  padding: 4px 12px 4px 4px;
-  background: color-mix(in srgb, var(--elevated, var(--panel)) 90%, var(--accent) 10%);
-  box-shadow:
-    0 2px 6px color-mix(in srgb, var(--accent) 28%, transparent),
-    0 10px 24px color-mix(in srgb, #000 14%, transparent);
-  max-width: min(19.5rem, 100%);
-}
-
-.app.is-bible-mode.is-narrow
-  .bible-yv-dock.is-floating:not(.is-play-only)
-  .bible-yv-audio-float.is-playing {
-  flex: 0 1 auto;
-  max-width: min(10rem, 38vw);
-  gap: 6px;
-  padding-right: 6px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--text) 8%, transparent);
+.app.is-bible-mode.is-narrow .bible-yv-dock.is-floating:not(.is-play-only) .bible-yv-audio-player.is-expanded {
+  --audio-player-strip-w: min(9.5rem, 34vw);
 }
 
 /* —— Recherche de mots (S21) —— */

@@ -9,7 +9,7 @@ Documentação das alterações recentes na branch `develop` (nov. 2026): leitor
 | Navbar mobile | Altura uniforme em todas as secções (Accueil, Plan, Bible, Profil). Removida a faixa extra `bible-chrome-dock` / `has-bible-tools`. |
 | Navegação topo | Livro e capítulo clicáveis (mesmo picker que o dock), setas de capítulo, estilo em pílula. |
 | Menu | Hamburger + item « Recherche » (ícone + texto). |
-| Play | FAB sobre o texto (não na tab bar); no mobile não fica `fixed` na viewport — oculta ao rolar (`is-head-compact` / chrome imersivo). |
+| Play | Pilula `.bible-yv-audio-player` fixa acima da tab bar (`is-play-only`) ; expandida com barra + tempos na mesma faixa. |
 | Texto | Título hero « Jean 3 » no corpo oculto no mobile; `padding-top` reservado para o header absoluto. |
 | Sync áudio (teste) | Jean **JHN 1**: MP3 do capítulo + `1.transcript.json`; versículo activo segue `currentTime`. |
 
@@ -75,7 +75,7 @@ Saída: `.../Jean/transcripts/Jean_Chapitre_1.{txt,srt,transcript.json}`
 
 ## Plano de leitura
 
-No mobile, o dock inferior com setas do **plano** mantém-se flutuante (`is-floating is-plan`). Leitura livre: só play no FAB; navegação de capítulo no topo.
+No mobile, o dock inferior com setas do **plano** mantém-se flutuante (`is-floating is-plan`). **Leitura livre:** dock `is-play-only` — só áudio; livro/capítulo e setas ficam no **topo** (nunca pílula « Jean 20 » no rodapé).
 
 ## Próximos passos sugeridos
 

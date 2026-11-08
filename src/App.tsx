@@ -1119,6 +1119,7 @@ export function App() {
                     focusRef={bibleFocusRef}
                     focusSeq={bibleFocusSeq}
                     active={mode === "bible"}
+                    compactViewport={narrow}
                     onBack={planReading ? exitPlanReading : () => {
                       if (planDay) selectMode("today");
                       else goHome();

@@ -27,7 +27,6 @@ export function BiblePassageChip({
   /** Placeholder tabular — largura estável (livre/capítulo) enquanto hidrata. */
   const placeholder = variant === "chapter" ? "88" : "Livre";
   const visibleLabel = showSkeleton ? (trimmed || placeholder) : trimmed;
-  const kindIcon = variant === "book" ? "menu_book" : "format_list_numbered";
 
   return (
     <button
@@ -43,7 +42,6 @@ export function BiblePassageChip({
       aria-label={ariaLabel}
       title={showSkeleton ? undefined : title}
     >
-      <YvIcon name={kindIcon} opsz={20} className="bible-yv-passage-chip-kind" />
       <span className="bible-yv-passage-chip-value">{visibleLabel}</span>
       <YvIcon
         name="keyboard_arrow_down"

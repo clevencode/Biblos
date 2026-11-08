@@ -311,6 +311,8 @@ type BibleReaderViewProps = {
   onReadingHistoryChange?: () => void;
   /** Mobile : hamburger à droite (outils Bible uniquement). */
   compactToolsMenu?: boolean;
+  /** Viewport compact (sincronizado com `app.is-narrow`). */
+  compactViewport?: boolean;
 };
 
 /** Ids USFM (JHN, 1SA) — ignore un livre fantôme type VERSECARD. */
@@ -430,6 +432,7 @@ export function BibleReaderView({
   onBibleRead,
   onReadingHistoryChange,
   compactToolsMenu = false,
+  compactViewport = false,
 }: BibleReaderViewProps) {
   const prefs = readPrefs();
   const prefsBookOk = isUsfmBookId(prefs.bookId || "");
@@ -587,7 +590,6 @@ export function BibleReaderView({
   const [uiTheme, setUiTheme] = useState<ResolvedTheme>(() => resolveTheme());
   const statusId = useId();
   const highlightRef = useRef<HTMLElement | null>(null);
-  const dockLocationRef = useRef<HTMLButtonElement | null>(null);
   const passageRollRef = useRef<HTMLDivElement | null>(null);
   const passageScrollRef = useRef<HTMLElement | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -917,7 +919,10 @@ export function BibleReaderView({
         input?.focus();
         return;
       }
-      dockLocationRef.current?.focus();
+      const chip = passageRollRef.current?.querySelector(
+        ".bible-yv-passage-chip.is-chapter",
+      ) as HTMLButtonElement | null;
+      chip?.focus();
     }, 0);
     return () => window.clearTimeout(id);
   }, [pickerOpen, passageStep]);
@@ -2589,21 +2594,14 @@ export function BibleReaderView({
       ) : null}
 
       {(() => {
-        const hideDockPassageNav = Boolean(narrowChrome && !planReading);
+        const compactDock = compactViewport || narrowChrome;
+        const freeReadingDock = !planReading;
         return (
       <footer
-        className={`bible-yv-dock${planReading ? " is-plan" : ""}${showCreateCard ? " has-verse-actions" : ""}${audioPlaying ? " is-playing" : ""}${narrowChrome ? " is-floating" : ""}${hideDockPassageNav ? " is-play-only" : ""}`}
-        aria-hidden={hideChrome && !hideDockPassageNav ? true : undefined}
-        inert={hideChrome && !hideDockPassageNav ? true : undefined}
-        aria-label={
-          hideDockPassageNav
-            ? "Lecteur audio"
-            : planReading
-              ? "Lecture du plan"
-              : pickerOpen
-                ? "Choisir livre et passage"
-                : "Chapitre"
-        }
+        className={`bible-yv-dock${planReading ? " is-plan" : ""}${showCreateCard ? " has-verse-actions" : ""}${audioPlaying ? " is-playing" : ""}${compactDock ? " is-floating" : ""}${freeReadingDock ? " is-play-only" : ""}`}
+        aria-hidden={hideChrome && planReading ? true : undefined}
+        inert={hideChrome && planReading ? true : undefined}
+        aria-label={freeReadingDock ? "Lecteur audio" : "Lecture du plan"}
       >
         <BibleAudioFloat
           hasAudio={canPlayBookAudio}
@@ -2614,8 +2612,8 @@ export function BibleReaderView({
           onTogglePlay={() => handleAudioTransport()}
           onSeek={(seconds) => seekAudio(seconds)}
         />
-        {hideDockPassageNav ? null : (
-        <div className={`bible-yv-dock-nav${planReading && onPlanStep ? " bible-yv-dock-nav--plan" : ""}`}>
+        {planReading ? (
+        <div className={`bible-yv-dock-nav${onPlanStep ? " bible-yv-dock-nav--plan" : ""}`}>
           <button
             type="button"
             className="bible-yv-dock-arrow"
@@ -2641,7 +2639,6 @@ export function BibleReaderView({
             <YvIcon name="chevron_left" className="bible-yv-dock-icon" />
           </button>
           <button
-            ref={dockLocationRef}
             type="button"
             className={`bible-yv-dock-location${pickerOpen ? " is-open" : ""}`}
             onClick={togglePicker}
@@ -2657,7 +2654,7 @@ export function BibleReaderView({
               {chapterLabel}
             </span>
           </button>
-          {planReading && onPlanStep ? (
+          {onPlanStep ? (
             <button
               type="button"
               className={`bible-yv-dock-advance${planReading.isLast ? " is-complete" : ""}`}
@@ -2689,7 +2686,7 @@ export function BibleReaderView({
             </button>
           )}
         </div>
-        )}
+        ) : null}
       </footer>
         );
       })()}
