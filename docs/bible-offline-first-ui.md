@@ -64,6 +64,11 @@ Selectors puros em `src/bible/viewState/selectors.ts` e `bibleChrome.ts` — a U
 | `biblePickerChrome` | `BibleReaderView` (chips + roll) | `chipsHydrating`, `pickerPanelOpenAllowed`, `controlsDisabled` |
 | `passagePickerChrome` | `BiblePassageScrollPicker` | `inFlight`, `showDeferredUi`, `schema` para skeleton de versos |
 | `mergeBibleReaderErrors` | barra de erro | prioridade: falha de passagem → erro de chrome (offline/áudio) |
+| `readerSurfaceChrome` | `BibleReaderView` (superfície) | `inert`/scrim, `is-passage-roll-open`, `forceChromeVisible` |
+| `overlayDismissTarget` | dismiss scrim / swallow | ordem: picker → menu → history → share |
+| `pickerVerseNumberOptions` | passo versículo no picker | grelha alinhada ao `PassageSkeletonSchema` de destino |
+| `planReaderOnStep` / `planStepProgressLabel` | dock/plan | passo activo vs capítulo livre |
+| `showOfflineChapterGate` | gate offline IDB | sem versets em memória |
 
 Catálogo: preferir `useBibleCatalog().viewState.status` (`CatalogViewState`) em vez de `isLoadingLocal` / `isLocalReady` isolados.
 

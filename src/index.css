@@ -8118,6 +8118,21 @@ ul.plan-yv-day-note-ref {
   contain: layout style;
 }
 
+.bible-reader--yv.is-tools-menu-open .bible-yv-top {
+  z-index: 24;
+  overflow: visible;
+  contain: none;
+}
+
+.bible-reader--yv.is-tools-menu-open .bible-yv-top-tools,
+.bible-reader--yv.is-tools-menu-open .bible-yv-tools-menu {
+  overflow: visible;
+}
+
+.bible-reader--yv.is-tools-menu-open .bible-yv-read-surface {
+  z-index: 0;
+}
+
 .bible-yv-top.is-plan {
   justify-content: space-between;
 }
@@ -9379,6 +9394,7 @@ ul.plan-yv-day-note-ref {
   top: calc(100% + 6px);
   right: 0;
   z-index: 40;
+  pointer-events: auto;
   min-width: min(16.5rem, calc(100vw - 2rem));
   max-height: min(74vh, 28rem);
   overflow: auto;

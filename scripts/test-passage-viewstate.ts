@@ -10,7 +10,13 @@ import {
   passageReducer,
 } from "../src/bible/viewState/passageReducer.ts";
 import { buildGridSkeletonSlotIds } from "../src/bible/viewState/pickerViewState.ts";
-import { passagePresentation } from "../src/bible/viewState/selectors.ts";
+import { passagePresentation, showOfflineChapterGate } from "../src/bible/viewState/selectors.ts";
+import {
+  overlayDismissTarget,
+  readerSurfaceChrome,
+} from "../src/bible/viewState/readerSurfaceChrome.ts";
+import { pickerVerseNumberOptions } from "../src/bible/viewState/pickerVerseOptions.ts";
+import { planReaderOnStep } from "../src/bible/viewState/planReaderChrome.ts";
 import type { YouVersionPassage } from "../src/youversion/client.ts";
 
 const jhn1 = buildPassageSkeletonSchema({
@@ -89,5 +95,79 @@ const reloading = passagePresentation({
 assert.equal(reloading.isReloading, true);
 assert.equal(reloading.showOpeningSkeleton, false);
 assert.equal(reloading.statusLine, "reload");
+
+const surfaceTools = readerSurfaceChrome({
+  pickerOpen: false,
+  pickerPanelOpenAllowed: true,
+  toolsMenuOpen: true,
+  historyOpen: false,
+  shareSheetOpen: false,
+  verseActionsOpen: false,
+});
+assert.equal(surfaceTools.passageInputBlocked, true);
+assert.equal(surfaceTools.passageSurfaceScrimOpen, false);
+assert.equal(surfaceTools.toolsMenuPassThroughDismiss, true);
+assert.equal(surfaceTools.rootClassPassageRollOpen, false);
+
+const surfacePickerNoCatalog = readerSurfaceChrome({
+  pickerOpen: true,
+  pickerPanelOpenAllowed: false,
+  toolsMenuOpen: false,
+  historyOpen: false,
+  shareSheetOpen: false,
+  verseActionsOpen: false,
+});
+assert.equal(surfacePickerNoCatalog.passageInputBlocked, false);
+assert.equal(surfacePickerNoCatalog.rootClassPassageRollOpen, false);
+
+assert.equal(
+  overlayDismissTarget({
+    pickerOpen: true,
+    pickerPanelOpenAllowed: true,
+    toolsMenuOpen: true,
+    historyOpen: false,
+    shareSheetOpen: false,
+    verseActionsOpen: false,
+  }),
+  "picker",
+);
+
+const versesStale = pickerVerseNumberOptions({
+  bookId: "JHN",
+  chapterId: "2",
+  schema: jhn2,
+  passageUsfm: "JHN.1",
+  passageVerseNumbers: [1, 2, 3],
+});
+assert.equal(versesStale.length, 25);
+assert.equal(versesStale[0], 1);
+
+const versesReady = pickerVerseNumberOptions({
+  bookId: "JHN",
+  chapterId: "1",
+  schema: jhn1,
+  passageUsfm: "JHN.1",
+  passageVerseNumbers: [1, 2, 51],
+});
+assert.deepEqual(versesReady, [1, 2, 51]);
+
+assert.equal(
+  planReaderOnStep({
+    planFocusRef: "Jean 3.16",
+    planLabel: "Jean 3",
+    bookId: "JHN",
+    chapterId: "3",
+  }),
+  true,
+);
+
+assert.equal(
+  showOfflineChapterGate({
+    passageErrorKind: "offline_not_cached",
+    localBundledAvailable: false,
+    versesInMemory: false,
+  }),
+  true,
+);
 
 console.log("passage-viewstate: ok");

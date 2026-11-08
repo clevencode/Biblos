@@ -8,3 +8,6 @@ export * from "./audioViewState";
 export * from "./selectors";
 export * from "./bibleChrome";
 export * from "./passagePickerChrome";
+export * from "./readerSurfaceChrome";
+export * from "./planReaderChrome";
+export * from "./pickerVerseOptions";

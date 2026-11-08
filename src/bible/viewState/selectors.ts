@@ -70,6 +70,19 @@ export type BibleReaderError =
   | { domain: "passage"; message: string; kind: PassageLoadErrorKind }
   | { domain: "chrome"; message: string };
 
+/** Gate téléchargement — sans versets em memória (texte em stale reload mantém-se). */
+export function showOfflineChapterGate(input: {
+  passageErrorKind: PassageLoadErrorKind;
+  localBundledAvailable: boolean;
+  versesInMemory: boolean;
+}): boolean {
+  return (
+    input.passageErrorKind === "offline_not_cached" &&
+    !input.localBundledAvailable &&
+    !input.versesInMemory
+  );
+}
+
 export function mergeBibleReaderErrors(
   passageMessage: string | null,
   passageKind: PassageLoadErrorKind,

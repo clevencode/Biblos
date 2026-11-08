@@ -44,13 +44,20 @@ import {
   type PassageDiscoverySession,
 } from "../bible/passageDiscovery/session";
 import {
+  OVERLAY_DISMISS_SWALLOW_MS,
   PASSAGE_LOADING_COPY,
   biblePickerChrome,
   bibleReaderErrorMessage,
   mergeBibleReaderErrors,
+  overlayDismissTarget,
   passageLiveStatusLabel,
   passagePickerChromeFromPresentation,
   passageSchemaCssVars,
+  pickerVerseNumberOptions,
+  planReaderOnStep,
+  planStepProgressLabel,
+  readerSurfaceChrome,
+  showOfflineChapterGate,
 } from "../bible/viewState";
 import { usePassageViewModel } from "../hooks/usePassageViewModel";
 import { useAppReadiness } from "../context/AppReadinessContext";
@@ -525,7 +532,7 @@ export function BibleReaderView({
     window.clearTimeout(overlayDismissSwallowTimerRef.current);
     overlayDismissSwallowTimerRef.current = window.setTimeout(() => {
       overlayDismissSwallowRef.current = false;
-    }, 480);
+    }, OVERLAY_DISMISS_SWALLOW_MS);
   }
 
   function takeOverlayDismissSwallow(): boolean {
@@ -535,24 +542,6 @@ export function BibleReaderView({
     return true;
   }
 
-  function dismissPassageSurfaceOverlay() {
-    markOverlayDismissSwallow();
-    if (pickerOpen) {
-      closePicker();
-      return;
-    }
-    if (toolsMenuOpen) {
-      setToolsMenuOpen(false);
-      return;
-    }
-    if (historyOpen) {
-      setHistoryOpen(false);
-      return;
-    }
-    if (shareSheetOpen) {
-      setShareSheetOpen(false);
-    }
-  }
   const [offlineReady, setOfflineReady] = useState(false);
   const {
     passage,
@@ -613,16 +602,6 @@ export function BibleReaderView({
     () => passagePickerChromeFromPresentation(presentation, activeSchema),
     [presentation, activeSchema],
   );
-
-  const passagePickerRollOpen =
-    pickerOpen && pickerChrome.pickerPanelOpenAllowed;
-
-  /** Bloqueia interação na passagem (inert, pointer-events) — inclui o picker. */
-  const passageInputBlocked =
-    passagePickerRollOpen || toolsMenuOpen || historyOpen || shareSheetOpen;
-
-  /** Scrim na `read-surface` (dismiss); o picker no header fica acima do scrim `.is-picker-dismiss`. */
-  const passageSurfaceScrimOpen = passageInputBlocked;
 
   const surfaceError = useMemo(
     () =>
@@ -1433,27 +1412,27 @@ export function BibleReaderView({
   const bookTitle = resolveBookTitle(bookId);
   /** Offline de navegador — não depende só da fonte do catálogo (evita salto de chrome). */
   const catalogOfflineHint = catalogOffline;
-  const showOfflineChapterGate =
-    passageErrorKind === "offline_not_cached" &&
-    !useLocalBundledBible() &&
-    !(passage?.verses?.length);
+  const localBundledBible = useLocalBundledBible();
+  const showOfflineChapterGateUi = showOfflineChapterGate({
+    passageErrorKind,
+    localBundledAvailable: localBundledBible,
+    versesInMemory: Boolean(passage?.verses?.length),
+  });
   const locationLabel = selection?.length
     ? `${bookTitle} ${chapterId}.${formatVerseList(selection)}`
     : `${bookTitle} ${chapterId}`;
   const onPlanStep = Boolean(
     planReading &&
-      (() => {
-        const parts = parseUsfmParts(planReading.focusRef || planReading.label);
-        return (
-          parts.bookId.toUpperCase() === bookId.toUpperCase() &&
-          String(parts.chapterId) === String(chapterId)
-        );
-      })(),
+      planReaderOnStep({
+        planFocusRef: planReading.focusRef,
+        planLabel: planReading.label,
+        bookId,
+        chapterId,
+      }),
   );
-  const planStepProgress =
-    planReading && planReading.stepCount > 1
-      ? `${planReading.stepIndex + 1}/${planReading.stepCount}`
-      : null;
+  const planStepProgress = planReading
+    ? planStepProgressLabel(planReading.stepIndex, planReading.stepCount)
+    : null;
 
   function handlePlanBack() {
     if (!planReading) {
@@ -1474,8 +1453,13 @@ export function BibleReaderView({
     onBack?.();
   }
 
-  const verseOptions =
-    passage?.verses?.map((verse) => verse.number) ?? (selection?.length ? selection : []);
+  const verseOptions = pickerVerseNumberOptions({
+    bookId,
+    chapterId,
+    schema: activeSchema,
+    passageUsfm: passage?.id ?? null,
+    passageVerseNumbers: passage?.verses?.map((verse) => verse.number),
+  });
   const selectedVerses = selection ?? EMPTY_VERSES;
   const selectedVerseText =
     selectedVerses.length && passage?.verses
@@ -1663,12 +1647,54 @@ export function BibleReaderView({
     existingVerseCard,
     narrowChrome,
   ]);
-  const forceChrome =
-    pickerOpen ||
-    showCreateCard ||
-    historyOpen ||
-    shareSheetOpen ||
-    toolsMenuOpen;
+  const surfaceChrome = useMemo(
+    () =>
+      readerSurfaceChrome({
+        pickerOpen,
+        pickerPanelOpenAllowed: pickerChrome.pickerPanelOpenAllowed,
+        toolsMenuOpen,
+        historyOpen,
+        shareSheetOpen,
+        verseActionsOpen: showCreateCard,
+      }),
+    [
+      pickerOpen,
+      pickerChrome.pickerPanelOpenAllowed,
+      toolsMenuOpen,
+      historyOpen,
+      shareSheetOpen,
+      showCreateCard,
+    ],
+  );
+
+  function dismissPassageSurfaceOverlay() {
+    markOverlayDismissSwallow();
+    const target = overlayDismissTarget({
+      pickerOpen,
+      pickerPanelOpenAllowed: pickerChrome.pickerPanelOpenAllowed,
+      toolsMenuOpen,
+      historyOpen,
+      shareSheetOpen,
+      verseActionsOpen: showCreateCard,
+    });
+    if (target === "picker") {
+      closePicker();
+      return;
+    }
+    if (target === "tools") {
+      setToolsMenuOpen(false);
+      return;
+    }
+    if (target === "history") {
+      setHistoryOpen(false);
+      return;
+    }
+    if (target === "share") {
+      setShareSheetOpen(false);
+    }
+  }
+
+  const forceChrome = surfaceChrome.forceChromeVisible;
   const hideChrome = chromeHidden && !forceChrome;
   forceChromeRef.current = forceChrome;
 
@@ -2152,7 +2178,7 @@ export function BibleReaderView({
   return (
     <section
       ref={readerRef}
-      className={`bible-reader bible-reader--yv${hideChrome ? " is-chrome-hidden" : ""}${audioPlaying ? " is-audio-playing" : ""}${showCreateCard ? " has-verse-actions" : ""}${shareSheetOpen ? " is-share-open" : ""}${headCompact ? " is-head-compact" : ""}${pickerOpen ? " is-passage-roll-open" : ""}${compactToolsMenu ? " is-compact-tools" : ""}${toolsMenuOpen ? " is-tools-menu-open" : ""}`}
+      className={`bible-reader bible-reader--yv${hideChrome ? " is-chrome-hidden" : ""}${audioPlaying ? " is-audio-playing" : ""}${showCreateCard ? " has-verse-actions" : ""}${shareSheetOpen ? " is-share-open" : ""}${headCompact ? " is-head-compact" : ""}${surfaceChrome.rootClassPassageRollOpen ? " is-passage-roll-open" : ""}${compactToolsMenu ? " is-compact-tools" : ""}${toolsMenuOpen ? " is-tools-menu-open" : ""}`}
       style={{ ["--bible-font-size" as string]: `${fontSize}px` }}
       onKeyDown={(event) => {
         if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement) {
@@ -2278,20 +2304,36 @@ export function BibleReaderView({
 
       <div
         className={`bible-yv-read-surface${
-          passageInputBlocked ? " is-overlay-occluding" : ""
+          surfaceChrome.passageInputBlocked ? " is-overlay-occluding" : ""
         }`}
         onClickCapture={(event) => {
           if (!takeOverlayDismissSwallow()) return;
           event.preventDefault();
           event.stopPropagation();
         }}
+        onPointerDownCapture={(event) => {
+          if (!surfaceChrome.toolsMenuPassThroughDismiss) return;
+          const target = event.target;
+          if (!(target instanceof Element)) return;
+          if (toolsMenuRef.current?.contains(target)) return;
+          if (
+            !target.closest(".bible-passage") &&
+            !target.classList.contains("bible-yv-read-surface")
+          ) {
+            return;
+          }
+          event.preventDefault();
+          event.stopPropagation();
+          markOverlayDismissSwallow();
+          setToolsMenuOpen(false);
+        }}
       >
-        {passageSurfaceScrimOpen ? (
+        {surfaceChrome.passageSurfaceScrimOpen ? (
           <button
             type="button"
             className={`bible-yv-passage-roll-scrim${
-              toolsMenuOpen ? " is-tools" : ""
-            }${passagePickerRollOpen ? " is-picker-dismiss" : ""}`}
+              surfaceChrome.scrimIsTools ? " is-tools" : ""
+            }${surfaceChrome.scrimIsPickerDismiss ? " is-picker-dismiss" : ""}`}
             aria-label="Fermer"
             onPointerDown={(event) => {
               event.preventDefault();
@@ -2328,8 +2370,8 @@ export function BibleReaderView({
           .filter(Boolean)
           .join(" ")}
         aria-busy={presentation.ariaBusy}
-        aria-hidden={passageInputBlocked || undefined}
-        inert={passageInputBlocked || undefined}
+        aria-hidden={surfaceChrome.passageInputBlocked || undefined}
+        inert={surfaceChrome.passageInputBlocked || undefined}
         style={
           {
             ["--verse-tint" as string]: actionTone.tint,
@@ -2338,7 +2380,7 @@ export function BibleReaderView({
         }
         onClick={() => {
           if (takeOverlayDismissSwallow()) return;
-          if (passageInputBlocked) return;
+          if (surfaceChrome.passageInputBlocked) return;
           // Tap to reveal chrome (YouVersion).
           if (chromeHiddenRef.current) setReadingChrome(false, true);
         }}
@@ -2348,7 +2390,7 @@ export function BibleReaderView({
           <p className="bible-chapter-num">{chapterId}</p>
         </header>
 
-        {showOfflineChapterGate ? (
+        {showOfflineChapterGateUi ? (
           <BibleOfflineChapterGate
             onDownload={() => void toggleOfflineBible()}
             offlineBusy={offlineBusy}
