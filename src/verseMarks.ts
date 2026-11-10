@@ -1,5 +1,10 @@
-import { isVerseMarkCard } from "./catalog";
 import type { Flashcard } from "./types";
+
+function isVerseMarkCard(card: Pick<Flashcard, "id" | "cardCategory">): boolean {
+  const cat = String(card.cardCategory || "").toUpperCase();
+  if (cat === "VERSEMARK") return true;
+  return String(card.id || "").toUpperCase().startsWith("MARK-");
+}
 import { normalizeVerseColor, parseVerseHex } from "./verseColors";
 
 const STORAGE_KEY = "biblos.verseMarks";

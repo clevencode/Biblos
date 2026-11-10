@@ -1,10 +1,6 @@
 /**
- * VERSECARD / VerseMark a partir da Bible (YouVersion) — local-first.
- * Cartões locaux ; sync cloud via Firestore (état utilisateur).
+ * Cartes verset locales (hors sync) — UI flashcards désactivée ; conserve l’API pour le reader.
  */
-import { todayKey } from "./calendar";
-import { applyRemoteOverride, notifyFlashcardRevision } from "./cardOverrides";
-import { ensureLembrete } from "./retention";
 import type { Flashcard } from "./types";
 import { DEFAULT_VERSE_COLOR, normalizeVerseColor } from "./verseColors";
 import { toUsfm } from "./youversion/usfm";
@@ -20,26 +16,18 @@ function stableUsfmKey(frenteOrUsfm: string): string {
   return (usfm || frenteOrUsfm.trim().toUpperCase().replace(/\s+/g, "-")).slice(0, 48);
 }
 
-/** Id estável por referência (évite doublons JEAN 3.16). */
 export function verseCardId(frenteOrUsfm: string): string {
   return `verse-${stableUsfmKey(frenteOrUsfm) || "card"}`;
 }
 
-/** Id estável VerseMark (surlignage sync Notion). */
 export function verseMarkCardId(frenteOrUsfm: string): string {
   return `mark-${stableUsfmKey(frenteOrUsfm) || "card"}`;
 }
 
-/**
- * Crée (ou met à jour) un flashcard local depuis un verset.
- * Frente MAJUSCULES · verso texte · statut Nouveau · lembrete = jour de création.
- */
 export function createVerseFlashcard(input: {
   frente: string;
   verso: string;
-  /** USFM optionnel (ex. JHN.3.16) pour un id stable. */
   usfm?: string;
-  /** Surligneur (hex). Défaut: bleu. */
   color?: string | null;
 }): CreateVerseCardResult {
   const frente = String(input.frente || "")
@@ -51,13 +39,6 @@ export function createVerseFlashcard(input: {
   }
 
   const id = verseCardId(input.usfm?.trim() || frente);
-  const criadoEm = todayKey();
-  const lembrete = ensureLembrete({
-    status: "espera",
-    lembrete: null,
-    criadoEm,
-    categoria: null,
-  });
   const color = normalizeVerseColor(input.color ?? DEFAULT_VERSE_COLOR);
 
   const card: Flashcard = {
@@ -67,85 +48,10 @@ export function createVerseFlashcard(input: {
     categoria: null,
     status: "espera",
     url: "",
-    lembrete,
     cardCategory: "VERSECARD",
     color,
-    criadoEm,
+    criadoEm: new Date().toISOString().slice(0, 10),
   };
-
-  // Overlay local (sans dirty Notion) — lembrete / status pour Timeline & Cartes
-  applyRemoteOverride(
-    id,
-    {
-      categoria: null,
-      status: "espera",
-      lembrete,
-      facilStreak: 0,
-      revisadoEm: null,
-    },
-    false,
-  );
-  notifyFlashcardRevision();
-
-  return { ok: true, card, created: true };
-}
-
-/**
- * Crée (ou met à jour) un VerseMark local — Category Notion = VerseMark.
- * Frente MAJUSCULES · verso métadonnées usfm/color · hors révision Anki.
- */
-export function createVerseMarkFlashcard(input: {
-  frente: string;
-  /** USFM ex. JHN.3.16 */
-  usfm: string;
-  color: string;
-}): CreateVerseCardResult {
-  const frente = String(input.frente || "")
-    .trim()
-    .toUpperCase();
-  const usfm = String(input.usfm || "")
-    .trim()
-    .toUpperCase();
-  if (!frente || !usfm) {
-    return { ok: false, error: "Référence du verset manquante" };
-  }
-
-  const color = normalizeVerseColor(input.color);
-  const id = verseMarkCardId(usfm);
-  const criadoEm = todayKey();
-  const lembrete = ensureLembrete({
-    status: "espera",
-    lembrete: null,
-    criadoEm,
-    categoria: null,
-  });
-  const verso = `usfm:${usfm}\ncolor:${color}`;
-
-  const card: Flashcard = {
-    id,
-    frente,
-    verso,
-    categoria: null,
-    status: "espera",
-    url: "",
-    lembrete,
-    cardCategory: "VerseMark",
-    color,
-    criadoEm,
-  };
-
-  applyRemoteOverride(
-    id,
-    {
-      categoria: null,
-      status: "espera",
-      lembrete,
-      facilStreak: 0,
-      revisadoEm: null,
-    },
-    false,
-  );
-  notifyFlashcardRevision();
 
   return { ok: true, card, created: true };
 }

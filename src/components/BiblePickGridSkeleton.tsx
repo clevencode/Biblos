@@ -30,7 +30,7 @@ export function BiblePickGridSkeleton({
       {ids.map((id, i) => (
         <div
           key={id}
-          className={`bible-yv-pick-cell is-loading${className ? ` ${className}` : ""}`}
+          className={`bible-yv-pick-cell is-loading skeleton-picker-cell${className ? ` ${className}` : ""}`}
           role={role}
           aria-hidden={role ? undefined : true}
           aria-label={ariaLabel}

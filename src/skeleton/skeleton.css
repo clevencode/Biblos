@@ -1,0 +1,80 @@
+/**
+ * Camada skeleton (API inspirada em react-loading-skeleton).
+ * Cores e duração via variáveis no .skeleton-theme — respeitam --panel / --text / tema Bible.
+ */
+
+.skeleton-theme {
+  --skeleton-base: color-mix(in srgb, var(--text, #0d1117) 5%, var(--panel, #f6f8fa));
+  --skeleton-highlight: color-mix(in srgb, var(--text, #0d1117) 10%, var(--panel, #f6f8fa));
+  --skeleton-radius: 6px;
+  --skeleton-duration: 1.5s;
+  --skeleton-line-height: 1;
+}
+
+.skeleton {
+  display: inline-block;
+  position: relative;
+  overflow: hidden;
+  vertical-align: middle;
+  line-height: var(--skeleton-line-height);
+  width: 100%;
+  border-radius: var(--skeleton-radius);
+  background: linear-gradient(
+    90deg,
+    var(--skeleton-base) 20%,
+    var(--skeleton-highlight) 50%,
+    var(--skeleton-base) 80%
+  );
+  background-size: 200% 100%;
+  user-select: none;
+}
+
+.skeleton--inline {
+  line-height: inherit;
+}
+
+.skeleton--block {
+  display: block;
+}
+
+.skeleton--circle {
+  border-radius: 50%;
+}
+
+.skeleton--pill {
+  border-radius: 999px;
+}
+
+.skeleton--opaque {
+  background: none;
+  animation: none;
+}
+
+.skeleton:not(.skeleton--opaque).skeleton--animate {
+  animation: bible-yv-shimmer var(--skeleton-duration) ease-in-out infinite;
+}
+
+.skeleton-stack {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.skeleton-stack--gap-sm {
+  gap: 0.45rem;
+}
+
+.skeleton-stack--gap-md {
+  gap: 0.72rem;
+}
+
+.skeleton-stack--gap-lg {
+  gap: 1.15rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton:not(.skeleton--opaque).skeleton--animate {
+    animation: none;
+    background: var(--skeleton-base);
+  }
+}

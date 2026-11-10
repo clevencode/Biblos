@@ -4,14 +4,13 @@ import { Component, StrictMode, type ErrorInfo, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
 import { AppReadinessProvider } from "./context/AppReadinessContext";
-import { AuthProvider } from "./hooks/useAuth";
-import { isFirebaseConfigured, listMissingFirebaseEnvKeys } from "./firebase/config";
-import { getFirestoreDbReady } from "./firebase/firestore";
+import { SkeletonTheme } from "./skeleton";
 import { ensureBibleIndexedFromBundle } from "./bibleEngine";
 import { ensureCleanSlate } from "./cleanSlate";
 import { syncNativeChrome } from "./nativeChrome";
 import { scheduleIdle } from "./scheduleIdle";
 import { applyTheme } from "./theme";
+import "./skeleton/skeleton.css";
 import "./index.css";
 
 void syncNativeChrome(applyTheme());
@@ -20,15 +19,6 @@ async function boot() {
   const reloading = await ensureCleanSlate();
   if (reloading) return;
 
-  if (!isFirebaseConfigured()) {
-    const missing = listMissingFirebaseEnvKeys();
-    if (missing.length) {
-      console.warn("[biblos] Firebase : variables manquantes →", missing.join(", "));
-    }
-  } else {
-    void getFirestoreDbReady();
-  }
-
   if (Capacitor.isNativePlatform()) {
     scheduleIdle(() => void ensureBibleIndexedFromBundle(), 8000);
   }
@@ -36,11 +26,11 @@ async function boot() {
   createRoot(document.getElementById("root")!).render(
     <StrictMode>
       <BootErrorBoundary>
-        <AuthProvider>
+        <SkeletonTheme>
           <AppReadinessProvider>
             <App />
           </AppReadinessProvider>
-        </AuthProvider>
+        </SkeletonTheme>
       </BootErrorBoundary>
     </StrictMode>,
   );
@@ -79,9 +69,9 @@ class BootErrorBoundary extends Component<{ children: ReactNode }, { error: Erro
               fontWeight: 600,
               cursor: "pointer",
             }}
-            onClick={() => this.setState({ error: null })}
+            onClick={() => window.location.reload()}
           >
-            Réessayer
+            Recharger
           </button>
         </div>
       );

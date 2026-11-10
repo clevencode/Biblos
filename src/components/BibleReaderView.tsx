@@ -471,7 +471,6 @@ export function BibleReaderView({
     setBible,
     isOffline: catalogOffline,
     viewState: catalogViewState,
-    isNetworkRefresh,
     refreshCatalog,
   } = useBibleCatalog();
   const [textVersion, setTextVersion] = useState<BibleTextVersionId>(() => {
@@ -489,8 +488,7 @@ export function BibleReaderView({
     (id: string) => resolveBookDisplay(id, books),
     [books],
   );
-  const { setCatalogHydrating, setCatalogLocalReady, registerCloudSync } =
-    useAppReadiness();
+  const { setCatalogHydrating, setCatalogLocalReady } = useAppReadiness();
   const [, setBibleId] = useState<number | null>(() => bible.id ?? LSG_BIBLE_ID);
   const [bookId, setBookId] = useState(initialParts.bookId);
   const [chapterId, setChapterId] = useState(initialParts.chapterId);
@@ -910,12 +908,6 @@ export function BibleReaderView({
     setCatalogHydrating(catalogViewState.status === "loading");
     setCatalogLocalReady(catalogViewState.status === "ready");
   }, [catalogViewState.status, setCatalogHydrating, setCatalogLocalReady]);
-
-  useEffect(() => {
-    if (!isNetworkRefresh) return;
-    registerCloudSync(true);
-    return () => registerCloudSync(false);
-  }, [isNetworkRefresh, registerCloudSync]);
 
   useEffect(() => {
     const base = { ...readPrefs(), fontSize, textVersion };

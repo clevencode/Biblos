@@ -3,6 +3,7 @@ import type { DiscoveryJump, PassageDiscoverySections } from "../bible/passageDi
 import type { BibleTextVersionId } from "../bible/bibleVersions";
 import type { BibleSearchHit } from "../youversion/client";
 import { BiblePassageDiscoveryBookRow } from "./BiblePassageDiscoveryBookRow";
+import { BiblePickerDiscoverySkeleton } from "../skeleton";
 import type { DiscoveryBookHit } from "../bible/passageDiscovery/types";
 
 type BiblePassageDiscoveryListProps = {
@@ -117,23 +118,7 @@ export function BiblePassageDiscoveryList({
         </div>
       ) : null}
 
-      {busy && hasQuery ? (
-        <div className="bible-yv-pick-discovery-skeleton" role="status" aria-busy="true">
-          <p className="bible-yv-pick-discovery-busy bible-yv-muted">
-            Recherche dans la Bible…
-          </p>
-          <div className="bible-yv-pick-grid is-books is-loading" aria-hidden>
-            {Array.from({ length: 4 }, (_, i) => (
-              <div
-                key={`skeleton-discovery-book:${i + 1}`}
-                className="bible-yv-pick-cell is-book is-loading"
-              >
-                <span className="bible-yv-pick-cell-label is-opaque">Livre</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : null}
+      {busy && hasQuery ? <BiblePickerDiscoverySkeleton /> : null}
 
       {contentError && hasQuery && !jumps.length ? (
         <p className="bible-yv-pick-discovery-hint bible-yv-muted" role="status">

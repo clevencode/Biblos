@@ -6,6 +6,7 @@ import { useBookVerseDiscovery } from "../hooks/useBookVerseDiscovery";
 import type { BibleTextVersionId } from "../bible/bibleVersions";
 import type { BibleSearchHit } from "../youversion/client";
 import { buildDiscoveryVerseRowId } from "../bible/viewState/pickerViewState";
+import { BibleVerseHitSnippetSkeleton } from "../skeleton";
 
 type BiblePassageDiscoveryBookRowProps = {
   hit: DiscoveryBookHit;
@@ -129,7 +130,7 @@ export function BiblePassageDiscoveryBookRow({
                       <span className="bible-yv-pick-verse-hit-ref is-opaque">
                         {i + 1}.{i + 1}
                       </span>
-                      <span className="bible-yv-pick-verse-hit-snippet is-loading-line" />
+                      <BibleVerseHitSnippetSkeleton />
                     </div>
                   </li>
                 ))}

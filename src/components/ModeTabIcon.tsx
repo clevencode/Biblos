@@ -1,23 +1,16 @@
 import type { IconComponent } from "@coolicons/react/line/round";
+import { Book, CalendarDays, House, User } from "@coolicons/react/line/round";
 import {
-  BookOpen,
-  CalendarDays,
-  House,
-  PlayingCards,
-  User,
-} from "@coolicons/react/line/round";
-import {
-  BookOpen as BookOpenFill,
+  Book as BookFill,
   CalendarDays as CalendarDaysFill,
   House as HouseFill,
-  PlayingCards as PlayingCardsFill,
   User as UserFill,
 } from "@coolicons/react/fill/round";
 import { ICON_STROKE_WIDTH, TAB_ICON_PX } from "../icons/config";
-import type { CenterMode } from "../types";
+import type { ShellTab } from "../shellNav";
 
 type ModeTabIconProps = {
-  name: CenterMode;
+  name: ShellTab;
   active?: boolean;
 };
 
@@ -26,15 +19,13 @@ type TabIconEntry = {
   fill: IconComponent;
 };
 
-const TAB_ICONS: Record<CenterMode, TabIconEntry> = {
+const TAB_ICONS: Record<ShellTab, TabIconEntry> = {
   home: { line: House, fill: HouseFill },
   today: { line: CalendarDays, fill: CalendarDaysFill },
-  bible: { line: BookOpen, fill: BookOpenFill },
-  cards: { line: PlayingCards, fill: PlayingCardsFill },
+  bible: { line: Book, fill: BookFill },
   profile: { line: User, fill: UserFill },
 };
 
-/** Ícones da tab bar — coolicons `line` / `fill`, cantos `round`. */
 export function ModeTabIcon({ name, active = false }: ModeTabIconProps) {
   const entry = TAB_ICONS[name];
   const Glyph = active ? entry.fill : entry.line;
