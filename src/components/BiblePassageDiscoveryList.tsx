@@ -24,6 +24,8 @@ type BiblePassageDiscoveryListProps = {
   onPickBook: (id: string) => void;
   onPickJump: (jump: DiscoveryJump) => void;
   onPickVerse: (hit: BibleSearchHit) => void;
+  /** `false` no passo livro (só títulos) — default `true`. */
+  verseDiscoveryEnabled?: boolean;
 };
 
 function renderSection(
@@ -52,6 +54,7 @@ function renderSection(
           expanded={props.expandedBookId?.toUpperCase() === hit.id.toUpperCase()}
           anchorVerseUsfm={props.anchorVerseUsfm}
           verseScrollTop={props.verseScrollByBook[hit.id.toUpperCase()] ?? 0}
+          verseDiscoveryEnabled={props.verseDiscoveryEnabled ?? true}
           onToggleExpand={props.onExpandedBookChange}
           onVerseListScroll={props.onVerseListScroll}
           onPickBook={props.onPickBook}
@@ -80,6 +83,7 @@ export function BiblePassageDiscoveryList({
   onPickBook,
   onPickJump,
   onPickVerse,
+  verseDiscoveryEnabled = true,
 }: BiblePassageDiscoveryListProps) {
   const totalBooks = sections.at.length + sections.nt.length;
 
@@ -92,6 +96,7 @@ export function BiblePassageDiscoveryList({
     expandedBookId,
     anchorVerseUsfm,
     verseScrollByBook,
+    verseDiscoveryEnabled,
     onExpandedBookChange,
     onVerseListScroll,
     onPickBook,

@@ -12,11 +12,14 @@ import type { PassageDiscoveryResult } from "../bible/passageDiscovery/types";
 const DEBOUNCE_MS = 280;
 const MIN_CONTENT_CHARS = 2;
 
+export type PassageDiscoveryScope = "full" | "books";
+
 export function usePassageDiscovery(
   query: string,
   books: YouVersionBook[],
   enabled: boolean,
   textVersion: BibleTextVersionId,
+  scope: PassageDiscoveryScope = "full",
 ): { result: PassageDiscoveryResult; busy: boolean } {
   const [result, setResult] = useState<PassageDiscoveryResult>(() =>
     discoverPassageSync(query, books),
@@ -37,6 +40,11 @@ export function usePassageDiscovery(
     }
 
     if (buildDiscoveryJumps(trimmed).length > 0) {
+      setBusy(false);
+      return;
+    }
+
+    if (scope === "books") {
       setBusy(false);
       return;
     }
@@ -69,7 +77,7 @@ export function usePassageDiscovery(
     return () => {
       window.clearTimeout(timer);
     };
-  }, [query, books, enabled, textVersion]);
+  }, [query, books, enabled, textVersion, scope]);
 
   return { result, busy };
 }

@@ -22,6 +22,7 @@ type BiblePassageDiscoveryBookRowProps = {
   onVerseListScroll: (bookId: string, scrollTop: number) => void;
   onPickBook: (id: string) => void;
   onPickVerse: (hit: BibleSearchHit) => void;
+  verseDiscoveryEnabled?: boolean;
 };
 
 export function BiblePassageDiscoveryBookRow({
@@ -38,12 +39,13 @@ export function BiblePassageDiscoveryBookRow({
   onVerseListScroll,
   onPickBook,
   onPickVerse,
+  verseDiscoveryEnabled = true,
 }: BiblePassageDiscoveryBookRowProps) {
   const panelId = useId();
   const verseListRef = useRef<HTMLUListElement | null>(null);
   const on = hit.id.toUpperCase() === currentBookId.toUpperCase();
   const contentHits = (hit.count ?? 0) > 0;
-  const expandable = hasQuery && contentHits;
+  const expandable = verseDiscoveryEnabled && hasQuery && contentHits;
   const { hits, total, busy, error } = useBookVerseDiscovery(
     searchQuery,
     expanded && expandable ? hit.id : null,

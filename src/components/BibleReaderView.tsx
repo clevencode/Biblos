@@ -52,14 +52,10 @@ import {
 import { passagePickerSkipsVerseStep } from "../bible/passagePickerFlow";
 import { passageBarSkipIcons } from "../bible/passageBarSkipIcons";
 import { isPassageBarPanelCompactTopbar } from "../bible/passageBarPanelLayout";
+import { BiblePassageWordSearchPanel } from "./BiblePassageWordSearchPanel";
 import { BibleOfflineChapterGate } from "./BibleOfflineChapterGate";
 import { BibleChapterLoadingPlaceholder } from "./BibleChapterLoadingPlaceholder";
-import { usePassageDiscovery } from "../hooks/usePassageDiscovery";
 import type { DiscoveryJump } from "../bible/passageDiscovery/types";
-import {
-  EMPTY_PASSAGE_DISCOVERY_SESSION,
-  type PassageDiscoverySession,
-} from "../bible/passageDiscovery/session";
 import {
   OVERLAY_DISMISS_SWALLOW_MS,
   PASSAGE_LOADING_COPY,
@@ -73,11 +69,11 @@ import {
   pickerVerseNumberOptions,
   planReaderOnStep,
   planStepProgressLabel,
-  passagePickerRollOpen,
   readerSurfaceChrome,
   showOfflineChapterGate,
 } from "../bible/viewState";
 import { usePassageViewModel } from "../hooks/usePassageViewModel";
+import { usePassageBarController } from "../hooks/usePassageBarController";
 import { useAppReadiness } from "../context/AppReadinessContext";
 import { CircularColorEditor } from "./CircularColorEditor";
 import { ACTIVITY_UI_ENABLED } from "../activityLog";
@@ -518,14 +514,6 @@ export function BibleReaderView({
     const n = Number(prefs.fontSize);
     return Number.isFinite(n) ? clampFontSize(n) : FONT_DEFAULT;
   });
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const [passageStep, setPassageStep] = useState<"book" | "chapter" | "verse">("book");
-  const [bookSearchQuery, setBookSearchQuery] = useState("");
-  const [discoverySession, setDiscoverySession] = useState<PassageDiscoverySession>(
-    () => ({ ...EMPTY_PASSAGE_DISCOVERY_SESSION }),
-  );
-  const discoveryListScrollRaf = useRef(0);
-  const discoveryVerseScrollRaf = useRef<Record<string, number>>({});
   const [narrowChrome, setNarrowChrome] = useState(false);
   const [cardBusy, setCardBusy] = useState(false);
   const [cardMsg, setCardMsg] = useState<string | null>(null);
@@ -549,20 +537,24 @@ export function BibleReaderView({
   const overlayDismissSwallowRef = useRef(false);
   const overlayDismissSwallowTimerRef = useRef<number | undefined>(undefined);
 
-  function markOverlayDismissSwallow() {
+  const markOverlayDismissSwallow = useCallback(() => {
     overlayDismissSwallowRef.current = true;
     window.clearTimeout(overlayDismissSwallowTimerRef.current);
     overlayDismissSwallowTimerRef.current = window.setTimeout(() => {
       overlayDismissSwallowRef.current = false;
     }, OVERLAY_DISMISS_SWALLOW_MS);
-  }
+  }, []);
 
-  function takeOverlayDismissSwallow(): boolean {
+  const takeOverlayDismissSwallow = useCallback((): boolean => {
     if (!overlayDismissSwallowRef.current) return false;
     overlayDismissSwallowRef.current = false;
     window.clearTimeout(overlayDismissSwallowTimerRef.current);
     return true;
-  }
+  }, []);
+
+  const closeToolsMenu = useCallback(() => {
+    setToolsMenuOpen(false);
+  }, []);
 
   const [offlineReady, setOfflineReady] = useState(false);
   const [htOfflineReady, setHtOfflineReady] = useState(false);
@@ -612,20 +604,54 @@ export function BibleReaderView({
     ],
   );
 
-  const passageRollOpen = useMemo(
-    () => passagePickerRollOpen(pickerOpen, pickerChrome.pickerPanelOpenAllowed),
-    [pickerOpen, pickerChrome.pickerPanelOpenAllowed],
-  );
-
-  const passageDiscoveryEnabled =
-    passageRollOpen && passageStep === "book";
-
-  const { result: passageDiscovery, busy: passageDiscoveryBusy } = usePassageDiscovery(
+  const {
+    discoverySplitSearch,
+    pickerOpen,
+    setPickerOpen,
+    passageStep,
+    setPassageStep,
+    passageRollOpen,
     bookSearchQuery,
+    setBookSearchQuery,
+    wordSearchOpen,
+    wordSearchQuery,
+    setWordSearchQuery,
+    discoverySession,
+    wordDiscoverySession,
+    passageDiscovery,
+    passageDiscoveryBusy,
+    wordDiscovery,
+    wordDiscoveryBusy,
+    passageRollRef,
+    wordSearchChromeRef,
+    wordSearchPanelId,
+    passagePickerPanelId,
+    armPendingVerseStep,
+    patchDiscoverySession,
+    patchWordDiscoverySession,
+    setDiscoveryListScroll,
+    setDiscoveryVerseListScroll,
+    setWordDiscoveryListScroll,
+    setWordDiscoveryVerseListScroll,
+    clearBookSearch,
+    clearWordSearch,
+    closeWordSearch,
+    closePicker,
+    closeAll,
+    togglePassagePicker,
+    togglePassagePickerRef,
+    toggleWordSearch,
+  } = usePassageBarController({
+    pickerPanelOpenAllowed: pickerChrome.pickerPanelOpenAllowed,
+    closeToolsMenu,
     books,
-    passageDiscoveryEnabled,
     textVersion,
-  );
+    bookId,
+    chapterId,
+    passageId: passage?.id,
+    presentationInFlight: presentation.inFlight,
+    markOverlayDismissSwallow,
+  });
 
   const pickerPassageChrome = useMemo(
     () => passagePickerChromeFromPresentation(presentation, activeSchema),
@@ -645,9 +671,7 @@ export function BibleReaderView({
   const [colorEditorOpen, setColorEditorOpen] = useState(false);
   const [uiTheme, setUiTheme] = useState<ResolvedTheme>(() => resolveTheme());
   const statusId = useId();
-  const passagePickerPanelId = useId();
   const highlightRef = useRef<HTMLElement | null>(null);
-  const passageRollRef = useRef<HTMLDivElement | null>(null);
   const passageScrollRef = useRef<HTMLElement | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioBookRef = useRef<string>("");
@@ -661,7 +685,6 @@ export function BibleReaderView({
   const scrollRaf = useRef(0);
   const readerRef = useRef<HTMLElement | null>(null);
   const verseActionsSheetRef = useRef<HTMLDivElement | null>(null);
-  const pendingVerseStep = useRef(false);
   const pendingScrollVerse = useRef<PendingVerseScroll | null>(null);
   const verseScrollSeq = useRef(0);
   const lastAppliedVerseScroll = useRef("");
@@ -989,62 +1012,6 @@ export function BibleReaderView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusSeq, focusRef, active]);
 
-  useEffect(() => {
-    if (!pickerOpen) return;
-    const id = window.setTimeout(() => {
-      if (passageStep === "book") {
-        const input = passageRollRef.current?.querySelector(
-          ".bible-yv-pick-search",
-        ) as HTMLInputElement | null;
-        input?.focus();
-        return;
-      }
-      const chip = passageRollRef.current?.querySelector(
-        ".bible-yv-passage-chip.is-chapter, .bible-yv-passage-chip.is-ref",
-      ) as HTMLButtonElement | null;
-      chip?.focus();
-    }, 0);
-    return () => window.clearTimeout(id);
-  }, [pickerOpen, passageStep]);
-
-  useEffect(() => {
-    if (!pickerOpen) return;
-    const onPointerDown = (event: PointerEvent) => {
-      const target = event.target;
-      if (!(target instanceof Node)) return;
-      if (target instanceof Element && target.closest(".bible-yv-dock")) return;
-      const roll = passageRollRef.current;
-      if (!roll) return;
-      if (roll.contains(target)) return;
-      event.preventDefault();
-      event.stopPropagation();
-      markOverlayDismissSwallow();
-      closePicker();
-    };
-    document.addEventListener("pointerdown", onPointerDown, true);
-    return () => document.removeEventListener("pointerdown", onPointerDown, true);
-  }, [pickerOpen]);
-
-  useEffect(() => {
-    if (!pickerOpen || passageStep !== "book") return;
-    const root = document.querySelector(".bible-yv-pick-grid.is-books") as HTMLElement | null;
-    const cell = document.getElementById(`bible-pick-book-${bookId}`);
-    if (!root || !cell) return;
-    const top = cell.offsetTop - Math.max(8, (root.clientHeight - cell.clientHeight) / 3);
-    root.scrollTop = Math.max(0, Math.min(top, root.scrollHeight - root.clientHeight));
-  }, [pickerOpen, passageStep, bookId]);
-
-  useEffect(() => {
-    if (!pickerOpen || !pendingVerseStep.current) return;
-    if (presentation.inFlight) return;
-    pendingVerseStep.current = false;
-    if (passagePickerSkipsVerseStep()) {
-      closePicker();
-      return;
-    }
-    setPassageStep("verse");
-  }, [pickerOpen, presentation.inFlight, chapterId, passage?.id]);
-
   function loadChapter(
     nextBook: string,
     nextChapter: string,
@@ -1077,7 +1044,9 @@ export function BibleReaderView({
 
   function selectVerse(number: number) {
     if (takeOverlayDismissSwallow()) return;
-    if (pickerOpen || toolsMenuOpen || shareSheetOpen || historyOpen) return;
+    if (pickerOpen || wordSearchOpen || toolsMenuOpen || shareSheetOpen || historyOpen) {
+      return;
+    }
     // Side-effects fora do updater (React pode correr updaters na fase de render).
     preferJumpFocusRef.current = false;
     const current = selection;
@@ -1114,73 +1083,6 @@ export function BibleReaderView({
     setFocusDim(true);
     setCardMsg(null);
     setPickerOpen(false);
-  }
-
-  function patchDiscoverySession(patch: Partial<PassageDiscoverySession>) {
-    setDiscoverySession((prev) => ({ ...prev, ...patch }));
-  }
-
-  function setDiscoveryListScroll(scrollTop: number) {
-    if (discoveryListScrollRaf.current) {
-      cancelAnimationFrame(discoveryListScrollRaf.current);
-    }
-    discoveryListScrollRaf.current = requestAnimationFrame(() => {
-      patchDiscoverySession({ listScrollTop: scrollTop });
-    });
-  }
-
-  function setDiscoveryVerseListScroll(bookId: string, scrollTop: number) {
-    const id = String(bookId || "").toUpperCase();
-    if (!id) return;
-    const prevRaf = discoveryVerseScrollRaf.current[id];
-    if (prevRaf) cancelAnimationFrame(prevRaf);
-    discoveryVerseScrollRaf.current[id] = requestAnimationFrame(() => {
-      setDiscoverySession((prev) => ({
-        ...prev,
-        verseScrollByBook: { ...prev.verseScrollByBook, [id]: scrollTop },
-      }));
-    });
-  }
-
-  function clearBookSearch() {
-    setBookSearchQuery("");
-    setDiscoverySession({ ...EMPTY_PASSAGE_DISCOVERY_SESSION });
-  }
-
-  function closePicker() {
-    setPickerOpen(false);
-    setPassageStep("book");
-    pendingVerseStep.current = false;
-  }
-
-  function openPassagePicker(step: "book" | "chapter") {
-    if (!pickerChrome.pickerPanelOpenAllowed) return;
-    setToolsMenuOpen(false);
-    setPassageStep(step);
-    pendingVerseStep.current = false;
-    setPickerOpen(true);
-  }
-
-  function togglePassagePicker(step: "book" | "chapter") {
-    if (!pickerChrome.pickerPanelOpenAllowed) return;
-    if (passageRollOpen && passageStep === step) {
-      closePicker();
-      return;
-    }
-    openPassagePicker(step);
-  }
-
-  function togglePassagePickerRef() {
-    if (!pickerChrome.pickerPanelOpenAllowed) return;
-    const rollRelevant =
-      passageStep === "book" || passageStep === "chapter";
-    if (passageRollOpen && rollRelevant) {
-      closePicker();
-      return;
-    }
-    const step: "book" | "chapter" =
-      passageStep === "chapter" ? "chapter" : "book";
-    openPassagePicker(step);
   }
 
   function renderPassageChapterSkips() {
@@ -1391,6 +1293,7 @@ export function BibleReaderView({
           onPickVerse={pickVerseSearchHit}
           onPickChapter={pickChapter}
           onJumpVerse={jumpToVerse}
+          discoveryBooksOnly={discoverySplitSearch}
         />
       </div>
     );
@@ -1409,7 +1312,7 @@ export function BibleReaderView({
   }
 
   function pickBook(nextBook: string) {
-    pendingVerseStep.current = false;
+    armPendingVerseStep(false);
     setPassageStep("chapter");
     if (nextBook.toUpperCase() === bookId.toUpperCase()) return;
     void loadChapter(nextBook, "1", null);
@@ -1417,18 +1320,17 @@ export function BibleReaderView({
 
   function pickVerseSearchHit(hit: BibleSearchHit) {
     const parts = parseUsfmParts(hit.usfm);
-    pendingVerseStep.current = false;
+    armPendingVerseStep(false);
     patchDiscoverySession({
       expandedBookId: parts.bookId.toUpperCase(),
       anchorVerseUsfm: hit.usfm.toUpperCase(),
     });
-    setPickerOpen(false);
-    setPassageStep("book");
+    closePicker();
     void loadChapter(parts.bookId, String(hit.chapter), hit.verse, null);
   }
 
   function pickDiscoveryJump(jump: DiscoveryJump) {
-    pendingVerseStep.current = jump.passage.verse != null;
+    armPendingVerseStep(jump.passage.verse != null);
     patchDiscoverySession({
       expandedBookId: jump.passage.bookId.toUpperCase(),
       anchorVerseUsfm: jump.passage.usfm || null,
@@ -1458,7 +1360,7 @@ export function BibleReaderView({
       setPassageStep("verse");
       return;
     }
-    pendingVerseStep.current = true;
+    armPendingVerseStep(true);
     void loadChapter(bookId, nextChapter, null);
   }
 
@@ -1867,6 +1769,7 @@ export function BibleReaderView({
       readerSurfaceChrome({
         pickerOpen,
         pickerPanelOpenAllowed: pickerChrome.pickerPanelOpenAllowed,
+        wordSearchOpen,
         toolsMenuOpen,
         historyOpen,
         shareSheetOpen,
@@ -1875,6 +1778,7 @@ export function BibleReaderView({
     [
       pickerOpen,
       pickerChrome.pickerPanelOpenAllowed,
+      wordSearchOpen,
       toolsMenuOpen,
       historyOpen,
       shareSheetOpen,
@@ -2478,8 +2382,8 @@ export function BibleReaderView({
             setShareSheetOpen(false);
             return;
           }
-          if (pickerOpen) {
-            closePicker();
+          if (pickerOpen || wordSearchOpen) {
+            closeAll();
             return;
           }
           if (showCreateCard) {
@@ -2487,7 +2391,7 @@ export function BibleReaderView({
             return;
           }
         }
-        if (pickerOpen) return;
+        if (pickerOpen || wordSearchOpen) return;
         if (event.key === "ArrowLeft") {
           event.preventDefault();
           goAdjacent(-1);
@@ -2518,6 +2422,55 @@ export function BibleReaderView({
             </button>
             {renderPassageRoll(" is-plan-chrome")}
           </>
+        ) : discoverySplitSearch ? (
+          <div
+            ref={wordSearchChromeRef}
+            className="bible-yv-passage-chrome-cluster"
+          >
+            <button
+              type="button"
+              className={`bible-yv-passage-word-search-trigger${
+                wordSearchOpen ? " is-on" : ""
+              }`}
+              aria-label="Rechercher un mot dans la Bible"
+              aria-expanded={wordSearchOpen}
+              aria-controls={wordSearchPanelId}
+              onClick={toggleWordSearch}
+            >
+              <YvIcon name="search" className="bible-yv-passage-word-search-icon" />
+            </button>
+            {renderPassageRoll()}
+            <BiblePassageWordSearchPanel
+              id={wordSearchPanelId}
+              open={wordSearchOpen}
+              query={wordSearchQuery}
+              onQueryChange={setWordSearchQuery}
+              onQueryClear={clearWordSearch}
+              discovery={wordDiscovery}
+              discoveryBusy={wordDiscoveryBusy}
+              textVersion={textVersion}
+              bookId={bookId}
+              loading={presentation.inFlight}
+              discoverySession={wordDiscoverySession}
+              onDiscoveryListScroll={setWordDiscoveryListScroll}
+              onDiscoveryExpandedBookChange={(id) =>
+                patchWordDiscoverySession({ expandedBookId: id })
+              }
+              onDiscoveryVerseListScroll={setWordDiscoveryVerseListScroll}
+              onPickJump={(jump) => {
+                closeWordSearch();
+                pickDiscoveryJump(jump);
+              }}
+              onPickVerse={(hit) => {
+                closeWordSearch();
+                pickVerseSearchHit(hit);
+              }}
+              onPickBook={(id) => {
+                closeWordSearch();
+                pickBook(id);
+              }}
+            />
+          </div>
         ) : (
           renderPassageRoll()
         )}

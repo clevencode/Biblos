@@ -5,6 +5,7 @@
 export type ReaderSurfaceChromeInput = {
   pickerOpen: boolean;
   pickerPanelOpenAllowed: boolean;
+  wordSearchOpen?: boolean;
   toolsMenuOpen: boolean;
   historyOpen: boolean;
   shareSheetOpen: boolean;
@@ -42,13 +43,15 @@ export function readerSurfaceChrome(
     input.pickerOpen,
     input.pickerPanelOpenAllowed,
   );
+  const wordSearchOpen = Boolean(input.wordSearchOpen);
   const passageInputBlocked =
     rollOpen ||
+    wordSearchOpen ||
     input.toolsMenuOpen ||
     input.historyOpen ||
     input.shareSheetOpen;
   const passageSurfaceScrimOpen =
-    rollOpen || input.historyOpen || input.shareSheetOpen;
+    rollOpen || wordSearchOpen || input.historyOpen || input.shareSheetOpen;
   const toolsMenuPassThroughDismiss =
     input.toolsMenuOpen && !passageSurfaceScrimOpen;
 
@@ -60,6 +63,7 @@ export function readerSurfaceChrome(
     forceChromeVisible:
       passageInputBlocked ||
       input.pickerOpen ||
+      wordSearchOpen ||
       input.verseActionsOpen,
     rootClassPassageRollOpen: rollOpen,
     scrimIsTools:

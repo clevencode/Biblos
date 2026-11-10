@@ -8459,10 +8459,14 @@ ul.plan-yv-day-note-ref {
   overflow: visible;
 }
 
-/* passage-bar-panel test: barra = altura subhead (32px); painel (grelha) inalterado + cartão destacado */
+/* passage-bar-panel test: barra = altura subhead (32px); painéis com cota estável (sem CLS) */
 html[data-passage-bar-panel="test"] {
   --bible-passage-bar-title-h: 32px;
   --bible-passage-skip-h: 32px;
+  /* Chip panel + word-search panel: mesma caixa — não alterna com o trigger */
+  --bible-passage-panel-w: min(100vw - 2 * var(--mobile-gutter, 12px), 22rem);
+  --bible-passage-panel-max-h: min(42dvh, 300px);
+  --bible-passage-panel-min-h: min(38dvh, 260px);
 }
 
 html[data-passage-bar-panel="test"] .app.is-bible-mode.is-narrow {
@@ -8477,6 +8481,86 @@ html[data-passage-bar-panel="test"] .bible-yv-top.is-free {
   align-items: flex-start;
   padding-bottom: 6px;
   min-height: calc(var(--bible-passage-bar-title-h) + 12px);
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-passage-chrome-cluster {
+  position: relative;
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 6px;
+  /* Só a fila de triggers; painéis saem em absolute com --bible-passage-panel-w */
+  width: auto;
+  max-width: min(100%, calc(100vw - 2 * var(--mobile-gutter, 12px)));
+  min-width: 0;
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-passage-word-search-trigger {
+  flex: none;
+  width: var(--bible-passage-bar-title-h);
+  height: var(--bible-passage-bar-title-h);
+  min-width: var(--bible-passage-bar-title-h);
+  min-height: var(--bible-passage-bar-title-h);
+  margin: 0;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--yv-line) 72%, transparent);
+  border-radius: 999px;
+  background: var(--yv-overlay-surface);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--yv-text) 5%, transparent);
+  color: var(--yv-text);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-passage-word-search-trigger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--yv-overlay-surface) 92%, var(--yv-text) 8%);
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-passage-word-search-trigger.is-on {
+  border-color: color-mix(in srgb, var(--yv-line) 88%, var(--accent) 12%);
+  outline: 2px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  outline-offset: 0;
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-passage-word-search-icon {
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-passage-word-search-panel.is-open {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: var(--bible-z-scroll-panel);
+  box-sizing: border-box;
+  width: var(--bible-passage-panel-w);
+  min-width: var(--bible-passage-panel-w);
+  max-width: var(--bible-passage-panel-w);
+  margin: 0;
+  padding: 8px 10px 10px;
+  border: var(--yv-overlay-border);
+  border-radius: 16px;
+  background: var(--yv-overlay-surface);
+  box-shadow: var(--yv-overlay-shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow: hidden;
+  max-height: var(--bible-passage-panel-max-h);
+  min-height: var(--bible-passage-panel-min-h);
+  contain: layout;
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-passage-word-search-panel .bible-yv-pick-grid.is-books {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
 }
 
 html[data-passage-bar-panel="test"] .bible-yv-top-passage.is-split-chrome {
@@ -8558,8 +8642,11 @@ html[data-passage-bar-panel="test"]
 html[data-passage-bar-panel="test"]
   .bible-reader--yv.is-compact-tools
   .bible-yv-passage-roll {
+  position: static;
   flex: 0 1 auto;
+  width: auto;
   min-width: 0;
+  max-width: min(100%, 16.5rem);
   margin-inline-end: auto;
 }
 
@@ -8632,10 +8719,10 @@ html[data-passage-bar-panel="test"] .bible-yv-passage-chip-ref-chapter {
   font-size: 0.9rem;
 }
 
-/* Painel: mesmas cotas de altura que legacy; barra pill separada (mock test) */
+/* Painel chip: mesma cota que word-search (não cresce/encolhe com o trigger) */
 html[data-passage-bar-panel="test"] .bible-yv-passage-scroll-panel.is-open {
-  max-height: min(42dvh, 300px);
-  min-height: min(38dvh, 260px);
+  max-height: var(--bible-passage-panel-max-h);
+  min-height: var(--bible-passage-panel-min-h);
 }
 
 html[data-passage-bar-panel="test"] .bible-yv-passage-roll.is-open .bible-yv-top-passage-bar.is-roll-head {
@@ -8648,34 +8735,40 @@ html[data-passage-bar-panel="test"] .bible-yv-passage-roll.is-open .bible-yv-top
 html[data-passage-bar-panel="test"]
   .bible-yv-passage-roll.is-open
   .bible-yv-passage-scroll-panel.is-header-roll.is-open {
-  top: calc(100% + 8px);
+  /* Âncora no cluster (roll é position:static) — largura estável partilhada */
+  top: calc(var(--bible-passage-bar-title-h) + 8px);
+  left: 0;
+  width: var(--bible-passage-panel-w);
+  min-width: var(--bible-passage-panel-w);
+  max-width: var(--bible-passage-panel-w);
   margin-top: 0;
   border-radius: 16px;
   border-top: var(--yv-overlay-border);
   box-shadow: var(--yv-overlay-shadow);
   padding-top: 8px;
+  transform-origin: top left;
 }
 
-/* Chip + panel: mock test — pill à esquerda; painel livro (22rem / dvh) inalterado */
+/* Chip + panel: trigger compacto; painel não altera a largura do roll */
 html[data-passage-bar-panel="test"] .bible-yv-top.is-free,
 html[data-passage-bar-panel="test"] .bible-yv-top.is-passage-roll-open {
   align-items: flex-start;
 }
 
 html[data-passage-bar-panel="test"] .bible-yv-top.is-free .bible-yv-passage-roll {
+  position: static;
   align-self: flex-start;
   flex: 0 1 auto;
+  width: auto;
+  max-width: min(100%, 16.5rem);
   margin-inline-end: auto;
 }
 
-html[data-passage-bar-panel="test"] .bible-yv-passage-roll:not(.is-open) {
+html[data-passage-bar-panel="test"] .bible-yv-passage-roll:not(.is-open),
+html[data-passage-bar-panel="test"] .bible-yv-passage-roll.is-open {
+  position: static;
   width: auto;
   max-width: min(100%, 16.5rem);
-}
-
-html[data-passage-bar-panel="test"] .bible-yv-passage-roll.is-open {
-  width: min(100%, 22rem);
-  max-width: min(100%, 22rem);
 }
 
 html[data-passage-bar-panel="test"] .bible-yv-passage-roll .bible-yv-top-passage,
@@ -8733,7 +8826,7 @@ html[data-passage-bar-panel="test"]
 }
 
 html[data-passage-bar-panel="test"] .bible-yv-passage-scroll-panel.is-open {
-  width: 100%;
+  /* Largura vem de --bible-passage-panel-w no ramo is-header-roll (acima) */
   left: 0;
 }
 
@@ -8777,12 +8870,6 @@ html[data-passage-bar-panel="test"] .bible-yv-passage-chip-caret {
 
 html[data-passage-bar-panel="test"] .bible-yv-top-passage-arrow:hover:not(:disabled) {
   background: color-mix(in srgb, var(--yv-text) 7%, transparent);
-}
-
-html[data-passage-bar-panel="test"]
-  .bible-yv-passage-roll.is-open
-  .bible-yv-passage-scroll-panel.is-header-roll.is-open {
-  transform-origin: top left;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -13083,6 +13170,20 @@ html[data-colortest*="BiblePassageChip:red"] .bible-yv-passage-chip {
 
 .app.is-bible-mode.is-narrow .bible-yv-passage-scroll-panel.is-open {
   max-height: min(48dvh, 340px);
+}
+
+/* test: painéis chip + search mantêm a mesma caixa também em narrow */
+html[data-passage-bar-panel="test"]
+  .app.is-bible-mode.is-narrow
+  .bible-yv-passage-scroll-panel.is-open,
+html[data-passage-bar-panel="test"]
+  .app.is-bible-mode.is-narrow
+  .bible-yv-passage-word-search-panel.is-open {
+  width: var(--bible-passage-panel-w);
+  min-width: var(--bible-passage-panel-w);
+  max-width: var(--bible-passage-panel-w);
+  max-height: var(--bible-passage-panel-max-h);
+  min-height: var(--bible-passage-panel-min-h);
 }
 
 .app.is-bible-mode.is-narrow .bible-reader--yv.has-verse-actions .bible-yv-dock.is-floating {

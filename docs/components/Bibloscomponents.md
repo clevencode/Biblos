@@ -16,6 +16,7 @@ flowchart TB
     Profile[ProfileShellPanel]
   end
   subgraph reader [BibleReaderView]
+    Bar[Passage bar test]
     Roll[Passage roll]
     Surface[Reader surface]
     Dock[Audio float + plan dock]
@@ -25,10 +26,13 @@ flowchart TB
   App --> Plan
   App --> Profile
   App --> reader
+  Bar --> SearchIcon[Word search panel]
+  Bar --> Chips[Passage chips]
+  Bar --> Roll
   Roll --> Picker[BiblePassageScrollPicker]
-  Picker --> Discovery[Passage discovery]
+  Picker --> Discovery[Passage discovery books]
+  SearchIcon --> WordDiscovery[Passage discovery full]
   Picker --> Verses[Verse selector]
-  Roll --> Chips[Passage chips]
   Surface --> OfflineGate[Offline chapter gate]
   Surface --> ChapterSkel[Chapter loading placeholder]
 ```
@@ -41,8 +45,9 @@ flowchart TB
 |----|------|----------------|
 | `app-shell` | Shell, tabs, painéis Accueil/Plan/Bible/Profil | [app-shell.md](./app-shell.md) |
 | `reader-surface` | Capítulo, versículos, seleção, acções | [reader-surface.md](./reader-surface.md) |
+| `passage-bar` | Estado actual da barra (chip + search + FAB skips) | [passage-bar.md](./passage-bar.md) |
 | `passage-roll` | Barra referência + contentor roll | [passage-roll.md](./passage-roll.md) |
-| `passage-chips` | Chips livro/capítulo | [passage-chips.md](./passage-chips.md) |
+| `passage-chips` | Chips livro/capítulo / ref | [passage-chips.md](./passage-chips.md) |
 | `passage-scroll-picker` | Painel picker (3 passos) | [passage-scroll-picker.md](./passage-scroll-picker.md) |
 | `passage-discovery` | Busca e lista de livros | [passage-discovery.md](./passage-discovery.md) |
 | `passage-verse-selector` | Grelha de versículos | [barra-seletor-versiculo.md](./barra-seletor-versiculo.md) |
@@ -74,6 +79,12 @@ ViewModel reduz carga de capítulo; a UI alterna entre gate offline, skeleton e 
 
 ## Bloco passage picker
 
+### Passage bar — estado actual (`passage-bar`)
+
+Layout `test`: ícone **search** (palavras) + **chip** `ref` (livros/capítulos), hamburger no header, setas capítulo no FAB inferior direito. Pesquisa desacoplada (`scope: books` vs `full`).
+
+→ [passage-bar.md](./passage-bar.md)
+
 ### Passage roll (`passage-roll`)
 
 Contentor `.bible-yv-passage-roll`: barra + picker, fecho por scrim/toque exterior, `passagePickerRollOpen` gated pelo catálogo.
@@ -82,21 +93,21 @@ Contentor `.bible-yv-passage-roll`: barra + picker, fecho por scrim/toque exteri
 
 ### Chips (`passage-chips`)
 
-`BiblePassageChip` — placeholders tabulares na hidratação, abre passo `book` ou `chapter`.
+`BiblePassageChip` — variantes `book` / `chapter` / `ref`; no layout test o chip unificado faz toggle do dropdown.
 
 → [passage-chips.md](./passage-chips.md)
 
 ### Painel scroll (`passage-scroll-picker`)
 
-`BiblePassageScrollPicker` — componente controlado; delega busca, grelhas capítulo/versículo.
+`BiblePassageScrollPicker` — componente controlado; com `discoveryBooksOnly` o campo do passo livro só filtra catálogo/refs.
 
 → [passage-scroll-picker.md](./passage-scroll-picker.md)
 
 ### Descoberta (`passage-discovery`)
 
-Lista AT/NT, saltos de referência, expansão por livro com hits (`usePassageDiscovery` / `useBookVerseDiscovery`). Sessão guarda scroll e âncoras.
+Lista AT/NT, saltos de referência; pesquisa de **palavras** no painel do ícone (`BiblePassageWordSearchPanel`). Hook `usePassageDiscovery` com `scope: "books" | "full"`.
 
-→ [passage-discovery.md](./passage-discovery.md)
+→ [passage-discovery.md](./passage-discovery.md) · [passage-bar.md](./passage-bar.md)
 
 ### Seletor de versículos (`passage-verse-selector`)
 

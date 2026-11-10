@@ -21,6 +21,7 @@ Cada ficheiro descreve um **módulo de UI** (ou fatia coesa de interface): respo
 | — | **[Bibloscomponents.md](./Bibloscomponents.md)** | Índice mestre + resumos |
 | `app-shell` | [app-shell.md](./app-shell.md) | Documentado |
 | `reader-surface` | [reader-surface.md](./reader-surface.md) | Documentado |
+| `passage-bar` | [passage-bar.md](./passage-bar.md) | Estado actual (test) |
 | `passage-roll` | [passage-roll.md](./passage-roll.md) | Documentado |
 | `passage-chips` | [passage-chips.md](./passage-chips.md) | Documentado |
 | `passage-scroll-picker` | [passage-scroll-picker.md](./passage-scroll-picker.md) | Documentado |

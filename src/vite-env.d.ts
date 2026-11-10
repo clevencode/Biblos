@@ -19,6 +19,8 @@ interface ImportMetaEnv {
   readonly VITE_PASSAGE_BAR_PANEL_LAYOUT?: string;
   /** `test` (default) = pill livro+capítulo; `legacy` = dois chips */
   readonly VITE_PASSAGE_PILL?: string;
+  /** `test` (default) = pill só livros; ícone search = palavras */
+  readonly VITE_PASSAGE_DISCOVERY_FLOW?: string;
 }
 
 interface ImportMeta {

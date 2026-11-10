@@ -44,6 +44,8 @@ type BiblePassageScrollPickerProps = {
   onPickVerse: (hit: BibleSearchHit) => void;
   onPickChapter: (id: string) => void;
   onJumpVerse: (n: number) => void;
+  /** Split discovery (test): busca do pill só filtra livros / refs. */
+  discoveryBooksOnly?: boolean;
 };
 
 export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageScrollPickerProps>(
@@ -77,6 +79,7 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
       onPickVerse,
       onPickChapter,
       onJumpVerse,
+      discoveryBooksOnly = false,
     },
     ref,
   ) {
@@ -138,12 +141,18 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
               type="search"
               className="bible-yv-pick-search"
               value={bookSearchQuery}
-              placeholder="Livre, mot ou référence…"
+              placeholder={
+                discoveryBooksOnly ? "Livre ou référence…" : "Livre, mot ou référence…"
+              }
               autoComplete="off"
               autoCorrect="off"
               spellCheck={false}
               enterKeyHint="search"
-              aria-label="Rechercher un livre, un mot ou une référence"
+              aria-label={
+                discoveryBooksOnly
+                  ? "Rechercher un livre ou une référence"
+                  : "Rechercher un livre, un mot ou une référence"
+              }
               onChange={(event) => onSearchChange(event.target.value)}
             />
             {hasQuery ? (
@@ -211,6 +220,7 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
               onPickBook={onPickBook}
               onPickJump={onPickJump}
               onPickVerse={handlePickVerse}
+              verseDiscoveryEnabled={!discoveryBooksOnly}
             />
           ) : step === "chapter"
             ? chapters.length
