@@ -15,6 +15,10 @@ interface ImportMetaEnv {
   readonly VITE_PASSAGE_PICKER_FLOW?: string;
   /** `test` (default) = chevrons na barra capítulo; `legacy` = skip_previous / skip_next */
   readonly VITE_PASSAGE_BAR_SKIP_ICONS?: string;
+  /** `test` (default) = barra compacta (altura título); `legacy` = barra touch 44px */
+  readonly VITE_PASSAGE_BAR_PANEL_LAYOUT?: string;
+  /** `test` (default) = pill livro+capítulo; `legacy` = dois chips */
+  readonly VITE_PASSAGE_PILL?: string;
 }
 
 interface ImportMeta {

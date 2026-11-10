@@ -16,6 +16,7 @@ import type { BibleTextVersionId } from "../bible/bibleVersions";
 export type PassagePickStep = "book" | "chapter" | "verse";
 
 type BiblePassageScrollPickerProps = {
+  id?: string;
   step: PassagePickStep;
   open: boolean;
   bookId: string;
@@ -48,6 +49,7 @@ type BiblePassageScrollPickerProps = {
 export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageScrollPickerProps>(
   function BiblePassageScrollPicker(
     {
+      id: panelId,
       step,
       open,
       bookId,
@@ -123,6 +125,7 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
     return (
       <div
         ref={ref}
+        id={panelId}
         className={`bible-yv-passage-scroll-panel is-open is-header-roll is-${step}`}
         role="dialog"
         aria-modal="false"

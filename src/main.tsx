@@ -14,6 +14,7 @@ import { ensureCleanSlate } from "./cleanSlate";
 import { syncNativeChrome } from "./nativeChrome";
 import { scheduleIdle } from "./scheduleIdle";
 import { applyTheme } from "./theme";
+import { bootPassageBarPanelLayout } from "./bible/passageBarPanelLayout";
 import { bootPassagePillLayoutTest } from "./bible/passagePillLayout";
 import { bootUiColortest } from "./ui/colortest";
 import "./skeleton/skeleton.css";
@@ -23,6 +24,7 @@ import "./index.css";
 void syncNativeChrome(applyTheme());
 bootUiColortest();
 bootPassagePillLayoutTest();
+bootPassageBarPanelLayout();
 
 async function boot() {
   const reloading = await ensureCleanSlate();

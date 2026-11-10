@@ -6,20 +6,28 @@
 const PARAM = "passage-pill";
 
 export function bootPassagePillLayoutTest(): void {
-  if (!import.meta.env.DEV || typeof document === "undefined") return;
+  if (typeof document === "undefined") return;
 
-  const raw = new URLSearchParams(location.search).get(PARAM);
-  if (raw === "0" || raw === "off" || raw === "legacy") {
+  if (import.meta.env.DEV) {
+    const raw = new URLSearchParams(location.search).get(PARAM);
+    if (raw === "0" || raw === "off" || raw === "legacy") {
+      delete document.documentElement.dataset.passagePill;
+      return;
+    }
+    if (raw === "test" || raw === "unified" || raw == null) {
+      document.documentElement.dataset.passagePill = "unified";
+      return;
+    }
+    document.documentElement.dataset.passagePill = raw.trim();
+    return;
+  }
+
+  const fromEnv = String(import.meta.env.VITE_PASSAGE_PILL ?? "test").trim().toLowerCase();
+  if (fromEnv === "legacy" || fromEnv === "0" || fromEnv === "off") {
     delete document.documentElement.dataset.passagePill;
     return;
   }
-
-  if (raw === "test" || raw === "unified" || raw == null) {
-    document.documentElement.dataset.passagePill = "unified";
-    return;
-  }
-
-  document.documentElement.dataset.passagePill = raw.trim();
+  document.documentElement.dataset.passagePill = "unified";
 }
 
 export function isPassagePillUnified(): boolean {

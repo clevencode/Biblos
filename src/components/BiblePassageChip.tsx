@@ -10,6 +10,8 @@ type BiblePassageChipProps = {
   disabled?: boolean;
   ariaLabel: string;
   title?: string;
+  /** `aria-controls` do painel roll (dropdown). */
+  panelId?: string;
   onClick: () => void;
 };
 
@@ -22,6 +24,7 @@ export function BiblePassageChip({
   disabled = false,
   ariaLabel,
   title,
+  panelId,
   onClick,
 }: BiblePassageChipProps) {
   const trimmed = String(label || "").trim();
@@ -44,6 +47,7 @@ export function BiblePassageChip({
       onClick={onClick}
       disabled={disabled || showSkeleton}
       aria-expanded={open}
+      aria-controls={panelId}
       aria-haspopup="dialog"
       aria-busy={showSkeleton || undefined}
       aria-label={ariaLabel}

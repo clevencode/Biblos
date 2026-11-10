@@ -644,6 +644,7 @@ export function BibleReaderView({
   const [colorEditorOpen, setColorEditorOpen] = useState(false);
   const [uiTheme, setUiTheme] = useState<ResolvedTheme>(() => resolveTheme());
   const statusId = useId();
+  const passagePickerPanelId = useId();
   const highlightRef = useRef<HTMLElement | null>(null);
   const passageRollRef = useRef<HTMLDivElement | null>(null);
   const passageScrollRef = useRef<HTMLElement | null>(null);
@@ -1159,6 +1160,28 @@ export function BibleReaderView({
     setPickerOpen(true);
   }
 
+  function togglePassagePicker(step: "book" | "chapter") {
+    if (!pickerChrome.pickerPanelOpenAllowed) return;
+    if (passageRollOpen && passageStep === step) {
+      closePicker();
+      return;
+    }
+    openPassagePicker(step);
+  }
+
+  function togglePassagePickerRef() {
+    if (!pickerChrome.pickerPanelOpenAllowed) return;
+    const rollRelevant =
+      passageStep === "book" || passageStep === "chapter";
+    if (passageRollOpen && rollRelevant) {
+      closePicker();
+      return;
+    }
+    const step: "book" | "chapter" =
+      passageStep === "chapter" ? "chapter" : "book";
+    openPassagePicker(step);
+  }
+
   function renderTopPassageNav(extraClass = "", rollOpen = false) {
     const compactBar = extraClass.includes("is-plan-chrome");
     const showChapterStep = true;
@@ -1214,11 +1237,15 @@ export function BibleReaderView({
                   (passageStep === "book" || passageStep === "chapter")
                 }
                 disabled={pickerChrome.controlsDisabled}
-                ariaLabel={`Choisir un passage · ${passageRefLabel}`}
-                title={passageRefLabel}
-                onClick={() =>
-                  openPassagePicker(passageStep === "chapter" ? "chapter" : "book")
+                ariaLabel={
+                  passageRollOpen &&
+                  (passageStep === "book" || passageStep === "chapter")
+                    ? `Replier le passage · ${passageRefLabel}`
+                    : `Choisir un passage · ${passageRefLabel}`
                 }
+                title={passageRefLabel}
+                panelId={passagePickerPanelId}
+                onClick={togglePassagePickerRef}
               />
             ) : (
               <>
@@ -1228,9 +1255,14 @@ export function BibleReaderView({
                   loading={pickerChrome.chipsHydrating}
                   open={passageRollOpen && passageStep === "book"}
                   disabled={pickerChrome.controlsDisabled}
-                  ariaLabel={`Choisir un livre · ${bookTitle}`}
+                  ariaLabel={
+                    passageRollOpen && passageStep === "book"
+                      ? `Replier · livre ${bookTitle}`
+                      : `Choisir un livre · ${bookTitle}`
+                  }
                   title={bookTitle}
-                  onClick={() => openPassagePicker("book")}
+                  panelId={passagePickerPanelId}
+                  onClick={() => togglePassagePicker("book")}
                 />
                 <span className="bible-yv-top-passage-divider" aria-hidden />
                 <BiblePassageChip
@@ -1239,9 +1271,14 @@ export function BibleReaderView({
                   loading={pickerChrome.chipsHydrating}
                   open={passageRollOpen && passageStep === "chapter"}
                   disabled={pickerChrome.controlsDisabled}
-                  ariaLabel={`Choisir un chapitre · ${chapterId}`}
+                  ariaLabel={
+                    passageRollOpen && passageStep === "chapter"
+                      ? `Replier · chapitre ${chapterId}`
+                      : `Choisir un chapitre · ${chapterId}`
+                  }
                   title={`Chapitre ${chapterId}`}
-                  onClick={() => openPassagePicker("chapter")}
+                  panelId={passagePickerPanelId}
+                  onClick={() => togglePassagePicker("chapter")}
                 />
               </>
             )}
@@ -1290,6 +1327,7 @@ export function BibleReaderView({
       >
         {renderTopPassageNav(extraClass, rollOpen)}
         <BiblePassageScrollPicker
+          id={passagePickerPanelId}
           open={rollOpen}
           step={passageStep}
           bookId={bookId}
