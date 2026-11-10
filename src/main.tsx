@@ -6,6 +6,10 @@ import { App } from "./App";
 import { AppReadinessProvider } from "./context/AppReadinessContext";
 import { SkeletonTheme } from "./skeleton";
 import { ensureBibleIndexedFromBundle } from "./bibleEngine";
+import {
+  bootReadingPlansFirestore,
+  isReadingPlansFirebaseConfigured,
+} from "./features/reading-plans";
 import { ensureCleanSlate } from "./cleanSlate";
 import { syncNativeChrome } from "./nativeChrome";
 import { scheduleIdle } from "./scheduleIdle";
@@ -21,6 +25,10 @@ async function boot() {
 
   if (Capacitor.isNativePlatform()) {
     scheduleIdle(() => void ensureBibleIndexedFromBundle(), 8000);
+  }
+
+  if (isReadingPlansFirebaseConfigured()) {
+    scheduleIdle(() => void bootReadingPlansFirestore(), 1200);
   }
 
   createRoot(document.getElementById("root")!).render(

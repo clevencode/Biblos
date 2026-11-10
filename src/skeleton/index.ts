@@ -6,3 +6,4 @@ export {
   BiblePickerDiscoverySkeleton,
   BibleVerseHitSnippetSkeleton,
 } from "./presets/BiblePickerDiscoverySkeleton";
+export { PlanGallerySkeleton } from "./presets/PlanGallerySkeleton";

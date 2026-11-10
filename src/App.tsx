@@ -2,7 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { BibleReaderView } from "./components/BibleReaderView";
 import { AppShellNav } from "./components/AppShellNav";
 import { HomeShellPanel } from "./components/HomeShellPanel";
-import { PlanShellPanel } from "./components/PlanShellPanel";
+import { PlanDiscoverPanel } from "./features/reading-plans";
+import type { ReadingPlan } from "./features/reading-plans";
 import { ProfileShellPanel } from "./components/ProfileShellPanel";
 import { recordBibleRead, appendActivity } from "./activityLog";
 import { consumeShareRefFromUrl } from "./shareVerse";
@@ -99,6 +100,16 @@ export function App() {
     setTab("bible");
   }, []);
 
+  const openPlanReading = useCallback(
+    (plan: ReadingPlan) => {
+      const passage =
+        plan.etapes[0]?.jours[0]?.passage?.trim() ||
+        plan.etapes.flatMap((e) => e.jours)[0]?.passage?.trim();
+      openBible(passage || undefined);
+    },
+    [openBible],
+  );
+
   const cycleTheme = useCallback(() => {
     const next = nextThemePref(themePref);
     setThemePref(next);
@@ -161,9 +172,10 @@ export function App() {
                   onOpenBible={(ref) => openBible(ref)}
                   onOpenPlan={() => selectTab("today")}
                 />
-                <PlanShellPanel
+                <PlanDiscoverPanel
                   active={tab === "today"}
                   onOpenBible={() => selectTab("bible")}
+                  onSelectPlan={openPlanReading}
                 />
                 <div
                   id="panel-bible"
