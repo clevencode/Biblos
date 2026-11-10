@@ -6063,6 +6063,24 @@ body {
   padding: 0 16px 24px;
 }
 
+/* Andaime fixo — evita colapso skeleton ↔ lista ↔ vazio (CLS). */
+.plan-discover-surface {
+  --plan-gallery-row-min: 5.75rem;
+  --plan-gallery-body-min: calc(4 * var(--plan-gallery-row-min) + 3 * 10px);
+  flex: 1;
+  min-height: min(58vh, var(--plan-gallery-body-min));
+  display: flex;
+  flex-direction: column;
+}
+
+.plan-discover-surface .plan-discover-empty {
+  flex: 1;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  min-height: var(--plan-gallery-body-min);
+}
+
 .plan-discover-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -6084,6 +6102,7 @@ body {
   gap: 14px;
   width: 100%;
   min-width: 0;
+  min-height: var(--plan-gallery-row-min, 5.75rem);
   margin: 0;
   padding: 14px;
   border: 0;
@@ -6195,6 +6214,15 @@ body {
   letter-spacing: var(--type-caption-tracking);
   line-height: var(--type-caption-lh);
   color: var(--muted);
+  min-height: var(--type-caption-lh, 1.2em);
+}
+
+.plan-card-meta--placeholder {
+  visibility: hidden;
+}
+
+.plan-card-progress--placeholder .plan-card-progress-track {
+  opacity: 0;
 }
 
 .plan-card-progress {
@@ -6242,6 +6270,62 @@ body {
   letter-spacing: var(--type-label-tracking);
   line-height: var(--type-label-lh);
   white-space: nowrap;
+}
+
+.plan-card--skeleton {
+  pointer-events: none;
+  cursor: default;
+  box-shadow: none;
+  background: color-mix(in srgb, var(--panel) 92%, var(--surface));
+}
+
+.plan-card-skeleton-swatch {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--text) 6%, var(--panel));
+  animation: bible-yv-shimmer 1.5s ease-in-out infinite;
+}
+
+.plan-card-skeleton-line {
+  display: block;
+  height: 0.72rem;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--text) 6%, var(--panel));
+  animation: bible-yv-shimmer 1.5s ease-in-out infinite;
+}
+
+.plan-card-skeleton-line--title {
+  width: 72%;
+  height: 0.85rem;
+}
+
+.plan-card-skeleton-line--meta {
+  width: 48%;
+  margin-top: 6px;
+}
+
+.plan-card-skeleton-progress {
+  display: block;
+  margin-top: 10px;
+  height: 5px;
+  width: 88%;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 6%, var(--panel));
+  animation: bible-yv-shimmer 1.5s ease-in-out infinite;
+}
+
+.plan-card-skeleton-progress--ghost {
+  opacity: 0;
+}
+
+.plan-card-skeleton-cta {
+  width: 5.5rem;
+  height: 2rem;
+  margin-top: 2px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 5%, var(--panel));
+  animation: bible-yv-shimmer 1.5s ease-in-out infinite;
 }
 
 .plan-discover-empty {

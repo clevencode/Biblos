@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { YvIcon } from "./YvIcon";
 import { loadPlanProgress, progressCounts } from "../planProgress";
-import { planCoverStyle, planTitle } from "../planTheme";
+import { PlanGalleryPlanRow } from "./PlanGalleryPlanRow";
+import { PlanGallerySkeleton } from "./PlanGallerySkeleton";
 import type { ReadingPlan } from "../types";
 
 type PlanGalleryProps = {
@@ -175,6 +176,10 @@ export function PlanGallery({
 
   const empty = EMPTY_COPY[filter];
 
+  const showCatalogSkeleton = plans.length === 0 && refreshBusy;
+  const showList = !showCatalogSkeleton && filtered.length > 0;
+  const showEmpty = !showCatalogSkeleton && filtered.length === 0;
+
   const content = (
     <>
       <header className="plan-discover-head">
@@ -241,75 +246,44 @@ export function PlanGallery({
           ) : null}
         </div>
       </header>
-      {filtered.length ? (
-        <div className="plan-discover-scroller" ref={gridRef}>
-          <div
-            id="plan-gallery-list"
-            className={`plan-discover-grid${embedded ? " is-stack" : ""}`}
-            role="listbox"
-            aria-label={PLAN_FILTERS.find((item) => item.id === filter)?.label ?? "Plans"}
-          >
-            {filtered.map((plan) => {
-              const current = plan.id === selectedId;
-              const active = plan.id === activeId;
-              const title = planTitle(plan);
-              const { done, total } = progressCounts(plan, loadPlanProgress(plan.id));
-              const started = done > 0;
-              const complete = total > 0 && done >= total;
-              const pct = total ? Math.min(100, Math.round((done / total) * 100)) : 0;
-              const action = complete ? "Terminé" : started ? "Continuer" : "Commencer";
-              const metaParts = [
-                total ? `${total} jour${total === 1 ? "" : "s"}` : null,
-                started && !complete ? `${done}/${total}` : null,
-                complete ? "Terminé" : null,
-              ].filter(Boolean);
-              return (
-                <button
-                  key={plan.id}
-                  id={`plan-card-${plan.id}`}
-                  type="button"
-                  role="option"
-                  aria-selected={active}
-                  className={`plan-card${current ? " is-on" : ""}${active ? " is-active" : ""}`}
-                  onMouseEnter={() => setActiveId(plan.id)}
-                  onFocus={() => setActiveId(plan.id)}
-                  onClick={() => onPick(plan)}
-                >
-                  <span className="plan-card-swatch" style={planCoverStyle(plan.id)} aria-hidden="true">
-                    <span className="plan-card-mark">{title.charAt(0)}</span>
-                  </span>
-                  <span className="plan-card-body">
-                    <span className="plan-card-title">{title}</span>
-                    {metaParts.length ? (
-                      <span className="plan-card-meta">{metaParts.join(" · ")}</span>
-                    ) : null}
-                    {total && started ? (
-                      <span className="plan-card-progress" aria-hidden="true">
-                        <span className="plan-card-progress-track">
-                          <span className="plan-card-progress-fill" style={{ width: `${pct}%` }} />
-                        </span>
-                      </span>
-                    ) : null}
-                  </span>
-                  <span className="plan-card-cta">
-                    {action}
-                    <YvIcon
-                      name="chevron_right"
-                      opsz={20}
-                      className="plan-card-cta-icon"
-                    />
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+      <div className="plan-discover-scroller" ref={gridRef}>
+        <div className="plan-discover-surface">
+          {showCatalogSkeleton ? <PlanGallerySkeleton /> : null}
+          {showList ? (
+            <div
+              id="plan-gallery-list"
+              className={`plan-discover-grid${embedded ? " is-stack" : ""}`}
+              role="listbox"
+              aria-label={PLAN_FILTERS.find((item) => item.id === filter)?.label ?? "Plans"}
+            >
+              {filtered.map((plan) => {
+                const current = plan.id === selectedId;
+                const active = plan.id === activeId;
+                const { done, total } = progressCounts(plan, loadPlanProgress(plan.id));
+                return (
+                  <PlanGalleryPlanRow
+                    key={plan.id}
+                    id={`plan-card-${plan.id}`}
+                    plan={plan}
+                      current={current}
+                      active={active}
+                      done={done}
+                      total={total}
+                      onActivate={() => setActiveId(plan.id)}
+                    onPick={() => onPick(plan)}
+                  />
+                );
+              })}
+            </div>
+          ) : null}
+          {showEmpty ? (
+            <div className="plan-discover-empty">
+              <p className="plan-discover-empty-title">{empty.title}</p>
+              <p className="muted">{empty.body}</p>
+            </div>
+          ) : null}
         </div>
-      ) : (
-        <div className="plan-discover-empty">
-          <p className="plan-discover-empty-title">{empty.title}</p>
-          <p className="muted">{empty.body}</p>
-        </div>
-      )}
+      </div>
     </>
   );
 
