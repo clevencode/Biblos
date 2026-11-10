@@ -22,6 +22,12 @@ import {
 import { syncNativeChrome } from "./nativeChrome";
 import { loadShellTab, saveShellTab, type ShellTab } from "./shellNav";
 import type { BibleHistorySelect } from "./components/BibleHistorySheet";
+import { EditorialAdminApp } from "./features/editorial-auth/presentation/EditorialAdminApp";
+
+function isEditorialAdminRoute(): boolean {
+  const hash = window.location.hash.replace(/^#/, "");
+  return hash === "admin" || hash.startsWith("admin/");
+}
 
 function historyToFocusRef(ref: BibleHistorySelect): string {
   if (ref.verse != null) {
@@ -31,6 +37,28 @@ function historyToFocusRef(ref: BibleHistorySelect): string {
 }
 
 export function App() {
+  const [editorialAdmin, setEditorialAdmin] = useState(() => isEditorialAdminRoute());
+  useEffect(() => {
+    const onHash = () => setEditorialAdmin(isEditorialAdminRoute());
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
+
+  if (editorialAdmin) {
+    return (
+      <EditorialAdminApp
+        onExit={() => {
+          window.location.hash = "";
+          setEditorialAdmin(false);
+        }}
+      />
+    );
+  }
+
+  return <BiblosConsumerApp />;
+}
+
+function BiblosConsumerApp() {
   const narrow = useNarrow();
   const profile = loadOrCreateProfile();
   const [tab, setTab] = useState<ShellTab>(() => loadShellTab());

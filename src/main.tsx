@@ -15,6 +15,7 @@ import { syncNativeChrome } from "./nativeChrome";
 import { scheduleIdle } from "./scheduleIdle";
 import { applyTheme } from "./theme";
 import "./skeleton/skeleton.css";
+import "./editorial-admin.css";
 import "./index.css";
 
 void syncNativeChrome(applyTheme());

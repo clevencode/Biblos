@@ -59,6 +59,18 @@ export function ProfileShellPanel({
         </div>
       </header>
 
+      <section className="profile-section" aria-labelledby="profile-editorial-title">
+        <h3 id="profile-editorial-title" className="type-eyebrow">
+          Édition
+        </h3>
+        <a className="profile-row-btn" href="#admin">
+          <span className="profile-row-body">
+            <span className="profile-row-label">CMS plans (Firestore)</span>
+            <span className="profile-row-value muted">Connexion éditeur</span>
+          </span>
+        </a>
+      </section>
+
       <section className="profile-section" aria-labelledby="profile-prefs-title">
         <h3 id="profile-prefs-title" className="type-eyebrow">
           Préférences

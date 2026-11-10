@@ -12,7 +12,10 @@ import {
   type QuerySnapshot,
   type Unsubscribe,
 } from "firebase/firestore";
-import { normalizeReadingPlan } from "../domain/normalizeReadingPlan";
+import {
+  normalizeReadingPlan,
+  normalizeReadingPlanDocument,
+} from "../domain/normalizeReadingPlan";
 import type { ReadingPlan, ReadingPlanFirestoreDoc } from "../domain/types";
 import { ensureReadingPlansFirestore, getReadingPlansFirestore } from "./firestoreDb";
 
@@ -71,4 +74,38 @@ export function subscribePublishedReadingPlans(
 export async function warmupReadingPlansRepository(): Promise<boolean> {
   const db = await ensureReadingPlansFirestore();
   return db != null;
+}
+
+export type EditorReadingPlansSnapshot = {
+  plans: ReadingPlan[];
+  fromCache: boolean;
+};
+
+function mapEditorSnapshot(snap: QuerySnapshot<DocumentData>): EditorReadingPlansSnapshot {
+  const plans: ReadingPlan[] = [];
+  for (const docSnap of snap.docs) {
+    const parsed = normalizeReadingPlanDocument(
+      docSnap.id,
+      docSnap.data() as ReadingPlanFirestoreDoc,
+    );
+    if (parsed) plans.push(parsed);
+  }
+  plans.sort((a, b) => a.title.localeCompare(b.title, "fr"));
+  return { plans, fromCache: snap.metadata.fromCache };
+}
+
+/** Admin — todos os documentos (incl. rascunhos), tempo real. */
+export function subscribeEditorReadingPlans(options: {
+  onData: (snapshot: EditorReadingPlansSnapshot) => void;
+  onError?: (error: FirestoreError) => void;
+}): Unsubscribe | null {
+  const db = getReadingPlansFirestore();
+  if (!db) return null;
+
+  const ref = collection(db, READING_PLANS_COLLECTION);
+  return onSnapshot(
+    ref,
+    (snap) => options.onData(mapEditorSnapshot(snap)),
+    (error) => options.onError?.(error),
+  );
 }

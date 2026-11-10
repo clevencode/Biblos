@@ -53,17 +53,16 @@ function deriveTotalDays(etapes: ReadingPlanEtape[], fallback: number): number {
   return nums.length ? Math.max(...nums) : 0;
 }
 
-/** Valida e normaliza um documento `reading_plans/{id}`. */
-export function normalizeReadingPlan(
+/** Documento estrutural (catálogo público ou admin). */
+export function normalizeReadingPlanDocument(
   id: string,
   data: ReadingPlanFirestoreDoc,
 ): ReadingPlan | null {
   if (!id.trim()) return null;
-  const isPublished = asBool(data.isPublished);
   const title = asString(data.title);
   const description = asString(data.description);
   const etapes = parseEtapes(data.etapes);
-  if (!isPublished || !title || !etapes.length) return null;
+  if (!title || !etapes.length) return null;
 
   const totalDays = deriveTotalDays(etapes, asInt(data.totalDays));
 
@@ -71,8 +70,18 @@ export function normalizeReadingPlan(
     id,
     title,
     description,
-    isPublished: true,
+    isPublished: asBool(data.isPublished),
     totalDays,
     etapes,
   };
+}
+
+/** Valida e normaliza um documento `reading_plans/{id}`. */
+export function normalizeReadingPlan(
+  id: string,
+  data: ReadingPlanFirestoreDoc,
+): ReadingPlan | null {
+  const doc = normalizeReadingPlanDocument(id, data);
+  if (!doc?.isPublished) return null;
+  return { ...doc, isPublished: true };
 }

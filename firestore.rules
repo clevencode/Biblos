@@ -3,8 +3,9 @@ service cloud.firestore {
   match /databases/{database}/documents {
   // CMS lecture (offline-first) — lecture publique des plans publiés
     match /reading_plans/{planId} {
-      allow read: if resource.data.isPublished == true;
-      allow write: if false;
+      allow read: if resource.data.isPublished == true
+        || (request.auth != null && request.auth.uid != null);
+      allow create, update, delete: if request.auth != null && request.auth.uid != null;
     }
 
     match /users/{uid}/{document=**} {

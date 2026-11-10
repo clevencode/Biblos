@@ -24,6 +24,14 @@ Boot : `warmupReadingPlansRepository()` (main.tsx, idle).
 
 Voir `firestore.rules` — lecture publique si `isPublished`.
 
+## CMS editorial (`#admin`)
+
+- URL : `https://…/#admin`
+- Firebase Auth **e-mail / mot de passe** (compte éditeur créé dans la console)
+- Écritures : `upsertReadingPlan` / `deleteReadingPlan` après `requireEditorialUser()`
+- Parser : `extractionArea` → `parsePlanExtraction` (Étape / Jour, sans IA)
+- Liste admin : `onSnapshot` sur toute la collection ; app public : query `isPublished`
+
 ## Déploiement des règles
 
 ```bash
