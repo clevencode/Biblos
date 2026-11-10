@@ -1,4 +1,4 @@
-import { apiUrl } from "../apiBase";
+import { apiUrl, readApiJson } from "../apiBase";
 
 export type BibleAudioEpisode = {
   usfm: string;
@@ -23,7 +23,16 @@ const AUDIO_POS_KEY = "biblos-bible-audio-pos";
 export async function fetchBibleAudioCatalog(): Promise<BibleAudioCatalog> {
   try {
     const res = await fetch(apiUrl("/api/bible-audio"));
-    return (await res.json()) as BibleAudioCatalog;
+    const parsed = await readApiJson<BibleAudioCatalog>(res);
+    if (!parsed.ok || !parsed.data) {
+      return {
+        ok: false,
+        error: "Catalogue audio invalide",
+        books: {},
+        count: 0,
+      };
+    }
+    return parsed.data;
   } catch (err) {
     return {
       ok: false,
