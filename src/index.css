@@ -8462,6 +8462,7 @@ ul.plan-yv-day-note-ref {
 /* passage-bar-panel test: barra = altura subhead (32px); painel (grelha) inalterado + cartão destacado */
 html[data-passage-bar-panel="test"] {
   --bible-passage-bar-title-h: 32px;
+  --bible-passage-skip-h: 32px;
 }
 
 html[data-passage-bar-panel="test"] .app.is-bible-mode.is-narrow {
@@ -8469,6 +8470,97 @@ html[data-passage-bar-panel="test"] .app.is-bible-mode.is-narrow {
   --bible-top-chrome: calc(
     max(6px, env(safe-area-inset-top, 0px)) + 6px + var(--bible-passage-bar-title-h) + 1px + 8px
   );
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-top.is-free {
+  position: absolute;
+  align-items: flex-start;
+  padding-bottom: 6px;
+  min-height: calc(var(--bible-passage-bar-title-h) + 12px);
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-top-passage.is-split-chrome {
+  width: auto;
+  max-width: min(100%, 16.5rem);
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-top-passage-bar.is-chip-trigger {
+  display: inline-flex;
+  width: fit-content;
+  max-width: min(100%, 16.5rem);
+  height: var(--bible-passage-bar-title-h);
+  min-height: var(--bible-passage-bar-title-h);
+  max-height: var(--bible-passage-bar-title-h);
+  grid-template-columns: none;
+  align-items: center;
+}
+
+/* Setas capítulo no lugar do hamburger flutuante (canto inf. direito). */
+html[data-passage-bar-panel="test"] .bible-yv-top-passage-skips.is-float-br {
+  position: fixed;
+  right: var(--bible-tools-float-inset-x);
+  bottom: var(--bible-tools-float-bottom);
+  z-index: var(--bible-z-tools-fab);
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: var(--yv-overlay-surface);
+  box-shadow: var(--yv-overlay-shadow);
+}
+
+html[data-passage-bar-panel="test"]
+  .bible-yv-top-passage-skips.is-float-br
+  .bible-yv-top-passage-arrow {
+  width: var(--bible-audio-play-size);
+  min-width: var(--bible-audio-play-size);
+  height: var(--bible-audio-play-size);
+  min-height: var(--bible-audio-play-size);
+  margin: 0;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+}
+
+html[data-passage-bar-panel="test"]
+  .bible-yv-top-passage-skips.is-float-br
+  .bible-yv-top-passage-arrow-icon {
+  width: 22px;
+  height: 22px;
+  font-size: 22px;
+}
+
+html[data-passage-bar-panel="test"]
+  .bible-yv-top-passage-skips.is-float-br
+  .bible-yv-top-passage-arrow:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--yv-text) 6%, transparent);
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-top-tools {
+  flex: none;
+  align-self: flex-start;
+  margin-left: auto;
+  margin-top: 0;
+}
+
+html[data-passage-bar-panel="test"]
+  .bible-reader--yv.is-compact-tools
+  .bible-yv-top.is-compact-tools
+  .bible-yv-top-tools {
+  align-self: flex-start;
+}
+
+html[data-passage-bar-panel="test"]
+  .bible-reader--yv.is-compact-tools
+  .bible-yv-passage-roll {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin-inline-end: auto;
 }
 
 html[data-passage-bar-panel="test"] .app.is-bible-mode.is-narrow .bible-yv-top {
@@ -8629,6 +8721,15 @@ html[data-passage-bar-panel="test"]
   max-width: min(100%, 16.5rem);
   grid-template-columns: var(--bible-passage-bar-title-h) minmax(0, 1fr)
     var(--bible-passage-bar-title-h);
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-top-passage-bar.is-chip-trigger,
+html[data-passage-bar-panel="test"]
+  .bible-yv-passage-roll.is-open
+  .bible-yv-top-passage-bar.is-chip-trigger.is-roll-head {
+  display: inline-flex;
+  grid-template-columns: none;
+  max-width: min(100%, 16.5rem);
 }
 
 html[data-passage-bar-panel="test"] .bible-yv-passage-scroll-panel.is-open {

@@ -1,8 +1,9 @@
 /**
  * BiblePassageBar (test): padrão chip + dropdown desanexado.
- * - Trigger compacto (32px) alinhado à esquerda; setas capítulo nos lados.
+ * - Trigger compacto (32px) à esquerda; setas capítulo no FAB inf. direito (ex-hamburger).
  * - Painel como cartão (gap 8px), não “pergaminho” colado — altura da grelha inalterada.
- * - Aberto: mesma barra (setas visíveis), caret ↑ (rotação), chip com a mesma superfície; 2.º clique no chip fecha o painel.
+ * - Layout split (test): chip à esquerda; hamburger topo direita; skips capítulo FAB inf. direito.
+ * - Aberto: caret ↑; 2.º clique no chip fecha o painel.
  *
  * `test` (default) — `?passage-bar-panel=legacy` | `off` (DEV) ou `VITE_PASSAGE_BAR_PANEL_LAYOUT=legacy`.
  */

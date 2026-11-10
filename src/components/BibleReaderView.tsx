@@ -51,6 +51,7 @@ import {
 } from "../bible/passagePillLayout";
 import { passagePickerSkipsVerseStep } from "../bible/passagePickerFlow";
 import { passageBarSkipIcons } from "../bible/passageBarSkipIcons";
+import { isPassageBarPanelCompactTopbar } from "../bible/passageBarPanelLayout";
 import { BibleOfflineChapterGate } from "./BibleOfflineChapterGate";
 import { BibleChapterLoadingPlaceholder } from "./BibleChapterLoadingPlaceholder";
 import { usePassageDiscovery } from "../hooks/usePassageDiscovery";
@@ -1182,21 +1183,86 @@ export function BibleReaderView({
     openPassagePicker(step);
   }
 
+  function renderPassageChapterSkips() {
+    const chapterSkipIcons = passageBarSkipIcons();
+    const renderChapterSkipButton = (delta: -1 | 1) => {
+      const isPrev = delta === -1;
+      return (
+        <button
+          key={isPrev ? "prev" : "next"}
+          type="button"
+          className="bible-yv-top-passage-arrow"
+          onClick={() => {
+            if (pickerOpen) setPassageStep("chapter");
+            goAdjacent(delta);
+          }}
+          disabled={
+            (isPrev ? !canPrev : !canNext) || pickerChrome.controlsDisabled
+          }
+          aria-label={isPrev ? "Chapitre précédent" : "Chapitre suivant"}
+        >
+          <YvIcon
+            name={isPrev ? chapterSkipIcons.previous : chapterSkipIcons.next}
+            className="bible-yv-top-passage-arrow-icon"
+          />
+        </button>
+      );
+    };
+    const floatSkips = isPassageBarPanelCompactTopbar();
+    return (
+      <div
+        className={`bible-yv-top-passage-skips${floatSkips ? " is-float-br" : ""}`.trim()}
+        aria-label="Chapitres"
+      >
+        {renderChapterSkipButton(-1)}
+        {renderChapterSkipButton(1)}
+      </div>
+    );
+  }
+
   function renderTopPassageNav(extraClass = "", rollOpen = false) {
     const compactBar = extraClass.includes("is-plan-chrome");
     const showChapterStep = true;
+    const splitChrome = isPassageBarPanelCompactTopbar() && !compactBar;
     const unifiedRefPill = isPassagePillUnified();
     const passageRefLabel = formatPassagePillRef(bookTitle, chapterId);
     const chapterSkipIcons = passageBarSkipIcons();
+
+    const renderChapterSkipButton = (delta: -1 | 1) => {
+      const isPrev = delta === -1;
+      return (
+        <button
+          key={isPrev ? "prev" : "next"}
+          type="button"
+          className="bible-yv-top-passage-arrow"
+          onClick={() => {
+            if (pickerOpen) setPassageStep("chapter");
+            goAdjacent(delta);
+          }}
+          disabled={
+            (isPrev ? !canPrev : !canNext) || pickerChrome.controlsDisabled
+          }
+          aria-label={isPrev ? "Chapitre précédent" : "Chapitre suivant"}
+        >
+          <YvIcon
+            name={isPrev ? chapterSkipIcons.previous : chapterSkipIcons.next}
+            className="bible-yv-top-passage-arrow-icon"
+          />
+        </button>
+      );
+    };
+
     return (
       <nav
-        className={`bible-yv-compact-ref bible-yv-top-passage${extraClass}`.trim()}
+        className={`bible-yv-compact-ref bible-yv-top-passage${extraClass}${
+          splitChrome ? " is-split-chrome" : ""
+        }`.trim()}
         aria-label="Livre et chapitre"
       >
         <div
           className={`bible-yv-top-passage-bar${compactBar ? " is-compact" : ""}${
-            unifiedRefPill ? " is-passage-ref-unified" : ""
-          }${
+            splitChrome ? " is-chip-trigger" : ""
+          }${unifiedRefPill ? " is-passage-ref-unified" : ""}${
             rollOpen
               ? " is-roll-head is-roll-chrome-active"
               : pickerOpen
@@ -1204,23 +1270,7 @@ export function BibleReaderView({
                 : ""
           }${pickerChrome.chipsHydrating ? " is-hydrating" : ""}`}
         >
-          {showChapterStep ? (
-            <button
-              type="button"
-              className="bible-yv-top-passage-arrow"
-              onClick={() => {
-                if (pickerOpen) setPassageStep("chapter");
-                goAdjacent(-1);
-              }}
-              disabled={!canPrev || pickerChrome.controlsDisabled}
-              aria-label="Chapitre précédent"
-            >
-              <YvIcon
-                name={chapterSkipIcons.previous}
-                className="bible-yv-top-passage-arrow-icon"
-              />
-            </button>
-          ) : null}
+          {showChapterStep && !splitChrome ? renderChapterSkipButton(-1) : null}
           <div
             className={`bible-yv-top-passage-segments${
               unifiedRefPill ? " is-passage-ref-unified" : ""
@@ -1283,23 +1333,7 @@ export function BibleReaderView({
               </>
             )}
           </div>
-          {showChapterStep ? (
-            <button
-              type="button"
-              className="bible-yv-top-passage-arrow"
-              onClick={() => {
-                if (pickerOpen) setPassageStep("chapter");
-                goAdjacent(1);
-              }}
-              disabled={!canNext || pickerChrome.controlsDisabled}
-              aria-label="Chapitre suivant"
-            >
-              <YvIcon
-                name={chapterSkipIcons.next}
-                className="bible-yv-top-passage-arrow-icon"
-              />
-            </button>
-          ) : null}
+          {showChapterStep && !splitChrome ? renderChapterSkipButton(1) : null}
         </div>
       </nav>
     );
@@ -2504,7 +2538,9 @@ export function BibleReaderView({
               <YvIcon name="ios_share" className="bible-yv-tool-icon" />
             </button>
           ) : null}
-          {!compactToolsMenu ? renderTopToolsMenu("header") : null}
+          {!compactToolsMenu || isPassageBarPanelCompactTopbar()
+            ? renderTopToolsMenu("header")
+            : null}
         </div>
       </header>
 
@@ -2908,7 +2944,13 @@ export function BibleReaderView({
         </div>
       ) : null}
 
-      {compactToolsMenu ? renderTopToolsMenu("float") : null}
+      {compactToolsMenu && !isPassageBarPanelCompactTopbar()
+        ? renderTopToolsMenu("float")
+        : null}
+
+      {!planReading && isPassageBarPanelCompactTopbar()
+        ? renderPassageChapterSkips()
+        : null}
 
       {(() => {
         const compactDock = compactViewport || narrowChrome;
