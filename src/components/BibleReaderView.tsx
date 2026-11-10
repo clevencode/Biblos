@@ -622,17 +622,17 @@ export function BibleReaderView({
     passageDiscoveryBusy,
     wordDiscovery,
     wordDiscoveryBusy,
+    wordVerseHits,
+    wordVerseTotal,
     passageRollRef,
     wordSearchChromeRef,
     wordSearchPanelId,
     passagePickerPanelId,
     armPendingVerseStep,
     patchDiscoverySession,
-    patchWordDiscoverySession,
     setDiscoveryListScroll,
     setDiscoveryVerseListScroll,
     setWordDiscoveryListScroll,
-    setWordDiscoveryVerseListScroll,
     clearBookSearch,
     clearWordSearch,
     closeWordSearch,
@@ -1791,6 +1791,7 @@ export function BibleReaderView({
     const target = overlayDismissTarget({
       pickerOpen,
       pickerPanelOpenAllowed: pickerChrome.pickerPanelOpenAllowed,
+      wordSearchOpen,
       toolsMenuOpen,
       historyOpen,
       shareSheetOpen,
@@ -1798,6 +1799,10 @@ export function BibleReaderView({
     });
     if (target === "picker") {
       closePicker();
+      return;
+    }
+    if (target === "wordSearch") {
+      closeWordSearch();
       return;
     }
     if (target === "tools") {
@@ -2446,28 +2451,16 @@ export function BibleReaderView({
               query={wordSearchQuery}
               onQueryChange={setWordSearchQuery}
               onQueryClear={clearWordSearch}
-              discovery={wordDiscovery}
               discoveryBusy={wordDiscoveryBusy}
+              verseHits={wordVerseHits}
+              verseTotal={wordVerseTotal}
+              contentError={wordDiscovery.contentError}
               textVersion={textVersion}
-              bookId={bookId}
-              loading={presentation.inFlight}
-              discoverySession={wordDiscoverySession}
-              onDiscoveryListScroll={setWordDiscoveryListScroll}
-              onDiscoveryExpandedBookChange={(id) =>
-                patchWordDiscoverySession({ expandedBookId: id })
-              }
-              onDiscoveryVerseListScroll={setWordDiscoveryVerseListScroll}
-              onPickJump={(jump) => {
-                closeWordSearch();
-                pickDiscoveryJump(jump);
-              }}
+              listScrollTop={wordDiscoverySession.listScrollTop}
+              onListScroll={setWordDiscoveryListScroll}
               onPickVerse={(hit) => {
                 closeWordSearch();
                 pickVerseSearchHit(hit);
-              }}
-              onPickBook={(id) => {
-                closeWordSearch();
-                pickBook(id);
               }}
             />
           </div>

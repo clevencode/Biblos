@@ -58,7 +58,16 @@ async function bibleFetch<T extends object>(
     if (v !== undefined && v !== "") qs.set(k, String(v));
   }
   try {
-    const res = await fetch(apiUrl(`/api/youversion?${qs.toString()}`));
+    const res = await fetch(apiUrl(`youversion?${qs.toString()}`));
+    const contentType = res.headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) {
+      return {
+        ok: false,
+        error: res.ok
+          ? "Réponse API invalide"
+          : `Recherche indisponible (${res.status})`,
+      } as ApiResult<T>;
+    }
     const json = (await res.json()) as ApiResult<T>;
     return json;
   } catch (err) {

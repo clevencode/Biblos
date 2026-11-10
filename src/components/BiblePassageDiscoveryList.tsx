@@ -26,6 +26,10 @@ type BiblePassageDiscoveryListProps = {
   onPickVerse: (hit: BibleSearchHit) => void;
   /** `false` no passo livro (só títulos) — default `true`. */
   verseDiscoveryEnabled?: boolean;
+  /** `false` no painel de palavras — sem saltos «Aller à …». */
+  showJumps?: boolean;
+  /** `false` no painel de palavras — cabeçalho não navega para o livro. */
+  bookNavigateEnabled?: boolean;
 };
 
 function renderSection(
@@ -55,6 +59,7 @@ function renderSection(
           anchorVerseUsfm={props.anchorVerseUsfm}
           verseScrollTop={props.verseScrollByBook[hit.id.toUpperCase()] ?? 0}
           verseDiscoveryEnabled={props.verseDiscoveryEnabled ?? true}
+          bookNavigateEnabled={props.bookNavigateEnabled ?? true}
           onToggleExpand={props.onExpandedBookChange}
           onVerseListScroll={props.onVerseListScroll}
           onPickBook={props.onPickBook}
@@ -84,8 +89,11 @@ export function BiblePassageDiscoveryList({
   onPickJump,
   onPickVerse,
   verseDiscoveryEnabled = true,
+  showJumps = true,
+  bookNavigateEnabled = true,
 }: BiblePassageDiscoveryListProps) {
   const totalBooks = sections.at.length + sections.nt.length;
+  const visibleJumps = showJumps ? jumps : [];
 
   const sectionProps = {
     searchQuery,
@@ -97,6 +105,7 @@ export function BiblePassageDiscoveryList({
     anchorVerseUsfm,
     verseScrollByBook,
     verseDiscoveryEnabled,
+    bookNavigateEnabled,
     onExpandedBookChange,
     onVerseListScroll,
     onPickBook,
@@ -106,9 +115,9 @@ export function BiblePassageDiscoveryList({
 
   return (
     <>
-      {jumps.length ? (
+      {visibleJumps.length ? (
         <div className="bible-yv-pick-jumps" role="group" aria-label="Références">
-          {jumps.map((jump) => (
+          {visibleJumps.map((jump) => (
             <button
               key={jump.passage.usfm}
               type="button"
@@ -125,7 +134,7 @@ export function BiblePassageDiscoveryList({
 
       {busy && hasQuery ? <BiblePickerDiscoverySkeleton /> : null}
 
-      {contentError && hasQuery && !jumps.length ? (
+      {contentError && hasQuery && !visibleJumps.length ? (
         <p className="bible-yv-pick-discovery-hint bible-yv-muted" role="status">
           {contentError}
         </p>
@@ -136,9 +145,9 @@ export function BiblePassageDiscoveryList({
           {renderSection("Ancien Testament", sections.at, sectionProps)}
           {renderSection("Nouveau Testament", sections.nt, sectionProps)}
         </>
-      ) : !busy && hasQuery && !jumps.length ? (
+      ) : !busy && hasQuery && !visibleJumps.length ? (
         <p className="bible-yv-pick-loading bible-yv-muted bible-yv-pick-roll-empty">
-          Aucun livre trouvé
+          Aucun résultat
         </p>
       ) : null}
     </>

@@ -23,6 +23,8 @@ type BiblePassageDiscoveryBookRowProps = {
   onPickBook: (id: string) => void;
   onPickVerse: (hit: BibleSearchHit) => void;
   verseDiscoveryEnabled?: boolean;
+  /** `false` no painel de palavras — cabeçalho só expande hits, não navega para o livro. */
+  bookNavigateEnabled?: boolean;
 };
 
 export function BiblePassageDiscoveryBookRow({
@@ -40,6 +42,7 @@ export function BiblePassageDiscoveryBookRow({
   onPickBook,
   onPickVerse,
   verseDiscoveryEnabled = true,
+  bookNavigateEnabled = true,
 }: BiblePassageDiscoveryBookRowProps) {
   const panelId = useId();
   const verseListRef = useRef<HTMLUListElement | null>(null);
@@ -70,6 +73,7 @@ export function BiblePassageDiscoveryBookRow({
       onToggleExpand(expanded ? null : hit.id);
       return;
     }
+    if (!bookNavigateEnabled) return;
     onPickBook(hit.id);
   }
 

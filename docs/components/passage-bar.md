@@ -194,19 +194,50 @@ Nota: o passo grelha **VERSET** após capítulo está desligado no fluxo `test` 
 
 ---
 
+## Diagnóstico reverso — barra unificada → split
+
+Antes do split (`test`), **um único** `bookSearchQuery` no passo livro do pill fazia:
+
+| Query | Lógica unificada (`scope` implícito full) |
+|-------|-------------------------------------------|
+| Vazia | Catálogo AT/NT completo |
+| Referência parseável | Saltos «Aller à …» (`buildDiscoveryJumps`) |
+| Texto ≥ 2 chars | Debounce → `searchVersesForVersion` + merge título/conteúdo + expand versos |
+
+A fatia **orientada a palavras** era só o ramo ≥ 2 chars + `useBookVerseDiscovery` nas linhas expansíveis. No split actual:
+
+- **Pill / books** → catálogo + refs (sem API de palavras)
+- **Ícone search / full** → só API de palavras (`contentOnly`), empty state se `< 2`, sem jumps/navegação de livro
+
+### Backdrop (igual ao chip book)
+
+| Peça | Chip roll | Word search |
+|------|-----------|-------------|
+| Scrim | `passageSurfaceScrimOpen` | idem |
+| Elevação topo | `rootClassPassageRollOpen` → `is-passage-roll-open` | **mesmo** (inclui `wordSearchOpen`) |
+| Classe scrim | `is-picker-dismiss` (z-index baixo) | **mesmo** |
+| Dismiss scrim | `overlayDismissTarget` → `picker` | → `wordSearch` → `closeWordSearch` |
+| Dim texto | `.is-overlay-occluding` | idem via `passageInputBlocked` |
+
+Sem `is-passage-roll-open`, o painel de palavras ficava no stacking do header (`z-top: 4`) **abaixo** do scrim (`z: 8`) — backdrop “comia” o painel.
+
+---
+
 ## Alterações seguras / anti-padrões
 
 **Seguro**
 
 - Ajustar copy/placeholders dos dois campos sem misturar scopes.
 - Estilos sob `html[data-passage-bar-panel="test"]` sem tocar no legacy.
-- Evoluir `BiblePassageWordSearchPanel` reutilizando a lista discovery.
+- Evoluir `BiblePassageWordSearchPanel` reutilizando a lista discovery (só hits de conteúdo).
 
 **Evitar**
 
-- Voltar a passar a mesma `bookSearchQuery` aos dois painéis (mistura livros e palavras).
-- Chamar `usePassageDiscovery` com scope `"full"` no passo livro do roll quando o split está activo.
-- Declarar `const discoverySplitSearch = …` **depois** de um hook que o leia (TDZ — crash «Cannot access before initialization»).
+- Acoplar `bookSearchQuery` com `wordSearchQuery` (estados e sessões separados).
+- Chamar `usePassageDiscovery` sem `scope` estrito (`"books" | "full"` obrigatório).
+- Usar scope `"full"` no passo livro do roll quando o split está activo.
+- Abrir word search **sem** elevar chrome (`rootClassPassageRollOpen`) — o scrim tapa o painel.
+- Declarar `const discoverySplitSearch = …` **depois** de um hook que o leia (TDZ).
 - Esconder o hamburger no layout `test` (deve permanecer no header).
 
 ---

@@ -8537,7 +8537,7 @@ html[data-passage-bar-panel="test"] .bible-yv-passage-word-search-panel.is-open 
   position: absolute;
   top: calc(100% + 8px);
   left: 0;
-  z-index: var(--bible-z-scroll-panel);
+  z-index: calc(var(--bible-z-chrome-elevated) + 1);
   box-sizing: border-box;
   width: var(--bible-passage-panel-w);
   min-width: var(--bible-passage-panel-w);
@@ -8554,13 +8554,174 @@ html[data-passage-bar-panel="test"] .bible-yv-passage-word-search-panel.is-open 
   overflow: hidden;
   max-height: var(--bible-passage-panel-max-h);
   min-height: var(--bible-passage-panel-min-h);
+  pointer-events: auto;
   contain: layout;
 }
 
-html[data-passage-bar-panel="test"] .bible-yv-passage-word-search-panel .bible-yv-pick-grid.is-books {
+/* Área de resultados: preenche a caixa fixa do painel (não colapsa) */
+html[data-passage-bar-panel="test"]
+  .bible-yv-passage-word-search-panel
+  .bible-yv-pick-grid.is-books,
+html[data-passage-bar-panel="test"]
+  .bible-yv-passage-word-search-panel
+  .bible-yv-pick-grid.is-word-search {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+  overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  display: block;
+  grid-template-columns: none;
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-word-search-empty {
+  margin: 0;
+  padding: 1.25rem 0.75rem;
+  text-align: center;
+  font-size: 0.875rem;
+  line-height: 1.35;
   flex: 1;
+  display: grid;
+  place-items: center;
+  min-height: 8rem;
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-word-search-meta {
+  margin: 0;
+  padding: 0 4px 2px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  flex: none;
+}
+
+html[data-passage-bar-panel="test"]
+  .bible-yv-pick-verse-hits.is-word-search-passages {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  /* Scroll no .pick-grid pai — evita max-height aninhado a colapsar */
+  max-height: none;
+  overflow: visible;
+}
+
+html[data-passage-bar-panel="test"]
+  .bible-yv-pick-verse-hits.is-word-search-passages
+  > li {
+  flex: none;
+  min-width: 0;
+}
+
+html[data-passage-bar-panel="test"]
+  .bible-yv-pick-verse-hits.is-word-search-passages
+  .bible-yv-pick-verse-hit {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 10px 12px;
+  text-align: left;
+  grid-template-columns: none;
+}
+
+html[data-passage-bar-panel="test"]
+  .bible-yv-pick-verse-hits.is-word-search-passages
+  .bible-yv-pick-verse-hit-ref {
+  display: block;
+  width: 100%;
+  font-weight: 700;
+  font-size: 0.8rem;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+html[data-passage-bar-panel="test"]
+  .bible-yv-pick-verse-hits.is-word-search-passages
+  .bible-yv-pick-verse-hit-snippet {
+  display: block;
+  width: 100%;
+  line-height: 1.4;
+}
+
+html[data-passage-bar-panel="test"]
+  .bible-yv-passage-word-search-panel
+  .bible-yv-passage-scroll-edge {
+  flex: none;
+  position: relative;
+  bottom: auto;
+  height: 4px;
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-word-search-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 12rem;
+  flex: 1;
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-word-search-skeleton-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-word-search-skeleton-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--yv-text) 5%, transparent);
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-word-search-skeleton-label {
+  display: block;
+  height: 0.85rem;
+  width: 42%;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--yv-text) 12%, transparent);
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-word-search-skeleton-meta {
+  display: block;
+  height: 0.75rem;
+  width: 2.25rem;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--yv-text) 10%, transparent);
+  flex: none;
+}
+
+html[data-passage-bar-panel="test"]
+  .bible-yv-passage-scroll-panel.is-open
+  .bible-yv-pick-grid.is-books {
+  flex: 1 1 auto;
   min-height: 0;
   overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  pointer-events: auto;
+}
+
+html[data-passage-bar-panel="test"]
+  .bible-yv-passage-scroll-panel.is-open
+  .bible-yv-pick-search,
+html[data-passage-bar-panel="test"]
+  .bible-yv-passage-word-search-panel.is-open
+  .bible-yv-pick-search {
+  pointer-events: auto;
+  touch-action: manipulation;
 }
 
 html[data-passage-bar-panel="test"] .bible-yv-top-passage.is-split-chrome {
@@ -8642,7 +8803,6 @@ html[data-passage-bar-panel="test"]
 html[data-passage-bar-panel="test"]
   .bible-reader--yv.is-compact-tools
   .bible-yv-passage-roll {
-  position: static;
   flex: 0 1 auto;
   width: auto;
   min-width: 0;
@@ -8735,8 +8895,8 @@ html[data-passage-bar-panel="test"] .bible-yv-passage-roll.is-open .bible-yv-top
 html[data-passage-bar-panel="test"]
   .bible-yv-passage-roll.is-open
   .bible-yv-passage-scroll-panel.is-header-roll.is-open {
-  /* Âncora no cluster (roll é position:static) — largura estável partilhada */
-  top: calc(var(--bible-passage-bar-title-h) + 8px);
+  /* Largura estável; stacking acima do scrim para digitar/scroll */
+  top: calc(100% + 8px);
   left: 0;
   width: var(--bible-passage-panel-w);
   min-width: var(--bible-passage-panel-w);
@@ -8747,6 +8907,16 @@ html[data-passage-bar-panel="test"]
   box-shadow: var(--yv-overlay-shadow);
   padding-top: 8px;
   transform-origin: top left;
+  z-index: calc(var(--bible-z-chrome-elevated) + 1);
+  pointer-events: auto;
+}
+
+/* Com ícone search: alinhar painel à esquerda do cluster */
+html[data-passage-bar-panel="test"]
+  .bible-yv-passage-chrome-cluster
+  .bible-yv-passage-roll.is-open
+  .bible-yv-passage-scroll-panel.is-header-roll.is-open {
+  left: calc(-1 * (var(--bible-passage-bar-title-h) + 6px));
 }
 
 /* Chip + panel: trigger compacto; painel não altera a largura do roll */
@@ -8756,7 +8926,6 @@ html[data-passage-bar-panel="test"] .bible-yv-top.is-passage-roll-open {
 }
 
 html[data-passage-bar-panel="test"] .bible-yv-top.is-free .bible-yv-passage-roll {
-  position: static;
   align-self: flex-start;
   flex: 0 1 auto;
   width: auto;
@@ -8766,9 +8935,13 @@ html[data-passage-bar-panel="test"] .bible-yv-top.is-free .bible-yv-passage-roll
 
 html[data-passage-bar-panel="test"] .bible-yv-passage-roll:not(.is-open),
 html[data-passage-bar-panel="test"] .bible-yv-passage-roll.is-open {
-  position: static;
+  position: relative;
   width: auto;
   max-width: min(100%, 16.5rem);
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-passage-roll.is-open {
+  z-index: var(--bible-z-chrome-elevated);
 }
 
 html[data-passage-bar-panel="test"] .bible-yv-passage-roll .bible-yv-top-passage,

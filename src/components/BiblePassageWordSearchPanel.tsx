@@ -1,10 +1,11 @@
-import { useLayoutEffect, useRef } from "react";
-import type { PassageDiscoverySession } from "../bible/passageDiscovery/session";
-import type { PassageDiscoveryResult, DiscoveryJump } from "../bible/passageDiscovery/types";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import type { BibleTextVersionId } from "../bible/bibleVersions";
 import type { BibleSearchHit } from "../youversion/client";
 import { YvIcon } from "./YvIcon";
-import { BiblePassageDiscoveryList } from "./BiblePassageDiscoveryList";
+import { BibleSearchHighlight } from "./BibleSearchHighlight";
+import { WordSearchSkeleton } from "./WordSearchSkeleton";
+
+const MIN_WORD_CHARS = 2;
 
 type BiblePassageWordSearchPanelProps = {
   id: string;
@@ -12,60 +13,69 @@ type BiblePassageWordSearchPanelProps = {
   query: string;
   onQueryChange: (value: string) => void;
   onQueryClear: () => void;
-  discovery: PassageDiscoveryResult;
   discoveryBusy: boolean;
+  verseHits: BibleSearchHit[];
+  verseTotal: number;
+  contentError: string | null;
   textVersion: BibleTextVersionId;
-  bookId: string;
-  loading: boolean;
-  discoverySession: PassageDiscoverySession;
-  onDiscoveryListScroll: (scrollTop: number) => void;
-  onDiscoveryExpandedBookChange: (bookId: string | null) => void;
-  onDiscoveryVerseListScroll: (bookId: string, scrollTop: number) => void;
-  onPickJump: (jump: DiscoveryJump) => void;
+  listScrollTop: number;
+  onListScroll: (scrollTop: number) => void;
   onPickVerse: (hit: BibleSearchHit) => void;
-  onPickBook: (id: string) => void;
 };
 
+/**
+ * Painel de pesquisa por palavras — mesma lógica da barra unificada antiga:
+ * digitar ≥ 2 chars → debounce → lista de **passagens** (ref + snippet).
+ */
 export function BiblePassageWordSearchPanel({
   id: panelId,
   open,
   query,
   onQueryChange,
   onQueryClear,
-  discovery,
   discoveryBusy,
-  textVersion,
-  bookId,
-  loading,
-  discoverySession,
-  onDiscoveryListScroll,
-  onDiscoveryExpandedBookChange,
-  onDiscoveryVerseListScroll,
-  onPickJump,
+  verseHits,
+  verseTotal,
+  contentError,
+  listScrollTop,
+  onListScroll,
   onPickVerse,
-  onPickBook,
 }: BiblePassageWordSearchPanelProps) {
   const gridRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const restoredListScrollRef = useRef(false);
-  const hasQuery = Boolean(query.trim());
+  const trimmed = query.trim();
+  const hasActiveQuery = trimmed.length >= MIN_WORD_CHARS;
+  const showEmptyHint = !hasActiveQuery;
+  const showSkeleton = discoveryBusy && hasActiveQuery;
+  const showEmptyResults =
+    hasActiveQuery && !discoveryBusy && !contentError && verseHits.length === 0;
+
+  useEffect(() => {
+    if (!open) return;
+    const id = window.setTimeout(() => {
+      inputRef.current?.focus();
+    }, 0);
+    return () => window.clearTimeout(id);
+  }, [open]);
 
   useLayoutEffect(() => {
     if (!open) {
       restoredListScrollRef.current = false;
       return;
     }
-    if (restoredListScrollRef.current) return;
+    if (!hasActiveQuery || restoredListScrollRef.current) return;
     const el = gridRef.current;
     if (!el) return;
-    el.scrollTop = discoverySession.listScrollTop;
+    el.scrollTop = listScrollTop;
     restoredListScrollRef.current = true;
-  }, [open, discoverySession.listScrollTop]);
+  }, [open, hasActiveQuery, listScrollTop]);
 
   if (!open) return null;
 
   function handlePickVerse(hit: BibleSearchHit) {
     if (gridRef.current) {
-      onDiscoveryListScroll(gridRef.current.scrollTop);
+      onListScroll(gridRef.current.scrollTop);
     }
     onPickVerse(hit);
   }
@@ -81,6 +91,7 @@ export function BiblePassageWordSearchPanel({
       <div className="bible-yv-pick-roll-search">
         <YvIcon name="search" opsz={20} className="bible-yv-pick-roll-search-icon" />
         <input
+          ref={inputRef}
           type="search"
           className="bible-yv-pick-search"
           value={query}
@@ -92,7 +103,7 @@ export function BiblePassageWordSearchPanel({
           aria-label="Rechercher un mot ou une expression dans la Bible"
           onChange={(event) => onQueryChange(event.target.value)}
         />
-        {hasQuery ? (
+        {trimmed ? (
           <button
             type="button"
             className="bible-yv-pick-search-clear"
@@ -103,32 +114,60 @@ export function BiblePassageWordSearchPanel({
           </button>
         ) : null}
       </div>
+
+      {!showEmptyHint && !showSkeleton && verseHits.length > 0 ? (
+        <p className="bible-yv-word-search-meta bible-yv-muted" aria-live="polite">
+          {verseTotal > verseHits.length
+            ? `${verseHits.length} sur ${verseTotal} passages`
+            : `${verseHits.length} passage${verseHits.length === 1 ? "" : "s"}`}
+        </p>
+      ) : null}
+
       <div
         ref={gridRef}
-        className="bible-yv-pick-grid is-books"
+        className="bible-yv-pick-grid is-word-search"
         role="listbox"
-        onScroll={(event) => onDiscoveryListScroll(event.currentTarget.scrollTop)}
+        aria-label="Passages"
+        onScroll={(event) => onListScroll(event.currentTarget.scrollTop)}
       >
-        <BiblePassageDiscoveryList
-          sections={discovery.sections}
-          jumps={discovery.jumps}
-          busy={discoveryBusy}
-          contentError={discovery.contentError}
-          textVersion={textVersion}
-          hasQuery={hasQuery}
-          searchQuery={query}
-          bookId={bookId}
-          loading={loading}
-          expandedBookId={discoverySession.expandedBookId}
-          anchorVerseUsfm={discoverySession.anchorVerseUsfm}
-          verseScrollByBook={discoverySession.verseScrollByBook}
-          verseDiscoveryEnabled
-          onExpandedBookChange={onDiscoveryExpandedBookChange}
-          onVerseListScroll={onDiscoveryVerseListScroll}
-          onPickBook={onPickBook}
-          onPickJump={onPickJump}
-          onPickVerse={handlePickVerse}
-        />
+        {showEmptyHint ? (
+          <p className="bible-yv-word-search-empty bible-yv-muted" role="status">
+            Saisir un mot ou une expression…
+          </p>
+        ) : showSkeleton ? (
+          <WordSearchSkeleton />
+        ) : contentError ? (
+          <p className="bible-yv-pick-discovery-hint bible-yv-muted" role="status">
+            {contentError}
+          </p>
+        ) : showEmptyResults ? (
+          <p className="bible-yv-pick-loading bible-yv-muted bible-yv-pick-roll-empty">
+            Aucun passage trouvé
+          </p>
+        ) : (
+          <ul className="bible-yv-pick-verse-hits is-word-search-passages">
+            {verseHits.map((hit) => (
+              <li key={hit.usfm}>
+                <button
+                  type="button"
+                  role="option"
+                  className="bible-yv-pick-verse-hit"
+                  onClick={() => handlePickVerse(hit)}
+                >
+                  <span className="bible-yv-pick-verse-hit-ref">
+                    {hit.bookTitle} {hit.chapter}.{hit.verse}
+                  </span>
+                  <span className="bible-yv-pick-verse-hit-snippet">
+                    <BibleSearchHighlight
+                      text={hit.snippet || hit.text}
+                      query={query}
+                    />
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
       <div className="bible-yv-passage-scroll-edge" aria-hidden />
     </div>

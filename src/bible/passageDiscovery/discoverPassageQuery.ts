@@ -145,10 +145,26 @@ export function buildPassageDiscoveryResult(
   options?: {
     bookCounts?: Record<string, number> | null;
     contentError?: string | null;
+    /** Só hits de conteúdo (painel palavras) — sem catálogo AT/NT nem saltos de referência. */
+    contentOnly?: boolean;
   },
 ): PassageDiscoveryResult {
   const trimmed = query.trim();
-  if (!trimmed) return allBooksGrouped(books);
+  if (!trimmed) {
+    return options?.contentOnly ? emptyDiscoveryResult("") : allBooksGrouped(books);
+  }
+
+  if (options?.contentOnly) {
+    const contentHits = options.bookCounts
+      ? booksFromContentCounts(options.bookCounts, books)
+      : [];
+    return {
+      query: trimmed,
+      jumps: [],
+      sections: groupByTestament(contentHits),
+      contentError: options.contentError ?? null,
+    };
+  }
 
   const jumps = buildDiscoveryJumps(trimmed);
   if (jumps.length > 0) {

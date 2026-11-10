@@ -509,7 +509,7 @@ async function fetchBookPayload(usfm: string): Promise<S21BookJson> {
     throw new Error(`Livre introuvable dans le bundle (${key})`);
   }
   const qs = new URLSearchParams({ action: "book", usfm: key });
-  const res = await fetch(apiUrl(`/api/youversion?${qs.toString()}`));
+  const res = await fetch(apiUrl(`youversion?${qs.toString()}`));
   const json = (await res.json()) as {
     ok?: boolean;
     error?: string;

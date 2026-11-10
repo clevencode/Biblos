@@ -83,7 +83,12 @@ export function usePassageBarController({
     discoverySplitSearch ? "books" : "full",
   );
 
-  const { result: wordDiscovery, busy: wordDiscoveryBusy } = usePassageDiscovery(
+  const {
+    result: wordDiscovery,
+    busy: wordDiscoveryBusy,
+    verseHits: wordVerseHits,
+    verseTotal: wordVerseTotal,
+  } = usePassageDiscovery(
     wordSearchQuery,
     books,
     wordSearchOpen,
@@ -272,10 +277,18 @@ export function usePassageBarController({
     const onPointerDown = (event: PointerEvent) => {
       const target = event.target;
       if (!(target instanceof Node)) return;
-      if (target instanceof Element && target.closest(".bible-yv-dock")) return;
-      const roll = passageRollRef.current;
-      if (!roll) return;
-      if (roll.contains(target)) return;
+      if (!(target instanceof Element)) return;
+      if (target.closest(".bible-yv-dock")) return;
+      if (target.closest(".bible-yv-passage-roll-scrim")) return;
+      /* Painel / cluster / roll — não fechar ao digitar ou fazer scroll */
+      if (
+        target.closest(".bible-yv-passage-scroll-panel") ||
+        target.closest(".bible-yv-passage-chrome-cluster") ||
+        target.closest(".bible-yv-passage-roll") ||
+        passageRollRef.current?.contains(target)
+      ) {
+        return;
+      }
       event.preventDefault();
       event.stopPropagation();
       markOverlayDismissSwallow();
@@ -290,15 +303,18 @@ export function usePassageBarController({
     const onPointerDown = (event: PointerEvent) => {
       const target = event.target;
       if (!(target instanceof Node)) return;
+      if (!(target instanceof Element)) return;
+      /* Scrim do leitor — mesmo contrato que o chip (fecho via dismissPassageSurfaceOverlay). */
+      if (target.closest(".bible-yv-passage-roll-scrim")) return;
+      if (target.closest(".bible-yv-dock")) return;
+      if (target.closest(".bible-yv-passage-word-search-trigger")) return;
       if (
-        target instanceof Element &&
-        target.closest(".bible-yv-passage-word-search-trigger")
+        target.closest(".bible-yv-passage-word-search-panel") ||
+        target.closest(".bible-yv-passage-chrome-cluster") ||
+        wordSearchChromeRef.current?.contains(target)
       ) {
         return;
       }
-      const chrome = wordSearchChromeRef.current;
-      if (!chrome) return;
-      if (chrome.contains(target)) return;
       event.preventDefault();
       event.stopPropagation();
       markOverlayDismissSwallow();
@@ -364,6 +380,8 @@ export function usePassageBarController({
     passageDiscoveryBusy,
     wordDiscovery,
     wordDiscoveryBusy,
+    wordVerseHits,
+    wordVerseTotal,
     passageRollRef,
     wordSearchChromeRef,
     wordSearchPanelId,

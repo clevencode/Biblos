@@ -24,7 +24,12 @@ export type ReaderSurfaceChrome = {
   scrimIsPickerDismiss: boolean;
 };
 
-export type OverlayDismissTarget = "picker" | "tools" | "history" | "share";
+export type OverlayDismissTarget =
+  | "picker"
+  | "wordSearch"
+  | "tools"
+  | "history"
+  | "share";
 
 export const OVERLAY_DISMISS_SWALLOW_MS = 480;
 
@@ -44,14 +49,15 @@ export function readerSurfaceChrome(
     input.pickerPanelOpenAllowed,
   );
   const wordSearchOpen = Boolean(input.wordSearchOpen);
+  /** Chip roll ou painel palavras — mesma elevação de chrome + scrim dismiss. */
+  const barOverlayOpen = rollOpen || wordSearchOpen;
   const passageInputBlocked =
-    rollOpen ||
-    wordSearchOpen ||
+    barOverlayOpen ||
     input.toolsMenuOpen ||
     input.historyOpen ||
     input.shareSheetOpen;
   const passageSurfaceScrimOpen =
-    rollOpen || wordSearchOpen || input.historyOpen || input.shareSheetOpen;
+    barOverlayOpen || input.historyOpen || input.shareSheetOpen;
   const toolsMenuPassThroughDismiss =
     input.toolsMenuOpen && !passageSurfaceScrimOpen;
 
@@ -65,20 +71,22 @@ export function readerSurfaceChrome(
       input.pickerOpen ||
       wordSearchOpen ||
       input.verseActionsOpen,
-    rootClassPassageRollOpen: rollOpen,
+    /* Eleva `.bible-yv-top` acima do scrim — igual ao chip book */
+    rootClassPassageRollOpen: barOverlayOpen,
     scrimIsTools:
       input.toolsMenuOpen &&
-      (rollOpen || input.historyOpen || input.shareSheetOpen),
-    scrimIsPickerDismiss: rollOpen,
+      (barOverlayOpen || input.historyOpen || input.shareSheetOpen),
+    scrimIsPickerDismiss: barOverlayOpen,
   };
 }
 
-/** Prioridade de fecho com um toque no scrim (picker → tools → history → share). */
+/** Prioridade de fecho com um toque no scrim (picker → wordSearch → tools → …). */
 export function overlayDismissTarget(
   input: ReaderSurfaceChromeInput,
 ): OverlayDismissTarget | null {
   const { passagePickerRollOpen } = readerSurfaceChrome(input);
   if (passagePickerRollOpen) return "picker";
+  if (input.wordSearchOpen) return "wordSearch";
   if (input.toolsMenuOpen) return "tools";
   if (input.historyOpen) return "history";
   if (input.shareSheetOpen) return "share";
