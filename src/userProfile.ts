@@ -1,7 +1,8 @@
 /** Profil utilisateur local — identité stable (Firebase uid) + noms d’affichage. */
 
-import { CLEVENCODE_ADMIN_EMAIL } from "./firebase/config";
 import type { FirebaseAuthUser } from "./firebase/auth";
+import { getFirebaseAuth } from "./firebase/app";
+import { CLEVENCODE_ADMIN_EMAIL } from "./firebase/config";
 
 const PROFILE_KEY = "biblos-user-profile";
 
@@ -65,37 +66,13 @@ export function preferredDisplayName(profile: UserProfile): string {
   return joinFullName(profile.firstName, profile.lastName);
 }
 
-/** Nom d’admin reconnu (insensible à la casse / accents). */
-export const CLEVENCODE_ADMIN_NAME = "clevencode";
-
 /**
  * Identifiant stable partagé sur tous les appareils pour l’admin.
  * Évite une nouvelle ligne Notion à chaque login sur un autre device.
  */
 export const CLEVENCODE_ADMIN_USER_ID = "biblos-admin-clevencode";
 
-function normalizeIdentityName(value: string): string {
-  return cleanName(value)
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/\p{M}/gu, "");
-}
-
-export function isClevencodeAdminName(
-  firstName: string,
-  lastName = "",
-  preferredName = "",
-): boolean {
-  const needle = normalizeIdentityName(CLEVENCODE_ADMIN_NAME);
-  const candidates = [
-    preferredName,
-    firstName,
-    joinFullName(firstName, lastName),
-  ];
-  return candidates.some((value) => normalizeIdentityName(value) === needle);
-}
-
-/** Detecte le propriétaire de l’app via le nom complet / prénom. */
+/** E-mail propriétaire (VITE_CLEVENCODE_ADMIN_EMAIL) — insensible à la casse. */
 export function isClevencodeAdminEmail(email: string | null | undefined): boolean {
   const needle = CLEVENCODE_ADMIN_EMAIL.trim().toLowerCase();
   if (!needle) return false;
@@ -104,10 +81,20 @@ export function isClevencodeAdminEmail(email: string | null | undefined): boolea
     .toLowerCase() === needle;
 }
 
+/**
+ * Admin = sessão Firebase activa + e-mail configuré (pas de heuristique sur le nom).
+ */
 export function isClevencodeAdmin(profile?: UserProfile | null): boolean {
   const p = profile ?? loadOrCreateProfile();
-  if (isClevencodeAdminEmail(p.email)) return true;
-  return isClevencodeAdminName(p.firstName, p.lastName, p.preferredName);
+  if (!isFirebaseSignedIn(p)) return false;
+
+  const session = getFirebaseAuth()?.currentUser ?? null;
+  if (session?.uid) {
+    if (p.firebaseUid && p.firebaseUid !== session.uid) return false;
+    return isClevencodeAdminEmail(session.email ?? p.email);
+  }
+
+  return isClevencodeAdminEmail(p.email);
 }
 
 /** Compte connecté via Firebase Google. */
@@ -192,12 +179,8 @@ function namesFromGoogleUser(user: FirebaseAuthUser): {
   return splitFullName(display);
 }
 
-function resolveProfileIdAfterFirebase(
-  profile: UserProfile,
-  uid: string,
-  email: string | null,
-): string {
-  if (isClevencodeAdminEmail(email) || isClevencodeAdmin(profile)) {
+function resolveProfileIdAfterFirebase(uid: string, email: string | null): string {
+  if (isClevencodeAdminEmail(email)) {
     return CLEVENCODE_ADMIN_USER_ID;
   }
   return uid;
@@ -231,7 +214,7 @@ export function applyFirebaseAuthUser(user: FirebaseAuthUser): UserProfile {
         current.lastName || googleNames.lastName,
       ),
   };
-  next.id = resolveProfileIdAfterFirebase(next, user.uid, email);
+  next.id = resolveProfileIdAfterFirebase(user.uid, email);
   writeProfile(next);
   return ensureStableAdminIdentity(next);
 }

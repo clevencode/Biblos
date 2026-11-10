@@ -6,13 +6,21 @@ import { isBiblosFlashcard } from "./catalog";
 import { sanitizePlanDays, sanitizePlanStages } from "./plan";
 import { clearPlanLocalState } from "./planProgress";
 import { normalizeCategoria, normalizeStatus } from "./retention";
-import { isClevencodeAdmin } from "./userProfile";
 import { applyVerseMarksFromCards } from "./verseMarks";
 import { upsertUserFlashcardInCatalog } from "./verseLocalCatalog";
 
 const CATALOG_USER_REVISION = "biblos-catalog-user-revision";
 
 const CATALOG_CACHE_KEY = "biblos-catalog-v1";
+
+/** Assinatura estável da lista de planos — detecta novos ids mesmo se `changed` falhar. */
+export function planIdsSignature(plans: ReadingPlan[] | null | undefined): string {
+  return (plans ?? [])
+    .map((p) => p.id)
+    .filter(Boolean)
+    .sort()
+    .join("|");
+}
 
 function isVerseBucketId(id: string): boolean {
   const key = String(id || "").toLowerCase();
@@ -317,6 +325,8 @@ function mergePlans(
         typeof plan.description === "string" && plan.description.trim()
           ? plan.description
           : (existing.description ?? ""),
+      cardIds:
+        plan.cardIds?.length ? plan.cardIds : (existing.cardIds ?? plan.cardIds),
     };
     if (JSON.stringify(existing) !== JSON.stringify(merged)) {
       byId.set(plan.id, merged);
@@ -366,8 +376,7 @@ export async function pullCatalog(current: Catalog): Promise<{ catalog: Catalog;
     return { catalog: current, changed: false, ok: true };
   }
   try {
-    const scope = isClevencodeAdmin() ? "admin" : "shared";
-    const response = await fetch(apiUrl(`/api/catalog?mode=index&scope=${scope}`));
+    const response = await fetch(apiUrl("/api/catalog?mode=index"));
     const parsed = await readApiJson<{
       ok?: boolean;
       plansOk?: boolean;

@@ -50,8 +50,6 @@ export type ReadingPlan = {
   stages?: PlanStage[];
   /** Propriedade Notion `Devotional` (ex-Description / comme Resumo no StudyOS). */
   description?: string;
-  /** Notion Audience: Admin (dono) | Shared (tous). Absent → Shared. */
-  audience?: "Admin" | "Shared";
   /** Notion checkbox Published — seul les plans cochés sont listés. */
   published?: boolean;
   cardIds?: string[];

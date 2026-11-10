@@ -10,6 +10,9 @@ type PlanGalleryProps = {
   embedded?: boolean;
   onPick: (plan: ReadingPlan) => void;
   onClose?: () => void;
+  onRefresh?: () => void | Promise<void>;
+  refreshBusy?: boolean;
+  cmsHealth?: "unknown" | "ok" | "no-token" | "down";
 };
 
 type PlanProgressFilter = "tout" | "attente" | "cours" | "termines";
@@ -54,6 +57,9 @@ export function PlanGallery({
   embedded = false,
   onPick,
   onClose,
+  onRefresh,
+  refreshBusy = false,
+  cmsHealth = "unknown",
 }: PlanGalleryProps) {
   const gridRef = useRef<HTMLDivElement>(null);
   const ordered = useMemo(
@@ -203,16 +209,37 @@ export function PlanGallery({
             );
           })}
         </div>
-        {onClose ? (
-          <button
-            type="button"
-            className="plan-discover-close"
-            onClick={onClose}
-            aria-label="Fermer les plans"
-          >
-            ×
-          </button>
-        ) : null}
+        <div className="plan-discover-head-actions">
+          {onRefresh ? (
+            <button
+              type="button"
+              className="plan-discover-refresh"
+              onClick={() => void onRefresh()}
+              disabled={refreshBusy || cmsHealth === "down"}
+              aria-label="Actualiser les plans depuis Notion"
+              title={
+                cmsHealth === "no-token"
+                  ? "CMS non configuré sur ce serveur"
+                  : "Actualiser les plans"
+              }
+            >
+              <YvIcon
+                name="sync"
+                className={`plan-discover-refresh-icon${refreshBusy ? " is-spinning" : ""}`}
+              />
+            </button>
+          ) : null}
+          {onClose ? (
+            <button
+              type="button"
+              className="plan-discover-close"
+              onClick={onClose}
+              aria-label="Fermer les plans"
+            >
+              ×
+            </button>
+          ) : null}
+        </div>
       </header>
       {filtered.length ? (
         <div className="plan-discover-scroller" ref={gridRef}>

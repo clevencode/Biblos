@@ -49,10 +49,8 @@ async function handleCatalog(req: IncomingMessage, res: ServerResponse, token: s
   }
   try {
     const mode = queryParam(req, "mode") || "index";
-    const scopeRaw = queryParam(req, "scope") || "shared";
-    const scope = scopeRaw === "admin" ? "admin" : "shared";
     const { buildCatalog } = await import("./api/catalog.mjs");
-    const catalog = await buildCatalog(token, { full: mode === "full", scope });
+    const catalog = await buildCatalog(token, { full: mode === "full" });
     send(res, 200, { ok: true, hasToken: true, ...catalog });
   } catch (error) {
     console.error("[catalog]", error);

@@ -422,22 +422,6 @@ function themeFromProp(prop) {
   return richFromProp(prop).replace(/\*\*/g, "").trim();
 }
 
-/** Audience Notion: Admin | Shared. Absente → Shared (rétrocompat). */
-function audienceFromProps(props) {
-  const prop = findProp(props, "Audience", "audience", "Public", "Visibilité");
-  if (!prop) return "Shared";
-  if (prop.type === "select") {
-    const name = String(prop.select?.name ?? "").trim();
-    if (/^admin$/i.test(name)) return "Admin";
-    return "Shared";
-  }
-  if (prop.type === "rich_text" || prop.type === "title") {
-    const text = richFromProp(prop).trim();
-    if (/^admin$/i.test(text)) return "Admin";
-  }
-  return "Shared";
-}
-
 /** Checkbox Published / Publié — seul les plans cochés apparaissent dans l’app. */
 function isPlanPublished(props) {
   const prop = findProp(
@@ -457,11 +441,6 @@ function isPlanPublished(props) {
   return false;
 }
 
-function includePlanForScope(audience, scope) {
-  if (scope === "admin") return true;
-  return audience !== "Admin";
-}
-
 function mapPlanPage(page, bodyText = "", planProp = "", description = "") {
   const props = page.properties ?? {};
   const id = page.id;
@@ -478,7 +457,6 @@ function mapPlanPage(page, bodyText = "", planProp = "", description = "") {
   const fromMerged = fromBody.days.length
     ? fromBody
     : parsePlanStructure(source.includes(planField) ? source : `${bodyText}\n${planField}`);
-  const audience = audienceFromProps(props);
   const published = isPlanPublished(props);
   return {
     id: `plan-${String(id).replace(/-/g, "").slice(0, 16)}`,
@@ -488,7 +466,6 @@ function mapPlanPage(page, bodyText = "", planProp = "", description = "") {
     days: fromMerged.days,
     stages: fromMerged.stages,
     description: descriptionField,
-    audience,
     published,
     criadoEm: page.created_time ? dateKey(page.created_time) : null,
   };
@@ -521,13 +498,12 @@ export function cardsToSeeds(cards) {
   return [...groups.values()];
 }
 
-export async function buildCatalog(token, { full = false, scope = "shared" } = {}) {
+export async function buildCatalog(token, { full = false } = {}) {
   // Page DB avant collection id (data_source) — /databases répond plus vite.
   const planDb = [envSafe("NOTION_PLAN_DB"), PLAN_PAGE_DB, PLAN_DB].filter(Boolean);
   const cardDb = [envSafe("NOTION_BIBLECARDS_DB"), BIBLECARDS_PAGE_DB, BIBLECARDS_DB].filter(
     Boolean,
   );
-  const catalogScope = scope === "admin" ? "admin" : "shared";
 
   let planPages = [];
   let plansOk = true;
@@ -563,7 +539,6 @@ export async function buildCatalog(token, { full = false, scope = "shared" } = {
     }
     const mapped = mapPlanPage(page, body, planProp, description);
     if (!mapped.published) continue;
-    if (!includePlanForScope(mapped.audience, catalogScope)) continue;
     plans.push(mapped);
   }
 
@@ -606,7 +581,6 @@ export async function buildCatalog(token, { full = false, scope = "shared" } = {
     cardsOk,
     cardCount: cards.length,
     planCount: plans.length,
-    scope: catalogScope,
   };
 }
 
@@ -629,8 +603,6 @@ export default async function handler(req, res) {
     const url = new URL(req.url || "/", "http://localhost");
     const mode = url.searchParams.get("mode") || "index";
     const full = mode === "full";
-    const scopeRaw = url.searchParams.get("scope") || "shared";
-    const scope = scopeRaw === "admin" ? "admin" : "shared";
 
     if (!token) {
       res.status(200).json({
@@ -643,7 +615,7 @@ export default async function handler(req, res) {
       return;
     }
 
-    const catalog = await buildCatalog(token, { full, scope });
+    const catalog = await buildCatalog(token, { full });
     res.status(200).json({ ok: true, hasToken: true, ...catalog });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

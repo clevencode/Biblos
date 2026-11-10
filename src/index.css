@@ -566,6 +566,53 @@ body {
 }
 
 
+.plan-discover-head-actions {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.plan-discover-refresh {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.plan-discover-refresh:hover:not(:disabled) {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.plan-discover-refresh:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.plan-discover-refresh-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.plan-discover-refresh-icon.is-spinning {
+  animation: plan-discover-refresh-spin 900ms linear infinite;
+}
+
+@keyframes plan-discover-refresh-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .plan-discover-close {
   flex: none;
   display: inline-flex;
@@ -573,7 +620,6 @@ body {
   justify-content: center;
   width: 36px;
   height: 36px;
-  margin-top: 2px;
   border: 0;
   border-radius: 999px;
   background: var(--surface);
@@ -8059,6 +8105,8 @@ ul.plan-yv-day-note-ref {
   --yv-overlay-surface: var(--elevated, var(--surface, var(--panel)));
   --yv-overlay-border: 1px solid color-mix(in srgb, var(--yv-text) 12%, transparent);
   --yv-overlay-shadow: none;
+  /* Scrim invisível — atenuação só no texto (igual menu hamburger). */
+  --yv-overlay-passage-dim: 0.62;
   /* Stack chrome (só no leitor YV) */
   --bible-z-read-below: 0;
   --bible-z-scroll-panel: 1;
@@ -9686,8 +9734,9 @@ ul.plan-yv-day-note-ref {
   border: 0;
   cursor: default;
   pointer-events: auto;
-  background: color-mix(in srgb, var(--text) 6%, transparent);
-  backdrop-filter: blur(0.5px);
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 .bible-reader--yv.is-passage-roll-open .bible-yv-read-surface.is-overlay-occluding .bible-passage,
@@ -9695,7 +9744,7 @@ ul.plan-yv-day-note-ref {
 .bible-reader--yv.is-share-open .bible-yv-read-surface.is-overlay-occluding .bible-passage {
   pointer-events: none;
   user-select: none;
-  opacity: 0.62;
+  opacity: var(--yv-overlay-passage-dim);
   transition: opacity 0.2s ease;
 }
 

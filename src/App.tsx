@@ -568,12 +568,17 @@ export function App() {
     return latestPlanJour({ ...activePlan, days: planDays }, planProgress);
   }, [activePlan, planProgress, planDays]);
 
-  const { cmsHealth } = useCmsSync({
+  const { cmsHealth, cmsPulling, refreshCatalog } = useCmsSync({
     catalog,
     setCatalog,
     modeRef,
     activePlan,
   });
+
+  useEffect(() => {
+    if (mode !== "today" || planDay) return;
+    void refreshCatalog({ force: true });
+  }, [mode, planDay, refreshCatalog]);
 
   useEffect(() => {
     // Uniquement le vrai hors ligne réseau — pas l’échec d’API Notion.
@@ -1103,6 +1108,11 @@ export function App() {
                       plans={plans}
                       selectedId={activePlan?.id ?? null}
                       onPick={pickPlan}
+                      onRefresh={() => {
+                        void refreshCatalog({ force: true });
+                      }}
+                      refreshBusy={cmsPulling}
+                      cmsHealth={cmsHealth}
                     />
                   )}
                 </div>
@@ -1269,7 +1279,7 @@ export function App() {
                       });
                       if (cloud.errors.length) throw new Error(cloud.errors[0]);
                       const result = await pullCatalog(catalogRef.current);
-                      if (result.changed) {
+                      if (result.ok) {
                         setCatalog(result.catalog);
                         catalogRef.current = result.catalog;
                       }

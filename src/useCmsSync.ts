@@ -2,9 +2,17 @@
  * Mobile-first : pull CMS Notion (plans + catalogue) et notifications.
  * Données utilisateur → Firebase via userProfileSync / activitySync (hors hook).
  */
-import { useEffect, useRef, useState, type Dispatch, type MutableRefObject, type SetStateAction } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type Dispatch,
+  type MutableRefObject,
+  type SetStateAction,
+} from "react";
 import { Capacitor } from "@capacitor/core";
-import { pullCatalog, persistCatalogCache } from "./catalogSync";
+import { planIdsSignature, pullCatalog, persistCatalogCache } from "./catalogSync";
 import { isNotionCmsPullEnabled } from "./contentCms";
 import { DESCRIPTION_PULL_MS, pullPlanDescription } from "./planDescriptionSync";
 import { pullRemoteAppNotifications } from "./appNotifications";
@@ -24,6 +32,16 @@ function cmsDeferred(modeRef: MutableRefObject<CenterMode>): boolean {
 
 function cmsPaused(): boolean {
   return !isNotionCmsPullEnabled();
+}
+
+function shouldApplyCatalogPull(
+  prev: Catalog,
+  enriched: Catalog,
+  changed: boolean,
+): boolean {
+  if (changed) return true;
+  if (planIdsSignature(prev.plans) !== planIdsSignature(enriched.plans)) return true;
+  return (prev.plans?.length ?? 0) !== (enriched.plans?.length ?? 0);
 }
 
 async function probeCmsHealth(): Promise<{
@@ -48,16 +66,51 @@ export function useCmsSync(options: {
   setCatalog: Dispatch<SetStateAction<Catalog>>;
   modeRef: MutableRefObject<CenterMode>;
   activePlan?: ReadingPlan | null;
-}): { cmsHealth: "unknown" | "ok" | "no-token" | "down" } {
+}): {
+  cmsHealth: "unknown" | "ok" | "no-token" | "down";
+  cmsPulling: boolean;
+  refreshCatalog: (options?: { force?: boolean }) => Promise<{ ok: boolean; changed: boolean }>;
+} {
   const { catalog, setCatalog, modeRef, activePlan } = options;
   const readiness = useAppReadinessOptional();
   const [cmsHealth, setCmsHealth] = useState<"unknown" | "ok" | "no-token" | "down">("unknown");
+  const [cmsPulling, setCmsPullingState] = useState(false);
   const catalogRef = useRef(catalog);
   catalogRef.current = catalog;
+  const syncBusyRef = useRef(false);
 
   const setCmsPulling = (value: boolean) => {
+    setCmsPullingState(value);
     readiness?.setCmsPulling(value);
   };
+
+  const refreshCatalog = useCallback(
+    async (options?: { force?: boolean }) => {
+      if (cmsPaused()) return { ok: false, changed: false };
+      if (!options?.force && cmsDeferred(modeRef)) {
+        return { ok: false, changed: false };
+      }
+      if (syncBusyRef.current) return { ok: false, changed: false };
+      syncBusyRef.current = true;
+      setCmsPulling(true);
+      try {
+        const result = await pullCatalog(catalogRef.current);
+        if (result.ok) {
+          const merged = ensureLocalMarksInCatalog(result.catalog);
+          const prev = catalogRef.current;
+          if (shouldApplyCatalogPull(prev, merged, result.changed)) {
+            setCatalog(merged);
+          }
+          readiness?.markCloudSyncSuccess();
+        }
+        return { ok: result.ok, changed: result.changed };
+      } finally {
+        syncBusyRef.current = false;
+        setCmsPulling(false);
+      }
+    },
+    [modeRef, readiness, setCatalog],
+  );
 
   useEffect(() => {
     if (cmsPaused()) return;
@@ -80,18 +133,20 @@ export function useCmsSync(options: {
     async function syncCatalog() {
       if (busy || cancelled || cmsDeferred(modeRef) || cmsPaused()) return;
       busy = true;
+      syncBusyRef.current = true;
       setCmsPulling(true);
       try {
         const result = await pullCatalog(catalogRef.current);
         if (!cancelled && result.ok) {
-          const merged = ensureLocalMarksInCatalog(result.catalog);
-          if (result.changed || merged !== result.catalog) {
-            setCatalog(merged);
+          const enriched = ensureLocalMarksInCatalog(result.catalog);
+          if (shouldApplyCatalogPull(catalogRef.current, enriched, result.changed)) {
+            setCatalog(enriched);
           }
           readiness?.markCloudSyncSuccess();
         }
       } finally {
         busy = false;
+        syncBusyRef.current = false;
         setCmsPulling(false);
       }
     }
@@ -109,7 +164,7 @@ export function useCmsSync(options: {
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("online", onVisibility);
     };
-  }, [setCatalog, modeRef]);
+  }, [modeRef, readiness, setCatalog]);
 
   useEffect(() => {
     if (!activePlan?.url || cmsPaused()) return;
@@ -176,5 +231,5 @@ export function useCmsSync(options: {
     };
   }, []);
 
-  return { cmsHealth };
+  return { cmsHealth, cmsPulling, refreshCatalog };
 }
