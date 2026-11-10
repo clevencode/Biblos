@@ -11,6 +11,10 @@ interface ImportMetaEnv {
   readonly VITE_FIREBASE_APP_ID: string;
   readonly VITE_FIREBASE_WEB_CLIENT_ID?: string;
   readonly VITE_CLEVENCODE_ADMIN_EMAIL?: string;
+  /** `test` (default) = sem passo versículo após capítulo; `legacy` = grelha Verset */
+  readonly VITE_PASSAGE_PICKER_FLOW?: string;
+  /** `test` (default) = chevrons na barra capítulo; `legacy` = skip_previous / skip_next */
+  readonly VITE_PASSAGE_BAR_SKIP_ICONS?: string;
 }
 
 interface ImportMeta {

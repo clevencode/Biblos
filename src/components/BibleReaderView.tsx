@@ -45,6 +45,12 @@ import { BibleHistorySheet } from "./BibleHistorySheet";
 import { BibleShareSheet } from "./BibleShareSheet";
 import { BiblePassageScrollPicker } from "./BiblePassageScrollPicker";
 import { BiblePassageChip } from "./BiblePassageChip";
+import {
+  formatPassagePillRef,
+  isPassagePillUnified,
+} from "../bible/passagePillLayout";
+import { passagePickerSkipsVerseStep } from "../bible/passagePickerFlow";
+import { passageBarSkipIcons } from "../bible/passageBarSkipIcons";
 import { BibleOfflineChapterGate } from "./BibleOfflineChapterGate";
 import { BibleChapterLoadingPlaceholder } from "./BibleChapterLoadingPlaceholder";
 import { usePassageDiscovery } from "../hooks/usePassageDiscovery";
@@ -992,7 +998,7 @@ export function BibleReaderView({
         return;
       }
       const chip = passageRollRef.current?.querySelector(
-        ".bible-yv-passage-chip.is-chapter",
+        ".bible-yv-passage-chip.is-chapter, .bible-yv-passage-chip.is-ref",
       ) as HTMLButtonElement | null;
       chip?.focus();
     }, 0);
@@ -1030,6 +1036,10 @@ export function BibleReaderView({
     if (!pickerOpen || !pendingVerseStep.current) return;
     if (presentation.inFlight) return;
     pendingVerseStep.current = false;
+    if (passagePickerSkipsVerseStep()) {
+      closePicker();
+      return;
+    }
     setPassageStep("verse");
   }, [pickerOpen, presentation.inFlight, chapterId, passage?.id]);
 
@@ -1152,6 +1162,9 @@ export function BibleReaderView({
   function renderTopPassageNav(extraClass = "", rollOpen = false) {
     const compactBar = extraClass.includes("is-plan-chrome");
     const showChapterStep = true;
+    const unifiedRefPill = isPassagePillUnified();
+    const passageRefLabel = formatPassagePillRef(bookTitle, chapterId);
+    const chapterSkipIcons = passageBarSkipIcons();
     return (
       <nav
         className={`bible-yv-compact-ref bible-yv-top-passage${extraClass}`.trim()}
@@ -1159,6 +1172,8 @@ export function BibleReaderView({
       >
         <div
           className={`bible-yv-top-passage-bar${compactBar ? " is-compact" : ""}${
+            unifiedRefPill ? " is-passage-ref-unified" : ""
+          }${
             rollOpen
               ? " is-roll-head is-roll-chrome-active"
               : pickerOpen
@@ -1177,31 +1192,59 @@ export function BibleReaderView({
               disabled={!canPrev || pickerChrome.controlsDisabled}
               aria-label="Chapitre précédent"
             >
-              <YvIcon name="skip_previous" className="bible-yv-top-passage-arrow-icon" />
+              <YvIcon
+                name={chapterSkipIcons.previous}
+                className="bible-yv-top-passage-arrow-icon"
+              />
             </button>
           ) : null}
-          <div className="bible-yv-top-passage-segments">
-            <BiblePassageChip
-              variant="book"
-              label={bookTitle}
-              loading={pickerChrome.chipsHydrating}
-              open={passageRollOpen && passageStep === "book"}
-              disabled={pickerChrome.controlsDisabled}
-              ariaLabel={`Choisir un livre · ${bookTitle}`}
-              title={bookTitle}
-              onClick={() => openPassagePicker("book")}
-            />
-            <span className="bible-yv-top-passage-divider" aria-hidden />
-            <BiblePassageChip
-              variant="chapter"
-              label={chapterId}
-              loading={pickerChrome.chipsHydrating}
-              open={passageRollOpen && passageStep === "chapter"}
-              disabled={pickerChrome.controlsDisabled}
-              ariaLabel={`Choisir un chapitre · ${chapterId}`}
-              title={`Chapitre ${chapterId}`}
-              onClick={() => openPassagePicker("chapter")}
-            />
+          <div
+            className={`bible-yv-top-passage-segments${
+              unifiedRefPill ? " is-passage-ref-unified" : ""
+            }`}
+          >
+            {unifiedRefPill ? (
+              <BiblePassageChip
+                variant="ref"
+                label={bookTitle}
+                chapterLabel={chapterId}
+                loading={pickerChrome.chipsHydrating}
+                open={
+                  passageRollOpen &&
+                  (passageStep === "book" || passageStep === "chapter")
+                }
+                disabled={pickerChrome.controlsDisabled}
+                ariaLabel={`Choisir un passage · ${passageRefLabel}`}
+                title={passageRefLabel}
+                onClick={() =>
+                  openPassagePicker(passageStep === "chapter" ? "chapter" : "book")
+                }
+              />
+            ) : (
+              <>
+                <BiblePassageChip
+                  variant="book"
+                  label={bookTitle}
+                  loading={pickerChrome.chipsHydrating}
+                  open={passageRollOpen && passageStep === "book"}
+                  disabled={pickerChrome.controlsDisabled}
+                  ariaLabel={`Choisir un livre · ${bookTitle}`}
+                  title={bookTitle}
+                  onClick={() => openPassagePicker("book")}
+                />
+                <span className="bible-yv-top-passage-divider" aria-hidden />
+                <BiblePassageChip
+                  variant="chapter"
+                  label={chapterId}
+                  loading={pickerChrome.chipsHydrating}
+                  open={passageRollOpen && passageStep === "chapter"}
+                  disabled={pickerChrome.controlsDisabled}
+                  ariaLabel={`Choisir un chapitre · ${chapterId}`}
+                  title={`Chapitre ${chapterId}`}
+                  onClick={() => openPassagePicker("chapter")}
+                />
+              </>
+            )}
           </div>
           {showChapterStep ? (
             <button
@@ -1214,7 +1257,10 @@ export function BibleReaderView({
               disabled={!canNext || pickerChrome.controlsDisabled}
               aria-label="Chapitre suivant"
             >
-              <YvIcon name="skip_next" className="bible-yv-top-passage-arrow-icon" />
+              <YvIcon
+                name={chapterSkipIcons.next}
+                className="bible-yv-top-passage-arrow-icon"
+              />
             </button>
           ) : null}
         </div>
@@ -1329,6 +1375,13 @@ export function BibleReaderView({
   }
 
   function pickChapter(nextChapter: string) {
+    if (passagePickerSkipsVerseStep()) {
+      if (nextChapter !== chapterId || !passage?.verses?.length) {
+        void loadChapter(bookId, nextChapter, null);
+      }
+      closePicker();
+      return;
+    }
     if (nextChapter === chapterId && passage?.verses?.length) {
       setPassageStep("verse");
       return;

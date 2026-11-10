@@ -14,11 +14,15 @@ import { ensureCleanSlate } from "./cleanSlate";
 import { syncNativeChrome } from "./nativeChrome";
 import { scheduleIdle } from "./scheduleIdle";
 import { applyTheme } from "./theme";
+import { bootPassagePillLayoutTest } from "./bible/passagePillLayout";
+import { bootUiColortest } from "./ui/colortest";
 import "./skeleton/skeleton.css";
 import "./editorial-admin.css";
 import "./index.css";
 
 void syncNativeChrome(applyTheme());
+bootUiColortest();
+bootPassagePillLayoutTest();
 
 async function boot() {
   const reloading = await ensureCleanSlate();
