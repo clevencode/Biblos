@@ -148,7 +148,8 @@ _(adicionar linhas à medida que decidir)_
 | [reading-plans-firestore.md](./reading-plans-firestore.md) | Planos de leitura / Firestore |
 | [typography.md](./typography.md) | Tipografia |
 | [icons.md](./icons.md) | Ícones |
-| [components/README.md](./components/README.md) | Documentação modular por componente / módulo de UI |
+| [components/README.md](./components/README.md) | Índice da documentação modular por componente |
+| [components/Bibloscomponents.md](./components/Bibloscomponents.md) | Bibloscomponents — todos os módulos num único documento |
 
 ---
 

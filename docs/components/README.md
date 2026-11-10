@@ -2,31 +2,33 @@
 
 Cada ficheiro descreve um **módulo de UI** (ou fatia coesa de interface): responsabilidade, ficheiros no repo, contratos de props/estado, fluxos, viewState, CSS, acessibilidade e regras para evoluir sem regressões.
 
+**Visão unificada:** [Bibloscomponents.md](./Bibloscomponents.md) — reúne todos os módulos num único documento.
+
 ## Convenção de ficheiros
 
 | Campo no doc | Significado |
 |--------------|-------------|
 | **ID** | Identificador estável (`passage-verse-selector`) |
 | **Superfície** | O que o utilizador vê / interage |
-| **Dono do estado** | Onde vive `useState` / refs (geralmente `BibleReaderView`) |
+| **Dono do estado** | Onde vive `useState` / refs (geralmente `BibleReaderView` ou `App`) |
 | **ViewState** | Funções puras em `src/bible/viewState/` |
-| **Dependências** | Filhos diretos, hooks, repositórios |
+| **Dependências** | Filhos directos, hooks, repositórios |
 
 ## Índice
 
 | ID | Documento | Estado |
 |----|-----------|--------|
-| `passage-verse-selector` | [barra-seletor-versiculo.md](./barra-seletor-versiculo.md) | Documentado |
+| — | **[Bibloscomponents.md](./Bibloscomponents.md)** | Índice mestre + resumos |
+| `app-shell` | [app-shell.md](./app-shell.md) | Documentado |
+| `reader-surface` | [reader-surface.md](./reader-surface.md) | Documentado |
 | `passage-roll` | [passage-roll.md](./passage-roll.md) | Documentado |
 | `passage-chips` | [passage-chips.md](./passage-chips.md) | Documentado |
+| `passage-scroll-picker` | [passage-scroll-picker.md](./passage-scroll-picker.md) | Documentado |
 | `passage-discovery` | [passage-discovery.md](./passage-discovery.md) | Documentado |
-| `reader-surface` | _(capítulo, versículos, seleção)_ | Pendente |
-| `audio-float` | _(BibleAudioFloat)_ | Pendente |
-| `study-sheets` | _(Strong, busca, estudo)_ | Pendente |
-| `share-history` | _(partilha, histórico)_ | Pendente |
-| `app-shell` | _(nav, home, perfil, settings)_ | Pendente |
-
-Atualize esta tabela à medida que novos módulos forem documentados.
+| `passage-verse-selector` | [barra-seletor-versiculo.md](./barra-seletor-versiculo.md) | Documentado |
+| `audio-float` | [audio-float.md](./audio-float.md) | Documentado |
+| `share-history` | [share-history.md](./share-history.md) | Documentado |
+| `study-sheets` | [study-sheets.md](./study-sheets.md) | Documentado |
 
 ## Modelo de secções (copiar em novos docs)
 
