@@ -96,7 +96,7 @@ Chrome da Bíblia:
 
 ### Painéis flutuantes (CSS)
 
-No `.bible-reader--yv`, partilhar `--yv-overlay-surface`, `--yv-overlay-border` e `--yv-overlay-passage-dim` entre picker, menu tools, share e scrim (UI plana : `--yv-overlay-shadow: none`; scrim só para toque dismiss — sem blur nem véu extra). Escala `--bible-z-*` para scrim, chrome elevado, popover e sheet.
+No `.bible-reader--yv`, partilhar `--yv-overlay-surface`, `--yv-overlay-border` (= `--yv-hairline`) e `--yv-overlay-passage-dim` entre picker, menu tools, share e scrim. Triggers do topo usam `--yv-chrome-surface` (fill permanente). Overlay/FAB têm **sombra sutil** (`--yv-overlay-shadow`, `--yv-audio-fab-shadow`); scrim só para toque dismiss — sem blur nem véu extra. Escala `--bible-z-*` para scrim, chrome elevado, popover e sheet.
 
 ## QA manual (homologação)
 

@@ -8281,8 +8281,8 @@ ul.plan-yv-day-note-ref {
 
 .bible-reader--yv {
   /*
-   * Hierarquia: canvas (bg) → chrome (surface) → overlay (elevated+shadow) → inverse.
-   * Chip/FAB idle usam --yv-chrome-surface para não fundirem com o texto branco.
+   * Ladder: L0 canvas → L1 chrome → L2 overlay → L3 inverse → L4 mark.
+   * Triggers/FABs idle = chrome-surface; painéis = overlay + shadow.
    */
   --yv-bg: var(--bg);
   --yv-surface: var(--surface);
@@ -8294,17 +8294,19 @@ ul.plan-yv-day-note-ref {
   --yv-chrome-ease: cubic-bezier(0.4, 0, 0.2, 1);
   --yv-chrome-ms: 240ms;
   --yv-dock-hide-y: calc(100% + 28px);
-  /* L1 chrome fill — distinto do canvas branco */
+  /* L1 chrome — search / menu / chip / FAB idle */
   --yv-chrome-surface: var(--surface);
-  /* L2 hairline / separator — alinhados a --stroke-elevated / --line de marca */
   --yv-hairline: var(--stroke-elevated);
+  --yv-chrome-border: var(--yv-hairline);
+  --yv-chrome-hover: color-mix(in srgb, var(--yv-chrome-surface) 92%, var(--yv-text) 8%);
+  --yv-chrome-active-border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--yv-line));
   --yv-separator: 1px solid color-mix(in srgb, var(--yv-line) 70%, transparent);
-  /* L3 Painéis flutuantes (picker, menu tools) — elevated + sombra */
-  --yv-overlay-surface: var(--elevated, var(--surface, var(--panel)));
+  /* L2 overlay — painéis (picker / word-search / tools) */
+  --yv-overlay-surface: color-mix(in srgb, var(--surface) 86%, var(--elevated));
   --yv-overlay-border: var(--yv-hairline);
   --yv-overlay-shadow:
-    0 1px 2px color-mix(in srgb, #000 5%, transparent),
-    0 6px 16px color-mix(in srgb, #000 7%, transparent);
+    0 1px 2px color-mix(in srgb, var(--yv-text) 4%, transparent),
+    0 8px 20px color-mix(in srgb, var(--yv-text) 6%, transparent);
   /* Scrim invisível — atenuação só no texto (igual menu hamburger). */
   --yv-overlay-passage-dim: 0.62;
   /* Stack chrome (só no leitor YV) */
@@ -8320,9 +8322,9 @@ ul.plan-yv-day-note-ref {
   --bible-z-tools-chrome: 24;
   --bible-z-tools-fab: 9;
   --bible-z-popover: 40;
-  /* FAB lecture audio — chrome-surface (não branco do canvas) */
+  /* L3 FAB — idle = chrome; playing = inverse */
   --yv-audio-fab-idle: var(--yv-chrome-surface);
-  --yv-audio-fab-idle-hover: color-mix(in srgb, var(--yv-text) 7%, var(--yv-chrome-surface));
+  --yv-audio-fab-idle-hover: var(--yv-chrome-hover);
   --yv-audio-fab-idle-active: color-mix(in srgb, var(--yv-text) 11%, var(--yv-chrome-surface));
   --yv-audio-fab-idle-ring: color-mix(in srgb, var(--yv-line) 70%, var(--yv-text));
   --yv-audio-fab-active-bg: color-mix(in srgb, var(--yv-text) 88%, var(--yv-bg));
@@ -8489,12 +8491,12 @@ html[data-passage-bar-panel="test"] {
   --bible-chrome-panel-gap: 6px;
   --bible-chrome-panel-offset-y: var(--mobile-chrome-gap, 10px);
   --bible-chrome-panel-edge: 4px;
-  --bible-chrome-active-outline: 2px solid color-mix(in srgb, var(--accent) 35%, transparent);
-  --bible-chrome-trigger-border: var(--yv-hairline);
+  --bible-chrome-active-outline: var(--yv-chrome-active-border);
+  --bible-chrome-trigger-border: var(--yv-chrome-border);
   --bible-chrome-trigger-shadow: none;
   --bible-chrome-fab-size: var(--mobile-touch, 44px);
-  --bible-chrome-fab-border: var(--yv-hairline);
-  --bible-chrome-fab-hover: color-mix(in srgb, var(--yv-text) 7%, transparent);
+  --bible-chrome-fab-border: var(--yv-chrome-border);
+  --bible-chrome-fab-hover: var(--yv-chrome-hover);
   --bible-chrome-fab-shadow: var(--yv-audio-fab-shadow);
 }
 
@@ -8523,7 +8525,7 @@ html[data-passage-bar-panel="test"] .bible-yv-passage-chrome-cluster {
   min-width: 0;
 }
 
-/* Search: ghost (modern UI) — só o chip traz superfície no topo */
+/* Search: fill sempre visível (não só no clique) */
 html[data-passage-bar-panel="test"] .bible-yv-passage-word-search-trigger {
   flex: none;
   width: var(--bible-chrome-trigger-h);
@@ -8534,32 +8536,27 @@ html[data-passage-bar-panel="test"] .bible-yv-passage-word-search-trigger {
   padding: 0;
   display: grid;
   place-items: center;
-  border: 0;
+  border: var(--bible-chrome-trigger-border);
   border-radius: 999px;
-  background: transparent;
+  background: var(--yv-chrome-surface);
   box-shadow: none;
   color: var(--yv-text);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition:
     background 0.18s ease,
-    color 0.18s ease,
+    border-color 0.18s ease,
     outline-color 0.18s ease;
 }
 
 html[data-passage-bar-panel="test"] .bible-yv-passage-word-search-trigger:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--yv-text) 6%, transparent);
+  background: var(--yv-chrome-hover);
 }
 
-/* Aberto: só outline — sem fill (não competir com o chip) */
 html[data-passage-bar-panel="test"] .bible-yv-passage-word-search-trigger.is-on {
-  background: transparent;
-  outline: var(--bible-chrome-active-outline);
-  outline-offset: 0;
-}
-
-html[data-passage-bar-panel="test"] .bible-yv-passage-word-search-trigger.is-on:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--yv-text) 6%, transparent);
+  background: var(--yv-chrome-surface);
+  border: var(--yv-chrome-active-border);
+  outline: none;
 }
 
 html[data-passage-bar-panel="test"] .bible-yv-passage-word-search-icon {
@@ -8887,30 +8884,30 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   margin-top: 0;
 }
 
-/* Hamburger: ghost (par com search); chip continua com superfície */
+/* Hamburger: fill sempre visível (par com search) */
 html[data-passage-bar-panel="test"] .bible-yv-tools-menu-btn {
   width: var(--bible-chrome-trigger-h);
   height: var(--bible-chrome-trigger-h);
   min-width: var(--bible-chrome-trigger-h);
   min-height: var(--bible-chrome-trigger-h);
-  border: 0;
+  border: var(--bible-chrome-trigger-border);
   border-radius: 999px;
-  background: transparent;
+  background: var(--yv-chrome-surface);
   box-shadow: none;
   transition:
     background 0.18s ease,
-    color 0.18s ease,
+    border-color 0.18s ease,
     outline-color 0.18s ease;
 }
 
 html[data-passage-bar-panel="test"] .bible-yv-tools-menu-btn:hover {
-  background: color-mix(in srgb, var(--yv-text) 6%, transparent);
+  background: var(--yv-chrome-hover);
 }
 
 html[data-passage-bar-panel="test"] .bible-yv-tools-menu-btn.is-on {
-  background: color-mix(in srgb, var(--yv-text) 6%, transparent);
-  outline: var(--bible-chrome-active-outline);
-  outline-offset: 0;
+  background: var(--yv-chrome-surface);
+  border: var(--yv-chrome-active-border);
+  outline: none;
 }
 
 html[data-passage-bar-panel="test"] .bible-yv-tool-icon {
@@ -9164,10 +9161,10 @@ html[data-passage-bar-panel="test"] .bible-yv-top-passage-bar.is-roll-chrome-act
   box-shadow: none;
 }
 
-/* Chip: fill + hairline só — sem sombra/halo (contorno opaco removido) */
+/* Chip: fill sempre (mesma família que search / menu) */
 html[data-passage-bar-panel="test"] .bible-yv-passage-chip,
 html[data-passage-bar-panel="test"] .bible-yv-passage-chip.is-ref {
-  background: var(--yv-overlay-surface);
+  background: var(--yv-chrome-surface);
   border: var(--bible-chrome-trigger-border);
   box-shadow: none;
   transition:
@@ -9176,13 +9173,12 @@ html[data-passage-bar-panel="test"] .bible-yv-passage-chip.is-ref {
 }
 
 html[data-passage-bar-panel="test"] .bible-yv-passage-chip:hover:not(:disabled):not(.is-hydrating) {
-  background: color-mix(in srgb, var(--yv-overlay-surface) 94%, var(--yv-text) 6%);
-  border-color: color-mix(in srgb, var(--yv-line) 55%, var(--yv-text) 12%);
+  background: var(--yv-chrome-hover);
 }
 
 html[data-passage-bar-panel="test"] .bible-yv-passage-chip.is-open {
-  background: var(--yv-overlay-surface);
-  border-color: color-mix(in srgb, var(--accent) 45%, var(--yv-line));
+  background: var(--yv-chrome-surface);
+  border: var(--yv-chrome-active-border);
   box-shadow: none;
   outline: none;
 }
@@ -9412,8 +9408,9 @@ html[data-passage-bar-panel="test"]
   min-height: 36px;
   padding: 0 8px;
   border-radius: 10px;
-  background: color-mix(in srgb, var(--text) 7%, var(--panel));
-  border: 1px solid color-mix(in srgb, var(--yv-line) 55%, transparent);
+  /* Campo inset sobre painel #F3F4F6 */
+  background: color-mix(in srgb, var(--yv-overlay-surface, var(--surface)) 72%, var(--elevated));
+  border: 1px solid color-mix(in srgb, var(--yv-line) 62%, transparent);
   flex: none;
 }
 

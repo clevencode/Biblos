@@ -101,19 +101,16 @@ Entra em `readerSurfaceChrome` como `verseActionsOpen` → `forceChromeVisible`.
 
 ## Hierarquia cor / profundidade
 
-Definida em `.bible-reader--yv`. Canvas branco ≠ chrome cinza ≠ overlay elevated. Sombras sutis só nos suspensos.
+Definida em `.bible-reader--yv`. Canvas branco ≠ chrome (`--surface`) ≠ overlay (mix + shadow).
 
 | Camada | Token | Uso |
 |--------|--------|-----|
-| L0 canvas | `--yv-bg` | Fundo de leitura (branco) |
-| L1 chrome | `--yv-chrome-surface` (= `--surface`) | FAB idle, skips, play bar |
-| L1 chip | `--yv-overlay-surface` + shadow | Chip ref (primário no topo; search = ghost) |
-| L1 quiet | `--yv-muted`, wash `text 6%` | Labels, hover ghost |
-| L2 hairline | `--yv-hairline`, `--yv-separator` | Bordas; traço sob o topo |
-| L3 overlay | `--yv-overlay-surface` + `--yv-overlay-shadow` | Painéis picker/search, popover |
-| L4 emphasis | `--yv-highlight`, `--verse-mark`, inset bar | Marcas / áudio activo |
-| L5 inverse | `--yv-audio-fab-active-*` | Play a tocar |
-| FAB shadow | `--yv-audio-fab-shadow` / `--bible-chrome-fab-shadow` | Play + skips |
+| L0 canvas | `--yv-bg` | Fundo de leitura |
+| L1 chrome | `--yv-chrome-surface` + `--yv-chrome-border` / `-hover` / `-active-border` | Search, menu, chip, FAB idle, skips, play bar (fill **sempre**) |
+| L2 overlay | `--yv-overlay-surface` + `--yv-overlay-border` (= hairline) + `--yv-overlay-shadow` | Painéis picker / word-search / tools |
+| L3 inverse | `--yv-audio-fab-active-*` | Play a tocar |
+| L4 mark | `--yv-highlight`, `--verse-mark` | Marcas / ênfase no texto |
+| FAB shadow | `--yv-audio-fab-shadow` | Play + skips |
 
 Selecção de versículo = underline (accent); **não** caixa azul de sistema. Cor azul no texto = marca do utilizador (`--verse-mark`).
 

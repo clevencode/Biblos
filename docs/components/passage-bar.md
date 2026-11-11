@@ -11,24 +11,20 @@ Documento do **estado actual** da barra após o fluxo `test`: chip dropdown, pes
 
 ### Shell UI partilhado (chrome)
 
-Cartões (scroll picker, word-search, tools popover) e FABs partilham tokens em `html[data-passage-bar-panel="test"]`. No topo, **modern UI**: search e hamburger são **ghost** (sem pill); só o **chip** traz superfície. Tamanhos alinhados à lógica mobile (`--mobile-touch`, `--mobile-chrome-gap`).
+Tokens em `.bible-reader--yv` + `html[data-passage-bar-panel="test"]`. Search, menu e chip partilham **fill permanente** chrome; painéis usam overlay + shadow. Tamanhos = `--mobile-touch` / `--mobile-chrome-gap`.
 
 | Token / regra | Papel |
 |-------|--------|
-| `--bible-chrome-trigger-h` | `var(--mobile-touch)` — hit ≥ 44px (search, chip, ☰) |
-| `--bible-chrome-trigger-icon` | 20px dentro do hit target |
-| `--yv-chrome-surface` | Fill dos FABs (play idle / skips) — cinza `--surface` |
-| Search / ☰ | Ghost: sem fill; hover = wash; aberto = outline só |
-| Chip | `--yv-overlay-surface` (elevated) + `--yv-overlay-shadow` — primário no topo |
-| Painéis / popover | `--yv-overlay-surface` (elevated) + `--yv-overlay-shadow` |
-| `--bible-chrome-panel-radius` / `-pad` / `-gap` | Cartão overlay idêntico |
-| `--bible-chrome-panel-offset-y` | `var(--mobile-chrome-gap)` |
-| `--bible-chrome-panel-edge` | Fade inferior 4px nos dois painéis |
-| `--bible-chrome-fab-size` / `-border` / `-shadow` | Touch + hairline + sombra FAB (play/skips) |
+| `--bible-chrome-trigger-h` / `-icon` | Hit ≥ 44px; ícone 20px |
+| `--yv-chrome-surface` + `--yv-chrome-border` | Fill + hairline (search, menu, chip, FAB idle) |
+| `--yv-chrome-hover` / `--yv-chrome-active-border` | Hover e estado aberto (sem outline extra) |
+| Painéis / popover | `--yv-overlay-surface` + `--yv-overlay-border` (= hairline) + `--yv-overlay-shadow` |
+| `--bible-chrome-panel-radius` / `-pad` / `-gap` / `-offset-y` | Cartão overlay idêntico |
+| `--bible-chrome-fab-size` / `-border` / `-shadow` | Touch + chrome border + sombra FAB |
 | Top bar | `border-bottom: var(--yv-separator)` |
 | `--bible-audio-play-size` / `--bible-fab-lift` | Play = touch; lift = `play + 12px` |
 
-Animação dos painéis: `opacity` + `translateY` (sem `scaleY`). Ver escala L0–L5 em [reader-surface.md](./reader-surface.md).
+Animação dos painéis: `opacity` + `translateY`. Escala completa em [reader-surface.md](./reader-surface.md).
 
 ---
 
@@ -46,9 +42,9 @@ Animação dos painéis: `opacity` + `translateY` (sem `scaleY`). Ver escala L0�
 
 | Peça | Componente / render | Papel |
 |------|---------------------|--------|
-| Ícone search | `bible-yv-passage-word-search-trigger` (ghost) | Abre painel de **palavras** |
-| Chip título | `BiblePassageChip` (`variant="ref"`, superfície) | Abre roll de **livros/capítulos** |
-| Menu | `renderTopToolsMenu("header")` (ghost) | Ferramentas Bible (activo) |
+| Ícone search | `bible-yv-passage-word-search-trigger` (chrome fill) | Abre painel de **palavras** |
+| Chip título | `BiblePassageChip` (`variant="ref"`, chrome fill) | Abre roll de **livros/capítulos** |
+| Menu | `renderTopToolsMenu("header")` (chrome fill) | Ferramentas Bible (activo) |
 | Setas capítulo | `renderPassageChapterSkips` + `is-float-br` | Capítulo anterior/seguinte |
 
 ---
