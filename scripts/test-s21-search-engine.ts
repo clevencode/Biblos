@@ -1,15 +1,18 @@
 /**
- * Motor de busca S21 em cascata.
+ * Motor de busca em cascata (S21 + perfil HT98).
  * Usage: npx tsx scripts/test-s21-search-engine.ts
+ * Alias: npm run test:verse-search
  */
 import assert from "node:assert/strict";
 import {
   buildIndexedVerse,
-  normalizeFrenchText,
-  searchS21Verses,
+  normalizeSearchText,
+  searchVersesCascade,
   stemFrenchToken,
   type IndexedVerse,
-} from "../src/bible/s21SearchEngine.ts";
+} from "../src/bible/verseSearchEngine.ts";
+import { HT98_PROFILE, S21_FR_PROFILE } from "../src/bible/verseSearchProfiles.ts";
+import { searchS21Verses } from "../src/bible/s21SearchEngine.ts";
 
 function verse(
   usfm: string,
@@ -57,9 +60,27 @@ const corpus: IndexedVerse[] = [
   ),
 ];
 
+const htCorpus: IndexedVerse[] = [
+  verse(
+    "JHN.11.43",
+    "Apre li fin di sa, li rele byen fò: Laza, soti non!",
+    43,
+  ),
+  verse(
+    "JHN.3.16",
+    "Paske Bondye sitèlman renmen lemonn, li bay sèl Pitit gason li a, pou tout moun ki gen konfyans nan li ka gen lavi ki p'ap janm fini.",
+    43,
+  ),
+  verse(
+    "PSA.23.1",
+    "Seyè a se bèje mwen. Mwen p'ap manke anyen.",
+    19,
+  ),
+];
+
 // --- normalize / elision ---
-assert.equal(normalizeFrenchText("L'amour"), "l amour");
-assert.ok(normalizeFrenchText("résurrection").includes("resurrection"));
+assert.equal(normalizeSearchText("L'amour"), "l amour");
+assert.ok(normalizeSearchText("résurrection").includes("resurrection"));
 
 // --- Stage 1: exact phrase ---
 {
@@ -119,6 +140,37 @@ assert.ok(normalizeFrenchText("résurrection").includes("resurrection"));
   const r = searchS21Verses(corpus, "jehovah");
   assert.ok(r.totalCount >= 1, `jehovah should map to eternel, mode=${r.matchMode}`);
   assert.ok(r.results.some((h) => h.verse.usfm === "PSA.23.1"));
+}
+
+// --- HT98 profile inherits cascade (out-of-order AND) ---
+{
+  const r = searchVersesCascade(htCorpus, "soti laza", {
+    profile: HT98_PROFILE,
+    limit: 10,
+  });
+  assert.equal(r.matchMode, "all_terms");
+  assert.ok(r.results.some((h) => h.verse.usfm === "JHN.11.43"));
+}
+
+// --- HT98 stop words ignored when multi-token ---
+{
+  const r = searchVersesCascade(htCorpus, "nan bondye renmen", {
+    profile: HT98_PROFILE,
+    limit: 10,
+  });
+  assert.ok(
+    r.matchMode === "all_terms" || r.matchMode === "exact_phrase" || r.matchMode === "stemmed",
+    `unexpected mode ${r.matchMode}`,
+  );
+  assert.ok(r.results.some((h) => h.verse.usfm === "JHN.3.16"));
+}
+
+// --- Same engine API with explicit S21 profile ---
+{
+  const r = searchVersesCascade(corpus, "jesus lazare", {
+    profile: S21_FR_PROFILE,
+  });
+  assert.equal(r.matchMode, "all_terms");
 }
 
 console.log("test-s21-search-engine: ok");

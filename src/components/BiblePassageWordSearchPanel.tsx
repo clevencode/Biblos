@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef } from "react";
 import type { BibleTextVersionId } from "../bible/bibleVersions";
-import type { MatchMode } from "../bible/s21SearchEngine";
+import type { MatchMode } from "../bible/verseSearchEngine";
 import type { BibleSearchHit } from "../youversion/client";
 import { YvIcon } from "./YvIcon";
 import { BibleSearchHighlight } from "./BibleSearchHighlight";

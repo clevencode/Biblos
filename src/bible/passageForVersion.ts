@@ -51,6 +51,8 @@ export async function searchVersesForVersion(
       total: local.total,
       results: local.results,
       bookCounts: local.bookCounts,
+      matchMode: local.matchMode,
+      matchedTerms: local.matchedTerms,
     };
   }
   return {

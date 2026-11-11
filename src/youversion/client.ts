@@ -195,7 +195,7 @@ export type BibleSearchResponse = {
   total?: number;
   results?: BibleSearchHit[];
   bookCounts?: Record<string, number>;
-  matchMode?: import("../bible/s21SearchEngine").MatchMode;
+  matchMode?: import("../bible/verseSearchEngine").MatchMode;
   matchedTerms?: string[];
 };
 

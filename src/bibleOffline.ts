@@ -268,8 +268,8 @@ export async function clearOfflineBible(): Promise<void> {
   } finally {
     db.close();
   }
-  const { invalidateS21VerseIndex } = await import("./bible/s21VerseIndex");
-  invalidateS21VerseIndex();
+  const { invalidateVerseIndex } = await import("./bible/verseIndexCache");
+  invalidateVerseIndex("s21");
 }
 
 export async function getChapterLayout(
@@ -395,26 +395,6 @@ export async function offlinePassage(
   };
 }
 
-function makeSnippet(
-  text: string,
-  needleNorm: string,
-  normalize: (value: string) => string,
-  radius = 60,
-): string {
-  const raw = String(text || "");
-  const norm = normalize(raw);
-  const idx = needleNorm ? norm.indexOf(needleNorm) : -1;
-  if (idx < 0) {
-    return raw.length > radius * 2 ? `${raw.slice(0, radius * 2).trim()}…` : raw;
-  }
-  const ratio = raw.length / Math.max(1, norm.length);
-  const center = Math.round(idx * ratio);
-  const start = Math.max(0, center - radius);
-  const end = Math.min(raw.length, center + needleNorm.length * ratio + radius);
-  const slice = raw.slice(start, end).trim();
-  return `${start > 0 ? "…" : ""}${slice}${end < raw.length ? "…" : ""}`;
-}
-
 export async function offlineSearch(
   q: string,
   limit = 40,
@@ -427,58 +407,28 @@ export async function offlineSearch(
       total: number;
       results: BibleSearchHit[];
       bookCounts: Record<string, number>;
-      matchMode?: import("./bible/s21SearchEngine").MatchMode;
+      matchMode?: import("./bible/verseSearchEngine").MatchMode;
       matchedTerms?: string[];
     }
   | { ok: false; error: string }
 > {
-  const query = String(q || "").trim();
-  const { normalizeFrenchText, searchS21Verses } = await import("./bible/s21SearchEngine");
-  const queryNorm = normalizeFrenchText(query);
-  if (queryNorm.length < 2) {
-    return { ok: true, q: query, total: 0, results: [], bookCounts: {} };
-  }
   if (!(await isOfflineBibleReady())) {
     return { ok: false, error: "Bible hors ligne incomplete" };
   }
 
-  const { ensureS21VerseIndex } = await import("./bible/s21VerseIndex");
   const meta = await getOfflineMeta();
   const books = meta?.books ?? [];
   const order =
     bookOrder ?? new Map(books.map((b, i) => [b.id.toUpperCase(), i]));
-  const allowed = bookFilter
-    ? new Set([...bookFilter].map((id) => String(id).toUpperCase()).filter(Boolean))
-    : null;
 
-  let verses = await ensureS21VerseIndex(order);
-  if (allowed) {
-    verses = verses.filter((v) => allowed.has(v.bookId));
-  }
-
-  const capped = Math.min(80, Math.max(1, Number(limit) || 40));
-  const found = searchS21Verses(verses, query, { limit: capped });
-  const snippetNeedle =
-    found.matchedTerms.find((t) => t.length >= 2) ?? queryNorm;
-
-  const results: BibleSearchHit[] = found.results.map(({ verse }) => ({
-    usfm: verse.usfm,
-    bookTitle: verse.bookTitle,
-    chapter: verse.chapter,
-    verse: verse.verse,
-    text: verse.raw,
-    snippet: makeSnippet(verse.raw, snippetNeedle, normalizeFrenchText),
-  }));
-
-  return {
-    ok: true,
-    q: query,
-    total: found.totalCount,
-    results,
-    bookCounts: found.bookCounts,
-    matchMode: found.matchMode,
-    matchedTerms: found.matchedTerms,
-  };
+  const { runLocalVerseSearch } = await import("./bible/localVerseSearch");
+  return runLocalVerseSearch({
+    version: "s21",
+    q,
+    limit,
+    bookFilter,
+    bookOrder: order,
+  });
 }
 
 async function fetchBookPayload(usfm: string): Promise<S21BookJson> {
@@ -562,8 +512,8 @@ export async function seedOfflineBibleFromBundledAssets(
     books: bookList,
   };
   await putMeta(meta);
-  const { invalidateS21VerseIndex } = await import("./bible/s21VerseIndex");
-  invalidateS21VerseIndex();
+  const { invalidateVerseIndex } = await import("./bible/verseIndexCache");
+  invalidateVerseIndex("s21");
   return meta;
 }
 
@@ -616,7 +566,7 @@ export async function downloadOfflineBible(
     books: bookList,
   };
   await putMeta(meta);
-  const { invalidateS21VerseIndex } = await import("./bible/s21VerseIndex");
-  invalidateS21VerseIndex();
+  const { invalidateVerseIndex } = await import("./bible/verseIndexCache");
+  invalidateVerseIndex("s21");
   return meta;
 }

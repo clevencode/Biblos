@@ -40,6 +40,9 @@ let cachedBooks: YouVersionBook[] | null = null;
 export function invalidateHt1998CatalogCache() {
   cachedRoot = null;
   cachedBooks = null;
+  void import("./verseIndexCache").then(({ invalidateVerseIndex }) => {
+    invalidateVerseIndex("ht98");
+  });
 }
 
 function cleanVerseText(text: string): string {
@@ -161,21 +164,6 @@ export async function ht1998Passage(
   }
 }
 
-function makeSnippet(text: string, queryNorm: string, radius = 60): string {
-  const raw = String(text || "");
-  const norm = normalizeSearchText(raw);
-  const idx = norm.indexOf(queryNorm);
-  if (idx < 0) {
-    return raw.length > radius * 2 ? `${raw.slice(0, radius * 2).trim()}…` : raw;
-  }
-  const ratio = raw.length / Math.max(1, norm.length);
-  const center = Math.round(idx * ratio);
-  const start = Math.max(0, center - radius);
-  const end = Math.min(raw.length, center + queryNorm.length * ratio + radius);
-  const slice = raw.slice(start, end).trim();
-  return `${start > 0 ? "…" : ""}${slice}${end < raw.length ? "…" : ""}`;
-}
-
 export async function ht1998Search(
   q: string,
   limit = 40,
@@ -187,51 +175,31 @@ export async function ht1998Search(
       total: number;
       results: BibleSearchHit[];
       bookCounts: Record<string, number>;
+      matchMode?: import("./verseSearchEngine").MatchMode;
+      matchedTerms?: string[];
     }
   | { ok: false; error: string }
 > {
   const query = String(q || "").trim();
-  const queryNorm = normalizeSearchText(query);
-  if (queryNorm.length < 2) {
+  if (normalizeSearchText(query).length < 2) {
     return { ok: false, error: "Saisissez au moins 2 caractères" };
   }
 
-  const filter =
-    bookFilter?.length
-      ? new Set(bookFilter.map((id) => id.toUpperCase()))
-      : null;
-
-  const root = await loadHt1998Root();
-  const results: BibleSearchHit[] = [];
-  const bookCounts: Record<string, number> = {};
-
-  outer: for (const book of root.books) {
-    const bookId = String(book.usfm).toUpperCase();
-    if (filter && !filter.has(bookId)) continue;
-    for (const ch of book.chapters ?? []) {
-      for (const verse of ch.verses ?? []) {
-        const text = cleanVerseText(verse.text);
-        const norm = normalizeSearchText(text);
-        if (!norm.includes(queryNorm)) continue;
-        bookCounts[bookId] = (bookCounts[bookId] ?? 0) + 1;
-        results.push({
-          usfm: `${bookId}.${ch.chapter}.${verse.number}`,
-          bookTitle: book.title,
-          chapter: Number(ch.chapter),
-          verse: Number(verse.number),
-          text,
-          snippet: makeSnippet(text, queryNorm),
-        });
-        if (results.length >= limit) break outer;
-      }
-    }
-  }
-
+  const { runLocalVerseSearch } = await import("./localVerseSearch");
+  const found = await runLocalVerseSearch({
+    version: "ht98",
+    q: query,
+    limit,
+    bookFilter,
+  });
+  if (!found.ok) return found;
   return {
     ok: true,
-    q: query,
-    total: results.length,
-    results,
-    bookCounts,
+    q: found.q,
+    total: found.total,
+    results: found.results,
+    bookCounts: found.bookCounts,
+    matchMode: found.matchMode,
+    matchedTerms: found.matchedTerms,
   };
 }

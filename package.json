@@ -19,7 +19,8 @@
     "bible:study:strong": "node scripts/export-strong-lexicon.mjs",
     "bible:study:stage": "node scripts/stage-study-assets.mjs",
     "test:passage-viewstate": "npx --yes tsx scripts/test-passage-viewstate.ts",
-    "test:s21-search": "npx --yes tsx scripts/test-s21-search-engine.ts"
+    "test:s21-search": "npx --yes tsx scripts/test-s21-search-engine.ts",
+    "test:verse-search": "npx --yes tsx scripts/test-s21-search-engine.ts"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.1",

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { searchVersesForVersion } from "../bible/passageForVersion";
 import type { BibleTextVersionId } from "../bible/bibleVersions";
-import type { MatchMode } from "../bible/s21SearchEngine";
+import type { MatchMode } from "../bible/verseSearchEngine";
 import type { BibleSearchHit } from "../youversion/client";
 import { passageJumpsFromQuery } from "../youversion/bibleRefs";
 
