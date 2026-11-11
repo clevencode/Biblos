@@ -8584,6 +8584,12 @@ html[data-passage-bar-panel="test"] {
   --bible-passage-panel-w: min(100vw - 2 * var(--mobile-gutter, 12px), 22rem);
   --bible-passage-panel-max-h: min(42dvh, 300px);
   --bible-passage-panel-min-h: min(38dvh, 260px);
+  --bible-word-search-panel-max-h: min(75dvh, 560px);
+  --bible-word-search-panel-compact-min-h: 0;
+  --bible-word-search-scrim: rgba(0, 0, 0, 0.35);
+  --bible-word-search-field-bg: color-mix(in srgb, var(--text) 6%, var(--surface));
+  --bible-word-search-pill-on: color-mix(in srgb, var(--text) 82%, transparent);
+  --bible-word-search-pill-off: color-mix(in srgb, var(--text) 7%, var(--surface));
   /* Shell partilhado: painéis chip / word-search / tools popover */
   --bible-chrome-trigger-h: var(--mobile-touch, 44px);
   --bible-chrome-trigger-icon: 20px;
@@ -8704,6 +8710,347 @@ html[data-passage-bar-panel="test"]
 
 html[data-passage-bar-panel="test"] .bible-yv-passage-word-search-panel.is-open {
   left: 0;
+  right: auto;
+  width: min(100vw - 1.5rem, 22rem);
+  min-width: min(100vw - 1.5rem, 22rem);
+  max-width: min(100vw - 1.5rem, 22rem);
+  margin-inline: 0;
+  padding: 10px 10px 12px;
+  border-radius: 16px;
+  background: var(--surface, #fff);
+  border: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.16),
+    0 2px 8px rgba(0, 0, 0, 0.06);
+  transition:
+    opacity 0.2s ease,
+    transform 0.22s ease,
+    max-height 0.28s ease,
+    min-height 0.28s ease;
+}
+
+html[data-passage-bar-panel="test"]
+  .bible-yv-passage-word-search-panel.is-open.is-compact {
+  min-height: var(--bible-word-search-panel-compact-min-h);
+  max-height: none;
+}
+
+html[data-passage-bar-panel="test"]
+  .bible-yv-passage-word-search-panel.is-open.has-results {
+  min-height: 12rem;
+  max-height: var(--bible-word-search-panel-max-h);
+}
+
+/* Campo + X único (esconde clear nativo do type=search) */
+html[data-passage-bar-panel="test"] .bible-yv-word-search-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 6px 0 10px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
+  background: var(--bible-word-search-field-bg);
+  flex: none;
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-word-search-field-icon {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  opacity: 0.45;
+  color: inherit;
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-word-search-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  padding: 10px 4px;
+  font: inherit;
+  font-size: 0.95rem;
+  color: inherit;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+html[data-passage-bar-panel="test"]
+  .bible-yv-word-search-input::-webkit-search-decoration,
+html[data-passage-bar-panel="test"]
+  .bible-yv-word-search-input::-webkit-search-cancel-button,
+html[data-passage-bar-panel="test"]
+  .bible-yv-word-search-input::-webkit-search-results-button,
+html[data-passage-bar-panel="test"]
+  .bible-yv-word-search-input::-webkit-search-results-decoration {
+  display: none;
+  -webkit-appearance: none;
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-word-search-clear {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+  color: inherit;
+  cursor: pointer;
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-word-search-clear-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* Pills de escopo — peek do último item */
+html[data-passage-bar-panel="test"] .bible-yv-word-search-pills {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 2px 1.25rem 2px 0;
+  margin: 0 -2px;
+  flex: none;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-word-search-pills::-webkit-scrollbar {
+  display: none;
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-word-search-pill {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 7px 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--bible-word-search-pill-off);
+  color: color-mix(in srgb, var(--text) 82%, transparent);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-word-search-pill.is-on {
+  background: var(--bible-word-search-pill-on);
+  color: var(--surface, #fff);
+  font-weight: 600;
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-word-search-pill--books {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: min(52vw, 220px);
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-word-search-pill-books-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-word-search-pill-chevron {
+  flex: none;
+  opacity: 0.75;
+  font-size: 0.7rem;
+  line-height: 1;
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-word-search-book-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+  flex: 1 1 auto;
+  padding-top: 6px;
+  margin-top: 2px;
+  border-top: 1px solid color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-word-search-book-picker-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-word-search-book-filter {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  padding: 9px 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--bible-word-search-pill-off);
+  color: inherit;
+  font: inherit;
+  font-size: 0.85rem;
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-word-search-book-filter:focus {
+  outline: 2px solid color-mix(in srgb, var(--text) 18%, transparent);
+  outline-offset: 1px;
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-word-search-book-clear {
+  flex: none;
+  margin: 0;
+  padding: 7px 12px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: color-mix(in srgb, var(--text) 72%, transparent);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-word-search-book-clear:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-word-search-book-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-word-search-book-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  margin: 0;
+  padding: 8px 4px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-word-search-book-row.is-on {
+  background: color-mix(in srgb, var(--bible-word-search-pill-off) 80%, transparent);
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-word-search-book-check {
+  flex: none;
+  width: 1.1rem;
+  font-size: 1rem;
+  line-height: 1;
+  opacity: 0.7;
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-word-search-book-check.is-on {
+  opacity: 1;
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-word-search-book-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.92rem;
+  font-weight: 500;
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-word-search-book-count {
+  flex: none;
+  font-size: 0.8rem;
+  color: color-mix(in srgb, var(--text) 55%, transparent);
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-word-search-book-empty {
+  margin: 0;
+  padding: 16px 4px;
+  font-size: 0.88rem;
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-word-search-book-footer {
+  flex: none;
+  padding-top: 4px;
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-word-search-book-apply {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 12px 16px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--bible-word-search-pill-on);
+  color: var(--surface, #fff);
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-word-search-recents {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 8px;
+  margin-top: 2px;
+  border-top: 1px solid color-mix(in srgb, var(--text) 8%, transparent);
+  flex: none;
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-word-search-recents-label {
+  margin: 0;
+  padding: 0 2px;
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--text) 48%, transparent);
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-word-search-recents-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-word-search-recent-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 7px 11px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--bible-word-search-pill-off);
+  color: inherit;
+  font: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-word-search-recent-chip-icon {
+  font-size: 0.75rem;
+  line-height: 1;
+  opacity: 0.7;
 }
 
 @supports (transition-behavior: allow-discrete) {
@@ -10944,6 +11291,20 @@ html[data-colortest*="BiblePassageChip:red"] .bible-yv-passage-chip {
   user-select: none;
   opacity: var(--yv-overlay-passage-dim);
   transition: opacity 0.2s ease;
+}
+
+/* Scrim mais visível sob a busca de palavras / roll */
+html[data-passage-bar-panel="test"]
+  .bible-reader--yv.is-passage-roll-open
+  .bible-yv-passage-roll-scrim.is-picker-dismiss {
+  background: var(--bible-word-search-scrim, rgba(0, 0, 0, 0.35));
+}
+
+html[data-passage-bar-panel="test"]
+  .bible-reader--yv.is-passage-roll-open
+  .bible-yv-read-surface.is-overlay-occluding
+  .bible-passage {
+  opacity: 0.55;
 }
 
 .bible-reader--yv .bible-passage {

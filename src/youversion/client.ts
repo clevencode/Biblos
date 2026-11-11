@@ -195,6 +195,7 @@ export type BibleSearchResponse = {
   total?: number;
   results?: BibleSearchHit[];
   bookCounts?: Record<string, number>;
+  facets?: import("../bible/verseSearchEngine").SearchFacets;
   matchMode?: import("../bible/verseSearchEngine").MatchMode;
   matchedTerms?: string[];
 };
@@ -202,14 +203,23 @@ export type BibleSearchResponse = {
 export async function searchVerses(
   q: string,
   limit = 40,
-  options?: { books?: string[] | null },
+  options?: {
+    books?: string[] | null;
+    scope?: import("../bible/verseSearchEngine").SearchScope;
+  },
 ): Promise<BibleSearchResponse> {
   const books = options?.books?.length
     ? options.books.map((id) => String(id).toUpperCase()).filter(Boolean)
     : null;
 
   if (await isOfflineBibleReady()) {
-    const local = await offlineSearch(q, limit, undefined, books);
+    const local = await offlineSearch(
+      q,
+      limit,
+      undefined,
+      options?.scope ? null : books,
+      options?.scope,
+    );
     if (local.ok) {
       return {
         ok: true,
@@ -224,6 +234,7 @@ export async function searchVerses(
         total: local.total,
         results: local.results,
         bookCounts: local.bookCounts,
+        facets: local.facets,
         matchMode: local.matchMode,
         matchedTerms: local.matchedTerms,
       };

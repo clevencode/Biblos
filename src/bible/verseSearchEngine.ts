@@ -3,6 +3,8 @@
  * Version-agnostic: regras linguísticas via VerseSearchProfile.
  */
 
+import { CANON_BOOKS } from "../youversion/canon";
+
 export type MatchMode =
   | "exact_phrase"
   | "all_terms"
@@ -33,18 +35,82 @@ export type VerseSearchHit = {
   matchCount: number;
 };
 
+export type SearchFacets = {
+  total: number;
+  otCount: number;
+  ntCount: number;
+  byBook: Record<string, number>;
+};
+
+export type SearchScope =
+  | { type: "all" }
+  | { type: "ot" }
+  | { type: "nt" }
+  | { type: "books"; bookIds: string[] };
+
 export type VerseSearchResult = {
   results: VerseSearchHit[];
   totalCount: number;
   matchMode: MatchMode;
   matchedTerms: string[];
+  /** Alias de facets.byBook (compat). */
   bookCounts: Record<string, number>;
+  facets: SearchFacets;
 };
 
 export type SearchVersesCascadeOptions = {
   limit?: number;
   profile: VerseSearchProfile;
+  scope?: SearchScope;
 };
+
+const OT_BOOK_SET = new Set(
+  CANON_BOOKS.filter((b) => b.testament === "at").map((b) => b.id.toUpperCase()),
+);
+const NT_BOOK_SET = new Set(
+  CANON_BOOKS.filter((b) => b.testament === "nt").map((b) => b.id.toUpperCase()),
+);
+
+export function emptySearchFacets(): SearchFacets {
+  return { total: 0, otCount: 0, ntCount: 0, byBook: {} };
+}
+
+export function buildSearchFacets(hits: VerseSearchHit[]): SearchFacets {
+  const byBook: Record<string, number> = {};
+  let otCount = 0;
+  let ntCount = 0;
+  for (const hit of hits) {
+    const book = String(hit.verse.bookId || "").toUpperCase();
+    if (!book) continue;
+    byBook[book] = (byBook[book] || 0) + 1;
+    if (OT_BOOK_SET.has(book)) otCount += 1;
+    else if (NT_BOOK_SET.has(book)) ntCount += 1;
+  }
+  return {
+    total: hits.length,
+    otCount,
+    ntCount,
+    byBook,
+  };
+}
+
+export function applySearchScope(
+  hits: VerseSearchHit[],
+  scope: SearchScope | undefined,
+): VerseSearchHit[] {
+  if (!scope || scope.type === "all") return hits;
+  if (scope.type === "ot") {
+    return hits.filter((h) => OT_BOOK_SET.has(String(h.verse.bookId || "").toUpperCase()));
+  }
+  if (scope.type === "nt") {
+    return hits.filter((h) => NT_BOOK_SET.has(String(h.verse.bookId || "").toUpperCase()));
+  }
+  const allowed = new Set(
+    scope.bookIds.map((id) => String(id || "").toUpperCase()).filter(Boolean),
+  );
+  if (allowed.size === 0) return hits;
+  return hits.filter((h) => allowed.has(String(h.verse.bookId || "").toUpperCase()));
+}
 
 /** Sufixos leves compartilhados (morfologia romance FR/HT). */
 export const ROMANCE_STEM_SUFFIXES = [
@@ -380,12 +446,14 @@ export function searchVersesCascade(
     prepareQueryTokens(rawQuery, profile);
 
   if (normQuery.length < 2 || tokenGroups.length === 0) {
+    const facets = emptySearchFacets();
     return {
       results: [],
       totalCount: 0,
       matchMode: "exact_phrase",
       matchedTerms: [],
-      bookCounts: {},
+      bookCounts: facets.byBook,
+      facets,
     };
   }
 
@@ -441,17 +509,20 @@ export function searchVersesCascade(
   }
 
   matched.sort((a, b) => compareRank(a, b, normQuery, tokens, stemmed, profile));
-  const totalCount = matched.length;
-  const bookCounts: Record<string, number> = {};
-  for (const hit of matched) {
-    const book = hit.verse.bookId;
-    if (!book) continue;
-    bookCounts[book] = (bookCounts[book] || 0) + 1;
-  }
-  const results = matched.slice(0, limit);
+  const facets = buildSearchFacets(matched);
+  const scoped = applySearchScope(matched, options.scope);
+  const totalCount = scoped.length;
+  const results = scoped.slice(0, limit);
   const matchedTerms = collectMatchedTerms(mode, tokens, stemmed, results);
 
-  return { results, totalCount, matchMode: mode, matchedTerms, bookCounts };
+  return {
+    results,
+    totalCount,
+    matchMode: mode,
+    matchedTerms,
+    bookCounts: facets.byBook,
+    facets,
+  };
 }
 
 /** Alias tipado legado. */

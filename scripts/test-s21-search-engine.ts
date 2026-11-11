@@ -173,4 +173,34 @@ assert.ok(normalizeSearchText("résurrection").includes("resurrection"));
   assert.equal(r.matchMode, "all_terms");
 }
 
+// --- Facets + scope books (pré-filtro vs pós-filtro) ---
+{
+  const all = searchVersesCascade(corpus, "jesus", {
+    profile: S21_FR_PROFILE,
+    limit: 40,
+  });
+  assert.ok(all.facets.total >= 2, `expected multi-book jesus hits, got ${all.facets.total}`);
+  assert.ok((all.facets.byBook.JHN ?? 0) >= 1);
+  assert.equal(all.bookCounts.JHN, all.facets.byBook.JHN);
+  assert.ok(all.facets.ntCount >= all.facets.byBook.JHN);
+
+  const scoped = searchVersesCascade(corpus, "jesus", {
+    profile: S21_FR_PROFILE,
+    limit: 40,
+    scope: { type: "books", bookIds: ["JHN"] },
+  });
+  assert.ok(
+    scoped.totalCount < all.facets.total,
+    `scoped total ${scoped.totalCount} should be < facets.total ${all.facets.total}`,
+  );
+  assert.ok(scoped.results.every((h) => h.verse.bookId.toUpperCase() === "JHN"));
+  assert.equal(
+    scoped.facets.total,
+    all.facets.total,
+    "facets must stay on the unscoped universe",
+  );
+  assert.equal(scoped.facets.byBook.JHN, all.facets.byBook.JHN);
+  assert.equal(scoped.totalCount, scoped.results.length);
+}
+
 console.log("test-s21-search-engine: ok");

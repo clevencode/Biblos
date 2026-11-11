@@ -17,6 +17,7 @@ import {
   passagePickerRollOpen,
 } from "../bible/viewState/readerSurfaceChrome";
 import { usePassageDiscovery } from "./usePassageDiscovery";
+import { usePersistentSearchSession } from "./usePersistentSearchSession";
 import { useWordPassageSearch } from "./useWordPassageSearch";
 import type { YouVersionBook } from "../youversion/client";
 
@@ -53,12 +54,36 @@ export function usePassageBarController({
   const [passageStep, setPassageStep] = useState<PassageBarStep>("book");
   const [bookSearchQuery, setBookSearchQuery] = useState("");
   const [wordSearchOpen, setWordSearchOpen] = useState(false);
-  const [wordSearchQuery, setWordSearchQuery] = useState("");
+  const {
+    query: wordSearchQuery,
+    scopeFilter: wordSearchScopeFilter,
+    selectedBookIds: wordSearchSelectedBookIds,
+    setQuery: setWordSearchQuery,
+    setScopeFilter: setWordSearchScopeFilter,
+    setSelectedBookIds: setWordSearchSelectedBookIds,
+    clearSearch: clearWordSearchSession,
+  } = usePersistentSearchSession();
   const [discoverySession, setDiscoverySession] = useState<PassageDiscoverySession>(
     () => ({ ...EMPTY_PASSAGE_DISCOVERY_SESSION }),
   );
-  const [wordDiscoverySession, setWordDiscoverySession] =
-    useState<PassageDiscoverySession>(() => ({ ...EMPTY_PASSAGE_DISCOVERY_SESSION }));
+
+  // Migrar current_book legado → books:[currentBookId]
+  useEffect(() => {
+    if (wordSearchScopeFilter !== "current_book") return;
+    const id = String(bookId || "")
+      .trim()
+      .toUpperCase();
+    if (!id) {
+      setWordSearchScopeFilter("all");
+      return;
+    }
+    setWordSearchSelectedBookIds([id]);
+  }, [
+    wordSearchScopeFilter,
+    bookId,
+    setWordSearchScopeFilter,
+    setWordSearchSelectedBookIds,
+  ]);
 
   const discoveryListScrollRaf = useRef(0);
   const discoveryVerseScrollRaf = useRef<Record<string, number>>({});
@@ -91,7 +116,13 @@ export function usePassageBarController({
     error: wordSearchError,
     matchMode: wordMatchMode,
     matchedTerms: wordMatchedTerms,
-  } = useWordPassageSearch(wordSearchQuery, wordSearchOpen, textVersion);
+    facets: wordSearchFacets,
+    scopeCounts: wordSearchScopeCounts,
+  } = useWordPassageSearch(wordSearchQuery, wordSearchOpen, textVersion, {
+    scopeFilter: wordSearchScopeFilter,
+    selectedBookIds: wordSearchSelectedBookIds,
+    currentBookId: bookId,
+  });
 
   /** Compatível com o painel (só `contentError`). */
   const wordDiscovery = useMemo(
@@ -102,13 +133,6 @@ export function usePassageBarController({
   const patchDiscoverySession = useCallback(
     (patch: Partial<PassageDiscoverySession>) => {
       setDiscoverySession((prev) => ({ ...prev, ...patch }));
-    },
-    [],
-  );
-
-  const patchWordDiscoverySession = useCallback(
-    (patch: Partial<PassageDiscoverySession>) => {
-      setWordDiscoverySession((prev) => ({ ...prev, ...patch }));
     },
     [],
   );
@@ -141,48 +165,17 @@ export function usePassageBarController({
     [],
   );
 
-  const setWordDiscoveryListScroll = useCallback(
-    (scrollTop: number) => {
-      if (discoveryListScrollRaf.current) {
-        cancelAnimationFrame(discoveryListScrollRaf.current);
-      }
-      discoveryListScrollRaf.current = requestAnimationFrame(() => {
-        patchWordDiscoverySession({ listScrollTop: scrollTop });
-      });
-    },
-    [patchWordDiscoverySession],
-  );
-
-  const setWordDiscoveryVerseListScroll = useCallback(
-    (bookIdScroll: string, scrollTop: number) => {
-      const id = String(bookIdScroll || "").toUpperCase();
-      if (!id) return;
-      const prevRaf = discoveryVerseScrollRaf.current[id];
-      if (prevRaf) cancelAnimationFrame(prevRaf);
-      discoveryVerseScrollRaf.current[id] = requestAnimationFrame(() => {
-        setWordDiscoverySession((prev) => ({
-          ...prev,
-          verseScrollByBook: { ...prev.verseScrollByBook, [id]: scrollTop },
-        }));
-      });
-    },
-    [],
-  );
-
   const clearBookSearch = useCallback(() => {
     setBookSearchQuery("");
     setDiscoverySession({ ...EMPTY_PASSAGE_DISCOVERY_SESSION });
   }, []);
 
   const clearWordSearch = useCallback(() => {
-    setWordSearchQuery("");
-    setWordDiscoverySession({ ...EMPTY_PASSAGE_DISCOVERY_SESSION });
-  }, []);
+    clearWordSearchSession();
+  }, [clearWordSearchSession]);
 
   const closeWordSearch = useCallback(() => {
     setWordSearchOpen(false);
-    setWordSearchQuery("");
-    setWordDiscoverySession({ ...EMPTY_PASSAGE_DISCOVERY_SESSION });
   }, []);
 
   const closePicker = useCallback(() => {
@@ -241,8 +234,6 @@ export function usePassageBarController({
   const toggleWordSearch = useCallback(() => {
     setWordSearchOpen((open) => {
       if (open) {
-        setWordSearchQuery("");
-        setWordDiscoverySession({ ...EMPTY_PASSAGE_DISCOVERY_SESSION });
         return false;
       }
       closeToolsMenu();
@@ -377,8 +368,13 @@ export function usePassageBarController({
     wordSearchOpen,
     wordSearchQuery,
     setWordSearchQuery,
+    wordSearchScopeFilter,
+    setWordSearchScopeFilter,
+    wordSearchSelectedBookIds,
+    setWordSearchSelectedBookIds,
+    wordSearchFacets,
+    wordSearchScopeCounts,
     discoverySession,
-    wordDiscoverySession,
     passageDiscovery,
     passageDiscoveryBusy,
     wordDiscovery,
@@ -394,11 +390,8 @@ export function usePassageBarController({
     pendingVerseStep,
     armPendingVerseStep,
     patchDiscoverySession,
-    patchWordDiscoverySession,
     setDiscoveryListScroll,
     setDiscoveryVerseListScroll,
-    setWordDiscoveryListScroll,
-    setWordDiscoveryVerseListScroll,
     clearBookSearch,
     clearWordSearch,
     closeWordSearch,

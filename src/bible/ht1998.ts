@@ -168,6 +168,7 @@ export async function ht1998Search(
   q: string,
   limit = 40,
   bookFilter?: string[] | null,
+  scope?: import("./verseSearchEngine").SearchScope,
 ): Promise<
   | {
       ok: true;
@@ -175,6 +176,7 @@ export async function ht1998Search(
       total: number;
       results: BibleSearchHit[];
       bookCounts: Record<string, number>;
+      facets?: import("./verseSearchEngine").SearchFacets;
       matchMode?: import("./verseSearchEngine").MatchMode;
       matchedTerms?: string[];
     }
@@ -190,7 +192,8 @@ export async function ht1998Search(
     version: "ht98",
     q: query,
     limit,
-    bookFilter,
+    bookFilter: scope ? null : bookFilter,
+    scope,
   });
   if (!found.ok) return found;
   return {
@@ -199,6 +202,7 @@ export async function ht1998Search(
     total: found.total,
     results: found.results,
     bookCounts: found.bookCounts,
+    facets: found.facets,
     matchMode: found.matchMode,
     matchedTerms: found.matchedTerms,
   };

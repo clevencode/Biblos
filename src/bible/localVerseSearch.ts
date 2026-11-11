@@ -6,9 +6,12 @@ import type { BibleTextVersionId } from "./bibleVersions";
 import { profileForVersion } from "./verseSearchProfiles";
 import { ensureVerseIndex } from "./verseIndexCache";
 import {
+  emptySearchFacets,
   normalizeSearchText,
   searchVersesCascade,
   type MatchMode,
+  type SearchFacets,
+  type SearchScope,
 } from "./verseSearchEngine";
 import type { BibleSearchHit } from "../youversion/client";
 
@@ -18,6 +21,7 @@ export type LocalVerseSearchOk = {
   total: number;
   results: BibleSearchHit[];
   bookCounts: Record<string, number>;
+  facets: SearchFacets;
   matchMode: MatchMode;
   matchedTerms: string[];
 };
@@ -52,37 +56,44 @@ export async function runLocalVerseSearch(input: {
   version: BibleTextVersionId;
   q: string;
   limit?: number;
+  /** Legado: pré-filtra o índice. Ignorado quando `scope` está definido. */
   bookFilter?: Iterable<string> | null;
   bookOrder?: Map<string, number>;
+  /** Escopo pós-rank (preferido para word-search). */
+  scope?: SearchScope;
 }): Promise<LocalVerseSearchResult> {
   const query = String(input.q || "").trim();
   const queryNorm = normalizeSearchText(query);
   if (queryNorm.length < 2) {
+    const facets = emptySearchFacets();
     return {
       ok: true,
       q: query,
       total: 0,
       results: [],
-      bookCounts: {},
+      bookCounts: facets.byBook,
+      facets,
       matchMode: "exact_phrase",
       matchedTerms: [],
     };
   }
 
   let verses = await ensureVerseIndex(input.version, input.bookOrder);
-  const allowed = input.bookFilter
-    ? new Set(
-        [...input.bookFilter].map((id) => String(id).toUpperCase()).filter(Boolean),
-      )
-    : null;
-  if (allowed) {
-    verses = verses.filter((v) => allowed.has(v.bookId));
+  const useScope = Boolean(input.scope);
+  if (!useScope && input.bookFilter) {
+    const allowed = new Set(
+      [...input.bookFilter].map((id) => String(id).toUpperCase()).filter(Boolean),
+    );
+    if (allowed.size > 0) {
+      verses = verses.filter((v) => allowed.has(v.bookId));
+    }
   }
 
   const capped = Math.min(80, Math.max(1, Number(input.limit) || 40));
   const found = searchVersesCascade(verses, query, {
     limit: capped,
     profile: profileForVersion(input.version),
+    scope: input.scope ?? { type: "all" },
   });
   const snippetNeedle =
     found.matchedTerms.find((t) => t.length >= 2) ?? queryNorm;
@@ -102,6 +113,7 @@ export async function runLocalVerseSearch(input: {
     total: found.totalCount,
     results,
     bookCounts: found.bookCounts,
+    facets: found.facets,
     matchMode: found.matchMode,
     matchedTerms: found.matchedTerms,
   };

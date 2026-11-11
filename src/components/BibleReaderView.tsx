@@ -647,8 +647,13 @@ export function BibleReaderView({
     wordSearchOpen,
     wordSearchQuery,
     setWordSearchQuery,
+    wordSearchScopeFilter,
+    setWordSearchScopeFilter,
+    wordSearchSelectedBookIds,
+    setWordSearchSelectedBookIds,
+    wordSearchFacets,
+    wordSearchScopeCounts,
     discoverySession,
-    wordDiscoverySession,
     passageDiscovery,
     passageDiscoveryBusy,
     wordDiscovery,
@@ -665,7 +670,6 @@ export function BibleReaderView({
     patchDiscoverySession,
     setDiscoveryListScroll,
     setDiscoveryVerseListScroll,
-    setWordDiscoveryListScroll,
     clearBookSearch,
     clearWordSearch,
     closeWordSearch,
@@ -2599,6 +2603,7 @@ export function BibleReaderView({
                 query={wordSearchQuery}
                 onQueryChange={setWordSearchQuery}
                 onQueryClear={clearWordSearch}
+                onClose={closeWordSearch}
                 discoveryBusy={wordDiscoveryBusy}
                 verseHits={wordVerseHits}
                 verseTotal={wordVerseTotal}
@@ -2606,8 +2611,14 @@ export function BibleReaderView({
                 textVersion={textVersion}
                 matchMode={wordMatchMode}
                 matchedTerms={wordMatchedTerms}
-                listScrollTop={wordDiscoverySession.listScrollTop}
-                onListScroll={setWordDiscoveryListScroll}
+                scopeFilter={wordSearchScopeFilter}
+                onScopeFilterChange={setWordSearchScopeFilter}
+                selectedBookIds={wordSearchSelectedBookIds}
+                onSelectedBookIdsChange={setWordSearchSelectedBookIds}
+                scopeCounts={wordSearchScopeCounts}
+                facets={wordSearchFacets}
+                currentBookId={bookId}
+                currentBookTitle={bookTitle}
                 onPickVerse={(hit) => {
                   closeWordSearch();
                   pickVerseSearchHit(hit);
@@ -2660,7 +2671,9 @@ export function BibleReaderView({
             type="button"
             className={`bible-yv-passage-roll-scrim${
               surfaceChrome.scrimIsTools ? " is-tools" : ""
-            }${surfaceChrome.scrimIsPickerDismiss ? " is-picker-dismiss" : ""}`}
+            }${surfaceChrome.scrimIsPickerDismiss ? " is-picker-dismiss" : ""}${
+              wordSearchOpen ? " is-word-search" : ""
+            }`}
             aria-label="Fermer"
             onPointerDown={(event) => {
               event.preventDefault();

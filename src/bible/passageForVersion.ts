@@ -36,12 +36,20 @@ export async function searchVersesForVersion(
   version: BibleTextVersionId,
   q: string,
   limit = 40,
-  options?: { books?: string[] | null },
+  options?: {
+    books?: string[] | null;
+    scope?: import("./verseSearchEngine").SearchScope;
+  },
 ): Promise<BibleSearchResponse> {
   if (version !== "ht98") {
     return searchVerses(q, limit, options);
   }
-  const local = await ht1998Search(q, limit, options?.books ?? null);
+  const local = await ht1998Search(
+    q,
+    limit,
+    options?.scope ? null : (options?.books ?? null),
+    options?.scope,
+  );
   if (local.ok) {
     return {
       ok: true,
@@ -51,6 +59,7 @@ export async function searchVersesForVersion(
       total: local.total,
       results: local.results,
       bookCounts: local.bookCounts,
+      facets: local.facets,
       matchMode: local.matchMode,
       matchedTerms: local.matchedTerms,
     };

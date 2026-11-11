@@ -400,6 +400,7 @@ export async function offlineSearch(
   limit = 40,
   bookOrder?: Map<string, number>,
   bookFilter?: Iterable<string> | null,
+  scope?: import("./bible/verseSearchEngine").SearchScope,
 ): Promise<
   | {
       ok: true;
@@ -407,6 +408,7 @@ export async function offlineSearch(
       total: number;
       results: BibleSearchHit[];
       bookCounts: Record<string, number>;
+      facets?: import("./bible/verseSearchEngine").SearchFacets;
       matchMode?: import("./bible/verseSearchEngine").MatchMode;
       matchedTerms?: string[];
     }
@@ -426,8 +428,9 @@ export async function offlineSearch(
     version: "s21",
     q,
     limit,
-    bookFilter,
+    bookFilter: scope ? null : bookFilter,
     bookOrder: order,
+    scope,
   });
 }
 
