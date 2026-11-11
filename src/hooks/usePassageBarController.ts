@@ -89,6 +89,8 @@ export function usePassageBarController({
     total: wordVerseTotal,
     busy: wordDiscoveryBusy,
     error: wordSearchError,
+    matchMode: wordMatchMode,
+    matchedTerms: wordMatchedTerms,
   } = useWordPassageSearch(wordSearchQuery, wordSearchOpen, textVersion);
 
   /** Compatível com o painel (só `contentError`). */
@@ -383,6 +385,8 @@ export function usePassageBarController({
     wordDiscoveryBusy,
     wordVerseHits,
     wordVerseTotal,
+    wordMatchMode,
+    wordMatchedTerms,
     passageRollRef,
     wordSearchChromeRef,
     wordSearchPanelId,

@@ -1,19 +1,47 @@
 :root {
   color-scheme: light;
-  /* CLEVENCODE brand → Biblos UI */
-  --bg: #ffffff;
-  --panel: #ffffff;
-  --surface: #f3f4f6;
-  --line: #e5e7eb;
-  --text: #0d1117;
-  --muted: #6b7280;
-  /* Accent neutre (pas de doré) — contraste par encre / surface */
-  --accent: #2f3f4d;
-  --accent-soft: #eceff2;
+
+  /*
+   * Color system — âncoras + escala tonal (ink ↔ paper).
+   * Hierarquia light: canvas claro → superfície → elevado branco → texto ink.
+   * Hierarquia dark:  canvas ink → superfície → elevado mais claro → texto paper.
+   */
+  --ink: #0d1117;
+  --paper: #ffffff;
+
+  --tone-0: var(--paper);
+  --tone-50: color-mix(in srgb, var(--ink) 3.5%, var(--paper));
+  --tone-100: color-mix(in srgb, var(--ink) 6.5%, var(--paper));
+  --tone-200: color-mix(in srgb, var(--ink) 12%, var(--paper));
+  --tone-300: color-mix(in srgb, var(--ink) 22%, var(--paper));
+  --tone-400: color-mix(in srgb, var(--ink) 40%, var(--paper));
+  --tone-500: color-mix(in srgb, var(--ink) 55%, var(--paper));
+  --tone-600: color-mix(in srgb, var(--ink) 68%, var(--paper));
+  --tone-700: color-mix(in srgb, var(--ink) 78%, var(--paper));
+  --tone-800: color-mix(in srgb, var(--ink) 88%, var(--paper));
+  --tone-900: color-mix(in srgb, var(--ink) 94%, var(--paper));
+  --tone-950: var(--ink);
+
+  /* Semântica — light */
+  --bg: var(--tone-0);
+  --panel: var(--tone-0);
+  --surface: var(--tone-50);
+  --elevated: var(--tone-0);
+  --sheet-bg: var(--tone-50);
+  --sheet-bg-mid: var(--tone-100);
+  --sheet-bg-deep: var(--tone-200);
+  --line: var(--tone-200);
+  --text: var(--tone-950);
+  --muted: var(--tone-500);
+  --fg-subtle: var(--tone-400);
+  /* Accent neutro — contraste por encre / surface (sem dourado) */
+  --accent: var(--tone-700);
+  --accent-soft: var(--tone-100);
   --danger: #c4554d;
   --danger-soft: #fdebec;
-  --answer: #5c6670;
-  --hover: rgba(13, 17, 23, 0.06);
+  --answer: var(--tone-600);
+  --hover: color-mix(in srgb, var(--ink) 6%, transparent);
+  --sheen: var(--paper);
   --shadow: none;
   --panel-depth: none;
   --menu-shadow: none;
@@ -31,8 +59,8 @@
   --panel-gutter: 14px;
   --scroll-size: 8px;
   --scroll-track: transparent;
-  --scroll-thumb: rgba(13, 17, 23, 0.16);
-  --scroll-thumb-hover: rgba(13, 17, 23, 0.28);
+  --scroll-thumb: color-mix(in srgb, var(--ink) 16%, transparent);
+  --scroll-thumb-hover: color-mix(in srgb, var(--ink) 28%, transparent);
 
   /*
    * Tipografia (OFL, Google Fonts via Fontsource)
@@ -89,13 +117,6 @@
   --type-eyebrow-weight: 600;
   --type-eyebrow-tracking: 0.06em;
 
-  /* Superfícies derivadas (light) */
-  --elevated: #ffffff;
-  --sheet-bg: #f6f7f8;
-  --sheet-bg-mid: #f0f1f3;
-  --sheet-bg-deep: #e8eaed;
-  --sheen: #ffffff;
-
   font-family: var(--font-ui);
   font-optical-sizing: auto;
   font-kerning: normal;
@@ -107,32 +128,52 @@
 
 html[data-theme="dark"] {
   color-scheme: dark;
-  --bg: #0d1117;
-  --panel: #0d1117;
-  --surface: #161b22;
-  --line: #21262d;
-  --text: #ffffff;
-  --muted: #9ca3af;
-  --accent: #4b5563;
-  --accent-soft: #21262d;
+  /* Semântica — dark (mesma escala, hierarquia invertida) */
+  --bg: var(--tone-950);
+  --panel: var(--tone-950);
+  --surface: var(--tone-900);
+  --elevated: var(--tone-800);
+  --sheet-bg: var(--tone-900);
+  --sheet-bg-mid: var(--tone-800);
+  --sheet-bg-deep: var(--tone-950);
+  --line: var(--tone-800);
+  --text: var(--tone-0);
+  --muted: var(--tone-400);
+  --fg-subtle: var(--tone-500);
+  --accent: var(--tone-400);
+  --accent-soft: var(--tone-800);
   --danger: #f85149;
-  --danger-soft: #3d1f1f;
-  --answer: #9ca3af;
-  --hover: rgba(255, 255, 255, 0.06);
+  --danger-soft: color-mix(in srgb, var(--danger) 22%, var(--tone-950));
+  --answer: var(--tone-400);
+  --hover: color-mix(in srgb, var(--paper) 6%, transparent);
+  --sheen: color-mix(in srgb, var(--paper) 55%, transparent);
   --shadow: none;
   --panel-depth: none;
   --menu-shadow: none;
-  --scroll-thumb: rgba(255, 255, 255, 0.18);
-  --scroll-thumb-hover: rgba(255, 255, 255, 0.3);
-  --elevated: #161b22;
-  --sheet-bg: #161b22;
-  --sheet-bg-mid: #1c2128;
-  --sheet-bg-deep: #0d1117;
-  --sheen: rgba(255, 255, 255, 0.55);
+  --scroll-thumb: color-mix(in srgb, var(--paper) 18%, transparent);
+  --scroll-thumb-hover: color-mix(in srgb, var(--paper) 30%, transparent);
 }
 
 html[data-theme="light"] {
   color-scheme: light;
+  --bg: var(--tone-0);
+  --panel: var(--tone-0);
+  --surface: var(--tone-50);
+  --elevated: var(--tone-0);
+  --sheet-bg: var(--tone-50);
+  --sheet-bg-mid: var(--tone-100);
+  --sheet-bg-deep: var(--tone-200);
+  --line: var(--tone-200);
+  --text: var(--tone-950);
+  --muted: var(--tone-500);
+  --fg-subtle: var(--tone-400);
+  --accent: var(--tone-700);
+  --accent-soft: var(--tone-100);
+  --answer: var(--tone-600);
+  --hover: color-mix(in srgb, var(--ink) 6%, transparent);
+  --sheen: var(--paper);
+  --scroll-thumb: color-mix(in srgb, var(--ink) 16%, transparent);
+  --scroll-thumb-hover: color-mix(in srgb, var(--ink) 28%, transparent);
 }
 
 /* Utilitários tipográficos — UI sans + leitura serif */
@@ -8726,6 +8767,15 @@ html[data-passage-bar-panel="test"] .bible-yv-word-search-meta {
   padding: 0 4px 2px;
   font-size: 0.74rem;
   font-weight: 600;
+  flex: none;
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-word-search-fallback {
+  margin: 0;
+  padding: 0 4px 6px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  line-height: 1.35;
   flex: none;
 }
 

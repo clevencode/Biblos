@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef } from "react";
 import type { BibleTextVersionId } from "../bible/bibleVersions";
+import type { MatchMode } from "../bible/s21SearchEngine";
 import type { BibleSearchHit } from "../youversion/client";
 import { YvIcon } from "./YvIcon";
 import { BibleSearchHighlight } from "./BibleSearchHighlight";
@@ -18,6 +19,8 @@ type BiblePassageWordSearchPanelProps = {
   verseTotal: number;
   contentError: string | null;
   textVersion: BibleTextVersionId;
+  matchMode?: MatchMode | null;
+  matchedTerms?: string[];
   listScrollTop: number;
   onListScroll: (scrollTop: number) => void;
   onPickVerse: (hit: BibleSearchHit) => void;
@@ -37,6 +40,8 @@ export function BiblePassageWordSearchPanel({
   verseHits,
   verseTotal,
   contentError,
+  matchMode = null,
+  matchedTerms = [],
   listScrollTop,
   onListScroll,
   onPickVerse,
@@ -50,6 +55,14 @@ export function BiblePassageWordSearchPanel({
   const showSkeleton = discoveryBusy && hasActiveQuery;
   const showEmptyResults =
     hasActiveQuery && !discoveryBusy && !contentError && verseHits.length === 0;
+  const fallbackBanner =
+    !showSkeleton &&
+    verseHits.length > 0 &&
+    (matchMode === "fuzzy"
+      ? "Aucun résultat exact. Affichage des passages pour des termes proches."
+      : matchMode === "partial_or"
+        ? "Aucun verset avec tous les mots. Passages contenant une partie de votre recherche :"
+        : null);
 
   useEffect(() => {
     if (!open) return;
@@ -123,6 +136,12 @@ export function BiblePassageWordSearchPanel({
         </p>
       ) : null}
 
+      {fallbackBanner ? (
+        <p className="bible-yv-word-search-fallback bible-yv-muted" role="status">
+          {fallbackBanner}
+        </p>
+      ) : null}
+
       <div
         ref={gridRef}
         className="bible-yv-pick-grid is-word-search"
@@ -161,6 +180,7 @@ export function BiblePassageWordSearchPanel({
                     <BibleSearchHighlight
                       text={hit.snippet || hit.text}
                       query={query}
+                      matchedTerms={matchedTerms}
                     />
                   </span>
                 </button>

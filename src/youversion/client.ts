@@ -195,6 +195,8 @@ export type BibleSearchResponse = {
   total?: number;
   results?: BibleSearchHit[];
   bookCounts?: Record<string, number>;
+  matchMode?: import("../bible/s21SearchEngine").MatchMode;
+  matchedTerms?: string[];
 };
 
 export async function searchVerses(
@@ -222,6 +224,8 @@ export async function searchVerses(
         total: local.total,
         results: local.results,
         bookCounts: local.bookCounts,
+        matchMode: local.matchMode,
+        matchedTerms: local.matchedTerms,
       };
     }
     if (useLocalBundledBible()) {

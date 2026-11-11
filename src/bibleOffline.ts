@@ -61,20 +61,28 @@ export function chapterLayoutKey(bookId: string, chapterId: string): string {
   return `${String(bookId || "").toUpperCase()}.${String(chapterId || "1")}`;
 }
 
-function cleanVerseText(text: string): string {
+export function cleanVerseText(text: string): string {
   return String(text || "")
     .replace(/''/g, "'")
     .replace(/\s+/g, " ")
     .trim();
 }
 
-function normalizeSearchText(value: string): string {
-  return String(value || "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/\s+/g, " ")
-    .trim();
+export type OfflineBookRow = { usfm: string; book: S21BookJson };
+
+/** Todos os livros no IndexedDB (uma leitura; usado pelo índice de busca em RAM). */
+export async function getAllOfflineBooks(): Promise<OfflineBookRow[]> {
+  const db = await openDb();
+  try {
+    const tx = db.transaction(STORE_BOOKS, "readonly");
+    const rows = await idbReq(
+      tx.objectStore(STORE_BOOKS).getAll() as IDBRequest<OfflineBookRow[]>,
+    );
+    await idbTxDone(tx);
+    return rows ?? [];
+  } finally {
+    db.close();
+  }
 }
 
 function openDb(): Promise<IDBDatabase> {
@@ -260,6 +268,8 @@ export async function clearOfflineBible(): Promise<void> {
   } finally {
     db.close();
   }
+  const { invalidateS21VerseIndex } = await import("./bible/s21VerseIndex");
+  invalidateS21VerseIndex();
 }
 
 export async function getChapterLayout(
@@ -385,30 +395,24 @@ export async function offlinePassage(
   };
 }
 
-function makeSnippet(text: string, queryNorm: string, radius = 60): string {
+function makeSnippet(
+  text: string,
+  needleNorm: string,
+  normalize: (value: string) => string,
+  radius = 60,
+): string {
   const raw = String(text || "");
-  const norm = normalizeSearchText(raw);
-  const idx = norm.indexOf(queryNorm);
+  const norm = normalize(raw);
+  const idx = needleNorm ? norm.indexOf(needleNorm) : -1;
   if (idx < 0) {
     return raw.length > radius * 2 ? `${raw.slice(0, radius * 2).trim()}…` : raw;
   }
   const ratio = raw.length / Math.max(1, norm.length);
   const center = Math.round(idx * ratio);
   const start = Math.max(0, center - radius);
-  const end = Math.min(raw.length, center + queryNorm.length * ratio + radius);
+  const end = Math.min(raw.length, center + needleNorm.length * ratio + radius);
   const slice = raw.slice(start, end).trim();
   return `${start > 0 ? "…" : ""}${slice}${end < raw.length ? "…" : ""}`;
-}
-
-function matchRank(normText: string, queryNorm: string): number {
-  if (!queryNorm) return 99;
-  const esc = queryNorm.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const reWord = new RegExp(`(?:^|[^a-z0-9])${esc}(?:$|[^a-z0-9])`);
-  if (reWord.test(` ${normText} `)) return 0;
-  if (normText.startsWith(queryNorm) || new RegExp(`(?:^|[^a-z0-9])${esc}`).test(normText)) {
-    return 1;
-  }
-  return 2;
 }
 
 export async function offlineSearch(
@@ -417,11 +421,20 @@ export async function offlineSearch(
   bookOrder?: Map<string, number>,
   bookFilter?: Iterable<string> | null,
 ): Promise<
-  | { ok: true; q: string; total: number; results: BibleSearchHit[]; bookCounts: Record<string, number> }
+  | {
+      ok: true;
+      q: string;
+      total: number;
+      results: BibleSearchHit[];
+      bookCounts: Record<string, number>;
+      matchMode?: import("./bible/s21SearchEngine").MatchMode;
+      matchedTerms?: string[];
+    }
   | { ok: false; error: string }
 > {
   const query = String(q || "").trim();
-  const queryNorm = normalizeSearchText(query);
+  const { normalizeFrenchText, searchS21Verses } = await import("./bible/s21SearchEngine");
+  const queryNorm = normalizeFrenchText(query);
   if (queryNorm.length < 2) {
     return { ok: true, q: query, total: 0, results: [], bookCounts: {} };
   }
@@ -429,73 +442,43 @@ export async function offlineSearch(
     return { ok: false, error: "Bible hors ligne incomplete" };
   }
 
+  const { ensureS21VerseIndex } = await import("./bible/s21VerseIndex");
   const meta = await getOfflineMeta();
   const books = meta?.books ?? [];
   const order =
-    bookOrder ??
-    new Map(books.map((b, i) => [b.id.toUpperCase(), i]));
+    bookOrder ?? new Map(books.map((b, i) => [b.id.toUpperCase(), i]));
   const allowed = bookFilter
     ? new Set([...bookFilter].map((id) => String(id).toUpperCase()).filter(Boolean))
     : null;
 
-  const db = await openDb();
-  let rows: { usfm: string; book: S21BookJson }[] = [];
-  try {
-    const tx = db.transaction(STORE_BOOKS, "readonly");
-    rows = await idbReq(tx.objectStore(STORE_BOOKS).getAll() as IDBRequest<{ usfm: string; book: S21BookJson }[]>);
-    await idbTxDone(tx);
-  } finally {
-    db.close();
+  let verses = await ensureS21VerseIndex(order);
+  if (allowed) {
+    verses = verses.filter((v) => allowed.has(v.bookId));
   }
 
   const capped = Math.min(80, Math.max(1, Number(limit) || 40));
-  type Hit = BibleSearchHit & { _rank: number; _book: number };
-  const hits: Hit[] = [];
+  const found = searchS21Verses(verses, query, { limit: capped });
+  const snippetNeedle =
+    found.matchedTerms.find((t) => t.length >= 2) ?? queryNorm;
 
-  for (const row of rows) {
-    const usfm = String(row.usfm || row.book.usfm || "").toUpperCase();
-    if (allowed && !allowed.has(usfm)) continue;
-    const bookTitle = row.book.title || usfm;
-    for (const chapter of row.book.chapters ?? []) {
-      const chapterNum = Number(chapter.chapter);
-      if (!Number.isFinite(chapterNum)) continue;
-      for (const verse of chapter.verses ?? []) {
-        const number = Number(verse.number);
-        const text = cleanVerseText(verse.text);
-        if (!Number.isFinite(number) || !text) continue;
-        const norm = normalizeSearchText(text);
-        if (!norm.includes(queryNorm)) continue;
-        hits.push({
-          usfm: `${usfm}.${chapterNum}.${number}`,
-          bookTitle,
-          chapter: chapterNum,
-          verse: number,
-          text,
-          snippet: makeSnippet(text, queryNorm),
-          _rank: matchRank(norm, queryNorm),
-          _book: order.get(usfm) ?? 999,
-        });
-      }
-    }
-  }
+  const results: BibleSearchHit[] = found.results.map(({ verse }) => ({
+    usfm: verse.usfm,
+    bookTitle: verse.bookTitle,
+    chapter: verse.chapter,
+    verse: verse.verse,
+    text: verse.raw,
+    snippet: makeSnippet(verse.raw, snippetNeedle, normalizeFrenchText),
+  }));
 
-  hits.sort(
-    (a, b) =>
-      a._rank - b._rank ||
-      a._book - b._book ||
-      a.chapter - b.chapter ||
-      a.verse - b.verse,
-  );
-  const bookCounts: Record<string, number> = {};
-  for (const hit of hits) {
-    const book = String(hit.usfm || "")
-      .split(".")[0]
-      ?.toUpperCase();
-    if (!book) continue;
-    bookCounts[book] = (bookCounts[book] || 0) + 1;
-  }
-  const results = hits.slice(0, capped).map(({ _rank, _book, ...rest }) => rest);
-  return { ok: true, q: query, total: hits.length, results, bookCounts };
+  return {
+    ok: true,
+    q: query,
+    total: found.totalCount,
+    results,
+    bookCounts: found.bookCounts,
+    matchMode: found.matchMode,
+    matchedTerms: found.matchedTerms,
+  };
 }
 
 async function fetchBookPayload(usfm: string): Promise<S21BookJson> {
@@ -579,6 +562,8 @@ export async function seedOfflineBibleFromBundledAssets(
     books: bookList,
   };
   await putMeta(meta);
+  const { invalidateS21VerseIndex } = await import("./bible/s21VerseIndex");
+  invalidateS21VerseIndex();
   return meta;
 }
 
@@ -631,5 +616,7 @@ export async function downloadOfflineBible(
     books: bookList,
   };
   await putMeta(meta);
+  const { invalidateS21VerseIndex } = await import("./bible/s21VerseIndex");
+  invalidateS21VerseIndex();
   return meta;
 }

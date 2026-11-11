@@ -5,9 +5,13 @@ export type ResolvedTheme = "light" | "dark";
 
 export const THEME_STORAGE_KEY = "biblos-theme";
 
+/** Âncoras do color system (CSS: --ink / --paper). */
+export const BRAND_INK = "#0D1117";
+export const BRAND_PAPER = "#FFFFFF";
+
 export const THEME_COLORS: Record<ResolvedTheme, string> = {
-  light: "#FFFFFF",
-  dark: "#0d1117",
+  light: BRAND_PAPER,
+  dark: BRAND_INK,
 };
 
 const PREFS: readonly ThemePref[] = ["light", "dark", "system"];

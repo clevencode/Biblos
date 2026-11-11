@@ -67,8 +67,9 @@
         color: #0d1117;
       }
       .boot-brand { margin: 0; font-size: 1.4rem; font-weight: 700; letter-spacing: -0.03em; }
-      .boot-muted { margin: 0; color: #9ca3af; font-size: 0.9rem; }
-      html[data-theme="light"] .boot-muted { color: #6b7280; }
+      /* Alinhado a --muted (tone-400 dark / tone-500 light) */
+      .boot-muted { margin: 0; color: color-mix(in srgb, #0d1117 40%, #ffffff); font-size: 0.9rem; }
+      html[data-theme="light"] .boot-muted { color: color-mix(in srgb, #0d1117 55%, #ffffff); }
     </style>
   </head>
   <body>

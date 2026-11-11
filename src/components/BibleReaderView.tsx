@@ -655,6 +655,8 @@ export function BibleReaderView({
     wordDiscoveryBusy,
     wordVerseHits,
     wordVerseTotal,
+    wordMatchMode,
+    wordMatchedTerms,
     passageRollRef,
     wordSearchChromeRef,
     wordSearchPanelId,
@@ -2602,6 +2604,8 @@ export function BibleReaderView({
                 verseTotal={wordVerseTotal}
                 contentError={wordDiscovery.contentError}
                 textVersion={textVersion}
+                matchMode={wordMatchMode}
+                matchedTerms={wordMatchedTerms}
                 listScrollTop={wordDiscoverySession.listScrollTop}
                 onListScroll={setWordDiscoveryListScroll}
                 onPickVerse={(hit) => {
