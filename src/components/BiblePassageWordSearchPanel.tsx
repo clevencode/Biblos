@@ -9,6 +9,7 @@ import {
 import type { BibleTextVersionId } from "../bible/bibleVersions";
 import {
   normalizeSearchText,
+  resolveCanonicalBookId,
   type MatchMode,
   type SearchFacets,
 } from "../bible/verseSearchEngine";
@@ -85,6 +86,11 @@ export function BiblePassageWordSearchPanel({
   const [isBookPickerOpen, setIsBookPickerOpen] = useState(false);
   const [draftBookIds, setDraftBookIds] = useState<string[]>([]);
   const [bookFilterQuery, setBookFilterQuery] = useState("");
+
+  const readerBookId = useMemo(
+    () => resolveCanonicalBookId(currentBookId, currentBookTitle),
+    [currentBookId, currentBookTitle],
+  );
 
   const trimmed = query.trim();
   const hasActiveQuery = trimmed.length >= MIN_WORD_CHARS;
@@ -168,13 +174,20 @@ export function BiblePassageWordSearchPanel({
   const bookPillLabel = useMemo(() => {
     const ids = selectedBookIds;
     const countFor = (list: string[]) =>
-      list.reduce((sum, id) => sum + (byBook[id.toUpperCase()] ?? 0), 0);
-    const titleOf = (id: string) =>
-      CANON_BOOKS.find((b) => b.id === id)?.title ??
-      (id === currentBookId.toUpperCase() ? bookLabel : id);
+      list.reduce((sum, id) => {
+        const key = resolveCanonicalBookId(id);
+        return sum + (byBook[key] ?? 0);
+      }, 0);
+    const titleOf = (id: string) => {
+      const key = resolveCanonicalBookId(id);
+      return (
+        CANON_BOOKS.find((b) => b.id.toUpperCase() === key)?.title ??
+        (key === readerBookId ? bookLabel : key || id)
+      );
+    };
 
     if (ids.length === 0) {
-      const n = byBook[currentBookId.toUpperCase()] ?? 0;
+      const n = readerBookId ? byBook[readerBookId] ?? 0 : 0;
       return hasActiveQuery && n > 0 ? `${bookLabel} (${n})` : bookLabel;
     }
     if (ids.length === 1) {
@@ -190,13 +203,7 @@ export function BiblePassageWordSearchPanel({
     return hasActiveQuery
       ? `${ids.length} livres (${n})`
       : `${ids.length} livres`;
-  }, [
-    selectedBookIds,
-    byBook,
-    currentBookId,
-    bookLabel,
-    hasActiveQuery,
-  ]);
+  }, [selectedBookIds, byBook, readerBookId, bookLabel, hasActiveQuery]);
 
   useEffect(() => {
     if (!open) {
@@ -213,14 +220,35 @@ export function BiblePassageWordSearchPanel({
     return () => window.clearTimeout(id);
   }, [open]);
 
-  useEffect(() => {
-    if (isBookPickerOpen) {
-      setDraftBookIds(selectedBookIds);
-      setBookFilterQuery("");
-    }
-  }, [isBookPickerOpen, selectedBookIds]);
-
   if (!open) return null;
+
+  function seedDraftBookIds(): string[] {
+    if (selectedBookIds.length > 0) {
+      return selectedBookIds
+        .map((id) => resolveCanonicalBookId(id))
+        .filter(Boolean);
+    }
+    return readerBookId ? [readerBookId] : [];
+  }
+
+  function openBookPicker() {
+    setDraftBookIds(seedDraftBookIds());
+    setBookFilterQuery("");
+    setIsBookPickerOpen(true);
+  }
+
+  function closeBookPicker() {
+    setIsBookPickerOpen(false);
+    setBookFilterQuery("");
+  }
+
+  function toggleBookPicker() {
+    if (isBookPickerOpen) {
+      closeBookPicker();
+      return;
+    }
+    openBookPicker();
+  }
 
   function handlePickVerse(hit: BibleSearchHit) {
     if (trimmed) pushRecent(trimmed);
@@ -243,53 +271,66 @@ export function BiblePassageWordSearchPanel({
     onQueryChange(value);
   }
 
-  function closeBookPicker() {
-    setIsBookPickerOpen(false);
-    setBookFilterQuery("");
-  }
-
   function handleTestamentPill(next: "nt" | "ot") {
     closeBookPicker();
     resetScroll();
     onScopeFilterChange(next);
   }
 
+  /** 1º toque: reativa histórico ou liga o livro atual. 2º toque: abre a gaveta. */
   function handleBooksPillTap() {
     if (!booksActive) {
-      const id = currentBookId.toUpperCase();
-      if (!id) return;
       resetScroll();
-      onSelectedBookIdsChange([id]);
+      if (selectedBookIds.length > 0) {
+        onSelectedBookIdsChange(selectedBookIds);
+        return;
+      }
+      if (!readerBookId) return;
+      onSelectedBookIdsChange([readerBookId]);
       return;
     }
-    setIsBookPickerOpen((openPicker) => !openPicker);
+    toggleBookPicker();
   }
 
+  /** Seta: abre a gaveta (restaura histórico ou pré-marca o livro atual). */
   function handleBooksChevron(event: MouseEvent) {
     event.stopPropagation();
     if (!booksActive) {
-      const id = currentBookId.toUpperCase();
-      if (id) {
-        resetScroll();
-        onSelectedBookIdsChange([id]);
+      resetScroll();
+      if (selectedBookIds.length > 0) {
+        onSelectedBookIdsChange(selectedBookIds);
+      } else if (readerBookId) {
+        onSelectedBookIdsChange([readerBookId]);
       }
     }
-    setIsBookPickerOpen((openPicker) => !openPicker);
+    toggleBookPicker();
+  }
+
+  /** Único caminho que anula o histórico de livros selecionados. */
+  function handleEffacerBooks() {
+    setDraftBookIds([]);
+    if (selectedBookIds.length > 0 || scopeFilter === "books") {
+      onScopeFilterChange("all");
+    }
   }
 
   function toggleDraftBook(bookId: string) {
-    const id = bookId.toUpperCase();
+    const id = resolveCanonicalBookId(bookId);
+    if (!id) return;
     setDraftBookIds((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
     );
   }
 
   function handleApplyBooks() {
+    const nextIds = draftBookIds
+      .map((id) => resolveCanonicalBookId(id))
+      .filter(Boolean);
     resetScroll();
-    if (draftBookIds.length === 0) {
+    if (nextIds.length === 0) {
       onScopeFilterChange("all");
     } else {
-      onSelectedBookIdsChange(draftBookIds);
+      onSelectedBookIdsChange(nextIds);
     }
     closeBookPicker();
   }
@@ -432,8 +473,8 @@ export function BiblePassageWordSearchPanel({
             <button
               type="button"
               className="bible-yv-word-search-book-clear"
-              disabled={draftBookIds.length === 0}
-              onClick={() => setDraftBookIds([])}
+              disabled={draftBookIds.length === 0 && selectedBookIds.length === 0}
+              onClick={handleEffacerBooks}
             >
               Effacer
             </button>

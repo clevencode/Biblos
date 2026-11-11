@@ -180,6 +180,43 @@ export function normalizeSearchText(text: string): string {
     .trim();
 }
 
+/** Chave estável para comparar id/título de livro (ex.: "2 Rois" → "2rois"). */
+export function normalizeBookKey(rawIdOrName: string): string {
+  return String(rawIdOrName || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+}
+
+const CANON_BY_ID = new Map(
+  CANON_BOOKS.map((book) => [book.id.toUpperCase(), book.id.toUpperCase()]),
+);
+const CANON_BY_TITLE_KEY = new Map(
+  CANON_BOOKS.map((book) => [
+    normalizeBookKey(book.title),
+    book.id.toUpperCase(),
+  ]),
+);
+
+/** Resolve id canônico (USFM) a partir de bookId e/ou título legível. */
+export function resolveCanonicalBookId(
+  bookId?: string | null,
+  bookTitle?: string | null,
+): string {
+  const rawId = String(bookId || "")
+    .trim()
+    .toUpperCase();
+  if (rawId && CANON_BY_ID.has(rawId)) return rawId;
+  const titleKey = normalizeBookKey(String(bookTitle || ""));
+  if (titleKey) {
+    const fromTitle = CANON_BY_TITLE_KEY.get(titleKey);
+    if (fromTitle) return fromTitle;
+  }
+  if (rawId) return rawId;
+  return "";
+}
+
 /** @deprecated Preferir normalizeSearchText */
 export const normalizeFrenchText = normalizeSearchText;
 

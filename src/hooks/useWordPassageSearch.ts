@@ -61,7 +61,6 @@ function resolveFacets(res: {
   total?: number;
 }): SearchFacets {
   if (res.facets) {
-    // API pode mandar facets parciais (ot/nt=0) com byBook ok.
     if (
       (res.facets.otCount > 0 || res.facets.ntCount > 0) &&
       Object.keys(res.facets.byBook).length > 0
@@ -83,6 +82,24 @@ function resolveFacets(res: {
     return res.facets;
   }
   return facetsFromBookCounts(res.bookCounts, res.total ?? 0);
+}
+
+/** Facets do universo completo (não colapsados ao filtro ativo). */
+function facetsCoverUniverse(facets: SearchFacets, scope: SearchScope): boolean {
+  const keys = Object.keys(facets.byBook);
+  if (keys.length === 0) return false;
+  if (scope.type === "all") return true;
+  if (scope.type === "books") {
+    const allowed = new Set(
+      scope.bookIds.map((id) => String(id).toUpperCase()).filter(Boolean),
+    );
+    // Universo completo se houver livros fora da seleção atual
+    return keys.some((k) => !allowed.has(k.toUpperCase()));
+  }
+  // ot/nt: precisa ter o outro testamento ou vários livros
+  if (scope.type === "nt") return facets.otCount > 0;
+  if (scope.type === "ot") return facets.ntCount > 0;
+  return true;
 }
 
 function buildScopeCounts(
@@ -158,6 +175,9 @@ export function useWordPassageSearch(
   const [facets, setFacets] = useState<SearchFacets>(() => emptySearchFacets());
   const [scopeCounts, setScopeCounts] = useState<WordSearchScopeCounts>(EMPTY_COUNTS);
   const reqGen = useRef(0);
+  const facetsCacheRef = useRef<{ key: string; facets: SearchFacets } | null>(
+    null,
+  );
 
   const scopeKey = useMemo(() => {
     if (engineScope.type === "books") {
@@ -180,12 +200,14 @@ export function useWordPassageSearch(
       setMatchedTerms([]);
       setFacets(emptySearchFacets());
       setScopeCounts(EMPTY_COUNTS);
+      facetsCacheRef.current = null;
       return;
     }
 
     const gen = ++reqGen.current;
     setBusy(true);
     setError(null);
+    const facetKey = `${textVersion}\0${q}`;
 
     const timer = window.setTimeout(() => {
       void (async () => {
@@ -207,7 +229,27 @@ export function useWordPassageSearch(
           return;
         }
 
-        const nextFacets = resolveFacets(res);
+        let nextFacets = resolveFacets(res);
+
+        // Facets devem refletir o universo da query (para pills + gaveta multi-livros).
+        if (
+          engineScope.type === "all" ||
+          facetsCoverUniverse(nextFacets, engineScope)
+        ) {
+          facetsCacheRef.current = { key: facetKey, facets: nextFacets };
+        } else if (facetsCacheRef.current?.key === facetKey) {
+          nextFacets = facetsCacheRef.current.facets;
+        } else {
+          const base = await searchVersesForVersion(textVersion, q, HIT_LIMIT, {
+            scope: { type: "all" },
+          });
+          if (gen !== reqGen.current) return;
+          if (base.ok) {
+            nextFacets = resolveFacets(base);
+            facetsCacheRef.current = { key: facetKey, facets: nextFacets };
+          }
+        }
+
         setFacets(nextFacets);
         setScopeCounts(
           buildScopeCounts(nextFacets, currentBookId, selectedBookIds),

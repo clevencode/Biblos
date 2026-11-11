@@ -114,16 +114,26 @@ export function usePersistentSearchSession() {
       const prev = stateRef.current;
       const nextFilter =
         scopeFilter === "current_book" ? "books" : scopeFilter;
-      if (nextFilter === "all" || nextFilter === "nt" || nextFilter === "ot") {
+      // nt/ot: troca o filtro ativo, mas preserva o histórico de livros
+      if (nextFilter === "nt" || nextFilter === "ot") {
+        if (prev.scopeFilter === nextFilter) return;
+        persist({
+          ...prev,
+          scopeFilter: nextFilter,
+        });
+        return;
+      }
+      // all: único caminho de sessão que zera o histórico (via Effacer / Appliquer vazio)
+      if (nextFilter === "all") {
         if (
-          prev.scopeFilter === nextFilter &&
+          prev.scopeFilter === "all" &&
           prev.selectedBookIds.length === 0
         ) {
           return;
         }
         persist({
           ...prev,
-          scopeFilter: nextFilter,
+          scopeFilter: "all",
           selectedBookIds: [],
         });
         return;
