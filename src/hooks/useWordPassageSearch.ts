@@ -2,7 +2,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { searchVersesForVersion } from "../bible/passageForVersion";
 import type { BibleTextVersionId } from "../bible/bibleVersions";
 import {
+  bookIdsForSearchScope,
   emptySearchFacets,
+  facetsFromBookCounts,
   type MatchMode,
   type SearchFacets,
   type SearchScope,
@@ -51,6 +53,36 @@ export function buildEngineScope(
     return { type: "books", bookIds: ids };
   }
   return { type: "all" };
+}
+
+function resolveFacets(res: {
+  facets?: SearchFacets;
+  bookCounts?: Record<string, number>;
+  total?: number;
+}): SearchFacets {
+  if (res.facets) {
+    // API pode mandar facets parciais (ot/nt=0) com byBook ok.
+    if (
+      (res.facets.otCount > 0 || res.facets.ntCount > 0) &&
+      Object.keys(res.facets.byBook).length > 0
+    ) {
+      return res.facets;
+    }
+    const derived = facetsFromBookCounts(
+      Object.keys(res.facets.byBook).length > 0
+        ? res.facets.byBook
+        : res.bookCounts,
+      res.facets.total || res.total || 0,
+    );
+    if (derived.otCount > 0 || derived.ntCount > 0 || derived.total > 0) {
+      return {
+        ...derived,
+        total: Math.max(derived.total, res.facets.total || 0),
+      };
+    }
+    return res.facets;
+  }
+  return facetsFromBookCounts(res.bookCounts, res.total ?? 0);
 }
 
 function buildScopeCounts(
@@ -112,6 +144,11 @@ export function useWordPassageSearch(
     [scopeFilter, selectedBookIds, currentBookId],
   );
 
+  const remoteBooks = useMemo(
+    () => bookIdsForSearchScope(engineScope),
+    [engineScope],
+  );
+
   const [hits, setHits] = useState<BibleSearchHit[]>([]);
   const [total, setTotal] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -154,6 +191,7 @@ export function useWordPassageSearch(
       void (async () => {
         const res = await searchVersesForVersion(textVersion, q, HIT_LIMIT, {
           scope: engineScope,
+          books: remoteBooks,
         });
         if (gen !== reqGen.current) return;
 
@@ -169,17 +207,7 @@ export function useWordPassageSearch(
           return;
         }
 
-        const nextFacets =
-          res.facets ??
-          ({
-            total: res.total ?? 0,
-            otCount: 0,
-            ntCount: 0,
-            byBook: res.bookCounts ?? {},
-          } satisfies SearchFacets);
-
-        // Se API remota não preencheu ot/nt, derivar de byBook no cliente fica parcial;
-        // offline sempre envia facets completos.
+        const nextFacets = resolveFacets(res);
         setFacets(nextFacets);
         setScopeCounts(
           buildScopeCounts(nextFacets, currentBookId, selectedBookIds),
@@ -202,6 +230,7 @@ export function useWordPassageSearch(
     textVersion,
     scopeKey,
     engineScope,
+    remoteBooks,
     currentBookId,
     selectedBookIds,
   ]);

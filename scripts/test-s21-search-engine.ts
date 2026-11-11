@@ -5,7 +5,9 @@
  */
 import assert from "node:assert/strict";
 import {
+  bookIdsForSearchScope,
   buildIndexedVerse,
+  facetsFromBookCounts,
   normalizeSearchText,
   searchVersesCascade,
   stemFrenchToken,
@@ -201,6 +203,25 @@ assert.ok(normalizeSearchText("résurrection").includes("resurrection"));
   );
   assert.equal(scoped.facets.byBook.JHN, all.facets.byBook.JHN);
   assert.equal(scoped.totalCount, scoped.results.length);
+}
+
+// --- facetsFromBookCounts: ot/nt a partir de byBook (sem zerar) ---
+{
+  const facets = facetsFromBookCounts(
+    { JHN: 10, PSA: 5, GEN: 3, ROM: 2 },
+    0,
+  );
+  assert.equal(facets.total, 20);
+  assert.equal(facets.ntCount, 12);
+  assert.equal(facets.otCount, 8);
+  assert.equal(facets.byBook.JHN, 10);
+  assert.ok((bookIdsForSearchScope({ type: "nt" }) ?? []).includes("JHN"));
+  assert.ok((bookIdsForSearchScope({ type: "ot" }) ?? []).includes("JDG"));
+  assert.equal(bookIdsForSearchScope({ type: "all" }), null);
+  assert.deepEqual(
+    bookIdsForSearchScope({ type: "books", bookIds: ["jdg", "JHN"] }),
+    ["JDG", "JHN"],
+  );
 }
 
 console.log("test-s21-search-engine: ok");

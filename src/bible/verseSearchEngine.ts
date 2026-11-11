@@ -75,6 +75,32 @@ export function emptySearchFacets(): SearchFacets {
   return { total: 0, otCount: 0, ntCount: 0, byBook: {} };
 }
 
+/** Facets a partir de contagens por livro (API remota sem ot/nt). */
+export function facetsFromBookCounts(
+  bookCounts: Record<string, number> | null | undefined,
+  totalFallback = 0,
+): SearchFacets {
+  const byBook: Record<string, number> = {};
+  let otCount = 0;
+  let ntCount = 0;
+  let total = 0;
+  for (const [rawId, rawCount] of Object.entries(bookCounts ?? {})) {
+    const book = String(rawId || "").toUpperCase();
+    const count = Math.max(0, Number(rawCount) || 0);
+    if (!book || count <= 0) continue;
+    byBook[book] = (byBook[book] || 0) + count;
+    total += count;
+    if (OT_BOOK_SET.has(book)) otCount += count;
+    else if (NT_BOOK_SET.has(book)) ntCount += count;
+  }
+  return {
+    total: total > 0 ? total : Math.max(0, totalFallback),
+    otCount,
+    ntCount,
+    byBook,
+  };
+}
+
 export function buildSearchFacets(hits: VerseSearchHit[]): SearchFacets {
   const byBook: Record<string, number> = {};
   let otCount = 0;
@@ -92,6 +118,17 @@ export function buildSearchFacets(hits: VerseSearchHit[]): SearchFacets {
     ntCount,
     byBook,
   };
+}
+
+/** IDs canônicos para filtrar a API remota a partir do SearchScope. */
+export function bookIdsForSearchScope(scope: SearchScope | undefined): string[] | null {
+  if (!scope || scope.type === "all") return null;
+  if (scope.type === "ot") return [...OT_BOOK_SET];
+  if (scope.type === "nt") return [...NT_BOOK_SET];
+  const ids = scope.bookIds
+    .map((id) => String(id || "").toUpperCase())
+    .filter(Boolean);
+  return ids.length > 0 ? ids : null;
 }
 
 export function applySearchScope(
