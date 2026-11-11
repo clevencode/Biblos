@@ -7199,6 +7199,32 @@ body {
   padding-bottom: 24px;
 }
 
+/* Timeline: scroll no miolo; Note du jour fica fixa acima da tab bar. */
+.panel-nota-content.plan-yv--workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  padding-bottom: 12px;
+}
+
+.plan-yv--workspace .plan-yv-main {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: grid;
+  gap: 16px;
+  padding-bottom: 8px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.plan-yv--workspace .plan-yv-secondary {
+  flex: none;
+  margin-top: 10px;
+}
+
 .plan-yv-head {
   margin-bottom: 4px;
   padding-bottom: 12px;
@@ -10654,44 +10680,6 @@ html[data-colortest*="BiblePassageChip:red"] .bible-yv-passage-chip {
   border-radius: 16px;
   background: var(--yv-overlay-surface);
   box-shadow: var(--yv-overlay-shadow);
-}
-
-.bible-yv-tools-plan {
-  display: grid;
-  gap: 6px;
-  margin: 0 0 4px;
-  padding: 10px 12px 8px;
-  border-bottom: 1px solid color-mix(in srgb, var(--yv-text) 10%, transparent);
-}
-
-.bible-yv-tools-plan-title {
-  margin: 0;
-  color: var(--yv-text);
-  font-size: 0.98rem;
-  font-weight: 650;
-  line-height: 1.25;
-}
-
-.bible-yv-tools-plan-meta {
-  margin: 0;
-  color: var(--yv-muted);
-  font-size: 0.82rem;
-}
-
-.bible-yv-tools-plan-desc {
-  margin: 2px 0 4px;
-  color: var(--yv-text);
-  font-size: 0.88rem;
-  line-height: 1.4;
-  white-space: pre-wrap;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 8;
-  overflow: hidden;
-}
-
-.bible-yv-tools-plan .bible-yv-tools-item {
-  margin-top: 2px;
 }
 
 .bible-yv-tools-item {

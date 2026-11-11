@@ -1,9 +1,9 @@
 import type { IconComponent } from "@coolicons/react/line/round";
-import { Book, CalendarDays, House, User } from "@coolicons/react/line/round";
+import { Book, House, Library, User } from "@coolicons/react/line/round";
 import {
   Book as BookFill,
-  CalendarDays as CalendarDaysFill,
   House as HouseFill,
+  Library as LibraryFill,
   User as UserFill,
 } from "@coolicons/react/fill/round";
 import { ICON_STROKE_WIDTH, TAB_ICON_PX } from "../icons/config";
@@ -21,7 +21,7 @@ type TabIconEntry = {
 
 const TAB_ICONS: Record<ShellTab, TabIconEntry> = {
   home: { line: House, fill: HouseFill },
-  today: { line: CalendarDays, fill: CalendarDaysFill },
+  today: { line: Library, fill: LibraryFill },
   bible: { line: Book, fill: BookFill },
   profile: { line: User, fill: UserFill },
 };

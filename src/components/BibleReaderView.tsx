@@ -1137,9 +1137,25 @@ export function BibleReaderView({
     planReading?.onAdvanceAfterNote?.();
   }
 
+  function resyncToPlanStep() {
+    if (!planReading) return false;
+    const parts = parseUsfmParts(planReading.focusRef || planReading.label);
+    if (!isUsfmBookId(parts.bookId)) return false;
+    const start = parts.verse ?? planReading.verseStart ?? null;
+    const end = planReading.verseEnd ?? start;
+    void loadChapter(parts.bookId, parts.chapterId, start, end);
+    return true;
+  }
+
   function planOrChapterSkip(delta: -1 | 1) {
     if (pickerOpen) setPassageStep("chapter");
-    if (planReading && onPlanStep) {
+    // Escopo plan : skips = uniquement le flux du plan (jamais chapitres libres).
+    // Chip = lecture libre ; hors pas → d’abord revenir au passage du plan.
+    if (planReading) {
+      if (!onPlanStep) {
+        resyncToPlanStep();
+        return;
+      }
       if (delta < 0) {
         if (!planReading.isFirst) planReading.onPrev();
       } else {
@@ -1157,7 +1173,7 @@ export function BibleReaderView({
 
   function renderPassageChapterSkips() {
     const chapterSkipIcons = passageBarSkipIcons();
-    const planSkips = Boolean(planReading && onPlanStep);
+    const planSkips = Boolean(planReading);
     const stageComplete = Boolean(planSkips && planReading?.isStageLast);
     const renderChapterSkipButton = (delta: -1 | 1) => {
       const isPrev = delta === -1;
@@ -1226,19 +1242,27 @@ export function BibleReaderView({
 
     const renderChapterSkipButton = (delta: -1 | 1) => {
       const isPrev = delta === -1;
+      const planBound = Boolean(planReading);
       return (
         <button
           key={isPrev ? "prev" : "next"}
           type="button"
           className="bible-yv-top-passage-arrow"
-          onClick={() => {
-            if (pickerOpen) setPassageStep("chapter");
-            goAdjacent(delta);
-          }}
+          onClick={() => planOrChapterSkip(delta)}
           disabled={
-            (isPrev ? !canPrev : !canNext) || pickerChrome.controlsDisabled
+            planBound
+              ? (isPrev ? planReading!.isFirst : false) || presentation.inFlight
+              : (isPrev ? !canPrev : !canNext) || pickerChrome.controlsDisabled
           }
-          aria-label={isPrev ? "Chapitre précédent" : "Chapitre suivant"}
+          aria-label={
+            planBound
+              ? isPrev
+                ? "Passage précédent du plan"
+                : "Passage suivant du plan"
+              : isPrev
+                ? "Chapitre précédent"
+                : "Chapitre suivant"
+          }
         >
           <YvIcon
             name={isPrev ? chapterSkipIcons.previous : chapterSkipIcons.next}
@@ -1675,12 +1699,6 @@ export function BibleReaderView({
     : "";
   const shareVerseText = selectedVerseText;
   const canShareVerse = Boolean(shareUsfm && shareVerseText);
-  const canSharePlan = Boolean(
-    planReading &&
-      (planReading.planShareTitle?.trim() ||
-        planReading.planName?.trim() ||
-        planReading.planDescription?.trim()),
-  );
   const selectedVerseCardId = useMemo(() => {
     if (!selection?.length) return null;
     return verseCardId(selectionUsfm(bookId, chapterId, selection));
@@ -2017,65 +2035,6 @@ export function BibleReaderView({
             role="menu"
             aria-label="Menu Bible"
           >
-            {planReading ? (
-              <div
-                className="bible-yv-tools-plan"
-                role="group"
-                aria-label="Plan de lecture"
-              >
-                <p className="bible-yv-tools-plan-title">
-                  {planReading.planShareTitle?.trim() ||
-                    planReading.planName?.trim() ||
-                    "Plan de lecture"}
-                </p>
-                {planReading.stepCount > 0 ? (
-                  <p className="bible-yv-tools-plan-meta">
-                    {planReading.stepCount} jour
-                    {planReading.stepCount > 1 ? "s" : ""}
-                  </p>
-                ) : planReading.planMeta?.trim() ? (
-                  <p className="bible-yv-tools-plan-meta">
-                    {planReading.planMeta.trim()}
-                  </p>
-                ) : null}
-                {planReading.planDescription?.trim() ? (
-                  <p className="bible-yv-tools-plan-desc">
-                    {planReading.planDescription.trim()}
-                  </p>
-                ) : null}
-                {canSharePlan ? (
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="bible-yv-tools-item"
-                    onClick={() => {
-                      setToolsMenuOpen(false);
-                      setShareMode("plan");
-                      setShareSheetOpen(true);
-                    }}
-                  >
-                    <YvIcon name="ios_share" className="bible-yv-tools-item-icon" />
-                    <span>Partager le plan</span>
-                  </button>
-                ) : null}
-                <button
-                  type="button"
-                  role="menuitem"
-                  className="bible-yv-tools-item"
-                  onClick={() => {
-                    setToolsMenuOpen(false);
-                    handlePlanBack();
-                  }}
-                >
-                  <YvIcon name="chevron_left" className="bible-yv-tools-item-icon" />
-                  <span>
-                    {onPlanStep
-                      ? "Quitter le plan"
-                      : "Retour au passage du plan"}
-                  </span>
-                </button>
-              </div>
-            ) : null}
             <div
               className="bible-yv-tools-version"
               role="group"

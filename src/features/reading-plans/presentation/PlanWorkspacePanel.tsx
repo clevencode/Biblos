@@ -448,7 +448,8 @@ export function PlanWorkspacePanel({
   }
 
   return (
-    <div className="today-view panel-nota-content plan-yv">
+    <div className="today-view panel-nota-content plan-yv plan-yv--workspace">
+      <div className="plan-yv-main">
       <header className="page-session-head plan-yv-head">
         <div className="plan-yv-head-row">
           <button
@@ -669,6 +670,7 @@ export function PlanWorkspacePanel({
           Aucun verset pour ce jour — le plan n’affiche que les références bibliques.
         </p>
       )}
+      </div>
 
       {hasDefinedChapter ? (
         <nav className="plan-yv-secondary" aria-label="Actions secondaires">
