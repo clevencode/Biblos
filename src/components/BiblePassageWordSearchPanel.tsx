@@ -29,7 +29,8 @@ import { WordSearchSkeleton } from "./WordSearchSkeleton";
 const MIN_WORD_CHARS = 2;
 const HIT_LIMIT = 40;
 
-type PickerMode = "books" | "nt" | "ot";
+/** Gaveta multi-livros só em Ancien / Nouveau. */
+type PickerMode = "nt" | "ot";
 
 const OT_BOOK_IDS = new Set(
   CANON_BOOKS.filter((b) => b.testament === "at").map((b) => b.id.toUpperCase()),
@@ -132,18 +133,22 @@ export function BiblePassageWordSearchPanel({
     verseHits.length > 0 &&
     !isBookPickerOpen;
   const hasResultsChrome = hasActiveQuery && !showSkeleton;
-  const booksActive = scopeFilter === "books" && selectedBookIds.length > 0;
+  /** Pill do livro atual: ativo só quando o filtro é exatamente esse livro. */
+  const currentBookActive =
+    scopeFilter === "books" &&
+    selectedBookIds.length === 1 &&
+    resolveCanonicalBookId(selectedBookIds[0]) === readerBookId;
   const ntActive = scopeFilter === "nt";
   const otActive = scopeFilter === "ot";
 
   const loadedLimit = Math.max(verseHits.length, HIT_LIMIT);
   const booksSignature = useMemo(() => {
-    if (booksActive) {
+    if (scopeFilter === "books" && selectedBookIds.length > 0) {
       return `books:${[...selectedBookIds].sort().join(",")}`;
     }
     if (scopeFilter === "nt" || scopeFilter === "ot") return scopeFilter;
     return "all";
-  }, [booksActive, selectedBookIds, scopeFilter]);
+  }, [selectedBookIds, scopeFilter]);
 
   const searchSignature = useMemo(
     () =>
@@ -213,38 +218,9 @@ export function BiblePassageWordSearchPanel({
   }, [pickerMode, facets, scopeCounts]);
 
   const bookPillLabel = useMemo(() => {
-    const ids = selectedBookIds;
-    const countFor = (list: string[]) =>
-      list.reduce((sum, id) => {
-        const key = resolveCanonicalBookId(id);
-        return sum + (byBook[key] ?? 0);
-      }, 0);
-    const titleOf = (id: string) => {
-      const key = resolveCanonicalBookId(id);
-      return (
-        CANON_BOOKS.find((b) => b.id.toUpperCase() === key)?.title ??
-        (key === readerBookId ? bookLabel : key || id)
-      );
-    };
-
-    if (ids.length === 0) {
-      const n = readerBookId ? byBook[readerBookId] ?? 0 : 0;
-      return hasActiveQuery && n > 0 ? `${bookLabel} (${n})` : bookLabel;
-    }
-    if (ids.length === 1) {
-      const n = countFor(ids);
-      return hasActiveQuery ? `${titleOf(ids[0]!)} (${n})` : titleOf(ids[0]!);
-    }
-    if (ids.length === 2) {
-      const n = countFor(ids);
-      const label = `${titleOf(ids[0]!)}, ${titleOf(ids[1]!)}`;
-      return hasActiveQuery ? `${label} (${n})` : label;
-    }
-    const n = countFor(ids);
-    return hasActiveQuery
-      ? `${ids.length} livres (${n})`
-      : `${ids.length} livres`;
-  }, [selectedBookIds, byBook, readerBookId, bookLabel, hasActiveQuery]);
+    const n = readerBookId ? byBook[readerBookId] ?? 0 : 0;
+    return hasActiveQuery && n > 0 ? `${bookLabel} (${n})` : bookLabel;
+  }, [byBook, readerBookId, bookLabel, hasActiveQuery]);
 
   useEffect(() => {
     if (!open) {
@@ -264,15 +240,7 @@ export function BiblePassageWordSearchPanel({
   if (!open) return null;
 
   function seedDraftForMode(mode: PickerMode): string[] {
-    if (mode === "nt" || mode === "ot") {
-      return bookIdsInTestament(selectedBookIds, mode);
-    }
-    if (selectedBookIds.length > 0) {
-      return selectedBookIds
-        .map((id) => resolveCanonicalBookId(id))
-        .filter(Boolean);
-    }
-    return readerBookId ? [readerBookId] : [];
+    return bookIdsInTestament(selectedBookIds, mode);
   }
 
   function openBookPicker(mode: PickerMode) {
@@ -315,34 +283,13 @@ export function BiblePassageWordSearchPanel({
     onQueryChange(value);
   }
 
-  /** 1º toque: reativa histórico ou liga o livro atual. 2º toque: abre a gaveta. */
-  function handleBooksPillTap() {
-    if (!booksActive) {
-      closeBookPicker();
-      resetScroll();
-      if (selectedBookIds.length > 0) {
-        onSelectedBookIdsChange(selectedBookIds);
-        return;
-      }
-      if (!readerBookId) return;
-      onSelectedBookIdsChange([readerBookId]);
-      return;
-    }
-    toggleBookPicker("books");
-  }
-
-  /** Seta: abre a gaveta (restaura histórico ou pré-marca o livro atual). */
-  function handleBooksChevron(event: MouseEvent) {
-    event.stopPropagation();
-    if (!booksActive) {
-      resetScroll();
-      if (selectedBookIds.length > 0) {
-        onSelectedBookIdsChange(selectedBookIds);
-      } else if (readerBookId) {
-        onSelectedBookIdsChange([readerBookId]);
-      }
-    }
-    toggleBookPicker("books");
+  /** Pill do livro atual: só liga/desliga o filtro desse livro (sem gaveta). */
+  function handleCurrentBookPillTap() {
+    closeBookPicker();
+    if (!readerBookId) return;
+    if (currentBookActive) return;
+    resetScroll();
+    onSelectedBookIdsChange([readerBookId]);
   }
 
   /** 1º toque: ativa o testamento. 2º toque: gaveta só com livros desse testamento. */
@@ -466,21 +413,11 @@ export function BiblePassageWordSearchPanel({
         <button
           type="button"
           role="tab"
-          aria-selected={booksActive}
-          aria-expanded={pickerMode === "books"}
-          className={`bible-yv-word-search-pill bible-yv-word-search-pill--books${
-            booksActive ? " is-on" : ""
-          }`}
-          onClick={handleBooksPillTap}
+          aria-selected={currentBookActive}
+          className={`bible-yv-word-search-pill${currentBookActive ? " is-on" : ""}`}
+          onClick={handleCurrentBookPillTap}
         >
-          <span className="bible-yv-word-search-pill-books-label">{bookPillLabel}</span>
-          <span
-            className="bible-yv-word-search-pill-chevron"
-            onClick={handleBooksChevron}
-            role="presentation"
-          >
-            ▾
-          </span>
+          {bookPillLabel}
         </button>
         <button
           type="button"
