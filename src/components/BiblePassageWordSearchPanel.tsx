@@ -248,7 +248,7 @@ export function BiblePassageWordSearchPanel({
     setBookFilterQuery("");
   }
 
-  function handleTestamentPill(next: "all" | "nt" | "ot") {
+  function handleTestamentPill(next: "nt" | "ot") {
     closeBookPicker();
     resetScroll();
     onScopeFilterChange(next);
@@ -310,9 +310,8 @@ export function BiblePassageWordSearchPanel({
     }
   }
 
-  function countLabel(scope: "all" | "nt" | "ot"): string {
-    const base =
-      scope === "all" ? "Tous" : scope === "nt" ? "Nouveau" : "Ancien";
+  function countLabel(scope: "nt" | "ot"): string {
+    const base = scope === "nt" ? "Nouveau" : "Ancien";
     if (!hasActiveQuery || !scopeCounts) return base;
     return `${base} (${scopeCounts[scope]})`;
   }
@@ -358,15 +357,6 @@ export function BiblePassageWordSearchPanel({
         role="tablist"
         aria-label="Portée de la recherche"
       >
-        <button
-          type="button"
-          role="tab"
-          aria-selected={scopeFilter === "all"}
-          className={`bible-yv-word-search-pill${scopeFilter === "all" ? " is-on" : ""}`}
-          onClick={() => handleTestamentPill("all")}
-        >
-          {countLabel("all")}
-        </button>
         <button
           type="button"
           role="tab"
