@@ -135,11 +135,11 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
         aria-label={ariaLabel}
       >
         {step === "book" ? (
-          <div className="bible-yv-pick-roll-search">
-            <YvIcon name="search" opsz={20} className="bible-yv-pick-roll-search-icon" />
+          <div className="bible-yv-word-search-field bible-yv-pick-roll-search">
+            <YvIcon name="search" opsz={20} className="bible-yv-word-search-field-icon" />
             <input
               type="search"
-              className="bible-yv-pick-search"
+              className="bible-yv-word-search-input bible-yv-pick-search"
               value={bookSearchQuery}
               placeholder={
                 discoveryBooksOnly ? "Livre ou référence…" : "Livre, mot ou référence…"
@@ -158,11 +158,11 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
             {hasQuery ? (
               <button
                 type="button"
-                className="bible-yv-pick-search-clear"
+                className="bible-yv-word-search-clear bible-yv-pick-search-clear"
                 onClick={onSearchClear}
                 aria-label="Effacer la recherche"
               >
-                <YvIcon name="close" opsz={20} className="bible-yv-pick-search-clear-icon" />
+                <YvIcon name="close" opsz={20} className="bible-yv-word-search-clear-icon" />
               </button>
             ) : null}
           </div>
