@@ -1,6 +1,15 @@
 import { isReadingPlansFirebaseConfigured } from "./data/firebaseConfig";
 
 export type { ReadingPlan, ReadingPlanEtape, ReadingPlanJour } from "./domain/types";
+export {
+  loadPlanProgress,
+  progressCounts,
+  isPlanComplete,
+  resumeStepIndex,
+  resetPlanProgress,
+  type PlanProgress,
+} from "./domain/planProgress";
+export { flattenPlanSteps } from "./domain/planSteps";
 export { PlanDiscoverPanel } from "./presentation/PlanDiscoverPanel";
 export { useReadingPlansCatalog } from "./presentation/hooks/useReadingPlansCatalog";
 export { isReadingPlansFirebaseConfigured };

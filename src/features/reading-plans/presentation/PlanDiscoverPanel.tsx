@@ -2,28 +2,67 @@ import { YvIcon } from "../../../components/YvIcon";
 import { useReadingPlansCatalog } from "./hooks/useReadingPlansCatalog";
 import { PlanCardRow } from "./PlanCardRow";
 import { PlanDiscoverSkeleton } from "./PlanDiscoverSkeleton";
+import type { PlanFlowReturn } from "./PlanWorkspacePanel";
+import { PlanWorkspacePanel } from "./PlanWorkspacePanel";
 import type { ReadingPlan } from "../domain/types";
 
 type PlanDiscoverPanelProps = {
   active: boolean;
+  workspacePlan?: ReadingPlan | null;
+  workspaceJour?: number;
+  workspaceResumeSeq?: number;
   onOpenBible: () => void;
   onSelectPlan?: (plan: ReadingPlan) => void;
+  onLeaveWorkspace?: () => void;
+  onStartPlanReading?: (
+    jour: number,
+    passage: string,
+    opts?: { returnTo?: PlanFlowReturn },
+  ) => void;
 };
 
 /**
- * Presentation — postura fixa (`plan-discover-surface`), skeleton antes do 1.º snapshot.
+ * Presentation — catálogo ou workspace (timeline / étapes).
  */
 export function PlanDiscoverPanel({
   active,
+  workspacePlan = null,
+  workspaceJour,
+  workspaceResumeSeq = 0,
   onOpenBible,
   onSelectPlan,
+  onLeaveWorkspace,
+  onStartPlanReading,
 }: PlanDiscoverPanelProps) {
-  const { status, plans, error, showSkeleton } = useReadingPlansCatalog(active);
+  const { status, plans, error, showSkeleton } = useReadingPlansCatalog(
+    active && !workspacePlan,
+  );
 
   const showList = !showSkeleton && plans.length > 0;
   const showEmpty = !showSkeleton && status === "ready" && plans.length === 0;
   const showError = status === "error" && plans.length === 0;
   const showUnconfigured = status === "unconfigured";
+
+  if (workspacePlan) {
+    return (
+      <div
+        id="panel-today"
+        role="tabpanel"
+        aria-labelledby="tab-today"
+        hidden={!active}
+        className="pane-body today-view"
+      >
+        <PlanWorkspacePanel
+          plan={workspacePlan}
+          focusJour={workspaceJour}
+          resumeSeq={workspaceResumeSeq}
+          onLeave={onLeaveWorkspace}
+          onStartPlanReading={onStartPlanReading}
+          onRestartPlan={() => undefined}
+        />
+      </div>
+    );
+  }
 
   return (
     <div

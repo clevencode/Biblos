@@ -58,7 +58,8 @@ try {
 
     if (-not $viteUp) {
       Write-Host "A arrancar Vite (npm run dev)…" -ForegroundColor Cyan
-      Start-Process -FilePath "npx" -ArgumentList "vite", "--host", "127.0.0.1", "--port", "5173" -WorkingDirectory $root -WindowStyle Minimized
+      # 0.0.0.0: adb reverse (localhost) + browser no celular via IP Wi‑Fi
+      Start-Process -FilePath "npx" -ArgumentList "vite", "--host", "0.0.0.0", "--port", "5173" -WorkingDirectory $root -WindowStyle Minimized
       $deadline = (Get-Date).AddSeconds(45)
       do {
         Start-Sleep -Seconds 1

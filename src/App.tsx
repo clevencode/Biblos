@@ -2,8 +2,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { BibleReaderView } from "./components/BibleReaderView";
 import { AppShellNav } from "./components/AppShellNav";
 import { HomeShellPanel } from "./components/HomeShellPanel";
-import { PlanDiscoverPanel } from "./features/reading-plans";
+import {
+  PlanDiscoverPanel,
+  flattenPlanSteps,
+  resumeStepIndex,
+} from "./features/reading-plans";
 import type { ReadingPlan } from "./features/reading-plans";
+import { usePlanReadingSession } from "./features/reading-plans/presentation/hooks/usePlanReadingSession";
+import type { PlanFlowReturn } from "./features/reading-plans/presentation/PlanWorkspacePanel";
 import { ProfileShellPanel } from "./components/ProfileShellPanel";
 import { recordBibleRead, appendActivity } from "./activityLog";
 import { consumeShareRefFromUrl } from "./shareVerse";
@@ -68,6 +74,9 @@ function BiblosConsumerApp() {
   const [bibleFocusRef, setBibleFocusRef] = useState<string | null>(null);
   const [bibleFocusSeq, setBibleFocusSeq] = useState(0);
   const [activityTick, setActivityTick] = useState(0);
+  const [workspacePlan, setWorkspacePlan] = useState<ReadingPlan | null>(null);
+  const [workspaceJour, setWorkspaceJour] = useState<number | undefined>();
+  const [workspaceResumeSeq, setWorkspaceResumeSeq] = useState(0);
   const [offlineToast, setOfflineToast] = useState(false);
   const offlineToastSeen = useRef(false);
   const shareBooted = useRef(false);
@@ -128,14 +137,36 @@ function BiblosConsumerApp() {
     setTab("bible");
   }, []);
 
-  const openPlanReading = useCallback(
-    (plan: ReadingPlan) => {
-      const passage =
-        plan.etapes[0]?.jours[0]?.passage?.trim() ||
-        plan.etapes.flatMap((e) => e.jours)[0]?.passage?.trim();
-      openBible(passage || undefined);
+  const { openPlanAtJour, planReading, clearPlan } = usePlanReadingSession({
+    onNavigate: (ref) => openBible(ref),
+  });
+
+  const openPlanWorkspace = useCallback((plan: ReadingPlan) => {
+    const flat = flattenPlanSteps(plan);
+    const idx = resumeStepIndex(plan);
+    setWorkspacePlan(plan);
+    setWorkspaceJour(flat[idx]?.jour ?? flat[0]?.jour);
+  }, []);
+
+  const leavePlanWorkspace = useCallback(() => {
+    setWorkspacePlan(null);
+    setWorkspaceJour(undefined);
+  }, []);
+
+  const returnFromPlanReading = useCallback(() => {
+    const jour = clearPlan();
+    if (typeof jour === "number") setWorkspaceJour(jour);
+    setTab("today");
+    setWorkspaceResumeSeq((n) => n + 1);
+  }, [clearPlan]);
+
+  const startPlanReadingFromWorkspace = useCallback(
+    (jour: number, _passage: string, _opts?: { returnTo?: PlanFlowReturn }) => {
+      if (!workspacePlan) return;
+      openPlanAtJour(workspacePlan, jour);
+      setTab("bible");
     },
-    [openBible],
+    [openPlanAtJour, workspacePlan],
   );
 
   const cycleTheme = useCallback(() => {
@@ -202,8 +233,13 @@ function BiblosConsumerApp() {
                 />
                 <PlanDiscoverPanel
                   active={tab === "today"}
+                  workspacePlan={workspacePlan}
+                  workspaceJour={workspaceJour}
+                  workspaceResumeSeq={workspaceResumeSeq}
                   onOpenBible={() => selectTab("bible")}
-                  onSelectPlan={openPlanReading}
+                  onSelectPlan={openPlanWorkspace}
+                  onLeaveWorkspace={leavePlanWorkspace}
+                  onStartPlanReading={startPlanReadingFromWorkspace}
                 />
                 <div
                   id="panel-bible"
@@ -221,6 +257,8 @@ function BiblosConsumerApp() {
                       compactViewport={narrow}
                       themePref={themePref}
                       onCycleTheme={cycleTheme}
+                      planReading={bibleMode ? planReading : null}
+                      onBack={planReading ? returnFromPlanReading : undefined}
                       onVerseMarked={handleVerseMarked}
                       onBibleRead={(payload) => {
                         const logged = recordBibleRead({
