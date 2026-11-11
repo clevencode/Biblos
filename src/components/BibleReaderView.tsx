@@ -115,7 +115,6 @@ import { loadChapterMarks, setVerseMarks } from "../verseMarks";
 import type { Flashcard } from "../types";
 const STORAGE_KEY = BIBLE_READER_PREFS_KEY;
 /** Panneau verset : pas de Flashcard tant que l’onglet Cartes est désactivé. */
-const VERSE_SUITE_FLASHCARDS_ENABLED = false;
 const FONT_MIN = 15;
 const FONT_MAX = 28;
 const FONT_DEFAULT = 19;
@@ -2926,134 +2925,93 @@ export function BibleReaderView({
             </div>
 
             <div className="bible-verse-actions-body">
-          <div className="bible-verse-action-block">
-            <p className="bible-verse-action-label" id="bible-verse-color-label">
-              Marquer
-            </p>
-
-            <div className="bible-verse-color-row" role="group" aria-labelledby="bible-verse-color-label">
-              <button
-                type="button"
-                className={`bible-verse-color-picker${selectionHasMark ? " is-marked" : ""}`}
-                style={
-                  {
-                    ["--swatch" as string]: pickerColor,
-                    ["--swatch-check" as string]: verseSwatchCheckInk(pickerColor),
-                  } as CSSProperties
-                }
-                title="Personnaliser la couleur"
-                aria-label={`Couleur ${verseColorHueLabel(pickerColor)} ${formatVerseColorHex(pickerColor)}. Ouvrir l’éditeur`}
-                aria-labelledby="bible-verse-color-label"
-                aria-haspopup="dialog"
-                aria-expanded={colorEditorOpen}
-                onClick={() => setColorEditorOpen(true)}
+              <div
+                className="bible-verse-action-row"
+                role="group"
+                aria-label="Actions du verset"
               >
-                <span className="bible-verse-color-picker-plus" aria-hidden>
-                  +
-                </span>
-              </button>
-              <button
-                type="button"
-                className={`bible-yv-chip bible-mark-toggle${selectionHasMark ? " is-marked" : ""}`}
-                aria-pressed={selectionHasMark}
-                onClick={() => {
-                  if (selectionHasMark) {
-                    clearSelectionMarks();
-                    return;
+                <button
+                  type="button"
+                  className={`bible-verse-color-picker${selectionHasMark ? " is-marked" : ""}`}
+                  style={
+                    {
+                      ["--swatch" as string]: pickerColor,
+                      ["--swatch-check" as string]: verseSwatchCheckInk(pickerColor),
+                    } as CSSProperties
                   }
-                  requestMarkSelection(activeVerseColor);
-                }}
-              >
-                {selectionHasMark ? (
-                  <YvIcon name="bookmark_remove" className="bible-verse-cta-icon" />
-                ) : (
-                  <YvIcon name="bookmark" className="bible-verse-cta-icon" />
-                )}
-                <span>{selectionHasMark ? "Démarquer" : "Marquer"}</span>
-              </button>
-            </div>
-
-            <CircularColorEditor
-              open={colorEditorOpen}
-              initialHex={pickerColor}
-              theme={uiTheme}
-              onClose={() => setColorEditorOpen(false)}
-              onConfirm={(hex) => {
-                setColorEditorOpen(false);
-                applyPickerColor(hex);
-              }}
-            />
-          </div>
-
-          <div className="bible-verse-action-block is-actions">
-            <p className="bible-verse-action-label" id="bible-verse-actions-label">
-              Suite
-            </p>
-            <div
-              className={`bible-verse-cta-row${VERSE_SUITE_FLASHCARDS_ENABLED ? "" : " is-single"}`}
-              role="group"
-              aria-labelledby="bible-verse-actions-label"
-            >
-              {VERSE_SUITE_FLASHCARDS_ENABLED ? (
-                existingVerseCard && selectedVerseCardId ? (
-                  <button
-                    type="button"
-                    className="bible-yv-chip bible-make-card is-carded bible-view-card"
-                    disabled={cardBusy || !onViewFlashcard}
-                    onClick={() => onViewFlashcard?.(selectedVerseCardId)}
-                  >
-                    <YvIcon name="style" className="bible-verse-cta-icon" />
-                    <span>Voir</span>
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    className="bible-yv-chip bible-make-card"
-                    disabled={cardBusy}
-                    onClick={() => void makeFlashcard()}
-                  >
-                    {cardBusy ? (
-                      "…"
-                    ) : (
-                      <>
-                        <YvIcon name="style" className="bible-verse-cta-icon" />
-                        <span>Flashcard</span>
-                      </>
-                    )}
-                  </button>
-                )
-              ) : null}
-              <button
-                type="button"
-                className="bible-yv-chip bible-share-verse"
-                disabled={!canShareVerse}
-                onClick={() => {
-                  void (async () => {
-                    const text = buildShareText(shareRefLabel, shareVerseText, "");
-                    const result = await sharePlainText({
-                      title: shareRefLabel || "Biblos",
-                      text,
-                    });
-                    if (result.ok) {
-                      setCardMsg(
-                        result.method === "clipboard" ? "Texte copié" : null,
-                      );
+                  title="Personnaliser la couleur"
+                  aria-label={`Couleur ${verseColorHueLabel(pickerColor)} ${formatVerseColorHex(pickerColor)}. Ouvrir l’éditeur`}
+                  aria-haspopup="dialog"
+                  aria-expanded={colorEditorOpen}
+                  onClick={() => setColorEditorOpen(true)}
+                >
+                  <span className="bible-verse-color-picker-plus" aria-hidden>
+                    +
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  className={`bible-yv-chip bible-mark-toggle${selectionHasMark ? " is-marked" : ""}`}
+                  aria-pressed={selectionHasMark}
+                  onClick={() => {
+                    if (selectionHasMark) {
+                      clearSelectionMarks();
                       return;
                     }
-                    if (!result.cancelled) {
-                      setCardMsg(result.error || "Partage impossible");
-                    }
-                  })();
+                    requestMarkSelection(activeVerseColor);
+                  }}
+                >
+                  {selectionHasMark ? (
+                    <YvIcon name="bookmark_remove" className="bible-verse-cta-icon" />
+                  ) : (
+                    <YvIcon name="bookmark" className="bible-verse-cta-icon" />
+                  )}
+                  <span>{selectionHasMark ? "Démarquer" : "Marquer"}</span>
+                </button>
+                <button
+                  type="button"
+                  className="bible-yv-chip bible-share-verse"
+                  disabled={!canShareVerse}
+                  onClick={() => {
+                    void (async () => {
+                      const text = buildShareText(shareRefLabel, shareVerseText, "");
+                      const result = await sharePlainText({
+                        title: shareRefLabel || "Biblos",
+                        text,
+                      });
+                      if (result.ok) {
+                        setCardMsg(
+                          result.method === "clipboard" ? "Texte copié" : null,
+                        );
+                        return;
+                      }
+                      if (!result.cancelled) {
+                        setCardMsg(result.error || "Partage impossible");
+                      }
+                    })();
+                  }}
+                >
+                  <YvIcon name="ios_share" className="bible-verse-cta-icon" />
+                  <span>Partager</span>
+                </button>
+              </div>
+
+              <CircularColorEditor
+                open={colorEditorOpen}
+                initialHex={pickerColor}
+                theme={uiTheme}
+                onClose={() => setColorEditorOpen(false)}
+                onConfirm={(hex) => {
+                  setColorEditorOpen(false);
+                  applyPickerColor(hex);
                 }}
-              >
-                <YvIcon name="ios_share" className="bible-verse-cta-icon" />
-                <span>Partager</span>
-              </button>
+              />
+
+              {cardMsg ? (
+                <p className="bible-verse-actions-msg">{cardMsg}</p>
+              ) : null}
             </div>
           </div>
-            </div>
-          {cardMsg ? <p className="bible-verse-actions-msg">{cardMsg}</p> : null}
-        </div>
       ) : null}
 
       {compactToolsMenu && !isPassageBarPanelCompactTopbar()

@@ -114,29 +114,46 @@ export function verseColorHueLabel(hex: string): string {
 
 export type HsvColor = { h: number; s: number; v: number };
 
-/** Valeur HSV par défaut selon le thème (tons foncés en light, clairs en dark). */
+/**
+ * Valeur HSV (V) cible pour marks lisibles :
+ * dark → tons clairs ; light → tons plus foncés.
+ */
+export function themeTargetValue(theme: "light" | "dark"): number {
+  return theme === "dark" ? 0.88 : 0.52;
+}
+
+/** @deprecated Preferir themeTargetValue */
 export function themeDefaultValue(theme: "light" | "dark"): number {
-  return theme === "dark" ? 0.82 : 0.48;
+  return themeTargetValue(theme);
 }
 
 /**
- * Adapte la luminosité au thème en préservant teinte + saturation.
- * Dark → tons plus clairs ; light → tons plus foncés (miroir autour du milieu).
+ * Saturation max pour marks pastel (évite #d1007f saturé sur fond sombre).
+ * dark → pastel plus doux ; light → un peu plus de chroma.
  */
+export function themeMaxSaturation(theme: "light" | "dark"): number {
+  return theme === "dark" ? 0.55 : 0.65;
+}
+
+/**
+ * Résolution déterministique d’une couleur de marquage pour le thème :
+ * H préservé, S plafonnée, V forcé à la cible thème.
+ */
+export function resolveVerseMarkColor(
+  hex: string,
+  theme: "light" | "dark",
+): string {
+  const { h, s } = hexToHsv(normalizeVerseColor(hex));
+  const cappedS = Math.min(s, themeMaxSaturation(theme));
+  return hsvToHex(h, cappedS, themeTargetValue(theme));
+}
+
+/** Alias : adapte toute couleur libre au thème (marks / preferências / editor). */
 export function adaptVerseColorForTheme(
   hex: string,
   theme: "light" | "dark",
 ): string {
-  const normalized = normalizeVerseColor(hex);
-  const { h, s, v } = hexToHsv(normalized);
-  const lightV = themeDefaultValue("light");
-  const darkV = themeDefaultValue("dark");
-  const mid = (lightV + darkV) / 2;
-  const suitedForDark = v >= mid;
-  if (theme === "dark" && suitedForDark) return normalized;
-  if (theme === "light" && !suitedForDark) return normalized;
-  const flipped = mid - (v - mid);
-  return hsvToHex(h, s, Math.min(1, Math.max(0.22, flipped)));
+  return resolveVerseMarkColor(hex, theme);
 }
 
 /** Clé teinte+saturation pour reconnaître la même couleur sous deux luminosités. */

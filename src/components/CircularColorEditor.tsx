@@ -1,6 +1,7 @@
 import {
   useEffect,
   useId,
+  useMemo,
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
@@ -9,7 +10,9 @@ import {
   formatVerseColorHex,
   hexToHsv,
   hsvToHex,
-  themeDefaultValue,
+  resolveVerseMarkColor,
+  themeMaxSaturation,
+  themeTargetValue,
   verseColorHueLabel,
 } from "../verseColors";
 import type { ResolvedTheme } from "../theme";
@@ -51,7 +54,13 @@ function hsvToRgbBytes(h: number, s: number, v: number): [number, number, number
   ];
 }
 
-function drawWheel(ctx: CanvasRenderingContext2D, size: number, value: number) {
+/** Roda com S efetiva = (dist/R) * maxS e V = target do tema. */
+function drawWheel(
+  ctx: CanvasRenderingContext2D,
+  size: number,
+  value: number,
+  maxS: number,
+) {
   const cx = size / 2;
   const cy = size / 2;
   const radius = size / 2 - WHEEL_PAD;
@@ -69,7 +78,7 @@ function drawWheel(ctx: CanvasRenderingContext2D, size: number, value: number) {
       }
       const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
       const h = (angle + 360) % 360;
-      const s = clamp01(dist / radius);
+      const s = clamp01(dist / radius) * maxS;
       const [r, g, b] = hsvToRgbBytes(h, s, value);
       data[i] = r;
       data[i + 1] = g;
@@ -82,7 +91,7 @@ function drawWheel(ctx: CanvasRenderingContext2D, size: number, value: number) {
 
 /**
  * Éditeur circulaire HSV (teinte × saturation).
- * La luminosité suit automatiquement le thème (tons foncés en light, clairs en dark).
+ * V et plafond de S suivent le thème (pastel en dark, plus profond en light).
  */
 export function CircularColorEditor({
   open,
@@ -94,17 +103,20 @@ export function CircularColorEditor({
   const titleId = useId();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const dragging = useRef(false);
-  const value = themeDefaultValue(theme);
+  const targetV = themeTargetValue(theme);
+  const maxS = themeMaxSaturation(theme);
 
   const [h, setH] = useState(210);
-  const [s, setS] = useState(0.7);
+  /** Saturation UI 0–1 (bord = maxS du thème). */
+  const [sNorm, setSNorm] = useState(0.7);
 
   useEffect(() => {
     if (!open) return;
-    const hsv = hexToHsv(initialHex);
+    const resolved = resolveVerseMarkColor(initialHex, theme);
+    const hsv = hexToHsv(resolved);
     setH(hsv.h);
-    setS(clamp01(hsv.s));
-  }, [open, initialHex]);
+    setSNorm(maxS > 0 ? clamp01(hsv.s / maxS) : 0);
+  }, [open, initialHex, theme, maxS]);
 
   useEffect(() => {
     if (!open) return;
@@ -112,8 +124,8 @@ export function CircularColorEditor({
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    drawWheel(ctx, WHEEL_SIZE, value);
-  }, [open, value]);
+    drawWheel(ctx, WHEEL_SIZE, targetV, maxS);
+  }, [open, targetV, maxS]);
 
   useEffect(() => {
     if (!open) return;
@@ -124,16 +136,18 @@ export function CircularColorEditor({
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  const hex = hsvToHex(h, s, value);
+  const hex = useMemo(
+    () => resolveVerseMarkColor(hsvToHex(h, clamp01(sNorm), 1), theme),
+    [h, sNorm, theme],
+  );
   const label = verseColorHueLabel(hex);
 
   const thumbStyle = (() => {
     const cx = WHEEL_SIZE / 2;
     const cy = WHEEL_SIZE / 2;
     const rad = (h * Math.PI) / 180;
-    /* Garde le centre du point dans le disque peint (échelle CSS via %). */
     const maxR = Math.max(0, RADIUS - 1);
-    const r = Math.min(clamp01(s), 1) * maxR;
+    const r = clamp01(sNorm) * maxR;
     const x = cx + Math.cos(rad) * r;
     const y = cy + Math.sin(rad) * r;
     return {
@@ -159,7 +173,7 @@ export function CircularColorEditor({
     const clamped = Math.min(dist, RADIUS);
     const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
     setH((angle + 360) % 360);
-    setS(clamped / RADIUS);
+    setSNorm(clamped / RADIUS);
   }
 
   function onPointerDown(event: ReactPointerEvent<HTMLDivElement>) {
