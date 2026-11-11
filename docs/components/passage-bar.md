@@ -17,16 +17,18 @@ Cartões (scroll picker, word-search, tools popover) e FABs partilham tokens em 
 |-------|--------|
 | `--bible-chrome-trigger-h` | `var(--mobile-touch)` — hit ≥ 44px (search, chip, ☰) |
 | `--bible-chrome-trigger-icon` | 20px dentro do hit target |
-| `--bible-chrome-trigger-border` / `-shadow` | Só no **chip** (superfície) |
-| Search / ☰ | `background: transparent`, `border: 0`; hover/on = wash leve + outline accent |
-| Chip `.is-open` | Superfície + outline accent; tipografia `--type-label-*` |
+| `--yv-chrome-surface` | Fill dos FABs (play idle / skips) — cinza `--surface` |
+| Search / ☰ | Ghost: sem fill; hover = wash; aberto = outline só |
+| Chip | `--yv-overlay-surface` (elevated) + `--yv-overlay-shadow` — primário no topo |
+| Painéis / popover | `--yv-overlay-surface` (elevated) + `--yv-overlay-shadow` |
 | `--bible-chrome-panel-radius` / `-pad` / `-gap` | Cartão overlay idêntico |
 | `--bible-chrome-panel-offset-y` | `var(--mobile-chrome-gap)` |
 | `--bible-chrome-panel-edge` | Fade inferior 4px nos dois painéis |
-| `--bible-chrome-fab-size` | `var(--mobile-touch)` — play + skips irmãos |
+| `--bible-chrome-fab-size` / `-border` / `-shadow` | Touch + hairline + sombra FAB (play/skips) |
+| Top bar | `border-bottom: var(--yv-separator)` |
 | `--bible-audio-play-size` / `--bible-fab-lift` | Play = touch; lift = `play + 12px` |
 
-Animação dos painéis: `opacity` + `translateY` (sem `scaleY`).
+Animação dos painéis: `opacity` + `translateY` (sem `scaleY`). Ver escala L0–L5 em [reader-surface.md](./reader-surface.md).
 
 ---
 

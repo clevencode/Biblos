@@ -8280,6 +8280,10 @@ ul.plan-yv-day-note-ref {
 }
 
 .bible-reader--yv {
+  /*
+   * Hierarquia: canvas (bg) → chrome (surface) → overlay (elevated+shadow) → inverse.
+   * Chip/FAB idle usam --yv-chrome-surface para não fundirem com o texto branco.
+   */
   --yv-bg: var(--bg);
   --yv-surface: var(--surface);
   --yv-text: var(--text);
@@ -8290,10 +8294,17 @@ ul.plan-yv-day-note-ref {
   --yv-chrome-ease: cubic-bezier(0.4, 0, 0.2, 1);
   --yv-chrome-ms: 240ms;
   --yv-dock-hide-y: calc(100% + 28px);
-  /* Painéis flutuantes (picker, menu tools, etc.) */
+  /* L1 chrome fill — distinto do canvas branco */
+  --yv-chrome-surface: var(--surface);
+  /* L2 hairline / separator — alinhados a --stroke-elevated / --line de marca */
+  --yv-hairline: var(--stroke-elevated);
+  --yv-separator: 1px solid color-mix(in srgb, var(--yv-line) 70%, transparent);
+  /* L3 Painéis flutuantes (picker, menu tools) — elevated + sombra */
   --yv-overlay-surface: var(--elevated, var(--surface, var(--panel)));
-  --yv-overlay-border: 1px solid color-mix(in srgb, var(--yv-text) 12%, transparent);
-  --yv-overlay-shadow: none;
+  --yv-overlay-border: var(--yv-hairline);
+  --yv-overlay-shadow:
+    0 1px 2px color-mix(in srgb, #000 5%, transparent),
+    0 6px 16px color-mix(in srgb, #000 7%, transparent);
   /* Scrim invisível — atenuação só no texto (igual menu hamburger). */
   --yv-overlay-passage-dim: 0.62;
   /* Stack chrome (só no leitor YV) */
@@ -8309,16 +8320,19 @@ ul.plan-yv-day-note-ref {
   --bible-z-tools-chrome: 24;
   --bible-z-tools-fab: 9;
   --bible-z-popover: 40;
-  /* FAB lecture audio — neutre (texte/surface), pas l’accent marque */
-  --yv-audio-fab-idle: var(--yv-overlay-surface);
-  --yv-audio-fab-idle-hover: color-mix(in srgb, var(--yv-text) 7%, var(--yv-overlay-surface));
-  --yv-audio-fab-idle-active: color-mix(in srgb, var(--yv-text) 11%, var(--yv-overlay-surface));
+  /* FAB lecture audio — chrome-surface (não branco do canvas) */
+  --yv-audio-fab-idle: var(--yv-chrome-surface);
+  --yv-audio-fab-idle-hover: color-mix(in srgb, var(--yv-text) 7%, var(--yv-chrome-surface));
+  --yv-audio-fab-idle-active: color-mix(in srgb, var(--yv-text) 11%, var(--yv-chrome-surface));
   --yv-audio-fab-idle-ring: color-mix(in srgb, var(--yv-line) 70%, var(--yv-text));
   --yv-audio-fab-active-bg: color-mix(in srgb, var(--yv-text) 88%, var(--yv-bg));
   --yv-audio-fab-active-fg: var(--yv-bg);
-  --yv-audio-fab-shadow: var(--yv-overlay-shadow);
+  /* Sombra sutil nos FABs (play / skips) */
+  --yv-audio-fab-shadow:
+    0 1px 2px color-mix(in srgb, var(--yv-text) 6%, transparent),
+    0 4px 14px color-mix(in srgb, var(--yv-text) 10%, transparent);
   --yv-audio-fab-focus: color-mix(in srgb, var(--yv-text) 40%, var(--yv-line));
-  --yv-audio-bar-bg: var(--yv-overlay-surface);
+  --yv-audio-bar-bg: var(--yv-chrome-surface);
   --yv-audio-bar-track: color-mix(in srgb, var(--yv-text) 12%, transparent);
   --yv-audio-bar-fill: color-mix(in srgb, var(--yv-text) 62%, var(--yv-line));
   --yv-audio-bar-thumb: var(--yv-text);
@@ -8383,7 +8397,7 @@ ul.plan-yv-day-note-ref {
   gap: 12px;
   padding: 6px 14px;
   background: var(--yv-bg);
-  border-bottom: 1px solid color-mix(in srgb, var(--yv-line) 70%, transparent);
+  border-bottom: var(--yv-separator);
   transform: translate3d(0, 0, 0);
   opacity: 1;
   transition:
@@ -8476,11 +8490,12 @@ html[data-passage-bar-panel="test"] {
   --bible-chrome-panel-offset-y: var(--mobile-chrome-gap, 10px);
   --bible-chrome-panel-edge: 4px;
   --bible-chrome-active-outline: 2px solid color-mix(in srgb, var(--accent) 35%, transparent);
-  --bible-chrome-trigger-border: 1px solid color-mix(in srgb, var(--yv-line) 72%, transparent);
-  --bible-chrome-trigger-shadow: 0 1px 2px color-mix(in srgb, var(--yv-text) 5%, transparent);
+  --bible-chrome-trigger-border: var(--yv-hairline);
+  --bible-chrome-trigger-shadow: none;
   --bible-chrome-fab-size: var(--mobile-touch, 44px);
-  --bible-chrome-fab-border: 1px solid color-mix(in srgb, var(--yv-line) 70%, transparent);
+  --bible-chrome-fab-border: var(--yv-hairline);
   --bible-chrome-fab-hover: color-mix(in srgb, var(--yv-text) 7%, transparent);
+  --bible-chrome-fab-shadow: var(--yv-audio-fab-shadow);
 }
 
 html[data-passage-bar-panel="test"] .app.is-bible-mode.is-narrow {
@@ -8536,10 +8551,15 @@ html[data-passage-bar-panel="test"] .bible-yv-passage-word-search-trigger:hover:
   background: color-mix(in srgb, var(--yv-text) 6%, transparent);
 }
 
+/* Aberto: só outline — sem fill (não competir com o chip) */
 html[data-passage-bar-panel="test"] .bible-yv-passage-word-search-trigger.is-on {
-  background: color-mix(in srgb, var(--yv-text) 6%, transparent);
+  background: transparent;
   outline: var(--bible-chrome-active-outline);
   outline-offset: 0;
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-passage-word-search-trigger.is-on:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--yv-text) 6%, transparent);
 }
 
 html[data-passage-bar-panel="test"] .bible-yv-passage-word-search-icon {
@@ -8813,8 +8833,8 @@ html[data-passage-bar-panel="test"] .bible-yv-top-passage-skips.is-float-br {
   padding: 0;
   border: var(--bible-chrome-fab-border);
   border-radius: 999px;
-  background: var(--yv-overlay-surface);
-  box-shadow: var(--yv-overlay-shadow);
+  background: var(--yv-chrome-surface);
+  box-shadow: var(--bible-chrome-fab-shadow);
   overflow: hidden;
 }
 
@@ -8983,15 +9003,19 @@ html[data-passage-bar-panel="test"] .bible-yv-top-passage-segments {
   min-height: 0;
 }
 
+/* Chip = hit target completo (--bible-chrome-trigger-h); fill até ao contorno */
 html[data-passage-bar-panel="test"] .app.is-bible-mode.is-narrow .bible-yv-passage-chip,
 html[data-passage-bar-panel="test"] .app.is-bible-mode.is-narrow .bible-yv-passage-chip.is-ref,
 html[data-passage-bar-panel="test"] .bible-yv-passage-chip,
 html[data-passage-bar-panel="test"] .bible-yv-passage-chip.is-ref {
-  min-height: 0;
-  max-height: 100%;
-  padding-block: 2px;
-  padding-inline: 8px 6px;
+  box-sizing: border-box;
+  height: var(--bible-chrome-trigger-h);
+  min-height: var(--bible-chrome-trigger-h);
+  max-height: var(--bible-chrome-trigger-h);
+  padding-block: 0;
+  padding-inline: 12px 8px;
   gap: 4px;
+  align-items: center;
 }
 
 html[data-passage-bar-panel="test"] .bible-yv-passage-chip-caret {
@@ -9022,10 +9046,11 @@ html[data-passage-bar-panel="test"] .bible-yv-passage-scroll-panel.is-open {
   transform: translateY(0);
 }
 
+/* Aberto: sem segundo pill no trilho — o chip já é o contorno opaco */
 html[data-passage-bar-panel="test"] .bible-yv-passage-roll.is-open .bible-yv-top-passage-bar.is-roll-head {
-  border-radius: 999px;
-  border: var(--yv-overlay-border);
-  border-bottom: var(--yv-overlay-border);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   box-shadow: none;
 }
 
@@ -9139,28 +9164,27 @@ html[data-passage-bar-panel="test"] .bible-yv-top-passage-bar.is-roll-chrome-act
   box-shadow: none;
 }
 
+/* Chip: fill + hairline só — sem sombra/halo (contorno opaco removido) */
 html[data-passage-bar-panel="test"] .bible-yv-passage-chip,
 html[data-passage-bar-panel="test"] .bible-yv-passage-chip.is-ref {
   background: var(--yv-overlay-surface);
   border: var(--bible-chrome-trigger-border);
-  box-shadow: var(--bible-chrome-trigger-shadow);
+  box-shadow: none;
   transition:
     background 0.18s ease,
-    border-color 0.18s ease,
-    box-shadow 0.18s ease;
+    border-color 0.18s ease;
 }
 
 html[data-passage-bar-panel="test"] .bible-yv-passage-chip:hover:not(:disabled):not(.is-hydrating) {
-  background: color-mix(in srgb, var(--yv-overlay-surface) 92%, var(--yv-text) 8%);
+  background: color-mix(in srgb, var(--yv-overlay-surface) 94%, var(--yv-text) 6%);
   border-color: color-mix(in srgb, var(--yv-line) 55%, var(--yv-text) 12%);
 }
 
 html[data-passage-bar-panel="test"] .bible-yv-passage-chip.is-open {
   background: var(--yv-overlay-surface);
-  border-color: color-mix(in srgb, var(--yv-line) 88%, var(--accent) 12%);
-  box-shadow: var(--bible-chrome-trigger-shadow);
-  outline: var(--bible-chrome-active-outline);
-  outline-offset: 0;
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--yv-line));
+  box-shadow: none;
+  outline: none;
 }
 
 html[data-passage-bar-panel="test"] .bible-yv-passage-chip-caret {
@@ -9183,7 +9207,7 @@ html[data-passage-bar-panel="test"] .bible-yv-top-passage-arrow:hover:not(:disab
   }
 }
 
-/* Play FAB: mesma borda suave que skips (família FAB) */
+/* Play FAB: chrome-surface + sombra (família skips) */
 html[data-passage-bar-panel="test"]
   .app.is-bible-mode.is-narrow
   .bible-yv-dock.is-play-only
@@ -9196,8 +9220,8 @@ html[data-passage-bar-panel="test"]
   min-height: var(--bible-chrome-fab-size);
   max-height: var(--bible-chrome-fab-size);
   border: var(--bible-chrome-fab-border);
-  background: var(--yv-overlay-surface);
-  box-shadow: var(--yv-overlay-shadow);
+  background: var(--yv-audio-fab-idle);
+  box-shadow: var(--bible-chrome-fab-shadow);
 }
 
 html[data-passage-bar-panel="test"]
@@ -9205,7 +9229,7 @@ html[data-passage-bar-panel="test"]
   .bible-yv-dock.is-play-only
   .bible-yv-audio-player
   .bible-yv-dock-play:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--yv-text) 7%, var(--yv-overlay-surface));
+  background: var(--yv-audio-fab-idle-hover);
 }
 
 html[data-passage-bar-panel="test"]
@@ -9214,6 +9238,17 @@ html[data-passage-bar-panel="test"]
   .bible-yv-audio-player
   .bible-yv-dock-play.is-playing {
   border-color: transparent;
+  background: var(--yv-audio-fab-active-bg);
+  color: var(--yv-audio-fab-active-fg);
+  box-shadow: var(--bible-chrome-fab-shadow);
+}
+
+html[data-passage-bar-panel="test"]
+  .app.is-bible-mode.is-narrow
+  .bible-yv-dock.is-play-only
+  .bible-yv-audio-player.is-expanded {
+  background: var(--yv-audio-bar-bg);
+  box-shadow: var(--bible-chrome-fab-shadow);
 }
 
 .bible-yv-top-passage-bar.is-compact {
@@ -9292,10 +9327,10 @@ html[data-passage-bar-panel="test"]
   .bible-yv-top-passage-bar.is-roll-head {
   width: fit-content;
   max-width: min(100%, 12.5rem);
-  border-radius: 999px;
-  border: var(--yv-overlay-border);
-  border-bottom: var(--yv-overlay-border);
-  background: var(--yv-overlay-surface);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .bible-yv-passage-scroll-panel {
