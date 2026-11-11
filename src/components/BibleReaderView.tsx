@@ -305,6 +305,7 @@ type BibleReaderViewProps = {
     verseEnd?: number | null;
     onPrev: () => void;
     onAdvance: () => void;
+    onAdvanceAfterNote?: () => void;
   } | null;
   /** Après création d’une VERSECARD (catalogue local). */
   onFlashcardCreated?: (card: Flashcard) => void;
@@ -559,7 +560,9 @@ export function BibleReaderView({
   const [historyOpen, setHistoryOpen] = useState(false);
   const [shareSheetOpen, setShareSheetOpen] = useState(false);
   const [shareMode, setShareMode] = useState<"verse" | "plan">("verse");
-  const [stageNoteOpen, setStageNoteOpen] = useState(false);
+  const [dayNoteOpen, setDayNoteOpen] = useState(false);
+  /** Fin d’étape / fin de plan → retour plans après la note. */
+  const [dayNoteReturnsToPlans, setDayNoteReturnsToPlans] = useState(false);
   const [toolsMenuOpen, setToolsMenuOpen] = useState(false);
   const toolsMenuRef = useRef<HTMLDivElement | null>(null);
   const overlayDismissSwallowRef = useRef(false);
@@ -1123,9 +1126,15 @@ export function BibleReaderView({
       }),
   );
 
-  function finishPlanStageNote() {
-    setStageNoteOpen(false);
-    onBack?.();
+  function finishPlanDayNote() {
+    const backToPlans = dayNoteReturnsToPlans;
+    setDayNoteOpen(false);
+    setDayNoteReturnsToPlans(false);
+    if (backToPlans) {
+      onBack?.();
+      return;
+    }
+    planReading?.onAdvanceAfterNote?.();
   }
 
   function planOrChapterSkip(delta: -1 | 1) {
@@ -1134,9 +1143,12 @@ export function BibleReaderView({
       if (delta < 0) {
         if (!planReading.isFirst) planReading.onPrev();
       } else {
-        const endOfStage = Boolean(planReading.isStageLast);
+        const returnToPlans = Boolean(
+          planReading.isStageLast || planReading.isLast,
+        );
         planReading.onAdvance();
-        if (endOfStage) setStageNoteOpen(true);
+        setDayNoteReturnsToPlans(returnToPlans);
+        setDayNoteOpen(true);
       }
       return;
     }
@@ -2486,7 +2498,7 @@ export function BibleReaderView({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- setReadingChrome is a render-local helper
   }, [active, bookId, chapterId]);
 
-  if (stageNoteOpen && planReading) {
+  if (dayNoteOpen && planReading) {
     return (
       <PlanStageNotePanel
         planId={planReading.planId}
@@ -2496,9 +2508,14 @@ export function BibleReaderView({
           "Plan"
         }
         jour={planReading.jour}
-        stageIndex={planReading.stageIndex}
-        stageName={planReading.stageName}
-        onDismiss={finishPlanStageNote}
+        lead={
+          planReading.isStageLast
+            ? "Étape terminée — ajoute une note personnelle (optionnel)."
+            : "Note du jour — ajoute une réflexion (optionnel)."
+        }
+        saveLabel="Enregistrer"
+        inputId="plan-reader-day-note"
+        onDismiss={finishPlanDayNote}
       />
     );
   }

@@ -8,7 +8,8 @@ import {
   latestPlanJour,
   planJourDate,
 } from "../domain/planCalendar";
-import { loadDayNote, saveDayNoteLocal } from "../domain/planDayNote";
+import { loadDayNote } from "../domain/planDayNote";
+import { PlanPersonalNotePanel } from "./PlanStageNotePanel";
 import {
   extractPassageRef,
   extractPassageRefs,
@@ -168,9 +169,6 @@ export function PlanWorkspacePanel({
   const [screen, setScreen] = useState<PlanScreen>("timeline");
   const [selectedJour, setSelectedJour] = useState(jumpJour);
   const [introSeen, setIntroSeen] = useState(false);
-  const [noteText, setNoteText] = useState("");
-  const [noteBusy, setNoteBusy] = useState(false);
-  const [noteMsg, setNoteMsg] = useState<string | null>(null);
   const [noteSaved, setNoteSaved] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const daysStripRef = useRef<HTMLDivElement>(null);
@@ -206,7 +204,6 @@ export function PlanWorkspacePanel({
   useEffect(() => {
     setIntroSeen(loadIntroSeen(plan.id));
     setScreen("timeline");
-    setNoteMsg(null);
   }, [plan.id]);
 
   useEffect(() => {
@@ -238,10 +235,7 @@ export function PlanWorkspacePanel({
   useEffect(() => {
     if (screen !== "dayNote") return;
     const local = loadDayNote(plan.id, selectedJour);
-    setNoteText(local?.text ?? "");
     setNoteSaved(Boolean(local?.text?.trim()));
-    setNoteMsg(null);
-    setNoteBusy(false);
   }, [screen, plan.id, selectedJour]);
 
   useEffect(() => {
@@ -378,19 +372,6 @@ export function PlanWorkspacePanel({
     openPassage();
   }
 
-  function saveDayNote(andClose: boolean) {
-    setNoteBusy(true);
-    setNoteMsg(null);
-    saveDayNoteLocal(plan.id, selectedJour, noteText);
-    setNoteBusy(false);
-    setNoteSaved(Boolean(noteText.trim()));
-    setNoteMsg("Note enregistrée sur cet appareil");
-    if (andClose) {
-      onClearDayNoteFocus?.();
-      setScreen("timeline");
-    }
-  }
-
   if (screen === "intro") {
     return (
       <div className="today-view panel-nota-content plan-yv plan-yv-devo">
@@ -449,75 +430,20 @@ export function PlanWorkspacePanel({
 
   if (screen === "dayNote" && hasDefinedChapter) {
     return (
-      <div className="today-view panel-nota-content plan-yv plan-yv-devo plan-yv-day-note">
-        <header className="plan-yv-devo-head">
-          <button
-            type="button"
-            className="flash-list-back"
-            onClick={leaveDayNote}
-            aria-label="Retour au plan"
-          >
-            <YvIcon name="chevron_left" className="flash-list-back-icon" />
-            Retour
-          </button>
-          <p className="plan-yv-devo-eyebrow">
-            Note du jour
-            {selectedIndex > 0 ? (
-              <>
-                {" "}
-                · Jour {selectedIndex} sur {scheduleTotal}
-              </>
-            ) : null}
-          </p>
-          <h2 className="plan-yv-devo-title">{planTitle}</h2>
-          {passageLabel ? (
-            <PassageRefsList
-              refs={passageRefs}
-              fallback={passageLabel}
-              className="plan-yv-day-note-ref muted"
-              onOpenRef={canOpenPassage ? openPassageAt : undefined}
-            />
-          ) : null}
-        </header>
-
-        <div className="plan-yv-devo-scroll">
-          <label className="plan-yv-day-note-label" htmlFor="plan-day-note">
-            Ta réflexion du jour
-          </label>
-          <textarea
-            id="plan-day-note"
-            className="plan-yv-day-note-input"
-            value={noteText}
-            onChange={(event) => {
-              setNoteText(event.target.value);
-              setNoteMsg(null);
-            }}
-            placeholder="Écris ta note du jour…"
-            rows={10}
-            disabled={noteBusy && !noteText}
-          />
-          {noteMsg ? <p className="plan-yv-day-note-msg muted">{noteMsg}</p> : null}
-        </div>
-
-        <footer className="plan-yv-devo-actions">
-          <button
-            type="button"
-            className="plan-yv-devo-mark"
-            disabled={noteBusy}
-            onClick={leaveDayNote}
-          >
-            Passer
-          </button>
-          <button
-            type="button"
-            className="plan-yv-devo-continue"
-            disabled={noteBusy}
-            onClick={() => saveDayNote(true)}
-          >
-            {noteBusy ? "Enregistrement…" : "Enregistrer"}
-          </button>
-        </footer>
-      </div>
+      <PlanPersonalNotePanel
+        planId={plan.id}
+        planTitle={planTitle}
+        jour={selectedJour}
+        lead="Note du jour — ajoute une réflexion (optionnel)."
+        saveLabel="Enregistrer"
+        inputId="plan-day-note"
+        onDismiss={() => {
+          setNoteSaved(
+            Boolean(loadDayNote(plan.id, selectedJour)?.text?.trim()),
+          );
+          leaveDayNote();
+        }}
+      />
     );
   }
 
@@ -527,11 +453,11 @@ export function PlanWorkspacePanel({
         <div className="plan-yv-head-row">
           <button
             type="button"
-            className="flash-list-back"
+            className="plan-yv-chrome-back"
             onClick={() => onLeave?.()}
             aria-label="Retour aux plans"
           >
-            <YvIcon name="chevron_left" className="flash-list-back-icon" />
+            <YvIcon name="chevron_left" className="plan-yv-chrome-back-icon" />
           </button>
           <h2 className="page-title">{planTitle}</h2>
           <button

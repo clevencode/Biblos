@@ -1,28 +1,31 @@
 import { useEffect, useState } from "react";
-import { YvIcon } from "../../../components/YvIcon";
 import { loadDayNote, saveDayNoteLocal } from "../domain/planDayNote";
 
-type PlanStageNotePanelProps = {
+export type PlanPersonalNotePanelProps = {
   planId: string;
   planTitle: string;
   jour: number;
-  stageIndex?: number;
-  stageName?: string;
-  /** Annuler / passer / après enregistrement → retour aux plans. */
+  /** Sous-titre sous le titre du plan. */
+  lead?: string;
+  /** Libellé du CTA principal. */
+  saveLabel?: string;
+  inputId?: string;
+  /** Passer / après enregistrement. */
   onDismiss: () => void;
 };
 
 /**
- * Après fin d’étape — note personnelle (passer ou enregistrer) puis retour plans.
+ * Note personnelle — UI partagée (fin d’étape + note du jour).
  */
-export function PlanStageNotePanel({
+export function PlanPersonalNotePanel({
   planId,
   planTitle,
   jour,
-  stageIndex,
-  stageName,
+  lead = "Étape terminée — ajoute une note personnelle (optionnel).",
+  saveLabel = "Ajouter la note",
+  inputId = "plan-personal-note",
   onDismiss,
-}: PlanStageNotePanelProps) {
+}: PlanPersonalNotePanelProps) {
   const [noteText, setNoteText] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -31,14 +34,10 @@ export function PlanStageNotePanel({
     setNoteText(existing?.text ?? "");
   }, [planId, jour]);
 
-  const stageLabel =
-    stageIndex != null
-      ? stageName?.trim()
-        ? `Étape ${stageIndex} · ${stageName.trim()}`
-        : `Étape ${stageIndex}`
-      : stageName?.trim() || "Étape terminée";
+  const canSaveNote = Boolean(noteText.trim()) && !busy;
 
   function saveAndFinish() {
+    if (!noteText.trim()) return;
     setBusy(true);
     try {
       saveDayNoteLocal(planId, jour, noteText);
@@ -53,44 +52,32 @@ export function PlanStageNotePanel({
       className="today-view panel-nota-content plan-yv plan-yv-devo plan-yv-day-note plan-yv-stage-note"
       role="dialog"
       aria-modal="true"
-      aria-labelledby="plan-stage-note-title"
+      aria-labelledby="plan-personal-note-title"
     >
       <header className="plan-yv-devo-head">
-        <button
-          type="button"
-          className="flash-list-back"
-          onClick={onDismiss}
-          aria-label="Annuler et retourner aux plans"
-        >
-          <YvIcon name="chevron_left" className="flash-list-back-icon" />
-          Annuler
-        </button>
-        <p className="plan-yv-devo-eyebrow">{stageLabel}</p>
-        <h2 id="plan-stage-note-title" className="plan-yv-devo-title">
+        <h2 id="plan-personal-note-title" className="plan-yv-devo-title">
           {planTitle}
         </h2>
-        <p className="muted plan-yv-stage-note-lead">
-          Étape terminée — ajoute une note personnelle (optionnel).
-        </p>
+        <p className="muted plan-yv-stage-note-lead">{lead}</p>
       </header>
 
-      <div className="plan-yv-devo-scroll">
-        <label className="plan-yv-day-note-label" htmlFor="plan-stage-note">
+      <div className="plan-yv-devo-scroll plan-yv-stage-note-body">
+        <label className="plan-yv-day-note-label" htmlFor={inputId}>
           Ta note
         </label>
         <textarea
-          id="plan-stage-note"
-          className="plan-yv-day-note-input"
+          id={inputId}
+          className="plan-yv-day-note-input plan-yv-stage-note-input"
           value={noteText}
           onChange={(event) => setNoteText(event.target.value)}
           placeholder="Écris ta réflexion…"
-          rows={10}
+          rows={5}
           disabled={busy}
           autoFocus
         />
       </div>
 
-      <footer className="plan-yv-devo-actions">
+      <footer className="plan-yv-devo-actions plan-yv-stage-note-actions">
         <button
           type="button"
           className="plan-yv-devo-mark"
@@ -102,12 +89,17 @@ export function PlanStageNotePanel({
         <button
           type="button"
           className="plan-yv-devo-continue"
-          disabled={busy}
+          disabled={!canSaveNote}
           onClick={saveAndFinish}
         >
-          {busy ? "Enregistrement…" : "Ajouter la note"}
+          {busy ? "Enregistrement…" : saveLabel}
         </button>
       </footer>
     </div>
   );
+}
+
+/** Alias — fin d’étape (lecteur Bible). */
+export function PlanStageNotePanel(props: PlanPersonalNotePanelProps) {
+  return <PlanPersonalNotePanel {...props} />;
 }

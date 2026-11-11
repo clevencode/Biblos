@@ -7188,6 +7188,12 @@ body {
 }
 
 .plan-yv {
+  /* Même ladder chrome que .bible-reader--yv (retour à côté du chip). */
+  --plan-chrome-trigger-h: var(--mobile-touch, 44px);
+  --plan-chrome-trigger-icon: 20px;
+  --plan-chrome-surface: var(--surface);
+  --plan-chrome-border: 1px solid color-mix(in srgb, var(--line) 92%, transparent);
+  --plan-chrome-hover: color-mix(in srgb, var(--plan-chrome-surface) 92%, var(--text) 8%);
   display: grid;
   gap: 16px;
   padding-bottom: 24px;
@@ -7205,17 +7211,38 @@ body {
   min-width: 0;
 }
 
-.plan-yv-head-row .flash-list-back {
+/* Pastille circulaire = bible-yv-passage-word-search-trigger (chevron_left). */
+.plan-yv-chrome-back {
+  box-sizing: border-box;
   flex: none;
-  justify-self: auto;
+  width: var(--plan-chrome-trigger-h);
+  height: var(--plan-chrome-trigger-h);
+  min-width: var(--plan-chrome-trigger-h);
+  min-height: var(--plan-chrome-trigger-h);
   margin: 0;
-  width: 36px;
-  height: 36px;
+  padding: 0;
   display: grid;
   place-items: center;
-  padding: 0;
+  border: var(--plan-chrome-border);
   border-radius: 999px;
-  font-size: 1.15rem;
+  background: var(--plan-chrome-surface);
+  color: var(--text);
+  box-shadow: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.plan-yv-chrome-back:hover {
+  background: var(--plan-chrome-hover);
+}
+
+.plan-yv-chrome-back-icon {
+  width: var(--plan-chrome-trigger-icon);
+  height: var(--plan-chrome-trigger-icon);
+  font-size: var(--plan-chrome-trigger-icon);
   line-height: 1;
 }
 
@@ -8107,12 +8134,19 @@ ul.plan-yv-day-note-ref {
   box-shadow: 0 6px 18px color-mix(in srgb, var(--text) 12%, transparent);
 }
 
-.plan-yv-devo-continue:hover {
+.plan-yv-devo-continue:hover:not(:disabled) {
   filter: brightness(1.05);
 }
 
-.plan-yv-devo-continue:active {
+.plan-yv-devo-continue:active:not(:disabled) {
   transform: translateY(1px);
+}
+
+.plan-yv-devo-continue:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+  box-shadow: none;
+  filter: none;
 }
 
 .plan-yv-day-note-ref {
@@ -12027,15 +12061,111 @@ html[data-colortest*="BiblePassageChip:red"] .bible-yv-passage-chip {
   font-weight: 550;
 }
 
+/* Note de fin d’étape : tout visible dans le viewport (header + champ + 2 CTA). */
 .plan-yv-stage-note {
-  min-height: 100%;
+  position: fixed;
+  inset: 0;
+  z-index: 40;
   box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  max-height: 100dvh;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding-top: max(12px, env(safe-area-inset-top, 0px));
+  padding-left: max(var(--mobile-gutter, 16px), env(safe-area-inset-left, 0px));
+  padding-right: max(var(--mobile-gutter, 16px), env(safe-area-inset-right, 0px));
+  padding-bottom: 0;
+}
+
+.plan-yv-stage-note .plan-yv-devo-head {
+  flex: 0 0 auto;
+  gap: 4px;
+  margin: 0;
+  padding-bottom: 10px;
+}
+
+.plan-yv-stage-note .plan-yv-devo-eyebrow {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  text-transform: none;
+  letter-spacing: -0.01em;
+  font-size: 0.78rem;
+  line-height: 1.3;
+}
+
+.plan-yv-stage-note .plan-yv-devo-title {
+  font-size: clamp(1.15rem, 4.5vw, 1.35rem);
+  line-height: 1.2;
 }
 
 .plan-yv-stage-note-lead {
-  margin: 4px 0 0;
-  font-size: 0.9rem;
+  margin: 2px 0 0;
+  font-size: 0.85rem;
   line-height: 1.35;
+}
+
+.plan-yv-stage-note-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 0 12px;
+  overflow: hidden;
+}
+
+.plan-yv-stage-note-body .plan-yv-day-note-label {
+  flex: none;
+  margin: 0;
+}
+
+.plan-yv-stage-note-input {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 7rem;
+  max-height: none;
+  height: auto;
+  resize: none;
+  /* Un seul contour (évite border + outline au focus). */
+  border: 1px solid color-mix(in srgb, var(--yv-text, var(--text)) 18%, transparent);
+  outline: none;
+  box-shadow: none;
+}
+
+.plan-yv-stage-note-input:focus,
+.plan-yv-stage-note-input:focus-visible {
+  outline: none;
+  box-shadow: none;
+  border-color: color-mix(in srgb, var(--accent, #3b82f6) 55%, transparent);
+}
+
+.plan-yv-stage-note-actions {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: 8px;
+  margin: 0 calc(-1 * max(var(--mobile-gutter, 16px), env(safe-area-inset-left, 0px)))
+    0 calc(-1 * max(var(--mobile-gutter, 16px), env(safe-area-inset-right, 0px)));
+  padding: 10px max(var(--mobile-gutter, 16px), env(safe-area-inset-left, 0px))
+    calc(10px + env(safe-area-inset-bottom, 0px))
+    max(var(--mobile-gutter, 16px), env(safe-area-inset-right, 0px));
+}
+
+.plan-yv-stage-note-actions .plan-yv-devo-mark,
+.plan-yv-stage-note-actions .plan-yv-devo-continue {
+  min-height: 44px;
+  width: 100%;
+}
+
+@media (max-width: 360px) {
+  .plan-yv-stage-note-actions {
+    grid-template-columns: 1fr;
+  }
 }
 
 .app.is-bible-mode.is-narrow .bible-yv-dock.is-floating.is-play-only .bible-yv-dock-play {
