@@ -9,6 +9,25 @@
 
 Documento do **estado actual** da barra após o fluxo `test`: chip dropdown, pesquisa desacoplada (livros vs palavras), sem passo versículo automático após capítulo, setas no canto inferior direito.
 
+### Shell UI partilhado (chrome)
+
+Cartões (scroll picker, word-search, tools popover) e FABs partilham tokens em `html[data-passage-bar-panel="test"]`. No topo, **modern UI**: search e hamburger são **ghost** (sem pill); só o **chip** traz superfície. Tamanhos alinhados à lógica mobile (`--mobile-touch`, `--mobile-chrome-gap`).
+
+| Token / regra | Papel |
+|-------|--------|
+| `--bible-chrome-trigger-h` | `var(--mobile-touch)` — hit ≥ 44px (search, chip, ☰) |
+| `--bible-chrome-trigger-icon` | 20px dentro do hit target |
+| `--bible-chrome-trigger-border` / `-shadow` | Só no **chip** (superfície) |
+| Search / ☰ | `background: transparent`, `border: 0`; hover/on = wash leve + outline accent |
+| Chip `.is-open` | Superfície + outline accent; tipografia `--type-label-*` |
+| `--bible-chrome-panel-radius` / `-pad` / `-gap` | Cartão overlay idêntico |
+| `--bible-chrome-panel-offset-y` | `var(--mobile-chrome-gap)` |
+| `--bible-chrome-panel-edge` | Fade inferior 4px nos dois painéis |
+| `--bible-chrome-fab-size` | `var(--mobile-touch)` — play + skips irmãos |
+| `--bible-audio-play-size` / `--bible-fab-lift` | Play = touch; lift = `play + 12px` |
+
+Animação dos painéis: `opacity` + `translateY` (sem `scaleY`).
+
 ---
 
 ## Resumo visual (narrow / free reading)
@@ -25,9 +44,9 @@ Documento do **estado actual** da barra após o fluxo `test`: chip dropdown, pes
 
 | Peça | Componente / render | Papel |
 |------|---------------------|--------|
-| Ícone search | `bible-yv-passage-word-search-trigger` | Abre painel de **palavras** |
-| Chip título | `BiblePassageChip` (`variant="ref"`) | Abre roll de **livros/capítulos** |
-| Menu | `renderTopToolsMenu("header")` | Ferramentas Bible (activo) |
+| Ícone search | `bible-yv-passage-word-search-trigger` (ghost) | Abre painel de **palavras** |
+| Chip título | `BiblePassageChip` (`variant="ref"`, superfície) | Abre roll de **livros/capítulos** |
+| Menu | `renderTopToolsMenu("header")` (ghost) | Ferramentas Bible (activo) |
 | Setas capítulo | `renderPassageChapterSkips` + `is-float-br` | Capítulo anterior/seguinte |
 
 ---
@@ -39,8 +58,8 @@ Documento do **estado actual** da barra após o fluxo `test`: chip dropdown, pes
 | **UI** | Campo em `BiblePassageScrollPicker` (passo `book`) | `BiblePassageWordSearchPanel` |
 | **Query state** | `bookSearchQuery` | `wordSearchQuery` |
 | **Sessão scroll** | `discoverySession` | `wordDiscoverySession` |
-| **Hook** | `usePassageDiscovery(..., "books")` | `usePassageDiscovery(..., "full")` |
-| **Scope** | Só títulos + saltos de referência | Conteúdo (API) + expansão de versículos |
+| **Hook** | `usePassageDiscovery(..., "books")` | `useWordPassageSearch` |
+| **Scope** | Só títulos + saltos de referência | Conteúdo (API) → lista flat de passagens |
 | **Placeholder** | «Livre ou référence…» | «Mot ou expression…» |
 
 Flag: `passageDiscoverySplitSearch()` em `src/bible/passageDiscoveryFlow.ts`  
@@ -56,9 +75,9 @@ flowchart LR
   C -->|toggle| R[passage roll]
   R --> P[BiblePassageScrollPicker book]
   P -->|scope books| D1[usePassageDiscovery books]
-  W -->|scope full| D2[usePassageDiscovery full]
+  W --> D2[useWordPassageSearch]
   D1 --> L1[DiscoveryList sem verse expand]
-  D2 --> L2[DiscoveryList com verse expand]
+  D2 --> L2[Lista flat ref + snippet]
 ```
 
 Os dois overlays **excluem-se**: abrir search fecha o picker; abrir o chip fecha o search.
@@ -101,16 +120,17 @@ Com layout `test`, a barra **mantém** o mesmo chrome visual aberto/fechado (set
 |-------|--------|
 | **Trigger** | Botão à esquerda do chip (cluster `.bible-yv-passage-chrome-cluster`) |
 | **Painel** | `src/components/BiblePassageWordSearchPanel.tsx` |
-| **Lista** | Reutiliza `BiblePassageDiscoveryList` + `BiblePassageDiscoveryBookRow` |
-| **Doc discovery** | [passage-discovery.md](./passage-discovery.md) |
+| **Lista** | Lista plana de passagens (ref + snippet) + `WordSearchSkeleton` |
+| **Hook** | `useWordPassageSearch` → `searchVersesForVersion` (limit 40) |
+| **Chrome** | Mesmo shell que o scroll picker (`--bible-chrome-panel-*`) |
 
-### Estado em `BibleReaderView`
+### Estado em `BibleReaderView` / `usePassageBarController`
 
 | Estado | Função |
 |--------|--------|
 | `wordSearchOpen` | Overlay aberto |
 | `wordSearchQuery` | Texto do campo palavras |
-| `wordDiscoverySession` | Scroll / livro expandido / âncora USFM |
+| `wordDiscoverySession` | Scroll da lista de hits |
 | `toggleWordSearch` / `closeWordSearch` | Abertura exclusão mútua com picker |
 
 ### Chrome de superfície
@@ -161,7 +181,8 @@ Quando `discoveryBooksOnly` / scope `"books"`:
 | Skips icons | `src/bible/passageBarSkipIcons.ts` |
 | Skip verse step | `src/bible/passagePickerFlow.ts` |
 | Chrome overlays | `src/bible/viewState/readerSurfaceChrome.ts` |
-| Estilos | `src/index.css` — `html[data-passage-bar-panel="test"]`, `.bible-yv-passage-word-search-*`, `.bible-yv-top-passage-skips.is-float-br` |
+| Estilos | `src/index.css` — tokens `--bible-chrome-*`, `.bible-yv-passage-word-search-*`, `.bible-yv-top-passage-skips.is-float-br` |
+| Skeleton search | `src/components/WordSearchSkeleton.tsx` |
 
 ---
 
@@ -175,8 +196,8 @@ flowchart TD
   D --> E[Escolher livro → capítulos]
   E --> F[Escolher capítulo → fecha roll]
   B -->|search| G[Painel palavras]
-  G --> H[API searchVerses + expand livros]
-  H --> I[Toque versículo → loadChapter + fecha]
+  G --> H[API searchVerses → lista flat]
+  H --> I[Toque passagem → loadChapter + fecha]
   B -->|‹ › FAB| J[Capítulo adjacente]
 ```
 

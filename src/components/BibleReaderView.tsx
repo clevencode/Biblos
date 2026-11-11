@@ -117,6 +117,20 @@ const FONT_MAX = 28;
 const FONT_DEFAULT = 19;
 const FONT_STEP = 0.5;
 
+type BibleFontFamily = "serif" | "sans";
+
+const BIBLE_FONT_FAMILIES: readonly {
+  id: BibleFontFamily;
+  label: string;
+}[] = [
+  { id: "serif", label: "Serif" },
+  { id: "sans", label: "Sans" },
+];
+
+function isBibleFontFamily(value: unknown): value is BibleFontFamily {
+  return value === "serif" || value === "sans";
+}
+
 function clampFontSize(n: number) {
   const stepped = Math.round(n / FONT_STEP) * FONT_STEP;
   return Math.min(FONT_MAX, Math.max(FONT_MIN, stepped));
@@ -246,6 +260,7 @@ type ReaderPrefs = {
   bookId?: string;
   chapterId?: string;
   fontSize?: number;
+  fontFamily?: BibleFontFamily;
   textVersion?: BibleTextVersionId;
 };
 
@@ -514,6 +529,9 @@ export function BibleReaderView({
     const n = Number(prefs.fontSize);
     return Number.isFinite(n) ? clampFontSize(n) : FONT_DEFAULT;
   });
+  const [fontFamily, setFontFamily] = useState<BibleFontFamily>(() =>
+    isBibleFontFamily(prefs.fontFamily) ? prefs.fontFamily : "serif",
+  );
   const [narrowChrome, setNarrowChrome] = useState(false);
   const [cardBusy, setCardBusy] = useState(false);
   const [cardMsg, setCardMsg] = useState<string | null>(null);
@@ -941,13 +959,13 @@ export function BibleReaderView({
   }, [catalogViewState.status, setCatalogHydrating, setCatalogLocalReady]);
 
   useEffect(() => {
-    const base = { ...readPrefs(), fontSize, textVersion };
+    const base = { ...readPrefs(), fontSize, fontFamily, textVersion };
     if (isUsfmBookId(bookId)) {
       writePrefs({ ...base, bookId, chapterId });
       return;
     }
     writePrefs(base);
-  }, [bookId, chapterId, fontSize, textVersion]);
+  }, [bookId, chapterId, fontSize, fontFamily, textVersion]);
 
   useEffect(() => {
     setChapterMarks(loadChapterMarks(bookId, chapterId));
@@ -1875,7 +1893,14 @@ export function BibleReaderView({
     if (next === textVersion) return;
     stopBibleAudio();
     setTextVersion(next);
-    writePrefs({ ...readPrefs(), textVersion: next, bookId, chapterId, fontSize });
+    writePrefs({
+      ...readPrefs(),
+      textVersion: next,
+      bookId,
+      chapterId,
+      fontSize,
+      fontFamily,
+    });
     if (next === "ht98") {
       setHtCatalogLoading(true);
       setHtCatalogError(null);
@@ -2021,6 +2046,28 @@ export function BibleReaderView({
                 <span>Historique</span>
               </button>
             ) : null}
+            <div
+              className="bible-yv-tools-version bible-yv-tools-font-family"
+              role="group"
+              aria-label="Police du texte"
+            >
+              <span className="bible-yv-tools-version-label">Police</span>
+              <div className="bible-yv-tools-version-options">
+                {BIBLE_FONT_FAMILIES.map((family) => (
+                  <button
+                    key={family.id}
+                    type="button"
+                    className={`bible-yv-tools-version-chip${
+                      fontFamily === family.id ? " is-on" : ""
+                    }`}
+                    aria-pressed={fontFamily === family.id}
+                    onClick={() => setFontFamily(family.id)}
+                  >
+                    {family.label}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div className="bible-yv-tools-font" role="group" aria-label="Taille du texte">
               <span className="bible-yv-tools-font-label">Texte</span>
               <div className="bible-yv-font">
@@ -2331,7 +2378,7 @@ export function BibleReaderView({
   return (
     <section
       ref={readerRef}
-      className={`bible-reader bible-reader--yv${hideChrome ? " is-chrome-hidden" : ""}${audioPlaying ? " is-audio-playing" : ""}${showCreateCard ? " has-verse-actions" : ""}${shareSheetOpen ? " is-share-open" : ""}${headCompact ? " is-head-compact" : ""}${surfaceChrome.rootClassPassageRollOpen ? " is-passage-roll-open" : ""}${compactToolsMenu ? " is-compact-tools" : ""}${toolsMenuOpen ? " is-tools-menu-open" : ""}`}
+      className={`bible-reader bible-reader--yv${hideChrome ? " is-chrome-hidden" : ""}${audioPlaying ? " is-audio-playing" : ""}${showCreateCard ? " has-verse-actions" : ""}${shareSheetOpen ? " is-share-open" : ""}${headCompact ? " is-head-compact" : ""}${surfaceChrome.rootClassPassageRollOpen ? " is-passage-roll-open" : ""}${compactToolsMenu ? " is-compact-tools" : ""}${toolsMenuOpen ? " is-tools-menu-open" : ""}${fontFamily === "sans" ? " is-font-sans" : " is-font-serif"}`}
       style={{ ["--bible-font-size" as string]: `${fontSize}px` }}
       onKeyDown={(event) => {
         if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement) {

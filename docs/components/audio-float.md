@@ -67,6 +67,16 @@ Classes no `footer`:
 
 `aria-hidden`/`inert` no dock em modo plano com chrome escondido.
 
+### Família FAB (layout `test`)
+
+No layout `data-passage-bar-panel="test"`, o play (canto inferior esquerdo) e as setas de capítulo (`.bible-yv-top-passage-skips.is-float-br`, canto inferior direito) partilham:
+
+- `--bible-chrome-fab-size` (= `--bible-audio-play-size`, 46px)
+- superfície idle `--yv-overlay-surface` + `--bible-chrome-fab-border`
+- hover wash `--bible-chrome-fab-hover`
+
+O play activo continua invertido (`--yv-audio-fab-active-*`); o strip expandido só no BL.
+
 ---
 
 ## Acessibilidade
