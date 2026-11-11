@@ -83,7 +83,11 @@ import {
   syncBibleAudioControls,
 } from "../bibleAudioControls";
 import { createVerseFlashcard, verseCardId } from "../verseCard";
-import { formatSelectedVersesForShare } from "../shareVerse";
+import {
+  buildShareText,
+  formatSelectedVersesForShare,
+  sharePlainText,
+} from "../shareVerse";
 import {
   clearOfflineBible,
   downloadOfflineBible,
@@ -3024,8 +3028,22 @@ export function BibleReaderView({
                 className="bible-yv-chip bible-share-verse"
                 disabled={!canShareVerse}
                 onClick={() => {
-                  setShareMode("verse");
-                  setShareSheetOpen(true);
+                  void (async () => {
+                    const text = buildShareText(shareRefLabel, shareVerseText, "");
+                    const result = await sharePlainText({
+                      title: shareRefLabel || "Biblos",
+                      text,
+                    });
+                    if (result.ok) {
+                      setCardMsg(
+                        result.method === "clipboard" ? "Texte copié" : null,
+                      );
+                      return;
+                    }
+                    if (!result.cancelled) {
+                      setCardMsg(result.error || "Partage impossible");
+                    }
+                  })();
                 }}
               >
                 <YvIcon name="ios_share" className="bible-verse-cta-icon" />

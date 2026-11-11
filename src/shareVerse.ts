@@ -339,6 +339,46 @@ export async function copyVerseText(input: {
   return copyShareCaption({ mode: "verse", ...input });
 }
 
+/**
+ * Partage texte vers d’autres apps (Web Share API).
+ * Fallback : copie presse-papiers.
+ */
+export async function sharePlainText(input: {
+  title: string;
+  text: string;
+  url?: string;
+}): Promise<ShareVerseResult> {
+  const title = String(input.title || "").trim() || "Biblos";
+  const text = String(input.text || "").trim();
+  const url = String(input.url || "").trim();
+  if (!text && !url) {
+    return { ok: false, error: "Rien à partager" };
+  }
+
+  if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+    try {
+      const candidates: ShareData[] = [];
+      if (text && url) candidates.push({ title, text, url });
+      if (text) candidates.push({ title, text });
+      if (url) candidates.push({ title, url });
+      const data = candidates.find((item) => canShareData(item));
+      if (data) {
+        await navigator.share(data);
+        return { ok: true, method: "share" };
+      }
+    } catch (err) {
+      const name = err instanceof DOMException ? err.name : "";
+      if (name === "AbortError") {
+        return { ok: false, cancelled: true, error: "Partage annulé" };
+      }
+      /* fall through → clipboard */
+    }
+  }
+
+  const fallback = [text, url].filter(Boolean).join("\n\n");
+  return writeTextToClipboard(fallback);
+}
+
 export type ShareVersePayload = {
   title: string;
   text?: string;
