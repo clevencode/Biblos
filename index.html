@@ -9,12 +9,12 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="alternate icon" type="image/png" href="/favicon.png" />
     <link rel="apple-touch-icon" href="/icon-512.png" />
-    <meta name="theme-color" content="#FFFFFF" />
+    <meta name="theme-color" content="#0d1117" />
     <meta name="application-name" content="Biblos" />
     <meta name="apple-mobile-web-app-title" content="Biblos" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="format-detection" content="telephone=no" />
     <meta name="description" content="Prototype Biblos — non destiné à l’indexation publique." />
     <script>
@@ -46,7 +46,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Biblos</title>
     <style>
-      html, body, #root { margin: 0; height: 100%; background: var(--bg, #fff); color: var(--text, #0d1117); }
+      /* Ouverture : fond sombre par défaut (évite flash blanc avant le boot JS). */
+      html, body, #root { margin: 0; height: 100%; background: #0d1117; color: #ffffff; }
+      html[data-theme="light"], html[data-theme="light"] body, html[data-theme="light"] #root {
+        background: #ffffff;
+        color: #0d1117;
+      }
       .boot-shell {
         min-height: 100%;
         display: grid;
@@ -54,10 +59,16 @@
         gap: 6px;
         font-family: Outfit, "Avenir Next", "Segoe UI", sans-serif;
         text-align: center;
+        background: #0d1117;
+        color: #ffffff;
+      }
+      html[data-theme="light"] .boot-shell {
+        background: #ffffff;
+        color: #0d1117;
       }
       .boot-brand { margin: 0; font-size: 1.4rem; font-weight: 700; letter-spacing: -0.03em; }
-      .boot-muted { margin: 0; color: #6b7280; font-size: 0.9rem; }
-      html[data-theme="dark"] .boot-muted { color: #9ca3af; }
+      .boot-muted { margin: 0; color: #9ca3af; font-size: 0.9rem; }
+      html[data-theme="light"] .boot-muted { color: #6b7280; }
     </style>
   </head>
   <body>

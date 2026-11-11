@@ -14,15 +14,26 @@ import { parsePassageVerseRange, passageFocusRef } from "../../domain/passageFoc
 import type { ReadingPlan } from "../../domain/types";
 
 export type PlanReadingChrome = {
+  planId: string;
   planName: string;
   planShareTitle?: string;
   planDescription?: string;
   planShareId?: string | null;
   planMeta?: string;
   label: string;
+  jour: number;
   focusRef: string;
   isFirst: boolean;
   isLast: boolean;
+  /** Dernier jour de l’étape courante — le skip › devient ✓. */
+  isStageLast: boolean;
+  stageName?: string;
+  /** Index 1-based de l’étape parmi les étapes avec jours. */
+  stageIndex: number;
+  stageCount: number;
+  /** Jour 1-based dans l’étape courante. */
+  stageDayIndex: number;
+  stageDayCount: number;
   stepIndex: number;
   stepCount: number;
   verseStart?: number | null;
@@ -94,7 +105,10 @@ export function usePlanReadingSession({ onNavigate }: UsePlanReadingSessionOptio
     if (!step) return null;
     const parts = parseUsfmParts(step.passage);
     const range = parsePassageVerseRange(step.passage);
-    const stageCount = activePlan.etapes.filter((e) => e.jours.length).length;
+    const stageOrders = [
+      ...new Set(steps.map((s) => s.etapeOrder)),
+    ].sort((a, b) => a - b);
+    const stageCount = stageOrders.length;
     const dayCount = steps.length || activePlan.totalDays;
     const metaParts: string[] = [];
     if (dayCount > 0) {
@@ -104,17 +118,35 @@ export function usePlanReadingSession({ onNavigate }: UsePlanReadingSessionOptio
       metaParts.push(`${stageCount} étape${stageCount > 1 ? "s" : ""}`);
     }
     const meta = metaParts.join(" · ");
+    const nextStep = steps[stepIndex + 1];
+    const isStageLast =
+      !nextStep || nextStep.etapeOrder !== step.etapeOrder;
+    const stageIndex = Math.max(1, stageOrders.indexOf(step.etapeOrder) + 1);
+    const stageSteps = steps.filter((s) => s.etapeOrder === step.etapeOrder);
+    const stageDayIndex = Math.max(
+      1,
+      stageSteps.findIndex((s) => s.jour === step.jour) + 1,
+    );
+    const stageDayCount = stageSteps.length;
 
     return {
+      planId: activePlan.id,
       planName: activePlan.title,
       planShareTitle: activePlan.title,
       planDescription: activePlan.description,
       planShareId: activePlan.id,
       planMeta: meta,
       label: `Jour ${step.jour} · ${step.passage}`,
+      jour: step.jour,
       focusRef: passageFocusRef(step.passage),
       isFirst: stepIndex <= 0,
       isLast: stepIndex >= steps.length - 1,
+      isStageLast,
+      stageName: step.etapeName || undefined,
+      stageIndex,
+      stageCount,
+      stageDayIndex,
+      stageDayCount,
       stepIndex,
       stepCount: steps.length,
       verseStart: range.verseStart ?? parts.verse ?? null,
@@ -125,6 +157,8 @@ export function usePlanReadingSession({ onNavigate }: UsePlanReadingSessionOptio
       },
       onAdvance: () => {
         markJourComplete(activePlan.id, step.jour);
+        // Fin d’étape : rester sur le pas — l’UI ouvre la note puis revient aux plans.
+        if (isStageLast) return;
         if (stepIndex < steps.length - 1) {
           goToStep(activePlan, stepIndex + 1, steps);
         }

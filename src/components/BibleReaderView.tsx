@@ -68,7 +68,6 @@ import {
   passageSchemaCssVars,
   pickerVerseNumberOptions,
   planReaderOnStep,
-  planStepProgressLabel,
   readerSurfaceChrome,
   showOfflineChapterGate,
 } from "../bible/viewState";
@@ -77,6 +76,7 @@ import { usePassageBarController } from "../hooks/usePassageBarController";
 import { useAppReadiness } from "../context/AppReadinessContext";
 import { CircularColorEditor } from "./CircularColorEditor";
 import { ACTIVITY_UI_ENABLED } from "../activityLog";
+import { PlanStageNotePanel } from "../features/reading-plans/presentation/PlanStageNotePanel";
 import {
   bindBibleAudioControls,
   clearBibleAudioControls,
@@ -275,6 +275,7 @@ type BibleReaderViewProps = {
   onBack?: () => void;
   /** Mode lecture de plan : un pas = un chapitre, › = chapitre suivant. */
   planReading?: {
+    planId: string;
     /** Nom affiché en haut (thème / titre du plan). */
     planName: string;
     /** Titre du plan pour Partager (thème). */
@@ -286,10 +287,18 @@ type BibleReaderViewProps = {
     /** Ex. « 40 jours ». */
     planMeta?: string;
     label: string;
+    jour: number;
     /** Référence du pas courant — pour détecter une navigation hors plan. */
     focusRef: string;
     isFirst: boolean;
     isLast: boolean;
+    /** Dernier jour de l’étape — skip › → ✓. */
+    isStageLast?: boolean;
+    stageName?: string;
+    stageIndex?: number;
+    stageCount?: number;
+    stageDayIndex?: number;
+    stageDayCount?: number;
     stepIndex: number;
     stepCount: number;
     verseStart?: number | null;
@@ -550,6 +559,7 @@ export function BibleReaderView({
   const [historyOpen, setHistoryOpen] = useState(false);
   const [shareSheetOpen, setShareSheetOpen] = useState(false);
   const [shareMode, setShareMode] = useState<"verse" | "plan">("verse");
+  const [stageNoteOpen, setStageNoteOpen] = useState(false);
   const [toolsMenuOpen, setToolsMenuOpen] = useState(false);
   const toolsMenuRef = useRef<HTMLDivElement | null>(null);
   const overlayDismissSwallowRef = useRef(false);
@@ -1103,26 +1113,80 @@ export function BibleReaderView({
     setPickerOpen(false);
   }
 
+  const onPlanStep = Boolean(
+    planReading &&
+      planReaderOnStep({
+        planFocusRef: planReading.focusRef,
+        planLabel: planReading.label,
+        bookId,
+        chapterId,
+      }),
+  );
+
+  function finishPlanStageNote() {
+    setStageNoteOpen(false);
+    onBack?.();
+  }
+
+  function planOrChapterSkip(delta: -1 | 1) {
+    if (pickerOpen) setPassageStep("chapter");
+    if (planReading && onPlanStep) {
+      if (delta < 0) {
+        if (!planReading.isFirst) planReading.onPrev();
+      } else {
+        const endOfStage = Boolean(planReading.isStageLast);
+        planReading.onAdvance();
+        if (endOfStage) setStageNoteOpen(true);
+      }
+      return;
+    }
+    goAdjacent(delta);
+  }
+
   function renderPassageChapterSkips() {
     const chapterSkipIcons = passageBarSkipIcons();
+    const planSkips = Boolean(planReading && onPlanStep);
+    const stageComplete = Boolean(planSkips && planReading?.isStageLast);
     const renderChapterSkipButton = (delta: -1 | 1) => {
       const isPrev = delta === -1;
+      const planDisabled = planSkips
+        ? (isPrev ? planReading!.isFirst : false) || presentation.inFlight
+        : (isPrev ? !canPrev : !canNext) || pickerChrome.controlsDisabled;
+      const nextIsCheck = !isPrev && stageComplete;
+      const stageTitle = planReading?.stageName?.trim();
       return (
         <button
           key={isPrev ? "prev" : "next"}
           type="button"
-          className="bible-yv-top-passage-arrow"
-          onClick={() => {
-            if (pickerOpen) setPassageStep("chapter");
-            goAdjacent(delta);
-          }}
-          disabled={
-            (isPrev ? !canPrev : !canNext) || pickerChrome.controlsDisabled
+          className={`bible-yv-top-passage-arrow${nextIsCheck ? " is-stage-complete" : ""}`}
+          onClick={() => planOrChapterSkip(delta)}
+          disabled={planDisabled}
+          aria-label={
+            planSkips
+              ? isPrev
+                ? "Passage précédent du plan"
+                : stageComplete
+                  ? planReading!.isLast
+                    ? stageTitle
+                      ? `Terminer l’étape · ${stageTitle}`
+                      : "Terminer la dernière étape"
+                    : stageTitle
+                      ? `Terminer l’étape · ${stageTitle}`
+                      : "Terminer l’étape"
+                  : "Passage suivant du plan"
+              : isPrev
+                ? "Chapitre précédent"
+                : "Chapitre suivant"
           }
-          aria-label={isPrev ? "Chapitre précédent" : "Chapitre suivant"}
         >
           <YvIcon
-            name={isPrev ? chapterSkipIcons.previous : chapterSkipIcons.next}
+            name={
+              isPrev
+                ? chapterSkipIcons.previous
+                : nextIsCheck
+                  ? "check"
+                  : chapterSkipIcons.next
+            }
             className="bible-yv-top-passage-arrow-icon"
           />
         </button>
@@ -1131,8 +1195,8 @@ export function BibleReaderView({
     const floatSkips = isPassageBarPanelCompactTopbar();
     return (
       <div
-        className={`bible-yv-top-passage-skips${floatSkips ? " is-float-br" : ""}`.trim()}
-        aria-label="Chapitres"
+        className={`bible-yv-top-passage-skips${floatSkips ? " is-float-br" : ""}${stageComplete ? " is-stage-end" : ""}`.trim()}
+        aria-label={planSkips ? "Progression du plan" : "Chapitres"}
       >
         {renderChapterSkipButton(-1)}
         {renderChapterSkipButton(1)}
@@ -1556,18 +1620,6 @@ export function BibleReaderView({
   const locationLabel = selection?.length
     ? `${bookTitle} ${chapterId}.${formatVerseList(selection)}`
     : `${bookTitle} ${chapterId}`;
-  const onPlanStep = Boolean(
-    planReading &&
-      planReaderOnStep({
-        planFocusRef: planReading.focusRef,
-        planLabel: planReading.label,
-        bookId,
-        chapterId,
-      }),
-  );
-  const planStepProgress = planReading
-    ? planStepProgressLabel(planReading.stepIndex, planReading.stepCount)
-    : null;
 
   function handlePlanBack() {
     if (!planReading) {
@@ -1953,6 +2005,65 @@ export function BibleReaderView({
             role="menu"
             aria-label="Menu Bible"
           >
+            {planReading ? (
+              <div
+                className="bible-yv-tools-plan"
+                role="group"
+                aria-label="Plan de lecture"
+              >
+                <p className="bible-yv-tools-plan-title">
+                  {planReading.planShareTitle?.trim() ||
+                    planReading.planName?.trim() ||
+                    "Plan de lecture"}
+                </p>
+                {planReading.stepCount > 0 ? (
+                  <p className="bible-yv-tools-plan-meta">
+                    {planReading.stepCount} jour
+                    {planReading.stepCount > 1 ? "s" : ""}
+                  </p>
+                ) : planReading.planMeta?.trim() ? (
+                  <p className="bible-yv-tools-plan-meta">
+                    {planReading.planMeta.trim()}
+                  </p>
+                ) : null}
+                {planReading.planDescription?.trim() ? (
+                  <p className="bible-yv-tools-plan-desc">
+                    {planReading.planDescription.trim()}
+                  </p>
+                ) : null}
+                {canSharePlan ? (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="bible-yv-tools-item"
+                    onClick={() => {
+                      setToolsMenuOpen(false);
+                      setShareMode("plan");
+                      setShareSheetOpen(true);
+                    }}
+                  >
+                    <YvIcon name="ios_share" className="bible-yv-tools-item-icon" />
+                    <span>Partager le plan</span>
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="bible-yv-tools-item"
+                  onClick={() => {
+                    setToolsMenuOpen(false);
+                    handlePlanBack();
+                  }}
+                >
+                  <YvIcon name="chevron_left" className="bible-yv-tools-item-icon" />
+                  <span>
+                    {onPlanStep
+                      ? "Quitter le plan"
+                      : "Retour au passage du plan"}
+                  </span>
+                </button>
+              </div>
+            ) : null}
             <div
               className="bible-yv-tools-version"
               role="group"
@@ -2375,6 +2486,23 @@ export function BibleReaderView({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- setReadingChrome is a render-local helper
   }, [active, bookId, chapterId]);
 
+  if (stageNoteOpen && planReading) {
+    return (
+      <PlanStageNotePanel
+        planId={planReading.planId}
+        planTitle={
+          planReading.planShareTitle?.trim() ||
+          planReading.planName?.trim() ||
+          "Plan"
+        }
+        jour={planReading.jour}
+        stageIndex={planReading.stageIndex}
+        stageName={planReading.stageName}
+        onDismiss={finishPlanStageNote}
+      />
+    );
+  }
+
   return (
     <section
       ref={readerRef}
@@ -2413,18 +2541,10 @@ export function BibleReaderView({
           }
           if (event.key === "ArrowLeft") {
             event.preventDefault();
-            if (onPlanStep) {
-              if (!planReading.isFirst) planReading.onPrev();
-            } else {
-              goAdjacent(-1);
-            }
+            planOrChapterSkip(-1);
           } else if (event.key === "ArrowRight" || event.key === "Enter") {
             event.preventDefault();
-            if (onPlanStep) {
-              planReading.onAdvance();
-            } else {
-              goAdjacent(1);
-            }
+            planOrChapterSkip(1);
           }
           return;
         }
@@ -2455,82 +2575,70 @@ export function BibleReaderView({
       tabIndex={-1}
     >
       <header
-        className={`bible-yv-top${planReading ? " is-plan" : " is-free"}${surfaceChrome.rootClassPassageRollOpen ? " is-passage-roll-open" : ""}${catalogOfflineHint ? " is-catalog-offline" : ""}${compactToolsMenu ? " is-compact-tools" : ""}`}
+        className={`bible-yv-top is-free${surfaceChrome.rootClassPassageRollOpen ? " is-passage-roll-open" : ""}${catalogOfflineHint ? " is-catalog-offline" : ""}${compactToolsMenu ? " is-compact-tools" : ""}`}
         aria-label="Navigation biblique"
       >
-        {planReading ? (
-          <>
-            <button
-              type="button"
-              className="bible-yv-back bible-yv-plan-exit"
-              onClick={handlePlanBack}
-              aria-label={
-                onPlanStep
-                  ? "Quitter la lecture du plan"
-                  : "Retour au passage du plan"
-              }
-            >
-              <YvIcon name="chevron_left" className="bible-yv-back-icon" />
-            </button>
-            {renderPassageRoll(" is-plan-chrome")}
-          </>
-        ) : discoverySplitSearch ? (
+        {discoverySplitSearch ? (
           <div
-            ref={wordSearchChromeRef}
+            ref={planReading ? undefined : wordSearchChromeRef}
             className="bible-yv-passage-chrome-cluster"
           >
-            <button
-              type="button"
-              className={`bible-yv-passage-word-search-trigger${
-                wordSearchOpen ? " is-on" : ""
-              }`}
-              aria-label="Rechercher un mot dans la Bible"
-              aria-expanded={wordSearchOpen}
-              aria-controls={wordSearchPanelId}
-              onClick={toggleWordSearch}
-            >
-              <YvIcon name="search" className="bible-yv-passage-word-search-icon" />
-            </button>
+            {planReading ? (
+              <button
+                type="button"
+                className="bible-yv-passage-word-search-trigger"
+                onClick={handlePlanBack}
+                aria-label={
+                  onPlanStep
+                    ? "Quitter la lecture du plan"
+                    : "Retour au passage du plan"
+                }
+              >
+                <YvIcon
+                  name="chevron_left"
+                  className="bible-yv-passage-word-search-icon"
+                />
+              </button>
+            ) : (
+              <button
+                type="button"
+                className={`bible-yv-passage-word-search-trigger${
+                  wordSearchOpen ? " is-on" : ""
+                }`}
+                aria-label="Rechercher un mot dans la Bible"
+                aria-expanded={wordSearchOpen}
+                aria-controls={wordSearchPanelId}
+                onClick={toggleWordSearch}
+              >
+                <YvIcon name="search" className="bible-yv-passage-word-search-icon" />
+              </button>
+            )}
             {renderPassageRoll()}
-            <BiblePassageWordSearchPanel
-              id={wordSearchPanelId}
-              open={wordSearchOpen}
-              query={wordSearchQuery}
-              onQueryChange={setWordSearchQuery}
-              onQueryClear={clearWordSearch}
-              discoveryBusy={wordDiscoveryBusy}
-              verseHits={wordVerseHits}
-              verseTotal={wordVerseTotal}
-              contentError={wordDiscovery.contentError}
-              textVersion={textVersion}
-              listScrollTop={wordDiscoverySession.listScrollTop}
-              onListScroll={setWordDiscoveryListScroll}
-              onPickVerse={(hit) => {
-                closeWordSearch();
-                pickVerseSearchHit(hit);
-              }}
-            />
+            {!planReading ? (
+              <BiblePassageWordSearchPanel
+                id={wordSearchPanelId}
+                open={wordSearchOpen}
+                query={wordSearchQuery}
+                onQueryChange={setWordSearchQuery}
+                onQueryClear={clearWordSearch}
+                discoveryBusy={wordDiscoveryBusy}
+                verseHits={wordVerseHits}
+                verseTotal={wordVerseTotal}
+                contentError={wordDiscovery.contentError}
+                textVersion={textVersion}
+                listScrollTop={wordDiscoverySession.listScrollTop}
+                onListScroll={setWordDiscoveryListScroll}
+                onPickVerse={(hit) => {
+                  closeWordSearch();
+                  pickVerseSearchHit(hit);
+                }}
+              />
+            ) : null}
           </div>
         ) : (
           renderPassageRoll()
         )}
         <div className="bible-yv-top-tools">
-          {planReading ? (
-            <button
-              type="button"
-              className="bible-yv-search-btn"
-              aria-label="Partager le plan"
-              title="Partager le plan"
-              disabled={!canSharePlan}
-              onClick={() => {
-                setToolsMenuOpen(false);
-                setShareMode("plan");
-                setShareSheetOpen(true);
-              }}
-            >
-              <YvIcon name="ios_share" className="bible-yv-tool-icon" />
-            </button>
-          ) : null}
           {!compactToolsMenu || isPassageBarPanelCompactTopbar()
             ? renderTopToolsMenu("header")
             : null}
@@ -2941,19 +3049,51 @@ export function BibleReaderView({
         ? renderTopToolsMenu("float")
         : null}
 
-      {!planReading && isPassageBarPanelCompactTopbar()
-        ? renderPassageChapterSkips()
-        : null}
+      {isPassageBarPanelCompactTopbar() ? renderPassageChapterSkips() : null}
 
       {(() => {
         const compactDock = compactViewport || narrowChrome;
-        const freeReadingDock = !planReading;
+        if (planReading) {
+          const stageIdx = planReading.stageIndex ?? 1;
+          const stageTotal = planReading.stageCount ?? 1;
+          const dayIdx = planReading.stageDayIndex ?? planReading.stepIndex + 1;
+          const dayTotal =
+            planReading.stageDayCount ?? planReading.stepCount;
+          const stageTitle = planReading.stageName?.trim();
+          return (
+            <footer
+              className={`bible-yv-dock is-plan-progress${showCreateCard ? " has-verse-actions" : ""}${compactDock ? " is-floating" : ""} is-play-only`}
+              aria-label="Progression du plan"
+            >
+              <div
+                className="bible-yv-plan-progress-chip"
+                role="status"
+                aria-live="polite"
+                title={
+                  stageTitle
+                    ? `Étape ${stageIdx} · ${stageTitle}`
+                    : `Étape ${stageIdx}`
+                }
+              >
+                <span className="bible-yv-plan-progress-stage">
+                  Étape {stageIdx}
+                  {stageTotal > 1 ? `/${stageTotal}` : ""}
+                </span>
+                <span className="bible-yv-plan-progress-sep" aria-hidden>
+                  ·
+                </span>
+                <span className="bible-yv-plan-progress-day">
+                  Jour {dayIdx}
+                  {dayTotal > 1 ? `/${dayTotal}` : ""}
+                </span>
+              </div>
+            </footer>
+          );
+        }
         return (
       <footer
-        className={`bible-yv-dock${planReading ? " is-plan" : ""}${showCreateCard ? " has-verse-actions" : ""}${audioPlaying ? " is-playing" : ""}${compactDock ? " is-floating" : ""}${freeReadingDock ? " is-play-only" : ""}`}
-        aria-hidden={hideChrome && planReading ? true : undefined}
-        inert={hideChrome && planReading ? true : undefined}
-        aria-label={freeReadingDock ? "Lecteur audio" : "Lecture du plan"}
+        className={`bible-yv-dock${showCreateCard ? " has-verse-actions" : ""}${audioPlaying ? " is-playing" : ""}${compactDock ? " is-floating" : ""} is-play-only`}
+        aria-label="Lecteur audio"
       >
         <BibleAudioFloat
           hasAudio={canPlayBookAudio}
@@ -2964,56 +3104,6 @@ export function BibleReaderView({
           onTogglePlay={() => handleAudioTransport()}
           onSeek={(seconds) => seekAudio(seconds)}
         />
-        {planReading ? (
-        <div className="bible-yv-dock-nav bible-yv-dock-nav--plan">
-          <button
-            type="button"
-            className="bible-yv-dock-arrow"
-            onClick={() => planReading.onPrev()}
-            disabled={planReading.isFirst || presentation.inFlight}
-            aria-label="Passage précédent du plan"
-          >
-            <YvIcon name="chevron_left" className="bible-yv-dock-icon" />
-          </button>
-          <div
-            className={`bible-yv-dock-location is-static${onPlanStep ? "" : " is-off-step"}`}
-            title={planReading.planName}
-          >
-            <span className="bible-yv-dock-location-text">{planReading.label}</span>
-            {planStepProgress ? (
-              <span className="bible-yv-dock-plan-progress" aria-hidden>
-                {planStepProgress}
-              </span>
-            ) : null}
-            {!onPlanStep ? (
-              <button
-                type="button"
-                className="bible-yv-dock-plan-resync"
-                onClick={() => handlePlanBack()}
-              >
-                Revenir au passage
-              </button>
-            ) : null}
-          </div>
-          <button
-            type="button"
-            className={`bible-yv-dock-advance${planReading.isLast ? " is-complete" : ""}`}
-            onClick={() => planReading.onAdvance()}
-            disabled={presentation.inFlight}
-            aria-label={
-              planReading.isLast
-                ? "Conclure la lecture du jour"
-                : "Passage suivant du plan"
-            }
-          >
-            {planReading.isLast ? (
-              <YvIcon name="check" className="bible-yv-dock-icon" />
-            ) : (
-              <YvIcon name="chevron_right" className="bible-yv-dock-icon" />
-            )}
-          </button>
-        </div>
-        ) : null}
       </footer>
         );
       })()}
