@@ -17,6 +17,7 @@ import {
   passagePickerRollOpen,
 } from "../bible/viewState/readerSurfaceChrome";
 import { usePassageDiscovery } from "./usePassageDiscovery";
+import { useWordPassageSearch } from "./useWordPassageSearch";
 import type { YouVersionBook } from "../youversion/client";
 
 export type PassageBarStep = "book" | "chapter" | "verse";
@@ -84,16 +85,16 @@ export function usePassageBarController({
   );
 
   const {
-    result: wordDiscovery,
+    hits: wordVerseHits,
+    total: wordVerseTotal,
     busy: wordDiscoveryBusy,
-    verseHits: wordVerseHits,
-    verseTotal: wordVerseTotal,
-  } = usePassageDiscovery(
-    wordSearchQuery,
-    books,
-    wordSearchOpen,
-    textVersion,
-    "full",
+    error: wordSearchError,
+  } = useWordPassageSearch(wordSearchQuery, wordSearchOpen, textVersion);
+
+  /** Compatível com o painel (só `contentError`). */
+  const wordDiscovery = useMemo(
+    () => ({ contentError: wordSearchError }),
+    [wordSearchError],
   );
 
   const patchDiscoverySession = useCallback(

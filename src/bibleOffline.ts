@@ -4,7 +4,7 @@
  */
 
 import { Capacitor } from "@capacitor/core";
-import { apiUrl } from "./apiBase";
+import { apiUrl, readApiJson } from "./apiBase";
 import { fetchBundledBookJson } from "./bibleS21Canon";
 import type {
   BibleSearchHit,
@@ -509,14 +509,15 @@ async function fetchBookPayload(usfm: string): Promise<S21BookJson> {
     throw new Error(`Livre introuvable dans le bundle (${key})`);
   }
   const qs = new URLSearchParams({ action: "book", usfm: key });
-  const res = await fetch(apiUrl(`youversion?${qs.toString()}`));
-  const json = (await res.json()) as {
+  const res = await fetch(apiUrl(`/api/youversion?${qs.toString()}`));
+  const parsed = await readApiJson<{
     ok?: boolean;
     error?: string;
     book?: S21BookJson;
-  };
-  if (!json.ok || !json.book?.chapters) {
-    throw new Error(json.error || `Échec téléchargement ${key}`);
+  }>(res);
+  const json = parsed.data;
+  if (!parsed.ok || !json?.ok || !json.book?.chapters) {
+    throw new Error(json?.error || `Échec téléchargement ${key}`);
   }
   return json.book;
 }

@@ -1,4 +1,4 @@
-import { apiUrl } from "../apiBase";
+import { apiUrl, readApiJson } from "../apiBase";
 import { buildS21BookList, S21_BIBLE_META } from "../bibleS21Canon";
 import { localS21BooksResponse, useLocalBundledBible } from "../bibleEngine";
 import { toUsfm } from "./usfm";
@@ -58,9 +58,9 @@ async function bibleFetch<T extends object>(
     if (v !== undefined && v !== "") qs.set(k, String(v));
   }
   try {
-    const res = await fetch(apiUrl(`youversion?${qs.toString()}`));
-    const contentType = res.headers.get("content-type") || "";
-    if (!contentType.includes("application/json")) {
+    const res = await fetch(apiUrl(`/api/youversion?${qs.toString()}`));
+    const parsed = await readApiJson<ApiResult<T>>(res);
+    if (!parsed.ok || !parsed.data) {
       return {
         ok: false,
         error: res.ok
@@ -68,8 +68,7 @@ async function bibleFetch<T extends object>(
           : `Recherche indisponible (${res.status})`,
       } as ApiResult<T>;
     }
-    const json = (await res.json()) as ApiResult<T>;
-    return json;
+    return parsed.data;
   } catch (err) {
     return {
       ok: false,

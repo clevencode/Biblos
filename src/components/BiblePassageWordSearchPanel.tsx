@@ -24,8 +24,8 @@ type BiblePassageWordSearchPanelProps = {
 };
 
 /**
- * Painel de pesquisa por palavras — mesma lógica da barra unificada antiga:
- * digitar ≥ 2 chars → debounce → lista de **passagens** (ref + snippet).
+ * Painel de pesquisa por palavras (ref. 62c757f / BibleSearchSheet):
+ * digitar ≥ 2 chars → debounce 280ms → lista plana de passagens (ref + snippet).
  */
 export function BiblePassageWordSearchPanel({
   id: panelId,
