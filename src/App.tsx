@@ -363,11 +363,16 @@ function BiblosConsumerApp() {
         </div>
       ) : null}
       {swUpdatePending && !bibleMode ? (
-        <div className="offline-toast sw-update-toast" role="status" aria-live="polite">
-          <p>Nouvelle version disponible</p>
+        <div className="sw-update-banner" role="status" aria-live="polite">
+          <div className="sw-update-banner-copy">
+            <p className="sw-update-banner-title">Nouvelle version</p>
+            <p className="sw-update-banner-meta">
+              Une mise à jour est prête à installer.
+            </p>
+          </div>
           <button
             type="button"
-            className="offline-toast-dismiss"
+            className="sw-update-banner-cta"
             onClick={() => void applyPendingSwUpdate()}
           >
             Mettre à jour

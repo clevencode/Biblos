@@ -480,6 +480,102 @@ body {
     /* Acima do dock Bíblia (lift) + altura aproximada do dock */
     bottom: calc(var(--bible-dock-lift, var(--mobile-bottom-chrome, 72px)) + 64px);
   }
+
+  .sw-update-banner {
+    bottom: calc(var(--mobile-bottom-chrome, 72px) + 12px);
+  }
+}
+
+.sw-update-banner {
+  position: fixed;
+  z-index: 82;
+  left: 50%;
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: min(calc(100vw - 24px), 22rem);
+  box-sizing: border-box;
+  margin: 0;
+  padding: 12px 12px 12px 14px;
+  border: var(--stroke-elevated, 1px solid color-mix(in srgb, var(--line) 75%, transparent));
+  border-radius: 16px;
+  background: var(--elevated);
+  box-shadow: var(--menu-shadow);
+  color: var(--text);
+  pointer-events: auto;
+  animation: offline-toast-in 220ms ease-out both;
+}
+
+.sw-update-banner-copy {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.sw-update-banner-title {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--type-label-size, 0.875rem);
+  font-weight: 700;
+  letter-spacing: var(--type-label-tracking, 0);
+  line-height: 1.25;
+  color: var(--text);
+}
+
+.sw-update-banner-meta {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--type-caption-size, 0.75rem);
+  font-weight: var(--type-caption-weight, 400);
+  letter-spacing: var(--type-caption-tracking, 0);
+  line-height: var(--type-caption-lh, 1.35);
+  color: var(--muted);
+}
+
+.sw-update-banner-cta {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  min-width: 7.5rem;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--paper, #fff);
+  font-family: var(--font-ui);
+  font-size: var(--type-label-size, 0.875rem);
+  font-weight: 700;
+  letter-spacing: var(--type-label-tracking, 0);
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+html[data-theme="dark"] .sw-update-banner-cta {
+  color: var(--ink, #0b0b0b);
+}
+
+.sw-update-banner-cta:hover {
+  filter: brightness(1.05);
+}
+
+.sw-update-banner-cta:active {
+  transform: scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sw-update-banner {
+    animation: none;
+  }
+
+  .sw-update-banner-cta:active {
+    transform: none;
+  }
 }
 
 .crumb {
