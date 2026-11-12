@@ -4,16 +4,40 @@ import { wipeLocalUserData } from "./userProfile";
 const CLEAN_SLATE_KEY = "biblos-clean-slate";
 const CLEAN_SLATE_TOKEN = `official-${__APP_VERSION__}`;
 
+/** Caches Workbox / PWA — limpar no bump de versão sem desregistrar o SW intencional. */
 async function clearHttpCaches(): Promise<void> {
   if (!("caches" in window)) return;
   const keys = await caches.keys();
   await Promise.all(keys.map((key) => caches.delete(key)));
 }
 
-async function unregisterServiceWorkers(): Promise<void> {
+/**
+ * Remove apenas SWs legados (não-workbox/biblos). O SW do vite-plugin-pwa
+ * permanece para updates com prompt.
+ */
+async function unregisterLegacyServiceWorkers(): Promise<void> {
   if (!("serviceWorker" in navigator)) return;
   const regs = await navigator.serviceWorker.getRegistrations();
-  await Promise.all(regs.map((reg) => reg.unregister()));
+  await Promise.all(
+    regs.map(async (reg) => {
+      const scriptUrl =
+        reg.active?.scriptURL ||
+        reg.waiting?.scriptURL ||
+        reg.installing?.scriptURL ||
+        "";
+      const keep =
+        scriptUrl.includes("sw.js") ||
+        scriptUrl.includes("workbox") ||
+        scriptUrl.includes("dev-sw");
+      if (!keep) {
+        try {
+          await reg.unregister();
+        } catch {
+          /* ignore */
+        }
+      }
+    }),
+  );
 }
 
 async function deleteOfflineDatabases(): Promise<void> {
@@ -51,7 +75,7 @@ async function deleteOfflineDatabases(): Promise<void> {
 }
 
 /**
- * Efface caches + données locales obsolètes, puis recharge une fois à froid.
+ * Efface caches + données locales obsolètes, puis reload une fois à froid.
  * @returns true si une navigation de rechargement a été déclenchée.
  */
 export async function ensureCleanSlate(): Promise<boolean> {
@@ -73,7 +97,7 @@ export async function ensureCleanSlate(): Promise<boolean> {
     await wipeLocalUserData();
     await deleteOfflineDatabases();
     await clearHttpCaches();
-    await unregisterServiceWorkers();
+    await unregisterLegacyServiceWorkers();
     try {
       localStorage.setItem(CLEAN_SLATE_KEY, CLEAN_SLATE_TOKEN);
     } catch {

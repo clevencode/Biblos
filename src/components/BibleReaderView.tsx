@@ -96,6 +96,13 @@ import {
   type OfflineDownloadProgress,
 } from "../bibleOffline";
 import {
+  classifyOfflineDownloadError,
+  clearVersionAvailabilityError,
+  clearVersionDownloadProgress,
+  setVersionAvailabilityError,
+  setVersionDownloadProgress,
+} from "../bible/bibleVersionStatus";
+import {
   BIBLE_READER_PREFS_KEY,
   resolveBookDisplay,
 } from "../bible/bibleCatalogRepository";
@@ -1578,6 +1585,8 @@ export function BibleReaderView({
         invalidateHt1998CatalogCache();
         setHtOfflineReady(false);
         setOfflineProgress(null);
+        clearVersionDownloadProgress("ht98");
+        clearVersionAvailabilityError("ht98");
         return;
       }
 
@@ -1585,17 +1594,22 @@ export function BibleReaderView({
       offlineAbortRef.current = ac;
       setOfflineBusy(true);
       setOfflineProgress({ done: 0, total: 2, usfm: "" });
+      setVersionDownloadProgress("ht98", { done: 0, total: 2 });
+      clearVersionAvailabilityError("ht98");
       setPassageUiError(null);
       try {
-        await downloadHt1998Offline(
-          (p) => setOfflineProgress({ done: p.done, total: p.total, usfm: "" }),
-          ac.signal,
-        );
+        await downloadHt1998Offline((p) => {
+          setOfflineProgress({ done: p.done, total: p.total, usfm: "" });
+          setVersionDownloadProgress("ht98", { done: p.done, total: p.total });
+        }, ac.signal);
         invalidateHt1998CatalogCache();
         setHtOfflineReady(true);
         setOfflineProgress(null);
+        clearVersionDownloadProgress("ht98");
       } catch (err) {
+        clearVersionDownloadProgress("ht98");
         if ((err as Error)?.name !== "AbortError") {
+          setVersionAvailabilityError("ht98", classifyOfflineDownloadError(err));
           setPassageUiError(
             err instanceof Error ? err.message : "Échec du téléchargement HAT98.",
           );
@@ -1615,6 +1629,8 @@ export function BibleReaderView({
       await clearOfflineBible();
       setOfflineReady(false);
       setOfflineProgress(null);
+      clearVersionDownloadProgress("s21");
+      clearVersionAvailabilityError("s21");
       return;
     }
 
@@ -1632,14 +1648,26 @@ export function BibleReaderView({
     offlineAbortRef.current = ac;
     setOfflineBusy(true);
     setOfflineProgress({ done: 0, total: list.length, usfm: "" });
+    setVersionDownloadProgress("s21", { done: 0, total: list.length });
+    clearVersionAvailabilityError("s21");
     setPassageUiError(null);
     try {
-      await downloadOfflineBible(list, (p) => setOfflineProgress({ ...p }), ac.signal);
+      await downloadOfflineBible(
+        list,
+        (p) => {
+          setOfflineProgress({ ...p });
+          setVersionDownloadProgress("s21", { done: p.done, total: p.total });
+        },
+        ac.signal,
+      );
       setOfflineReady(true);
       setOfflineProgress(null);
+      clearVersionDownloadProgress("s21");
       await refreshCatalog();
     } catch (err) {
+      clearVersionDownloadProgress("s21");
       if ((err as Error)?.name !== "AbortError") {
+        setVersionAvailabilityError("s21", classifyOfflineDownloadError(err));
         setPassageUiError(
           err instanceof Error ? err.message : "Échec du téléchargement hors ligne.",
         );
@@ -2820,6 +2848,11 @@ export function BibleReaderView({
           <BibleOfflineChapterGate
             onDownload={() => void toggleOfflineBible()}
             offlineBusy={offlineBusy}
+            needsReconnect={
+              typeof navigator !== "undefined" &&
+              navigator.onLine === false &&
+              !versionOfflineReady
+            }
           />
         ) : presentation.showOpeningSkeleton ? (
           <BibleChapterLoadingPlaceholder

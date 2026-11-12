@@ -17,6 +17,8 @@ import { applyTheme } from "./theme";
 import { bootPassageBarPanelLayout } from "./bible/passageBarPanelLayout";
 import { bootPassagePillLayoutTest } from "./bible/passagePillLayout";
 import { bootUiColortest } from "./ui/colortest";
+import { requestPersistentStorage } from "./offlineStorageGuard";
+import { bootSwUpdateManager } from "./swUpdateManager";
 import "./skeleton/skeleton.css";
 import "./editorial-admin.css";
 import "./index.css";
@@ -29,6 +31,9 @@ bootPassageBarPanelLayout();
 async function boot() {
   const reloading = await ensureCleanSlate();
   if (reloading) return;
+
+  void requestPersistentStorage();
+  void bootSwUpdateManager();
 
   if (Capacitor.isNativePlatform()) {
     scheduleIdle(() => void ensureBibleIndexedFromBundle(), 8000);

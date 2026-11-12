@@ -2,7 +2,12 @@
  * Bible HAT98 hors ligne — un seul JSON (~8 Mo) en IndexedDB.
  */
 
+import {
+  isQuotaExceededError,
+  requestPersistentStorage,
+} from "../offlineStorageGuard";
 import { HT1998_JSON_URL, type Ht1998Root } from "./ht1998";
+import { OFFLINE_BOOK_TOTAL } from "../bibleOffline";
 
 const DB_NAME = "biblos-ht-offline";
 const DB_VERSION = 2;
@@ -159,35 +164,78 @@ export async function readHt1998OfflineRoot(): Promise<Ht1998Root | null> {
   }
 }
 
+export function validateHt1998Root(root: Ht1998Root | null | undefined): Ht1998Root {
+  if (!root?.books?.length) {
+    throw new Error("Catalogue haïtien vide");
+  }
+  if (root.books.length < OFFLINE_BOOK_TOTAL) {
+    throw new Error("Catalogue haïtien incomplet");
+  }
+  for (const book of root.books) {
+    const usfm = String(book?.usfm || "").trim();
+    if (!usfm) throw new Error("Catalogue haïtien invalide");
+    const chapters = book.chapters;
+    if (!Array.isArray(chapters) || chapters.length === 0) {
+      throw new Error(`Données invalides: ${usfm}`);
+    }
+    const hasVerse = chapters.some(
+      (ch) =>
+        Array.isArray(ch.verses) &&
+        ch.verses.some((v) => String(v?.text || "").trim()),
+    );
+    if (!hasVerse) throw new Error(`Données invalides: ${usfm}`);
+  }
+  return root;
+}
+
 export async function downloadHt1998Offline(
   onProgress?: (p: Ht1998OfflineProgress) => void,
   signal?: AbortSignal,
 ): Promise<Ht1998OfflineMeta> {
   if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
 
+  await requestPersistentStorage();
+
   onProgress?.({ done: 0, total: 2, phase: "fetch" });
-  const res = await fetch(HT1998_JSON_URL, { signal });
-  if (!res.ok) throw new Error("Traduction haïtienne indisponible");
-  const root = (await res.json()) as Ht1998Root;
-  if (!root?.books?.length) throw new Error("Catalogue haïtien vide");
+  let root: Ht1998Root;
+  try {
+    const res = await fetch(HT1998_JSON_URL, { signal });
+    if (!res.ok) throw new Error("Traduction haïtienne indisponible");
+    root = validateHt1998Root((await res.json()) as Ht1998Root);
+  } catch (err) {
+    if (err instanceof DOMException && err.name === "AbortError") throw err;
+    if (isQuotaExceededError(err)) {
+      throw new Error("Espace de stockage insuffisant pour la Bible hors ligne");
+    }
+    throw err instanceof Error ? err : new Error("Traduction haïtienne indisponible");
+  }
+
+  if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
 
   onProgress?.({ done: 1, total: 2, phase: "store" });
   const bytes = new Blob([JSON.stringify(root)]).size;
 
-  return runWithDb(async (db) => {
-    const tx = db.transaction([STORE_ROOT, STORE_META], "readwrite");
-    tx.objectStore(STORE_ROOT).put({ key: ROOT_KEY, root });
-    const meta: Ht1998OfflineMeta = {
-      key: META_KEY,
-      complete: true,
-      at: Date.now(),
-      bytes,
-    };
-    tx.objectStore(STORE_META).put(meta);
-    await idbTxDone(tx);
-    onProgress?.({ done: 2, total: 2, phase: "store" });
-    return meta;
-  });
+  try {
+    return await runWithDb(async (db) => {
+      const tx = db.transaction([STORE_ROOT, STORE_META], "readwrite");
+      tx.objectStore(STORE_ROOT).put({ key: ROOT_KEY, root });
+      const meta: Ht1998OfflineMeta = {
+        key: META_KEY,
+        complete: true,
+        at: Date.now(),
+        bytes,
+      };
+      tx.objectStore(STORE_META).put(meta);
+      await idbTxDone(tx);
+      onProgress?.({ done: 2, total: 2, phase: "store" });
+      return meta;
+    });
+  } catch (err) {
+    if (isQuotaExceededError(err)) {
+      throw new Error("Espace de stockage insuffisant pour la Bible hors ligne");
+    }
+    throw err;
+  }
 }
 
 export async function clearHt1998Offline(): Promise<void> {

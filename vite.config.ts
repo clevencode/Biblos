@@ -1,5 +1,6 @@
 import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
+import { VitePWA } from "vite-plugin-pwa";
 import { readFileSync } from "node:fs";
 import os from "node:os";
 import { notionFlashcardPlugin } from "./vite.notion.ts";
@@ -7,6 +8,8 @@ import { notionFlashcardPlugin } from "./vite.notion.ts";
 const pkg = JSON.parse(readFileSync("./package.json", "utf8")) as {
   version: string;
 };
+
+const isCapacitorBuild = process.env.CAPACITOR === "1";
 
 /** Interfaces virtuais/VPN que o Vite lista como "Network" mas o celular não alcança. */
 const SKIP_IFACE =
@@ -70,7 +73,37 @@ export default defineConfig(({ mode }) => ({
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
   },
-  plugins: [react(), notionFlashcardPlugin(mode), lanUrlHintPlugin()],
+  plugins: [
+    react(),
+    notionFlashcardPlugin(mode),
+    lanUrlHintPlugin(),
+    // PWA / SW só na web — Capacitor usa assets nativos.
+    !isCapacitorBuild
+      ? VitePWA({
+          registerType: "prompt",
+          injectRegister: false,
+          includeAssets: ["favicon.svg", "apple-touch-icon.png"],
+          manifest: {
+            name: "Biblos",
+            short_name: "Biblos",
+            description: "Lecture biblique offline-first",
+            theme_color: "#0D1117",
+            background_color: "#FFFFFF",
+            display: "standalone",
+            start_url: "/",
+          },
+          workbox: {
+            globPatterns: ["**/*.{js,css,html,ico,svg,woff2,png,webp}"],
+            navigateFallback: "/index.html",
+            // Bíblias grandes ficam no IndexedDB / fetch sob demanda — não precache.
+            navigateFallbackDenylist: [/^\/api\//, /^\/bibles\//, /^\/bible\//],
+          },
+          devOptions: {
+            enabled: false,
+          },
+        })
+      : null,
+  ].filter(Boolean),
   // 0.0.0.0 = localhost + LAN (celular). Evita host só em 127.0.0.1.
   server: {
     host: "0.0.0.0",

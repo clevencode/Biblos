@@ -1,6 +1,24 @@
 /// <reference types="vite/client" />
+/// <reference types="vite-plugin-pwa/client" />
 
 declare const __APP_VERSION__: string;
+
+declare module "virtual:pwa-register" {
+  export type RegisterSWOptions = {
+    immediate?: boolean;
+    onNeedRefresh?: () => void;
+    onOfflineReady?: () => void;
+    onRegisteredSW?: (
+      swScriptUrl: string,
+      registration: ServiceWorkerRegistration | undefined,
+    ) => void;
+    onRegisterError?: (error: unknown) => void;
+  };
+
+  export function registerSW(
+    options?: RegisterSWOptions,
+  ): (reloadPage?: boolean) => Promise<void>;
+}
 
 interface ImportMetaEnv {
   readonly VITE_FIREBASE_API_KEY: string;

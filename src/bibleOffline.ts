@@ -6,6 +6,10 @@
 import { Capacitor } from "@capacitor/core";
 import { apiUrl, readApiJson } from "./apiBase";
 import { fetchBundledBookJson } from "./bibleS21Canon";
+import {
+  isQuotaExceededError,
+  requestPersistentStorage,
+} from "./offlineStorageGuard";
 import type {
   BibleSearchHit,
   YouVersionBook,
@@ -185,17 +189,6 @@ async function putBook(usfm: string, book: S21BookJson): Promise<void> {
     const layouts = chapterLayoutsFromBook(book);
     const layoutStore = tx.objectStore(STORE_CHAPTER_LAYOUT);
     for (const row of layouts) layoutStore.put(row);
-    await idbTxDone(tx);
-  } finally {
-    db.close();
-  }
-}
-
-async function putMeta(meta: OfflineBibleMeta): Promise<void> {
-  const db = await openDb();
-  try {
-    const tx = db.transaction(STORE_META, "readwrite");
-    tx.objectStore(STORE_META).put(meta);
     await idbTxDone(tx);
   } finally {
     db.close();
@@ -458,8 +451,73 @@ async function fetchBookPayload(usfm: string): Promise<S21BookJson> {
   return json.book;
 }
 
+export function validateS21BookPayload(usfm: string, book: S21BookJson | null | undefined): S21BookJson {
+  if (!book || !Array.isArray(book.chapters) || book.chapters.length === 0) {
+    throw new Error(`Données invalides: ${usfm}`);
+  }
+  const hasVerse = book.chapters.some(
+    (ch) => Array.isArray(ch.verses) && ch.verses.some((v) => String(v?.text || "").trim()),
+  );
+  if (!hasVerse) throw new Error(`Données invalides: ${usfm}`);
+  return book;
+}
+
+/**
+ * Commit atômico: substitui o store final só se a validação passou.
+ * Uma versão `complete` anterior permanece intacta se a tx falhar.
+ */
+async function commitOfflineBibleAtomic(
+  payloads: Map<string, S21BookJson>,
+  bookList: YouVersionBook[],
+): Promise<OfflineBibleMeta> {
+  if (payloads.size < OFFLINE_BOOK_TOTAL && payloads.size < bookList.length) {
+    throw new Error("Téléchargement incomplet");
+  }
+  for (const [usfm, book] of payloads) {
+    validateS21BookPayload(usfm, book);
+  }
+
+  const meta: OfflineBibleMeta = {
+    key: META_KEY,
+    complete: true,
+    count: payloads.size,
+    total: Math.max(bookList.length, OFFLINE_BOOK_TOTAL),
+    at: Date.now(),
+    books: bookList,
+  };
+
+  const db = await openDb();
+  try {
+    const tx = db.transaction(
+      [STORE_BOOKS, STORE_META, STORE_CHAPTER_LAYOUT],
+      "readwrite",
+    );
+    const booksStore = tx.objectStore(STORE_BOOKS);
+    const layoutStore = tx.objectStore(STORE_CHAPTER_LAYOUT);
+    booksStore.clear();
+    layoutStore.clear();
+    for (const [usfm, book] of payloads) {
+      booksStore.put({ usfm, book });
+      for (const row of chapterLayoutsFromBook(book)) {
+        layoutStore.put(row);
+      }
+    }
+    tx.objectStore(STORE_META).put(meta);
+    await idbTxDone(tx);
+  } catch (err) {
+    if (isQuotaExceededError(err)) {
+      throw new Error("Espace de stockage insuffisant pour la Bible hors ligne");
+    }
+    throw err;
+  } finally {
+    db.close();
+  }
+  return meta;
+}
+
 /**
  * Indexa os 66 livros a partir dos JSON embarcados (APK) — sem rede.
+ * Fetch completo em memória → commit atômico.
  */
 export async function seedOfflineBibleFromBundledAssets(
   bookList: YouVersionBook[],
@@ -468,10 +526,13 @@ export async function seedOfflineBibleFromBundledAssets(
   const list = bookList.filter((b) => b?.id);
   if (!list.length) throw new Error("Liste de livres vide");
 
+  await requestPersistentStorage();
+
   const total = list.length;
   let done = 0;
   const concurrency = 2;
   let cursor = 0;
+  const payloads = new Map<string, S21BookJson>();
 
   const yieldMain = () =>
     new Promise<void>((resolve) => {
@@ -489,32 +550,16 @@ export async function seedOfflineBibleFromBundledAssets(
       const usfm = book.id.toUpperCase();
       const json = await fetchBundledBookJson(usfm);
       if (!json) throw new Error(`Asset manquant: ${usfm}`);
-      await putBook(usfm, json);
+      payloads.set(usfm, validateS21BookPayload(usfm, json));
       done += 1;
       onProgress?.(done, total, usfm);
-      await putMeta({
-        key: META_KEY,
-        complete: false,
-        count: done,
-        total,
-        at: Date.now(),
-        books: bookList,
-      });
       await yieldMain();
     }
   }
 
   await Promise.all(Array.from({ length: Math.min(concurrency, list.length) }, () => worker()));
 
-  const meta: OfflineBibleMeta = {
-    key: META_KEY,
-    complete: true,
-    count: done,
-    total,
-    at: Date.now(),
-    books: bookList,
-  };
-  await putMeta(meta);
+  const meta = await commitOfflineBibleAtomic(payloads, bookList);
   const { invalidateVerseIndex } = await import("./bible/verseIndexCache");
   invalidateVerseIndex("s21");
   return meta;
@@ -522,7 +567,7 @@ export async function seedOfflineBibleFromBundledAssets(
 
 /**
  * Télécharge les 66 livres S21 dans IndexedDB.
- * `signal` permet d’annuler ; relancer reprend / écrase.
+ * Fetch + validation em memória; commit atômico (sem parciais no store final).
  */
 export async function downloadOfflineBible(
   bookList: YouVersionBook[],
@@ -531,11 +576,15 @@ export async function downloadOfflineBible(
 ): Promise<OfflineBibleMeta> {
   const list = bookList.filter((b) => b?.id);
   if (!list.length) throw new Error("Liste de livres vide");
+  if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
+
+  await requestPersistentStorage();
 
   const total = list.length;
   let done = 0;
   const concurrency = 4;
   let cursor = 0;
+  const payloads = new Map<string, S21BookJson>();
 
   async function worker() {
     while (cursor < list.length) {
@@ -544,31 +593,30 @@ export async function downloadOfflineBible(
       const book = list[index]!;
       const usfm = book.id.toUpperCase();
       const json = await fetchBookPayload(usfm);
-      await putBook(usfm, json);
+      if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
+      payloads.set(usfm, validateS21BookPayload(usfm, json));
       done += 1;
       onProgress?.({ done, total, usfm });
-      await putMeta({
-        key: META_KEY,
-        complete: false,
-        count: done,
-        total,
-        at: Date.now(),
-        books: bookList,
-      });
     }
   }
 
-  await Promise.all(Array.from({ length: Math.min(concurrency, list.length) }, () => worker()));
+  try {
+    await Promise.all(
+      Array.from({ length: Math.min(concurrency, list.length) }, () => worker()),
+    );
+  } catch (err) {
+    if (isQuotaExceededError(err)) {
+      throw new Error("Espace de stockage insuffisant pour la Bible hors ligne");
+    }
+    throw err;
+  }
 
-  const meta: OfflineBibleMeta = {
-    key: META_KEY,
-    complete: true,
-    count: done,
-    total,
-    at: Date.now(),
-    books: bookList,
-  };
-  await putMeta(meta);
+  if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
+  if (payloads.size !== total) {
+    throw new Error("Téléchargement incomplet");
+  }
+
+  const meta = await commitOfflineBibleAtomic(payloads, bookList);
   const { invalidateVerseIndex } = await import("./bible/verseIndexCache");
   invalidateVerseIndex("s21");
   return meta;

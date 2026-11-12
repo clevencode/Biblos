@@ -29,6 +29,10 @@ import { syncNativeChrome } from "./nativeChrome";
 import { loadShellTab, saveShellTab, type ShellTab } from "./shellNav";
 import type { BibleHistorySelect } from "./components/BibleHistorySheet";
 import { EditorialAdminApp } from "./features/editorial-auth/presentation/EditorialAdminApp";
+import {
+  applyPendingSwUpdate,
+  subscribeSwUpdate,
+} from "./swUpdateManager";
 
 function isEditorialAdminRoute(): boolean {
   const hash = window.location.hash.replace(/^#/, "");
@@ -78,11 +82,14 @@ function BiblosConsumerApp() {
   const [workspaceJour, setWorkspaceJour] = useState<number | undefined>();
   const [workspaceResumeSeq, setWorkspaceResumeSeq] = useState(0);
   const [offlineToast, setOfflineToast] = useState(false);
+  const [swUpdatePending, setSwUpdatePending] = useState(false);
   const offlineToastSeen = useRef(false);
   const shareBooted = useRef(false);
 
   const bibleMode = tab === "bible";
   const bibleCompactTools = BIBLE_COMPACT_TOOLS_MENU && narrow && bibleMode;
+
+  useEffect(() => subscribeSwUpdate(setSwUpdatePending), []);
 
   useEffect(() => {
     if (tab === "bible") setBibleMounted(true);
@@ -216,6 +223,18 @@ function BiblosConsumerApp() {
             onClick={() => setOfflineToast(false)}
           >
             ×
+          </button>
+        </div>
+      ) : null}
+      {swUpdatePending && !bibleMode ? (
+        <div className="offline-toast sw-update-toast" role="status" aria-live="polite">
+          <p>Nouvelle version disponible</p>
+          <button
+            type="button"
+            className="offline-toast-dismiss"
+            onClick={() => void applyPendingSwUpdate()}
+          >
+            Mettre à jour
           </button>
         </div>
       ) : null}

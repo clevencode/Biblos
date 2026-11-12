@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { YvIcon } from "./YvIcon";
 import {
   clearBibleReadingHistory,
@@ -8,6 +8,15 @@ import {
 import { loadOrCreateProfile } from "../userProfile";
 import { resolveTheme, themePrefLabel, type ThemePref } from "../theme";
 import type { BibleHistorySelect } from "./BibleHistorySheet";
+import {
+  getStorageHealth,
+  type StorageHealth,
+} from "../offlineStorageGuard";
+import {
+  resolveVersionAvailability,
+  versionAvailabilityLabel,
+  type VersionAvailabilityState,
+} from "../bible/bibleVersionStatus";
 
 type ProfileShellPanelProps = {
   active: boolean;
@@ -28,11 +37,33 @@ export function ProfileShellPanel({
 }: ProfileShellPanelProps) {
   const profile = loadOrCreateProfile();
   const [confirmClear, setConfirmClear] = useState(false);
+  const [storageHealth, setStorageHealth] = useState<StorageHealth | null>(null);
+  const [s21Status, setS21Status] = useState<VersionAvailabilityState | null>(null);
+  const [htStatus, setHtStatus] = useState<VersionAvailabilityState | null>(null);
 
   const history = useMemo(() => {
     void activityTick;
     return listBibleReadingHistory(profile.id, 12);
   }, [activityTick, profile.id]);
+
+  useEffect(() => {
+    if (!active) return;
+    let cancelled = false;
+    void (async () => {
+      const [health, s21, ht] = await Promise.all([
+        getStorageHealth(),
+        resolveVersionAvailability("s21"),
+        resolveVersionAvailability("ht98"),
+      ]);
+      if (cancelled) return;
+      setStorageHealth(health);
+      setS21Status(s21);
+      setHtStatus(ht);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [active, activityTick]);
 
   function parseRef(event: (typeof history)[0]): BibleHistorySelect | null {
     const bookId = String(event.meta?.bookId || "").trim().toUpperCase();
@@ -87,6 +118,43 @@ export function ProfileShellPanel({
           </span>
           <YvIcon name="chevron_right" className="profile-row-chevron" opsz={20} />
         </button>
+      </section>
+
+      <section className="profile-section" aria-labelledby="profile-storage-title">
+        <h3 id="profile-storage-title" className="type-eyebrow">
+          Stockage
+        </h3>
+        <div className="profile-row-btn" role="group" aria-label="Espace hors ligne">
+          <YvIcon name="download" className="profile-row-icon" opsz={20} />
+          <span className="profile-row-body">
+            <span className="profile-row-label">Cache hors ligne</span>
+            <span className="profile-row-value muted">
+              {storageHealth
+                ? `${storageHealth.usedMB} Mo utilisés${
+                    storageHealth.quotaMB > 0 ? ` / ${storageHealth.quotaMB} Mo` : ""
+                  }`
+                : "Calcul…"}
+            </span>
+            <span className="profile-row-value muted">
+              {storageHealth?.isPersisted
+                ? "Stockage protégé (persistant)"
+                : "Protection non garantie par le système"}
+            </span>
+          </span>
+        </div>
+        <div className="profile-row-btn" role="group" aria-label="Versions hors ligne">
+          <YvIcon name="menu_book" className="profile-row-icon" opsz={20} />
+          <span className="profile-row-body">
+            <span className="profile-row-label">S21</span>
+            <span className="profile-row-value muted">
+              {s21Status ? versionAvailabilityLabel(s21Status) : "…"}
+            </span>
+            <span className="profile-row-label">HAT98</span>
+            <span className="profile-row-value muted">
+              {htStatus ? versionAvailabilityLabel(htStatus) : "…"}
+            </span>
+          </span>
+        </div>
       </section>
 
       <section className="profile-section" aria-labelledby="profile-history-title">
