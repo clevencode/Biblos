@@ -83,7 +83,7 @@ import {
   clearBibleAudioControls,
   syncBibleAudioControls,
 } from "../bibleAudioControls";
-import { createVerseFlashcard, verseCardId } from "../verseCard";
+import { verseCardId } from "../verseCard";
 import {
   buildShareText,
   formatSelectedVersesForShare,
@@ -477,11 +477,9 @@ export function BibleReaderView({
   active = true,
   onBack,
   planReading = null,
-  onFlashcardCreated,
   existingVerseCardIds,
   existingVerseCardColors,
   onUpdateVerseCardColor,
-  onViewFlashcard,
   onReadingChromeChange,
   themePref = "system",
   onCycleTheme,
@@ -554,7 +552,6 @@ export function BibleReaderView({
     isBibleFontFamily(prefs.fontFamily) ? prefs.fontFamily : "serif",
   );
   const [narrowChrome, setNarrowChrome] = useState(false);
-  const [cardBusy, setCardBusy] = useState(false);
   const [cardMsg, setCardMsg] = useState<string | null>(null);
   const [cardColor, setCardColor] = useState(() => loadPreferredVerseColor());
   const [chapterMarks, setChapterMarks] = useState<ReadonlyMap<number, string>>(
@@ -569,7 +566,7 @@ export function BibleReaderView({
   const [audioTime, setAudioTime] = useState(0);
   const [audioDuration, setAudioDuration] = useState(0);
   const [shareSheetOpen, setShareSheetOpen] = useState(false);
-  const [shareMode, setShareMode] = useState<"verse" | "plan">("verse");
+  const [shareMode] = useState<"verse" | "plan">("verse");
   const [dayNoteOpen, setDayNoteOpen] = useState(false);
   /** Fin d’étape / fin de plan → retour plans après la note. */
   const [dayNoteReturnsToPlans, setDayNoteReturnsToPlans] = useState(false);
@@ -1675,58 +1672,6 @@ export function BibleReaderView({
     } finally {
       setOfflineBusy(false);
       offlineAbortRef.current = null;
-    }
-  }
-
-  async function makeFlashcard() {
-    if (!selection?.length || !passage?.verses?.length || cardBusy) return;
-    const selected = new Set(selection);
-    const verses = passage.verses.filter((item) => selected.has(item.number));
-    if (!verses.length || verses.some((item) => !item.text?.trim())) return;
-    const title = selectedBook?.title ?? bookId;
-    const frente = formatSelectionFront(title, chapterId, selection);
-    const usfm = selectionUsfm(bookId, chapterId, selection);
-    const verso = verses.map((item) => item.text.trim()).join(" ");
-    const color = adaptVerseColorForTheme(normalizeVerseColor(cardColor), uiTheme);
-    setCardBusy(true);
-    setCardMsg(null);
-    try {
-      // Même logique que Marquer : une VERSECARD s’appuie sur un verset marqué.
-      if (!selection.some((n) => chapterMarks.has(n))) {
-        if (requireNameToMark && onRequestNameToMark) {
-          onRequestNameToMark({
-            color,
-            verses: [...selection],
-            bookId,
-            chapterId,
-            bookTitle: title,
-          });
-          return;
-        }
-        setChapterMarks(setVerseMarks(bookId, chapterId, selection, color));
-        onVerseMarked?.({
-          color,
-          verses: [...selection],
-          bookId,
-          chapterId,
-          bookTitle: title,
-        });
-      }
-      const result = createVerseFlashcard({
-        frente,
-        verso,
-        usfm,
-        color,
-      });
-      if (!result.ok) {
-        setCardMsg(result.error);
-        return;
-      }
-      onFlashcardCreated?.(result.card);
-      setCardMsg(`Carte créée pour ${frente}`);
-      closeCreateCard();
-    } finally {
-      setCardBusy(false);
     }
   }
 
