@@ -7,19 +7,24 @@ import {
 } from "../activityLog";
 import {
   completeOnboarding,
+  isClevencodeAdminEmail,
   joinFullName,
   preferredDisplayName,
   splitFullName,
 } from "../userProfile";
-import { resolveTheme, themePrefLabel, type ThemePref } from "../theme";
+import { resolveTheme, type ThemePref } from "../theme";
 import type { BibleHistorySelect } from "./BibleHistorySheet";
 import {
   getStorageHealth,
   type StorageHealth,
 } from "../offlineStorageGuard";
 import {
+  classifyOfflineDownloadError,
+  clearVersionAvailabilityError,
+  clearVersionDownloadProgress,
   resolveVersionAvailability,
-  versionAvailabilityLabel,
+  setVersionAvailabilityError,
+  setVersionDownloadProgress,
   type VersionAvailabilityState,
 } from "../bible/bibleVersionStatus";
 import {
@@ -32,35 +37,49 @@ import {
   subscribeSyncStatus,
   type SyncStatus,
 } from "../features/user-sync";
+import { downloadOfflineBible } from "../bibleOffline";
+import { downloadHt1998Offline } from "../bible/ht1998Offline";
+import { localS21Books } from "../bibleEngine";
 
 type ProfileShellPanelProps = {
   active: boolean;
   activityTick: number;
   themePref: ThemePref;
-  onCycleTheme: () => void;
+  onSetTheme: (pref: "light" | "dark") => void;
   onOpenPassage: (ref: BibleHistorySelect) => void;
   onHistoryChange?: () => void;
   onRequestSignIn?: () => void;
 };
 
-function syncStatusLabel(status: SyncStatus): string {
-  switch (status) {
-    case "synced":
-      return "Synchronisé";
-    case "pending":
-      return "Hors ligne — modifications en attente";
-    case "offline":
-      return "Hors ligne — modifications en attente";
-    default:
-      return "Sync inactive";
+function syncBadge(status: SyncStatus): { label: string; tone: "synced" | "pending" | "idle" } {
+  if (status === "synced") return { label: "Synchronisé", tone: "synced" };
+  if (status === "pending" || status === "offline") {
+    return { label: "En attente", tone: "pending" };
   }
+  return { label: "Inactif", tone: "idle" };
+}
+
+function syncRowLabel(status: SyncStatus): string {
+  if (status === "synced") return "Synchronisé";
+  if (status === "pending" || status === "offline") {
+    return "Hors ligne — modifications en attente";
+  }
+  return "Sync inactive";
+}
+
+function isReady(state: VersionAvailabilityState | null): boolean {
+  return state?.status === "offline_ready";
+}
+
+function isDownloading(state: VersionAvailabilityState | null): boolean {
+  return state?.status === "downloading";
 }
 
 export function ProfileShellPanel({
   active,
   activityTick,
   themePref,
-  onCycleTheme,
+  onSetTheme,
   onOpenPassage,
   onHistoryChange,
   onRequestSignIn,
@@ -68,12 +87,16 @@ export function ProfileShellPanel({
   const {
     session,
     profile,
+    user,
     signOut,
     deleteAccountAndData,
     refreshProfile,
     loading,
     isAuthenticated,
   } = useConsumerAuth();
+  /** Link CMS só para o propriétaire autenticado — jamais para guest/anonymous. */
+  const showAdminEntry =
+    isAuthenticated && isClevencodeAdminEmail(user?.email);
   const [confirmClear, setConfirmClear] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [storageHealth, setStorageHealth] = useState<StorageHealth | null>(null);
@@ -84,9 +107,12 @@ export function ProfileShellPanel({
     joinFullName(profile.firstName, profile.lastName),
   );
   const nameInputRef = useRef<HTMLInputElement>(null);
+  const clearTimerRef = useRef<number | null>(null);
   const [signOutBusy, setSignOutBusy] = useState(false);
   const [deleteBusy, setDeleteBusy] = useState(false);
+  const [dlBusy, setDlBusy] = useState<"s21" | "ht98" | null>(null);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>("idle");
+
   const markedCount = useMemo(() => {
     void activityTick;
     return countMarkedVerses();
@@ -96,6 +122,14 @@ export function ProfileShellPanel({
     void activityTick;
     return listBibleReadingHistory(profile.id, 12);
   }, [activityTick, profile.id]);
+
+  const resolvedTheme = resolveTheme(themePref);
+  const guest =
+    session.status === "anonymous" || session.status === "offline_guest";
+  const showQuota = guest && markedCount >= 7;
+  const quotaPct = Math.min((markedCount / FREE_MARK_QUOTA) * 100, 100);
+  const badge = syncBadge(syncStatus);
+  const displayName = preferredDisplayName(profile) || "…";
 
   useEffect(() => {
     setFullName(joinFullName(profile.firstName, profile.lastName));
@@ -120,7 +154,13 @@ export function ProfileShellPanel({
     return () => {
       cancelled = true;
     };
-  }, [active, activityTick]);
+  }, [active, activityTick, dlBusy]);
+
+  useEffect(() => {
+    return () => {
+      if (clearTimerRef.current) window.clearTimeout(clearTimerRef.current);
+    };
+  }, []);
 
   function parseRef(event: (typeof history)[0]): BibleHistorySelect | null {
     const bookId = String(event.meta?.bookId || "").trim().toUpperCase();
@@ -152,12 +192,8 @@ export function ProfileShellPanel({
     }
   }
 
-  async function handleDeleteAccount() {
+  async function handleDeleteConfirm() {
     if (deleteBusy) return;
-    if (!confirmDelete) {
-      setConfirmDelete(true);
-      return;
-    }
     setDeleteBusy(true);
     try {
       await deleteAccountAndData();
@@ -167,12 +203,65 @@ export function ProfileShellPanel({
     }
   }
 
-  const displayName = preferredDisplayName(profile) || "…";
-  const guest = session.status === "anonymous" || session.status === "offline_guest";
-  const quotaHint =
-    guest && markedCount >= Math.max(1, FREE_MARK_QUOTA - 3)
-      ? `${markedCount}/${FREE_MARK_QUOTA} surlignages — relie un compte pour continuer sereinement`
-      : null;
+  function requestClearHistory() {
+    if (!confirmClear) {
+      setConfirmClear(true);
+      if (clearTimerRef.current) window.clearTimeout(clearTimerRef.current);
+      clearTimerRef.current = window.setTimeout(() => {
+        setConfirmClear(false);
+        clearTimerRef.current = null;
+      }, 4000);
+      return;
+    }
+    if (clearTimerRef.current) {
+      window.clearTimeout(clearTimerRef.current);
+      clearTimerRef.current = null;
+    }
+    clearBibleReadingHistory(profile.id);
+    setConfirmClear(false);
+    onHistoryChange?.();
+  }
+
+  async function downloadVersion(id: "s21" | "ht98") {
+    if (dlBusy) return;
+    setDlBusy(id);
+    clearVersionAvailabilityError(id);
+    try {
+      if (id === "ht98") {
+        setVersionDownloadProgress("ht98", { done: 0, total: 2 });
+        await downloadHt1998Offline((p) => {
+          setVersionDownloadProgress("ht98", { done: p.done, total: p.total });
+        });
+        clearVersionDownloadProgress("ht98");
+      } else {
+        const list = localS21Books();
+        setVersionDownloadProgress("s21", { done: 0, total: list.length || 66 });
+        await downloadOfflineBible(list, (p) => {
+          setVersionDownloadProgress("s21", { done: p.done, total: p.total });
+        });
+        clearVersionDownloadProgress("s21");
+      }
+    } catch (err) {
+      if ((err as Error)?.name !== "AbortError") {
+        setVersionAvailabilityError(id, classifyOfflineDownloadError(err));
+      }
+      clearVersionDownloadProgress(id);
+    } finally {
+      setDlBusy(null);
+      const [s21, ht] = await Promise.all([
+        resolveVersionAvailability("s21"),
+        resolveVersionAvailability("ht98"),
+      ]);
+      setS21Status(s21);
+      setHtStatus(ht);
+    }
+  }
+
+  const subtitle = isAuthenticated
+    ? displayName
+    : session.status === "offline_guest"
+      ? "Mode hors ligne (cet appareil)"
+      : "Études sur cet appareil";
 
   return (
     <div
@@ -185,13 +274,18 @@ export function ProfileShellPanel({
       <header className="profile-head">
         <div className="profile-head-copy">
           <h2 className="type-headline">Profil</h2>
-          <p className="muted type-caption">
-            {isAuthenticated
-              ? displayName
-              : session.status === "offline_guest"
-                ? "Mode hors ligne (cet appareil)"
-                : "Études sur cet appareil"}
-          </p>
+          <p className="muted type-caption">{subtitle}</p>
+        </div>
+        <div className="profile-head-meta">
+          {session.status === "offline_guest" ? (
+            <YvIcon name="cloud_off" className="profile-row-icon" opsz={20} />
+          ) : null}
+          {session.status === "anonymous" ? (
+            <YvIcon name="desktop_windows" className="profile-row-icon" opsz={20} />
+          ) : null}
+          {isAuthenticated ? (
+            <span className={`profile-sync-badge is-${badge.tone}`}>{badge.label}</span>
+          ) : null}
         </div>
       </header>
 
@@ -199,192 +293,280 @@ export function ProfileShellPanel({
         <h3 id="profile-account-title" className="type-eyebrow">
           Compte
         </h3>
-        {guest ? (
-          <div className="profile-sign-in-banner">
-            <p>
-              <strong>Sauvegarder mes études</strong>
-              <br />
-              Relie Google ou un e-mail pour synchroniser marques, notes et plans
-              entre tes appareils.
-            </p>
-            {quotaHint ? <p className="muted">{quotaHint}</p> : null}
-            <button
-              type="button"
-              className="auth-google-btn"
-              disabled={loading}
-              onClick={() => onRequestSignIn?.()}
-            >
-              Connecter un compte
-            </button>
-          </div>
-        ) : (
-          <>
-            {editingName ? (
-              <form className="profile-onboarding-form" onSubmit={saveName}>
-                <label className="profile-field">
-                  <span>Nom complet</span>
-                  <input
-                    ref={nameInputRef}
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    maxLength={128}
-                    autoComplete="name"
-                  />
-                </label>
-                <button type="submit" className="profile-save-btn">
-                  Enregistrer
-                </button>
+        <div className="profile-card">
+          {guest ? (
+            <>
+              <div className="profile-card-body">
+                <p className="profile-card-title">Sauvegarder mes études</p>
+                <p className="profile-card-lead">
+                  Relie Google ou un e-mail pour synchroniser tes marques, notes et
+                  plans.
+                </p>
+                {showQuota ? (
+                  <div className="profile-quota">
+                    <div className="profile-quota-bar" aria-hidden="true">
+                      <div
+                        className="profile-quota-fill"
+                        style={{ width: `${quotaPct}%` }}
+                      />
+                    </div>
+                    <p className="profile-quota-label">
+                      {markedCount}/{FREE_MARK_QUOTA} surlignages — relie un compte
+                      pour continuer sereinement
+                    </p>
+                  </div>
+                ) : null}
                 <button
                   type="button"
-                  className="profile-onboarding-cancel"
-                  onClick={() => {
-                    setFullName(joinFullName(profile.firstName, profile.lastName));
-                    setEditingName(false);
-                  }}
+                  className="profile-pill-cta"
+                  disabled={loading}
+                  onClick={() => onRequestSignIn?.()}
                 >
-                  Annuler
+                  Connecter un compte
                 </button>
-              </form>
-            ) : (
-              <button
-                type="button"
-                className="profile-row-btn"
-                onClick={() => setEditingName(true)}
-              >
-                <YvIcon name="person" className="profile-row-icon" opsz={20} />
+              </div>
+              <div className="profile-card-footer">
+                <button
+                  type="button"
+                  className="profile-inset-row"
+                  onClick={() =>
+                    downloadUserBackupJson(
+                      `biblos-backup-${new Date().toISOString().slice(0, 10)}.json`,
+                    )
+                  }
+                >
+                  <YvIcon name="download" className="profile-row-icon" opsz={20} />
+                  <span className="profile-row-body">
+                    <span className="profile-row-label">Exporter backup (JSON)</span>
+                  </span>
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="profile-card-rows">
+              {editingName ? (
+                <form className="profile-name-edit" onSubmit={saveName}>
+                  <label className="profile-field">
+                    <span>Nom complet</span>
+                    <input
+                      ref={nameInputRef}
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      maxLength={128}
+                      autoComplete="name"
+                      autoFocus
+                    />
+                  </label>
+                  <div className="profile-delete-actions">
+                    <button
+                      type="button"
+                      className="is-cancel"
+                      onClick={() => {
+                        setFullName(
+                          joinFullName(profile.firstName, profile.lastName),
+                        );
+                        setEditingName(false);
+                      }}
+                    >
+                      Annuler
+                    </button>
+                    <button type="submit" className="profile-save-btn">
+                      Enregistrer
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <button
+                  type="button"
+                  className="profile-inset-row"
+                  onClick={() => setEditingName(true)}
+                >
+                  <YvIcon name="person" className="profile-row-icon" opsz={20} />
+                  <span className="profile-row-body">
+                    <span className="profile-row-label">{displayName}</span>
+                    <span className="profile-row-value muted">
+                      {profile.email || "Compte connecté"}
+                    </span>
+                  </span>
+                  <YvIcon name="settings" className="profile-row-chevron" opsz={20} />
+                </button>
+              )}
+              <div className="profile-inset-row profile-inset-static" role="status">
+                <YvIcon name="sync" className="profile-row-icon" opsz={20} />
                 <span className="profile-row-body">
-                  <span className="profile-row-label">{displayName}</span>
+                  <span className="profile-row-label">Synchronisation</span>
                   <span className="profile-row-value muted">
-                    {profile.email || "Compte connecté"}
+                    {syncRowLabel(syncStatus)}
                   </span>
                 </span>
-                <YvIcon name="chevron_right" className="profile-row-chevron" opsz={20} />
+              </div>
+              <button
+                type="button"
+                className="profile-inset-row"
+                onClick={() =>
+                  downloadUserBackupJson(
+                    `biblos-backup-${new Date().toISOString().slice(0, 10)}.json`,
+                  )
+                }
+              >
+                <YvIcon name="download" className="profile-row-icon" opsz={20} />
+                <span className="profile-row-body">
+                  <span className="profile-row-label">Exporter backup (JSON)</span>
+                </span>
               </button>
-            )}
-            <div className="profile-row-btn" role="status">
-              <YvIcon name="sync" className="profile-row-icon" opsz={20} />
-              <span className="profile-row-body">
-                <span className="profile-row-label">Synchronisation</span>
-                <span className="profile-row-value muted">
-                  {syncStatusLabel(syncStatus)}
+              <button
+                type="button"
+                className="profile-inset-row"
+                disabled={signOutBusy}
+                onClick={() => void handleSignOut()}
+              >
+                <YvIcon name="close" className="profile-row-icon" opsz={20} />
+                <span className="profile-row-body">
+                  <span className="profile-row-label">Se déconnecter</span>
                 </span>
-              </span>
+              </button>
+              {!confirmDelete ? (
+                <button
+                  type="button"
+                  className="profile-inset-row is-danger"
+                  onClick={() => setConfirmDelete(true)}
+                >
+                  <YvIcon name="delete" className="profile-row-icon" opsz={20} />
+                  <span className="profile-row-body">
+                    <span className="profile-row-label">Supprimer mon compte</span>
+                  </span>
+                </button>
+              ) : (
+                <div className="profile-delete-panel">
+                  <p>
+                    Les bibles S21/HT98 resteront sur l&apos;appareil. Tes données
+                    cloud et locales personnelles seront effacées.
+                  </p>
+                  <div className="profile-delete-actions">
+                    <button
+                      type="button"
+                      className="is-cancel"
+                      disabled={deleteBusy}
+                      onClick={() => setConfirmDelete(false)}
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      type="button"
+                      className="is-confirm"
+                      disabled={deleteBusy}
+                      onClick={() => void handleDeleteConfirm()}
+                    >
+                      Confirmer la suppression
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
-            <button
-              type="button"
-              className="profile-row-btn"
-              disabled={signOutBusy}
-              onClick={() => void handleSignOut()}
-            >
-              <YvIcon name="close" className="profile-row-icon" opsz={20} />
-              <span className="profile-row-body">
-                <span className="profile-row-label">Se déconnecter</span>
-                <span className="profile-row-value muted">
-                  Les Bibles téléchargées restent sur l’appareil
-                </span>
-              </span>
-            </button>
-            <button
-              type="button"
-              className="profile-row-btn"
-              disabled={deleteBusy}
-              onClick={() => void handleDeleteAccount()}
-            >
-              <YvIcon name="delete" className="profile-row-icon" opsz={20} />
-              <span className="profile-row-body">
-                <span className="profile-row-label">
-                  {confirmDelete ? "Confirmer la suppression" : "Supprimer mon compte"}
-                </span>
-                <span className="profile-row-value muted">
-                  Efface tes données cloud (pas les textes bibliques)
-                </span>
-              </span>
-            </button>
-          </>
-        )}
-        <button
-          type="button"
-          className="profile-row-btn"
-          onClick={() =>
-            downloadUserBackupJson(
-              `biblos-backup-${new Date().toISOString().slice(0, 10)}.json`,
-            )
-          }
-        >
-          <YvIcon name="download" className="profile-row-icon" opsz={20} />
-          <span className="profile-row-body">
-            <span className="profile-row-label">Exporter backup (JSON)</span>
-            <span className="profile-row-value muted">
-              Marques, notes et progrès de plans
-            </span>
-          </span>
-        </button>
-      </section>
-
-      <section className="profile-section" aria-labelledby="profile-editorial-title">
-        <h3 id="profile-editorial-title" className="type-eyebrow">
-          Édition
-        </h3>
-        <a className="profile-row-btn" href="#admin">
-          <span className="profile-row-body">
-            <span className="profile-row-label">CMS plans (Firestore)</span>
-            <span className="profile-row-value muted">Connexion éditeur</span>
-          </span>
-        </a>
+          )}
+        </div>
       </section>
 
       <section className="profile-section" aria-labelledby="profile-prefs-title">
         <h3 id="profile-prefs-title" className="type-eyebrow">
-          Préférences
+          {showAdminEntry ? "Édition & Préférences" : "Préférences"}
         </h3>
-        <button type="button" className="profile-row-btn" onClick={onCycleTheme}>
-          <YvIcon
-            name={resolveTheme(themePref) === "light" ? "light_mode" : "dark_mode"}
-            className="profile-row-icon"
-            opsz={20}
-          />
-          <span className="profile-row-body">
-            <span className="profile-row-label">Apparence</span>
-            <span className="profile-row-value muted">{themePrefLabel(themePref)}</span>
-          </span>
-          <YvIcon name="chevron_right" className="profile-row-chevron" opsz={20} />
-        </button>
+        <div className="profile-card profile-card-rows">
+          {showAdminEntry ? (
+            <a className="profile-inset-row" href="#admin">
+              <span className="profile-row-body">
+                <span className="profile-row-label">CMS plans (Firestore)</span>
+              </span>
+              <span className="profile-admin-pill">#admin ›</span>
+            </a>
+          ) : null}
+          <div className="profile-inset-row profile-inset-static">
+            <span className="profile-row-body">
+              <span className="profile-row-label">Apparence</span>
+            </span>
+            <div className="profile-theme-seg" role="group" aria-label="Thème">
+              <button
+                type="button"
+                className={resolvedTheme === "light" ? "is-active" : undefined}
+                onClick={() => onSetTheme("light")}
+              >
+                Clair
+              </button>
+              <button
+                type="button"
+                className={resolvedTheme === "dark" ? "is-active" : undefined}
+                onClick={() => onSetTheme("dark")}
+              >
+                Sombre
+              </button>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section className="profile-section" aria-labelledby="profile-storage-title">
         <h3 id="profile-storage-title" className="type-eyebrow">
           Stockage
         </h3>
-        <div className="profile-row-btn" role="group" aria-label="Espace hors ligne">
-          <YvIcon name="download" className="profile-row-icon" opsz={20} />
-          <span className="profile-row-body">
-            <span className="profile-row-label">Cache hors ligne</span>
-            <span className="profile-row-value muted">
-              {storageHealth
-                ? `${storageHealth.usedMB} Mo utilisés${
-                    storageHealth.quotaMB > 0 ? ` / ${storageHealth.quotaMB} Mo` : ""
-                  }`
-                : "Calcul…"}
+        <div className="profile-card profile-card-rows">
+          <div className="profile-inset-row profile-inset-static" role="status">
+            <span className="profile-row-body">
+              <span className="profile-row-label">
+                {storageHealth
+                  ? `${storageHealth.usedMB} Mo utilisés`
+                  : "Calcul…"}
+              </span>
+              <span className="profile-row-value muted">
+                {storageHealth
+                  ? storageHealth.isPersisted
+                    ? "Stockage persistant"
+                    : "Cache navigateur"
+                  : "…"}
+              </span>
             </span>
-            <span className="profile-row-value muted">
-              {storageHealth?.isPersisted
-                ? "Stockage protégé (persistant)"
-                : "Protection non garantie par le système"}
+          </div>
+          <div className="profile-inset-row profile-inset-static">
+            <span className="profile-row-body">
+              <span className="profile-row-label">Segond 21 (S21)</span>
             </span>
-          </span>
-        </div>
-        <div className="profile-row-btn" role="group" aria-label="Versions hors ligne">
-          <YvIcon name="menu_book" className="profile-row-icon" opsz={20} />
-          <span className="profile-row-body">
-            <span className="profile-row-label">S21</span>
-            <span className="profile-row-value muted">
-              {s21Status ? versionAvailabilityLabel(s21Status) : "…"}
+            {isReady(s21Status) ? (
+              <span className="profile-ready-badge">Prêt</span>
+            ) : (
+              <button
+                type="button"
+                className="profile-download-btn"
+                disabled={dlBusy !== null}
+                onClick={() => void downloadVersion("s21")}
+              >
+                {isDownloading(s21Status) || dlBusy === "s21"
+                  ? s21Status?.status === "downloading"
+                    ? `${s21Status.progressPercent}%`
+                    : "…"
+                  : "Télécharger"}
+              </button>
+            )}
+          </div>
+          <div className="profile-inset-row profile-inset-static">
+            <span className="profile-row-body">
+              <span className="profile-row-label">Bib la (HT98)</span>
             </span>
-            <span className="profile-row-label">HAT98</span>
-            <span className="profile-row-value muted">
-              {htStatus ? versionAvailabilityLabel(htStatus) : "…"}
-            </span>
-          </span>
+            {isReady(htStatus) ? (
+              <span className="profile-ready-badge">Prêt</span>
+            ) : (
+              <button
+                type="button"
+                className="profile-download-btn"
+                disabled={dlBusy !== null}
+                onClick={() => void downloadVersion("ht98")}
+              >
+                {isDownloading(htStatus) || dlBusy === "ht98"
+                  ? htStatus?.status === "downloading"
+                    ? `${htStatus.progressPercent}%`
+                    : "…"
+                  : "Télécharger"}
+              </button>
+            )}
+          </div>
         </div>
       </section>
 
@@ -396,47 +578,41 @@ export function ProfileShellPanel({
           {history.length ? (
             <button
               type="button"
-              className="profile-text-btn"
-              onClick={() => {
-                if (!confirmClear) {
-                  setConfirmClear(true);
-                  return;
-                }
-                clearBibleReadingHistory(profile.id);
-                setConfirmClear(false);
-                onHistoryChange?.();
-              }}
+              className={`profile-text-btn${confirmClear ? " is-confirm-warn" : ""}`}
+              onClick={requestClearHistory}
             >
-              {confirmClear ? "Confirmer" : "Effacer"}
+              {confirmClear ? "Confirmer ?" : "Effacer"}
             </button>
           ) : null}
         </div>
         {history.length ? (
-          <ul className="profile-history-list">
-            {history.map((event) => {
-              const ref = parseRef(event);
-              if (!ref) return null;
-              const label =
-                String(event.meta?.label || "").trim() ||
-                (ref.verse != null
-                  ? `${ref.bookId} ${ref.chapterId}.${ref.verse}`
-                  : `${ref.bookId} ${ref.chapterId}`);
-              return (
-                <li key={event.id}>
-                  <button
-                    type="button"
-                    className="profile-history-item"
-                    onClick={() => onOpenPassage(ref)}
-                  >
-                    <span className="profile-history-label">{label}</span>
-                    <span className="profile-history-when muted">
-                      {formatActivityWhen(event.at)}
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
+          <div className="profile-card profile-history-card">
+            <ul className="profile-history-list">
+              {history.map((event) => {
+                const ref = parseRef(event);
+                if (!ref) return null;
+                const label =
+                  String(event.meta?.label || "").trim() ||
+                  (ref.verse != null
+                    ? `${ref.bookId} ${ref.chapterId}.${ref.verse}`
+                    : `${ref.bookId} ${ref.chapterId}`);
+                return (
+                  <li key={event.id}>
+                    <button
+                      type="button"
+                      className="profile-history-item"
+                      onClick={() => onOpenPassage(ref)}
+                    >
+                      <span className="profile-history-label">{label}</span>
+                      <span className="profile-history-when muted">
+                        {formatActivityWhen(event.at)}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         ) : (
           <p className="muted">Aucune lecture enregistrée pour le moment.</p>
         )}

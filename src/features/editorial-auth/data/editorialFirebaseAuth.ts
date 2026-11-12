@@ -12,6 +12,7 @@ import {
   type User,
 } from "firebase/auth";
 import { ensureFirebase } from "../../../lib/firebase";
+import { isClevencodeAdminEmail } from "../../../userProfile";
 
 let auth: Auth | null = null;
 
@@ -71,16 +72,7 @@ export async function signOutEditor(): Promise<void> {
 }
 
 function isEditorialAllowlisted(email: string | null | undefined): boolean {
-  const needle = String(import.meta.env.VITE_CLEVENCODE_ADMIN_EMAIL ?? "")
-    .trim()
-    .toLowerCase();
-  // Sem allowlist configurada: qualquer sessão Firebase (comportamento legado).
-  if (!needle) return true;
-  return (
-    String(email ?? "")
-      .trim()
-      .toLowerCase() === needle
-  );
+  return isClevencodeAdminEmail(email);
 }
 
 /** Barreira obrigatória antes de qualquer write Firestore. */

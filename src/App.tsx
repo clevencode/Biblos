@@ -106,9 +106,10 @@ function BiblosConsumerApp() {
   const [workspaceJour, setWorkspaceJour] = useState<number | undefined>();
   const [workspaceResumeSeq, setWorkspaceResumeSeq] = useState(0);
   const [offlineToast, setOfflineToast] = useState(false);
+  const [markSavedToast, setMarkSavedToast] = useState(false);
   const [swUpdatePending, setSwUpdatePending] = useState(false);
   const [signInOpen, setSignInOpen] = useState(false);
-  const [signInVariant, setSignInVariant] = useState<"upgrade" | "mark_quota">(
+  const [signInVariant, setSignInVariant] = useState<"upgrade" | "soft_gate">(
     "upgrade",
   );
   const [showWelcomeOnboarding, setShowWelcomeOnboarding] = useState(false);
@@ -221,6 +222,16 @@ function BiblosConsumerApp() {
     setActivityTick((n) => n + 1);
   }, [profile.id, themePref]);
 
+  const setTheme = useCallback(
+    (pref: "light" | "dark") => {
+      setThemePref(pref);
+      saveThemePref(pref);
+      appendActivity("theme.change", { pref }, profile.id);
+      setActivityTick((n) => n + 1);
+    },
+    [profile.id],
+  );
+
   function handleVerseMarked(payload: {
     color: string | null;
     verses: number[];
@@ -249,7 +260,7 @@ function BiblosConsumerApp() {
 
   function requestAccountForMark(payload: MarkPayload) {
     pendingMarkRef.current = payload;
-    setSignInVariant("mark_quota");
+    setSignInVariant("soft_gate");
     setSignInOpen(true);
   }
 
@@ -276,6 +287,8 @@ function BiblosConsumerApp() {
     pendingMarkRef.current = null;
     if (pendingMark) {
       authorizeMark(pendingMark);
+      setMarkSavedToast(true);
+      window.setTimeout(() => setMarkSavedToast(false), 3200);
     }
     setMarkQuotaHit(false);
     if (!isProfileOnboarded(profile) && !welcomeShownRef.current) {
@@ -331,6 +344,19 @@ function BiblosConsumerApp() {
             className="offline-toast-dismiss"
             aria-label="Fermer"
             onClick={() => setOfflineToast(false)}
+          >
+            ×
+          </button>
+        </div>
+      ) : null}
+      {markSavedToast ? (
+        <div className="offline-toast" role="status" aria-live="polite">
+          <p>Surlignage enregistré</p>
+          <button
+            type="button"
+            className="offline-toast-dismiss"
+            aria-label="Fermer"
+            onClick={() => setMarkSavedToast(false)}
           >
             ×
           </button>
@@ -411,7 +437,7 @@ function BiblosConsumerApp() {
                   active={tab === "profile"}
                   activityTick={activityTick}
                   themePref={themePref}
-                  onCycleTheme={cycleTheme}
+                  onSetTheme={setTheme}
                   onOpenPassage={(ref) => openBible(historyToFocusRef(ref))}
                   onHistoryChange={() => setActivityTick((n) => n + 1)}
                   onRequestSignIn={() => {

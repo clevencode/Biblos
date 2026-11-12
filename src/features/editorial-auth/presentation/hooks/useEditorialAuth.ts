@@ -5,20 +5,9 @@ import {
   signOutEditor,
   subscribeEditorialAuth,
 } from "../../data/editorialFirebaseAuth";
+import { isClevencodeAdminEmail } from "../../../../userProfile";
 
 export type EditorialAuthPhase = "checking" | "signed_out" | "signed_in";
-
-function isEditorialAllowlisted(email: string | null | undefined): boolean {
-  const allow = String(import.meta.env.VITE_CLEVENCODE_ADMIN_EMAIL ?? "")
-    .trim()
-    .toLowerCase();
-  if (!allow) return true;
-  return (
-    String(email ?? "")
-      .trim()
-      .toLowerCase() === allow
-  );
-}
 
 export function useEditorialAuth() {
   const [phase, setPhase] = useState<EditorialAuthPhase>("checking");
@@ -27,7 +16,7 @@ export function useEditorialAuth() {
 
   useEffect(() => {
     const stop = subscribeEditorialAuth((next) => {
-      if (next && !isEditorialAllowlisted(next.email)) {
+      if (next && !isClevencodeAdminEmail(next.email)) {
         setUser(null);
         setPhase("signed_out");
         return;
@@ -42,7 +31,7 @@ export function useEditorialAuth() {
     setError(null);
     try {
       const next = await signInEditor(email, password);
-      if (!isEditorialAllowlisted(next.email)) {
+      if (!isClevencodeAdminEmail(next.email)) {
         await signOutEditor();
         const message = "Compte non autorisé pour l’édition CMS";
         setError(message);

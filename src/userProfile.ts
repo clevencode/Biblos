@@ -64,14 +64,21 @@ export function preferredDisplayName(profile: UserProfile): string {
   return cleanName(profile.preferredName);
 }
 
-/** E-mail propriétaire (VITE_CLEVENCODE_ADMIN_EMAIL) — insensible à la casse. */
+/** Propriétaire CMS — fallback si `VITE_CLEVENCODE_ADMIN_EMAIL` absente. */
+export const CLEVENCODE_ADMIN_EMAIL_DEFAULT = "clevypetit@gmail.com";
+
+/** E-mail propriétaire (env ou défaut) — insensible à la casse. */
+export function getClevencodeAdminEmail(): string {
+  const fromEnv = String(import.meta.env.VITE_CLEVENCODE_ADMIN_EMAIL ?? "")
+    .trim()
+    .toLowerCase();
+  return fromEnv || CLEVENCODE_ADMIN_EMAIL_DEFAULT;
+}
+
 export function isClevencodeAdminEmail(
   email: string | null | undefined,
 ): boolean {
-  const needle = String(import.meta.env.VITE_CLEVENCODE_ADMIN_EMAIL ?? "")
-    .trim()
-    .toLowerCase();
-  if (!needle) return false;
+  const needle = getClevencodeAdminEmail();
   return (
     String(email ?? "")
       .trim()

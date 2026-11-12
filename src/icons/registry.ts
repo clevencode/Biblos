@@ -11,6 +11,7 @@ import {
   ChevronRight,
   CircleCheck,
   Close,
+  CloudOff,
   Copy,
   Download,
   Highlighter,
@@ -71,7 +72,8 @@ export type BiblosIconName =
   | "sync"
   | "notifications"
   | "notifications_active"
-  | "desktop_windows";
+  | "desktop_windows"
+  | "cloud_off";
 
 type IconEntry = {
   line: IconComponent;
@@ -111,6 +113,7 @@ export const ICON_REGISTRY: Record<BiblosIconName, IconEntry> = {
   notifications: { line: Bell, fill: BellDotFill },
   notifications_active: { line: BellDot, fill: BellDotFill },
   desktop_windows: { line: Monitor },
+  cloud_off: { line: CloudOff },
 };
 
 export function isBiblosIconName(name: string): name is BiblosIconName {

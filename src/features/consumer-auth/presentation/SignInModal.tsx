@@ -6,7 +6,7 @@ type SignInModalProps = {
   title?: string;
   lead?: string;
   /** Soft gate après cote de marques. */
-  variant?: "upgrade" | "mark_quota";
+  variant?: "upgrade" | "soft_gate";
   onClose: () => void;
   onSignedIn?: () => void;
 };
@@ -41,13 +41,13 @@ export function SignInModal({
 
   const resolvedTitle =
     title ??
-    (variant === "mark_quota"
+    (variant === "soft_gate"
       ? "Garde tes surlignages"
       : "Sauvegarder mes études");
   const resolvedLead =
     lead ??
-    (variant === "mark_quota"
-      ? "Tu as déjà plusieurs marques sur cet appareil. Relie un compte pour les retrouver sur tous tes appareils — c’est plus serein pour poursuivre."
+    (variant === "soft_gate"
+      ? "En mode invité, tu peux marquer jusqu’à 10 versets sur cet appareil. Relie un compte pour continuer et retrouver tes surlignages partout."
       : "Connecte un compte Google ou e-mail pour synchroniser marques, notes et plans entre tes appareils.");
 
   const displayError = localError || error;
