@@ -5434,8 +5434,8 @@ body {
     opacity: 0;
     pointer-events: none;
     transition:
-      transform 0.22s ease,
-      opacity 0.18s ease;
+      transform 200ms ease-out,
+      opacity 200ms ease-out;
   }
 
   .workspace.is-mobile-vista .graph-pane-body {
@@ -5490,6 +5490,9 @@ body {
     bottom: 0;
     width: auto;
     will-change: transform, opacity;
+    transition:
+      transform 200ms ease-out,
+      opacity 200ms ease-out;
   }
 
   .app.is-bible-mode.is-narrow .note-shell-main > .graph-pane {
@@ -11839,11 +11842,11 @@ html[data-passage-bar-panel="test"]
   color: inherit;
 }
 
-/* Verse sheet → mesmo cartão editorial do word-search */
+/* Verse actions — cartão suspenso (não bottom-sheet) */
 .bible-reader--yv .bible-verse-actions.is-sheet {
   left: max(var(--mobile-gutter, 12px), env(safe-area-inset-left, 0px));
   right: max(var(--mobile-gutter, 12px), env(safe-area-inset-right, 0px));
-  bottom: 0;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
   width: auto;
   max-width: none;
   margin: 0;
@@ -11852,26 +11855,20 @@ html[data-passage-bar-panel="test"]
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 10px 10px calc(12px + env(safe-area-inset-bottom, 0px));
+  padding: 12px 12px 14px;
   border: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
   border-radius: 16px;
   background: var(--surface, #fff);
   box-shadow:
     0 18px 40px rgba(0, 0, 0, 0.16),
     0 2px 8px rgba(0, 0, 0, 0.06);
-  animation: bible-sheet-up 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: bible-popup-in 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
   overflow: visible;
 }
 
 .bible-reader--yv .bible-verse-actions.is-sheet::before {
-  content: "";
-  display: block;
-  width: 2.25rem;
-  height: 3px;
-  margin: 2px auto 6px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--text) 14%, transparent);
-  flex: none;
+  content: none;
+  display: none;
 }
 
 .bible-reader--yv .bible-verse-actions.is-sheet .bible-verse-actions-body {
@@ -13718,8 +13715,24 @@ html[data-passage-bar-panel="test"]
   bottom: calc(var(--mobile-bottom-chrome) + 8px);
 }
 
+/* Navbar oculta: mantém cartão suspenso (gutters + lift), sem full-bleed sheet */
+.app.is-bible-mode.is-narrow .bible-reader--yv.is-overlay-active .bible-verse-actions.is-sheet,
+.app.is-bible-mode.is-narrow:has(.mode-tabs.is-immersive-hidden)
+  .bible-reader--yv.has-verse-actions
+  .bible-verse-actions.is-sheet {
+  left: max(var(--mobile-gutter, 12px), env(safe-area-inset-left, 0px));
+  right: max(var(--mobile-gutter, 12px), env(safe-area-inset-right, 0px));
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
+  padding: 12px 12px 14px;
+}
+
 .app.is-bible-mode.is-narrow .bible-reader--yv .bible-share-sheet.is-sheet {
   bottom: var(--mobile-bottom-chrome);
+}
+
+.app.is-bible-mode.is-narrow .bible-reader--yv.is-overlay-active .bible-share-sheet.is-sheet {
+  bottom: 0;
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
 }
 
 .bible-search-sheet-close {
@@ -14460,7 +14473,7 @@ html[data-passage-bar-panel="test"]
 }
 
 .app.is-bible-mode.is-narrow .bible-reader--yv .bible-verse-actions.is-sheet {
-  padding: 10px 10px calc(12px + env(safe-area-inset-bottom, 0px));
+  padding: 12px 12px 14px;
 }
 
 @keyframes bible-sheet-up {

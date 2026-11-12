@@ -25,7 +25,13 @@ export type PassageBarStep = "book" | "chapter" | "verse";
 
 export type UsePassageBarControllerArgs = {
   pickerPanelOpenAllowed: boolean;
-  closeToolsMenu: () => void;
+  /** Controlado pelo overlay único da tela Bible. */
+  pickerOpen: boolean;
+  wordSearchOpen: boolean;
+  requestOpenPassagePicker: () => void;
+  requestClosePicker: () => void;
+  requestToggleWordSearch: () => void;
+  requestCloseWordSearch: () => void;
   books: YouVersionBook[];
   textVersion: BibleTextVersionId;
   bookId: string;
@@ -37,11 +43,17 @@ export type UsePassageBarControllerArgs = {
 
 /**
  * Orquestração da BiblePassageBar (layout test + legacy):
- * chip/roll, word search, discovery sessions e exclusão mútua dos overlays.
+ * chip/roll, word search, discovery sessions.
+ * Abertura/fecho de picker e word search é controlada pelo overlay único.
  */
 export function usePassageBarController({
   pickerPanelOpenAllowed,
-  closeToolsMenu,
+  pickerOpen,
+  wordSearchOpen,
+  requestOpenPassagePicker,
+  requestClosePicker,
+  requestToggleWordSearch,
+  requestCloseWordSearch,
   books,
   textVersion,
   bookId,
@@ -50,10 +62,8 @@ export function usePassageBarController({
   presentationInFlight,
   markOverlayDismissSwallow,
 }: UsePassageBarControllerArgs) {
-  const [pickerOpen, setPickerOpen] = useState(false);
   const [passageStep, setPassageStep] = useState<PassageBarStep>("book");
   const [bookSearchQuery, setBookSearchQuery] = useState("");
-  const [wordSearchOpen, setWordSearchOpen] = useState(false);
   const {
     query: wordSearchQuery,
     scopeFilter: wordSearchScopeFilter,
@@ -175,14 +185,14 @@ export function usePassageBarController({
   }, [clearWordSearchSession]);
 
   const closeWordSearch = useCallback(() => {
-    setWordSearchOpen(false);
-  }, []);
+    requestCloseWordSearch();
+  }, [requestCloseWordSearch]);
 
   const closePicker = useCallback(() => {
-    setPickerOpen(false);
     setPassageStep("book");
     pendingVerseStep.current = false;
-  }, []);
+    requestClosePicker();
+  }, [requestClosePicker]);
 
   const closeAll = useCallback(() => {
     closePicker();
@@ -192,13 +202,11 @@ export function usePassageBarController({
   const openPassagePicker = useCallback(
     (step: "book" | "chapter") => {
       if (!pickerPanelOpenAllowed) return;
-      closeToolsMenu();
-      closeWordSearch();
       setPassageStep(step);
       pendingVerseStep.current = false;
-      setPickerOpen(true);
+      requestOpenPassagePicker();
     },
-    [pickerPanelOpenAllowed, closeToolsMenu, closeWordSearch],
+    [pickerPanelOpenAllowed, requestOpenPassagePicker],
   );
 
   const togglePassagePicker = useCallback(
@@ -232,17 +240,12 @@ export function usePassageBarController({
   ]);
 
   const toggleWordSearch = useCallback(() => {
-    setWordSearchOpen((open) => {
-      if (open) {
-        return false;
-      }
-      closeToolsMenu();
-      setPickerOpen(false);
+    if (!wordSearchOpen) {
       setPassageStep("book");
       pendingVerseStep.current = false;
-      return true;
-    });
-  }, [closeToolsMenu]);
+    }
+    requestToggleWordSearch();
+  }, [wordSearchOpen, requestToggleWordSearch]);
 
   const armPendingVerseStep = useCallback((armed: boolean) => {
     pendingVerseStep.current = armed;
@@ -359,7 +362,6 @@ export function usePassageBarController({
   return {
     discoverySplitSearch,
     pickerOpen,
-    setPickerOpen,
     passageStep,
     setPassageStep,
     passageRollOpen,

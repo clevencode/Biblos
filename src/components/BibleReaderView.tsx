@@ -72,6 +72,7 @@ import {
   showOfflineChapterGate,
 } from "../bible/viewState";
 import { usePassageViewModel } from "../hooks/usePassageViewModel";
+import { useBibleOverlayController } from "../hooks/useBibleOverlayController";
 import { usePassageBarController } from "../hooks/usePassageBarController";
 import { useAppReadiness } from "../context/AppReadinessContext";
 import { CircularColorEditor } from "./CircularColorEditor";
@@ -566,7 +567,6 @@ export function BibleReaderView({
   const [dayNoteOpen, setDayNoteOpen] = useState(false);
   /** Fin d’étape / fin de plan → retour plans après la note. */
   const [dayNoteReturnsToPlans, setDayNoteReturnsToPlans] = useState(false);
-  const [toolsMenuOpen, setToolsMenuOpen] = useState(false);
   const toolsMenuRef = useRef<HTMLDivElement | null>(null);
   const overlayDismissSwallowRef = useRef(false);
   const overlayDismissSwallowTimerRef = useRef<number | undefined>(undefined);
@@ -586,9 +586,58 @@ export function BibleReaderView({
     return true;
   }, []);
 
-  const closeToolsMenu = useCallback(() => {
-    setToolsMenuOpen(false);
+  const clearVerseSelectionUi = useCallback(() => {
+    preferJumpFocusRef.current = false;
+    pendingScrollVerse.current = null;
+    lastAppliedVerseScroll.current = "";
+    setSelection(null);
+    setHighlightVerse(null);
+    setHighlightVerseEnd(null);
+    setFocusDim(false);
+    setCardMsg(null);
+    setCardColor(loadPreferredVerseColor());
+    setColorEditorOpen(false);
   }, []);
+
+  const {
+    activeOverlay,
+    hasActiveModal,
+    openOverlay,
+    closeOverlay,
+    toggleOverlay,
+  } = useBibleOverlayController({
+    onClearVerseSelection: clearVerseSelectionUi,
+  });
+
+  const pickerOpen = activeOverlay.type === "passage_picker";
+  const wordSearchOpen = activeOverlay.type === "word_search";
+  const toolsMenuOpen = activeOverlay.type === "reader_settings";
+  const hasActiveModalRef = useRef(hasActiveModal);
+  hasActiveModalRef.current = hasActiveModal;
+
+  const requestOpenPassagePicker = useCallback(() => {
+    setHistoryOpen(false);
+    setShareSheetOpen(false);
+    openOverlay({ type: "passage_picker" });
+  }, [openOverlay]);
+
+  const requestClosePicker = useCallback(() => {
+    closeOverlay();
+  }, [closeOverlay]);
+
+  const requestCloseWordSearch = useCallback(() => {
+    closeOverlay();
+  }, [closeOverlay]);
+
+  const requestToggleWordSearch = useCallback(() => {
+    setHistoryOpen(false);
+    setShareSheetOpen(false);
+    toggleOverlay("word_search");
+  }, [toggleOverlay]);
+
+  const closeToolsMenu = useCallback(() => {
+    closeOverlay();
+  }, [closeOverlay]);
 
   const [offlineReady, setOfflineReady] = useState(false);
   const [htOfflineReady, setHtOfflineReady] = useState(false);
@@ -640,14 +689,11 @@ export function BibleReaderView({
 
   const {
     discoverySplitSearch,
-    pickerOpen,
-    setPickerOpen,
     passageStep,
     setPassageStep,
     passageRollOpen,
     bookSearchQuery,
     setBookSearchQuery,
-    wordSearchOpen,
     wordSearchQuery,
     setWordSearchQuery,
     wordSearchScopeFilter,
@@ -683,7 +729,12 @@ export function BibleReaderView({
     toggleWordSearch,
   } = usePassageBarController({
     pickerPanelOpenAllowed: pickerChrome.pickerPanelOpenAllowed,
-    closeToolsMenu,
+    pickerOpen,
+    wordSearchOpen,
+    requestOpenPassagePicker,
+    requestClosePicker,
+    requestToggleWordSearch,
+    requestCloseWordSearch,
     books,
     textVersion,
     bookId,
@@ -1084,9 +1135,13 @@ export function BibleReaderView({
 
   function selectVerse(number: number) {
     if (takeOverlayDismissSwallow()) return;
-    if (pickerOpen || wordSearchOpen || toolsMenuOpen || shareSheetOpen || historyOpen) {
+    if (
+      hasActiveModal &&
+      activeOverlay.type !== "verse_actions"
+    ) {
       return;
     }
+    if (shareSheetOpen || historyOpen) return;
     // Side-effects fora do updater (React pode correr updaters na fase de render).
     preferJumpFocusRef.current = false;
     const current = selection;
@@ -1101,17 +1156,24 @@ export function BibleReaderView({
       setHighlightVerseEnd(null);
       setFocusDim(false);
       setSelection(null);
+      closeOverlay();
     } else {
+      const sorted = sortVerses(next);
       const mode: VerseScrollMode = current?.length ? "nearest" : "start";
       pendingScrollVerse.current = { number, mode, seq: ++verseScrollSeq.current };
       setHighlightVerse(number);
       setHighlightVerseEnd(null);
       setFocusDim(false);
       if (!current?.length) setCardColor(loadPreferredVerseColor());
-      setSelection(sortVerses(next));
+      setSelection(sorted);
+      setHistoryOpen(false);
+      setShareSheetOpen(false);
+      openOverlay({
+        type: "verse_actions",
+        selectedVerseIds: sorted.map(String),
+      });
     }
     setCardMsg(null);
-    setPickerOpen(false);
   }
 
   function jumpToVerse(number: number) {
@@ -1122,7 +1184,7 @@ export function BibleReaderView({
     setHighlightVerseEnd(null);
     setFocusDim(true);
     setCardMsg(null);
-    setPickerOpen(false);
+    closeOverlay();
   }
 
   const onPlanStep = Boolean(
@@ -1462,7 +1524,7 @@ export function BibleReaderView({
       expandedBookId: jump.passage.bookId.toUpperCase(),
       anchorVerseUsfm: jump.passage.usfm || null,
     });
-    setPickerOpen(false);
+    closePicker();
     setPassageStep("book");
     const chapter = String(jump.passage.chapter);
     const verse = jump.passage.verse;
@@ -1492,15 +1554,12 @@ export function BibleReaderView({
   }
 
   function closeCreateCard() {
-    preferJumpFocusRef.current = false;
-    setSelection(null);
-    setHighlightVerse(null);
-    setHighlightVerseEnd(null);
-    setFocusDim(false);
-    setCardMsg(null);
-    setCardColor(loadPreferredVerseColor());
-    setColorEditorOpen(false);
     setShareSheetOpen(false);
+    if (activeOverlay.type === "verse_actions") {
+      closeOverlay();
+      return;
+    }
+    clearVerseSelectionUi();
   }
 
   async function toggleOfflineBible() {
@@ -1844,7 +1903,10 @@ export function BibleReaderView({
   const shareAccentHex = "#C4A574";
 
   const showCreateCard = Boolean(
-    selectedVerses.length && selectedVerseText && !pickerOpen && !shareSheetOpen,
+    activeOverlay.type === "verse_actions" &&
+      selectedVerses.length &&
+      selectedVerseText &&
+      !shareSheetOpen,
   );
 
   useLayoutEffect(() => {
@@ -1915,7 +1977,7 @@ export function BibleReaderView({
       return;
     }
     if (target === "tools") {
-      setToolsMenuOpen(false);
+      closeToolsMenu();
       return;
     }
     if (target === "history") {
@@ -1940,13 +2002,13 @@ export function BibleReaderView({
         event.preventDefault();
         event.stopPropagation();
         markOverlayDismissSwallow();
-        setToolsMenuOpen(false);
+        closeToolsMenu();
       }
     };
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         markOverlayDismissSwallow();
-        setToolsMenuOpen(false);
+        closeToolsMenu();
       }
     };
     window.addEventListener("pointerdown", onPointer, true);
@@ -1955,7 +2017,7 @@ export function BibleReaderView({
       window.removeEventListener("pointerdown", onPointer, true);
       window.removeEventListener("keydown", onKey);
     };
-  }, [toolsMenuOpen]);
+  }, [toolsMenuOpen, closeToolsMenu, markOverlayDismissSwallow]);
 
   function stopBibleAudio() {
     const audio = audioRef.current;
@@ -2034,7 +2096,11 @@ export function BibleReaderView({
           aria-label="Menu"
           aria-haspopup="menu"
           aria-expanded={toolsMenuOpen}
-          onClick={() => setToolsMenuOpen((open) => !open)}
+          onClick={() => {
+            setHistoryOpen(false);
+            setShareSheetOpen(false);
+            toggleOverlay("reader_settings");
+          }}
         >
           <YvIcon name="menu" className="bible-yv-tool-icon" />
         </button>
@@ -2096,7 +2162,7 @@ export function BibleReaderView({
               role="menuitem"
               className={`bible-yv-tools-item${versionOfflineReady ? " is-ready" : ""}${offlineBusy ? " is-busy" : ""}`}
               onClick={() => {
-                if (!offlineBusy) setToolsMenuOpen(false);
+                if (!offlineBusy) closeToolsMenu();
                 void toggleOfflineBible();
               }}
               aria-label={
@@ -2129,7 +2195,7 @@ export function BibleReaderView({
                 role="menuitem"
                 className="bible-yv-tools-item"
                 onClick={() => {
-                  setToolsMenuOpen(false);
+                  closeOverlay();
                   setHistoryOpen(true);
                 }}
               >
@@ -2330,9 +2396,10 @@ export function BibleReaderView({
     chromeLockUntil.current = now + (hidden ? CHROME_HIDE_LOCK_MS : CHROME_SHOW_LOCK_MS);
 
     // flushSync: leitor + shell (dock/tabs) no mesmo paint — evita race classList vs className.
+    // Tab Bar: oculta no scroll OU com modal ativo (hasActiveModal).
     flushSync(() => {
       setChromeHidden(hidden);
-      onReadingChromeChange?.(hidden);
+      onReadingChromeChange?.(hasActiveModalRef.current || hidden);
     });
   }
 
@@ -2342,6 +2409,11 @@ export function BibleReaderView({
     setReadingChrome(false, true);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- setReadingChrome is a render-local helper
   }, [forceChrome]);
+
+  /** Navbar: modal aberto mantém hide mesmo com top chrome forçado visível. */
+  useEffect(() => {
+    onReadingChromeChange?.(hasActiveModal || chromeHidden);
+  }, [hasActiveModal, chromeHidden, onReadingChromeChange]);
 
   useEffect(() => {
     return () => {
@@ -2491,7 +2563,7 @@ export function BibleReaderView({
   return (
     <section
       ref={readerRef}
-      className={`bible-reader bible-reader--yv${hideChrome ? " is-chrome-hidden" : ""}${audioPlaying ? " is-audio-playing" : ""}${showCreateCard ? " has-verse-actions" : ""}${shareSheetOpen ? " is-share-open" : ""}${headCompact ? " is-head-compact" : ""}${surfaceChrome.rootClassPassageRollOpen ? " is-passage-roll-open" : ""}${compactToolsMenu ? " is-compact-tools" : ""}${toolsMenuOpen ? " is-tools-menu-open" : ""}${fontFamily === "sans" ? " is-font-sans" : " is-font-serif"}`}
+      className={`bible-reader bible-reader--yv${hideChrome ? " is-chrome-hidden" : ""}${hasActiveModal ? " is-overlay-active" : ""}${audioPlaying ? " is-audio-playing" : ""}${showCreateCard ? " has-verse-actions" : ""}${shareSheetOpen ? " is-share-open" : ""}${headCompact ? " is-head-compact" : ""}${surfaceChrome.rootClassPassageRollOpen ? " is-passage-roll-open" : ""}${compactToolsMenu ? " is-compact-tools" : ""}${toolsMenuOpen ? " is-tools-menu-open" : ""}${fontFamily === "sans" ? " is-font-sans" : " is-font-serif"}`}
       style={{ ["--bible-font-size" as string]: `${fontSize}px` }}
       onKeyDown={(event) => {
         if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement) {
@@ -2666,7 +2738,7 @@ export function BibleReaderView({
           event.preventDefault();
           event.stopPropagation();
           markOverlayDismissSwallow();
-          setToolsMenuOpen(false);
+          closeToolsMenu();
         }}
       >
         {surfaceChrome.passageSurfaceScrimOpen ? (
@@ -3102,7 +3174,7 @@ export function BibleReaderView({
           onClose={() => setHistoryOpen(false)}
           onSelect={({ bookId, chapterId, verse }) => {
             setHistoryOpen(false);
-            setPickerOpen(false);
+            closeOverlay();
             void loadChapter(bookId, chapterId, verse);
           }}
           onHistoryChange={onReadingHistoryChange}
