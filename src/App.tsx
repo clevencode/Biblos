@@ -13,11 +13,14 @@ import type { PlanFlowReturn } from "./features/reading-plans/presentation/PlanW
 import { ProfileShellPanel } from "./components/ProfileShellPanel";
 import { recordBibleRead, appendActivity } from "./activityLog";
 import { consumeShareRefFromUrl } from "./shareVerse";
-import { setVerseMarks } from "./verseMarks";
+import {
+  isOverFreeMarkQuota,
+  setVerseMarks,
+  subscribeVerseMarksRevision,
+} from "./verseMarks";
 import {
   completeOnboarding,
   isProfileOnboarded,
-  loadOrCreateProfile,
 } from "./userProfile";
 import {
   ProfileOnboarding,
@@ -88,9 +91,9 @@ export function App() {
 function BiblosConsumerApp() {
   const narrow = useNarrow();
   const {
-    user: firebaseUser,
     profile,
     refreshProfile,
+    isAuthenticated,
   } = useConsumerAuth();
   const [tab, setTab] = useState<ShellTab>(() => loadShellTab());
   const [bibleMounted, setBibleMounted] = useState(() => loadShellTab() === "bible");
@@ -105,20 +108,20 @@ function BiblosConsumerApp() {
   const [offlineToast, setOfflineToast] = useState(false);
   const [swUpdatePending, setSwUpdatePending] = useState(false);
   const [signInOpen, setSignInOpen] = useState(false);
-  const [nameGateOpen, setNameGateOpen] = useState(false);
-  const [onboardingDone, setOnboardingDone] = useState(() =>
-    isProfileOnboarded(loadOrCreateProfile()),
+  const [signInVariant, setSignInVariant] = useState<"upgrade" | "mark_quota">(
+    "upgrade",
   );
+  const [showWelcomeOnboarding, setShowWelcomeOnboarding] = useState(false);
   const [authorizedMarkSeq, setAuthorizedMarkSeq] = useState(0);
   const [authorizedMark, setAuthorizedMark] = useState<MarkPayload | null>(null);
+  const [markQuotaHit, setMarkQuotaHit] = useState(() => isOverFreeMarkQuota());
   const pendingMarkRef = useRef<MarkPayload | null>(null);
-  const pendingAfterAccountRef = useRef<(() => void) | null>(null);
   const offlineToastSeen = useRef(false);
   const shareBooted = useRef(false);
+  const welcomeShownRef = useRef(false);
 
-  const onboarded = isProfileOnboarded(profile) || onboardingDone;
-  const accountReady = Boolean(firebaseUser) && onboarded;
-  const showWelcomeOnboarding = Boolean(firebaseUser) && !onboarded && !nameGateOpen;
+  /** Soft gate: après cote, guest doit upgrader pour continuer à marquer. */
+  const requireAccountToMark = !isAuthenticated && markQuotaHit;
 
   const bibleMode = tab === "bible";
   const bibleCompactTools = BIBLE_COMPACT_TOOLS_MENU && narrow && bibleMode;
@@ -246,15 +249,8 @@ function BiblosConsumerApp() {
 
   function requestAccountForMark(payload: MarkPayload) {
     pendingMarkRef.current = payload;
-    if (!firebaseUser) {
-      setSignInOpen(true);
-      return;
-    }
-    if (!isProfileOnboarded(profile)) {
-      setNameGateOpen(true);
-      return;
-    }
-    authorizeMark(payload);
+    setSignInVariant("mark_quota");
+    setSignInOpen(true);
   }
 
   function finishOnboarding(input: {
@@ -264,42 +260,45 @@ function BiblosConsumerApp() {
   }) {
     completeOnboarding(input);
     refreshProfile();
-    setOnboardingDone(true);
-    setNameGateOpen(false);
+    setShowWelcomeOnboarding(false);
+  }
+
+  function handleSignInClose() {
+    setSignInOpen(false);
+    // « Plus tard » après cote : ne pas appliquer la marque
+    if (!isAuthenticated) {
+      pendingMarkRef.current = null;
+    }
+  }
+
+  function handleSignedIn() {
     const pendingMark = pendingMarkRef.current;
     pendingMarkRef.current = null;
     if (pendingMark) {
       authorizeMark(pendingMark);
     }
-    const pending = pendingAfterAccountRef.current;
-    pendingAfterAccountRef.current = null;
-    pending?.();
-  }
-
-  function cancelNameGate() {
-    setNameGateOpen(false);
-    pendingMarkRef.current = null;
-  }
-
-  useEffect(() => {
-    if (!firebaseUser) {
-      setOnboardingDone(false);
-      return;
+    setMarkQuotaHit(false);
+    if (!isProfileOnboarded(profile) && !welcomeShownRef.current) {
+      welcomeShownRef.current = true;
+      setShowWelcomeOnboarding(true);
     }
-    setOnboardingDone(isProfileOnboarded(loadOrCreateProfile()));
-  }, [firebaseUser]);
+  }
 
   useEffect(() => {
-    if (!firebaseUser || !isProfileOnboarded(profile)) return;
+    return subscribeVerseMarksRevision(() => {
+      setMarkQuotaHit(isOverFreeMarkQuota());
+      setActivityTick((n) => n + 1);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
     const pendingMark = pendingMarkRef.current;
+    if (!pendingMark) return;
     pendingMarkRef.current = null;
-    if (pendingMark) {
-      authorizeMark(pendingMark);
-    }
-    const pending = pendingAfterAccountRef.current;
-    pendingAfterAccountRef.current = null;
-    pending?.();
-  }, [firebaseUser, profile]);
+    authorizeMark(pendingMark);
+    setMarkQuotaHit(false);
+  }, [isAuthenticated]);
 
   return (
     <div
@@ -313,21 +312,17 @@ function BiblosConsumerApp() {
       {showWelcomeOnboarding ? (
         <ProfileOnboarding
           variant="welcome"
-          initialFullName={firebaseUser?.displayName?.trim() || ""}
+          initialFullName={profile.preferredName || ""}
           onComplete={finishOnboarding}
+          onCancel={() => setShowWelcomeOnboarding(false)}
         />
       ) : null}
-      {!onboarded && nameGateOpen ? (
-        <ProfileOnboarding
-          variant="mark"
-          initialFullName={
-            profile.preferredName || firebaseUser?.displayName || ""
-          }
-          onComplete={finishOnboarding}
-          onCancel={cancelNameGate}
-        />
-      ) : null}
-      <SignInModal open={signInOpen} onClose={() => setSignInOpen(false)} />
+      <SignInModal
+        open={signInOpen}
+        variant={signInVariant}
+        onClose={handleSignInClose}
+        onSignedIn={handleSignedIn}
+      />
       {offlineToast ? (
         <div className="offline-toast" role="status" aria-live="polite">
           <p>Hors ligne — tout reste enregistré sur cet appareil.</p>
@@ -393,7 +388,7 @@ function BiblosConsumerApp() {
                       onCycleTheme={cycleTheme}
                       planReading={bibleMode ? planReading : null}
                       onBack={planReading ? returnFromPlanReading : undefined}
-                      requireNameToMark={!accountReady}
+                      requireNameToMark={requireAccountToMark}
                       onRequestNameToMark={requestAccountForMark}
                       authorizedMarkSeq={authorizedMarkSeq}
                       authorizedMark={authorizedMark}
@@ -419,7 +414,10 @@ function BiblosConsumerApp() {
                   onCycleTheme={cycleTheme}
                   onOpenPassage={(ref) => openBible(historyToFocusRef(ref))}
                   onHistoryChange={() => setActivityTick((n) => n + 1)}
-                  onRequestSignIn={() => setSignInOpen(true)}
+                  onRequestSignIn={() => {
+                    setSignInVariant("upgrade");
+                    setSignInOpen(true);
+                  }}
                 />
               </div>
             </section>

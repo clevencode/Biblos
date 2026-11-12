@@ -5,6 +5,8 @@ type SignInModalProps = {
   open: boolean;
   title?: string;
   lead?: string;
+  /** Soft gate après cote de marques. */
+  variant?: "upgrade" | "mark_quota";
   onClose: () => void;
   onSignedIn?: () => void;
 };
@@ -13,8 +15,9 @@ type EmailMode = "signin" | "register" | "reset";
 
 export function SignInModal({
   open,
-  title = "Connexion requise",
-  lead = "Connecte-toi pour enregistrer ta progression et tes marques sur tous tes appareils.",
+  title,
+  lead,
+  variant = "upgrade",
   onClose,
   onSignedIn,
 }: SignInModalProps) {
@@ -35,6 +38,17 @@ export function SignInModal({
   const [localError, setLocalError] = useState<string | null>(null);
 
   if (!open) return null;
+
+  const resolvedTitle =
+    title ??
+    (variant === "mark_quota"
+      ? "Garde tes surlignages"
+      : "Sauvegarder mes études");
+  const resolvedLead =
+    lead ??
+    (variant === "mark_quota"
+      ? "Tu as déjà plusieurs marques sur cet appareil. Relie un compte pour les retrouver sur tous tes appareils — c’est plus serein pour poursuivre."
+      : "Connecte un compte Google ou e-mail pour synchroniser marques, notes et plans entre tes appareils.");
 
   const displayError = localError || error;
 
@@ -116,9 +130,9 @@ export function SignInModal({
       >
         <p className="profile-onboarding-brand">Biblos</p>
         <h2 id="sign-in-modal-title" className="profile-onboarding-title type-title">
-          {title}
+          {resolvedTitle}
         </h2>
-        <p className="profile-onboarding-lead muted">{lead}</p>
+        <p className="profile-onboarding-lead muted">{resolvedLead}</p>
         {displayError ? (
           <p className="profile-onboarding-error" role="alert">
             {displayError}

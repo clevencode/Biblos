@@ -199,6 +199,18 @@ export function subscribeVerseMarksRevision(onChange: () => void): () => void {
   };
 }
 
+/** Efface marques locales (logout / delete) — pas les Bibles IndexedDB. */
+export function clearVerseMarkStore(): void {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(TOUCHED_KEY);
+    localStorage.removeItem(REMOVED_KEY);
+    notifyRevision();
+  } catch {
+    /* ignore */
+  }
+}
+
 export function loadChapterMarks(
   bookId: string,
   chapterId: string,
@@ -269,6 +281,17 @@ export type SavedVerseMark = {
   /** Affichage court (ex. JHN 3.16). */
   label: string;
 };
+
+/** Nombre de versets uniques surlignés (cote soft-auth). */
+export const FREE_MARK_QUOTA = 10;
+
+export function countMarkedVerses(): number {
+  return listAllVerseMarks().length;
+}
+
+export function isOverFreeMarkQuota(quota = FREE_MARK_QUOTA): boolean {
+  return countMarkedVerses() >= quota;
+}
 
 /** Tous les versets marqués (local), du plus récent chapitre en dernier. */
 export function listAllVerseMarks(): SavedVerseMark[] {

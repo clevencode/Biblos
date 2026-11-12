@@ -22,7 +22,16 @@ import {
   versionAvailabilityLabel,
   type VersionAvailabilityState,
 } from "../bible/bibleVersionStatus";
+import {
+  countMarkedVerses,
+  FREE_MARK_QUOTA,
+} from "../verseMarks";
 import { useConsumerAuth } from "../features/consumer-auth";
+import {
+  downloadUserBackupJson,
+  subscribeSyncStatus,
+  type SyncStatus,
+} from "../features/user-sync";
 
 type ProfileShellPanelProps = {
   active: boolean;
@@ -34,6 +43,19 @@ type ProfileShellPanelProps = {
   onRequestSignIn?: () => void;
 };
 
+function syncStatusLabel(status: SyncStatus): string {
+  switch (status) {
+    case "synced":
+      return "Synchronisé";
+    case "pending":
+      return "Hors ligne — modifications en attente";
+    case "offline":
+      return "Hors ligne — modifications en attente";
+    default:
+      return "Sync inactive";
+  }
+}
+
 export function ProfileShellPanel({
   active,
   activityTick,
@@ -43,9 +65,17 @@ export function ProfileShellPanel({
   onHistoryChange,
   onRequestSignIn,
 }: ProfileShellPanelProps) {
-  const { user, profile, signOut, refreshProfile, loading } = useConsumerAuth();
-  const signedIn = Boolean(user);
+  const {
+    session,
+    profile,
+    signOut,
+    deleteAccountAndData,
+    refreshProfile,
+    loading,
+    isAuthenticated,
+  } = useConsumerAuth();
   const [confirmClear, setConfirmClear] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [storageHealth, setStorageHealth] = useState<StorageHealth | null>(null);
   const [s21Status, setS21Status] = useState<VersionAvailabilityState | null>(null);
   const [htStatus, setHtStatus] = useState<VersionAvailabilityState | null>(null);
@@ -55,6 +85,12 @@ export function ProfileShellPanel({
   );
   const nameInputRef = useRef<HTMLInputElement>(null);
   const [signOutBusy, setSignOutBusy] = useState(false);
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>("idle");
+  const markedCount = useMemo(() => {
+    void activityTick;
+    return countMarkedVerses();
+  }, [activityTick]);
 
   const history = useMemo(() => {
     void activityTick;
@@ -64,6 +100,8 @@ export function ProfileShellPanel({
   useEffect(() => {
     setFullName(joinFullName(profile.firstName, profile.lastName));
   }, [profile.firstName, profile.lastName]);
+
+  useEffect(() => subscribeSyncStatus(setSyncStatus), []);
 
   useEffect(() => {
     if (!active) return;
@@ -114,11 +152,26 @@ export function ProfileShellPanel({
     }
   }
 
+  async function handleDeleteAccount() {
+    if (deleteBusy) return;
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      return;
+    }
+    setDeleteBusy(true);
+    try {
+      await deleteAccountAndData();
+      setConfirmDelete(false);
+    } finally {
+      setDeleteBusy(false);
+    }
+  }
+
   const displayName = preferredDisplayName(profile) || "…";
-  const providerLabel = user?.email
-    ? user.email
-    : signedIn
-      ? "Compte connecté"
+  const guest = session.status === "anonymous" || session.status === "offline_guest";
+  const quotaHint =
+    guest && markedCount >= Math.max(1, FREE_MARK_QUOTA - 3)
+      ? `${markedCount}/${FREE_MARK_QUOTA} surlignages — relie un compte pour continuer sereinement`
       : null;
 
   return (
@@ -133,7 +186,11 @@ export function ProfileShellPanel({
         <div className="profile-head-copy">
           <h2 className="type-headline">Profil</h2>
           <p className="muted type-caption">
-            {signedIn ? displayName : "Données sur cet appareil"}
+            {isAuthenticated
+              ? displayName
+              : session.status === "offline_guest"
+                ? "Mode hors ligne (cet appareil)"
+                : "Études sur cet appareil"}
           </p>
         </div>
       </header>
@@ -142,19 +199,22 @@ export function ProfileShellPanel({
         <h3 id="profile-account-title" className="type-eyebrow">
           Compte
         </h3>
-        {!signedIn ? (
+        {guest ? (
           <div className="profile-sign-in-banner">
             <p>
-              Lecture et plans restent disponibles. Connecte-toi pour lier ton
-              compte (Google ou e-mail).
+              <strong>Sauvegarder mes études</strong>
+              <br />
+              Relie Google ou un e-mail pour synchroniser marques, notes et plans
+              entre tes appareils.
             </p>
+            {quotaHint ? <p className="muted">{quotaHint}</p> : null}
             <button
               type="button"
               className="auth-google-btn"
               disabled={loading}
               onClick={() => onRequestSignIn?.()}
             >
-              Se connecter
+              Connecter un compte
             </button>
           </div>
         ) : (
@@ -195,12 +255,21 @@ export function ProfileShellPanel({
                 <span className="profile-row-body">
                   <span className="profile-row-label">{displayName}</span>
                   <span className="profile-row-value muted">
-                    {providerLabel}
+                    {profile.email || "Compte connecté"}
                   </span>
                 </span>
                 <YvIcon name="chevron_right" className="profile-row-chevron" opsz={20} />
               </button>
             )}
+            <div className="profile-row-btn" role="status">
+              <YvIcon name="sync" className="profile-row-icon" opsz={20} />
+              <span className="profile-row-body">
+                <span className="profile-row-label">Synchronisation</span>
+                <span className="profile-row-value muted">
+                  {syncStatusLabel(syncStatus)}
+                </span>
+              </span>
+            </div>
             <button
               type="button"
               className="profile-row-btn"
@@ -210,10 +279,46 @@ export function ProfileShellPanel({
               <YvIcon name="close" className="profile-row-icon" opsz={20} />
               <span className="profile-row-body">
                 <span className="profile-row-label">Se déconnecter</span>
+                <span className="profile-row-value muted">
+                  Les Bibles téléchargées restent sur l’appareil
+                </span>
+              </span>
+            </button>
+            <button
+              type="button"
+              className="profile-row-btn"
+              disabled={deleteBusy}
+              onClick={() => void handleDeleteAccount()}
+            >
+              <YvIcon name="delete" className="profile-row-icon" opsz={20} />
+              <span className="profile-row-body">
+                <span className="profile-row-label">
+                  {confirmDelete ? "Confirmer la suppression" : "Supprimer mon compte"}
+                </span>
+                <span className="profile-row-value muted">
+                  Efface tes données cloud (pas les textes bibliques)
+                </span>
               </span>
             </button>
           </>
         )}
+        <button
+          type="button"
+          className="profile-row-btn"
+          onClick={() =>
+            downloadUserBackupJson(
+              `biblos-backup-${new Date().toISOString().slice(0, 10)}.json`,
+            )
+          }
+        >
+          <YvIcon name="download" className="profile-row-icon" opsz={20} />
+          <span className="profile-row-body">
+            <span className="profile-row-label">Exporter backup (JSON)</span>
+            <span className="profile-row-value muted">
+              Marques, notes et progrès de plans
+            </span>
+          </span>
+        </button>
       </section>
 
       <section className="profile-section" aria-labelledby="profile-editorial-title">

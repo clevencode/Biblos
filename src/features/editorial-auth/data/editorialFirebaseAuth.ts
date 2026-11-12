@@ -4,7 +4,6 @@
  */
 
 import {
-  getAuth,
   onAuthStateChanged,
   signInWithEmailAndPassword,
   signOut,
@@ -12,8 +11,7 @@ import {
   type Unsubscribe,
   type User,
 } from "firebase/auth";
-import { getApps } from "firebase/app";
-import { ensureReadingPlansFirestore } from "../../reading-plans/data/firestoreDb";
+import { ensureFirebase } from "../../../lib/firebase";
 
 let auth: Auth | null = null;
 
@@ -25,9 +23,9 @@ export class EditorialAuthRequiredError extends Error {
 }
 
 async function ensureAuthReady(): Promise<Auth | null> {
-  const dbOk = await ensureReadingPlansFirestore();
-  if (!dbOk || !getApps().length) return null;
-  auth = getAuth();
+  const ready = await ensureFirebase();
+  if (!ready) return null;
+  auth = ready.auth;
   return auth;
 }
 
