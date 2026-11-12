@@ -5373,7 +5373,7 @@ body {
     --mobile-bottom-chrome: var(--mobile-tabbar-outer-h);
     /* FAB lecture : 16px au-dessus du bord supérieur de la tab bar (Material / iOS HIG). */
     --bible-play-float-gap: 16px;
-    --bible-audio-play-size: var(--mobile-touch);
+    --bible-audio-play-size: 44px;
     --bible-audio-float-inset-x: max(
       var(--mobile-float-inset-x, var(--mobile-gutter, 12px)),
       env(safe-area-inset-left, 0px)
@@ -5488,7 +5488,13 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
+    z-index: 30;
     width: auto;
+    min-height: 64px;
+    background: color-mix(in srgb, var(--panel) 98%, transparent);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
     will-change: transform, opacity;
     transition:
       transform 200ms ease-out,
@@ -5497,6 +5503,24 @@ body {
 
   .app.is-bible-mode.is-narrow .note-shell-main > .graph-pane {
     padding-bottom: 0;
+  }
+
+  /* Degradê de respiro acima da Tab Bar — texto esmaeça sob os FABs */
+  .app.is-bible-mode.is-narrow .bible-reader--yv::after {
+    content: "";
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: var(--mobile-bottom-chrome, 64px);
+    height: 72px;
+    z-index: 5;
+    pointer-events: none;
+    background: linear-gradient(
+      to top,
+      var(--yv-bg) 0%,
+      color-mix(in srgb, var(--yv-bg) 90%, transparent) 45%,
+      transparent 100%
+    );
   }
 
   /* Chrome imersivo lecture = .bible-reader (is-chrome-hidden) ; tab bar reste visible. */
@@ -8435,10 +8459,11 @@ ul.plan-yv-day-note-ref {
   --yv-audio-fab-idle-ring: color-mix(in srgb, var(--yv-line) 70%, var(--yv-text));
   --yv-audio-fab-active-bg: color-mix(in srgb, var(--yv-text) 88%, var(--yv-bg));
   --yv-audio-fab-active-fg: var(--yv-bg);
-  /* Sombra sutil nos FABs (play / skips) */
+  /* Sombra tipo shadow-md nos FABs (play / skips) */
   --yv-audio-fab-shadow:
-    0 1px 2px color-mix(in srgb, var(--yv-text) 6%, transparent),
-    0 4px 14px color-mix(in srgb, var(--yv-text) 10%, transparent);
+    0 1px 2px color-mix(in srgb, var(--yv-text) 8%, transparent),
+    0 4px 6px color-mix(in srgb, var(--yv-text) 6%, transparent),
+    0 10px 18px color-mix(in srgb, var(--yv-text) 10%, transparent);
   --yv-audio-fab-focus: color-mix(in srgb, var(--yv-text) 40%, var(--yv-line));
   --yv-audio-bar-bg: var(--yv-chrome-surface);
   --yv-audio-bar-track: color-mix(in srgb, var(--yv-text) 12%, transparent);
@@ -8489,8 +8514,8 @@ ul.plan-yv-day-note-ref {
 }
 
 .app.is-bible-mode.is-narrow .bible-yv-top {
-  padding-top: max(8px, env(safe-area-inset-top, 0px));
-  padding-bottom: 8px;
+  padding-top: max(10px, env(safe-area-inset-top, 0px));
+  padding-bottom: 16px;
 }
 
 .bible-yv-top {
@@ -8504,14 +8529,34 @@ ul.plan-yv-day-note-ref {
   justify-content: space-between;
   gap: 12px;
   padding: 6px 14px;
-  background: var(--yv-bg);
-  border-bottom: var(--yv-separator);
+  /* Degradê de proteção — texto esmaeça sob os controles */
+  background: linear-gradient(
+    to bottom,
+    var(--yv-bg) 0%,
+    color-mix(in srgb, var(--yv-bg) 95%, transparent) 55%,
+    transparent 100%
+  );
+  border-bottom: 0;
+  pointer-events: none;
   transform: translate3d(0, 0, 0);
   opacity: 1;
   transition:
     transform var(--yv-chrome-ms) var(--yv-chrome-ease),
     opacity calc(var(--yv-chrome-ms) * 0.85) var(--yv-chrome-ease);
   contain: layout style;
+}
+
+.bible-yv-top .bible-yv-passage-chrome-cluster,
+.bible-yv-top .bible-yv-top-tools,
+.bible-yv-top .bible-yv-top-passage,
+.bible-yv-top .bible-yv-compact-ref,
+.bible-yv-top .bible-yv-passage-word-search-trigger,
+.bible-yv-top .bible-yv-passage-chip,
+.bible-yv-top .bible-yv-history-btn,
+.bible-yv-top .bible-yv-tools-menu-btn,
+.bible-yv-top .bible-yv-history-menu,
+.bible-yv-top .bible-yv-tools-menu {
+  pointer-events: auto;
 }
 
 .bible-reader--yv.is-tools-menu-open .bible-yv-top,
@@ -8585,10 +8630,10 @@ ul.plan-yv-day-note-ref {
   overflow: visible;
 }
 
-/* passage-bar-panel test: chrome UI unificado — hit targets = --mobile-touch */
+/* passage-bar-panel test: chrome UI unificado — hit targets = 40px (h-10) */
 html[data-passage-bar-panel="test"] {
-  --bible-passage-bar-title-h: var(--mobile-touch, 44px);
-  --bible-passage-skip-h: var(--mobile-touch, 44px);
+  --bible-passage-bar-title-h: 40px;
+  --bible-passage-skip-h: 44px;
   /* Chip panel + word-search panel: mesma caixa — não alterna com o trigger */
   --bible-passage-panel-w: min(100vw - 2 * var(--mobile-gutter, 12px), 22rem);
   --bible-passage-panel-max-h: min(42dvh, 300px);
@@ -8600,40 +8645,43 @@ html[data-passage-bar-panel="test"] {
   --bible-word-search-pill-on: color-mix(in srgb, var(--text) 82%, transparent);
   --bible-word-search-pill-off: color-mix(in srgb, var(--text) 7%, var(--surface));
   /* Shell partilhado: painéis chip / word-search / tools popover */
-  --bible-chrome-trigger-h: var(--mobile-touch, 44px);
+  --bible-chrome-trigger-h: 40px;
   --bible-chrome-trigger-icon: 20px;
+  --bible-chrome-trigger-fill: color-mix(in srgb, var(--yv-text) 12%, var(--yv-bg));
+  --bible-chrome-trigger-fill-hover: color-mix(in srgb, var(--yv-text) 18%, var(--yv-bg));
   --bible-chrome-panel-radius: 16px;
   --bible-chrome-panel-pad: 8px 10px 10px;
   --bible-chrome-panel-gap: 6px;
   --bible-chrome-panel-offset-y: var(--mobile-chrome-gap, 10px);
   --bible-chrome-panel-edge: 4px;
   --bible-chrome-active-outline: var(--yv-chrome-active-border);
-  --bible-chrome-trigger-border: var(--yv-chrome-border);
+  --bible-chrome-trigger-border: 1px solid transparent;
   --bible-chrome-trigger-shadow: none;
-  --bible-chrome-fab-size: var(--mobile-touch, 44px);
-  --bible-chrome-fab-border: var(--yv-chrome-border);
-  --bible-chrome-fab-hover: var(--yv-chrome-hover);
+  --bible-chrome-fab-size: 44px;
+  --bible-chrome-fab-border: 1px solid color-mix(in srgb, var(--yv-line) 80%, transparent);
+  --bible-chrome-fab-hover: color-mix(in srgb, var(--surface) 88%, var(--yv-text) 6%);
+  --bible-chrome-fab-fill: color-mix(in srgb, var(--surface) 95%, transparent);
   --bible-chrome-fab-shadow: var(--yv-audio-fab-shadow);
 }
 
 html[data-passage-bar-panel="test"] .app.is-bible-mode.is-narrow {
   --bible-passage-bar-h: var(--bible-passage-bar-title-h);
   --bible-top-chrome: calc(
-    max(6px, env(safe-area-inset-top, 0px)) + 6px + var(--bible-passage-bar-title-h) + 1px + 8px
+    max(10px, env(safe-area-inset-top, 0px)) + 16px + var(--bible-passage-bar-title-h)
   );
 }
 
 html[data-passage-bar-panel="test"] .bible-yv-top.is-free {
   position: absolute;
-  align-items: flex-start;
-  padding-bottom: 6px;
-  min-height: calc(var(--bible-passage-bar-title-h) + 12px);
+  align-items: center;
+  padding-bottom: 16px;
+  min-height: calc(var(--bible-passage-bar-title-h) + 26px);
 }
 
 html[data-passage-bar-panel="test"] .bible-yv-passage-chrome-cluster {
   position: relative;
   display: inline-flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 6px;
   /* Só a fila de triggers; painéis saem em absolute com --bible-passage-panel-w */
   width: auto;
@@ -8654,7 +8702,7 @@ html[data-passage-bar-panel="test"] .bible-yv-passage-word-search-trigger {
   place-items: center;
   border: var(--bible-chrome-trigger-border);
   border-radius: 999px;
-  background: var(--yv-chrome-surface);
+  background: var(--bible-chrome-trigger-fill);
   box-shadow: none;
   color: var(--yv-text);
   cursor: pointer;
@@ -8666,11 +8714,11 @@ html[data-passage-bar-panel="test"] .bible-yv-passage-word-search-trigger {
 }
 
 html[data-passage-bar-panel="test"] .bible-yv-passage-word-search-trigger:hover:not(:disabled) {
-  background: var(--yv-chrome-hover);
+  background: var(--bible-chrome-trigger-fill-hover);
 }
 
 html[data-passage-bar-panel="test"] .bible-yv-passage-word-search-trigger.is-on {
-  background: var(--yv-chrome-surface);
+  background: var(--bible-chrome-trigger-fill);
   border: var(--yv-chrome-active-border);
   outline: none;
 }
@@ -9306,7 +9354,7 @@ html[data-passage-bar-panel="test"] .bible-yv-top-passage-bar.is-chip-trigger {
   align-items: center;
 }
 
-/* Setas capítulo: família FAB com o play (mesma altura / superfície). */
+/* Setas capítulo: família FAB com o play (elevação + divisória). */
 html[data-passage-bar-panel="test"] .bible-yv-top-passage-skips.is-float-br {
   position: fixed;
   right: var(--bible-tools-float-inset-x);
@@ -9317,10 +9365,12 @@ html[data-passage-bar-panel="test"] .bible-yv-top-passage-skips.is-float-br {
   align-items: center;
   gap: 0;
   height: var(--bible-chrome-fab-size);
-  padding: 0;
+  padding: 3px;
   border: var(--bible-chrome-fab-border);
   border-radius: 999px;
-  background: var(--yv-chrome-surface);
+  background: var(--bible-chrome-fab-fill, color-mix(in srgb, var(--surface) 95%, transparent));
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
   box-shadow: var(--bible-chrome-fab-shadow);
   overflow: hidden;
 }
@@ -9328,25 +9378,43 @@ html[data-passage-bar-panel="test"] .bible-yv-top-passage-skips.is-float-br {
 html[data-passage-bar-panel="test"]
   .bible-yv-top-passage-skips.is-float-br
   .bible-yv-top-passage-arrow {
-  width: var(--bible-chrome-fab-size);
-  min-width: var(--bible-chrome-fab-size);
-  height: var(--bible-chrome-fab-size);
-  min-height: var(--bible-chrome-fab-size);
+  width: 40px;
+  min-width: 40px;
+  height: 36px;
+  min-height: 36px;
   margin: 0;
   padding: 0;
   display: grid;
   place-items: center;
   border: 0;
-  border-radius: 0;
+  border-radius: 999px;
   background: transparent;
+  color: var(--yv-text);
+  transition:
+    background 0.15s ease,
+    opacity 0.12s ease,
+    transform 0.12s ease;
+}
+
+html[data-passage-bar-panel="test"]
+  .bible-yv-top-passage-skips.is-float-br
+  .bible-yv-top-passage-arrow + .bible-yv-top-passage-arrow {
+  border-left: 1px solid color-mix(in srgb, var(--yv-line) 60%, transparent);
+  border-radius: 0 999px 999px 0;
+}
+
+html[data-passage-bar-panel="test"]
+  .bible-yv-top-passage-skips.is-float-br
+  .bible-yv-top-passage-arrow:first-child {
+  border-radius: 999px 0 0 999px;
 }
 
 html[data-passage-bar-panel="test"]
   .bible-yv-top-passage-skips.is-float-br
   .bible-yv-top-passage-arrow-icon {
-  width: 22px;
-  height: 22px;
-  font-size: 22px;
+  width: 20px;
+  height: 20px;
+  font-size: 20px;
 }
 
 html[data-passage-bar-panel="test"]
@@ -9358,7 +9426,8 @@ html[data-passage-bar-panel="test"]
 html[data-passage-bar-panel="test"]
   .bible-yv-top-passage-skips.is-float-br
   .bible-yv-top-passage-arrow:active:not(:disabled) {
-  background: color-mix(in srgb, var(--yv-text) 11%, transparent);
+  opacity: 0.6;
+  transform: scale(0.96);
 }
 
 html[data-passage-bar-panel="test"]
@@ -9391,7 +9460,7 @@ html[data-passage-bar-panel="test"] .bible-yv-history-btn {
   place-items: center;
   border: var(--bible-chrome-trigger-border);
   border-radius: 999px;
-  background: var(--yv-chrome-surface);
+  background: var(--bible-chrome-trigger-fill);
   color: var(--yv-text);
   box-shadow: none;
   cursor: pointer;
@@ -9403,12 +9472,12 @@ html[data-passage-bar-panel="test"] .bible-yv-history-btn {
 
 html[data-passage-bar-panel="test"] .bible-yv-tools-menu-btn:hover,
 html[data-passage-bar-panel="test"] .bible-yv-history-btn:hover {
-  background: var(--yv-chrome-hover);
+  background: var(--bible-chrome-trigger-fill-hover);
 }
 
 html[data-passage-bar-panel="test"] .bible-yv-tools-menu-btn.is-on,
 html[data-passage-bar-panel="test"] .bible-yv-history-btn.is-on {
-  background: var(--yv-chrome-surface);
+  background: var(--bible-chrome-trigger-fill);
   border: var(--yv-chrome-active-border);
   outline: none;
 }
@@ -9547,7 +9616,7 @@ html[data-passage-bar-panel="test"] .bible-yv-top-passage-segments {
   min-height: 0;
 }
 
-/* Chip = hit target completo (--bible-chrome-trigger-h); fill até ao contorno */
+/* Chip = hit target completo (40px); fill até ao contorno */
 html[data-passage-bar-panel="test"] .app.is-bible-mode.is-narrow .bible-yv-passage-chip,
 html[data-passage-bar-panel="test"] .app.is-bible-mode.is-narrow .bible-yv-passage-chip.is-ref,
 html[data-passage-bar-panel="test"] .bible-yv-passage-chip,
@@ -9557,9 +9626,12 @@ html[data-passage-bar-panel="test"] .bible-yv-passage-chip.is-ref {
   min-height: var(--bible-chrome-trigger-h);
   max-height: var(--bible-chrome-trigger-h);
   padding-block: 0;
-  padding-inline: 12px 8px;
-  gap: 4px;
+  padding-inline: 14px 10px;
+  gap: 6px;
   align-items: center;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.875rem;
 }
 
 html[data-passage-bar-panel="test"] .bible-yv-passage-chip-caret {
@@ -9777,7 +9849,7 @@ html[data-passage-bar-panel="test"] .bible-yv-passage-scroll-panel.is-open {
 
 html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   flex: none;
-  align-self: flex-start;
+  align-self: center;
 }
 
 /* Chip-dropdown (test): trilho transparente; superfície só no trigger */
@@ -9790,7 +9862,7 @@ html[data-passage-bar-panel="test"] .bible-yv-top-passage-bar.is-roll-chrome-act
 /* Chip: fill sempre (mesma família que search / menu) */
 html[data-passage-bar-panel="test"] .bible-yv-passage-chip,
 html[data-passage-bar-panel="test"] .bible-yv-passage-chip.is-ref {
-  background: var(--yv-chrome-surface);
+  background: var(--bible-chrome-trigger-fill);
   border: var(--bible-chrome-trigger-border);
   box-shadow: none;
   transition:
@@ -9799,11 +9871,11 @@ html[data-passage-bar-panel="test"] .bible-yv-passage-chip.is-ref {
 }
 
 html[data-passage-bar-panel="test"] .bible-yv-passage-chip:hover:not(:disabled):not(.is-hydrating) {
-  background: var(--yv-chrome-hover);
+  background: var(--bible-chrome-trigger-fill-hover);
 }
 
 html[data-passage-bar-panel="test"] .bible-yv-passage-chip.is-open {
-  background: var(--yv-chrome-surface);
+  background: var(--bible-chrome-trigger-fill);
   border: var(--yv-chrome-active-border);
   box-shadow: none;
   outline: none;
@@ -9829,7 +9901,7 @@ html[data-passage-bar-panel="test"] .bible-yv-top-passage-arrow:hover:not(:disab
   }
 }
 
-/* Play FAB: chrome-surface + sombra (família skips) */
+/* Play FAB: elevação (família skips) */
 html[data-passage-bar-panel="test"]
   .app.is-bible-mode.is-narrow
   .bible-yv-dock.is-play-only
@@ -9842,7 +9914,9 @@ html[data-passage-bar-panel="test"]
   min-height: var(--bible-chrome-fab-size);
   max-height: var(--bible-chrome-fab-size);
   border: var(--bible-chrome-fab-border);
-  background: var(--yv-audio-fab-idle);
+  background: var(--bible-chrome-fab-fill);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
   box-shadow: var(--bible-chrome-fab-shadow);
 }
 
@@ -9851,7 +9925,7 @@ html[data-passage-bar-panel="test"]
   .bible-yv-dock.is-play-only
   .bible-yv-audio-player
   .bible-yv-dock-play:hover:not(:disabled) {
-  background: var(--yv-audio-fab-idle-hover);
+  background: var(--bible-chrome-fab-hover);
 }
 
 html[data-passage-bar-panel="test"]
@@ -13066,27 +13140,35 @@ html[data-passage-bar-panel="test"]
   display: grid;
   place-items: center;
   box-sizing: border-box;
-  width: var(--bible-audio-play-size, 46px);
-  height: var(--bible-audio-play-size, 46px);
-  min-width: var(--bible-audio-play-size, 46px);
-  max-width: var(--bible-audio-play-size, 46px);
-  min-height: var(--bible-audio-play-size, 46px);
-  max-height: var(--bible-audio-play-size, 46px);
+  width: var(--bible-chrome-fab-size, var(--bible-audio-play-size, 44px));
+  height: var(--bible-chrome-fab-size, var(--bible-audio-play-size, 44px));
+  min-width: var(--bible-chrome-fab-size, var(--bible-audio-play-size, 44px));
+  max-width: var(--bible-chrome-fab-size, var(--bible-audio-play-size, 44px));
+  min-height: var(--bible-chrome-fab-size, var(--bible-audio-play-size, 44px));
+  max-height: var(--bible-chrome-fab-size, var(--bible-audio-play-size, 44px));
   padding: 0;
   aspect-ratio: 1 / 1;
   border-radius: 999px;
-  background: var(--yv-audio-fab-idle);
-  box-shadow: var(--yv-audio-fab-shadow);
+  border: var(--bible-chrome-fab-border, 1px solid color-mix(in srgb, var(--yv-line) 80%, transparent));
+  background: var(--bible-chrome-fab-fill, color-mix(in srgb, var(--surface) 95%, transparent));
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  box-shadow: var(--bible-chrome-fab-shadow, var(--yv-audio-fab-shadow));
   color: var(--yv-text);
   overflow: hidden;
   -webkit-tap-highlight-color: transparent;
+  transition:
+    transform 0.12s ease,
+    background 0.15s ease,
+    opacity 0.12s ease;
 }
 
 .app.is-bible-mode.is-narrow .bible-yv-dock.is-floating .bible-yv-dock-play:hover:not(:disabled) {
-  background: var(--yv-audio-fab-idle-hover);
+  background: var(--bible-chrome-fab-hover, var(--yv-audio-fab-idle-hover));
 }
 
 .app.is-bible-mode.is-narrow .bible-yv-dock.is-floating .bible-yv-dock-play:active:not(:disabled) {
+  transform: scale(0.95);
   background: var(--yv-audio-fab-idle-active);
 }
 
