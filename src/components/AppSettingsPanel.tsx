@@ -1,5 +1,5 @@
 import { YvIcon } from "./YvIcon";
-import { themePrefLabel, type ThemePref } from "../theme";
+import { resolveTheme, themePrefLabel, type ThemePref } from "../theme";
 
 type AppSettingsPanelProps = {
   active: boolean;
@@ -8,6 +8,7 @@ type AppSettingsPanelProps = {
 };
 
 export function AppSettingsPanel({ active, themePref, onCycleTheme }: AppSettingsPanelProps) {
+  const themeResolved = resolveTheme(themePref);
   return (
     <div
       id="panel-settings"
@@ -22,7 +23,10 @@ export function AppSettingsPanel({ active, themePref, onCycleTheme }: AppSetting
       <ul className="bible-settings-list">
         <li>
           <button type="button" className="bible-settings-row" onClick={onCycleTheme}>
-            <YvIcon name="routine" className="bible-settings-row-icon" />
+            <YvIcon
+              name={themeResolved === "light" ? "light_mode" : "dark_mode"}
+              className="bible-settings-row-icon"
+            />
             <span className="bible-settings-row-body">
               <span className="bible-settings-row-label">Apparence</span>
               <span className="bible-settings-row-value">{themePrefLabel(themePref)}</span>

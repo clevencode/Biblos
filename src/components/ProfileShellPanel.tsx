@@ -6,7 +6,7 @@ import {
   listBibleReadingHistory,
 } from "../activityLog";
 import { loadOrCreateProfile } from "../userProfile";
-import { themePrefLabel, type ThemePref } from "../theme";
+import { resolveTheme, themePrefLabel, type ThemePref } from "../theme";
 import type { BibleHistorySelect } from "./BibleHistorySheet";
 
 type ProfileShellPanelProps = {
@@ -76,7 +76,11 @@ export function ProfileShellPanel({
           Préférences
         </h3>
         <button type="button" className="profile-row-btn" onClick={onCycleTheme}>
-          <YvIcon name="routine" className="profile-row-icon" opsz={20} />
+          <YvIcon
+            name={resolveTheme(themePref) === "light" ? "light_mode" : "dark_mode"}
+            className="profile-row-icon"
+            opsz={20}
+          />
           <span className="profile-row-body">
             <span className="profile-row-label">Apparence</span>
             <span className="profile-row-value muted">{themePrefLabel(themePref)}</span>

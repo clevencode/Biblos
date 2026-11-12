@@ -85,39 +85,39 @@ export function BibleHistorySheet({
 
   return (
     <div
-      className="bible-search-sheet"
+      className="bible-yv-history-panel"
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
     >
-      <header className="bible-search-sheet-head bible-history-sheet-head">
-        <button
-          type="button"
-          className="bible-search-sheet-back"
-          onClick={onClose}
-          aria-label="Fermer l’historique"
-        >
-          <YvIcon name="chevron_left" className="bible-search-sheet-back-icon" />
-        </button>
-        <p id={titleId} className="bible-search-sheet-title">
+      <header className="bible-yv-history-panel-head">
+        <p id={titleId} className="bible-yv-history-panel-title">
           Historique
         </p>
-        {events.length > 0 ? (
+        <div className="bible-yv-history-panel-actions">
+          {events.length > 0 ? (
+            <button
+              type="button"
+              className="bible-yv-history-panel-icon-btn"
+              onClick={clearAll}
+              aria-label="Effacer tout l’historique"
+              title="Effacer tout"
+            >
+              <YvIcon name="delete" className="bible-yv-history-panel-icon" />
+            </button>
+          ) : null}
           <button
             type="button"
-            className="bible-search-sheet-clear-all"
-            onClick={clearAll}
-            aria-label="Effacer tout l’historique"
-            title="Effacer tout"
+            className="bible-yv-history-panel-icon-btn"
+            onClick={onClose}
+            aria-label="Fermer l’historique"
           >
-            <YvIcon name="delete" className="bible-search-sheet-clear-all-icon" />
+            <YvIcon name="close" className="bible-yv-history-panel-icon" />
           </button>
-        ) : (
-          <span className="bible-search-sheet-spacer" aria-hidden />
-        )}
+        </div>
       </header>
 
-      <div className="bible-search-sheet-meta" aria-live="polite">
+      <div className="bible-yv-history-panel-meta" aria-live="polite">
         {events.length === 0 ? (
           <span>Chapitres ouverts récemment</span>
         ) : (
@@ -127,9 +127,9 @@ export function BibleHistorySheet({
         )}
       </div>
 
-      <ul className="bible-search-sheet-list" aria-label="Historique de lecture">
+      <ul className="bible-yv-history-panel-list" aria-label="Historique de lecture">
         {events.length === 0 ? (
-          <li className="bible-search-sheet-empty">
+          <li className="bible-yv-history-panel-empty">
             Aucune lecture enregistrée pour l’instant.
           </li>
         ) : (
@@ -140,13 +140,13 @@ export function BibleHistorySheet({
               <li key={event.id} className="bible-history-row">
                 <button
                   type="button"
-                  className="bible-search-sheet-item"
+                  className="bible-yv-history-panel-item"
                   onClick={() => onSelect(ref)}
                 >
-                  <span className="bible-search-sheet-ref">
+                  <span className="bible-yv-history-panel-ref">
                     {readingLabel(event, ref)}
                   </span>
-                  <span className="bible-search-sheet-snippet">
+                  <span className="bible-yv-history-panel-when">
                     {formatActivityWhen(event.at)}
                   </span>
                 </button>

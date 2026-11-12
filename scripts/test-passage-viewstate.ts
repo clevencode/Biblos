@@ -105,8 +105,10 @@ const surfaceTools = readerSurfaceChrome({
   verseActionsOpen: false,
 });
 assert.equal(surfaceTools.passageInputBlocked, true);
-assert.equal(surfaceTools.passageSurfaceScrimOpen, false);
-assert.equal(surfaceTools.toolsMenuPassThroughDismiss, true);
+assert.equal(surfaceTools.passageSurfaceScrimOpen, true);
+assert.equal(surfaceTools.toolsMenuPassThroughDismiss, false);
+assert.equal(surfaceTools.scrimIsTools, true);
+assert.equal(surfaceTools.scrimIsPickerDismiss, true);
 assert.equal(surfaceTools.rootClassPassageRollOpen, false);
 
 const surfacePickerNoCatalog = readerSurfaceChrome({

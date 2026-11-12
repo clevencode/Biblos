@@ -16,7 +16,7 @@ export type ReaderSurfaceChrome = {
   passagePickerRollOpen: boolean;
   passageInputBlocked: boolean;
   passageSurfaceScrimOpen: boolean;
-  /** Menu tools: inert na passagem mas sem scrim (popover desce sobre o texto). */
+  /** Legado: dismiss por toque na passagem sem scrim (desligado — tools usa o mesmo scrim do book modal). */
   toolsMenuPassThroughDismiss: boolean;
   forceChromeVisible: boolean;
   rootClassPassageRollOpen: boolean;
@@ -56,10 +56,13 @@ export function readerSurfaceChrome(
     input.toolsMenuOpen ||
     input.historyOpen ||
     input.shareSheetOpen;
+  /** Mesmo fundo escuro do book modal — tools incluso. */
   const passageSurfaceScrimOpen =
-    barOverlayOpen || input.historyOpen || input.shareSheetOpen;
-  const toolsMenuPassThroughDismiss =
-    input.toolsMenuOpen && !passageSurfaceScrimOpen;
+    barOverlayOpen ||
+    input.toolsMenuOpen ||
+    input.historyOpen ||
+    input.shareSheetOpen;
+  const toolsMenuPassThroughDismiss = false;
 
   return {
     passagePickerRollOpen: rollOpen,
@@ -73,10 +76,9 @@ export function readerSurfaceChrome(
       input.verseActionsOpen,
     /* Eleva `.bible-yv-top` acima do scrim — igual ao chip book */
     rootClassPassageRollOpen: barOverlayOpen,
-    scrimIsTools:
-      input.toolsMenuOpen &&
-      (barOverlayOpen || input.historyOpen || input.shareSheetOpen),
-    scrimIsPickerDismiss: barOverlayOpen,
+    scrimIsTools: input.toolsMenuOpen || input.historyOpen,
+    scrimIsPickerDismiss:
+      barOverlayOpen || input.toolsMenuOpen || input.historyOpen,
   };
 }
 

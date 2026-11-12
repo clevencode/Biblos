@@ -14,8 +14,6 @@ export const THEME_COLORS: Record<ResolvedTheme, string> = {
   dark: BRAND_INK,
 };
 
-const PREFS: readonly ThemePref[] = ["light", "dark", "system"];
-
 export function isThemePref(value: unknown): value is ThemePref {
   return value === "light" || value === "dark" || value === "system";
 }
@@ -51,15 +49,14 @@ export function resolveTheme(pref: ThemePref = loadThemePref()): ResolvedTheme {
   return pref;
 }
 
+/** Toggle d’apparence : uniquement clair ↔ sombre (quitte `system` si besoin). */
 export function nextThemePref(pref: ThemePref): ThemePref {
-  const i = PREFS.indexOf(pref);
-  return PREFS[(i + 1) % PREFS.length]!;
+  return resolveTheme(pref) === "light" ? "dark" : "light";
 }
 
 export function themePrefLabel(pref: ThemePref): string {
-  if (pref === "light") return "Thème clair";
-  if (pref === "dark") return "Thème sombre";
-  return "Thème système";
+  const resolved = resolveTheme(pref);
+  return resolved === "light" ? "Thème clair" : "Thème sombre";
 }
 
 export function updateThemeColorMeta(resolved: ResolvedTheme): void {

@@ -323,9 +323,9 @@ type BibleReaderViewProps = {
   onViewFlashcard?: (cardId: string) => void;
   /** Lecture immersive : chrome (tabs) masqué au scroll. */
   onReadingChromeChange?: (hidden: boolean) => void;
-  /** Préférence thème (clair / sombre / système). */
+  /** Préférence thème (clair / sombre). */
   themePref?: ThemePref;
-  /** Cycle le thème (clair → sombre → système). */
+  /** Toggle le thème (clair ↔ sombre). */
   onCycleTheme?: () => void;
   /** Si true, Marquer demande d’abord le nom (compte créé seulement alors). */
   requireNameToMark?: boolean;
@@ -561,13 +561,13 @@ export function BibleReaderView({
   const [audioActiveUsfm, setAudioActiveUsfm] = useState<string | null>(null);
   const [audioTime, setAudioTime] = useState(0);
   const [audioDuration, setAudioDuration] = useState(0);
-  const [historyOpen, setHistoryOpen] = useState(false);
   const [shareSheetOpen, setShareSheetOpen] = useState(false);
   const [shareMode, setShareMode] = useState<"verse" | "plan">("verse");
   const [dayNoteOpen, setDayNoteOpen] = useState(false);
   /** Fin d’étape / fin de plan → retour plans après la note. */
   const [dayNoteReturnsToPlans, setDayNoteReturnsToPlans] = useState(false);
   const toolsMenuRef = useRef<HTMLDivElement | null>(null);
+  const historyToolsRef = useRef<HTMLDivElement | null>(null);
   const overlayDismissSwallowRef = useRef(false);
   const overlayDismissSwallowTimerRef = useRef<number | undefined>(undefined);
 
@@ -612,11 +612,11 @@ export function BibleReaderView({
   const pickerOpen = activeOverlay.type === "passage_picker";
   const wordSearchOpen = activeOverlay.type === "word_search";
   const toolsMenuOpen = activeOverlay.type === "reader_settings";
+  const historyOpen = activeOverlay.type === "history";
   const hasActiveModalRef = useRef(hasActiveModal);
   hasActiveModalRef.current = hasActiveModal;
 
   const requestOpenPassagePicker = useCallback(() => {
-    setHistoryOpen(false);
     setShareSheetOpen(false);
     openOverlay({ type: "passage_picker" });
   }, [openOverlay]);
@@ -630,7 +630,6 @@ export function BibleReaderView({
   }, [closeOverlay]);
 
   const requestToggleWordSearch = useCallback(() => {
-    setHistoryOpen(false);
     setShareSheetOpen(false);
     toggleOverlay("word_search");
   }, [toggleOverlay]);
@@ -1166,7 +1165,6 @@ export function BibleReaderView({
       setFocusDim(false);
       if (!current?.length) setCardColor(loadPreferredVerseColor());
       setSelection(sorted);
-      setHistoryOpen(false);
       setShareSheetOpen(false);
       openOverlay({
         type: "verse_actions",
@@ -1981,7 +1979,7 @@ export function BibleReaderView({
       return;
     }
     if (target === "history") {
-      setHistoryOpen(false);
+      closeOverlay();
       return;
     }
     if (target === "share") {
@@ -2084,6 +2082,7 @@ export function BibleReaderView({
   }
 
   function renderTopToolsMenu(placement: "header" | "float" = "header") {
+    const themeResolved = resolveTheme(themePref);
     const themeLabel = themePrefLabel(themePref);
     return (
       <div
@@ -2097,7 +2096,6 @@ export function BibleReaderView({
           aria-haspopup="menu"
           aria-expanded={toolsMenuOpen}
           onClick={() => {
-            setHistoryOpen(false);
             setShareSheetOpen(false);
             toggleOverlay("reader_settings");
           }}
@@ -2146,12 +2144,10 @@ export function BibleReaderView({
                 className="bible-yv-tools-item"
                 onClick={() => onCycleTheme()}
               >
-                {themePref === "light" ? (
+                {themeResolved === "light" ? (
                   <YvIcon name="light_mode" className="bible-yv-tools-item-icon" />
-                ) : themePref === "dark" ? (
-                  <YvIcon name="dark_mode" className="bible-yv-tools-item-icon" />
                 ) : (
-                  <YvIcon name="routine" className="bible-yv-tools-item-icon" />
+                  <YvIcon name="dark_mode" className="bible-yv-tools-item-icon" />
                 )}
                 <span>{themeLabel}</span>
               </button>
@@ -2189,20 +2185,6 @@ export function BibleReaderView({
               </span>
             </button>
             )}
-            {ACTIVITY_UI_ENABLED ? (
-              <button
-                type="button"
-                role="menuitem"
-                className="bible-yv-tools-item"
-                onClick={() => {
-                  closeOverlay();
-                  setHistoryOpen(true);
-                }}
-              >
-                <YvIcon name="history" className="bible-yv-tools-item-icon" />
-                <span>Historique</span>
-              </button>
-            ) : null}
             <div
               className="bible-yv-tools-version bible-yv-tools-font-family"
               role="group"
@@ -2563,7 +2545,7 @@ export function BibleReaderView({
   return (
     <section
       ref={readerRef}
-      className={`bible-reader bible-reader--yv${hideChrome ? " is-chrome-hidden" : ""}${hasActiveModal ? " is-overlay-active" : ""}${audioPlaying ? " is-audio-playing" : ""}${showCreateCard ? " has-verse-actions" : ""}${shareSheetOpen ? " is-share-open" : ""}${headCompact ? " is-head-compact" : ""}${surfaceChrome.rootClassPassageRollOpen ? " is-passage-roll-open" : ""}${compactToolsMenu ? " is-compact-tools" : ""}${toolsMenuOpen ? " is-tools-menu-open" : ""}${fontFamily === "sans" ? " is-font-sans" : " is-font-serif"}`}
+      className={`bible-reader bible-reader--yv${hideChrome ? " is-chrome-hidden" : ""}${hasActiveModal ? " is-overlay-active" : ""}${audioPlaying ? " is-audio-playing" : ""}${showCreateCard ? " has-verse-actions" : ""}${shareSheetOpen ? " is-share-open" : ""}${headCompact ? " is-head-compact" : ""}${surfaceChrome.rootClassPassageRollOpen ? " is-passage-roll-open" : ""}${compactToolsMenu ? " is-compact-tools" : ""}${toolsMenuOpen ? " is-tools-menu-open" : ""}${historyOpen ? " is-history-open" : ""}${fontFamily === "sans" ? " is-font-sans" : " is-font-serif"}`}
       style={{ ["--bible-font-size" as string]: `${fontSize}px` }}
       onKeyDown={(event) => {
         if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement) {
@@ -2705,6 +2687,32 @@ export function BibleReaderView({
           renderPassageRoll()
         )}
         <div className="bible-yv-top-tools">
+          {ACTIVITY_UI_ENABLED ? (
+            <div className="bible-yv-history-menu" ref={historyToolsRef}>
+              <button
+                type="button"
+                className={`bible-yv-history-btn${historyOpen ? " is-on" : ""}`}
+                aria-label="Historique"
+                aria-haspopup="dialog"
+                aria-expanded={historyOpen}
+                onClick={() => {
+                  setShareSheetOpen(false);
+                  toggleOverlay("history");
+                }}
+              >
+                <YvIcon name="history" className="bible-yv-tool-icon" />
+              </button>
+              <BibleHistorySheet
+                open={historyOpen}
+                onClose={() => closeOverlay()}
+                onSelect={({ bookId, chapterId, verse }) => {
+                  closeOverlay();
+                  void loadChapter(bookId, chapterId, verse);
+                }}
+                onHistoryChange={onReadingHistoryChange}
+              />
+            </div>
+          ) : null}
           {!compactToolsMenu || isPassageBarPanelCompactTopbar()
             ? renderTopToolsMenu("header")
             : null}
@@ -3168,18 +3176,6 @@ export function BibleReaderView({
         planId={planReading?.planShareId ?? null}
       />
 
-      {ACTIVITY_UI_ENABLED ? (
-        <BibleHistorySheet
-          open={historyOpen}
-          onClose={() => setHistoryOpen(false)}
-          onSelect={({ bookId, chapterId, verse }) => {
-            setHistoryOpen(false);
-            closeOverlay();
-            void loadChapter(bookId, chapterId, verse);
-          }}
-          onHistoryChange={onReadingHistoryChange}
-        />
-      ) : null}
     </section>
   );
 }

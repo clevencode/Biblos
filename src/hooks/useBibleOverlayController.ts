@@ -5,7 +5,8 @@ export type ActiveBibleOverlay =
   | { type: "word_search" }
   | { type: "passage_picker" }
   | { type: "verse_actions"; selectedVerseIds: string[] }
-  | { type: "reader_settings" };
+  | { type: "reader_settings" }
+  | { type: "history" };
 
 export type ActiveBibleOverlayType = ActiveBibleOverlay["type"];
 
