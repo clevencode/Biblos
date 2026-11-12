@@ -385,6 +385,10 @@ function BiblosConsumerApp() {
                   activityTick={activityTick}
                   onOpenBible={(ref) => openBible(ref)}
                   onOpenPlan={() => selectTab("today")}
+                  onResumePlan={(plan) => {
+                    openPlanWorkspace(plan);
+                    selectTab("today");
+                  }}
                 />
                 <PlanDiscoverPanel
                   active={tab === "today"}
@@ -395,6 +399,12 @@ function BiblosConsumerApp() {
                   onSelectPlan={openPlanWorkspace}
                   onLeaveWorkspace={leavePlanWorkspace}
                   onStartPlanReading={startPlanReadingFromWorkspace}
+                  onMarkRead={() => {
+                    setActivityTick((n) => n + 1);
+                  }}
+                  onRestartPlan={() => {
+                    setActivityTick((n) => n + 1);
+                  }}
                 />
                 <div
                   id="panel-bible"

@@ -23,7 +23,9 @@ import {
   isPlanComplete,
   loadPlanProgress,
   markJourComplete,
+  progressCounts,
   resetPlanProgress,
+  resumeStepIndex,
   type PlanProgress,
 } from "../domain/planProgress";
 import {
@@ -160,11 +162,16 @@ export function PlanWorkspacePanel({
   }, []);
 
   const progress = useMemo(
-  () => progressProp ?? loadPlanProgress(plan.id),
-  [plan.id, progressProp, progressTick],
+    () => progressProp ?? loadPlanProgress(plan.id),
+    [plan.id, progressProp, progressTick],
   );
   const planJour = calendarPlanJour(plan, progress);
-  const jumpJour = focusJour ?? latestPlanJour(plan, progress);
+  const resumeJour = useMemo(() => {
+    const steps = planDaysFromReadingPlan(plan);
+    const idx = resumeStepIndex(plan);
+    return steps[idx]?.jour ?? latestPlanJour(plan, progress);
+  }, [plan, progress]);
+  const jumpJour = focusJour ?? resumeJour;
 
   const [screen, setScreen] = useState<PlanScreen>("timeline");
   const [selectedJour, setSelectedJour] = useState(jumpJour);
@@ -298,6 +305,19 @@ export function PlanWorkspacePanel({
     passageRefs.length > 0 ? formatReadingTimeLabel(passageRefs) : null;
   const displayProgressTotal = hasStages ? stageDayTotal : scheduleTotal;
   const displayJourIndex = hasStages ? stageDayIndex : selectedIndex;
+  const { done: progressDone } = progressCounts(plan, progress);
+  const hasStartedPlan = progressDone > 0 || progress?.lastJour != null;
+
+  const nextUnreadDay = useMemo(() => {
+    if (!days.length) return null;
+    const after = days.find(
+      (day) => day.jour > selectedJour && !isJourComplete(progress, day.jour),
+    );
+    if (after) return after;
+    const any = days.find((day) => !isJourComplete(progress, day.jour));
+    if (any && any.jour !== selectedJour) return any;
+    return null;
+  }, [days, selectedJour, progress]);
 
   function pickStageJour(stage: { fromJour: number; toJour: number }) {
     const inStage = days.filter(
@@ -351,6 +371,15 @@ export function PlanWorkspacePanel({
     saveIntroSeen(plan.id, true);
   }
 
+  function openNextJour() {
+    if (!nextUnreadDay || !onStartPlanReading) return;
+    setSelectedJour(nextUnreadDay.jour);
+    const refs = extractPassageRefs(nextUnreadDay.passage);
+    const target = refs[0] ?? extractPassageRef(nextUnreadDay.passage);
+    if (!target || !isPassageRef(target)) return;
+    onStartPlanReading(nextUnreadDay.jour, target, { returnTo: "timeline" });
+  }
+
   function startReading() {
     if (planComplete) {
       resetPlanProgress(plan.id);
@@ -365,12 +394,32 @@ export function PlanWorkspacePanel({
       }
       return;
     }
+    if (passageRead && nextUnreadDay) {
+      openNextJour();
+      return;
+    }
     if (hasDescription && !introSeen) {
       setScreen("intro");
       return;
     }
     openPassage();
   }
+
+  function toggleJourDone() {
+    if (!selectedDay) return;
+    markJourComplete(plan.id, selectedDay.jour);
+    onMarkRead?.(selectedDay.jour);
+  }
+
+  const primaryCtaLabel = planComplete
+    ? "Recommencer la lecture"
+    : passageRead && nextUnreadDay
+      ? "Jour suivant"
+      : passageRead
+        ? "Relire"
+        : hasStartedPlan
+          ? "Continuer la lecture"
+          : "Commencer la lecture";
 
   if (screen === "intro") {
     return (
@@ -636,14 +685,7 @@ export function PlanWorkspacePanel({
               refs={passageRefs.length ? passageRefs : [passageLabel || "Passage du jour"]}
               className="plan-yv-hero-title"
               done={passageRead}
-              onToggleDone={
-                onMarkRead && selectedDay
-                  ? () => {
-                      markJourComplete(plan.id, selectedDay.jour);
-                      onMarkRead(selectedDay.jour);
-                    }
-                  : undefined
-              }
+              onToggleDone={selectedDay ? toggleJourDone : undefined}
               onOpenRef={canOpenPassage ? openPassageAt : undefined}
             />
           ) : (
@@ -655,15 +697,25 @@ export function PlanWorkspacePanel({
           <button
             type="button"
             className="plan-yv-start"
-            disabled={!planComplete && !canOpenPassage && !hasDescription}
+            disabled={
+              !planComplete &&
+              !(passageRead && nextUnreadDay) &&
+              !canOpenPassage &&
+              !hasDescription
+            }
             onClick={startReading}
           >
-            {planComplete
-              ? "Recommencer la lecture"
-              : passageRead
-                ? "Relire"
-                : "Commencer la lecture"}
+            {primaryCtaLabel}
           </button>
+          {passageRead && nextUnreadDay && canOpenPassage ? (
+            <button
+              type="button"
+              className="plan-yv-start-secondary"
+              onClick={openPassage}
+            >
+              Relire ce jour
+            </button>
+          ) : null}
         </section>
       ) : (
         <p className="muted plan-yv-empty">
