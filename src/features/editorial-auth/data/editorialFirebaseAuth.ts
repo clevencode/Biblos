@@ -72,10 +72,28 @@ export async function signOutEditor(): Promise<void> {
   await signOut(instance);
 }
 
+function isEditorialAllowlisted(email: string | null | undefined): boolean {
+  const needle = String(import.meta.env.VITE_CLEVENCODE_ADMIN_EMAIL ?? "")
+    .trim()
+    .toLowerCase();
+  // Sem allowlist configurada: qualquer sessão Firebase (comportamento legado).
+  if (!needle) return true;
+  return (
+    String(email ?? "")
+      .trim()
+      .toLowerCase() === needle
+  );
+}
+
 /** Barreira obrigatória antes de qualquer write Firestore. */
 export async function requireEditorialUser(): Promise<User> {
   const instance = await ensureAuthReady();
   const user = instance?.currentUser ?? null;
   if (!user) throw new EditorialAuthRequiredError();
+  if (!isEditorialAllowlisted(user.email)) {
+    throw new EditorialAuthRequiredError(
+      "Compte non autorisé pour l’édition CMS",
+    );
+  }
   return user;
 }

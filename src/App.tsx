@@ -14,7 +14,16 @@ import { ProfileShellPanel } from "./components/ProfileShellPanel";
 import { recordBibleRead, appendActivity } from "./activityLog";
 import { consumeShareRefFromUrl } from "./shareVerse";
 import { setVerseMarks } from "./verseMarks";
-import { loadOrCreateProfile } from "./userProfile";
+import {
+  completeOnboarding,
+  isProfileOnboarded,
+  loadOrCreateProfile,
+} from "./userProfile";
+import {
+  ProfileOnboarding,
+  SignInModal,
+  useConsumerAuth,
+} from "./features/consumer-auth";
 import { useNarrow } from "./layout";
 import { BIBLE_COMPACT_TOOLS_MENU } from "./bible/bibleChromeLayout";
 import {
@@ -33,6 +42,14 @@ import {
   applyPendingSwUpdate,
   subscribeSwUpdate,
 } from "./swUpdateManager";
+
+type MarkPayload = {
+  color: string;
+  verses: number[];
+  bookId: string;
+  chapterId: string;
+  bookTitle: string;
+};
 
 function isEditorialAdminRoute(): boolean {
   const hash = window.location.hash.replace(/^#/, "");
@@ -70,7 +87,11 @@ export function App() {
 
 function BiblosConsumerApp() {
   const narrow = useNarrow();
-  const profile = loadOrCreateProfile();
+  const {
+    user: firebaseUser,
+    profile,
+    refreshProfile,
+  } = useConsumerAuth();
   const [tab, setTab] = useState<ShellTab>(() => loadShellTab());
   const [bibleMounted, setBibleMounted] = useState(() => loadShellTab() === "bible");
   const [navHidden, setNavHidden] = useState(false);
@@ -83,8 +104,21 @@ function BiblosConsumerApp() {
   const [workspaceResumeSeq, setWorkspaceResumeSeq] = useState(0);
   const [offlineToast, setOfflineToast] = useState(false);
   const [swUpdatePending, setSwUpdatePending] = useState(false);
+  const [signInOpen, setSignInOpen] = useState(false);
+  const [nameGateOpen, setNameGateOpen] = useState(false);
+  const [onboardingDone, setOnboardingDone] = useState(() =>
+    isProfileOnboarded(loadOrCreateProfile()),
+  );
+  const [authorizedMarkSeq, setAuthorizedMarkSeq] = useState(0);
+  const [authorizedMark, setAuthorizedMark] = useState<MarkPayload | null>(null);
+  const pendingMarkRef = useRef<MarkPayload | null>(null);
+  const pendingAfterAccountRef = useRef<(() => void) | null>(null);
   const offlineToastSeen = useRef(false);
   const shareBooted = useRef(false);
+
+  const onboarded = isProfileOnboarded(profile) || onboardingDone;
+  const accountReady = Boolean(firebaseUser) && onboarded;
+  const showWelcomeOnboarding = Boolean(firebaseUser) && !onboarded && !nameGateOpen;
 
   const bibleMode = tab === "bible";
   const bibleCompactTools = BIBLE_COMPACT_TOOLS_MENU && narrow && bibleMode;
@@ -204,6 +238,69 @@ function BiblosConsumerApp() {
     }
   }
 
+  function authorizeMark(payload: MarkPayload) {
+    setAuthorizedMark(payload);
+    setAuthorizedMarkSeq((value) => value + 1);
+    setTab("bible");
+  }
+
+  function requestAccountForMark(payload: MarkPayload) {
+    pendingMarkRef.current = payload;
+    if (!firebaseUser) {
+      setSignInOpen(true);
+      return;
+    }
+    if (!isProfileOnboarded(profile)) {
+      setNameGateOpen(true);
+      return;
+    }
+    authorizeMark(payload);
+  }
+
+  function finishOnboarding(input: {
+    firstName: string;
+    lastName: string;
+    preferredName: string;
+  }) {
+    completeOnboarding(input);
+    refreshProfile();
+    setOnboardingDone(true);
+    setNameGateOpen(false);
+    const pendingMark = pendingMarkRef.current;
+    pendingMarkRef.current = null;
+    if (pendingMark) {
+      authorizeMark(pendingMark);
+    }
+    const pending = pendingAfterAccountRef.current;
+    pendingAfterAccountRef.current = null;
+    pending?.();
+  }
+
+  function cancelNameGate() {
+    setNameGateOpen(false);
+    pendingMarkRef.current = null;
+  }
+
+  useEffect(() => {
+    if (!firebaseUser) {
+      setOnboardingDone(false);
+      return;
+    }
+    setOnboardingDone(isProfileOnboarded(loadOrCreateProfile()));
+  }, [firebaseUser]);
+
+  useEffect(() => {
+    if (!firebaseUser || !isProfileOnboarded(profile)) return;
+    const pendingMark = pendingMarkRef.current;
+    pendingMarkRef.current = null;
+    if (pendingMark) {
+      authorizeMark(pendingMark);
+    }
+    const pending = pendingAfterAccountRef.current;
+    pendingAfterAccountRef.current = null;
+    pending?.();
+  }, [firebaseUser, profile]);
+
   return (
     <div
       className={`app biblos-shell skeleton-theme${
@@ -213,6 +310,24 @@ function BiblosConsumerApp() {
       <a className="skip" href="#workspace">
         Aller au contenu
       </a>
+      {showWelcomeOnboarding ? (
+        <ProfileOnboarding
+          variant="welcome"
+          initialFullName={firebaseUser?.displayName?.trim() || ""}
+          onComplete={finishOnboarding}
+        />
+      ) : null}
+      {!onboarded && nameGateOpen ? (
+        <ProfileOnboarding
+          variant="mark"
+          initialFullName={
+            profile.preferredName || firebaseUser?.displayName || ""
+          }
+          onComplete={finishOnboarding}
+          onCancel={cancelNameGate}
+        />
+      ) : null}
+      <SignInModal open={signInOpen} onClose={() => setSignInOpen(false)} />
       {offlineToast ? (
         <div className="offline-toast" role="status" aria-live="polite">
           <p>Hors ligne — tout reste enregistré sur cet appareil.</p>
@@ -278,6 +393,11 @@ function BiblosConsumerApp() {
                       onCycleTheme={cycleTheme}
                       planReading={bibleMode ? planReading : null}
                       onBack={planReading ? returnFromPlanReading : undefined}
+                      requireNameToMark={!accountReady}
+                      onRequestNameToMark={requestAccountForMark}
+                      authorizedMarkSeq={authorizedMarkSeq}
+                      authorizedMark={authorizedMark}
+                      onAuthorizedMarkConsumed={() => setAuthorizedMark(null)}
                       onVerseMarked={handleVerseMarked}
                       onBibleRead={(payload) => {
                         const logged = recordBibleRead({
@@ -299,6 +419,7 @@ function BiblosConsumerApp() {
                   onCycleTheme={cycleTheme}
                   onOpenPassage={(ref) => openBible(historyToFocusRef(ref))}
                   onHistoryChange={() => setActivityTick((n) => n + 1)}
+                  onRequestSignIn={() => setSignInOpen(true)}
                 />
               </div>
             </section>

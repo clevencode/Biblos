@@ -1,11 +1,16 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { YvIcon } from "./YvIcon";
 import {
   clearBibleReadingHistory,
   formatActivityWhen,
   listBibleReadingHistory,
 } from "../activityLog";
-import { loadOrCreateProfile } from "../userProfile";
+import {
+  completeOnboarding,
+  joinFullName,
+  preferredDisplayName,
+  splitFullName,
+} from "../userProfile";
 import { resolveTheme, themePrefLabel, type ThemePref } from "../theme";
 import type { BibleHistorySelect } from "./BibleHistorySheet";
 import {
@@ -17,6 +22,7 @@ import {
   versionAvailabilityLabel,
   type VersionAvailabilityState,
 } from "../bible/bibleVersionStatus";
+import { useConsumerAuth } from "../features/consumer-auth";
 
 type ProfileShellPanelProps = {
   active: boolean;
@@ -25,6 +31,7 @@ type ProfileShellPanelProps = {
   onCycleTheme: () => void;
   onOpenPassage: (ref: BibleHistorySelect) => void;
   onHistoryChange?: () => void;
+  onRequestSignIn?: () => void;
 };
 
 export function ProfileShellPanel({
@@ -34,17 +41,29 @@ export function ProfileShellPanel({
   onCycleTheme,
   onOpenPassage,
   onHistoryChange,
+  onRequestSignIn,
 }: ProfileShellPanelProps) {
-  const profile = loadOrCreateProfile();
+  const { user, profile, signOut, refreshProfile, loading } = useConsumerAuth();
+  const signedIn = Boolean(user);
   const [confirmClear, setConfirmClear] = useState(false);
   const [storageHealth, setStorageHealth] = useState<StorageHealth | null>(null);
   const [s21Status, setS21Status] = useState<VersionAvailabilityState | null>(null);
   const [htStatus, setHtStatus] = useState<VersionAvailabilityState | null>(null);
+  const [editingName, setEditingName] = useState(false);
+  const [fullName, setFullName] = useState(() =>
+    joinFullName(profile.firstName, profile.lastName),
+  );
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const [signOutBusy, setSignOutBusy] = useState(false);
 
   const history = useMemo(() => {
     void activityTick;
     return listBibleReadingHistory(profile.id, 12);
   }, [activityTick, profile.id]);
+
+  useEffect(() => {
+    setFullName(joinFullName(profile.firstName, profile.lastName));
+  }, [profile.firstName, profile.lastName]);
 
   useEffect(() => {
     if (!active) return;
@@ -75,6 +94,33 @@ export function ProfileShellPanel({
     return { bookId, chapterId, verse };
   }
 
+  function saveName(event: FormEvent) {
+    event.preventDefault();
+    const raw = (fullName.trim() || nameInputRef.current?.value.trim() || "").trim();
+    const { firstName, lastName } = splitFullName(raw);
+    if (!firstName) return;
+    completeOnboarding({ firstName, lastName });
+    refreshProfile();
+    setEditingName(false);
+  }
+
+  async function handleSignOut() {
+    if (signOutBusy) return;
+    setSignOutBusy(true);
+    try {
+      await signOut();
+    } finally {
+      setSignOutBusy(false);
+    }
+  }
+
+  const displayName = preferredDisplayName(profile) || "…";
+  const providerLabel = user?.email
+    ? user.email
+    : signedIn
+      ? "Compte connecté"
+      : null;
+
   return (
     <div
       id="panel-profile"
@@ -86,9 +132,89 @@ export function ProfileShellPanel({
       <header className="profile-head">
         <div className="profile-head-copy">
           <h2 className="type-headline">Profil</h2>
-          <p className="muted type-caption">Données sur cet appareil</p>
+          <p className="muted type-caption">
+            {signedIn ? displayName : "Données sur cet appareil"}
+          </p>
         </div>
       </header>
+
+      <section className="profile-section" aria-labelledby="profile-account-title">
+        <h3 id="profile-account-title" className="type-eyebrow">
+          Compte
+        </h3>
+        {!signedIn ? (
+          <div className="profile-sign-in-banner">
+            <p>
+              Lecture et plans restent disponibles. Connecte-toi pour lier ton
+              compte (Google ou e-mail).
+            </p>
+            <button
+              type="button"
+              className="auth-google-btn"
+              disabled={loading}
+              onClick={() => onRequestSignIn?.()}
+            >
+              Se connecter
+            </button>
+          </div>
+        ) : (
+          <>
+            {editingName ? (
+              <form className="profile-onboarding-form" onSubmit={saveName}>
+                <label className="profile-field">
+                  <span>Nom complet</span>
+                  <input
+                    ref={nameInputRef}
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    maxLength={128}
+                    autoComplete="name"
+                  />
+                </label>
+                <button type="submit" className="profile-save-btn">
+                  Enregistrer
+                </button>
+                <button
+                  type="button"
+                  className="profile-onboarding-cancel"
+                  onClick={() => {
+                    setFullName(joinFullName(profile.firstName, profile.lastName));
+                    setEditingName(false);
+                  }}
+                >
+                  Annuler
+                </button>
+              </form>
+            ) : (
+              <button
+                type="button"
+                className="profile-row-btn"
+                onClick={() => setEditingName(true)}
+              >
+                <YvIcon name="person" className="profile-row-icon" opsz={20} />
+                <span className="profile-row-body">
+                  <span className="profile-row-label">{displayName}</span>
+                  <span className="profile-row-value muted">
+                    {providerLabel}
+                  </span>
+                </span>
+                <YvIcon name="chevron_right" className="profile-row-chevron" opsz={20} />
+              </button>
+            )}
+            <button
+              type="button"
+              className="profile-row-btn"
+              disabled={signOutBusy}
+              onClick={() => void handleSignOut()}
+            >
+              <YvIcon name="close" className="profile-row-icon" opsz={20} />
+              <span className="profile-row-body">
+                <span className="profile-row-label">Se déconnecter</span>
+              </span>
+            </button>
+          </>
+        )}
+      </section>
 
       <section className="profile-section" aria-labelledby="profile-editorial-title">
         <h3 id="profile-editorial-title" className="type-eyebrow">

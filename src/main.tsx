@@ -10,6 +10,7 @@ import {
   bootReadingPlansFirestore,
   isReadingPlansFirebaseConfigured,
 } from "./features/reading-plans";
+import { ConsumerAuthProvider } from "./features/consumer-auth";
 import { ensureCleanSlate } from "./cleanSlate";
 import { syncNativeChrome } from "./nativeChrome";
 import { scheduleIdle } from "./scheduleIdle";
@@ -48,7 +49,9 @@ async function boot() {
       <BootErrorBoundary>
         <SkeletonTheme>
           <AppReadinessProvider>
-            <App />
+            <ConsumerAuthProvider>
+              <App />
+            </ConsumerAuthProvider>
           </AppReadinessProvider>
         </SkeletonTheme>
       </BootErrorBoundary>

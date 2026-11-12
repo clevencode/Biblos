@@ -23,6 +23,7 @@
     "test:verse-search": "npx --yes tsx scripts/test-s21-search-engine.ts"
   },
   "dependencies": {
+    "@capacitor-firebase/authentication": "^8.6.0",
     "@capacitor/android": "^8.5.1",
     "@capacitor/cli": "^8.5.1",
     "@capacitor/core": "^8.5.1",
