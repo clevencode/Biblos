@@ -86,6 +86,7 @@ import {
 import { verseCardId } from "../verseCard";
 import {
   buildShareText,
+  buildShareUrl,
   formatSelectedVersesForShare,
   sharePlainText,
 } from "../shareVerse";
@@ -3032,10 +3033,16 @@ export function BibleReaderView({
                   disabled={!canShareVerse}
                   onClick={() => {
                     void (async () => {
-                      const text = buildShareText(shareRefLabel, shareVerseText, "");
+                      const shareUrl = buildShareUrl(shareUsfm);
+                      const text = buildShareText(
+                        shareRefLabel,
+                        shareVerseText,
+                        shareUrl,
+                      );
                       const result = await sharePlainText({
                         title: shareRefLabel || "Biblos",
                         text,
+                        url: shareUrl,
                       });
                       if (result.ok) {
                         setCardMsg(
