@@ -72,7 +72,15 @@ export function usePassageBarController({
     setScopeFilter: setWordSearchScopeFilter,
     setSelectedBookIds: setWordSearchSelectedBookIds,
     clearSearch: clearWordSearchSession,
-  } = usePersistentSearchSession();
+    resetForVersion: resetWordSearchForVersion,
+  } = usePersistentSearchSession(textVersion);
+
+  const prevTextVersionRef = useRef(textVersion);
+  useEffect(() => {
+    if (prevTextVersionRef.current === textVersion) return;
+    prevTextVersionRef.current = textVersion;
+    resetWordSearchForVersion();
+  }, [textVersion, resetWordSearchForVersion]);
   const [discoverySession, setDiscoverySession] = useState<PassageDiscoverySession>(
     () => ({ ...EMPTY_PASSAGE_DISCOVERY_SESSION }),
   );

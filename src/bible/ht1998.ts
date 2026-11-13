@@ -184,7 +184,7 @@ export async function ht1998Search(
 > {
   const query = String(q || "").trim();
   if (normalizeSearchText(query).length < 2) {
-    return { ok: false, error: "Saisissez au moins 2 caractères" };
+    return { ok: false, error: "Tape omwen 2 karaktè" };
   }
 
   const { runLocalVerseSearch } = await import("./localVerseSearch");

@@ -2711,6 +2711,7 @@ export function BibleReaderView({
                 verseTotal={wordVerseTotal}
                 contentError={wordDiscovery.contentError}
                 textVersion={textVersion}
+                books={books}
                 matchMode={wordMatchMode}
                 matchedTerms={wordMatchedTerms}
                 scopeFilter={wordSearchScopeFilter}

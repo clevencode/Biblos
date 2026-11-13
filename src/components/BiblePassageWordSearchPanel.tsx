@@ -8,6 +8,12 @@ import {
 } from "react";
 import type { BibleTextVersionId } from "../bible/bibleVersions";
 import {
+  isDcBook,
+  isNtBook,
+  isOtBook,
+} from "../bible/searchTestamentSets";
+import { wordSearchUi } from "../bible/wordSearchUi";
+import {
   normalizeSearchText,
   resolveCanonicalBookId,
   type MatchMode,
@@ -20,8 +26,7 @@ import {
   useSearchScrollRestoration,
 } from "../hooks/useSearchScrollRestoration";
 import type { WordSearchScopeCounts } from "../hooks/useWordPassageSearch";
-import { CANON_BOOKS } from "../youversion/canon";
-import type { BibleSearchHit } from "../youversion/client";
+import type { BibleSearchHit, YouVersionBook } from "../youversion/client";
 import { YvIcon } from "./YvIcon";
 import { BibleSearchHighlight } from "./BibleSearchHighlight";
 import { WordSearchSkeleton } from "./WordSearchSkeleton";
@@ -29,27 +34,38 @@ import { WordSearchSkeleton } from "./WordSearchSkeleton";
 const MIN_WORD_CHARS = 2;
 const HIT_LIMIT = 40;
 
-/** Gaveta multi-livros só em Ancien / Nouveau. */
-type PickerMode = "nt" | "ot";
+/** Gaveta multi-livros: OT / NT / DC. */
+type PickerMode = "nt" | "ot" | "dc";
 
-const OT_BOOK_IDS = new Set(
-  CANON_BOOKS.filter((b) => b.testament === "at").map((b) => b.id.toUpperCase()),
-);
-const NT_BOOK_IDS = new Set(
-  CANON_BOOKS.filter((b) => b.testament === "nt").map((b) => b.id.toUpperCase()),
-);
+type PanelBook = {
+  id: string;
+  title: string;
+  section: PickerMode;
+};
 
-function bookIdsInTestament(ids: string[], mode: "nt" | "ot"): string[] {
-  const allowed = mode === "nt" ? NT_BOOK_IDS : OT_BOOK_IDS;
+function bookIdsInSection(ids: string[], mode: PickerMode): string[] {
   const out: string[] = [];
   const seen = new Set<string>();
   for (const raw of ids) {
     const id = resolveCanonicalBookId(raw);
-    if (!id || !allowed.has(id) || seen.has(id)) continue;
+    if (!id || seen.has(id)) continue;
+    const ok =
+      mode === "nt"
+        ? isNtBook(id)
+        : mode === "ot"
+          ? isOtBook(id)
+          : isDcBook(id);
+    if (!ok) continue;
     seen.add(id);
     out.push(id);
   }
   return out;
+}
+
+function sectionForBook(id: string): PickerMode {
+  if (isNtBook(id)) return "nt";
+  if (isOtBook(id)) return "ot";
+  return "dc";
 }
 
 type BiblePassageWordSearchPanelProps = {
@@ -64,6 +80,8 @@ type BiblePassageWordSearchPanelProps = {
   verseTotal: number;
   contentError: string | null;
   textVersion: BibleTextVersionId;
+  /** Catálogo da versão ativa (títulos localizados; HT inclui deuterocanônicos). */
+  books: YouVersionBook[];
   matchMode?: MatchMode | null;
   matchedTerms?: string[];
   scopeFilter: SearchScopeFilter;
@@ -78,7 +96,8 @@ type BiblePassageWordSearchPanelProps = {
 };
 
 /**
- * Painel de busca — pills + gaveta multi-livros (também AT/NT) + RÉCENTS.
+ * Painel de busca — pills + gaveta multi-livros + chips por hits + RÉCENTS.
+ * Escopo isolado pela versão ativa (`textVersion` + `books`).
  */
 export function BiblePassageWordSearchPanel({
   id: panelId,
@@ -92,6 +111,7 @@ export function BiblePassageWordSearchPanel({
   verseTotal,
   contentError,
   textVersion,
+  books,
   matchMode = null,
   matchedTerms = [],
   scopeFilter,
@@ -104,13 +124,34 @@ export function BiblePassageWordSearchPanel({
   currentBookTitle,
   onPickVerse,
 }: BiblePassageWordSearchPanelProps) {
+  const ui = useMemo(() => wordSearchUi(textVersion), [textVersion]);
+  const showDcPill = textVersion === "ht98";
   const inputRef = useRef<HTMLInputElement>(null);
-  const { chips, isSuggestions, pushRecent } = useRecentWordSearches();
+  const { chips, isSuggestions, pushRecent } = useRecentWordSearches(textVersion);
   const [pickerMode, setPickerMode] = useState<PickerMode | null>(null);
   const [draftBookIds, setDraftBookIds] = useState<string[]>([]);
   const [bookFilterQuery, setBookFilterQuery] = useState("");
 
   const isBookPickerOpen = pickerMode !== null;
+
+  const catalogBooks = useMemo((): PanelBook[] => {
+    return books.map((book) => {
+      const id = String(book.id || "").trim().toUpperCase();
+      return {
+        id,
+        title: book.title || book.fullTitle || id,
+        section: sectionForBook(id),
+      };
+    }).filter((b) => Boolean(b.id));
+  }, [books]);
+
+  const titleById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const book of catalogBooks) {
+      map.set(book.id, book.title);
+    }
+    return map;
+  }, [catalogBooks]);
 
   const readerBookId = useMemo(
     () => resolveCanonicalBookId(currentBookId, currentBookTitle),
@@ -133,20 +174,26 @@ export function BiblePassageWordSearchPanel({
     verseHits.length > 0 &&
     !isBookPickerOpen;
   const hasResultsChrome = hasActiveQuery && !showSkeleton;
-  /** Pill do livro atual: ativo só quando o filtro é exatamente esse livro. */
   const currentBookActive =
     scopeFilter === "books" &&
     selectedBookIds.length === 1 &&
     resolveCanonicalBookId(selectedBookIds[0]) === readerBookId;
   const ntActive = scopeFilter === "nt";
   const otActive = scopeFilter === "ot";
+  const dcActive = scopeFilter === "dc";
 
   const loadedLimit = Math.max(verseHits.length, HIT_LIMIT);
   const booksSignature = useMemo(() => {
     if (scopeFilter === "books" && selectedBookIds.length > 0) {
       return `books:${[...selectedBookIds].sort().join(",")}`;
     }
-    if (scopeFilter === "nt" || scopeFilter === "ot") return scopeFilter;
+    if (
+      scopeFilter === "nt" ||
+      scopeFilter === "ot" ||
+      scopeFilter === "dc"
+    ) {
+      return scopeFilter;
+    }
     return "all";
   }, [selectedBookIds, scopeFilter]);
 
@@ -175,32 +222,41 @@ export function BiblePassageWordSearchPanel({
     !isBookPickerOpen &&
     verseHits.length > 0 &&
     (matchMode === "fuzzy"
-      ? "Aucun résultat exact. Affichage des passages pour des termes proches."
+      ? ui.fuzzyBanner
       : matchMode === "partial_or"
-        ? "Aucun verset avec tous les mots. Passages contenant une partie de votre recherche :"
+        ? ui.orBanner
         : null);
 
-  const bookLabel = currentBookTitle.trim() || currentBookId || "Livre";
+  const bookLabel =
+    currentBookTitle.trim() ||
+    titleById.get(readerBookId) ||
+    currentBookId ||
+    ui.bookFallback;
   const byBook = facets?.byBook ?? {};
 
   const booksWithHits = useMemo(() => {
-    const withHits = CANON_BOOKS.filter(
-      (book) => (byBook[book.id.toUpperCase()] ?? 0) > 0,
+    const withHits = catalogBooks.filter(
+      (book) => (byBook[book.id] ?? 0) > 0,
     );
     if (pickerMode === "nt") {
-      return withHits.filter((book) => book.testament === "nt");
+      return withHits.filter((book) => book.section === "nt");
     }
     if (pickerMode === "ot") {
-      return withHits.filter((book) => book.testament === "at");
+      return withHits.filter((book) => book.section === "ot");
+    }
+    if (pickerMode === "dc") {
+      return withHits.filter((book) => book.section === "dc");
     }
     return withHits;
-  }, [byBook, pickerMode]);
+  }, [byBook, pickerMode, catalogBooks]);
 
   const filteredBooks = useMemo(() => {
     const q = normalizeSearchText(bookFilterQuery);
     if (!q) return booksWithHits;
-    return booksWithHits.filter((book) =>
-      normalizeSearchText(book.title).includes(q),
+    return booksWithHits.filter(
+      (book) =>
+        normalizeSearchText(book.title).includes(q) ||
+        normalizeSearchText(book.id).includes(q),
     );
   }, [booksWithHits, bookFilterQuery]);
 
@@ -214,6 +270,7 @@ export function BiblePassageWordSearchPanel({
   const applyEmptyTotal = useMemo(() => {
     if (pickerMode === "nt") return facets?.ntCount ?? scopeCounts?.nt ?? 0;
     if (pickerMode === "ot") return facets?.otCount ?? scopeCounts?.ot ?? 0;
+    if (pickerMode === "dc") return facets?.dcCount ?? scopeCounts?.dc ?? 0;
     return facets?.total ?? 0;
   }, [pickerMode, facets, scopeCounts]);
 
@@ -240,7 +297,7 @@ export function BiblePassageWordSearchPanel({
   if (!open) return null;
 
   function seedDraftForMode(mode: PickerMode): string[] {
-    return bookIdsInTestament(selectedBookIds, mode);
+    return bookIdsInSection(selectedBookIds, mode);
   }
 
   function openBookPicker(mode: PickerMode) {
@@ -283,7 +340,6 @@ export function BiblePassageWordSearchPanel({
     onQueryChange(value);
   }
 
-  /** Pill do livro atual: só liga/desliga o filtro desse livro (sem gaveta). */
   function handleCurrentBookPillTap() {
     closeBookPicker();
     if (!readerBookId) return;
@@ -292,9 +348,9 @@ export function BiblePassageWordSearchPanel({
     onSelectedBookIdsChange([readerBookId]);
   }
 
-  /** 1º toque: ativa o testamento. 2º toque: gaveta só com livros desse testamento. */
-  function handleTestamentPillTap(next: "nt" | "ot") {
-    const active = next === "nt" ? ntActive : otActive;
+  function handleTestamentPillTap(next: PickerMode) {
+    const active =
+      next === "nt" ? ntActive : next === "ot" ? otActive : dcActive;
     if (!active) {
       closeBookPicker();
       resetScroll();
@@ -304,9 +360,10 @@ export function BiblePassageWordSearchPanel({
     toggleBookPicker(next);
   }
 
-  function handleTestamentChevron(event: MouseEvent, next: "nt" | "ot") {
+  function handleTestamentChevron(event: MouseEvent, next: PickerMode) {
     event.stopPropagation();
-    const active = next === "nt" ? ntActive : otActive;
+    const active =
+      next === "nt" ? ntActive : next === "ot" ? otActive : dcActive;
     if (!active) {
       resetScroll();
       onScopeFilterChange(next);
@@ -314,7 +371,6 @@ export function BiblePassageWordSearchPanel({
     toggleBookPicker(next);
   }
 
-  /** Único caminho que anula o histórico de livros selecionados. */
   function handleEffacerBooks() {
     setDraftBookIds([]);
     if (selectedBookIds.length > 0 || scopeFilter === "books") {
@@ -336,7 +392,7 @@ export function BiblePassageWordSearchPanel({
       .filter(Boolean);
     resetScroll();
     if (nextIds.length === 0) {
-      if (pickerMode === "nt" || pickerMode === "ot") {
+      if (pickerMode === "nt" || pickerMode === "ot" || pickerMode === "dc") {
         onScopeFilterChange(pickerMode);
       } else {
         onScopeFilterChange("all");
@@ -363,11 +419,15 @@ export function BiblePassageWordSearchPanel({
     }
   }
 
-  function countLabel(scope: "nt" | "ot"): string {
-    const base = scope === "nt" ? "Nouveau" : "Ancien";
+  function countLabel(scope: PickerMode): string {
+    const base =
+      scope === "nt" ? ui.nt : scope === "ot" ? ui.ot : ui.dc;
     if (!hasActiveQuery || !scopeCounts) return base;
     return `${base} (${scopeCounts[scope]})`;
   }
+
+  const displayError =
+    contentError === "unavailable" ? ui.unavailable : contentError;
 
   return (
     <div
@@ -377,7 +437,7 @@ export function BiblePassageWordSearchPanel({
       }${isBookPickerOpen ? " is-book-picker" : ""}`}
       role="dialog"
       aria-modal="false"
-      aria-label="Recherche dans la Bible"
+      aria-label={ui.ariaPanel}
     >
       <div className="bible-yv-word-search-field">
         <YvIcon name="search" opsz={20} className="bible-yv-word-search-field-icon" />
@@ -386,12 +446,12 @@ export function BiblePassageWordSearchPanel({
           type="search"
           className="bible-yv-word-search-input"
           value={query}
-          placeholder="Mot ou expression…"
+          placeholder={ui.placeholder}
           autoComplete="off"
           autoCorrect="off"
           spellCheck={false}
           enterKeyHint="search"
-          aria-label="Rechercher un mot ou une expression dans la Bible"
+          aria-label={ui.ariaLabel}
           onChange={(event) => handleQueryChange(event.target.value)}
           onKeyDown={handleKeyDown}
         />
@@ -399,7 +459,7 @@ export function BiblePassageWordSearchPanel({
           type="button"
           className="bible-yv-word-search-clear"
           onClick={handleClearOrClose}
-          aria-label={trimmed ? "Effacer la recherche" : "Fermer la recherche"}
+          aria-label={trimmed ? ui.clear : ui.close}
         >
           <YvIcon name="close" opsz={20} className="bible-yv-word-search-clear-icon" />
         </button>
@@ -408,7 +468,7 @@ export function BiblePassageWordSearchPanel({
       <div
         className="bible-yv-word-search-pills"
         role="tablist"
-        aria-label="Portée de la recherche"
+        aria-label={ui.ariaPanel}
       >
         <button
           type="button"
@@ -440,6 +500,29 @@ export function BiblePassageWordSearchPanel({
             ▾
           </span>
         </button>
+        {showDcPill ? (
+          <button
+            type="button"
+            role="tab"
+            aria-selected={dcActive}
+            aria-expanded={pickerMode === "dc"}
+            className={`bible-yv-word-search-pill bible-yv-word-search-pill--books${
+              dcActive ? " is-on" : ""
+            }`}
+            onClick={() => handleTestamentPillTap("dc")}
+          >
+            <span className="bible-yv-word-search-pill-books-label">
+              {countLabel("dc")}
+            </span>
+            <span
+              className="bible-yv-word-search-pill-chevron"
+              onClick={(event) => handleTestamentChevron(event, "dc")}
+              role="presentation"
+            >
+              ▾
+            </span>
+          </button>
+        ) : null}
         <button
           type="button"
           role="tab"
@@ -466,7 +549,7 @@ export function BiblePassageWordSearchPanel({
       {!hasActiveQuery ? (
         <div className="bible-yv-word-search-recents">
           <p className="bible-yv-word-search-recents-label">
-            {isSuggestions ? "SUGGESTIONS" : "RÉCENTS"}
+            {isSuggestions ? ui.suggestions : ui.recents}
           </p>
           <div className="bible-yv-word-search-recents-chips">
             {chips.map((term) => (
@@ -491,7 +574,7 @@ export function BiblePassageWordSearchPanel({
               type="search"
               className="bible-yv-word-search-book-filter"
               value={bookFilterQuery}
-              placeholder="Filtrer un livre…"
+              placeholder={ui.filterBook}
               autoComplete="off"
               spellCheck={false}
               onChange={(event) => setBookFilterQuery(event.target.value)}
@@ -502,17 +585,17 @@ export function BiblePassageWordSearchPanel({
               disabled={draftBookIds.length === 0 && selectedBookIds.length === 0}
               onClick={handleEffacerBooks}
             >
-              Effacer
+              {ui.clear}
             </button>
           </div>
           <ul className="bible-yv-word-search-book-list" role="listbox">
             {filteredBooks.length === 0 ? (
               <li className="bible-yv-word-search-book-empty bible-yv-muted">
-                Aucun livre avec des résultats
+                {ui.empty}
               </li>
             ) : (
               filteredBooks.map((book) => {
-                const id = book.id.toUpperCase();
+                const id = book.id;
                 const checked = draftBookIds.includes(id);
                 const count = byBook[id] ?? 0;
                 return (
@@ -553,8 +636,8 @@ export function BiblePassageWordSearchPanel({
               onClick={handleApplyBooks}
             >
               {draftBookIds.length > 0
-                ? `Appliquer (${draftPassages} passages)`
-                : `Tout afficher (${applyEmptyTotal})`}
+                ? ui.applyPassages(draftPassages)
+                : ui.showAll(applyEmptyTotal)}
             </button>
           </div>
         </div>
@@ -563,8 +646,8 @@ export function BiblePassageWordSearchPanel({
           {!showSkeleton && verseHits.length > 0 ? (
             <p className="bible-yv-word-search-meta bible-yv-muted" aria-live="polite">
               {verseTotal > verseHits.length
-                ? `${verseHits.length} sur ${verseTotal} passages`
-                : `${verseHits.length} passage${verseHits.length === 1 ? "" : "s"}`}
+                ? ui.passagesPartial(verseHits.length, verseTotal)
+                : ui.passagesCount(verseHits.length)}
             </p>
           ) : null}
 
@@ -578,43 +661,51 @@ export function BiblePassageWordSearchPanel({
             ref={listRef}
             className="bible-yv-pick-grid is-word-search"
             role="listbox"
-            aria-label="Passages"
+            aria-label={ui.ariaPanel}
             style={{ overflowAnchor: "none" }}
             onScroll={handleScroll}
           >
             {showSkeleton ? (
               <WordSearchSkeleton />
-            ) : contentError ? (
+            ) : displayError ? (
               <p className="bible-yv-pick-discovery-hint bible-yv-muted" role="status">
-                {contentError}
+                {displayError}
               </p>
             ) : showEmptyResults ? (
               <p className="bible-yv-pick-loading bible-yv-muted bible-yv-pick-roll-empty">
-                Aucun passage trouvé
+                {ui.empty}
               </p>
             ) : (
               <ul className="bible-yv-pick-verse-hits is-word-search-passages">
-                {verseHits.map((hit) => (
-                  <li key={hit.usfm}>
-                    <button
-                      type="button"
-                      role="option"
-                      className="bible-yv-pick-verse-hit"
-                      onClick={() => handlePickVerse(hit)}
-                    >
-                      <span className="bible-yv-pick-verse-hit-ref">
-                        {hit.bookTitle} {hit.chapter}.{hit.verse}
-                      </span>
-                      <span className="bible-yv-pick-verse-hit-snippet">
-                        <BibleSearchHighlight
-                          text={hit.snippet || hit.text}
-                          query={query}
-                          matchedTerms={matchedTerms}
-                        />
-                      </span>
-                    </button>
-                  </li>
-                ))}
+                {verseHits.map((hit) => {
+                  const usfmBook = String(hit.usfm || "")
+                    .split(".")[0]
+                    ?.toUpperCase();
+                  const localizedTitle =
+                    (usfmBook ? titleById.get(usfmBook) : null) ||
+                    hit.bookTitle;
+                  return (
+                    <li key={hit.usfm}>
+                      <button
+                        type="button"
+                        role="option"
+                        className="bible-yv-pick-verse-hit"
+                        onClick={() => handlePickVerse(hit)}
+                      >
+                        <span className="bible-yv-pick-verse-hit-ref">
+                          {localizedTitle} {hit.chapter}.{hit.verse}
+                        </span>
+                        <span className="bible-yv-pick-verse-hit-snippet">
+                          <BibleSearchHighlight
+                            text={hit.snippet || hit.text}
+                            query={query}
+                            matchedTerms={matchedTerms}
+                          />
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </div>

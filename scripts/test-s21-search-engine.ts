@@ -214,6 +214,7 @@ assert.ok(normalizeSearchText("résurrection").includes("resurrection"));
   assert.equal(facets.total, 20);
   assert.equal(facets.ntCount, 12);
   assert.equal(facets.otCount, 8);
+  assert.equal(facets.dcCount, 0);
   assert.equal(facets.byBook.JHN, 10);
   assert.ok((bookIdsForSearchScope({ type: "nt" }) ?? []).includes("JHN"));
   assert.ok((bookIdsForSearchScope({ type: "ot" }) ?? []).includes("JDG"));
@@ -222,6 +223,31 @@ assert.ok(normalizeSearchText("résurrection").includes("resurrection"));
     bookIdsForSearchScope({ type: "books", bookIds: ["jdg", "JHN"] }),
     ["JDG", "JHN"],
   );
+}
+
+// --- facets + scope dc (deuterocanônicos HT) ---
+{
+  const facets = facetsFromBookCounts(
+    { JHN: 4, TOB: 7, SIR: 3, GEN: 2 },
+    0,
+  );
+  assert.equal(facets.total, 16);
+  assert.equal(facets.ntCount, 4);
+  assert.equal(facets.otCount, 2);
+  assert.equal(facets.dcCount, 10);
+  const dcIds = bookIdsForSearchScope({ type: "dc" }) ?? [];
+  assert.ok(dcIds.includes("TOB"));
+  assert.ok(dcIds.includes("SIR"));
+  const dcCorpus: IndexedVerse[] = [
+    ...htCorpus,
+    verse("TOB.1.1", "Istwa Tobi, pitit Tobit, nan tribilye Neftali.", 100),
+  ];
+  const scoped = searchVersesCascade(dcCorpus, "Tobi", {
+    profile: HT98_PROFILE,
+    limit: 10,
+    scope: { type: "dc" },
+  });
+  assert.ok(scoped.results.every((h) => h.verse.bookId.toUpperCase() === "TOB"));
 }
 
 console.log("test-s21-search-engine: ok");

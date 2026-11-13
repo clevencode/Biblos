@@ -4,6 +4,14 @@
  */
 
 import { CANON_BOOKS } from "../youversion/canon";
+import {
+  DC_BOOK_SET,
+  NT_BOOK_SET,
+  OT_BOOK_SET,
+  isDcBook,
+  isNtBook,
+  isOtBook,
+} from "./searchTestamentSets";
 
 export type MatchMode =
   | "exact_phrase"
@@ -39,6 +47,8 @@ export type SearchFacets = {
   total: number;
   otCount: number;
   ntCount: number;
+  /** Hits em deuterocanônicos / livros fora do cânon protestante. */
+  dcCount: number;
   byBook: Record<string, number>;
 };
 
@@ -46,6 +56,7 @@ export type SearchScope =
   | { type: "all" }
   | { type: "ot" }
   | { type: "nt" }
+  | { type: "dc" }
   | { type: "books"; bookIds: string[] };
 
 export type VerseSearchResult = {
@@ -64,18 +75,11 @@ export type SearchVersesCascadeOptions = {
   scope?: SearchScope;
 };
 
-const OT_BOOK_SET = new Set(
-  CANON_BOOKS.filter((b) => b.testament === "at").map((b) => b.id.toUpperCase()),
-);
-const NT_BOOK_SET = new Set(
-  CANON_BOOKS.filter((b) => b.testament === "nt").map((b) => b.id.toUpperCase()),
-);
-
 export function emptySearchFacets(): SearchFacets {
-  return { total: 0, otCount: 0, ntCount: 0, byBook: {} };
+  return { total: 0, otCount: 0, ntCount: 0, dcCount: 0, byBook: {} };
 }
 
-/** Facets a partir de contagens por livro (API remota sem ot/nt). */
+/** Facets a partir de contagens por livro (API remota sem ot/nt/dc). */
 export function facetsFromBookCounts(
   bookCounts: Record<string, number> | null | undefined,
   totalFallback = 0,
@@ -83,6 +87,7 @@ export function facetsFromBookCounts(
   const byBook: Record<string, number> = {};
   let otCount = 0;
   let ntCount = 0;
+  let dcCount = 0;
   let total = 0;
   for (const [rawId, rawCount] of Object.entries(bookCounts ?? {})) {
     const book = String(rawId || "").toUpperCase();
@@ -90,13 +95,15 @@ export function facetsFromBookCounts(
     if (!book || count <= 0) continue;
     byBook[book] = (byBook[book] || 0) + count;
     total += count;
-    if (OT_BOOK_SET.has(book)) otCount += count;
-    else if (NT_BOOK_SET.has(book)) ntCount += count;
+    if (isOtBook(book)) otCount += count;
+    else if (isNtBook(book)) ntCount += count;
+    else dcCount += count;
   }
   return {
     total: total > 0 ? total : Math.max(0, totalFallback),
     otCount,
     ntCount,
+    dcCount,
     byBook,
   };
 }
@@ -105,17 +112,20 @@ export function buildSearchFacets(hits: VerseSearchHit[]): SearchFacets {
   const byBook: Record<string, number> = {};
   let otCount = 0;
   let ntCount = 0;
+  let dcCount = 0;
   for (const hit of hits) {
     const book = String(hit.verse.bookId || "").toUpperCase();
     if (!book) continue;
     byBook[book] = (byBook[book] || 0) + 1;
-    if (OT_BOOK_SET.has(book)) otCount += 1;
-    else if (NT_BOOK_SET.has(book)) ntCount += 1;
+    if (isOtBook(book)) otCount += 1;
+    else if (isNtBook(book)) ntCount += 1;
+    else dcCount += 1;
   }
   return {
     total: hits.length,
     otCount,
     ntCount,
+    dcCount,
     byBook,
   };
 }
@@ -125,6 +135,7 @@ export function bookIdsForSearchScope(scope: SearchScope | undefined): string[] 
   if (!scope || scope.type === "all") return null;
   if (scope.type === "ot") return [...OT_BOOK_SET];
   if (scope.type === "nt") return [...NT_BOOK_SET];
+  if (scope.type === "dc") return [...DC_BOOK_SET];
   const ids = scope.bookIds
     .map((id) => String(id || "").toUpperCase())
     .filter(Boolean);
@@ -137,10 +148,13 @@ export function applySearchScope(
 ): VerseSearchHit[] {
   if (!scope || scope.type === "all") return hits;
   if (scope.type === "ot") {
-    return hits.filter((h) => OT_BOOK_SET.has(String(h.verse.bookId || "").toUpperCase()));
+    return hits.filter((h) => isOtBook(String(h.verse.bookId || "")));
   }
   if (scope.type === "nt") {
-    return hits.filter((h) => NT_BOOK_SET.has(String(h.verse.bookId || "").toUpperCase()));
+    return hits.filter((h) => isNtBook(String(h.verse.bookId || "")));
+  }
+  if (scope.type === "dc") {
+    return hits.filter((h) => isDcBook(String(h.verse.bookId || "")));
   }
   const allowed = new Set(
     scope.bookIds.map((id) => String(id || "").toUpperCase()).filter(Boolean),

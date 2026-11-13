@@ -25,6 +25,7 @@ export type WordSearchScopeCounts = {
   books: number;
   nt: number;
   ot: number;
+  dc: number;
   /** Contagem do livro atual (pill). */
   current_book: number;
 };
@@ -42,6 +43,7 @@ export function buildEngineScope(
 ): SearchScope {
   if (scopeFilter === "nt") return { type: "nt" };
   if (scopeFilter === "ot") return { type: "ot" };
+  if (scopeFilter === "dc") return { type: "dc" };
   if (scopeFilter === "books" || scopeFilter === "current_book") {
     const ids =
       selectedBookIds.length > 0
@@ -61,11 +63,15 @@ function resolveFacets(res: {
   total?: number;
 }): SearchFacets {
   if (res.facets) {
-    if (
-      (res.facets.otCount > 0 || res.facets.ntCount > 0) &&
-      Object.keys(res.facets.byBook).length > 0
-    ) {
-      return res.facets;
+    const hasSections =
+      res.facets.otCount > 0 ||
+      res.facets.ntCount > 0 ||
+      (res.facets.dcCount ?? 0) > 0;
+    if (hasSections && Object.keys(res.facets.byBook).length > 0) {
+      return {
+        ...res.facets,
+        dcCount: res.facets.dcCount ?? 0,
+      };
     }
     const derived = facetsFromBookCounts(
       Object.keys(res.facets.byBook).length > 0
@@ -73,13 +79,18 @@ function resolveFacets(res: {
         : res.bookCounts,
       res.facets.total || res.total || 0,
     );
-    if (derived.otCount > 0 || derived.ntCount > 0 || derived.total > 0) {
+    if (
+      derived.otCount > 0 ||
+      derived.ntCount > 0 ||
+      derived.dcCount > 0 ||
+      derived.total > 0
+    ) {
       return {
         ...derived,
         total: Math.max(derived.total, res.facets.total || 0),
       };
     }
-    return res.facets;
+    return { ...res.facets, dcCount: res.facets.dcCount ?? 0 };
   }
   return facetsFromBookCounts(res.bookCounts, res.total ?? 0);
 }
@@ -96,9 +107,16 @@ function facetsCoverUniverse(facets: SearchFacets, scope: SearchScope): boolean 
     // Universo completo se houver livros fora da seleção atual
     return keys.some((k) => !allowed.has(k.toUpperCase()));
   }
-  // ot/nt: precisa ter o outro testamento ou vários livros
-  if (scope.type === "nt") return facets.otCount > 0;
-  if (scope.type === "ot") return facets.ntCount > 0;
+  // ot/nt/dc: precisa ter hits noutra secção (universo completo)
+  if (scope.type === "nt") {
+    return facets.otCount > 0 || (facets.dcCount ?? 0) > 0;
+  }
+  if (scope.type === "ot") {
+    return facets.ntCount > 0 || (facets.dcCount ?? 0) > 0;
+  }
+  if (scope.type === "dc") {
+    return facets.otCount > 0 || facets.ntCount > 0;
+  }
   return true;
 }
 
@@ -124,6 +142,7 @@ function buildScopeCounts(
     books: booksSum,
     nt: facets.ntCount,
     ot: facets.otCount,
+    dc: facets.dcCount ?? 0,
     current_book: current ? facets.byBook[current] ?? 0 : 0,
   };
 }
@@ -133,6 +152,7 @@ const EMPTY_COUNTS: WordSearchScopeCounts = {
   books: 0,
   nt: 0,
   ot: 0,
+  dc: 0,
   current_book: 0,
 };
 
@@ -218,7 +238,7 @@ export function useWordPassageSearch(
         if (gen !== reqGen.current) return;
 
         if (!res.ok) {
-          setError(res.error || "Recherche indisponible");
+          setError(res.error || "unavailable");
           setHits([]);
           setTotal(0);
           setMatchMode(null);
