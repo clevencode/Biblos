@@ -887,7 +887,8 @@ html[data-theme="dark"] .sw-update-banner-cta {
   --mode-tabs-bar-body: 40px;
   --mode-tabs-hub-size: 56px;
   --mode-tabs-item-size: var(--mobile-touch, 44px);
-  /* Ladder (mesmo contrato do .bible-reader--yv) */
+  /* Ladder (mesmo contrato do .bible-reader--yv / top bar) */
+  --yv-bg: var(--bg);
   --yv-text: var(--text);
   --yv-muted: var(--muted);
   --yv-line: var(--line);
@@ -898,18 +899,12 @@ html[data-theme="dark"] .sw-update-banner-cta {
   --yv-chrome-active-border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--yv-line));
   --yv-chrome-ease: cubic-bezier(0.4, 0, 0.2, 1);
   --yv-chrome-ms: 240ms;
+  --yv-separator: 1px solid color-mix(in srgb, var(--yv-line) 70%, transparent);
   --yv-overlay-frost-bg: color-mix(in srgb, var(--surface) 72%, transparent);
   --yv-overlay-backdrop-filter: blur(16px) saturate(1.25);
   --yv-overlay-shadow:
     0 1px 2px color-mix(in srgb, var(--yv-text) 4%, transparent),
     0 8px 20px color-mix(in srgb, var(--yv-text) 6%, transparent);
-  --yv-audio-fab-idle: var(--yv-chrome-surface);
-  --yv-audio-fab-idle-hover: var(--yv-chrome-hover);
-  --yv-audio-fab-idle-active: color-mix(in srgb, var(--yv-text) 11%, var(--yv-chrome-surface));
-  --yv-audio-fab-idle-ring: color-mix(in srgb, var(--yv-line) 70%, var(--yv-text));
-  --yv-audio-fab-shadow:
-    0 1px 2px color-mix(in srgb, var(--yv-text) 6%, transparent),
-    0 6px 16px color-mix(in srgb, var(--yv-text) 8%, transparent);
   position: fixed;
   left: 0;
   right: 0;
@@ -942,7 +937,8 @@ html[data-theme="dark"] .sw-update-banner-cta {
   width: 100%;
   height: 100%;
   pointer-events: none;
-  filter: drop-shadow(0 -4px 16px color-mix(in srgb, var(--yv-text) 8%, transparent));
+  filter: none;
+  box-shadow: none;
 }
 
 .convex-bottom-bar-svg {
@@ -951,15 +947,13 @@ html[data-theme="dark"] .sw-update-banner-cta {
   height: 100%;
 }
 
+/* Mesmo fundo da top bar (.bible-yv-top → --yv-bg) */
 .convex-bottom-bar-fill {
-  fill: var(--yv-chrome-surface);
+  fill: var(--yv-bg);
 }
 
 .convex-bottom-bar-stroke {
-  stroke: color-mix(in srgb, var(--yv-line) 88%, transparent);
-  stroke-width: 1px;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  stroke: none;
 }
 
 /* L2 frost — mesmo contrato do word-search / tools popover */
@@ -989,7 +983,7 @@ html[data-theme="dark"] .sw-update-banner-cta {
   pointer-events: none;
 }
 
-/* Hub = FAB idle (L3) */
+/* Hub = botão da top bar (chrome-surface), sem contorno */
 .mode-tabs-hub {
   position: relative;
   z-index: 2;
@@ -999,13 +993,14 @@ html[data-theme="dark"] .sw-update-banner-cta {
   min-height: var(--mode-tabs-hub-size);
   margin: 0;
   padding: 0;
-  border: 1px solid var(--yv-audio-fab-idle-ring);
+  border: 0;
+  outline: none;
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: var(--yv-audio-fab-idle);
+  background: var(--yv-chrome-surface);
   color: var(--yv-text);
-  box-shadow: var(--yv-audio-fab-shadow);
+  box-shadow: none;
   font: inherit;
   cursor: pointer;
   pointer-events: auto;
@@ -1013,29 +1008,23 @@ html[data-theme="dark"] .sw-update-banner-cta {
   -webkit-tap-highlight-color: transparent;
   transition:
     transform var(--yv-chrome-ms) var(--yv-chrome-ease),
-    background var(--yv-chrome-ms) var(--yv-chrome-ease),
-    border-color var(--yv-chrome-ms) var(--yv-chrome-ease),
-    box-shadow var(--yv-chrome-ms) var(--yv-chrome-ease);
+    background var(--yv-chrome-ms) var(--yv-chrome-ease);
 }
 
 .mode-tabs-hub:hover {
-  background: var(--yv-audio-fab-idle-hover);
+  background: var(--yv-chrome-hover);
 }
 
 .mode-tabs-hub:active {
   transform: scale(0.95);
-  background: var(--yv-audio-fab-idle-active);
+  background: color-mix(in srgb, var(--yv-text) 11%, var(--yv-chrome-surface));
 }
 
 .mode-tabs.is-open {
   z-index: calc(var(--bible-z-popover, 40) + 20);
 }
 
-.mode-tabs.is-open .mode-tabs-hub {
-  background: color-mix(in srgb, var(--accent) 18%, var(--yv-chrome-surface));
-  border: var(--yv-chrome-active-border);
-  color: var(--yv-text);
-}
+/* Hub aberto: herda idle (só o ícone troca para close) */
 
 .mode-tabs-hub .mode-tab-icon,
 .mode-tabs-hub .mode-tabs-hub-close {
@@ -1089,13 +1078,13 @@ html[data-theme="dark"] .sw-update-banner-cta {
   min-height: var(--mode-tabs-item-size);
   margin: 0;
   padding: 0;
-  border: var(--yv-chrome-border);
+  border: 0;
   border-radius: 50%;
   display: grid;
   place-items: center;
   background: var(--yv-chrome-surface);
   color: var(--yv-muted);
-  box-shadow: var(--yv-overlay-shadow);
+  box-shadow: none;
   transform: translate(-50%, -50%) scale(0.35);
   opacity: 0;
   pointer-events: none;
@@ -1103,8 +1092,7 @@ html[data-theme="dark"] .sw-update-banner-cta {
     transform 260ms cubic-bezier(0.4, 0, 0.2, 1),
     opacity 160ms ease-out,
     background var(--yv-chrome-ms) var(--yv-chrome-ease),
-    color var(--yv-chrome-ms) var(--yv-chrome-ease),
-    border-color var(--yv-chrome-ms) var(--yv-chrome-ease);
+    color var(--yv-chrome-ms) var(--yv-chrome-ease);
   transition-delay: 0ms;
   cursor: pointer;
   touch-action: manipulation;
@@ -1123,8 +1111,7 @@ html[data-theme="dark"] .sw-update-banner-cta {
     transform 400ms cubic-bezier(0.22, 1, 0.36, 1),
     opacity 200ms ease-out,
     background var(--yv-chrome-ms) var(--yv-chrome-ease),
-    color var(--yv-chrome-ms) var(--yv-chrome-ease),
-    border-color var(--yv-chrome-ms) var(--yv-chrome-ease);
+    color var(--yv-chrome-ms) var(--yv-chrome-ease);
   transition-delay: calc(40ms + var(--roulette-i) * 40ms);
 }
 
@@ -1135,7 +1122,7 @@ html[data-theme="dark"] .sw-update-banner-cta {
 .mode-tabs-item.is-on {
   color: var(--yv-text);
   background: color-mix(in srgb, var(--accent) 18%, var(--yv-chrome-surface));
-  border: var(--yv-chrome-active-border);
+  border: 0;
 }
 
 .mode-tabs-item:hover {
@@ -16334,7 +16321,7 @@ html[data-passage-bar-panel="test"]
   font-size: 0.78rem;
 }
 
-/* --- Historique: badge de vers�o --- */
+/* --- Historique: badge de vers�o --- */
 .bible-history-version-badge {
   display: inline-flex;
   align-items: center;
