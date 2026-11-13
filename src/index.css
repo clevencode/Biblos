@@ -880,21 +880,59 @@ html[data-theme="dark"] .sw-update-banner-cta {
 }
 
 
-/* Shell nav — hub radial (Accueil / Plan / Bible / Profil) */
+/* Shell nav — Convex Bottom Bar (chrome) + hub radial */
 .mode-tabs {
+  --mode-tabs-dome-rise: 28px;
+  --mode-tabs-bar-body: 40px;
+  --mode-tabs-hub-size: 56px;
   position: fixed;
-  left: calc(50% - 28px);
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+  left: 0;
+  right: 0;
+  bottom: 0;
   z-index: 40;
-  width: 56px;
-  height: 56px;
+  width: 100%;
+  height: auto;
   margin: 0;
-  padding: 0;
+  padding: 0 0 env(safe-area-inset-bottom, 0px);
   border: 0;
   background: transparent;
   pointer-events: none;
   min-width: 0;
   min-height: 0;
+}
+
+.mode-tabs-chrome {
+  position: relative;
+  width: 100%;
+  height: calc(var(--mode-tabs-dome-rise) + var(--mode-tabs-bar-body));
+  pointer-events: none;
+}
+
+.convex-bottom-bar,
+.mode-tabs-convex {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  filter: drop-shadow(0 -6px 18px color-mix(in srgb, #000 14%, transparent));
+}
+
+.convex-bottom-bar-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.convex-bottom-bar-fill {
+  fill: color-mix(in srgb, var(--panel, var(--surface, #fff)) 94%, transparent);
+}
+
+.convex-bottom-bar-stroke {
+  stroke: color-mix(in srgb, var(--text) 14%, transparent);
+  stroke-width: 1px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .mode-tabs-scrim {
@@ -909,25 +947,47 @@ html[data-theme="dark"] .sw-update-banner-cta {
   cursor: default;
 }
 
+/* Hub: centro na linha plana → semicírculo do SVG = 100% do botão */
+.mode-tabs-stage {
+  position: absolute;
+  left: 50%;
+  top: var(--mode-tabs-dome-rise);
+  z-index: 2;
+  width: var(--mode-tabs-hub-size);
+  height: var(--mode-tabs-hub-size);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
 .mode-tabs-hub {
   position: relative;
   z-index: 2;
-  width: 56px;
-  height: 56px;
+  width: var(--mode-tabs-hub-size);
+  height: var(--mode-tabs-hub-size);
   margin: 0;
   padding: 0;
-  border: 0;
+  border: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: var(--yv-chrome-surface, color-mix(in srgb, var(--surface, #fff) 92%, var(--text)));
+  background: var(--yv-chrome-surface, color-mix(in srgb, var(--surface, #fff) 94%, var(--text)));
   color: var(--text);
-  box-shadow: var(--yv-audio-fab-shadow, 0 8px 24px color-mix(in srgb, #000 18%, transparent));
+  box-shadow:
+    0 8px 22px color-mix(in srgb, #000 16%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, #fff 35%, transparent);
   font: inherit;
   cursor: pointer;
   pointer-events: auto;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
+  transition:
+    transform 120ms ease,
+    background 140ms ease,
+    border-color 140ms ease;
+}
+
+.mode-tabs-hub:active {
+  transform: scale(0.95);
 }
 
 .mode-tabs.is-open {
@@ -936,6 +996,7 @@ html[data-theme="dark"] .sw-update-banner-cta {
 
 .mode-tabs.is-open .mode-tabs-hub {
   background: color-mix(in srgb, var(--accent, #2a6f6a) 22%, var(--surface, #fff));
+  border-color: color-mix(in srgb, var(--accent, #2a6f6a) 35%, transparent);
 }
 
 .mode-tabs-hub-close {
@@ -5822,14 +5883,20 @@ html[data-theme="dark"] .profile-download-btn {
     --mobile-touch: 44px;
     --mobile-tab-min: 48px;
     --mobile-chrome-gap: 10px;
-    /* Chrome inferior: hub radial shell + safe-area */
+    /* Chrome inferior: Convex bar + overhang do hub + safe-area */
     --mobile-float-inset-x: var(--mobile-gutter);
     --shell-float-gap: 12px;
-    --mobile-tabbar-pad: 12px;
-    /* Hub radial 56px + folga inferior + safe-area */
-    --mobile-tabbar-h: 56px;
+    --mobile-tabbar-pad: 0px;
+    --mode-tabs-dome-rise: 28px;
+    --mode-tabs-bar-body: 40px;
+    --mode-tabs-hub-size: 56px;
+    /* Altura da superfície SVG (domo + corpo) */
+    --mobile-tabbar-h: calc(var(--mode-tabs-dome-rise) + var(--mode-tabs-bar-body));
+    /* Metade do hub sobe acima da linha plana (= rise) */
     --mobile-tabbar-outer-h: calc(
-      var(--mobile-tabbar-h) + var(--mobile-tabbar-pad) + env(safe-area-inset-bottom, 0px)
+      var(--mode-tabs-bar-body)
+      + var(--mode-tabs-hub-size)
+      + env(safe-area-inset-bottom, 0px)
     );
     --mobile-bottom-chrome: var(--mobile-tabbar-outer-h);
     --shell-tab-clearance: var(--mobile-bottom-chrome);
@@ -5888,7 +5955,7 @@ html[data-theme="dark"] .profile-download-btn {
   }
 
   /*
-   * Shell nav mobile — hub radial flutuante (não barra full-width).
+   * Shell nav mobile — Convex Bottom Bar + hub radial.
    * --mobile-bottom-chrome : reserva para scroll, docks e popups Bible.
    */
   .note-shell .mode-tabs.is-immersive-hidden {
@@ -5918,17 +5985,16 @@ html[data-theme="dark"] .profile-download-btn {
     order: 2;
     flex: none;
     position: fixed;
-    left: calc(50% - 28px);
-    right: auto;
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+    left: 0;
+    right: 0;
+    bottom: 0;
     z-index: 40;
-    width: 56px;
-    height: 56px;
+    width: 100%;
+    height: auto;
     margin: 0;
     min-height: 0;
-    padding: 0;
+    padding: 0 0 env(safe-area-inset-bottom, 0px);
     border: 0;
-    border-radius: 0;
     background: transparent;
     box-shadow: none;
     transform: none;
@@ -5942,10 +6008,10 @@ html[data-theme="dark"] .profile-download-btn {
 
   .app.is-bible-mode.is-narrow .note-shell .mode-tabs {
     position: fixed;
-    left: calc(50% - 28px);
-    right: auto;
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
-    width: 56px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
   }
 
   .app.is-bible-mode.is-narrow .note-shell-main > .graph-pane {
@@ -5957,8 +6023,13 @@ html[data-theme="dark"] .profile-download-btn {
       transition: none;
     }
 
-    .mode-tabs-item {
+    .mode-tabs-item,
+    .mode-tabs-hub {
       transition: none;
+    }
+
+    .mode-tabs-hub:active {
+      transform: none;
     }
   }
 
