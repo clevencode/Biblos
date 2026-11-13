@@ -1,4 +1,12 @@
-import { useId, useRef, useState, type FormEvent } from "react";
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
+import { createPortal } from "react-dom";
+import { useUiLocale } from "../../../i18n/UiLocaleContext";
 import { joinFullName, splitFullName } from "../../../userProfile";
 
 type ProfileOnboardingProps = {
@@ -7,10 +15,8 @@ type ProfileOnboardingProps = {
     lastName: string;
     preferredName: string;
   }) => void;
-  /** Ferme sans enregistrer (ex. Annuler depuis Marquer). */
+  /** Ferme sans enregistrer. */
   onCancel?: () => void;
-  /** Contexte d’affichage — le nom n’est demandé qu’au moment de marquer. */
-  variant?: "welcome" | "mark";
   /** Préremplissage (ex. displayName Google). */
   initialFullName?: string;
 };
@@ -18,15 +24,39 @@ type ProfileOnboardingProps = {
 export function ProfileOnboarding({
   onComplete,
   onCancel,
-  variant = "welcome",
   initialFullName = "",
 }: ProfileOnboardingProps) {
+  const { t } = useUiLocale();
   const formId = useId();
+  const titleId = `${formId}-title`;
+  const cardRef = useRef<HTMLDivElement>(null);
   const nameRef = useRef<HTMLInputElement>(null);
   const [fullName, setFullName] = useState(initialFullName);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const isMark = variant === "mark";
+
+  useEffect(() => {
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const focusTimer = window.requestAnimationFrame(() => {
+      nameRef.current?.focus();
+    });
+
+    function onKey(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      if (busy) return;
+      if (!onCancel) return;
+      event.preventDefault();
+      onCancel();
+    }
+
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.cancelAnimationFrame(focusTimer);
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [busy, onCancel]);
 
   function submit(event: FormEvent) {
     event.preventDefault();
@@ -34,7 +64,7 @@ export function ProfileOnboarding({
     const raw = (fullName.trim() || nameRef.current?.value.trim() || "").trim();
     const { firstName, lastName } = splitFullName(raw);
     if (!firstName) {
-      setError("Indique ton nom complet pour continuer.");
+      setError(t("onboarding.errorName"));
       nameRef.current?.focus();
       return;
     }
@@ -47,35 +77,38 @@ export function ProfileOnboarding({
     });
   }
 
-  return (
+  return createPortal(
     <div
-      className={`profile-onboarding${isMark ? " is-mark-gate" : ""}`}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby={`${formId}-title`}
+      className="profile-onboarding"
+      role="presentation"
     >
       {onCancel ? (
         <button
           type="button"
           className="profile-onboarding-backdrop"
-          aria-label="Fermer"
+          aria-label={t("common.close")}
+          disabled={busy}
           onClick={onCancel}
         />
       ) : null}
-      <div className="profile-onboarding-card">
+      <div
+        ref={cardRef}
+        className="profile-onboarding-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+      >
         <p className="profile-onboarding-brand">Biblos</p>
-        <h1 id={`${formId}-title`} className="profile-onboarding-title type-title">
-          {isMark ? "Marquer un verset" : "Bienvenue"}
+        <h1 id={titleId} className="profile-onboarding-title type-title">
+          {t("onboarding.welcomeTitle")}
         </h1>
         <p className="profile-onboarding-lead muted">
-          {isMark
-            ? "Pour enregistrer un surlignage, indique ton nom. Ton activité reste liée à un identifiant privé."
-            : "Confirme ou ajuste ton nom. Ton compte synchronise tes données entre appareils."}
+          {t("onboarding.welcomeLead")}
         </p>
 
         <form className="profile-onboarding-form" onSubmit={submit}>
           <label className="profile-field">
-            <span>Nom complet</span>
+            <span>{t("onboarding.fullName")}</span>
             <input
               ref={nameRef}
               name="fullName"
@@ -86,14 +119,17 @@ export function ProfileOnboarding({
                 if (error) setError(null);
               }}
               maxLength={128}
-              autoFocus
               placeholder="Ex. Alex Dupont"
               aria-invalid={Boolean(error)}
               aria-describedby={error ? `${formId}-error` : undefined}
             />
           </label>
           {error ? (
-            <p id={`${formId}-error`} className="profile-onboarding-error" role="alert">
+            <p
+              id={`${formId}-error`}
+              className="profile-onboarding-error"
+              role="alert"
+            >
               {error}
             </p>
           ) : null}
@@ -102,7 +138,7 @@ export function ProfileOnboarding({
             className="profile-onboarding-submit"
             disabled={busy}
           >
-            {isMark ? "Marquer" : "Continuer"}
+            {t("onboarding.submit")}
           </button>
           {onCancel ? (
             <button
@@ -111,11 +147,12 @@ export function ProfileOnboarding({
               disabled={busy}
               onClick={onCancel}
             >
-              Annuler
+              {t("onboarding.cancel")}
             </button>
           ) : null}
         </form>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

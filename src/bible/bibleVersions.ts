@@ -1,4 +1,7 @@
-import { readReadingPrefs } from "./bibleCatalogRepository";
+import {
+  BIBLE_READER_PREFS_KEY,
+  readReadingPrefs,
+} from "./bibleCatalogRepository";
 
 export type BibleTextVersionId = "s21" | "ht98";
 
@@ -32,6 +35,19 @@ export function readBibleTextVersionPref(): BibleTextVersionId {
   const prefs = readReadingPrefs();
   if (String(prefs.textVersion || "") === "sg1910") return "s21";
   return isBibleTextVersionId(prefs.textVersion) ? prefs.textVersion : "s21";
+}
+
+/** Grava a versão bíblica nas prefs do leitor (idioma UI segue via notifyUiLocale). */
+export function writeBibleTextVersionPref(versionId: BibleTextVersionId): void {
+  const prefs = readReadingPrefs();
+  try {
+    localStorage.setItem(
+      BIBLE_READER_PREFS_KEY,
+      JSON.stringify({ ...prefs, textVersion: versionId }),
+    );
+  } catch {
+    /* private mode */
+  }
 }
 
 export function bibleVersionDef(id: BibleTextVersionId): BibleVersionDef {

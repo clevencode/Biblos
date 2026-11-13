@@ -91,10 +91,15 @@ export function isFirebaseSignedIn(profile: UserProfile): boolean {
   return Boolean(profile.firebaseUid?.trim());
 }
 
+/**
+ * Conta ligada + nome utilizável → não reabrir onboarding a cada login.
+ * (Google displayName ou nome já gravado localmente basta.)
+ */
 export function isProfileOnboarded(profile: UserProfile): boolean {
   if (!isFirebaseSignedIn(profile)) return false;
-  if (!profile.onboardedAt) return false;
-  return Boolean(cleanName(profile.firstName));
+  return Boolean(
+    cleanName(profile.firstName) || cleanName(profile.preferredName),
+  );
 }
 
 function emptyProfile(): UserProfile {
@@ -178,27 +183,30 @@ export function applyFirebaseAuthUser(user: ConsumerAuthUser): UserProfile {
         : null);
   const authNames = namesFromAuthUser(user);
   const email = user.email?.trim() || current.email || null;
+  const firstName = current.firstName || authNames.firstName;
+  const lastName = current.lastName || authNames.lastName;
+  const preferredName =
+    current.preferredName || joinFullName(firstName, lastName);
+  const hasName = Boolean(cleanName(firstName) || cleanName(preferredName));
   const next: UserProfile = {
     ...current,
     firebaseUid: user.uid,
     email,
     photoURL: user.photoURL?.trim() || current.photoURL || null,
     legacyLocalId: legacy,
-    firstName: current.firstName || authNames.firstName,
-    lastName: current.lastName || authNames.lastName,
-    preferredName:
-      current.preferredName ||
-      joinFullName(
-        current.firstName || authNames.firstName,
-        current.lastName || authNames.lastName,
-      ),
+    firstName,
+    lastName,
+    preferredName,
     id: user.uid,
+    /* Nome Google/local → marca onboarded (evita pedir nome a cada login) */
+    onboardedAt:
+      current.onboardedAt || (hasName ? new Date().toISOString() : null),
   };
   writeProfile(next);
   return next;
 }
 
-/** Efface les champs Firebase tout en conservant un nouveau profil local. */
+/** Efface les champs Firebase; conserve nome local (não re-pedir no próximo login). */
 export function clearFirebaseFromProfile(): UserProfile {
   const current = loadOrCreateProfile();
   const next: UserProfile = {
@@ -206,7 +214,7 @@ export function clearFirebaseFromProfile(): UserProfile {
     firebaseUid: null,
     email: null,
     photoURL: null,
-    onboardedAt: null,
+    /* Mantém onboardedAt + nomes para o próximo Google login. */
     id: current.legacyLocalId?.trim() || newId(),
     legacyLocalId: null,
   };

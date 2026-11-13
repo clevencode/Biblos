@@ -30,6 +30,7 @@ import {
 import {
   countMarkedVerses,
   FREE_MARK_QUOTA,
+  listAllVerseMarks,
 } from "../verseMarks";
 import { useConsumerAuth } from "../features/consumer-auth";
 import {
@@ -101,7 +102,7 @@ export function ProfileShellPanel({
   onHistoryChange,
   onRequestSignIn,
 }: ProfileShellPanelProps) {
-  const { t, dateLocale } = useUiLocale();
+  const { t, dateLocale, locale, setLocaleWithBibleVersion } = useUiLocale();
   const {
     session,
     profile,
@@ -118,6 +119,7 @@ export function ProfileShellPanel({
   const [contentTab, setContentTab] = useState<ProfileContentTab>("account");
   const [confirmClear, setConfirmClear] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmSignOut, setConfirmSignOut] = useState(false);
   const [storageHealth, setStorageHealth] = useState<StorageHealth | null>(null);
   const [s21Status, setS21Status] = useState<VersionAvailabilityState | null>(null);
   const [htStatus, setHtStatus] = useState<VersionAvailabilityState | null>(null);
@@ -135,6 +137,11 @@ export function ProfileShellPanel({
   const markedCount = useMemo(() => {
     void activityTick;
     return countMarkedVerses();
+  }, [activityTick]);
+
+  const markedVerses = useMemo(() => {
+    void activityTick;
+    return listAllVerseMarks();
   }, [activityTick]);
 
   const history = useMemo(() => {
@@ -349,8 +356,7 @@ export function ProfileShellPanel({
                   <div className="profile-card-body">
                     <p className="profile-card-title">Sauvegarder mes études</p>
                     <p className="profile-card-lead">
-                      Relie Google ou un e-mail pour synchroniser tes marques, notes et
-                      plans.
+                      Connecte Google pour synchroniser tes marques, notes et plans.
                     </p>
                     {showQuota ? (
                       <div className="profile-quota">
@@ -464,17 +470,49 @@ export function ProfileShellPanel({
                       <span className="profile-row-label">Exporter backup (JSON)</span>
                     </span>
                   </button>
-                  <button
-                    type="button"
-                    className="profile-inset-row"
-                    disabled={signOutBusy}
-                    onClick={() => void handleSignOut()}
-                  >
-                    <YvIcon name="close" className="profile-row-icon" opsz={20} />
-                    <span className="profile-row-body">
-                      <span className="profile-row-label">{t("profile.signOut")}</span>
-                    </span>
-                  </button>
+                  {!confirmSignOut ? (
+                    <button
+                      type="button"
+                      className="profile-inset-row"
+                      disabled={signOutBusy}
+                      onClick={() => setConfirmSignOut(true)}
+                    >
+                      <YvIcon name="close" className="profile-row-icon" opsz={20} />
+                      <span className="profile-row-body">
+                        <span className="profile-row-label">
+                          {t("profile.signOut")}
+                        </span>
+                      </span>
+                    </button>
+                  ) : (
+                    <div className="profile-delete-panel">
+                      <p>{t("auth.signOutConfirm")}</p>
+                      {typeof navigator !== "undefined" && !navigator.onLine ? (
+                        <p>{t("auth.signOutConfirmOffline")}</p>
+                      ) : null}
+                      <div className="profile-delete-actions">
+                        <button
+                          type="button"
+                          className="is-cancel"
+                          disabled={signOutBusy}
+                          onClick={() => setConfirmSignOut(false)}
+                        >
+                          {t("common.cancel")}
+                        </button>
+                        <button
+                          type="button"
+                          className="is-confirm"
+                          disabled={signOutBusy}
+                          onClick={() => {
+                            setConfirmSignOut(false);
+                            void handleSignOut();
+                          }}
+                        >
+                          {t("auth.signOutConfirmAction")}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                   {!confirmDelete ? (
                     <button
                       type="button"
@@ -538,6 +576,31 @@ export function ProfileShellPanel({
                   <span className="profile-admin-pill">#admin ›</span>
                 </a>
               ) : null}
+              <div className="profile-inset-row profile-inset-static">
+                <span className="profile-row-body">
+                  <span className="profile-row-label">{t("profile.language")}</span>
+                </span>
+                <div
+                  className="profile-theme-seg"
+                  role="group"
+                  aria-label={t("profile.language")}
+                >
+                  <button
+                    type="button"
+                    className={locale === "fr" ? "is-active" : undefined}
+                    onClick={() => setLocaleWithBibleVersion("fr")}
+                  >
+                    {t("profile.langFr")}
+                  </button>
+                  <button
+                    type="button"
+                    className={locale === "ht" ? "is-active" : undefined}
+                    onClick={() => setLocaleWithBibleVersion("ht")}
+                  >
+                    {t("profile.langHt")}
+                  </button>
+                </div>
+              </div>
               <div className="profile-inset-row profile-inset-static">
                 <span className="profile-row-body">
                   <span className="profile-row-label">{t("profile.appearance")}</span>
@@ -648,6 +711,50 @@ export function ProfileShellPanel({
           className="profile-tab-panel"
           hidden={contentTab !== "history"}
         >
+          <section className="profile-section" aria-labelledby="profile-marks-title">
+            <div className="profile-section-head">
+              <h3 id="profile-marks-title" className="type-eyebrow">
+                {t("profile.marks")}
+              </h3>
+              {markedVerses.length ? (
+                <span className="muted type-caption">{markedVerses.length}</span>
+              ) : null}
+            </div>
+            {markedVerses.length ? (
+              <div className="profile-card profile-history-card">
+                <ul className="profile-history-list">
+                  {markedVerses.map((mark) => (
+                    <li key={mark.key}>
+                      <button
+                        type="button"
+                        className="profile-history-item"
+                        onClick={() =>
+                          onOpenPassage({
+                            versionId: "s21",
+                            bookId: mark.bookId,
+                            chapterId: mark.chapterId,
+                            verse: mark.verse,
+                          })
+                        }
+                      >
+                        <span className="profile-history-label">
+                          <span
+                            className="profile-mark-swatch"
+                            style={{ background: mark.color }}
+                            aria-hidden
+                          />
+                          {mark.label}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <p className="muted">{t("profile.marksEmpty")}</p>
+            )}
+          </section>
+
           <section className="profile-section" aria-labelledby="profile-history-title">
             <div className="profile-section-head">
               <h3 id="profile-history-title" className="type-eyebrow">

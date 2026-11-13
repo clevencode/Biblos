@@ -21,12 +21,14 @@ import {
 import {
   completeOnboarding,
   isProfileOnboarded,
+  loadOrCreateProfile,
 } from "./userProfile";
 import {
   ProfileOnboarding,
   SignInModal,
   useConsumerAuth,
 } from "./features/consumer-auth";
+import { useUiLocale } from "./i18n/UiLocaleContext";
 import { useNarrow } from "./layout";
 import { BIBLE_COMPACT_TOOLS_MENU } from "./bible/bibleChromeLayout";
 import {
@@ -102,10 +104,12 @@ export function App() {
 
 function BiblosConsumerApp() {
   const narrow = useNarrow();
+  const { t } = useUiLocale();
   const {
     profile,
     refreshProfile,
     isAuthenticated,
+    session,
   } = useConsumerAuth();
   const [tab, setTab] = useState<ShellTab>(() => loadShellTab());
   const [bibleMounted, setBibleMounted] = useState(() => loadShellTab() === "bible");
@@ -135,8 +139,10 @@ function BiblosConsumerApp() {
   const shareBooted = useRef(false);
   const welcomeShownRef = useRef(false);
 
-  /** Soft gate: après cote, guest doit upgrader pour continuer à marquer. */
-  const requireAccountToMark = !isAuthenticated && markQuotaHit;
+  /** Soft gate: após cota, guest precisa de conta — nunca durante boot auth. */
+  const authReady = session.status !== "initializing";
+  const requireAccountToMark =
+    authReady && !isAuthenticated && markQuotaHit;
 
   const bibleMode = tab === "bible";
   const bibleCompactTools = BIBLE_COMPACT_TOOLS_MENU && narrow && bibleMode;
@@ -309,7 +315,10 @@ function BiblosConsumerApp() {
       window.setTimeout(() => setMarkSavedToast(false), 3200);
     }
     setMarkQuotaHit(false);
-    if (!isProfileOnboarded(profile) && !welcomeShownRef.current) {
+    refreshProfile();
+    const latest = loadOrCreateProfile();
+    /* Só pede nome se ainda não houver nenhum (ex. Google sem displayName). */
+    if (!isProfileOnboarded(latest) && !welcomeShownRef.current) {
       welcomeShownRef.current = true;
       setShowWelcomeOnboarding(true);
     }
@@ -342,7 +351,6 @@ function BiblosConsumerApp() {
       </a>
       {showWelcomeOnboarding ? (
         <ProfileOnboarding
-          variant="welcome"
           initialFullName={profile.preferredName || ""}
           onComplete={finishOnboarding}
           onCancel={() => setShowWelcomeOnboarding(false)}
@@ -356,11 +364,11 @@ function BiblosConsumerApp() {
       />
       {offlineToast ? (
         <div className="offline-toast" role="status" aria-live="polite">
-          <p>Hors ligne — tout reste enregistré sur cet appareil.</p>
+          <p>{t("toast.offline")}</p>
           <button
             type="button"
             className="offline-toast-dismiss"
-            aria-label="Fermer"
+            aria-label={t("common.close")}
             onClick={() => setOfflineToast(false)}
           >
             ×
@@ -369,11 +377,11 @@ function BiblosConsumerApp() {
       ) : null}
       {markSavedToast ? (
         <div className="offline-toast" role="status" aria-live="polite">
-          <p>Surlignage enregistré</p>
+          <p>{t("toast.markSaved")}</p>
           <button
             type="button"
             className="offline-toast-dismiss"
-            aria-label="Fermer"
+            aria-label={t("common.close")}
             onClick={() => setMarkSavedToast(false)}
           >
             ×
@@ -448,8 +456,8 @@ function BiblosConsumerApp() {
                       onCycleTheme={cycleTheme}
                       planReading={bibleMode ? planReading : null}
                       onBack={planReading ? returnFromPlanReading : undefined}
-                      requireNameToMark={requireAccountToMark}
-                      onRequestNameToMark={requestAccountForMark}
+                      requireAccountToMark={requireAccountToMark}
+                      onRequestAccountToMark={requestAccountForMark}
                       authorizedMarkSeq={authorizedMarkSeq}
                       authorizedMark={authorizedMark}
                       onAuthorizedMarkConsumed={() => setAuthorizedMark(null)}

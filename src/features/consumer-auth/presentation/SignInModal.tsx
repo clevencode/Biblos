@@ -1,10 +1,4 @@
-import {
-  useEffect,
-  useId,
-  useRef,
-  useState,
-  type FormEvent,
-} from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { YvIcon } from "../../../components/YvIcon";
 import { useUiLocale } from "../../../i18n/UiLocaleContext";
@@ -20,11 +14,13 @@ type SignInModalProps = {
   onSignedIn?: () => void;
 };
 
-type EmailMode = "signin" | "register" | "reset";
-
 const FOCUSABLE =
   'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
+/**
+ * Auth público (consumer): Google only.
+ * Admin (#admin) permanece e-mail/senha em editorial-auth.
+ */
 export function SignInModal({
   open,
   title,
@@ -34,15 +30,7 @@ export function SignInModal({
   onSignedIn,
 }: SignInModalProps) {
   const { t } = useUiLocale();
-  const {
-    signInWithGoogle,
-    signInWithEmail,
-    registerWithEmail,
-    resetPassword,
-    error,
-    clearError,
-  } = useConsumerAuth();
-  const formId = useId();
+  const { signInWithGoogle, error, clearError } = useConsumerAuth();
   const titleId = useId();
   const leadId = useId();
   const cardRef = useRef<HTMLDivElement>(null);
@@ -51,11 +39,6 @@ export function SignInModal({
   const restoreFocusRef = useRef<HTMLElement | null>(null);
 
   const [busy, setBusy] = useState(false);
-  const [emailMode, setEmailMode] = useState<EmailMode>("signin");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [resetSent, setResetSent] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
   busyRef.current = busy;
@@ -72,11 +55,6 @@ export function SignInModal({
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
-    setEmailMode("signin");
-    setEmail("");
-    setPassword("");
-    setShowPassword(false);
-    setResetSent(false);
     setLocalError(null);
     setBusy(false);
     clearError();
@@ -157,55 +135,6 @@ export function SignInModal({
     }
   }
 
-  async function handleEmailSubmit(event: FormEvent) {
-    event.preventDefault();
-    if (busy) return;
-    clearError();
-    setLocalError(null);
-    setResetSent(false);
-    const trimmed = email.trim();
-    if (!trimmed) {
-      setLocalError(t("auth.errorEmail"));
-      return;
-    }
-    if (emailMode !== "reset" && password.length < 6) {
-      setLocalError(t("auth.errorPassword"));
-      return;
-    }
-    setBusy(true);
-    try {
-      if (emailMode === "reset") {
-        await resetPassword(trimmed);
-        setResetSent(true);
-        return;
-      }
-      if (emailMode === "register") {
-        await registerWithEmail(trimmed, password);
-      } else {
-        await signInWithEmail(trimmed, password);
-      }
-      await finishOk();
-    } catch {
-      /* context */
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  function switchMode(mode: EmailMode) {
-    setEmailMode(mode);
-    setLocalError(null);
-    setResetSent(false);
-    clearError();
-  }
-
-  const submitLabel =
-    emailMode === "register"
-      ? t("auth.register")
-      : emailMode === "reset"
-        ? t("auth.sendLink")
-        : t("auth.signIn");
-
   return createPortal(
     <div className="sign-in-modal" role="presentation">
       <button
@@ -245,11 +174,6 @@ export function SignInModal({
             {displayError}
           </p>
         ) : null}
-        {resetSent ? (
-          <p className="profile-onboarding-lead muted" role="status">
-            {t("auth.resetSent")}
-          </p>
-        ) : null}
 
         <button
           ref={googleBtnRef}
@@ -279,108 +203,8 @@ export function SignInModal({
               />
             </svg>
           </span>
-          {t("auth.google")}
+          {busy ? t("common.loading") : t("auth.google")}
         </button>
-
-        <div className="sign-in-divider" role="separator">
-          <span>{t("auth.or")}</span>
-        </div>
-
-        <form
-          id={formId}
-          className="profile-onboarding-form"
-          onSubmit={(e) => void handleEmailSubmit(e)}
-        >
-          <label className="profile-field">
-            <span>{t("auth.email")}</span>
-            <input
-              type="email"
-              autoComplete="username"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={busy}
-            />
-          </label>
-          {emailMode !== "reset" ? (
-            <label className="profile-field">
-              <span>{t("auth.password")}</span>
-              <span className="auth-password-field">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  autoComplete={
-                    emailMode === "register"
-                      ? "new-password"
-                      : "current-password"
-                  }
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={busy}
-                  minLength={6}
-                />
-                <button
-                  type="button"
-                  className="auth-password-toggle"
-                  aria-label={
-                    showPassword
-                      ? t("auth.hidePassword")
-                      : t("auth.showPassword")
-                  }
-                  aria-pressed={showPassword}
-                  disabled={busy}
-                  onClick={() => setShowPassword((v) => !v)}
-                >
-                  <YvIcon
-                    name={showPassword ? "visibility_off" : "visibility"}
-                    className="auth-password-toggle-icon"
-                    opsz={20}
-                  />
-                </button>
-              </span>
-            </label>
-          ) : null}
-          <button
-            type="submit"
-            className="profile-onboarding-submit"
-            disabled={busy}
-            aria-busy={busy}
-          >
-            {busy ? t("common.loading") : submitLabel}
-          </button>
-        </form>
-
-        <div className="sign-in-email-links">
-          {emailMode === "signin" ? (
-            <>
-              <button
-                type="button"
-                className="profile-onboarding-cancel"
-                disabled={busy}
-                onClick={() => switchMode("register")}
-              >
-                {t("auth.createAccount")}
-              </button>
-              <button
-                type="button"
-                className="profile-onboarding-cancel"
-                disabled={busy}
-                onClick={() => switchMode("reset")}
-              >
-                {t("auth.forgotPassword")}
-              </button>
-            </>
-          ) : (
-            <button
-              type="button"
-              className="profile-onboarding-cancel"
-              disabled={busy}
-              onClick={() => switchMode("signin")}
-            >
-              {t("auth.backToSignIn")}
-            </button>
-          )}
-        </div>
 
         <button
           type="button"

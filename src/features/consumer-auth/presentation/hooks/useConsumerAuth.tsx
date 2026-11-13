@@ -34,6 +34,7 @@ import {
   stopUserDataSync,
   type LocalUserDataSnapshot,
 } from "../../../user-sync";
+import { mapAuthErrorToMessage } from "../mapAuthErrorToMessage";
 
 export type AuthSessionState =
   | { status: "initializing" }
@@ -187,9 +188,7 @@ export function ConsumerAuthProvider({ children }: { children: ReactNode }) {
         setSession(sessionFromUser(result.user, result.user.uid));
         await startUserDataSync(result.user.uid);
       } catch (err) {
-        const message =
-          err instanceof Error ? err.message : "Connexion impossible";
-        setError(message);
+        setError(mapAuthErrorToMessage(err));
         throw err;
       }
     },
@@ -223,9 +222,7 @@ export function ConsumerAuthProvider({ children }: { children: ReactNode }) {
     try {
       await resetPasswordForEmail(email);
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Réinitialisation impossible";
-      setError(message);
+      setError(mapAuthErrorToMessage(err));
       throw err;
     }
   }, []);

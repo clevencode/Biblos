@@ -15,6 +15,11 @@ export function uiLocaleFromVersion(versionId: BibleTextVersionId): UiLocale {
   return versionId === "ht98" ? "ht" : "fr";
 }
 
+/** Idioma UI → versão bíblica (fr→s21, ht→ht98). */
+export function versionIdFromUiLocale(locale: UiLocale): BibleTextVersionId {
+  return locale === "ht" ? "ht98" : "s21";
+}
+
 export function readUiLocaleFromPrefs(): UiLocale {
   return uiLocaleFromVersion(readBibleTextVersionPref());
 }

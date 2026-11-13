@@ -3062,8 +3062,18 @@ html[data-theme="dark"] .profile-download-btn {
 }
 
 .profile-history-label {
+  min-width: 0;
   font-weight: 600;
   font-size: 0.88rem;
+}
+
+.profile-history-item .profile-mark-swatch {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  margin-right: 6px;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 18%, transparent);
 }
 
 .profile-history-when {
@@ -4374,11 +4384,11 @@ html[data-theme="dark"] .profile-download-btn {
   font-size: 0.75rem;
 }
 
-/* Onboarding plein écran */
+/* Onboarding plein écran — alinhado ao sign-in (portal body) */
 .profile-onboarding {
   position: fixed;
   inset: 0;
-  z-index: 80;
+  z-index: var(--app-z-sign-in, 120);
   display: grid;
   place-items: center;
   padding: 24px 16px calc(24px + env(safe-area-inset-bottom, 0px));
@@ -4389,10 +4399,6 @@ html[data-theme="dark"] .profile-download-btn {
       var(--bg) 48%,
       var(--bg) 100%
     );
-}
-
-.profile-onboarding.is-mark-gate {
-  background: transparent;
 }
 
 .sign-in-modal {

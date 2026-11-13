@@ -52,7 +52,7 @@ import {
   versionBadgeFor,
 } from "../bible/readingScope";
 import { useUiLocale } from "../i18n/UiLocaleContext";
-import { notifyUiLocale } from "../i18n/uiLocale";
+import { notifyUiLocale, subscribeUiLocale } from "../i18n/uiLocale";
 import {
   formatPassagePillRef,
   isPassagePillUnified,
@@ -345,10 +345,10 @@ type BibleReaderViewProps = {
   themePref?: ThemePref;
   /** Toggle le thème (clair ↔ sombre). */
   onCycleTheme?: () => void;
-  /** Si true, Marquer demande d’abord le nom (compte créé seulement alors). */
-  requireNameToMark?: boolean;
-  /** Demande le nom avant de marquer ; le marquage reprend via authorizedMark*. */
-  onRequestNameToMark?: (payload: {
+  /** Soft gate: exige compte après cota de marques guest. */
+  requireAccountToMark?: boolean;
+  /** Demande login antes de marcar; retoma via authorizedMark*. */
+  onRequestAccountToMark?: (payload: {
     color: string;
     verses: number[];
     bookId: string;
@@ -499,8 +499,8 @@ export function BibleReaderView({
   onReadingChromeChange,
   themePref = "system",
   onCycleTheme,
-  requireNameToMark = false,
-  onRequestNameToMark,
+  requireAccountToMark = false,
+  onRequestAccountToMark,
   authorizedMarkSeq = 0,
   authorizedMark = null,
   onAuthorizedMarkConsumed,
@@ -536,6 +536,9 @@ export function BibleReaderView({
   const [htCatalogLoading, setHtCatalogLoading] = useState(false);
   const [htCatalogError, setHtCatalogError] = useState<string | null>(null);
   const textVersionRef = useRef<BibleTextVersionId>(textVersion);
+  const switchTextVersionRef = useRef<
+    (next: BibleTextVersionId) => Promise<void>
+  >(async () => {});
   const books =
     textVersion === "ht98" ? (htBooks ?? []) : catalogBooks;
   const resolveBookTitleActive = useCallback(
@@ -1022,6 +1025,14 @@ export function BibleReaderView({
   useEffect(() => {
     textVersionRef.current = textVersion;
   }, [textVersion]);
+
+  /** Prefs → idioma (perfil) atualiza a versão bíblica se o leitor já estiver montado. */
+  useEffect(() => {
+    return subscribeUiLocale((_locale, versionId) => {
+      if (versionId === textVersionRef.current) return;
+      void switchTextVersionRef.current(versionId);
+    });
+  }, []);
 
   /** Warm-up silencioso do índice de busca (IDB → RAM / worker). */
   useEffect(() => {
@@ -1839,8 +1850,8 @@ export function BibleReaderView({
   function requestMarkSelection(hex: string) {
     if (!selection?.length) return;
     const next = adaptVerseColorForTheme(normalizeVerseColor(hex), uiTheme);
-    if (requireNameToMark && onRequestNameToMark) {
-      onRequestNameToMark({
+    if (requireAccountToMark && onRequestAccountToMark) {
+      onRequestAccountToMark({
         color: next,
         verses: [...selection],
         bookId,
@@ -2061,7 +2072,7 @@ export function BibleReaderView({
   }
 
   async function switchTextVersion(next: BibleTextVersionId) {
-    if (next === textVersion) return;
+    if (next === textVersionRef.current) return;
     stopBibleAudio();
     setTextVersion(next);
     writePrefs({
@@ -2101,6 +2112,7 @@ export function BibleReaderView({
       null,
     );
   }
+  switchTextVersionRef.current = switchTextVersion;
 
   function renderTopToolsMenu(placement: "header" | "float" = "header") {
     const themeResolved = resolveTheme(themePref);

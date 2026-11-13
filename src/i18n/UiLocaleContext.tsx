@@ -7,7 +7,10 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { BibleTextVersionId } from "../bible/bibleVersions";
+import {
+  writeBibleTextVersionPref,
+  type BibleTextVersionId,
+} from "../bible/bibleVersions";
 import {
   formatUiCopy,
   uiCopy,
@@ -19,6 +22,7 @@ import {
   readUiLocaleFromPrefs,
   subscribeUiLocale,
   uiLocaleFromVersion,
+  versionIdFromUiLocale,
   type UiLocale,
 } from "./uiLocale";
 
@@ -33,6 +37,8 @@ type UiLocaleContextValue = {
   t: UiTranslate;
   /** Após gravar prefs da versão bíblica. */
   setVersionDrivenLocale: (versionId: BibleTextVersionId) => void;
+  /** Preferências: idioma → grava versão bíblica + atualiza UI. */
+  setLocaleWithBibleVersion: (locale: UiLocale) => void;
 };
 
 const UiLocaleContext = createContext<UiLocaleContextValue | null>(null);
@@ -47,6 +53,13 @@ export function UiLocaleProvider({ children }: { children: ReactNode }) {
     notifyUiLocale(versionId);
   }, []);
 
+  const setLocaleWithBibleVersion = useCallback((next: UiLocale) => {
+    const versionId = versionIdFromUiLocale(next);
+    writeBibleTextVersionPref(versionId);
+    setLocale(next);
+    notifyUiLocale(versionId);
+  }, []);
+
   const t = useCallback<UiTranslate>(
     (key, vars) => formatUiCopy(uiCopy(locale)[key], vars),
     [locale],
@@ -58,8 +71,9 @@ export function UiLocaleProvider({ children }: { children: ReactNode }) {
       dateLocale: dateLocaleTag(locale),
       t,
       setVersionDrivenLocale,
+      setLocaleWithBibleVersion,
     }),
-    [locale, t, setVersionDrivenLocale],
+    [locale, t, setVersionDrivenLocale, setLocaleWithBibleVersion],
   );
 
   return (
