@@ -195,7 +195,7 @@ async function putBook(usfm: string, book: S21BookJson): Promise<void> {
   }
 }
 
-/** Livro: assets embarquados (mobile) → IndexedDB → null. Grava no IDB em background. */
+/** Livro: assets embarquados (mobile) → IndexedDB → API book (web) → null. Grava no IDB em background. */
 export async function resolveS21Book(usfm: string): Promise<S21BookJson | null> {
   const key = String(usfm || "")
     .trim()
@@ -219,6 +219,14 @@ export async function resolveS21Book(usfm: string): Promise<S21BookJson | null> 
     if (bundled) {
       void putBook(key, bundled).catch(() => undefined);
       return bundled;
+    }
+    // Web sem asset estático (ex. deploy sem stage): baixa o livro via /api/youversion.
+    try {
+      const fromApi = validateS21BookPayload(key, await fetchBookPayload(key));
+      void putBook(key, fromApi).catch(() => undefined);
+      return fromApi;
+    } catch {
+      return null;
     }
   }
 

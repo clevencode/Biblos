@@ -13,11 +13,13 @@ import {
   verseStudyKey,
 } from "../bible/readingScope";
 import type { BibleTextVersionId } from "../bible/bibleVersions";
+import {
+  hydrateCrossRefTexts,
+  resolveCrossRefPassageText,
+} from "../bible/crossRefPassageText";
 import { ensureVerseIndex } from "../bible/verseIndexCache";
 import { useUiLocale } from "../i18n/UiLocaleContext";
-import type { UiCopyKey } from "../i18n/uiCopy";
 import type { YouVersionBook } from "../youversion/client";
-import { parseUsfmParts } from "../youversion/client";
 
 export type VerseStudyTab = "context" | "refs" | "application";
 
@@ -38,17 +40,6 @@ export type VerseStudyDrawerProps = VerseStudyPanelProps & {
   onClose: () => void;
   refLabel?: string;
 };
-
-/** Contesto / Application reservados — só Referências ativo por agora. */
-const TAB_KEYS: Array<{
-  id: VerseStudyTab;
-  labelKey: UiCopyKey;
-  enabled: boolean;
-}> = [
-  { id: "context", labelKey: "study.context", enabled: false },
-  { id: "refs", labelKey: "study.refs", enabled: true },
-  { id: "application", labelKey: "study.application", enabled: false },
-];
 
 const EMPTY_REFS: TskeRef[] = [];
 
@@ -84,12 +75,6 @@ export function localizeTskeRefLabel(
   const title = titleById.get(bookId) || bookId;
   if (!verseRaw) return `${title} ${chapterRaw}`;
   return `${title} ${chapterRaw}.${verseRaw}`;
-}
-
-function firstVerseKey(usfm: string): string | null {
-  const parts = parseUsfmParts(usfm);
-  if (!parts.bookId || !parts.chapterId || parts.verse == null) return null;
-  return `${parts.bookId.toUpperCase()}.${parts.chapterId}.${parts.verse}`;
 }
 
 function RefList({
@@ -130,14 +115,23 @@ function RefList({
 
 function RefTextModal({
   card,
+  versionId,
   onClose,
   closeLabel,
+  loadingLabel,
+  unavailableLabel,
 }: {
   card: RefCard;
+  versionId: BibleTextVersionId;
   onClose: () => void;
   closeLabel: string;
+  loadingLabel: string;
+  unavailableLabel: string;
 }) {
   const titleId = useId();
+  const [text, setText] = useState(card.preview);
+  const [busy, setBusy] = useState(!card.preview.trim());
+
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
@@ -145,6 +139,34 @@ function RefTextModal({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
+
+  useEffect(() => {
+    if (card.preview.trim()) {
+      setText(card.preview);
+      setBusy(false);
+      return;
+    }
+    if (!card.usfm) {
+      setText("");
+      setBusy(false);
+      return;
+    }
+    let cancelled = false;
+    setBusy(true);
+    void resolveCrossRefPassageText(versionId, card.usfm)
+      .then((next) => {
+        if (!cancelled) setText(next);
+      })
+      .catch(() => {
+        if (!cancelled) setText("");
+      })
+      .finally(() => {
+        if (!cancelled) setBusy(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [card.preview, card.usfm, versionId]);
 
   return (
     <div className="bible-study-ref-modal" role="dialog" aria-modal="true" aria-labelledby={titleId}>
@@ -170,10 +192,16 @@ function RefTextModal({
             </button>
           </header>
           <div className="bible-study-ref-modal-body">
-            {card.preview ? (
-              <p className="bible-study-ref-modal-text">{card.preview}</p>
+            {busy ? (
+              <p className="bible-study-ref-modal-text muted" aria-busy="true">
+                {loadingLabel}
+              </p>
+            ) : text ? (
+              <p className="bible-study-ref-modal-text">{text}</p>
             ) : (
-              <p className="bible-study-ref-modal-text muted">{card.label}</p>
+              <p className="bible-study-ref-modal-text muted" role="status">
+                {unavailableLabel}
+              </p>
             )}
           </div>
         </div>
@@ -191,7 +219,6 @@ export function VerseStudyPanel({
   initialTab = "refs",
 }: VerseStudyPanelProps) {
   const { t } = useUiLocale();
-  const [tab, setTab] = useState<VerseStudyTab>("refs");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [bundle, setBundle] = useState<VerseStudyBundle | null>(null);
@@ -207,7 +234,6 @@ export function VerseStudyPanel({
 
   useEffect(() => {
     void initialTab;
-    setTab("refs");
     setActiveRef(null);
   }, [initialTab, scopedKey]);
 
@@ -237,38 +263,38 @@ export function VerseStudyPanel({
 
   useEffect(() => {
     const refs = bundle?.tske?.refs ?? EMPTY_REFS;
-    if (tab !== "refs" || !refs.length) {
+    if (!refs.length) {
       setPreviewByUsfm({});
       return;
     }
     let cancelled = false;
-    void ensureVerseIndex(versionId)
-      .then((index) => {
+    const usfms = refs.map((ref) => ref.usfm).filter(Boolean) as string[];
+    void (async () => {
+      try {
+        let byKey: Map<string, string> | null = null;
+        try {
+          const index = await ensureVerseIndex(versionId);
+          byKey = new Map<string, string>();
+          for (const v of index.verses) {
+            byKey.set(
+              `${v.bookId.toUpperCase()}.${v.chapter}.${v.verse}`,
+              v.raw,
+            );
+          }
+        } catch {
+          byKey = null;
+        }
         if (cancelled) return;
-        const byKey = new Map<string, string>();
-        for (const v of index.verses) {
-          byKey.set(
-            `${v.bookId.toUpperCase()}.${v.chapter}.${v.verse}`,
-            v.raw,
-          );
-        }
-        const next: Record<string, string> = {};
-        for (const ref of refs) {
-          if (!ref.usfm) continue;
-          const key = firstVerseKey(ref.usfm);
-          if (!key) continue;
-          const text = byKey.get(key);
-          if (text) next[ref.usfm] = text;
-        }
-        setPreviewByUsfm(next);
-      })
-      .catch(() => {
+        const next = await hydrateCrossRefTexts(versionId, usfms, byKey);
+        if (!cancelled) setPreviewByUsfm(next);
+      } catch {
         if (!cancelled) setPreviewByUsfm({});
-      });
+      }
+    })();
     return () => {
       cancelled = true;
     };
-  }, [tab, bundle, versionId]);
+  }, [bundle, versionId]);
 
   const cards = useMemo((): RefCard[] => {
     return rawRefs.map((ref: TskeRef, i) => ({
@@ -279,7 +305,6 @@ export function VerseStudyPanel({
     }));
   }, [rawRefs, titleById, previewByUsfm]);
 
-  const heading = bundle?.tske?.heading;
   const language = languageForVersion(versionId);
 
   return (
@@ -289,71 +314,36 @@ export function VerseStudyPanel({
       data-universal-key={universalKey}
       data-language={language}
     >
-      <div className="verse-study-tabs" role="tablist" aria-label={t("study.tabs")}>
-        {TAB_KEYS.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            role="tab"
-            className={`verse-study-tab${tab === item.id ? " is-on" : ""}${
-              item.enabled ? "" : " is-disabled"
-            }`}
-            aria-selected={tab === item.id}
-            aria-disabled={!item.enabled}
-            disabled={!item.enabled}
-            onClick={() => {
-              if (!item.enabled) return;
-              setTab(item.id);
-            }}
-          >
-            {t(item.labelKey)}
-          </button>
-        ))}
-      </div>
+      <p className="verse-study-section-title">{t("study.crossRefs")}</p>
 
-      <div className="verse-study-panel" role="tabpanel">
-        {tab === "context" ? (
-          <div className="verse-study-block">
-            {heading ? (
-              <p className="bible-study-heading">{heading}</p>
-            ) : (
-              <p className="bible-study-empty muted">{t("study.contextEmpty")}</p>
-            )}
-          </div>
-        ) : null}
-
-        {tab === "refs" ? (
-          <div className="verse-study-block">
-            {busy ? (
-              <p className="bible-study-status muted" aria-busy="true">
-                {t("common.loading")}
-              </p>
-            ) : error ? (
-              <p className="bible-study-empty muted" role="status">
-                {t("study.refsEmpty")}
-              </p>
-            ) : (
-              <RefList
-                cards={cards}
-                onSelect={setActiveRef}
-                emptyLabel={t("study.refsEmpty")}
-              />
-            )}
-          </div>
-        ) : null}
-
-        {tab === "application" ? (
-          <div className="verse-study-block">
-            <p className="bible-study-empty muted">{t("study.appEmpty")}</p>
-          </div>
-        ) : null}
+      <div className="verse-study-panel" role="region" aria-label={t("study.crossRefs")}>
+        <div className="verse-study-block">
+          {busy ? (
+            <p className="bible-study-status muted" aria-busy="true">
+              {t("common.loading")}
+            </p>
+          ) : error ? (
+            <p className="bible-study-empty muted" role="status">
+              {t("study.refsEmpty")}
+            </p>
+          ) : (
+            <RefList
+              cards={cards}
+              onSelect={setActiveRef}
+              emptyLabel={t("study.refsEmpty")}
+            />
+          )}
+        </div>
       </div>
 
       {activeRef ? (
         <RefTextModal
           card={activeRef}
+          versionId={versionId}
           onClose={() => setActiveRef(null)}
           closeLabel={t("common.close")}
+          loadingLabel={t("common.loading")}
+          unavailableLabel={t("study.refUnavailable")}
         />
       ) : null}
     </div>

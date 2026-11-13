@@ -16347,42 +16347,14 @@ html[data-passage-bar-panel="test"]
   border: 0;
 }
 
-.verse-study-tabs {
-  display: flex;
-  gap: 4px;
-  padding: 0.35rem 0 0.6rem;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.verse-study-tabs::-webkit-scrollbar {
-  display: none;
-}
-
-.verse-study-tab {
-  flex: 0 0 auto;
-  margin: 0;
-  padding: 0.42rem 0.7rem;
-  border: 0;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--text) 7%, transparent);
-  color: color-mix(in srgb, var(--text) 72%, transparent);
-  font: inherit;
-  font-size: 0.82rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.verse-study-tab.is-on {
-  background: color-mix(in srgb, var(--accent, #2a6f6a) 18%, transparent);
-  color: var(--text);
-}
-
-.verse-study-tab:disabled,
-.verse-study-tab.is-disabled {
-  opacity: 0.42;
-  cursor: not-allowed;
-  pointer-events: none;
+.bible-reader--yv .bible-verse-actions.is-sheet .verse-study-section-title {
+  margin: 0 0 0.45rem;
+  font-family: var(--font-ui);
+  font-size: 1.02rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  line-height: 1.25;
+  color: var(--yv-text);
 }
 
 .bible-reader--yv .bible-verse-actions.is-sheet .verse-study-panel {

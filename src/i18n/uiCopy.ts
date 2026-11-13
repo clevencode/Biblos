@@ -122,6 +122,7 @@ export type UiCopyKey =
   | "study.close"
   | "study.context"
   | "study.refs"
+  | "study.crossRefs"
   | "study.application"
   | "study.notes"
   | "study.tabs"
@@ -133,6 +134,7 @@ export type UiCopyKey =
   | "study.notesSaved"
   | "study.notesDraft"
   | "study.loadError"
+  | "study.refUnavailable"
   | "verse.actions"
   | "verse.hint"
   | "verse.hintMulti"
@@ -285,6 +287,7 @@ const FR: Dict = {
   "study.close": "Fermer l’étude",
   "study.context": "Contexte",
   "study.refs": "Références",
+  "study.crossRefs": "Référence croisée",
   "study.application": "Application",
   "study.notes": "Notes",
   "study.tabs": "Sections d’étude",
@@ -296,6 +299,7 @@ const FR: Dict = {
   "study.notesSaved": "Enregistré · sync si connecté",
   "study.notesDraft": "Brouillon local",
   "study.loadError": "Erreur de chargement",
+  "study.refUnavailable": "Texte de ce passage indisponible pour cette version.",
   "verse.actions": "Actions du verset",
   "verse.hint": "Tape d’autres versets pour compléter la sélection",
   "verse.hintMulti": "{n} versets · tape pour ajouter ou retirer",
@@ -448,6 +452,7 @@ const HT: Dict = {
   "study.close": "Fèmen etid la",
   "study.context": "Kontèks",
   "study.refs": "Referans",
+  "study.crossRefs": "Referans kwa",
   "study.application": "Aplikasyon",
   "study.notes": "Nòt",
   "study.tabs": "Seksyon etid",
@@ -459,6 +464,7 @@ const HT: Dict = {
   "study.notesSaved": "Anrejistre · sync si konekte",
   "study.notesDraft": "Brouiyon lokal",
   "study.loadError": "Erè chajman",
+  "study.refUnavailable": "Tèks pasaj sa a pa disponib pou vèsyon sa a.",
   "verse.actions": "Aksyon vèsè",
   "verse.hint": "Tape lòt vèsè pou konplete seleksyon an",
   "verse.hintMulti": "{n} vèsè · tape pou ajoute oswa retire",

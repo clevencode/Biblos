@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "node scripts/stage-bible-assets.mjs && tsc && vite build",
     "build:mobile": "node scripts/stage-bible-assets.mjs && cross-env CAPACITOR=1 tsc && cross-env CAPACITOR=1 vite build",
     "mobile:sync": "npm run build:mobile && npx cap sync android",
     "mobile:open": "npx cap open android",
