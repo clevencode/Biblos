@@ -1,4 +1,13 @@
-import { useId, useState, type FormEvent } from "react";
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
+import { createPortal } from "react-dom";
+import { YvIcon } from "../../../components/YvIcon";
+import { useUiLocale } from "../../../i18n/UiLocaleContext";
 import { useConsumerAuth } from "./hooks/useConsumerAuth";
 
 type SignInModalProps = {
@@ -13,6 +22,9 @@ type SignInModalProps = {
 
 type EmailMode = "signin" | "register" | "reset";
 
+const FOCUSABLE =
+  'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
 export function SignInModal({
   open,
   title,
@@ -21,6 +33,7 @@ export function SignInModal({
   onClose,
   onSignedIn,
 }: SignInModalProps) {
+  const { t } = useUiLocale();
   const {
     signInWithGoogle,
     signInWithEmail,
@@ -30,27 +43,99 @@ export function SignInModal({
     clearError,
   } = useConsumerAuth();
   const formId = useId();
+  const titleId = useId();
+  const leadId = useId();
+  const cardRef = useRef<HTMLDivElement>(null);
+  const googleBtnRef = useRef<HTMLButtonElement>(null);
+  const busyRef = useRef(false);
+  const restoreFocusRef = useRef<HTMLElement | null>(null);
+
   const [busy, setBusy] = useState(false);
   const [emailMode, setEmailMode] = useState<EmailMode>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [resetSent, setResetSent] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+
+  busyRef.current = busy;
+
+  useEffect(() => {
+    if (!open) return;
+
+    const prev =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    restoreFocusRef.current = prev;
+
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    setEmailMode("signin");
+    setEmail("");
+    setPassword("");
+    setShowPassword(false);
+    setResetSent(false);
+    setLocalError(null);
+    setBusy(false);
+    clearError();
+
+    const focusTimer = window.requestAnimationFrame(() => {
+      googleBtnRef.current?.focus();
+    });
+
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        if (busyRef.current) return;
+        event.preventDefault();
+        onClose();
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const root = cardRef.current;
+      if (!root) return;
+      const nodes = root.querySelectorAll<HTMLElement>(FOCUSABLE);
+      if (!nodes.length) return;
+      const first = nodes[0]!;
+      const last = nodes[nodes.length - 1]!;
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.cancelAnimationFrame(focusTimer);
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+      const restore = restoreFocusRef.current;
+      restoreFocusRef.current = null;
+      if (restore && document.contains(restore)) {
+        restore.focus();
+      }
+    };
+  }, [open, onClose, clearError]);
 
   if (!open) return null;
 
   const resolvedTitle =
     title ??
-    (variant === "soft_gate"
-      ? "Garde tes surlignages"
-      : "Sauvegarder mes études");
+    (variant === "soft_gate" ? t("auth.titleSoftGate") : t("auth.titleUpgrade"));
   const resolvedLead =
     lead ??
-    (variant === "soft_gate"
-      ? "En mode invité, tu peux marquer jusqu’à 10 versets sur cet appareil. Relie un compte pour continuer et retrouver tes surlignages partout."
-      : "Connecte un compte Google ou e-mail pour synchroniser marques, notes et plans entre tes appareils.");
+    (variant === "soft_gate" ? t("auth.leadSoftGate") : t("auth.leadUpgrade"));
 
   const displayError = localError || error;
+
+  function requestClose() {
+    if (busyRef.current) return;
+    onClose();
+  }
 
   async function finishOk() {
     onSignedIn?.();
@@ -80,11 +165,11 @@ export function SignInModal({
     setResetSent(false);
     const trimmed = email.trim();
     if (!trimmed) {
-      setLocalError("Indique ton e-mail.");
+      setLocalError(t("auth.errorEmail"));
       return;
     }
     if (emailMode !== "reset" && password.length < 6) {
-      setLocalError("Mot de passe : au moins 6 caractères.");
+      setLocalError(t("auth.errorPassword"));
       return;
     }
     setBusy(true);
@@ -114,25 +199,47 @@ export function SignInModal({
     clearError();
   }
 
-  return (
+  const submitLabel =
+    emailMode === "register"
+      ? t("auth.register")
+      : emailMode === "reset"
+        ? t("auth.sendLink")
+        : t("auth.signIn");
+
+  return createPortal(
     <div className="sign-in-modal" role="presentation">
       <button
         type="button"
         className="profile-onboarding-backdrop"
-        aria-label="Fermer"
-        onClick={onClose}
+        aria-label={t("common.close")}
+        disabled={busy}
+        onClick={requestClose}
       />
       <div
+        ref={cardRef}
         className="profile-onboarding-card sign-in-modal-card"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="sign-in-modal-title"
+        aria-labelledby={titleId}
+        aria-describedby={leadId}
       >
+        <button
+          type="button"
+          className="sign-in-modal-close"
+          aria-label={t("common.close")}
+          disabled={busy}
+          onClick={requestClose}
+        >
+          <YvIcon name="close" className="sign-in-modal-close-icon" />
+        </button>
+
         <p className="profile-onboarding-brand">Biblos</p>
-        <h2 id="sign-in-modal-title" className="profile-onboarding-title type-title">
+        <h2 id={titleId} className="profile-onboarding-title type-title">
           {resolvedTitle}
         </h2>
-        <p className="profile-onboarding-lead muted">{resolvedLead}</p>
+        <p id={leadId} className="profile-onboarding-lead muted">
+          {resolvedLead}
+        </p>
         {displayError ? (
           <p className="profile-onboarding-error" role="alert">
             {displayError}
@@ -140,14 +247,16 @@ export function SignInModal({
         ) : null}
         {resetSent ? (
           <p className="profile-onboarding-lead muted" role="status">
-            E-mail de réinitialisation envoyé. Vérifie ta boîte de réception.
+            {t("auth.resetSent")}
           </p>
         ) : null}
 
         <button
+          ref={googleBtnRef}
           type="button"
           className="auth-google-btn"
           disabled={busy}
+          aria-busy={busy}
           onClick={() => void handleGoogle()}
         >
           <span className="auth-google-icon" aria-hidden="true">
@@ -170,11 +279,11 @@ export function SignInModal({
               />
             </svg>
           </span>
-          Continuer avec Google
+          {t("auth.google")}
         </button>
 
         <div className="sign-in-divider" role="separator">
-          <span>ou</span>
+          <span>{t("auth.or")}</span>
         </div>
 
         <form
@@ -183,7 +292,7 @@ export function SignInModal({
           onSubmit={(e) => void handleEmailSubmit(e)}
         >
           <label className="profile-field">
-            <span>E-mail</span>
+            <span>{t("auth.email")}</span>
             <input
               type="email"
               autoComplete="username"
@@ -195,32 +304,49 @@ export function SignInModal({
           </label>
           {emailMode !== "reset" ? (
             <label className="profile-field">
-              <span>Mot de passe</span>
-              <input
-                type="password"
-                autoComplete={
-                  emailMode === "register" ? "new-password" : "current-password"
-                }
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={busy}
-                minLength={6}
-              />
+              <span>{t("auth.password")}</span>
+              <span className="auth-password-field">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  autoComplete={
+                    emailMode === "register"
+                      ? "new-password"
+                      : "current-password"
+                  }
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={busy}
+                  minLength={6}
+                />
+                <button
+                  type="button"
+                  className="auth-password-toggle"
+                  aria-label={
+                    showPassword
+                      ? t("auth.hidePassword")
+                      : t("auth.showPassword")
+                  }
+                  aria-pressed={showPassword}
+                  disabled={busy}
+                  onClick={() => setShowPassword((v) => !v)}
+                >
+                  <YvIcon
+                    name={showPassword ? "visibility_off" : "visibility"}
+                    className="auth-password-toggle-icon"
+                    opsz={20}
+                  />
+                </button>
+              </span>
             </label>
           ) : null}
           <button
             type="submit"
             className="profile-onboarding-submit"
             disabled={busy}
+            aria-busy={busy}
           >
-            {busy
-              ? "…"
-              : emailMode === "register"
-                ? "Créer un compte"
-                : emailMode === "reset"
-                  ? "Envoyer le lien"
-                  : "Se connecter"}
+            {busy ? t("common.loading") : submitLabel}
           </button>
         </form>
 
@@ -233,7 +359,7 @@ export function SignInModal({
                 disabled={busy}
                 onClick={() => switchMode("register")}
               >
-                Créer un compte
+                {t("auth.createAccount")}
               </button>
               <button
                 type="button"
@@ -241,7 +367,7 @@ export function SignInModal({
                 disabled={busy}
                 onClick={() => switchMode("reset")}
               >
-                Mot de passe oublié ?
+                {t("auth.forgotPassword")}
               </button>
             </>
           ) : (
@@ -251,15 +377,21 @@ export function SignInModal({
               disabled={busy}
               onClick={() => switchMode("signin")}
             >
-              Retour à la connexion
+              {t("auth.backToSignIn")}
             </button>
           )}
         </div>
 
-        <button type="button" className="profile-onboarding-cancel" onClick={onClose}>
-          Plus tard
+        <button
+          type="button"
+          className="profile-onboarding-cancel"
+          disabled={busy}
+          onClick={requestClose}
+        >
+          {t("auth.later")}
         </button>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

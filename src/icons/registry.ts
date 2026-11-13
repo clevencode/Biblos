@@ -14,6 +14,8 @@ import {
   CloudOff,
   Copy,
   Download,
+  Eye,
+  EyeOff,
   Highlighter,
   History,
   ListOrdered,
@@ -73,7 +75,9 @@ export type BiblosIconName =
   | "notifications"
   | "notifications_active"
   | "desktop_windows"
-  | "cloud_off";
+  | "cloud_off"
+  | "visibility"
+  | "visibility_off";
 
 type IconEntry = {
   line: IconComponent;
@@ -114,6 +118,8 @@ export const ICON_REGISTRY: Record<BiblosIconName, IconEntry> = {
   notifications_active: { line: BellDot, fill: BellDotFill },
   desktop_windows: { line: Monitor },
   cloud_off: { line: CloudOff },
+  visibility: { line: Eye },
+  visibility_off: { line: EyeOff },
 };
 
 export function isBiblosIconName(name: string): name is BiblosIconName {

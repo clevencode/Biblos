@@ -6,6 +6,7 @@ import {
   useState,
   type PointerEvent as ReactPointerEvent,
 } from "react";
+import { createPortal } from "react-dom";
 import {
   formatVerseColorHex,
   hexToHsv,
@@ -204,7 +205,9 @@ export function CircularColorEditor({
       ? "Tons clairs · adaptés au thème sombre"
       : "Tons foncés · adaptés au thème clair";
 
-  return (
+  /* Portal no body: o sheet de verso tem overflow + transform (animation)
+     e cortava a roda / z-index abaixo do chrome. */
+  return createPortal(
     <div className="circular-color-editor-root" role="presentation">
       <button
         type="button"
@@ -277,6 +280,7 @@ export function CircularColorEditor({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

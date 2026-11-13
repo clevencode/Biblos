@@ -103,17 +103,17 @@ export function AppShellNav({
         } as CSSProperties
       }
     >
+      {open ? (
+        <button
+          type="button"
+          className="mode-tabs-scrim"
+          aria-label={t("common.close")}
+          onClick={() => setOpen(false)}
+        />
+      ) : null}
+
       <div className="mode-tabs-chrome">
         <ConvexBottomBarSurface className="mode-tabs-convex" />
-
-        {open ? (
-          <button
-            type="button"
-            className="mode-tabs-scrim"
-            aria-label={t("common.close")}
-            onClick={() => setOpen(false)}
-          />
-        ) : null}
 
         <div className="mode-tabs-stage">
           <div

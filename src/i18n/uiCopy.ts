@@ -52,6 +52,27 @@ export type UiCopyKey =
   | "profile.clearHistoryConfirm"
   | "profile.signIn"
   | "profile.signOut"
+  | "profile.connectAccount"
+  | "auth.titleUpgrade"
+  | "auth.titleSoftGate"
+  | "auth.leadUpgrade"
+  | "auth.leadSoftGate"
+  | "auth.google"
+  | "auth.or"
+  | "auth.email"
+  | "auth.password"
+  | "auth.signIn"
+  | "auth.register"
+  | "auth.sendLink"
+  | "auth.createAccount"
+  | "auth.forgotPassword"
+  | "auth.backToSignIn"
+  | "auth.later"
+  | "auth.resetSent"
+  | "auth.errorEmail"
+  | "auth.errorPassword"
+  | "auth.showPassword"
+  | "auth.hidePassword"
   | "profile.theme"
   | "profile.settings"
   | "profile.appearance"
@@ -208,6 +229,30 @@ const FR: Dict = {
   "profile.clearHistoryConfirm": "Confirmer ?",
   "profile.signIn": "Se connecter",
   "profile.signOut": "Se déconnecter",
+  "profile.connectAccount": "Connecter un compte",
+  "auth.titleUpgrade": "Sauvegarder mes études",
+  "auth.titleSoftGate": "Garde tes surlignages",
+  "auth.leadUpgrade":
+    "Connecte un compte Google ou e-mail pour synchroniser marques, notes et plans entre tes appareils.",
+  "auth.leadSoftGate":
+    "En mode invité, tu peux marquer jusqu’à 10 versets sur cet appareil. Relie un compte pour continuer et retrouver tes surlignages partout.",
+  "auth.google": "Continuer avec Google",
+  "auth.or": "ou",
+  "auth.email": "E-mail",
+  "auth.password": "Mot de passe",
+  "auth.signIn": "Se connecter",
+  "auth.register": "Créer un compte",
+  "auth.sendLink": "Envoyer le lien",
+  "auth.createAccount": "Créer un compte",
+  "auth.forgotPassword": "Mot de passe oublié ?",
+  "auth.backToSignIn": "Retour à la connexion",
+  "auth.later": "Plus tard",
+  "auth.resetSent":
+    "E-mail de réinitialisation envoyé. Vérifie ta boîte de réception.",
+  "auth.errorEmail": "Indique ton e-mail.",
+  "auth.errorPassword": "Mot de passe : au moins 6 caractères.",
+  "auth.showPassword": "Afficher le mot de passe",
+  "auth.hidePassword": "Masquer le mot de passe",
   "profile.theme": "Thème",
   "profile.settings": "Préférences",
   "profile.appearance": "Apparence",
@@ -367,6 +412,30 @@ const HT: Dict = {
   "profile.clearHistoryConfirm": "Konfime ?",
   "profile.signIn": "Konekte",
   "profile.signOut": "Dekonekte",
+  "profile.connectAccount": "Konekte yon kont",
+  "auth.titleUpgrade": "Sove etid mwen yo",
+  "auth.titleSoftGate": "Kenbe souliyman ou yo",
+  "auth.leadUpgrade":
+    "Konekte yon kont Google oswa imèl pou senkronize mak, nòt ak plan ant aparèy ou yo.",
+  "auth.leadSoftGate":
+    "An mòd envite, ou ka make jiska 10 vèsè sou aparèy sa a. Mare yon kont pou kontinye epi jwenn souliyman ou yo tout kote.",
+  "auth.google": "Kontinye ak Google",
+  "auth.or": "oswa",
+  "auth.email": "Imèl",
+  "auth.password": "Modpas",
+  "auth.signIn": "Konekte",
+  "auth.register": "Kreye yon kont",
+  "auth.sendLink": "Voye lyen an",
+  "auth.createAccount": "Kreye yon kont",
+  "auth.forgotPassword": "Modpas bliye ?",
+  "auth.backToSignIn": "Retounen nan koneksyon",
+  "auth.later": "Pita",
+  "auth.resetSent":
+    "Imèl reyinisyalizasyon voye. Tcheke bwat resepsyon ou.",
+  "auth.errorEmail": "Antre imèl ou.",
+  "auth.errorPassword": "Modpas : omwen 6 karaktè.",
+  "auth.showPassword": "Montre modpas la",
+  "auth.hidePassword": "Kache modpas la",
   "profile.theme": "Tèm",
   "profile.settings": "Preferans",
   "profile.appearance": "Aparans",

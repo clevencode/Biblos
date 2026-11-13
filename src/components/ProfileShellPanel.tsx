@@ -326,7 +326,7 @@ export function ProfileShellPanel({
                   disabled={loading}
                   onClick={() => onRequestSignIn?.()}
                 >
-                  Connecter un compte
+                  {t("profile.connectAccount")}
                 </button>
               </div>
               <div className="profile-card-footer">

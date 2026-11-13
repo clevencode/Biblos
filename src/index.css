@@ -47,6 +47,8 @@
   --menu-shadow: none;
   --stroke-elevated: 1px solid color-mix(in srgb, var(--line) 92%, transparent);
   --search-split-cols: minmax(0, 1fr) minmax(240px, 38%);
+  /* Auth modal — acima do sheet / roleta / color editor */
+  --app-z-sign-in: 120;
   /* Contrato: mobile ≤ --bp-narrow; master–detail lista|cartão ≥ --bp-split. */
   --bp-narrow: 860px;
   --bp-split: 1280px;
@@ -925,15 +927,18 @@ html[data-theme="dark"] .sw-update-banner-cta {
 
 .mode-tabs-chrome {
   position: relative;
+  z-index: 1;
   width: 100%;
   height: calc(var(--mode-tabs-dome-rise) + var(--mode-tabs-bar-body));
   pointer-events: none;
 }
 
+/* Acima do scrim (z=0): barra idle = barra aberta, sem frost em cima */
 .convex-bottom-bar,
 .mode-tabs-convex {
   position: absolute;
   inset: 0;
+  z-index: 1;
   width: 100%;
   height: 100%;
   pointer-events: none;
@@ -956,7 +961,7 @@ html[data-theme="dark"] .sw-update-banner-cta {
   stroke: none;
 }
 
-/* L2 frost — mesmo contrato do word-search / tools popover */
+/* Hit-target só para fechar — sem frost/blur (barra convexa fica intacta) */
 .mode-tabs-scrim {
   position: fixed;
   inset: 0;
@@ -964,9 +969,11 @@ html[data-theme="dark"] .sw-update-banner-cta {
   margin: 0;
   padding: 0;
   border: 0;
-  background: var(--yv-overlay-frost-bg);
-  -webkit-backdrop-filter: var(--yv-overlay-backdrop-filter);
-  backdrop-filter: var(--yv-overlay-backdrop-filter);
+  background: transparent;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  transform: none;
+  filter: none;
   pointer-events: auto;
   cursor: default;
 }
@@ -1006,17 +1013,16 @@ html[data-theme="dark"] .sw-update-banner-cta {
   pointer-events: auto;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  transition:
-    transform var(--yv-chrome-ms) var(--yv-chrome-ease),
-    background var(--yv-chrome-ms) var(--yv-chrome-ease);
+  transition: background var(--yv-chrome-ms) var(--yv-chrome-ease);
 }
 
 .mode-tabs-hub:hover {
   background: var(--yv-chrome-hover);
 }
 
+/* Mesmo contrato dos triggers da top bar: sem scale no clique */
 .mode-tabs-hub:active {
-  transform: scale(0.95);
+  transform: none;
   background: color-mix(in srgb, var(--yv-text) 11%, var(--yv-chrome-surface));
 }
 
@@ -4392,7 +4398,7 @@ html[data-theme="dark"] .profile-download-btn {
 .sign-in-modal {
   position: fixed;
   inset: 0;
-  z-index: 120;
+  z-index: var(--app-z-sign-in, 120);
   display: grid;
   place-items: center;
   padding: 24px 16px calc(24px + env(safe-area-inset-bottom, 0px));
@@ -4400,6 +4406,80 @@ html[data-theme="dark"] .profile-download-btn {
 
 .sign-in-modal-card {
   box-shadow: var(--menu-shadow, 0 20px 48px color-mix(in srgb, #000 28%, transparent));
+}
+
+.sign-in-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+  color: inherit;
+  cursor: pointer;
+}
+
+.sign-in-modal-close:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--text) 12%, transparent);
+}
+
+.sign-in-modal-close:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.sign-in-modal-close-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.auth-password-field {
+  position: relative;
+  display: block;
+}
+
+.auth-password-field input {
+  padding-right: 44px;
+}
+
+.auth-password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.auth-password-toggle:hover:not(:disabled) {
+  color: var(--text);
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+.auth-password-toggle:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.auth-password-toggle-icon {
+  width: 1.15rem;
+  height: 1.15rem;
+  font-size: 1.15rem;
 }
 
 .sign-in-divider {
@@ -4425,27 +4505,6 @@ html[data-theme="dark"] .profile-download-btn {
 .sign-in-email-links {
   display: grid;
   gap: 2px;
-}
-
-.profile-sign-in-banner {
-  display: grid;
-  gap: 12px;
-  margin: 0 0 16px;
-  padding: 14px 16px;
-  border-radius: 14px;
-  border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
-  background: color-mix(in srgb, var(--accent) 6%, var(--elevated));
-}
-
-.profile-sign-in-banner p {
-  margin: 0;
-  font-size: 0.88rem;
-  line-height: 1.45;
-}
-
-.profile-sign-in-banner .auth-google-btn {
-  width: 100%;
-  justify-content: center;
 }
 
 .profile-onboarding-backdrop {
@@ -9153,6 +9212,8 @@ ul.plan-yv-day-note-ref {
   --bible-z-tools-chrome: 24;
   --bible-z-tools-fab: 9;
   --bible-z-popover: 40;
+  /* Acima do sheet + roleta aberta (popover+20) */
+  --bible-z-color-editor: calc(var(--bible-z-popover) + 30);
   /* L3 FAB — idle = chrome; playing = inverse */
   --yv-audio-fab-idle: var(--yv-chrome-surface);
   --yv-audio-fab-idle-hover: var(--yv-chrome-hover);
@@ -13143,7 +13204,7 @@ html[data-passage-bar-panel="test"]
 .circular-color-editor-root {
   position: fixed;
   inset: 0;
-  z-index: 40;
+  z-index: var(--bible-z-color-editor, 70);
   display: grid;
   place-items: end center;
   padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px));
