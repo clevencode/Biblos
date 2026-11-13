@@ -78,7 +78,29 @@ export async function runLocalVerseSearch(input: {
     };
   }
 
-  const index = await ensureVerseIndex(input.version, input.bookOrder);
+  let index;
+  try {
+    index = await ensureVerseIndex(input.version, input.bookOrder);
+  } catch (err) {
+    return {
+      ok: false,
+      error:
+        err instanceof Error
+          ? err.message
+          : input.version === "ht98"
+            ? "Catalogue HT98 indisponible"
+            : "Index biblique indisponible",
+    };
+  }
+  if (!index.verses.length) {
+    return {
+      ok: false,
+      error:
+        input.version === "ht98"
+          ? "Catalogue HT98 vide"
+          : "Index biblique vide — réessaie après le chargement des livres",
+    };
+  }
   let searchIndex = index;
   const useScope = Boolean(input.scope);
   if (!useScope && input.bookFilter) {

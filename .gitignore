@@ -52,6 +52,9 @@ android/local.properties
 *.sw?
 
 public/bible/
-data/bible/study/
+# Study ETL: só TSKE versionado (refs croisées no deploy). strong/sg1910 ficam locais.
+data/bible/study/*
+!data/bible/study/tske/
+!data/bible/study/tske/**
 
 .vercel

@@ -15,45 +15,121 @@ import {
 const cache = new Map<BibleTextVersionId, VerseSearchIndex>();
 const warming = new Map<BibleTextVersionId, Promise<VerseSearchIndex>>();
 
+function pushBookVerses(
+  verses: IndexedVerse[],
+  book: {
+    usfm?: string;
+    book?: string;
+    title?: string;
+    chapters?: {
+      chapter: number;
+      verses?: { number: number; text: string }[];
+    }[];
+  },
+  order: Map<string, number>,
+  cleanText: (raw: string) => string,
+): void {
+  const bookId = String(book.usfm || book.book || "")
+    .trim()
+    .toUpperCase();
+  if (!bookId) return;
+  const bookTitle = book.title || bookId;
+  const canonIndex = order.get(bookId) ?? 999;
+  for (const chapter of book.chapters ?? []) {
+    const chapterNum = Number(chapter.chapter);
+    if (!Number.isFinite(chapterNum)) continue;
+    for (const verse of chapter.verses ?? []) {
+      const number = Number(verse.number);
+      const text = cleanText(String(verse.text || ""));
+      if (!Number.isFinite(number) || !text) continue;
+      verses.push(
+        buildIndexedVerse({
+          usfm: `${bookId}.${chapterNum}.${number}`,
+          bookId,
+          bookTitle,
+          chapter: chapterNum,
+          verse: number,
+          raw: text,
+          canonIndex,
+        }),
+      );
+    }
+  }
+}
+
+async function loadS21VersesFromBundle(
+  order: Map<string, number>,
+  cleanText: (raw: string) => string,
+): Promise<IndexedVerse[]> {
+  const { buildS21BookList, fetchBundledBookJson } = await import(
+    "../bibleS21Canon"
+  );
+  const books = buildS21BookList();
+  const verses: IndexedVerse[] = [];
+  // Paralelismo limitado — evita saturar a rede no cold start.
+  const CONCURRENCY = 8;
+  for (let i = 0; i < books.length; i += CONCURRENCY) {
+    const chunk = books.slice(i, i + CONCURRENCY);
+    const loaded = await Promise.all(
+      chunk.map(async (book) => {
+        const json = await fetchBundledBookJson(book.id);
+        return json;
+      }),
+    );
+    for (const json of loaded) {
+      if (json) pushBookVerses(verses, json, order, cleanText);
+    }
+  }
+  return verses;
+}
+
 async function loadS21Verses(
   bookOrder?: Map<string, number>,
 ): Promise<{ verses: IndexedVerse[]; revision: string }> {
-  const { getAllOfflineBooks, getOfflineMeta, cleanVerseText } = await import(
-    "../bibleOffline"
-  );
-  const meta = await getOfflineMeta();
-  const books = meta?.books ?? [];
+  const {
+    getAllOfflineBooks,
+    getOfflineMeta,
+    cleanVerseText,
+    isOfflineBibleReady,
+    OFFLINE_BOOK_TOTAL,
+  } = await import("../bibleOffline");
+  const { buildS21BookList } = await import("../bibleS21Canon");
+  const canon = buildS21BookList();
   const order =
-    bookOrder ?? new Map(books.map((b, i) => [b.id.toUpperCase(), i]));
-  const rows = await getAllOfflineBooks();
+    bookOrder ??
+    new Map(canon.map((b, i) => [String(b.id).toUpperCase(), i]));
+
   const verses: IndexedVerse[] = [];
-  for (const row of rows) {
-    const bookId = String(row.usfm || row.book.usfm || "").toUpperCase();
-    if (!bookId) continue;
-    const bookTitle = row.book.title || bookId;
-    const canonIndex = order.get(bookId) ?? 999;
-    for (const chapter of row.book.chapters ?? []) {
-      const chapterNum = Number(chapter.chapter);
-      if (!Number.isFinite(chapterNum)) continue;
-      for (const verse of chapter.verses ?? []) {
-        const number = Number(verse.number);
-        const text = cleanVerseText(verse.text);
-        if (!Number.isFinite(number) || !text) continue;
-        verses.push(
-          buildIndexedVerse({
-            usfm: `${bookId}.${chapterNum}.${number}`,
-            bookId,
-            bookTitle,
-            chapter: chapterNum,
-            verse: number,
-            raw: text,
-            canonIndex,
-          }),
-        );
-      }
+  const offlineReady = await isOfflineBibleReady();
+  if (offlineReady) {
+    const rows = await getAllOfflineBooks();
+    for (const row of rows) {
+      pushBookVerses(
+        verses,
+        {
+          usfm: row.usfm || row.book.usfm,
+          title: row.book.title,
+          chapters: row.book.chapters,
+        },
+        order,
+        cleanVerseText,
+      );
     }
   }
-  const revision = `s21:${verses.length}:${meta?.count ?? 0}:${meta?.at ?? 0}`;
+
+  // Sem pack offline completo: indexar a partir dos JSON embutidos (/bible/s21).
+  if (verses.length === 0) {
+    const bundled = await loadS21VersesFromBundle(order, cleanVerseText);
+    verses.push(...bundled);
+  }
+
+  const meta = await getOfflineMeta();
+  const revision = `s21:${verses.length}:${meta?.count ?? 0}:${meta?.at ?? 0}:${offlineReady ? "idb" : "bundle"}`;
+  if (verses.length === 0) {
+    throw new Error(
+      `Index S21 vide (offline < ${OFFLINE_BOOK_TOTAL} livres et bundle indisponible)`,
+    );
+  }
   return { verses, revision };
 }
 

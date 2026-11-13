@@ -250,13 +250,12 @@ export function VerseStudyPanel({
       .then((data) => {
         if (gen !== reqGen.current) return;
         setBundle(data);
-        setError(null);
+        setError(data.unavailable ? "load" : null);
       })
       .catch(() => {
         if (gen !== reqGen.current) return;
-        // Dados TSKE ausentes / HTML fallback → empty state, sem stack técnica.
-        setBundle({ tske: null });
-        setError(null);
+        setBundle({ tske: null, unavailable: true });
+        setError("load");
       })
       .finally(() => {
         if (gen === reqGen.current) setBusy(false);
@@ -328,7 +327,7 @@ export function VerseStudyPanel({
             </p>
           ) : error ? (
             <p className="bible-study-empty muted" role="status">
-              {t("study.refsEmpty")}
+              {t("study.loadError")}
             </p>
           ) : (
             <RefList

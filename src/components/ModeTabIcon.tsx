@@ -1,9 +1,9 @@
 import type { IconComponent } from "@coolicons/react/line/round";
-import { Book, House, Library, User } from "@coolicons/react/line/round";
+import { Book, CalendarCheck, House, User } from "@coolicons/react/line/round";
 import {
   Book as BookFill,
+  CalendarCheck as CalendarCheckFill,
   House as HouseFill,
-  Library as LibraryFill,
   User as UserFill,
 } from "@coolicons/react/fill/round";
 import { ICON_STROKE_WIDTH, TAB_ICON_PX } from "../icons/config";
@@ -21,7 +21,8 @@ type TabIconEntry = {
 
 const TAB_ICONS: Record<ShellTab, TabIconEntry> = {
   home: { line: House, fill: HouseFill },
-  today: { line: Library, fill: LibraryFill },
+  /** Plano de leitura — calendário com check (ritmo diário), não biblioteca. */
+  today: { line: CalendarCheck, fill: CalendarCheckFill },
   bible: { line: Book, fill: BookFill },
   profile: { line: User, fill: UserFill },
 };
