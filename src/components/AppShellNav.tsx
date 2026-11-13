@@ -140,6 +140,7 @@ export function AppShellNav({
                     {
                       ["--radial-x" as string]: `${x}px`,
                       ["--radial-y" as string]: `${y}px`,
+                      ["--roulette-i" as string]: String(i),
                     } as CSSProperties
                   }
                   aria-selected={false}

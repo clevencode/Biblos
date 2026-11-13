@@ -44,7 +44,6 @@ import { BibleAudioFloat } from "./BibleAudioFloat";
 import { BibleHistorySheet } from "./BibleHistorySheet";
 import { BibleShareSheet } from "./BibleShareSheet";
 import { SearchBooksModal } from "./SearchBooksModal";
-import { RadialNavbar, type RadialNavbarAction } from "./RadialNavbar";
 import { VerseStudyPanel } from "./VerseStudyDrawer";
 import { BiblePassageScrollPicker } from "./BiblePassageScrollPicker";
 import { BiblePassageChip } from "./BiblePassageChip";
@@ -2008,47 +2007,6 @@ export function BibleReaderView({
     }
   }
 
-  function openVerseActionsForStudy(verse: number) {
-    if (!Number.isFinite(verse) || verse < 1) return;
-    preferJumpFocusRef.current = false;
-    setShareSheetOpen(false);
-    setHighlightVerse(verse);
-    setHighlightVerseEnd(null);
-    setFocusDim(false);
-    setCardColor(loadPreferredVerseColor());
-    setSelection([verse]);
-    setCardMsg(null);
-    openOverlay({
-      type: "verse_actions",
-      selectedVerseIds: [String(verse)],
-    });
-  }
-
-  function handleRadialAction(action: RadialNavbarAction) {
-    if (action === "search_books") {
-      setShareSheetOpen(false);
-      openOverlay({ type: "book_search" });
-      return;
-    }
-    if (action === "switch_version") {
-      const next: BibleTextVersionId = textVersion === "s21" ? "ht98" : "s21";
-      void switchTextVersion(next);
-      return;
-    }
-    if (action === "history") {
-      setShareSheetOpen(false);
-      openOverlay({ type: "history" });
-      return;
-    }
-    if (action === "study") {
-      const verse =
-        selection?.[0] ??
-        highlightVerse ??
-        (passage?.verses?.[0]?.number ?? 1);
-      openVerseActionsForStudy(verse);
-    }
-  }
-
   const forceChrome = surfaceChrome.forceChromeVisible;
   const hideChrome = chromeHidden && !forceChrome;
   forceChromeRef.current = forceChrome;
@@ -3282,14 +3240,6 @@ export function BibleReaderView({
           void loadChapter(usfm, String(chapter), null);
         }}
       />
-
-      {!planReading ? (
-        <RadialNavbar
-          versionId={textVersion}
-          floating={compactViewport || narrowChrome}
-          onAction={handleRadialAction}
-        />
-      ) : null}
 
     </section>
   );

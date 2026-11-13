@@ -103,12 +103,6 @@ export type UiCopyKey =
   | "offline.downloading"
   | "offline.waiting"
   | "offline.downloadCta"
-  | "radial.menu"
-  | "radial.close"
-  | "radial.books"
-  | "radial.version"
-  | "radial.history"
-  | "radial.study"
   | "searchBooks.title"
   | "searchBooks.back"
   | "searchBooks.close"
@@ -268,12 +262,6 @@ const FR: Dict = {
   "offline.downloading": "Téléchargement…",
   "offline.waiting": "En attente de connexion",
   "offline.downloadCta": "Télécharger la Bible hors ligne",
-  "radial.menu": "Menu Bible",
-  "radial.close": "Fermer le menu",
-  "radial.books": "Livres",
-  "radial.version": "Version",
-  "radial.history": "Historique",
-  "radial.study": "Étude",
   "searchBooks.title": "Livres",
   "searchBooks.back": "Retour aux livres",
   "searchBooks.close": "Fermer",
@@ -433,12 +421,6 @@ const HT: Dict = {
   "offline.downloading": "Ap telechaje…",
   "offline.waiting": "Ap tann koneksyon",
   "offline.downloadCta": "Telechaje Bib la offline",
-  "radial.menu": "Meni Bib",
-  "radial.close": "Fèmen meni an",
-  "radial.books": "Liv",
-  "radial.version": "Vèsyon",
-  "radial.history": "Istorik",
-  "radial.study": "Etid",
   "searchBooks.title": "Liv",
   "searchBooks.back": "Tounen nan liv yo",
   "searchBooks.close": "Fèmen",
