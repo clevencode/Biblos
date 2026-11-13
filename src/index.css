@@ -16346,8 +16346,7 @@ html[data-passage-bar-panel="test"]
 .bible-reader--yv .bible-verse-actions.is-sheet .verse-study-panel-host {
   display: flex;
   flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
+  flex: none;
   margin: 0;
   padding: 0;
   border: 0;
@@ -16365,9 +16364,11 @@ html[data-passage-bar-panel="test"]
   color: var(--yv-text);
 }
 
+/* Altura fixa: muitas refs → scroll interno, sem esticar o cartão. */
 .bible-reader--yv .bible-verse-actions.is-sheet .verse-study-panel {
-  flex: 1 1 auto;
-  min-height: 0;
+  flex: none;
+  height: 9.5rem;
+  min-height: 9.5rem;
   max-height: 9.5rem;
   overflow-x: hidden;
   overflow-y: auto;
