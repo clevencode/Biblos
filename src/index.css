@@ -3213,28 +3213,40 @@ html[data-theme="dark"] .profile-download-btn {
 
 .profile-tabs {
   flex: none;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  display: flex;
+  flex-wrap: nowrap;
   align-items: stretch;
   width: 100%;
+  max-width: 100%;
   margin: 0;
   padding: 0;
   border: 0;
   border-bottom: 1px solid color-mix(in srgb, var(--text) 14%, transparent);
   background: transparent;
   gap: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  scroll-snap-type: x proximity;
+}
+
+.profile-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .profile-tab {
   position: relative;
   display: inline-flex;
+  flex: 0 0 auto;
   align-items: center;
   justify-content: center;
-  width: 100%;
-  min-width: 0;
+  width: auto;
+  min-width: max(4.5rem, 18%);
   min-height: 40px;
   margin: 0;
-  padding: 10px 4px 12px;
+  padding: 10px 12px 12px;
   border: 0;
   border-radius: 0;
   background: transparent;
@@ -3251,6 +3263,7 @@ html[data-theme="dark"] .profile-download-btn {
   white-space: nowrap;
   text-align: center;
   transition: color 0.14s ease;
+  scroll-snap-align: center;
 }
 
 .profile-tab:hover {
@@ -6699,7 +6712,8 @@ html[data-theme="dark"] .profile-download-btn {
 
   .profile-tab {
     min-height: 44px;
-    padding: 10px 3px 12px;
+    min-width: max(4.25rem, 20%);
+    padding: 10px 10px 12px;
     font-size: clamp(0.62rem, 2.8vw, 0.76rem);
     overflow: hidden;
     text-overflow: ellipsis;

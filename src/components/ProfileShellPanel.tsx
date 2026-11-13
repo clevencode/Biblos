@@ -34,6 +34,7 @@ import {
 } from "../verseMarks";
 import { useConsumerAuth } from "../features/consumer-auth";
 import { downloadUserBackupJson } from "../features/user-sync";
+import { AdminReadingPlansWorkspace } from "../features/reading-plans/presentation/admin/AdminReadingPlansWorkspace";
 import { downloadOfflineBible } from "../bibleOffline";
 import { downloadHt1998Offline } from "../bible/ht1998Offline";
 import { localS21Books } from "../bibleEngine";
@@ -111,6 +112,15 @@ export function ProfileShellPanel({
       setContentTab("account");
     }
   }, [contentTab, showAdminEntry]);
+
+  useEffect(() => {
+    const el = document.getElementById(`profile-tab-${contentTab}`);
+    el?.scrollIntoView({
+      behavior: "smooth",
+      inline: "nearest",
+      block: "nearest",
+    });
+  }, [contentTab]);
   const [confirmClear, setConfirmClear] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmSignOut, setConfirmSignOut] = useState(false);
@@ -778,22 +788,15 @@ export function ProfileShellPanel({
             id="profile-panel-admin"
             role="tabpanel"
             aria-labelledby="profile-tab-admin"
-            className="profile-tab-panel"
+            className="profile-tab-panel profile-tab-panel--admin"
             hidden={contentTab !== "admin"}
           >
-            <section className="profile-section" aria-labelledby="profile-admin-title">
-              <h3 id="profile-admin-title" className="type-eyebrow">
-                {t("profile.tab.admin")}
-              </h3>
-              <div className="profile-card profile-card-rows">
-                <a className="profile-inset-row" href="#admin">
-                  <span className="profile-row-body">
-                    <span className="profile-row-label">CMS plans (Firestore)</span>
-                  </span>
-                  <span className="profile-admin-pill">#admin ›</span>
-                </a>
-              </div>
-            </section>
+            {contentTab === "admin" ? (
+              <AdminReadingPlansWorkspace
+                embedded
+                userEmail={user?.email ?? null}
+              />
+            ) : null}
           </div>
         ) : null}
       </div>
