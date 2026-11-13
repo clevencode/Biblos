@@ -1,81 +1,126 @@
 /**
- * Gaveta de estudo versículo a versículo.
- * Chave: versionId:usfm:chapter:verse (+ universal usfm:chapter:verse).
+ * Painel de estudo embutido no sheet de seleção de versículos.
+ * Abas: Contexte / Références / Application (sem Notes, sem dialog próprio).
  */
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { YvIcon } from "./YvIcon";
 import { loadVerseStudy, type VerseStudyBundle } from "../bible/studyQueries";
 import type { TskeRef } from "../bible/tske";
 import {
-  loadVerseNote,
-  saveVerseNote,
-} from "../bible/verseNotes";
-import {
   languageForVersion,
   universalVerseKey,
   verseStudyKey,
-  versionBadgeFor,
 } from "../bible/readingScope";
 import type { BibleTextVersionId } from "../bible/bibleVersions";
+import { ensureVerseIndex } from "../bible/verseIndexCache";
 import { useUiLocale } from "../i18n/UiLocaleContext";
 import type { UiCopyKey } from "../i18n/uiCopy";
+import type { YouVersionBook } from "../youversion/client";
+import { parseUsfmParts } from "../youversion/client";
 
-export type VerseStudyTab =
-  | "context"
-  | "refs"
-  | "application"
-  | "notes";
+export type VerseStudyTab = "context" | "refs" | "application";
 
-export type VerseStudyDrawerProps = {
-  open: boolean;
-  onClose: () => void;
+export type VerseStudyPanelProps = {
   versionId: BibleTextVersionId;
   bookId: string;
   chapterId: string;
   verse: number;
-  refLabel: string;
-  /** Abre referência cruzada na mesma versão ativa. */
-  onOpenRef: (usfm: string) => void;
+  books: YouVersionBook[];
+  /** Reservado: navegação para a passagem (hoje o card abre modal de texto). */
+  onOpenRef?: (usfm: string) => void;
   initialTab?: VerseStudyTab;
 };
 
-const TAB_KEYS: Array<{ id: VerseStudyTab; labelKey: UiCopyKey }> = [
-  { id: "context", labelKey: "study.context" },
-  { id: "refs", labelKey: "study.refs" },
-  { id: "application", labelKey: "study.application" },
-  { id: "notes", labelKey: "study.notes" },
+/** @deprecated Preferir VerseStudyPanel — mantido para compat. */
+export type VerseStudyDrawerProps = VerseStudyPanelProps & {
+  open: boolean;
+  onClose: () => void;
+  refLabel?: string;
+};
+
+/** Contesto / Application reservados — só Referências ativo por agora. */
+const TAB_KEYS: Array<{
+  id: VerseStudyTab;
+  labelKey: UiCopyKey;
+  enabled: boolean;
+}> = [
+  { id: "context", labelKey: "study.context", enabled: false },
+  { id: "refs", labelKey: "study.refs", enabled: true },
+  { id: "application", labelKey: "study.application", enabled: false },
 ];
 
+const EMPTY_REFS: TskeRef[] = [];
+
+type RefCard = {
+  key: string;
+  usfm: string | null;
+  label: string;
+  preview: string;
+};
+
+function bookTitleMap(books: YouVersionBook[]): Map<string, string> {
+  const map = new Map<string, string>();
+  for (const book of books) {
+    const id = String(book.id || "").toUpperCase();
+    if (!id) continue;
+    const title = String(book.title || book.fullTitle || id).trim();
+    if (title) map.set(id, title);
+  }
+  return map;
+}
+
+/** Labels a partir do catálogo da versão ativa (não CANON_BOOKS FR). */
+export function localizeTskeRefLabel(
+  usfm: string | null,
+  fallbackLabel: string,
+  titleById: Map<string, string>,
+): string {
+  if (!usfm) return fallbackLabel;
+  const raw = String(usfm).trim();
+  const [bookRaw = "", chapterRaw = "", verseRaw = ""] = raw.split(".");
+  const bookId = bookRaw.toUpperCase();
+  if (!bookId || !chapterRaw) return fallbackLabel;
+  const title = titleById.get(bookId) || bookId;
+  if (!verseRaw) return `${title} ${chapterRaw}`;
+  return `${title} ${chapterRaw}.${verseRaw}`;
+}
+
+function firstVerseKey(usfm: string): string | null {
+  const parts = parseUsfmParts(usfm);
+  if (!parts.bookId || !parts.chapterId || parts.verse == null) return null;
+  return `${parts.bookId.toUpperCase()}.${parts.chapterId}.${parts.verse}`;
+}
+
 function RefList({
-  refs,
-  onOpenRef,
+  cards,
+  onSelect,
   emptyLabel,
 }: {
-  refs: TskeRef[];
-  onOpenRef: (usfm: string) => void;
+  cards: RefCard[];
+  onSelect: (card: RefCard) => void;
   emptyLabel: string;
 }) {
-  if (!refs.length) {
+  if (!cards.length) {
     return <p className="bible-study-empty muted">{emptyLabel}</p>;
   }
   return (
-    <ul className="bible-study-ref-list" role="list">
-      {refs.map((item) => (
-        <li key={item.usfm ?? item.label}>
+    <ul className="bible-study-ref-list is-compact" role="list">
+      {cards.map((item) => (
+        <li key={item.key}>
           <button
             type="button"
-            className="bible-study-ref"
-            disabled={!item.usfm}
-            onClick={() => {
-              if (item.usfm) onOpenRef(item.usfm);
-            }}
+            className="bible-study-ref is-compact"
+            disabled={!item.usfm && !item.preview}
+            onClick={() => onSelect(item)}
           >
-            <YvIcon name="menu_book" className="bible-study-ref-icon" />
-            <span className="bible-study-ref-label">{item.label}</span>
-            {item.usfm ? (
-              <YvIcon name="chevron_right" className="bible-study-ref-chevron" />
-            ) : null}
+            <span className="bible-study-ref-copy">
+              <span className="bible-study-ref-label">{item.label}</span>
+              {item.preview ? (
+                <span className="bible-study-ref-preview muted">{item.preview}</span>
+              ) : null}
+            </span>
+            <YvIcon name="chevron_right" className="bible-study-ref-chevron" />
           </button>
         </li>
       ))}
@@ -83,39 +128,90 @@ function RefList({
   );
 }
 
-export function VerseStudyDrawer({
-  open,
+function RefTextModal({
+  card,
   onClose,
+  closeLabel,
+}: {
+  card: RefCard;
+  onClose: () => void;
+  closeLabel: string;
+}) {
+  const titleId = useId();
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return (
+    <div className="bible-study-ref-modal" role="dialog" aria-modal="true" aria-labelledby={titleId}>
+      <button
+        type="button"
+        className="bible-study-ref-modal-scrim"
+        aria-label={closeLabel}
+        onClick={onClose}
+      />
+      <div className="bible-study-ref-modal-card">
+        <div className="bible-study-ref-modal-surface">
+          <header className="bible-study-ref-modal-head">
+            <h3 className="bible-study-ref-modal-title" id={titleId}>
+              {card.label}
+            </h3>
+            <button
+              type="button"
+              className="bible-study-ref-modal-close"
+              onClick={onClose}
+              aria-label={closeLabel}
+            >
+              <YvIcon name="close" className="bible-study-ref-modal-close-icon" />
+            </button>
+          </header>
+          <div className="bible-study-ref-modal-body">
+            {card.preview ? (
+              <p className="bible-study-ref-modal-text">{card.preview}</p>
+            ) : (
+              <p className="bible-study-ref-modal-text muted">{card.label}</p>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function VerseStudyPanel({
   versionId,
   bookId,
   chapterId,
   verse,
-  refLabel,
-  onOpenRef,
+  books,
   initialTab = "refs",
-}: VerseStudyDrawerProps) {
+}: VerseStudyPanelProps) {
   const { t } = useUiLocale();
-  const titleId = useId();
-  const noteId = useId();
-  const [tab, setTab] = useState<VerseStudyTab>(initialTab);
+  const [tab, setTab] = useState<VerseStudyTab>("refs");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [bundle, setBundle] = useState<VerseStudyBundle | null>(null);
-  const [noteText, setNoteText] = useState("");
-  const [noteSavedAt, setNoteSavedAt] = useState<string | null>(null);
+  const [previewByUsfm, setPreviewByUsfm] = useState<Record<string, string>>(
+    {},
+  );
+  const [activeRef, setActiveRef] = useState<RefCard | null>(null);
   const reqGen = useRef(0);
-  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const scopedKey = verseStudyKey(versionId, bookId, chapterId, verse);
   const universalKey = universalVerseKey(bookId, chapterId, verse);
+  const titleById = useMemo(() => bookTitleMap(books), [books]);
 
   useEffect(() => {
-    if (!open) return;
-    setTab(initialTab);
-  }, [open, initialTab, scopedKey]);
+    void initialTab;
+    setTab("refs");
+    setActiveRef(null);
+  }, [initialTab, scopedKey]);
 
   useEffect(() => {
-    if (!open) return;
     const gen = ++reqGen.current;
     setBusy(true);
     setError(null);
@@ -124,103 +220,91 @@ export function VerseStudyDrawer({
       .then((data) => {
         if (gen !== reqGen.current) return;
         setBundle(data);
+        setError(null);
       })
-      .catch((err) => {
+      .catch(() => {
         if (gen !== reqGen.current) return;
-        setError(err instanceof Error ? err.message : t("study.loadError"));
+        // Dados TSKE ausentes / HTML fallback → empty state, sem stack técnica.
+        setBundle({ tske: null });
+        setError(null);
       })
       .finally(() => {
         if (gen === reqGen.current) setBusy(false);
       });
-  }, [open, bookId, chapterId, verse, t]);
+  }, [bookId, chapterId, verse]);
+
+  const rawRefs = bundle?.tske?.refs ?? EMPTY_REFS;
 
   useEffect(() => {
-    if (!open) return;
-    const existing = loadVerseNote(versionId, bookId, chapterId, verse);
-    setNoteText(existing?.text ?? "");
-    setNoteSavedAt(existing?.updatedAt ?? null);
-  }, [open, versionId, bookId, chapterId, verse]);
-
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
-
-  useEffect(() => {
+    const refs = bundle?.tske?.refs ?? EMPTY_REFS;
+    if (tab !== "refs" || !refs.length) {
+      setPreviewByUsfm({});
+      return;
+    }
+    let cancelled = false;
+    void ensureVerseIndex(versionId)
+      .then((index) => {
+        if (cancelled) return;
+        const byKey = new Map<string, string>();
+        for (const v of index.verses) {
+          byKey.set(
+            `${v.bookId.toUpperCase()}.${v.chapter}.${v.verse}`,
+            v.raw,
+          );
+        }
+        const next: Record<string, string> = {};
+        for (const ref of refs) {
+          if (!ref.usfm) continue;
+          const key = firstVerseKey(ref.usfm);
+          if (!key) continue;
+          const text = byKey.get(key);
+          if (text) next[ref.usfm] = text;
+        }
+        setPreviewByUsfm(next);
+      })
+      .catch(() => {
+        if (!cancelled) setPreviewByUsfm({});
+      });
     return () => {
-      if (saveTimer.current) clearTimeout(saveTimer.current);
+      cancelled = true;
     };
-  }, []);
+  }, [tab, bundle, versionId]);
 
-  function scheduleSave(next: string) {
-    setNoteText(next);
-    if (saveTimer.current) clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => {
-      const record = saveVerseNote(
-        {
-          versionId,
-          usfm: bookId,
-          chapter: Number(chapterId),
-          verse,
-        },
-        next,
-      );
-      setNoteSavedAt(record.text ? record.updatedAt : null);
-    }, 450);
-  }
-
-  if (!open) return null;
+  const cards = useMemo((): RefCard[] => {
+    return rawRefs.map((ref: TskeRef, i) => ({
+      key: ref.usfm ?? `${ref.label}-${i}`,
+      usfm: ref.usfm,
+      label: localizeTskeRefLabel(ref.usfm, ref.label, titleById),
+      preview: ref.usfm ? previewByUsfm[ref.usfm] ?? "" : "",
+    }));
+  }, [rawRefs, titleById, previewByUsfm]);
 
   const heading = bundle?.tske?.heading;
-  const refs = bundle?.tske?.refs ?? [];
-  const badge = versionBadgeFor(versionId);
   const language = languageForVersion(versionId);
 
   return (
     <div
-      className="bible-search-sheet bible-study-sheet verse-study-drawer"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby={titleId}
+      className="verse-study-panel-host"
       data-study-key={scopedKey}
       data-universal-key={universalKey}
       data-language={language}
     >
-      <header className="bible-search-sheet-head bible-history-sheet-head">
-        <button
-          type="button"
-          className="bible-search-sheet-back"
-          onClick={onClose}
-          aria-label={t("study.close")}
-        >
-          <YvIcon name="chevron_left" className="bible-search-sheet-back-icon" />
-        </button>
-        <h2 className="bible-search-sheet-title" id={titleId}>
-          {t("study.title")}
-        </h2>
-        <span className="bible-search-sheet-spacer" aria-hidden />
-      </header>
-
-      <div className="bible-search-sheet-meta" aria-live="polite">
-        <span className="bible-history-version-badge" data-version={versionId}>
-          {badge}
-        </span>
-        <span>{refLabel}</span>
-      </div>
-
       <div className="verse-study-tabs" role="tablist" aria-label={t("study.tabs")}>
         {TAB_KEYS.map((item) => (
           <button
             key={item.id}
             type="button"
             role="tab"
-            className={`verse-study-tab${tab === item.id ? " is-on" : ""}`}
+            className={`verse-study-tab${tab === item.id ? " is-on" : ""}${
+              item.enabled ? "" : " is-disabled"
+            }`}
             aria-selected={tab === item.id}
-            onClick={() => setTab(item.id)}
+            aria-disabled={!item.enabled}
+            disabled={!item.enabled}
+            onClick={() => {
+              if (!item.enabled) return;
+              setTab(item.id);
+            }}
           >
             {t(item.labelKey)}
           </button>
@@ -241,17 +325,17 @@ export function VerseStudyDrawer({
         {tab === "refs" ? (
           <div className="verse-study-block">
             {busy ? (
-              <p className="bible-study-status muted" aria-hidden>
-                …
+              <p className="bible-study-status muted" aria-busy="true">
+                {t("common.loading")}
               </p>
             ) : error ? (
-              <p className="bible-search-sheet-error" role="alert">
-                {error}
+              <p className="bible-study-empty muted" role="status">
+                {t("study.refsEmpty")}
               </p>
             ) : (
               <RefList
-                refs={refs}
-                onOpenRef={onOpenRef}
+                cards={cards}
+                onSelect={setActiveRef}
                 emptyLabel={t("study.refsEmpty")}
               />
             )}
@@ -263,26 +347,40 @@ export function VerseStudyDrawer({
             <p className="bible-study-empty muted">{t("study.appEmpty")}</p>
           </div>
         ) : null}
-
-        {tab === "notes" ? (
-          <div className="verse-study-block verse-study-notes">
-            <label className="sr-only" htmlFor={noteId}>
-              {t("study.notesLabel")}
-            </label>
-            <textarea
-              id={noteId}
-              className="verse-study-notes-input"
-              rows={8}
-              value={noteText}
-              onChange={(e) => scheduleSave(e.target.value)}
-              placeholder={t("study.notesPlaceholder")}
-            />
-            <p className="verse-study-notes-meta muted">
-              {noteSavedAt ? t("study.notesSaved") : t("study.notesDraft")}
-            </p>
-          </div>
-        ) : null}
       </div>
+
+      {activeRef ? (
+        <RefTextModal
+          card={activeRef}
+          onClose={() => setActiveRef(null)}
+          closeLabel={t("common.close")}
+        />
+      ) : null}
     </div>
+  );
+}
+
+/** Compat: se ainda aberto como dialog, renderiza só o painel. */
+export function VerseStudyDrawer({
+  open,
+  versionId,
+  bookId,
+  chapterId,
+  verse,
+  books = [],
+  onOpenRef,
+  initialTab,
+}: VerseStudyDrawerProps) {
+  if (!open) return null;
+  return (
+    <VerseStudyPanel
+      versionId={versionId}
+      bookId={bookId}
+      chapterId={chapterId}
+      verse={verse}
+      books={books}
+      onOpenRef={onOpenRef}
+      initialTab={initialTab}
+    />
   );
 }

@@ -6,7 +6,6 @@ export type ActiveBibleOverlay =
   | { type: "passage_picker" }
   | { type: "book_search" }
   | { type: "verse_actions"; selectedVerseIds: string[] }
-  | { type: "verse_study"; verse: number }
   | { type: "reader_settings" }
   | { type: "history" };
 
@@ -92,15 +91,10 @@ export function useBibleOverlayController(
           leaveVerseActionsIfNeeded(prev, { type: "none" });
           return { type: "none" };
         }
-        let next: ActiveBibleOverlay;
-        if (targetType === "verse_actions") {
-          next = { type: "verse_actions", selectedVerseIds: [] };
-        } else if (targetType === "verse_study") {
-          // Preferir openOverlay({ type: "verse_study", verse }) — toggle sem verso = 1.
-          next = { type: "verse_study", verse: 1 };
-        } else {
-          next = { type: targetType };
-        }
+        const next: ActiveBibleOverlay =
+          targetType === "verse_actions"
+            ? { type: "verse_actions", selectedVerseIds: [] }
+            : { type: targetType };
         leaveVerseActionsIfNeeded(prev, next);
         return next;
       });

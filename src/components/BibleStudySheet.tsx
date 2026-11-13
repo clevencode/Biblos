@@ -1,13 +1,13 @@
 /**
- * Compat: a folha de estudo passa a ser o VerseStudyDrawer com abas.
- * Mantém a API mínima antiga para chamadas legadas.
+ * Compat: estudo unificado no sheet de seleção (VerseStudyPanel).
  */
 
 import {
-  VerseStudyDrawer,
-  type VerseStudyDrawerProps,
+  VerseStudyPanel,
+  type VerseStudyPanelProps,
 } from "./VerseStudyDrawer";
 import type { BibleTextVersionId } from "../bible/bibleVersions";
+import type { YouVersionBook } from "../youversion/client";
 
 export type BibleStudySheetProps = {
   open: boolean;
@@ -18,28 +18,27 @@ export type BibleStudySheetProps = {
   refLabel: string;
   onOpenRef: (usfm: string) => void;
   versionId?: BibleTextVersionId;
+  books?: YouVersionBook[];
 };
 
 export function BibleStudySheet({
   open,
-  onClose,
   bookId,
   chapterId,
   verse,
-  refLabel,
   onOpenRef,
   versionId = "s21",
+  books = [],
 }: BibleStudySheetProps) {
-  const props: VerseStudyDrawerProps = {
-    open,
-    onClose,
+  if (!open) return null;
+  const props: VerseStudyPanelProps = {
     versionId,
     bookId,
     chapterId,
     verse,
-    refLabel,
+    books,
     onOpenRef,
     initialTab: "refs",
   };
-  return <VerseStudyDrawer {...props} />;
+  return <VerseStudyPanel {...props} />;
 }

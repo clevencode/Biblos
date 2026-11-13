@@ -95,11 +95,19 @@ export async function loadTskeChapter(
   if (!book || !Number.isFinite(ch) || ch < 0) return null;
   const key = `${book}.${ch}`;
   if (chapterCache.has(key)) return chapterCache.get(key)!;
-  const res = await fetch(chapterUrl(book, ch));
-  if (!res.ok) return null;
-  const json = (await res.json()) as TskeChapterJson;
-  chapterCache.set(key, json);
-  return json;
+  try {
+    const res = await fetch(chapterUrl(book, ch));
+    if (!res.ok) return null;
+    const raw = (await res.text()).trim();
+    // SPA/HTML fallback quando o JSON TSKE não existe.
+    if (!raw || raw.startsWith("<")) return null;
+    const json = JSON.parse(raw) as TskeChapterJson;
+    if (!json || typeof json !== "object") return null;
+    chapterCache.set(key, json);
+    return json;
+  } catch {
+    return null;
+  }
 }
 
 export async function fetchTskeForVerse(

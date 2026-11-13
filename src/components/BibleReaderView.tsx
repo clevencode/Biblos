@@ -45,7 +45,7 @@ import { BibleHistorySheet } from "./BibleHistorySheet";
 import { BibleShareSheet } from "./BibleShareSheet";
 import { SearchBooksModal } from "./SearchBooksModal";
 import { RadialNavbar, type RadialNavbarAction } from "./RadialNavbar";
-import { VerseStudyDrawer } from "./VerseStudyDrawer";
+import { VerseStudyPanel } from "./VerseStudyDrawer";
 import { BiblePassageScrollPicker } from "./BiblePassageScrollPicker";
 import { BiblePassageChip } from "./BiblePassageChip";
 import {
@@ -636,9 +636,6 @@ export function BibleReaderView({
   const bookSearchOpen = activeOverlay.type === "book_search";
   const toolsMenuOpen = activeOverlay.type === "reader_settings";
   const historyOpen = activeOverlay.type === "history";
-  const verseStudyOpen = activeOverlay.type === "verse_study";
-  const verseStudyVerse =
-    activeOverlay.type === "verse_study" ? activeOverlay.verse : null;
   const hasActiveModalRef = useRef(hasActiveModal);
   hasActiveModalRef.current = hasActiveModal;
 
@@ -1963,7 +1960,7 @@ export function BibleReaderView({
         historyOpen,
         shareSheetOpen,
         verseActionsOpen: showCreateCard,
-        verseStudyOpen,
+        verseStudyOpen: false,
       }),
     [
       pickerOpen,
@@ -1974,7 +1971,6 @@ export function BibleReaderView({
       historyOpen,
       shareSheetOpen,
       showCreateCard,
-      verseStudyOpen,
     ],
   );
 
@@ -1989,7 +1985,7 @@ export function BibleReaderView({
       historyOpen,
       shareSheetOpen,
       verseActionsOpen: showCreateCard,
-      verseStudyOpen,
+      verseStudyOpen: false,
     });
     if (target === "picker") {
       closePicker();
@@ -1999,7 +1995,7 @@ export function BibleReaderView({
       closeWordSearch();
       return;
     }
-    if (target === "bookSearch" || target === "verseStudy" || target === "history") {
+    if (target === "bookSearch" || target === "history") {
       closeOverlay();
       return;
     }
@@ -2012,10 +2008,20 @@ export function BibleReaderView({
     }
   }
 
-  function openVerseStudy(verse: number) {
+  function openVerseActionsForStudy(verse: number) {
     if (!Number.isFinite(verse) || verse < 1) return;
+    preferJumpFocusRef.current = false;
     setShareSheetOpen(false);
-    openOverlay({ type: "verse_study", verse });
+    setHighlightVerse(verse);
+    setHighlightVerseEnd(null);
+    setFocusDim(false);
+    setCardColor(loadPreferredVerseColor());
+    setSelection([verse]);
+    setCardMsg(null);
+    openOverlay({
+      type: "verse_actions",
+      selectedVerseIds: [String(verse)],
+    });
   }
 
   function handleRadialAction(action: RadialNavbarAction) {
@@ -2039,7 +2045,7 @@ export function BibleReaderView({
         selection?.[0] ??
         highlightVerse ??
         (passage?.verses?.[0]?.number ?? 1);
-      openVerseStudy(verse);
+      openVerseActionsForStudy(verse);
     }
   }
 
@@ -3035,7 +3041,7 @@ export function BibleReaderView({
             className={`bible-verse-actions is-sheet${narrowChrome ? " is-tab-chrome" : ""}`}
             role="dialog"
             aria-modal="false"
-            aria-label="Actions du verset"
+            aria-label={t("verse.actions")}
             style={
               {
                 ["--verse-tint" as string]: actionTone.tint,
@@ -3058,12 +3064,10 @@ export function BibleReaderView({
                 </p>
                 {selectedVerses.length > 1 ? (
                   <p className="bible-verse-actions-hint">
-                    {selectedVerses.length} versets · tape pour ajouter ou retirer
+                    {t("verse.hintMulti", { n: selectedVerses.length })}
                   </p>
                 ) : (
-                  <p className="bible-verse-actions-hint">
-                    Tape d&apos;autres versets pour compléter la sélection
-                  </p>
+                  <p className="bible-verse-actions-hint">{t("verse.hint")}</p>
                 )}
               </div>
               <button
@@ -3080,7 +3084,7 @@ export function BibleReaderView({
               <div
                 className="bible-verse-action-row"
                 role="group"
-                aria-label="Actions du verset"
+                aria-label={t("verse.actions")}
               >
                 <button
                   type="button"
@@ -3091,8 +3095,8 @@ export function BibleReaderView({
                       ["--swatch-check" as string]: verseSwatchCheckInk(pickerColor),
                     } as CSSProperties
                   }
-                  title="Personnaliser la couleur"
-                  aria-label={`Couleur ${verseColorHueLabel(pickerColor)} ${formatVerseColorHex(pickerColor)}. Ouvrir l’éditeur`}
+                  title={t("verse.colorTitle")}
+                  aria-label={`${t("verse.colorTitle")} ${verseColorHueLabel(pickerColor)} ${formatVerseColorHex(pickerColor)}`}
                   aria-haspopup="dialog"
                   aria-expanded={colorEditorOpen}
                   onClick={() => setColorEditorOpen(true)}
@@ -3118,7 +3122,9 @@ export function BibleReaderView({
                   ) : (
                     <YvIcon name="bookmark" className="bible-verse-cta-icon" />
                   )}
-                  <span>{selectionHasMark ? "Démarquer" : "Marquer"}</span>
+                  <span>
+                    {selectionHasMark ? t("verse.unmark") : t("verse.mark")}
+                  </span>
                 </button>
                 <button
                   type="button"
@@ -3139,34 +3145,20 @@ export function BibleReaderView({
                       });
                       if (result.ok) {
                         setCardMsg(
-                          result.method === "clipboard" ? "Texte copié" : null,
+                          result.method === "clipboard"
+                            ? t("verse.shareCopied")
+                            : null,
                         );
                         return;
                       }
                       if (!result.cancelled) {
-                        setCardMsg(result.error || "Partage impossible");
+                        setCardMsg(result.error || t("verse.shareFailed"));
                       }
                     })();
                   }}
                 >
                   <YvIcon name="ios_share" className="bible-verse-cta-icon" />
-                  <span>Partager</span>
-                </button>
-                <button
-                  type="button"
-                  className="bible-yv-chip bible-verse-study"
-                  disabled={!selectedVerses.length}
-                  onClick={() => {
-                    const verse = selectedVerses[0];
-                    if (verse == null) return;
-                    openVerseStudy(verse);
-                  }}
-                >
-                  <YvIcon
-                    name="format_list_numbered"
-                    className="bible-verse-cta-icon"
-                  />
-                  <span>Étude</span>
+                  <span>{t("verse.share")}</span>
                 </button>
               </div>
 
@@ -3183,6 +3175,16 @@ export function BibleReaderView({
 
               {cardMsg ? (
                 <p className="bible-verse-actions-msg">{cardMsg}</p>
+              ) : null}
+
+              {selectedVerses[0] != null ? (
+                <VerseStudyPanel
+                  versionId={textVersion}
+                  bookId={bookId}
+                  chapterId={chapterId}
+                  verse={selectedVerses[0]}
+                  books={books}
+                />
               ) : null}
             </div>
           </div>
@@ -3278,26 +3280,6 @@ export function BibleReaderView({
         onPick={({ usfm, chapter }) => {
           closeOverlay();
           void loadChapter(usfm, String(chapter), null);
-        }}
-      />
-
-      <VerseStudyDrawer
-        open={verseStudyOpen && verseStudyVerse != null}
-        onClose={() => closeOverlay()}
-        versionId={textVersion}
-        bookId={bookId}
-        chapterId={chapterId}
-        verse={verseStudyVerse ?? 1}
-        refLabel={`${bookTitle} ${chapterId}.${verseStudyVerse ?? 1}`}
-        onOpenRef={(usfm) => {
-          closeOverlay();
-          const parts = parseUsfmParts(usfm);
-          if (!isUsfmBookId(parts.bookId)) return;
-          void loadChapter(
-            parts.bookId,
-            parts.chapterId,
-            parts.verse ?? null,
-          );
         }}
       />
 

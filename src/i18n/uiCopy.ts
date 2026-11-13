@@ -133,6 +133,15 @@ export type UiCopyKey =
   | "study.notesSaved"
   | "study.notesDraft"
   | "study.loadError"
+  | "verse.actions"
+  | "verse.hint"
+  | "verse.hintMulti"
+  | "verse.mark"
+  | "verse.unmark"
+  | "verse.share"
+  | "verse.shareCopied"
+  | "verse.shareFailed"
+  | "verse.colorTitle"
   | "word.placeholder"
   | "word.aria"
   | "word.panel"
@@ -287,6 +296,15 @@ const FR: Dict = {
   "study.notesSaved": "Enregistré · sync si connecté",
   "study.notesDraft": "Brouillon local",
   "study.loadError": "Erreur de chargement",
+  "verse.actions": "Actions du verset",
+  "verse.hint": "Tape d’autres versets pour compléter la sélection",
+  "verse.hintMulti": "{n} versets · tape pour ajouter ou retirer",
+  "verse.mark": "Marquer",
+  "verse.unmark": "Démarquer",
+  "verse.share": "Partager",
+  "verse.shareCopied": "Texte copié",
+  "verse.shareFailed": "Partage impossible",
+  "verse.colorTitle": "Personnaliser la couleur",
   "word.placeholder": "Mot ou expression…",
   "word.aria": "Rechercher un mot ou une expression dans la Bible",
   "word.panel": "Recherche dans la Bible",
@@ -441,6 +459,15 @@ const HT: Dict = {
   "study.notesSaved": "Anrejistre · sync si konekte",
   "study.notesDraft": "Brouiyon lokal",
   "study.loadError": "Erè chajman",
+  "verse.actions": "Aksyon vèsè",
+  "verse.hint": "Tape lòt vèsè pou konplete seleksyon an",
+  "verse.hintMulti": "{n} vèsè · tape pou ajoute oswa retire",
+  "verse.mark": "Make",
+  "verse.unmark": "Demake",
+  "verse.share": "Pataje",
+  "verse.shareCopied": "Tèks kopye",
+  "verse.shareFailed": "Pataj pa posib",
+  "verse.colorTitle": "Personnalize koulè a",
   "word.placeholder": "Chèche nan Bib la…",
   "word.aria": "Chèche yon mo oswa yon ekspresyon nan Bib la",
   "word.panel": "Rechèch nan Bib la",
