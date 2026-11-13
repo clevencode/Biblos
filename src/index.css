@@ -641,8 +641,6 @@ html[data-theme="dark"] .sw-update-banner-cta {
 
 .note-shell .mode-tabs {
   flex: none;
-  width: 48px;
-  border-right: 1px solid var(--line);
 }
 
 .note-shell .graph-pane {
@@ -882,109 +880,144 @@ html[data-theme="dark"] .sw-update-banner-cta {
 }
 
 
+/* Shell nav — hub radial (Accueil / Plan / Bible / Profil) */
 .mode-tabs {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  justify-content: flex-start;
-  gap: 0;
-  width: 48px;
-  padding: 14px 0 16px;
-  border-right: 1px solid var(--line);
-  border-bottom: 0;
-  background: var(--panel);
+  position: fixed;
+  left: calc(50% - 28px);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+  z-index: 40;
+  width: 56px;
+  height: 56px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  pointer-events: none;
   min-width: 0;
   min-height: 0;
 }
 
-.mode-tabs-nav {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  min-width: 0;
-  flex: 0;
-  padding: 0 6px;
+.mode-tabs-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  pointer-events: auto;
+  cursor: default;
 }
 
-.mode-tabs-nav > button {
+.mode-tabs-hub {
   position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  min-width: 36px;
-  min-height: 36px;
-  border: 0;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--muted);
-  padding: 0;
+  z-index: 2;
+  width: 56px;
+  height: 56px;
   margin: 0;
-  cursor: pointer;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--yv-chrome-surface, color-mix(in srgb, var(--surface, #fff) 92%, var(--text)));
+  color: var(--text);
+  box-shadow: var(--yv-audio-fab-shadow, 0 8px 24px color-mix(in srgb, #000 18%, transparent));
   font: inherit;
-  box-shadow: none;
+  cursor: pointer;
+  pointer-events: auto;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
+}
+
+.mode-tabs.is-open {
+  z-index: 60;
+}
+
+.mode-tabs.is-open .mode-tabs-hub {
+  background: color-mix(in srgb, var(--accent, #2a6f6a) 22%, var(--surface, #fff));
+}
+
+.mode-tabs-hub-close {
+  width: 1.25rem;
+  height: 1.25rem;
+  font-size: 1.25rem;
+}
+
+.mode-tabs-arc {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.mode-tabs-item {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 48px;
+  height: 48px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--yv-chrome-surface, color-mix(in srgb, var(--surface, #fff) 94%, var(--text)));
+  color: var(--muted);
+  box-shadow: var(--yv-overlay-shadow, 0 6px 18px color-mix(in srgb, #000 14%, transparent));
+  transform: translate(-50%, -50%) scale(0.4);
+  opacity: 0;
+  pointer-events: none;
   transition:
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 180ms ease,
     background 0.12s ease,
     color 0.12s ease;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mode-tabs.is-open .mode-tabs-item {
+  transform: translate(
+      calc(-50% + var(--radial-x)),
+      calc(-50% + var(--radial-y))
+    )
+    scale(1);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.mode-tabs-item.is-on {
+  color: var(--text);
+  background: color-mix(in srgb, var(--accent, #2a6f6a) 18%, var(--surface, #fff));
+}
+
+.mode-tabs-item:hover {
+  color: var(--text);
 }
 
 .mode-tab-icon {
   flex-shrink: 0;
   color: inherit;
-}
-
-.mode-tabs-nav > button.is-on .mode-tab-icon {
-  color: var(--text);
+  font-size: 22px;
 }
 
 .mode-tab-label {
-  display: none;
-  font-size: var(--type-label-size);
-  font-weight: var(--type-label-weight);
-  letter-spacing: var(--type-label-tracking);
-  line-height: var(--type-label-lh);
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .mode-tab-badge {
-  position: absolute;
-  top: 1px;
-  right: 1px;
-  min-width: 15px;
-  height: 15px;
-  padding: 0 3px;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--muted);
-  border: 0;
-  font-size: 0.58rem;
-  font-weight: 500;
-  line-height: 15px;
-  text-align: center;
-  font-variant-numeric: tabular-nums;
-  pointer-events: none;
-}
-
-.mode-tabs-nav > button.is-on .mode-tab-badge {
-  color: var(--text);
-}
-
-.mode-tabs-nav > button:hover {
-  background: var(--hover);
-  color: var(--text);
-}
-
-.mode-tabs-nav > button.is-on {
-  color: var(--text);
-  background: color-mix(in srgb, var(--text) 8%, transparent);
-}
-
-.mode-tabs-nav > button:active {
-  background: color-mix(in srgb, var(--text) 12%, transparent);
-  color: var(--text);
+  display: none;
 }
 
 .flash {
@@ -5789,21 +5822,17 @@ html[data-theme="dark"] .profile-download-btn {
     --mobile-touch: 44px;
     --mobile-tab-min: 48px;
     --mobile-chrome-gap: 10px;
-    /* Chrome inferior: altura da tab bar + safe-area (barra ancorada, sem flutuação) */
+    /* Chrome inferior: hub radial shell + safe-area */
     --mobile-float-inset-x: var(--mobile-gutter);
     --shell-float-gap: 12px;
-    --mobile-tabbar-pad: 4px;
-    --mobile-tabbar-h: 46px;
-    /* Hauteur réelle tab bar (contenu + safe-area dans le padding, sans double comptage). */
-    --mobile-tabbar-outer-h: max(
-      var(--mobile-tabbar-h),
-      calc(
-        var(--mobile-tabbar-pad)
-        + (var(--mobile-tabbar-h) - var(--mobile-tabbar-pad) * 2)
-        + max(var(--mobile-tabbar-pad), env(safe-area-inset-bottom, 0px))
-      )
+    --mobile-tabbar-pad: 12px;
+    /* Hub radial 56px + folga inferior + safe-area */
+    --mobile-tabbar-h: 56px;
+    --mobile-tabbar-outer-h: calc(
+      var(--mobile-tabbar-h) + var(--mobile-tabbar-pad) + env(safe-area-inset-bottom, 0px)
     );
     --mobile-bottom-chrome: var(--mobile-tabbar-outer-h);
+    --shell-tab-clearance: var(--mobile-bottom-chrome);
     /* FAB lecture : 16px au-dessus du bord supérieur de la tab bar (Material / iOS HIG). */
     --bible-play-float-gap: 16px;
     --bible-audio-play-size: var(--mobile-touch);
@@ -5859,11 +5888,11 @@ html[data-theme="dark"] .profile-download-btn {
   }
 
   /*
-   * Tab bar mobile — barra ancorada (full width, fluxo do shell).
+   * Shell nav mobile — hub radial flutuante (não barra full-width).
    * --mobile-bottom-chrome : reserva para scroll, docks e popups Bible.
    */
   .note-shell .mode-tabs.is-immersive-hidden {
-    transform: translateY(calc(100% + 8px));
+    transform: translateY(calc(100% + 12px));
     opacity: 0;
     pointer-events: none;
     transition:
@@ -5888,154 +5917,53 @@ html[data-theme="dark"] .profile-download-btn {
   .note-shell .mode-tabs {
     order: 2;
     flex: none;
-    position: relative;
-    left: auto;
+    position: fixed;
+    left: calc(50% - 28px);
     right: auto;
-    bottom: auto;
-    z-index: 8;
-    width: 100%;
-    max-width: none;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+    z-index: 40;
+    width: 56px;
+    height: 56px;
     margin: 0;
-    min-height: var(--mobile-tabbar-h);
-    padding: var(--mobile-tabbar-pad) var(--mobile-gutter)
-      max(var(--mobile-tabbar-pad), env(safe-area-inset-bottom, 0px));
-    padding-left: max(var(--mobile-gutter), env(safe-area-inset-left, 0px));
-    padding-right: max(var(--mobile-gutter), env(safe-area-inset-right, 0px));
+    min-height: 0;
+    padding: 0;
     border: 0;
-    border-top: 1px solid var(--line);
     border-radius: 0;
-    background: var(--panel);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
+    background: transparent;
     box-shadow: none;
     transform: none;
     opacity: 1;
-    pointer-events: auto;
-    transition:
-      transform 160ms cubic-bezier(0.4, 0, 0.2, 1),
-      opacity 140ms cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .app.is-bible-mode.is-narrow .note-shell .mode-tabs {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: auto;
+    pointer-events: none;
     will-change: transform, opacity;
     transition:
       transform 200ms ease-out,
       opacity 200ms ease-out;
   }
 
+  .app.is-bible-mode.is-narrow .note-shell .mode-tabs {
+    position: fixed;
+    left: calc(50% - 28px);
+    right: auto;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+    width: 56px;
+  }
+
   .app.is-bible-mode.is-narrow .note-shell-main > .graph-pane {
     padding-bottom: 0;
   }
-
-  /* Chrome imersivo lecture = .bible-reader (is-chrome-hidden) ; tab bar reste visible. */
 
   @media (prefers-reduced-motion: reduce) {
     .note-shell .mode-tabs {
       transition: none;
     }
 
-    .mode-tabs-nav > button:active {
-      transform: none;
+    .mode-tabs-item {
+      transition: none;
     }
-  }
-
-  .mode-tabs {
-    flex-direction: row;
-    align-items: stretch;
-    justify-content: space-between;
-    gap: 4px;
-    min-height: var(--mobile-tabbar-h);
-    border-right: 0;
-  }
-
-  .note-shell .mode-tabs-nav {
-    min-height: 0;
-    padding: 0;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    box-shadow: none;
-  }
-
-  .mode-tabs-nav {
-    flex-direction: row;
-    flex: 1;
-    align-items: stretch;
-    justify-content: space-around;
-    gap: 2px;
-    min-width: 0;
-    width: auto;
-    padding: 0 2px;
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .mode-tabs-nav::-webkit-scrollbar {
-    display: none;
-  }
-
-  .mode-tabs-nav > button {
-    flex: 1 1 0;
-    width: auto;
-    min-width: 0;
-    height: auto;
-    min-height: calc(var(--mobile-tabbar-h) - var(--mobile-tabbar-pad) * 2);
-    padding: 5px 8px 4px;
-    flex-direction: column;
-    gap: 3px;
-    border-radius: 999px;
-    -webkit-tap-highlight-color: transparent;
-    transition:
-      background 0.14s ease,
-      color 0.14s ease;
-  }
-
-  .mode-tabs-nav > button.is-on {
-    background: color-mix(in srgb, var(--text) 8%, transparent);
-    color: var(--text);
-  }
-
-  .mode-tabs-nav > button:active {
-    background: color-mix(in srgb, var(--text) 12%, transparent);
-  }
-
-  .mode-tab-label {
-    display: block;
-    font-size: var(--type-caption-size);
-    font-weight: var(--type-label-weight);
-    letter-spacing: 0.01em;
-    line-height: 1.15;
-    color: var(--muted);
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .mode-tabs-nav > button.is-on .mode-tab-label {
-    color: var(--text);
   }
 
   .mode-tab-icon {
     font-size: 22px;
-  }
-
-  .mode-tab-badge {
-    top: 0;
-    right: max(4px, 12%);
-    min-width: 16px;
-    height: 16px;
-    line-height: 16px;
-    font-size: 0.56rem;
   }
 
   /* Página: tabs + nota. Vistas: tabs + cartões/inbox/calendário/mapa. */
