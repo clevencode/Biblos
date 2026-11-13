@@ -12720,7 +12720,7 @@ html[data-passage-bar-panel="test"]
   color: inherit;
 }
 
-/* Verse actions — cartão suspenso (não bottom-sheet) */
+/* Verse actions — cartão suspenso (não bottom-sheet); altura compacta */
 .bible-reader--yv .bible-verse-actions.is-sheet {
   left: max(var(--mobile-gutter, 12px), env(safe-area-inset-left, 0px));
   right: max(var(--mobile-gutter, 12px), env(safe-area-inset-right, 0px));
@@ -12729,7 +12729,7 @@ html[data-passage-bar-panel="test"]
   max-width: none;
   margin: 0;
   height: auto;
-  max-height: none;
+  max-height: min(48dvh, 22rem);
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -12741,7 +12741,7 @@ html[data-passage-bar-panel="test"]
     0 18px 40px rgba(0, 0, 0, 0.16),
     0 2px 8px rgba(0, 0, 0, 0.06);
   animation: bible-popup-in 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
-  overflow: visible;
+  overflow: hidden;
 }
 
 .bible-reader--yv .bible-verse-actions.is-sheet::before {
@@ -12750,14 +12750,17 @@ html[data-passage-bar-panel="test"]
 }
 
 .bible-reader--yv .bible-verse-actions.is-sheet .bible-verse-actions-body {
-  overflow: visible;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   gap: 10px;
   padding-top: 0;
   padding-bottom: 0;
 }
 
 .bible-reader--yv .bible-verse-actions.is-sheet .bible-verse-actions-head,
-.bible-reader--yv .bible-verse-actions.is-sheet .bible-verse-actions-body,
 .bible-reader--yv .bible-verse-actions.is-sheet .bible-verse-actions-msg {
   flex: none;
 }
@@ -12772,6 +12775,7 @@ html[data-passage-bar-panel="test"]
 /* Linha única: + | Marquer | Partager */
 .bible-reader--yv .bible-verse-action-row {
   display: flex;
+  flex: none;
   align-items: center;
   gap: 10px;
   width: 100%;
@@ -16342,12 +16346,16 @@ html[data-passage-bar-panel="test"]
 .bible-reader--yv .bible-verse-actions.is-sheet .verse-study-panel-host {
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
   margin: 0;
   padding: 0;
   border: 0;
+  overflow: hidden;
 }
 
 .bible-reader--yv .bible-verse-actions.is-sheet .verse-study-section-title {
+  flex: none;
   margin: 0 0 0.45rem;
   font-family: var(--font-ui);
   font-size: 1.02rem;
@@ -16358,7 +16366,9 @@ html[data-passage-bar-panel="test"]
 }
 
 .bible-reader--yv .bible-verse-actions.is-sheet .verse-study-panel {
-  max-height: 12.5rem;
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 9.5rem;
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
