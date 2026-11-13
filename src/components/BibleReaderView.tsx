@@ -43,8 +43,15 @@ import {
 import { BibleAudioFloat } from "./BibleAudioFloat";
 import { BibleHistorySheet } from "./BibleHistorySheet";
 import { BibleShareSheet } from "./BibleShareSheet";
+import { SearchBooksModal } from "./SearchBooksModal";
+import { RadialNavbar, type RadialNavbarAction } from "./RadialNavbar";
+import { VerseStudyDrawer } from "./VerseStudyDrawer";
 import { BiblePassageScrollPicker } from "./BiblePassageScrollPicker";
 import { BiblePassageChip } from "./BiblePassageChip";
+import {
+  languageForVersion,
+  versionBadgeFor,
+} from "../bible/readingScope";
 import {
   formatPassagePillRef,
   isPassagePillUnified,
@@ -281,6 +288,8 @@ type BibleReaderViewProps = {
   initialRef?: string;
   /** Navigation externe (rappel → Lecture). */
   focusRef?: string | null;
+  /** Força a versão ativa antes de aplicar `focusRef` (histórico isolado). */
+  focusVersionId?: BibleTextVersionId | null;
   focusSeq?: number;
   /** Onglet Lecture visible (le panneau peut être `hidden` au montage). */
   active?: boolean;
@@ -369,6 +378,10 @@ type BibleReaderViewProps = {
     chapterId: string;
     verse: number | null;
     label: string;
+    versionId: BibleTextVersionId;
+    language: string;
+    versionBadge: string;
+    localizedBookName: string;
   }) => void;
   /** Historique de lecture modifié (suppression). */
   onReadingHistoryChange?: () => void;
@@ -474,6 +487,7 @@ function alignVerseInScroller(
 export function BibleReaderView({
   initialRef = "Jean 3.16",
   focusRef = null,
+  focusVersionId = null,
   focusSeq = 0,
   active = true,
   onBack,
@@ -616,8 +630,12 @@ export function BibleReaderView({
 
   const pickerOpen = activeOverlay.type === "passage_picker";
   const wordSearchOpen = activeOverlay.type === "word_search";
+  const bookSearchOpen = activeOverlay.type === "book_search";
   const toolsMenuOpen = activeOverlay.type === "reader_settings";
   const historyOpen = activeOverlay.type === "history";
+  const verseStudyOpen = activeOverlay.type === "verse_study";
+  const verseStudyVerse =
+    activeOverlay.type === "verse_study" ? activeOverlay.verse : null;
   const hasActiveModalRef = useRef(hasActiveModal);
   hasActiveModalRef.current = hasActiveModal;
 
@@ -664,11 +682,18 @@ export function BibleReaderView({
       if (outcome.bible) setBible(outcome.bible);
       if (outcome.bibleId) setBibleId(outcome.bibleId);
       else setBibleId(versionedBibleId(textVersionRef.current));
+      const vId = textVersionRef.current;
+      const localizedBookName =
+        resolveBookTitleActive(outcome.bookId) || outcome.bookId;
       onBibleRead?.({
         bookId: outcome.bookId,
         chapterId: outcome.chapterId,
         verse: outcome.verse,
         label: outcome.label,
+        versionId: vId,
+        language: languageForVersion(vId),
+        versionBadge: versionBadgeFor(vId),
+        localizedBookName,
       });
     },
   });
@@ -1103,9 +1128,18 @@ export function BibleReaderView({
               return match ? Number(match[2]) : null;
             })()
           : null;
-    void loadChapter(parts.bookId, parts.chapterId, start, end);
+    void (async () => {
+      if (
+        focusVersionId &&
+        isBibleTextVersionId(focusVersionId) &&
+        focusVersionId !== textVersionRef.current
+      ) {
+        await switchTextVersion(focusVersionId);
+      }
+      void loadChapter(parts.bookId, parts.chapterId, start, end);
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [focusSeq, focusRef, active]);
+  }, [focusSeq, focusRef, focusVersionId, active]);
 
   function loadChapter(
     nextBook: string,
@@ -1913,19 +1947,23 @@ export function BibleReaderView({
         pickerOpen,
         pickerPanelOpenAllowed: pickerChrome.pickerPanelOpenAllowed,
         wordSearchOpen,
+        bookSearchOpen,
         toolsMenuOpen,
         historyOpen,
         shareSheetOpen,
         verseActionsOpen: showCreateCard,
+        verseStudyOpen,
       }),
     [
       pickerOpen,
       pickerChrome.pickerPanelOpenAllowed,
       wordSearchOpen,
+      bookSearchOpen,
       toolsMenuOpen,
       historyOpen,
       shareSheetOpen,
       showCreateCard,
+      verseStudyOpen,
     ],
   );
 
@@ -1935,10 +1973,12 @@ export function BibleReaderView({
       pickerOpen,
       pickerPanelOpenAllowed: pickerChrome.pickerPanelOpenAllowed,
       wordSearchOpen,
+      bookSearchOpen,
       toolsMenuOpen,
       historyOpen,
       shareSheetOpen,
       verseActionsOpen: showCreateCard,
+      verseStudyOpen,
     });
     if (target === "picker") {
       closePicker();
@@ -1948,16 +1988,47 @@ export function BibleReaderView({
       closeWordSearch();
       return;
     }
+    if (target === "bookSearch" || target === "verseStudy" || target === "history") {
+      closeOverlay();
+      return;
+    }
     if (target === "tools") {
       closeToolsMenu();
       return;
     }
-    if (target === "history") {
-      closeOverlay();
-      return;
-    }
     if (target === "share") {
       setShareSheetOpen(false);
+    }
+  }
+
+  function openVerseStudy(verse: number) {
+    if (!Number.isFinite(verse) || verse < 1) return;
+    setShareSheetOpen(false);
+    openOverlay({ type: "verse_study", verse });
+  }
+
+  function handleRadialAction(action: RadialNavbarAction) {
+    if (action === "search_books") {
+      setShareSheetOpen(false);
+      openOverlay({ type: "book_search" });
+      return;
+    }
+    if (action === "switch_version") {
+      const next: BibleTextVersionId = textVersion === "s21" ? "ht98" : "s21";
+      void switchTextVersion(next);
+      return;
+    }
+    if (action === "history") {
+      setShareSheetOpen(false);
+      openOverlay({ type: "history" });
+      return;
+    }
+    if (action === "study") {
+      const verse =
+        selection?.[0] ??
+        highlightVerse ??
+        (passage?.verses?.[0]?.number ?? 1);
+      openVerseStudy(verse);
     }
   }
 
@@ -2679,9 +2750,14 @@ export function BibleReaderView({
               <BibleHistorySheet
                 open={historyOpen}
                 onClose={() => closeOverlay()}
-                onSelect={({ bookId, chapterId, verse }) => {
+                onSelect={({ versionId, bookId, chapterId, verse }) => {
                   closeOverlay();
-                  void loadChapter(bookId, chapterId, verse);
+                  void (async () => {
+                    if (versionId !== textVersionRef.current) {
+                      await switchTextVersion(versionId);
+                    }
+                    void loadChapter(bookId, chapterId, verse);
+                  })();
                 }}
                 onHistoryChange={onReadingHistoryChange}
               />
@@ -3059,6 +3135,22 @@ export function BibleReaderView({
                   <YvIcon name="ios_share" className="bible-verse-cta-icon" />
                   <span>Partager</span>
                 </button>
+                <button
+                  type="button"
+                  className="bible-yv-chip bible-verse-study"
+                  disabled={!selectedVerses.length}
+                  onClick={() => {
+                    const verse = selectedVerses[0];
+                    if (verse == null) return;
+                    openVerseStudy(verse);
+                  }}
+                >
+                  <YvIcon
+                    name="format_list_numbered"
+                    className="bible-verse-cta-icon"
+                  />
+                  <span>Étude</span>
+                </button>
               </div>
 
               <CircularColorEditor
@@ -3160,6 +3252,45 @@ export function BibleReaderView({
         planMeta={planReading?.planMeta ?? ""}
         planId={planReading?.planShareId ?? null}
       />
+
+      <SearchBooksModal
+        open={bookSearchOpen}
+        onClose={() => closeOverlay()}
+        books={books}
+        versionId={textVersion}
+        onPick={({ usfm, chapter }) => {
+          closeOverlay();
+          void loadChapter(usfm, String(chapter), null);
+        }}
+      />
+
+      <VerseStudyDrawer
+        open={verseStudyOpen && verseStudyVerse != null}
+        onClose={() => closeOverlay()}
+        versionId={textVersion}
+        bookId={bookId}
+        chapterId={chapterId}
+        verse={verseStudyVerse ?? 1}
+        refLabel={`${bookTitle} ${chapterId}.${verseStudyVerse ?? 1}`}
+        onOpenRef={(usfm) => {
+          closeOverlay();
+          const parts = parseUsfmParts(usfm);
+          if (!isUsfmBookId(parts.bookId)) return;
+          void loadChapter(
+            parts.bookId,
+            parts.chapterId,
+            parts.verse ?? null,
+          );
+        }}
+      />
+
+      {!planReading ? (
+        <RadialNavbar
+          versionId={textVersion}
+          floating={compactViewport || narrowChrome}
+          onAction={handleRadialAction}
+        />
+      ) : null}
 
     </section>
   );

@@ -8,6 +8,11 @@ export function userNotesDoc(uid: string) {
   return `users/${uid}/notes/state`;
 }
 
+/** Notas de estudo por versículo (nunca textos bíblicos). */
+export function userVerseNotesDoc(uid: string) {
+  return `users/${uid}/verseNotes/state`;
+}
+
 export function userPlanProgressDoc(uid: string) {
   return `users/${uid}/planProgress/state`;
 }

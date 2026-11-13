@@ -169,7 +169,9 @@ export function ProfileShellPanel({
     const verseRaw = event.meta?.verse;
     const verse =
       typeof verseRaw === "number" && Number.isFinite(verseRaw) ? verseRaw : null;
-    return { bookId, chapterId, verse };
+    const versionRaw = String(event.meta?.versionId || "s21").trim();
+    const versionId = versionRaw === "ht98" ? "ht98" : "s21";
+    return { versionId, bookId, chapterId, verse };
   }
 
   function saveName(event: FormEvent) {
@@ -591,6 +593,9 @@ export function ProfileShellPanel({
               {history.map((event) => {
                 const ref = parseRef(event);
                 if (!ref) return null;
+                const badge =
+                  String(event.meta?.versionBadge || "").trim() ||
+                  (ref.versionId === "ht98" ? "KREYÒL" : "S21");
                 const label =
                   String(event.meta?.label || "").trim() ||
                   (ref.verse != null
@@ -603,7 +608,15 @@ export function ProfileShellPanel({
                       className="profile-history-item"
                       onClick={() => onOpenPassage(ref)}
                     >
-                      <span className="profile-history-label">{label}</span>
+                      <span className="profile-history-label">
+                        <span
+                          className="bible-history-version-badge"
+                          data-version={ref.versionId}
+                        >
+                          {badge}
+                        </span>
+                        {label}
+                      </span>
                       <span className="profile-history-when muted">
                         {formatActivityWhen(event.at)}
                       </span>

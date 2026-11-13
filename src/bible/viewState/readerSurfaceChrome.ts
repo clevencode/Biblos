@@ -6,10 +6,12 @@ export type ReaderSurfaceChromeInput = {
   pickerOpen: boolean;
   pickerPanelOpenAllowed: boolean;
   wordSearchOpen?: boolean;
+  bookSearchOpen?: boolean;
   toolsMenuOpen: boolean;
   historyOpen: boolean;
   shareSheetOpen: boolean;
   verseActionsOpen: boolean;
+  verseStudyOpen?: boolean;
 };
 
 export type ReaderSurfaceChrome = {
@@ -27,9 +29,11 @@ export type ReaderSurfaceChrome = {
 export type OverlayDismissTarget =
   | "picker"
   | "wordSearch"
+  | "bookSearch"
   | "tools"
   | "history"
-  | "share";
+  | "share"
+  | "verseStudy";
 
 export const OVERLAY_DISMISS_SWALLOW_MS = 480;
 
@@ -49,19 +53,23 @@ export function readerSurfaceChrome(
     input.pickerPanelOpenAllowed,
   );
   const wordSearchOpen = Boolean(input.wordSearchOpen);
+  const bookSearchOpen = Boolean(input.bookSearchOpen);
+  const verseStudyOpen = Boolean(input.verseStudyOpen);
   /** Chip roll ou painel palavras — mesma elevação de chrome + scrim dismiss. */
-  const barOverlayOpen = rollOpen || wordSearchOpen;
+  const barOverlayOpen = rollOpen || wordSearchOpen || bookSearchOpen;
   const passageInputBlocked =
     barOverlayOpen ||
     input.toolsMenuOpen ||
     input.historyOpen ||
-    input.shareSheetOpen;
+    input.shareSheetOpen ||
+    verseStudyOpen;
   /** Mesmo fundo escuro do book modal — tools incluso. */
   const passageSurfaceScrimOpen =
     barOverlayOpen ||
     input.toolsMenuOpen ||
     input.historyOpen ||
-    input.shareSheetOpen;
+    input.shareSheetOpen ||
+    verseStudyOpen;
   const toolsMenuPassThroughDismiss = false;
 
   return {
@@ -73,12 +81,17 @@ export function readerSurfaceChrome(
       passageInputBlocked ||
       input.pickerOpen ||
       wordSearchOpen ||
+      bookSearchOpen ||
+      verseStudyOpen ||
       input.verseActionsOpen,
     /* Eleva `.bible-yv-top` acima do scrim — igual ao chip book */
     rootClassPassageRollOpen: barOverlayOpen,
-    scrimIsTools: input.toolsMenuOpen || input.historyOpen,
+    scrimIsTools: input.toolsMenuOpen || input.historyOpen || verseStudyOpen,
     scrimIsPickerDismiss:
-      barOverlayOpen || input.toolsMenuOpen || input.historyOpen,
+      barOverlayOpen ||
+      input.toolsMenuOpen ||
+      input.historyOpen ||
+      verseStudyOpen,
   };
 }
 
@@ -89,6 +102,8 @@ export function overlayDismissTarget(
   const { passagePickerRollOpen } = readerSurfaceChrome(input);
   if (passagePickerRollOpen) return "picker";
   if (input.wordSearchOpen) return "wordSearch";
+  if (input.bookSearchOpen) return "bookSearch";
+  if (input.verseStudyOpen) return "verseStudy";
   if (input.toolsMenuOpen) return "tools";
   if (input.historyOpen) return "history";
   if (input.shareSheetOpen) return "share";

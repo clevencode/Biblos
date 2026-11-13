@@ -122,28 +122,49 @@ export function recordBibleRead(input: {
   verse?: number | null;
   label?: string;
   userId?: string;
+  /** Isolamento de escopo — obrigatório para novas leituras. */
+  versionId?: string;
+  language?: string;
+  versionBadge?: string;
+  localizedBookName?: string;
 }): ActivityEvent | null {
   if (!ACTIVITY_TRACKING_ENABLED) return null;
   const bookId = String(input.bookId || "").trim().toUpperCase();
   const chapterId = String(input.chapterId || "").trim();
   if (!bookId || !chapterId) return null;
+  const versionId = String(input.versionId || "s21").trim() || "s21";
   const usfm = `${bookId}.${chapterId}`;
   const uid = input.userId ?? loadOrCreateProfile().id;
   const recent = listBibleReadingHistory(uid, 1)[0];
+  const recentVersion = String(recent?.meta?.versionId || "s21");
   if (
     recent?.meta?.usfm === usfm &&
+    recentVersion === versionId &&
     Date.now() - new Date(recent.at).getTime() < 90_000
   ) {
     return null;
   }
   const verse =
     input.verse != null && Number.isFinite(input.verse) ? Number(input.verse) : null;
+  const localizedBookName = String(input.localizedBookName || "").trim();
   const label =
     String(input.label || "").trim() ||
-    (verse ? `${bookId} ${chapterId}.${verse}` : `${bookId} ${chapterId}`);
+    (verse
+      ? `${localizedBookName || bookId} ${chapterId}.${verse}`
+      : `${localizedBookName || bookId} ${chapterId}`);
   return appendActivity(
     "bible.read",
-    { usfm, bookId, chapterId, verse, label },
+    {
+      usfm,
+      bookId,
+      chapterId,
+      verse,
+      label,
+      versionId,
+      language: String(input.language || "").trim() || null,
+      versionBadge: String(input.versionBadge || "").trim() || null,
+      localizedBookName: localizedBookName || null,
+    },
     uid,
   );
 }

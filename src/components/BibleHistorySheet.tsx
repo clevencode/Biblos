@@ -7,12 +7,14 @@ import {
   removeActivityById,
   type ActivityEvent,
 } from "../activityLog";
+import {
+  readingLabelForItem,
+  toReadingHistoryItem,
+  type HistorySelectPayload,
+} from "../bible/readingHistoryRepository";
+import type { ReadingHistoryItem } from "../bible/readingScope";
 
-export type BibleHistorySelect = {
-  bookId: string;
-  chapterId: string;
-  verse: number | null;
-};
+export type BibleHistorySelect = HistorySelectPayload;
 
 export type BibleHistorySheetProps = {
   open: boolean;
@@ -21,22 +23,29 @@ export type BibleHistorySheetProps = {
   onHistoryChange?: () => void;
 };
 
-function parseReadingEvent(event: ActivityEvent): BibleHistorySelect | null {
-  const bookId = String(event.meta?.bookId || "").trim().toUpperCase();
-  const chapterId = String(event.meta?.chapterId || "").trim();
-  if (!bookId || !chapterId) return null;
-  const verseRaw = event.meta?.verse;
-  const verse =
-    typeof verseRaw === "number" && Number.isFinite(verseRaw) ? verseRaw : null;
-  return { bookId, chapterId, verse };
+type HistoryRow = {
+  eventId: string;
+  at: string;
+  item: ReadingHistoryItem;
+};
+
+function rowsFromEvents(events: ActivityEvent[]): HistoryRow[] {
+  const rows: HistoryRow[] = [];
+  for (const event of events) {
+    const item = toReadingHistoryItem(event);
+    if (!item) continue;
+    rows.push({ eventId: event.id, at: event.at, item });
+  }
+  return rows;
 }
 
-function readingLabel(event: ActivityEvent, ref: BibleHistorySelect): string {
-  const fromMeta = String(event.meta?.label || "").trim();
-  if (fromMeta) return fromMeta;
-  return ref.verse != null
-    ? `${ref.bookId} ${ref.chapterId}.${ref.verse}`
-    : `${ref.bookId} ${ref.chapterId}`;
+function toSelect(item: ReadingHistoryItem): BibleHistorySelect {
+  return {
+    versionId: item.versionId,
+    bookId: item.usfm,
+    chapterId: String(item.chapter),
+    verse: item.verse ?? null,
+  };
 }
 
 export function BibleHistorySheet({
@@ -46,10 +55,10 @@ export function BibleHistorySheet({
   onHistoryChange,
 }: BibleHistorySheetProps) {
   const titleId = useId();
-  const [events, setEvents] = useState<ActivityEvent[]>([]);
+  const [rows, setRows] = useState<HistoryRow[]>([]);
 
   function refresh() {
-    setEvents(listBibleReadingHistory(undefined, 40));
+    setRows(rowsFromEvents(listBibleReadingHistory(undefined, 40)));
   }
 
   useEffect(() => {
@@ -73,7 +82,7 @@ export function BibleHistorySheet({
   }
 
   function clearAll() {
-    if (events.length === 0) return;
+    if (rows.length === 0) return;
     const ok = window.confirm("Effacer tout l’historique de lecture ?");
     if (!ok) return;
     clearBibleReadingHistory();
@@ -95,7 +104,7 @@ export function BibleHistorySheet({
           Historique
         </p>
         <div className="bible-yv-history-panel-actions">
-          {events.length > 0 ? (
+          {rows.length > 0 ? (
             <button
               type="button"
               className="bible-yv-history-panel-icon-btn"
@@ -118,45 +127,50 @@ export function BibleHistorySheet({
       </header>
 
       <div className="bible-yv-history-panel-meta" aria-live="polite">
-        {events.length === 0 ? (
+        {rows.length === 0 ? (
           <span>Chapitres ouverts récemment</span>
         ) : (
           <span>
-            {events.length} lecture{events.length === 1 ? "" : "s"}
+            {rows.length} lecture{rows.length === 1 ? "" : "s"}
           </span>
         )}
       </div>
 
       <ul className="bible-yv-history-panel-list" aria-label="Historique de lecture">
-        {events.length === 0 ? (
+        {rows.length === 0 ? (
           <li className="bible-yv-history-panel-empty">
             Aucune lecture enregistrée pour l’instant.
           </li>
         ) : (
-          events.map((event) => {
-            const ref = parseReadingEvent(event);
-            if (!ref) return null;
+          rows.map(({ eventId, at, item }) => {
+            const label = readingLabelForItem(item);
             return (
-              <li key={event.id} className="bible-history-row">
+              <li key={eventId} className="bible-history-row">
                 <button
                   type="button"
                   className="bible-yv-history-panel-item"
-                  onClick={() => onSelect(ref)}
+                  onClick={() => onSelect(toSelect(item))}
                 >
                   <span className="bible-yv-history-panel-ref">
-                    {readingLabel(event, ref)}
+                    <span
+                      className="bible-history-version-badge"
+                      data-version={item.versionId}
+                    >
+                      {item.versionBadge}
+                    </span>
+                    {label}
                   </span>
                   <span className="bible-yv-history-panel-when">
-                    {formatActivityWhen(event.at)}
+                    {formatActivityWhen(at)}
                   </span>
                 </button>
                 <button
                   type="button"
                   className="bible-history-delete"
-                  aria-label={`Supprimer ${readingLabel(event, ref)}`}
+                  aria-label={`Supprimer ${label}`}
                   onClick={(e) => {
                     e.stopPropagation();
-                    deleteOne(event.id);
+                    deleteOne(eventId);
                   }}
                 >
                   <YvIcon name="delete" className="bible-history-delete-icon" />

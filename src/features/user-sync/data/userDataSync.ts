@@ -35,9 +35,16 @@ import {
   subscribePlanProgress,
 } from "../../reading-plans/domain/planProgress";
 import {
+  clearVerseNoteStore,
+  exportVerseNoteStore,
+  importVerseNoteStore,
+  subscribeVerseNotes,
+} from "../../../bible/verseNotes";
+import {
   userHighlightsDoc,
   userNotesDoc,
   userPlanProgressDoc,
+  userVerseNotesDoc,
 } from "./userDataPaths";
 
 export type SyncStatus = "idle" | "synced" | "pending" | "offline";
@@ -108,6 +115,14 @@ async function pushAll(uid: string): Promise<void> {
       { merge: true },
     ),
     setDoc(
+      pathDoc(db, userVerseNotesDoc(uid)),
+      {
+        store: exportVerseNoteStore(),
+        updatedAt,
+      },
+      { merge: true },
+    ),
+    setDoc(
       pathDoc(db, userPlanProgressDoc(uid)),
       {
         store: exportPlanProgressStore(),
@@ -164,6 +179,19 @@ function applyRemoteNotes(data: Record<string, unknown> | undefined) {
   try {
     importDayNoteStore(
       (data.store ?? {}) as Parameters<typeof importDayNoteStore>[0],
+      true,
+    );
+  } finally {
+    applyingRemote = false;
+  }
+}
+
+function applyRemoteVerseNotes(data: Record<string, unknown> | undefined) {
+  if (!data) return;
+  applyingRemote = true;
+  try {
+    importVerseNoteStore(
+      (data.store ?? {}) as Parameters<typeof importVerseNoteStore>[0],
       true,
     );
   } finally {
@@ -231,6 +259,17 @@ export async function startUserDataSync(uid: string): Promise<void> {
   );
   unsubs.push(
     onSnapshot(
+      pathDoc(db, userVerseNotesDoc(uid)),
+      (snap) => {
+        applyRemoteVerseNotes(
+          snap.data() as Record<string, unknown> | undefined,
+        );
+      },
+      (err) => console.warn("[user-sync] verseNotes", err),
+    ),
+  );
+  unsubs.push(
+    onSnapshot(
       pathDoc(db, userPlanProgressDoc(uid)),
       (snap) => {
         applyRemotePlanProgress(
@@ -253,6 +292,7 @@ export async function startUserDataSync(uid: string): Promise<void> {
   };
   localUnsubs.push(subscribeVerseMarksRevision(onLocal));
   localUnsubs.push(subscribeDayNotes(onLocal));
+  localUnsubs.push(subscribeVerseNotes(onLocal));
   localUnsubs.push(subscribePlanProgress(onLocal));
 
   // Premier push pour seed cloud si docs vides
@@ -282,6 +322,7 @@ export function snapshotLocalUserData() {
       removed: exportVerseMarkRemoved(),
     },
     notes: exportDayNoteStore(),
+    verseNotes: exportVerseNoteStore(),
     planProgress: exportPlanProgressStore(),
   };
 }
@@ -298,6 +339,7 @@ export function mergeLocalSnapshotIntoStores(
     true,
   );
   importDayNoteStore(snapshot.notes, true);
+  if (snapshot.verseNotes) importVerseNoteStore(snapshot.verseNotes, true);
   importPlanProgressStore(snapshot.planProgress, true);
 }
 
@@ -305,6 +347,7 @@ export function mergeLocalSnapshotIntoStores(
 export function clearPersonalLocalData(): void {
   clearVerseMarkStore();
   clearDayNoteStore();
+  clearVerseNoteStore();
   clearPlanProgressStore();
   try {
     localStorage.removeItem("biblos-activity-v1");
@@ -319,6 +362,7 @@ export async function deleteUserCloudData(uid: string): Promise<void> {
   await Promise.all([
     deleteDoc(pathDoc(db, userHighlightsDoc(uid))).catch(() => undefined),
     deleteDoc(pathDoc(db, userNotesDoc(uid))).catch(() => undefined),
+    deleteDoc(pathDoc(db, userVerseNotesDoc(uid))).catch(() => undefined),
     deleteDoc(pathDoc(db, userPlanProgressDoc(uid))).catch(() => undefined),
   ]);
 }
@@ -337,6 +381,7 @@ export function exportUserBackupJson(meta?: {
       removed: exportVerseMarkRemoved(),
     },
     notes: exportDayNoteStore(),
+    verseNotes: exportVerseNoteStore(),
     planProgress: exportPlanProgressStore(),
   };
   return JSON.stringify(payload, null, 2);

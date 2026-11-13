@@ -40,6 +40,11 @@ import {
 import { syncNativeChrome } from "./nativeChrome";
 import { loadShellTab, saveShellTab, type ShellTab } from "./shellNav";
 import type { BibleHistorySelect } from "./components/BibleHistorySheet";
+import type { BibleTextVersionId } from "./bible/bibleVersions";
+import {
+  languageForVersion,
+  versionBadgeFor,
+} from "./bible/readingScope";
 import { EditorialAdminApp } from "./features/editorial-auth/presentation/EditorialAdminApp";
 import {
   applyPendingSwUpdate,
@@ -64,6 +69,13 @@ function historyToFocusRef(ref: BibleHistorySelect): string {
     return `${ref.bookId} ${ref.chapterId}.${ref.verse}`;
   }
   return `${ref.bookId} ${ref.chapterId}`;
+}
+
+function openHistoryPassage(
+  ref: BibleHistorySelect,
+  open: (passage: string, versionId?: BibleTextVersionId) => void,
+) {
+  open(historyToFocusRef(ref), ref.versionId);
 }
 
 export function App() {
@@ -100,6 +112,8 @@ function BiblosConsumerApp() {
   const [navHidden, setNavHidden] = useState(false);
   const [themePref, setThemePref] = useState<ThemePref>(() => loadThemePref());
   const [bibleFocusRef, setBibleFocusRef] = useState<string | null>(null);
+  const [bibleFocusVersion, setBibleFocusVersion] =
+    useState<BibleTextVersionId | null>(null);
   const [bibleFocusSeq, setBibleFocusSeq] = useState(0);
   const [activityTick, setActivityTick] = useState(0);
   const [workspacePlan, setWorkspacePlan] = useState<ReadingPlan | null>(null);
@@ -174,13 +188,17 @@ function BiblosConsumerApp() {
     setTab(next);
   }, []);
 
-  const openBible = useCallback((ref?: string) => {
-    if (ref) {
-      setBibleFocusRef(ref);
-      setBibleFocusSeq((n) => n + 1);
-    }
-    setTab("bible");
-  }, []);
+  const openBible = useCallback(
+    (ref?: string, versionId?: BibleTextVersionId) => {
+      if (ref) {
+        setBibleFocusRef(ref);
+        setBibleFocusVersion(versionId ?? null);
+        setBibleFocusSeq((n) => n + 1);
+      }
+      setTab("bible");
+    },
+    [],
+  );
 
   const { openPlanAtJour, planReading, clearPlan } = usePlanReadingSession({
     onNavigate: (ref) => openBible(ref),
@@ -422,6 +440,7 @@ function BiblosConsumerApp() {
                     <BibleReaderView
                       initialRef="Jean 3.16"
                       focusRef={bibleFocusRef}
+                      focusVersionId={bibleFocusVersion}
                       focusSeq={bibleFocusSeq}
                       active={bibleMode}
                       compactViewport={narrow}
@@ -436,8 +455,15 @@ function BiblosConsumerApp() {
                       onAuthorizedMarkConsumed={() => setAuthorizedMark(null)}
                       onVerseMarked={handleVerseMarked}
                       onBibleRead={(payload) => {
+                        const versionId = payload.versionId ?? "s21";
                         const logged = recordBibleRead({
                           ...payload,
+                          versionId,
+                          language:
+                            payload.language || languageForVersion(versionId),
+                          versionBadge:
+                            payload.versionBadge || versionBadgeFor(versionId),
+                          localizedBookName: payload.localizedBookName,
                           userId: profile.id,
                         });
                         if (logged) setActivityTick((n) => n + 1);
@@ -453,7 +479,7 @@ function BiblosConsumerApp() {
                   activityTick={activityTick}
                   themePref={themePref}
                   onSetTheme={setTheme}
-                  onOpenPassage={(ref) => openBible(historyToFocusRef(ref))}
+                  onOpenPassage={(ref) => openHistoryPassage(ref, openBible)}
                   onHistoryChange={() => setActivityTick((n) => n + 1)}
                   onRequestSignIn={() => {
                     setSignInVariant("upgrade");
