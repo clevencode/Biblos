@@ -57,6 +57,7 @@ export type UiCopyKey =
   | "profile.tab.prefs"
   | "profile.tab.storage"
   | "profile.tab.history"
+  | "profile.tab.admin"
   | "profile.account"
   | "auth.titleUpgrade"
   | "auth.titleSoftGate"
@@ -264,6 +265,7 @@ const FR: Dict = {
   "profile.tab.prefs": "Préfs",
   "profile.tab.storage": "Stockage",
   "profile.tab.history": "Historique",
+  "profile.tab.admin": "Admin",
   "profile.account": "Compte",
   "auth.titleUpgrade": "Sauvegarder mes études",
   "auth.titleSoftGate": "Garde tes surlignages",
@@ -483,6 +485,7 @@ const HT: Dict = {
   "profile.tab.prefs": "Preferans",
   "profile.tab.storage": "Depo",
   "profile.tab.history": "Istorik",
+  "profile.tab.admin": "Admin",
   "profile.account": "Kont",
   "auth.titleUpgrade": "Sove etid mwen yo",
   "auth.titleSoftGate": "Kenbe souliyman ou yo",

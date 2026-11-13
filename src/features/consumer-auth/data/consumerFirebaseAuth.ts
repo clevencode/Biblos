@@ -5,6 +5,7 @@
 import { Capacitor } from "@capacitor/core";
 import { FirebaseAuthentication } from "@capacitor-firebase/authentication";
 import {
+  browserLocalPersistence,
   createUserWithEmailAndPassword,
   deleteUser,
   EmailAuthProvider,
@@ -13,6 +14,7 @@ import {
   linkWithPopup,
   onAuthStateChanged,
   sendPasswordResetEmail,
+  setPersistence,
   signInAnonymously,
   signInWithCredential,
   signInWithEmailAndPassword,
@@ -24,6 +26,20 @@ import {
   type User,
 } from "firebase/auth";
 import { ensureFirebase, getFirebaseAuth, isFirebaseConfigured } from "../../../lib/firebase";
+
+let persistenceReady: Promise<void> | null = null;
+
+/** Persistência local — sessão sobrevive a fechar a app (só sai no logout). */
+async function ensureAuthPersistence(instance: Auth): Promise<void> {
+  if (!persistenceReady) {
+    persistenceReady = setPersistence(instance, browserLocalPersistence).catch(
+      (err) => {
+        console.warn("[auth] setPersistence", err);
+      },
+    );
+  }
+  await persistenceReady;
+}
 
 export type ConsumerAuthUser = Pick<
   User,
@@ -43,7 +59,9 @@ export function isConsumerAuthConfigured(): boolean {
 
 async function ensureAuthReady(): Promise<Auth | null> {
   const ready = await ensureFirebase();
-  return ready?.auth ?? null;
+  const instance = ready?.auth ?? null;
+  if (instance) await ensureAuthPersistence(instance);
+  return instance;
 }
 
 export function getConsumerAuth(): Auth | null {
@@ -114,6 +132,10 @@ export function getCredentialFromError(err: unknown): AuthCredential | null {
   return cred ?? null;
 }
 
+/**
+ * Cria sessão anónima só se ainda não houver utilizador.
+ * Não chamar antes do 1.º onAuthStateChanged — senão apaga o login persistido.
+ */
 export async function ensureAnonymousSession(): Promise<ConsumerAuthUser | null> {
   const instance = await ensureAuthReady();
   if (!instance) return null;

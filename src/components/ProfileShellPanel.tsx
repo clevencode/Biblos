@@ -33,11 +33,7 @@ import {
   listAllVerseMarks,
 } from "../verseMarks";
 import { useConsumerAuth } from "../features/consumer-auth";
-import {
-  downloadUserBackupJson,
-  subscribeSyncStatus,
-  type SyncStatus,
-} from "../features/user-sync";
+import { downloadUserBackupJson } from "../features/user-sync";
 import { downloadOfflineBible } from "../bibleOffline";
 import { downloadHt1998Offline } from "../bible/ht1998Offline";
 import { localS21Books } from "../bibleEngine";
@@ -53,7 +49,7 @@ type ProfileShellPanelProps = {
   onRequestSignIn?: () => void;
 };
 
-type ProfileContentTab = "account" | "prefs" | "storage" | "history";
+type ProfileContentTab = "account" | "prefs" | "storage" | "history" | "admin";
 
 const PROFILE_CONTENT_TABS: {
   id: ProfileContentTab;
@@ -61,29 +57,16 @@ const PROFILE_CONTENT_TABS: {
     | "profile.tab.account"
     | "profile.tab.prefs"
     | "profile.tab.storage"
-    | "profile.tab.history";
+    | "profile.tab.history"
+    | "profile.tab.admin";
+  adminOnly?: boolean;
 }[] = [
   { id: "account", labelKey: "profile.tab.account" },
   { id: "prefs", labelKey: "profile.tab.prefs" },
   { id: "storage", labelKey: "profile.tab.storage" },
   { id: "history", labelKey: "profile.tab.history" },
+  { id: "admin", labelKey: "profile.tab.admin", adminOnly: true },
 ];
-
-function syncBadge(status: SyncStatus): { label: string; tone: "synced" | "pending" | "idle" } {
-  if (status === "synced") return { label: "Synchronisé", tone: "synced" };
-  if (status === "pending" || status === "offline") {
-    return { label: "En attente", tone: "pending" };
-  }
-  return { label: "Inactif", tone: "idle" };
-}
-
-function syncRowLabel(status: SyncStatus): string {
-  if (status === "synced") return "Synchronisé";
-  if (status === "pending" || status === "offline") {
-    return "Hors ligne — modifications en attente";
-  }
-  return "Sync inactive";
-}
 
 function isReady(state: VersionAvailabilityState | null): boolean {
   return state?.status === "offline_ready";
@@ -117,6 +100,17 @@ export function ProfileShellPanel({
   const showAdminEntry =
     isAuthenticated && isClevencodeAdminEmail(user?.email);
   const [contentTab, setContentTab] = useState<ProfileContentTab>("account");
+  const visibleTabs = useMemo(
+    () =>
+      PROFILE_CONTENT_TABS.filter((tab) => !tab.adminOnly || showAdminEntry),
+    [showAdminEntry],
+  );
+
+  useEffect(() => {
+    if (contentTab === "admin" && !showAdminEntry) {
+      setContentTab("account");
+    }
+  }, [contentTab, showAdminEntry]);
   const [confirmClear, setConfirmClear] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmSignOut, setConfirmSignOut] = useState(false);
@@ -132,7 +126,6 @@ export function ProfileShellPanel({
   const [signOutBusy, setSignOutBusy] = useState(false);
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [dlBusy, setDlBusy] = useState<"s21" | "ht98" | null>(null);
-  const [syncStatus, setSyncStatus] = useState<SyncStatus>("idle");
 
   const markedCount = useMemo(() => {
     void activityTick;
@@ -154,14 +147,11 @@ export function ProfileShellPanel({
     session.status === "anonymous" || session.status === "offline_guest";
   const showQuota = guest && markedCount >= 7;
   const quotaPct = Math.min((markedCount / FREE_MARK_QUOTA) * 100, 100);
-  const badge = syncBadge(syncStatus);
   const displayName = preferredDisplayName(profile) || "…";
 
   useEffect(() => {
     setFullName(joinFullName(profile.firstName, profile.lastName));
   }, [profile.firstName, profile.lastName]);
-
-  useEffect(() => subscribeSyncStatus(setSyncStatus), []);
 
   useEffect(() => {
     if (!active) return;
@@ -311,14 +301,11 @@ export function ProfileShellPanel({
           {session.status === "anonymous" ? (
             <YvIcon name="desktop_windows" className="profile-row-icon" opsz={20} />
           ) : null}
-          {isAuthenticated ? (
-            <span className={`profile-sync-badge is-${badge.tone}`}>{badge.label}</span>
-          ) : null}
         </div>
       </header>
 
       <div className="profile-tabs" role="tablist" aria-label={t("profile.title")}>
-        {PROFILE_CONTENT_TABS.map((tab) => {
+        {visibleTabs.map((tab) => {
           const selected = contentTab === tab.id;
           return (
             <button
@@ -447,29 +434,6 @@ export function ProfileShellPanel({
                       <YvIcon name="settings" className="profile-row-chevron" opsz={20} />
                     </button>
                   )}
-                  <div className="profile-inset-row profile-inset-static" role="status">
-                    <YvIcon name="sync" className="profile-row-icon" opsz={20} />
-                    <span className="profile-row-body">
-                      <span className="profile-row-label">Synchronisation</span>
-                      <span className="profile-row-value muted">
-                        {syncRowLabel(syncStatus)}
-                      </span>
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    className="profile-inset-row"
-                    onClick={() =>
-                      downloadUserBackupJson(
-                        `biblos-backup-${new Date().toISOString().slice(0, 10)}.json`,
-                      )
-                    }
-                  >
-                    <YvIcon name="download" className="profile-row-icon" opsz={20} />
-                    <span className="profile-row-body">
-                      <span className="profile-row-label">Exporter backup (JSON)</span>
-                    </span>
-                  </button>
                   {!confirmSignOut ? (
                     <button
                       type="button"
@@ -565,17 +529,9 @@ export function ProfileShellPanel({
         >
           <section className="profile-section" aria-labelledby="profile-prefs-title">
             <h3 id="profile-prefs-title" className="type-eyebrow">
-              {showAdminEntry ? "Édition & Préférences" : t("profile.settings")}
+              {t("profile.settings")}
             </h3>
             <div className="profile-card profile-card-rows">
-              {showAdminEntry ? (
-                <a className="profile-inset-row" href="#admin">
-                  <span className="profile-row-body">
-                    <span className="profile-row-label">CMS plans (Firestore)</span>
-                  </span>
-                  <span className="profile-admin-pill">#admin ›</span>
-                </a>
-              ) : null}
               <div className="profile-inset-row profile-inset-static">
                 <span className="profile-row-body">
                   <span className="profile-row-label">{t("profile.language")}</span>
@@ -816,6 +772,30 @@ export function ProfileShellPanel({
             )}
           </section>
         </div>
+
+        {showAdminEntry ? (
+          <div
+            id="profile-panel-admin"
+            role="tabpanel"
+            aria-labelledby="profile-tab-admin"
+            className="profile-tab-panel"
+            hidden={contentTab !== "admin"}
+          >
+            <section className="profile-section" aria-labelledby="profile-admin-title">
+              <h3 id="profile-admin-title" className="type-eyebrow">
+                {t("profile.tab.admin")}
+              </h3>
+              <div className="profile-card profile-card-rows">
+                <a className="profile-inset-row" href="#admin">
+                  <span className="profile-row-body">
+                    <span className="profile-row-label">CMS plans (Firestore)</span>
+                  </span>
+                  <span className="profile-admin-pill">#admin ›</span>
+                </a>
+              </div>
+            </section>
+          </div>
+        ) : null}
       </div>
     </div>
   );

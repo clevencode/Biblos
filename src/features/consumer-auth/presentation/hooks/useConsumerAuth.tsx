@@ -113,58 +113,63 @@ export function ConsumerAuthProvider({ children }: { children: ReactNode }) {
     }
 
     let cancelled = false;
-    let booted = false;
+    /** Só após o 1.º onAuthStateChanged — evita signInAnonymously a apagar login Google. */
+    let sawFirstAuth = false;
+
+    function applyUser(next: ConsumerAuthUser) {
+      const p = applyFirebaseAuthUser(next);
+      setUser(next);
+      setProfile(p);
+      setSession(sessionFromUser(next, p.id));
+      void startUserDataSync(next.uid);
+    }
+
+    function applyGuest() {
+      stopUserDataSync();
+      const local = loadOrCreateProfile();
+      setUser(null);
+      setProfile(local);
+      setSession({ status: "offline_guest", localId: local.id });
+    }
 
     const stop = subscribeConsumerAuth((next) => {
       if (cancelled) return;
-      setUser(next);
-      if (next) {
-        const p = applyFirebaseAuthUser(next);
-        setProfile(p);
-        setSession(sessionFromUser(next, p.id));
-        void startUserDataSync(next.uid);
-      } else if (booted) {
-        stopUserDataSync();
-        const local = loadOrCreateProfile();
-        setProfile(local);
-        setSession({ status: "offline_guest", localId: local.id });
-      }
-      setLoading(false);
-    });
 
-    void (async () => {
-      try {
-        const anon = await ensureAnonymousSession();
-        if (cancelled) return;
-        booted = true;
-        if (anon) {
-          setUser(anon);
-          const p = applyFirebaseAuthUser(anon);
-          setProfile(p);
-          setSession(sessionFromUser(anon, p.id));
-          void startUserDataSync(anon.uid);
-        } else {
-          const local = loadOrCreateProfile();
-          setProfile(local);
-          setSession({ status: "offline_guest", localId: local.id });
+      void (async () => {
+        if (!sawFirstAuth) {
+          sawFirstAuth = true;
+          if (next) {
+            applyUser(next);
+            if (!cancelled) setLoading(false);
+            return;
+          }
+          /* Sem sessão persistida → guest anónimo (não há login a preservar). */
+          try {
+            const anon = await ensureAnonymousSession();
+            if (cancelled) return;
+            if (anon) applyUser(anon);
+            else applyGuest();
+          } catch (err) {
+            if (cancelled) return;
+            if (!isNetworkAuthError(err)) {
+              console.warn("[auth] anonymous boot", err);
+            }
+            applyGuest();
+          } finally {
+            if (!cancelled) setLoading(false);
+          }
+          return;
         }
-      } catch (err) {
-        if (cancelled) return;
-        booted = true;
-        if (isNetworkAuthError(err)) {
-          const local = loadOrCreateProfile();
-          setProfile(local);
-          setSession({ status: "offline_guest", localId: local.id });
+
+        /* Updates seguintes: login Google / logout manual */
+        if (next) {
+          applyUser(next);
         } else {
-          console.warn("[auth] anonymous boot", err);
-          const local = loadOrCreateProfile();
-          setProfile(local);
-          setSession({ status: "offline_guest", localId: local.id });
+          applyGuest();
         }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
+        setLoading(false);
+      })();
+    });
 
     return () => {
       cancelled = true;

@@ -339,9 +339,15 @@ export async function copyVerseText(input: {
   return copyShareCaption({ mode: "verse", ...input });
 }
 
+function urlAlreadyInText(text: string, url: string): boolean {
+  if (!text || !url) return false;
+  return text.includes(url);
+}
+
 /**
  * Partage texte vers d’autres apps (Web Share API).
  * Fallback : copie presse-papiers.
+ * Se o URL já está no `text` (buildShareText), não reenvia `url` à parte.
  */
 export async function sharePlainText(input: {
   title: string;
@@ -350,7 +356,8 @@ export async function sharePlainText(input: {
 }): Promise<ShareVerseResult> {
   const title = String(input.title || "").trim() || "Biblos";
   const text = String(input.text || "").trim();
-  const url = String(input.url || "").trim();
+  const rawUrl = String(input.url || "").trim();
+  const url = urlAlreadyInText(text, rawUrl) ? "" : rawUrl;
   if (!text && !url) {
     return { ok: false, error: "Rien à partager" };
   }
@@ -430,7 +437,8 @@ export async function shareVersePayload(
 ): Promise<ShareVerseResult> {
   const title = payload.title.trim() || "Biblos";
   const text = String(payload.text || "").trim();
-  const url = String(payload.url || "").trim();
+  const rawUrl = String(payload.url || "").trim();
+  const url = urlAlreadyInText(text, rawUrl) ? "" : rawUrl;
   const file = toShareFile(payload.file);
   const canShare =
     typeof navigator !== "undefined" && typeof navigator.share === "function";
