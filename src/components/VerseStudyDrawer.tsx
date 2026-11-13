@@ -4,6 +4,7 @@
  */
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { YvIcon } from "./YvIcon";
 import { loadVerseStudy, type VerseStudyBundle } from "../bible/studyQueries";
 import type { TskeRef } from "../bible/tske";
@@ -168,7 +169,9 @@ function RefTextModal({
     };
   }, [card.preview, card.usfm, versionId]);
 
-  return (
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
     <div className="bible-study-ref-modal" role="dialog" aria-modal="true" aria-labelledby={titleId}>
       <button
         type="button"
@@ -206,7 +209,8 @@ function RefTextModal({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

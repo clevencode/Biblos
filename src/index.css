@@ -13320,6 +13320,12 @@ html[data-passage-bar-panel="test"]
   color: inherit;
 }
 
+/* Ref cruzada aberta: esconde o X do cartão principal (evita X duplicado). */
+body:has(.bible-study-ref-modal) .bible-reader--yv .bible-verse-actions-close {
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .bible-reader--yv .bible-verse-actions-msg {
   margin: 0;
   font-size: 0.85rem;
@@ -16407,17 +16413,13 @@ html[data-passage-bar-panel="test"]
   font-weight: 400;
 }
 
-/* Modal de texto ao tocar numa referência cruzada */
+/* Modal de texto ao tocar numa referência cruzada — ancorado em baixo (como o cartão principal) */
 .bible-study-ref-modal {
   position: fixed;
   inset: 0;
   z-index: calc(var(--bible-z-verse-sheet, 40) + 8);
-  display: grid;
-  place-items: end center;
-  /* Espaço extra em baixo para a sombra arredondada não ser cortada. */
-  padding: 0 max(var(--mobile-gutter, 12px), env(safe-area-inset-left, 0px))
-    calc(env(safe-area-inset-bottom, 0px) + 28px)
-    max(var(--mobile-gutter, 12px), env(safe-area-inset-right, 0px));
+  margin: 0;
+  padding: 0;
   overflow: visible;
   pointer-events: none;
 }
@@ -16439,15 +16441,19 @@ html[data-passage-bar-panel="test"]
   pointer-events: auto;
 }
 
-/* Altura fixa — não cresce com o texto; o body faz scroll. */
+/* Altura fixa; bottom alinhado ao cartão de seleção suspenso. */
 .bible-study-ref-modal-card {
-  --ref-modal-h: min(40vh, 15.5rem);
-  position: relative;
+  --ref-modal-h: min(36vh, 14rem);
+  position: absolute;
   z-index: 1;
-  width: min(100%, 28rem);
+  left: max(var(--mobile-gutter, 12px), env(safe-area-inset-left, 0px));
+  right: max(var(--mobile-gutter, 12px), env(safe-area-inset-right, 0px));
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
+  width: auto;
+  max-width: none;
   height: var(--ref-modal-h);
   max-height: var(--ref-modal-h);
-  margin: 0 0 4px;
+  margin: 0;
   padding: 0;
   border: 0;
   border-radius: 16px;
@@ -16458,6 +16464,20 @@ html[data-passage-bar-panel="test"]
   overflow: visible;
   pointer-events: auto;
   animation: bible-popup-in 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.app.is-bible-mode.is-narrow .bible-study-ref-modal-card {
+  bottom: calc(var(--mobile-bottom-chrome, 64px) + 8px);
+}
+
+/* Com seleção aberta / chrome oculto: mesmo lift do cartão principal */
+.app.is-bible-mode.is-narrow:has(.bible-reader--yv.has-verse-actions)
+  .bible-study-ref-modal-card,
+.app.is-bible-mode.is-narrow:has(.bible-reader--yv.is-overlay-active)
+  .bible-study-ref-modal-card,
+.app.is-bible-mode.is-narrow:has(.mode-tabs.is-immersive-hidden)
+  .bible-study-ref-modal-card {
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
 }
 
 .bible-study-ref-modal-surface {
