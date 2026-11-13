@@ -1024,6 +1024,14 @@ export function BibleReaderView({
     textVersionRef.current = textVersion;
   }, [textVersion]);
 
+  /** Warm-up silencioso do índice de busca (IDB → RAM / worker). */
+  useEffect(() => {
+    if (!active) return;
+    void import("../bible/verseSearchClient").then(({ warmSearchIndexInWorker }) => {
+      warmSearchIndexInWorker(textVersion);
+    });
+  }, [active, textVersion]);
+
   useEffect(() => {
     if (textVersion !== "ht98") return;
     let cancelled = false;

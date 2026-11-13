@@ -681,9 +681,12 @@ export function BiblePassageWordSearchPanel({
                   const usfmBook = String(hit.usfm || "")
                     .split(".")[0]
                     ?.toUpperCase();
+                  // Títulos só do catálogo da versão / índice (nunca CANON_BOOKS FR)
                   const localizedTitle =
                     (usfmBook ? titleById.get(usfmBook) : null) ||
-                    hit.bookTitle;
+                    hit.bookTitle ||
+                    usfmBook ||
+                    "";
                   return (
                     <li key={hit.usfm}>
                       <button

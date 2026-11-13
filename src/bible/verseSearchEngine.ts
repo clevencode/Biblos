@@ -523,13 +523,114 @@ export function prepareQueryTokens(
   return { normQuery, tokenGroups, tokens, stemmedGroups, stemmed };
 }
 
-export function searchVersesCascade(
+/** Índice invertido por versão (RAM / IDB / worker). */
+export type VerseSearchIndex = {
+  verses: IndexedVerse[];
+  /** token normalizado → índices em `verses` */
+  tokenMap: Record<string, number[]>;
+  uniqueTokens: string[];
+};
+
+export function buildTokenIndex(verses: IndexedVerse[]): VerseSearchIndex {
+  const tokenMap: Record<string, number[]> = Object.create(null);
+  for (let i = 0; i < verses.length; i++) {
+    const verse = verses[i]!;
+    for (const word of verse.words) {
+      const list = tokenMap[word];
+      if (list) list.push(i);
+      else tokenMap[word] = [i];
+    }
+  }
+  return {
+    verses,
+    tokenMap,
+    uniqueTokens: Object.keys(tokenMap),
+  };
+}
+
+function unionPostings(
+  tokenMap: Record<string, number[]>,
+  alts: string[],
+): number[] {
+  if (alts.length === 0) return [];
+  if (alts.length === 1) return tokenMap[alts[0]!] ?? [];
+  const seen = new Set<number>();
+  for (const alt of alts) {
+    const list = tokenMap[alt];
+    if (!list) continue;
+    for (const idx of list) seen.add(idx);
+  }
+  return [...seen].sort((a, b) => a - b);
+}
+
+function intersectSorted(a: number[], b: number[]): number[] {
+  if (a.length === 0 || b.length === 0) return [];
+  const out: number[] = [];
+  let i = 0;
+  let j = 0;
+  while (i < a.length && j < b.length) {
+    const av = a[i]!;
+    const bv = b[j]!;
+    if (av === bv) {
+      out.push(av);
+      i += 1;
+      j += 1;
+    } else if (av < bv) {
+      i += 1;
+    } else {
+      j += 1;
+    }
+  }
+  return out;
+}
+
+/** Interseção das posting lists (união dentro de cada grupo de sinónimos). */
+function intersectTokenGroups(
+  tokenMap: Record<string, number[]>,
+  tokenGroups: string[][],
+): number[] {
+  let result: number[] | null = null;
+  for (const alts of tokenGroups) {
+    const posting = unionPostings(tokenMap, alts);
+    if (posting.length === 0) return [];
+    result = result == null ? posting : intersectSorted(result, posting);
+    if (result.length === 0) return [];
+  }
+  return result ?? [];
+}
+
+function versesFromIndices(
   verses: IndexedVerse[],
+  indices: number[],
+): IndexedVerse[] {
+  const out: IndexedVerse[] = [];
+  for (const idx of indices) {
+    const v = verses[idx];
+    if (v) out.push(v);
+  }
+  return out;
+}
+
+function unionIndices(lists: number[][]): number[] {
+  const seen = new Set<number>();
+  for (const list of lists) {
+    for (const idx of list) seen.add(idx);
+  }
+  return [...seen].sort((a, b) => a - b);
+}
+
+/**
+ * Cascata otimizada sobre índice invertido.
+ * Facetas = universo completo dos hits **antes** do filtro de escopo / limit.
+ */
+export function searchVersesCascadeOnIndex(
+  index: VerseSearchIndex,
   rawQuery: string,
   options: SearchVersesCascadeOptions,
 ): VerseSearchResult {
   const profile = options.profile;
   const limit = Math.min(80, Math.max(1, Number(options.limit) || 40));
+  const { verses, tokenMap, uniqueTokens } = index;
   const { normQuery, tokenGroups, tokens, stemmedGroups, stemmed } =
     prepareQueryTokens(rawQuery, profile);
 
@@ -549,19 +650,48 @@ export function searchVersesCascade(
   let mode: MatchMode = "exact_phrase";
   let matched: VerseSearchHit[] = [];
 
-  matched = verses
+  // Candidatos AND via tokenMap (evita full-scan nas etapas 1–2)
+  const andCandidates = intersectTokenGroups(tokenMap, tokenGroups);
+  const andVerses = versesFromIndices(verses, andCandidates);
+
+  matched = andVerses
     .filter((v) => v.norm.includes(normQuery))
     .map((verse) => ({ verse, matchCount: slotCount }));
   if (matched.length > 0) {
     mode = "exact_phrase";
   } else {
-    matched = verses
+    matched = andVerses
       .filter((v) => allTermsMatch(v, tokenGroups))
       .map((verse) => ({ verse, matchCount: slotCount }));
     if (matched.length > 0) {
       mode = "all_terms";
     } else {
-      matched = verses
+      // Stem: matching só em uniqueTokens → postings
+      const stemPostings: number[][] = [];
+      for (const alts of stemmedGroups) {
+        const matchedToks: string[] = [];
+        for (const tok of uniqueTokens) {
+          if (
+            alts.some(
+              (stem) =>
+                tok === stem ||
+                tok.startsWith(stem) ||
+                (stem.length >= 4 && tok.includes(stem)),
+            )
+          ) {
+            matchedToks.push(tok);
+          }
+        }
+        stemPostings.push(unionPostings(tokenMap, matchedToks));
+      }
+      let stemIndices =
+        stemPostings.length > 0 ? stemPostings[0]! : ([] as number[]);
+      for (let g = 1; g < stemPostings.length; g++) {
+        stemIndices = intersectSorted(stemIndices, stemPostings[g]!);
+        if (stemIndices.length === 0) break;
+      }
+      const stemVerses = versesFromIndices(verses, stemIndices);
+      matched = stemVerses
         .filter((v) => stemmedMatch(v, stemmedGroups))
         .map((verse) => ({ verse, matchCount: slotCount }));
       if (matched.length > 0) {
@@ -570,7 +700,17 @@ export function searchVersesCascade(
         const alts = tokenGroups[0]!;
         const fuzzyAlts = alts.filter((t) => t.length >= 5);
         if (fuzzyAlts.length > 0) {
-          matched = verses
+          const fuzzyToks: string[] = [];
+          for (const tok of uniqueTokens) {
+            if (fuzzyAlts.some((t) => fuzzyTokenMatches(tok, t))) {
+              fuzzyToks.push(tok);
+            }
+          }
+          const fuzzyVerses = versesFromIndices(
+            verses,
+            unionPostings(tokenMap, fuzzyToks),
+          );
+          matched = fuzzyVerses
             .filter((v) =>
               v.words.some((w) => fuzzyAlts.some((t) => fuzzyTokenMatches(w, t))),
             )
@@ -578,8 +718,27 @@ export function searchVersesCascade(
           mode = "fuzzy";
         }
       } else {
+        // partial OR: união de postings por grupo stem
+        const orLists: number[][] = [];
+        for (const alts of stemmedGroups) {
+          const matchedToks: string[] = [];
+          for (const tok of uniqueTokens) {
+            if (
+              alts.some(
+                (stem) =>
+                  tok === stem ||
+                  tok.startsWith(stem) ||
+                  (stem.length >= 4 && tok.includes(stem)),
+              )
+            ) {
+              matchedToks.push(tok);
+            }
+          }
+          orLists.push(unionPostings(tokenMap, matchedToks));
+        }
+        const orVerses = versesFromIndices(verses, unionIndices(orLists));
         matched = [];
-        for (const verse of verses) {
+        for (const verse of orVerses) {
           let matchCount = 0;
           for (const alts of stemmedGroups) {
             const hit = alts.some(
@@ -597,6 +756,7 @@ export function searchVersesCascade(
   }
 
   matched.sort((a, b) => compareRank(a, b, normQuery, tokens, stemmed, profile));
+  // Facetas no universo completo (pré-filtro de escopo)
   const facets = buildSearchFacets(matched);
   const scoped = applySearchScope(matched, options.scope);
   const totalCount = scoped.length;
@@ -611,6 +771,15 @@ export function searchVersesCascade(
     bookCounts: facets.byBook,
     facets,
   };
+}
+
+/** Compat: constrói tokenMap on-the-fly (testes / callers legados). */
+export function searchVersesCascade(
+  verses: IndexedVerse[],
+  rawQuery: string,
+  options: SearchVersesCascadeOptions,
+): VerseSearchResult {
+  return searchVersesCascadeOnIndex(buildTokenIndex(verses), rawQuery, options);
 }
 
 /** Alias tipado legado. */

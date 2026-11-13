@@ -1,15 +1,23 @@
 /**
- * Índice plano de versículos em memória, keyed por versão.
- * Warm-up único por versão; buscas seguintes não releem storage.
+ * Índice de busca em memória (verses + tokenMap), keyed por versão.
+ * Persistência: idbSearchCache. Warm-up: ensureVerseIndex / warmSearchIndex.
  */
 
 import type { BibleTextVersionId } from "./bibleVersions";
-import { buildIndexedVerse, type IndexedVerse } from "./verseSearchEngine";
+import { clearSearchIndex, readSearchIndex, writeSearchIndex } from "./idbSearchCache";
+import {
+  buildIndexedVerse,
+  buildTokenIndex,
+  type IndexedVerse,
+  type VerseSearchIndex,
+} from "./verseSearchEngine";
 
-const cache = new Map<BibleTextVersionId, IndexedVerse[]>();
-const warming = new Map<BibleTextVersionId, Promise<IndexedVerse[]>>();
+const cache = new Map<BibleTextVersionId, VerseSearchIndex>();
+const warming = new Map<BibleTextVersionId, Promise<VerseSearchIndex>>();
 
-async function loadS21Index(bookOrder?: Map<string, number>): Promise<IndexedVerse[]> {
+async function loadS21Verses(
+  bookOrder?: Map<string, number>,
+): Promise<{ verses: IndexedVerse[]; revision: string }> {
   const { getAllOfflineBooks, getOfflineMeta, cleanVerseText } = await import(
     "../bibleOffline"
   );
@@ -45,10 +53,14 @@ async function loadS21Index(bookOrder?: Map<string, number>): Promise<IndexedVer
       }
     }
   }
-  return verses;
+  const revision = `s21:${verses.length}:${meta?.count ?? 0}:${meta?.at ?? 0}`;
+  return { verses, revision };
 }
 
-async function loadHt98Index(): Promise<IndexedVerse[]> {
+async function loadHt98Verses(): Promise<{
+  verses: IndexedVerse[];
+  revision: string;
+}> {
   const { loadHt1998Root } = await import("./ht1998");
   const root = await loadHt1998Root();
   const verses: IndexedVerse[] = [];
@@ -79,25 +91,31 @@ async function loadHt98Index(): Promise<IndexedVerse[]> {
       }
     }
   });
-  return verses;
+  const revision = `ht98:${verses.length}:${root.books.length}`;
+  return { verses, revision };
 }
 
-async function loadIndex(
+async function buildIndexFromSource(
   version: BibleTextVersionId,
   bookOrder?: Map<string, number>,
-): Promise<IndexedVerse[]> {
-  if (version === "ht98") return loadHt98Index();
-  return loadS21Index(bookOrder);
+): Promise<{ index: VerseSearchIndex; revision: string }> {
+  const loaded =
+    version === "ht98"
+      ? await loadHt98Verses()
+      : await loadS21Verses(bookOrder);
+  return { index: buildTokenIndex(loaded.verses), revision: loaded.revision };
 }
 
 export function invalidateVerseIndex(version?: BibleTextVersionId): void {
   if (version) {
     cache.delete(version);
     warming.delete(version);
+    void clearSearchIndex(version);
     return;
   }
   cache.clear();
   warming.clear();
+  void clearSearchIndex();
 }
 
 /** @deprecated Preferir invalidateVerseIndex("s21") */
@@ -105,10 +123,13 @@ export function invalidateS21VerseIndex(): void {
   invalidateVerseIndex("s21");
 }
 
+/**
+ * Garante VerseSearchIndex em RAM (IDB → build → write IDB).
+ */
 export async function ensureVerseIndex(
   version: BibleTextVersionId,
   bookOrder?: Map<string, number>,
-): Promise<IndexedVerse[]> {
+): Promise<VerseSearchIndex> {
   const hit = cache.get(version);
   if (hit) return hit;
 
@@ -116,10 +137,23 @@ export async function ensureVerseIndex(
   if (pending) return pending;
 
   const job = (async () => {
-    const verses = await loadIndex(version, bookOrder);
-    cache.set(version, verses);
+    const stored = await readSearchIndex(version);
+    if (stored?.verses?.length) {
+      const index: VerseSearchIndex = {
+        verses: stored.verses,
+        tokenMap: stored.tokenMap,
+        uniqueTokens: stored.uniqueTokens,
+      };
+      cache.set(version, index);
+      warming.delete(version);
+      return index;
+    }
+
+    const { index, revision } = await buildIndexFromSource(version, bookOrder);
+    cache.set(version, index);
     warming.delete(version);
-    return verses;
+    void writeSearchIndex(version, index, revision).catch(() => undefined);
+    return index;
   })();
 
   warming.set(version, job);
@@ -131,9 +165,34 @@ export async function ensureVerseIndex(
   }
 }
 
+/** Só o array de versículos (compat callers). */
+export async function ensureVerseIndexVerses(
+  version: BibleTextVersionId,
+  bookOrder?: Map<string, number>,
+): Promise<IndexedVerse[]> {
+  const index = await ensureVerseIndex(version, bookOrder);
+  return index.verses;
+}
+
 /** @deprecated Preferir ensureVerseIndex("s21", …) */
 export async function ensureS21VerseIndex(
   bookOrder?: Map<string, number>,
-): Promise<IndexedVerse[]> {
+): Promise<VerseSearchIndex> {
   return ensureVerseIndex("s21", bookOrder);
+}
+
+/**
+ * Pré-aquece o índice da versão em idle (main ou via worker client).
+ */
+export function scheduleSearchIndexWarmup(
+  versionId: BibleTextVersionId,
+): void {
+  const run = () => {
+    void ensureVerseIndex(versionId).catch(() => undefined);
+  };
+  if (typeof requestIdleCallback === "function") {
+    requestIdleCallback(() => run(), { timeout: 4000 });
+  } else {
+    window.setTimeout(run, 1200);
+  }
 }

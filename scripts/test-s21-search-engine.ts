@@ -7,9 +7,11 @@ import assert from "node:assert/strict";
 import {
   bookIdsForSearchScope,
   buildIndexedVerse,
+  buildTokenIndex,
   facetsFromBookCounts,
   normalizeSearchText,
   searchVersesCascade,
+  searchVersesCascadeOnIndex,
   stemFrenchToken,
   type IndexedVerse,
 } from "../src/bible/verseSearchEngine.ts";
@@ -248,6 +250,29 @@ assert.ok(normalizeSearchText("résurrection").includes("resurrection"));
     scope: { type: "dc" },
   });
   assert.ok(scoped.results.every((h) => h.verse.bookId.toUpperCase() === "TOB"));
+}
+
+// --- tokenMap: mesma qualidade que full-scan; facetas pré-scope ---
+{
+  const index = buildTokenIndex(corpus);
+  assert.ok(index.uniqueTokens.length > 0);
+  assert.ok((index.tokenMap.jesus ?? index.tokenMap.amour)?.length);
+  const viaIndex = searchVersesCascadeOnIndex(index, "jesus lazare", {
+    profile: S21_FR_PROFILE,
+    limit: 40,
+    scope: { type: "nt" },
+  });
+  const viaArray = searchVersesCascade(corpus, "jesus lazare", {
+    profile: S21_FR_PROFILE,
+    limit: 40,
+    scope: { type: "nt" },
+  });
+  assert.equal(viaIndex.matchMode, viaArray.matchMode);
+  assert.equal(viaIndex.facets.total, viaArray.facets.total);
+  assert.ok(viaIndex.facets.ntCount >= 1);
+  assert.ok(
+    viaIndex.results.every((h) => h.verse.bookId.toUpperCase() !== "PSA"),
+  );
 }
 
 console.log("test-s21-search-engine: ok");

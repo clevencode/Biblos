@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { searchVersesForVersion } from "../bible/passageForVersion";
 import type { BibleTextVersionId } from "../bible/bibleVersions";
 import {
   bookIdsForSearchScope,
@@ -9,12 +8,13 @@ import {
   type SearchFacets,
   type SearchScope,
 } from "../bible/verseSearchEngine";
+import { searchInWorker } from "../bible/verseSearchClient";
 import type { SearchScopeFilter } from "./usePersistentSearchSession";
 import type { BibleSearchHit } from "../youversion/client";
 import { passageJumpsFromQuery } from "../youversion/bibleRefs";
 
 /**
- * Pesquisa por palavras — uma busca, facets + filtro de escopo em memória.
+ * Pesquisa por palavras — uma busca (worker), facets pré-filtro, debounce 280ms.
  */
 const DEBOUNCE_MS = 280;
 const MIN_CHARS = 2;
@@ -63,61 +63,12 @@ function resolveFacets(res: {
   total?: number;
 }): SearchFacets {
   if (res.facets) {
-    const hasSections =
-      res.facets.otCount > 0 ||
-      res.facets.ntCount > 0 ||
-      (res.facets.dcCount ?? 0) > 0;
-    if (hasSections && Object.keys(res.facets.byBook).length > 0) {
-      return {
-        ...res.facets,
-        dcCount: res.facets.dcCount ?? 0,
-      };
-    }
-    const derived = facetsFromBookCounts(
-      Object.keys(res.facets.byBook).length > 0
-        ? res.facets.byBook
-        : res.bookCounts,
-      res.facets.total || res.total || 0,
-    );
-    if (
-      derived.otCount > 0 ||
-      derived.ntCount > 0 ||
-      derived.dcCount > 0 ||
-      derived.total > 0
-    ) {
-      return {
-        ...derived,
-        total: Math.max(derived.total, res.facets.total || 0),
-      };
-    }
-    return { ...res.facets, dcCount: res.facets.dcCount ?? 0 };
+    return {
+      ...res.facets,
+      dcCount: res.facets.dcCount ?? 0,
+    };
   }
   return facetsFromBookCounts(res.bookCounts, res.total ?? 0);
-}
-
-/** Facets do universo completo (não colapsados ao filtro ativo). */
-function facetsCoverUniverse(facets: SearchFacets, scope: SearchScope): boolean {
-  const keys = Object.keys(facets.byBook);
-  if (keys.length === 0) return false;
-  if (scope.type === "all") return true;
-  if (scope.type === "books") {
-    const allowed = new Set(
-      scope.bookIds.map((id) => String(id).toUpperCase()).filter(Boolean),
-    );
-    // Universo completo se houver livros fora da seleção atual
-    return keys.some((k) => !allowed.has(k.toUpperCase()));
-  }
-  // ot/nt/dc: precisa ter hits noutra secção (universo completo)
-  if (scope.type === "nt") {
-    return facets.otCount > 0 || (facets.dcCount ?? 0) > 0;
-  }
-  if (scope.type === "ot") {
-    return facets.ntCount > 0 || (facets.dcCount ?? 0) > 0;
-  }
-  if (scope.type === "dc") {
-    return facets.otCount > 0 || facets.ntCount > 0;
-  }
-  return true;
 }
 
 function buildScopeCounts(
@@ -181,11 +132,6 @@ export function useWordPassageSearch(
     [scopeFilter, selectedBookIds, currentBookId],
   );
 
-  const remoteBooks = useMemo(
-    () => bookIdsForSearchScope(engineScope),
-    [engineScope],
-  );
-
   const [hits, setHits] = useState<BibleSearchHit[]>([]);
   const [total, setTotal] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -195,9 +141,6 @@ export function useWordPassageSearch(
   const [facets, setFacets] = useState<SearchFacets>(() => emptySearchFacets());
   const [scopeCounts, setScopeCounts] = useState<WordSearchScopeCounts>(EMPTY_COUNTS);
   const reqGen = useRef(0);
-  const facetsCacheRef = useRef<{ key: string; facets: SearchFacets } | null>(
-    null,
-  );
 
   const scopeKey = useMemo(() => {
     if (engineScope.type === "books") {
@@ -220,20 +163,20 @@ export function useWordPassageSearch(
       setMatchedTerms([]);
       setFacets(emptySearchFacets());
       setScopeCounts(EMPTY_COUNTS);
-      facetsCacheRef.current = null;
       return;
     }
 
     const gen = ++reqGen.current;
     setBusy(true);
     setError(null);
-    const facetKey = `${textVersion}\0${q}`;
 
     const timer = window.setTimeout(() => {
       void (async () => {
-        const res = await searchVersesForVersion(textVersion, q, HIT_LIMIT, {
+        const res = await searchInWorker({
+          versionId: textVersion,
+          q,
+          limit: HIT_LIMIT,
           scope: engineScope,
-          books: remoteBooks,
         });
         if (gen !== reqGen.current) return;
 
@@ -249,27 +192,8 @@ export function useWordPassageSearch(
           return;
         }
 
-        let nextFacets = resolveFacets(res);
-
-        // Facets devem refletir o universo da query (para pills + gaveta multi-livros).
-        if (
-          engineScope.type === "all" ||
-          facetsCoverUniverse(nextFacets, engineScope)
-        ) {
-          facetsCacheRef.current = { key: facetKey, facets: nextFacets };
-        } else if (facetsCacheRef.current?.key === facetKey) {
-          nextFacets = facetsCacheRef.current.facets;
-        } else {
-          const base = await searchVersesForVersion(textVersion, q, HIT_LIMIT, {
-            scope: { type: "all" },
-          });
-          if (gen !== reqGen.current) return;
-          if (base.ok) {
-            nextFacets = resolveFacets(base);
-            facetsCacheRef.current = { key: facetKey, facets: nextFacets };
-          }
-        }
-
+        // Facetas já vêm do universo pré-filtro (uma única passagem no motor)
+        const nextFacets = resolveFacets(res);
         setFacets(nextFacets);
         setScopeCounts(
           buildScopeCounts(nextFacets, currentBookId, selectedBookIds),
@@ -292,7 +216,6 @@ export function useWordPassageSearch(
     textVersion,
     scopeKey,
     engineScope,
-    remoteBooks,
     currentBookId,
     selectedBookIds,
   ]);
@@ -309,3 +232,6 @@ export function useWordPassageSearch(
     scopeCounts,
   };
 }
+
+// Re-export para callers que ainda tipam books remotos
+export { bookIdsForSearchScope };

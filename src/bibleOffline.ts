@@ -263,6 +263,9 @@ export async function clearOfflineBible(): Promise<void> {
   }
   const { invalidateVerseIndex } = await import("./bible/verseIndexCache");
   invalidateVerseIndex("s21");
+  void import("./bible/verseSearchClient").then(({ invalidateSearchIndexInWorker }) => {
+    invalidateSearchIndexInWorker("s21");
+  });
 }
 
 export async function getChapterLayout(
@@ -562,6 +565,9 @@ export async function seedOfflineBibleFromBundledAssets(
   const meta = await commitOfflineBibleAtomic(payloads, bookList);
   const { invalidateVerseIndex } = await import("./bible/verseIndexCache");
   invalidateVerseIndex("s21");
+  void import("./bible/verseSearchClient").then(({ invalidateSearchIndexInWorker }) => {
+    invalidateSearchIndexInWorker("s21");
+  });
   return meta;
 }
 
@@ -619,5 +625,8 @@ export async function downloadOfflineBible(
   const meta = await commitOfflineBibleAtomic(payloads, bookList);
   const { invalidateVerseIndex } = await import("./bible/verseIndexCache");
   invalidateVerseIndex("s21");
+  void import("./bible/verseSearchClient").then(({ invalidateSearchIndexInWorker }) => {
+    invalidateSearchIndexInWorker("s21");
+  });
   return meta;
 }

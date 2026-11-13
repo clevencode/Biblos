@@ -43,6 +43,9 @@ export function invalidateHt1998CatalogCache() {
   void import("./verseIndexCache").then(({ invalidateVerseIndex }) => {
     invalidateVerseIndex("ht98");
   });
+  void import("./verseSearchClient").then(({ invalidateSearchIndexInWorker }) => {
+    invalidateSearchIndexInWorker("ht98");
+  });
 }
 
 function cleanVerseText(text: string): string {

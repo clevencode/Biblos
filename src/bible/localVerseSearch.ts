@@ -8,7 +8,7 @@ import { ensureVerseIndex } from "./verseIndexCache";
 import {
   emptySearchFacets,
   normalizeSearchText,
-  searchVersesCascade,
+  searchVersesCascadeOnIndex,
   type MatchMode,
   type SearchFacets,
   type SearchScope,
@@ -78,19 +78,23 @@ export async function runLocalVerseSearch(input: {
     };
   }
 
-  let verses = await ensureVerseIndex(input.version, input.bookOrder);
+  const index = await ensureVerseIndex(input.version, input.bookOrder);
+  let searchIndex = index;
   const useScope = Boolean(input.scope);
   if (!useScope && input.bookFilter) {
     const allowed = new Set(
       [...input.bookFilter].map((id) => String(id).toUpperCase()).filter(Boolean),
     );
     if (allowed.size > 0) {
-      verses = verses.filter((v) => allowed.has(v.bookId));
+      const { buildTokenIndex } = await import("./verseSearchEngine");
+      searchIndex = buildTokenIndex(
+        index.verses.filter((v) => allowed.has(v.bookId)),
+      );
     }
   }
 
   const capped = Math.min(80, Math.max(1, Number(input.limit) || 40));
-  const found = searchVersesCascade(verses, query, {
+  const found = searchVersesCascadeOnIndex(searchIndex, query, {
     limit: capped,
     profile: profileForVersion(input.version),
     scope: input.scope ?? { type: "all" },
