@@ -52,6 +52,11 @@ import {
   applyPendingSwUpdate,
   subscribeSwUpdate,
 } from "./swUpdateManager";
+import {
+  isFirstInstallPackReady,
+  runFirstInstallPack,
+  type FirstInstallProgress,
+} from "./offline/firstInstallPack";
 
 type MarkPayload = {
   color: string;
@@ -126,6 +131,13 @@ function BiblosConsumerApp() {
   const [offlineToast, setOfflineToast] = useState(false);
   const [markSavedToast, setMarkSavedToast] = useState(false);
   const [swUpdatePending, setSwUpdatePending] = useState(false);
+  const [firstInstallNeeded, setFirstInstallNeeded] = useState(false);
+  const [firstInstallBusy, setFirstInstallBusy] = useState(false);
+  const [firstInstallProgress, setFirstInstallProgress] =
+    useState<FirstInstallProgress | null>(null);
+  const [firstInstallError, setFirstInstallError] = useState<string | null>(
+    null,
+  );
   const [signInOpen, setSignInOpen] = useState(false);
   const [signInVariant, setSignInVariant] = useState<"upgrade" | "soft_gate">(
     "upgrade",
@@ -148,6 +160,16 @@ function BiblosConsumerApp() {
   const bibleCompactTools = BIBLE_COMPACT_TOOLS_MENU && narrow && bibleMode;
 
   useEffect(() => subscribeSwUpdate(setSwUpdatePending), []);
+
+  useEffect(() => {
+    let cancelled = false;
+    void isFirstInstallPackReady().then((ready) => {
+      if (!cancelled) setFirstInstallNeeded(!ready);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (tab === "bible") setBibleMounted(true);
@@ -189,6 +211,38 @@ function BiblosConsumerApp() {
   useEffect(() => {
     if (!bibleMode) setNavHidden(false);
   }, [bibleMode]);
+
+  async function handleFirstInstall() {
+    if (firstInstallBusy) return;
+    setFirstInstallBusy(true);
+    setFirstInstallError(null);
+    try {
+      await runFirstInstallPack((p) => setFirstInstallProgress(p));
+      setFirstInstallNeeded(false);
+      setFirstInstallProgress(null);
+    } catch {
+      setFirstInstallError(t("install.error"));
+    } finally {
+      setFirstInstallBusy(false);
+    }
+  }
+
+  function firstInstallMeta(): string {
+    if (firstInstallError) return firstInstallError;
+    const p = firstInstallProgress;
+    if (!p || p.phase === "done") return t("install.bannerLead");
+    if (p.phase === "plans") return t("install.phase.plans");
+    if (p.phase === "s21") {
+      return t("install.phase.s21", { done: p.done, total: p.total });
+    }
+    if (p.phase === "ht98") {
+      return t("install.phase.ht98", { done: p.done, total: p.total });
+    }
+    if (p.phase === "tske") {
+      return t("install.phase.tske", { done: p.done, total: p.total });
+    }
+    return t("install.bannerLead");
+  }
 
   const selectTab = useCallback((next: ShellTab) => {
     setTab(next);
@@ -388,20 +442,34 @@ function BiblosConsumerApp() {
           </button>
         </div>
       ) : null}
-      {swUpdatePending && !bibleMode ? (
+      {firstInstallNeeded && !bibleMode ? (
         <div className="sw-update-banner" role="status" aria-live="polite">
           <div className="sw-update-banner-copy">
-            <p className="sw-update-banner-title">Nouvelle version</p>
-            <p className="sw-update-banner-meta">
-              Une mise à jour est prête à installer.
-            </p>
+            <p className="sw-update-banner-title">{t("install.bannerTitle")}</p>
+            <p className="sw-update-banner-meta">{firstInstallMeta()}</p>
+          </div>
+          <button
+            type="button"
+            className="sw-update-banner-cta"
+            disabled={firstInstallBusy}
+            onClick={() => void handleFirstInstall()}
+          >
+            {firstInstallBusy ? t("install.bannerBusy") : t("install.bannerCta")}
+          </button>
+        </div>
+      ) : null}
+      {swUpdatePending && !firstInstallNeeded && !bibleMode ? (
+        <div className="sw-update-banner" role="status" aria-live="polite">
+          <div className="sw-update-banner-copy">
+            <p className="sw-update-banner-title">{t("swUpdate.title")}</p>
+            <p className="sw-update-banner-meta">{t("swUpdate.lead")}</p>
           </div>
           <button
             type="button"
             className="sw-update-banner-cta"
             onClick={() => void applyPendingSwUpdate()}
           >
-            Mettre à jour
+            {t("swUpdate.cta")}
           </button>
         </div>
       ) : null}

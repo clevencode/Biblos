@@ -97,6 +97,24 @@ export default defineConfig(({ mode }) => ({
             navigateFallback: "/index.html",
             // Bíblias grandes ficam no IndexedDB / fetch sob demanda — não precache.
             navigateFallbackDenylist: [/^\/api\//, /^\/bibles\//, /^\/bible\//],
+            runtimeCaching: [
+              {
+                // Refs croisées TSKE — CacheFirst após 1.ª visita (PWA offline).
+                urlPattern: ({ url }) =>
+                  url.pathname.startsWith("/bible/study/tske/"),
+                handler: "CacheFirst",
+                options: {
+                  cacheName: "biblos-tske-json",
+                  expiration: {
+                    maxEntries: 2000,
+                    maxAgeSeconds: 60 * 60 * 24 * 365,
+                  },
+                  cacheableResponse: {
+                    statuses: [0, 200],
+                  },
+                },
+              },
+            ],
           },
           devOptions: {
             enabled: false,

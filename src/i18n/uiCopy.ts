@@ -155,6 +155,18 @@ export type UiCopyKey =
   | "offline.downloading"
   | "offline.waiting"
   | "offline.downloadCta"
+  | "install.bannerTitle"
+  | "install.bannerLead"
+  | "install.bannerCta"
+  | "install.bannerBusy"
+  | "install.phase.s21"
+  | "install.phase.ht98"
+  | "install.phase.tske"
+  | "install.phase.plans"
+  | "install.error"
+  | "swUpdate.title"
+  | "swUpdate.lead"
+  | "swUpdate.cta"
   | "searchBooks.title"
   | "searchBooks.back"
   | "searchBooks.close"
@@ -375,6 +387,19 @@ const FR: Dict = {
   "offline.downloading": "Téléchargement…",
   "offline.waiting": "En attente de connexion",
   "offline.downloadCta": "Télécharger la Bible hors ligne",
+  "install.bannerTitle": "Installer Biblos hors ligne",
+  "install.bannerLead":
+    "Versions bibliques, plans de lecture et références croisées — une seule fois.",
+  "install.bannerCta": "Installer",
+  "install.bannerBusy": "Installation…",
+  "install.phase.s21": "Segond 21 — {done}/{total}",
+  "install.phase.ht98": "Kreyòl HT98 — {done}/{total}",
+  "install.phase.tske": "Références croisées — {done}/{total}",
+  "install.phase.plans": "Plans de lecture…",
+  "install.error": "Échec de l’installation. Réessaie avec une connexion.",
+  "swUpdate.title": "Nouvelle version",
+  "swUpdate.lead": "Une mise à jour est prête à installer.",
+  "swUpdate.cta": "Mettre à jour",
   "searchBooks.title": "Livres",
   "searchBooks.back": "Retour aux livres",
   "searchBooks.close": "Fermer",
@@ -594,6 +619,19 @@ const HT: Dict = {
   "offline.downloading": "Ap telechaje…",
   "offline.waiting": "Ap tann koneksyon",
   "offline.downloadCta": "Telechaje Bib la offline",
+  "install.bannerTitle": "Enstale Biblos offline",
+  "install.bannerLead":
+    "Vèsyon Bib, plan lekti ak referans kwa — yon sèl fwa.",
+  "install.bannerCta": "Enstale",
+  "install.bannerBusy": "Ap enstale…",
+  "install.phase.s21": "Segond 21 — {done}/{total}",
+  "install.phase.ht98": "Kreyòl HT98 — {done}/{total}",
+  "install.phase.tske": "Referans kwa — {done}/{total}",
+  "install.phase.plans": "Plan lekti…",
+  "install.error": "Enstalasyon echwe. Eseye ankò ak yon koneksyon.",
+  "swUpdate.title": "Nouvo vèsyon",
+  "swUpdate.lead": "Gen yon mizajou pare pou enstale.",
+  "swUpdate.cta": "Mete ajou",
   "searchBooks.title": "Liv",
   "searchBooks.back": "Tounen nan liv yo",
   "searchBooks.close": "Fèmen",

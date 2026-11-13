@@ -562,12 +562,17 @@ html[data-theme="dark"] .sw-update-banner-cta {
   color: var(--ink, #0b0b0b);
 }
 
-.sw-update-banner-cta:hover {
+.sw-update-banner-cta:hover:not(:disabled) {
   filter: brightness(1.05);
 }
 
-.sw-update-banner-cta:active {
+.sw-update-banner-cta:active:not(:disabled) {
   transform: scale(0.97);
+}
+
+.sw-update-banner-cta:disabled {
+  opacity: 0.72;
+  cursor: wait;
 }
 
 @media (prefers-reduced-motion: reduce) {

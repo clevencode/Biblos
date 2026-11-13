@@ -576,6 +576,12 @@ export async function seedOfflineBibleFromBundledAssets(
   void import("./bible/verseSearchClient").then(({ invalidateSearchIndexInWorker }) => {
     invalidateSearchIndexInWorker("s21");
   });
+  try {
+    const { ensureTskeOfflinePack } = await import("./bible/tskeOffline");
+    await ensureTskeOfflinePack();
+  } catch {
+    /* refs: cache sob demanda se o pack falhar */
+  }
   return meta;
 }
 
@@ -636,5 +642,11 @@ export async function downloadOfflineBible(
   void import("./bible/verseSearchClient").then(({ invalidateSearchIndexInWorker }) => {
     invalidateSearchIndexInWorker("s21");
   });
+  try {
+    const { ensureTskeOfflinePack } = await import("./bible/tskeOffline");
+    await ensureTskeOfflinePack();
+  } catch {
+    /* refs: cache sob demanda se o pack falhar */
+  }
   return meta;
 }

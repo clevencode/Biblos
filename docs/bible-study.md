@@ -28,6 +28,17 @@ npm run bible:study:stage
 
 `npm run build` e `build:mobile` já correm o stage de study depois do S21.
 
+## Offline (refs croisées)
+
+| Camada | Comportamento |
+|--------|----------------|
+| Leitura | `loadTskeChapter`: RAM → IndexedDB (`biblos-tske-offline`) → fetch asset |
+| Pack | Ao descarregar / seed da Bible S21 hors ligne, corre `ensureTskeOfflinePack()` (manifest) |
+| PWA | Workbox `CacheFirst` em `/bible/study/tske/` |
+| Manifest | `public/bible/study/tske/manifest.json` gerado no stage |
+
+Sem rede, as refs usam o pack IDB (ou o cache HTTP / assets Capacitor).
+
 ## Licenças
 
 - Sg1910 / TSKe: conforme as fontes MySword / concordance.bible referenciadas no compilado.
