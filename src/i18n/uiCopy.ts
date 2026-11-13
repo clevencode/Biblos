@@ -53,6 +53,11 @@ export type UiCopyKey =
   | "profile.signIn"
   | "profile.signOut"
   | "profile.connectAccount"
+  | "profile.tab.account"
+  | "profile.tab.prefs"
+  | "profile.tab.storage"
+  | "profile.tab.history"
+  | "profile.account"
   | "auth.titleUpgrade"
   | "auth.titleSoftGate"
   | "auth.leadUpgrade"
@@ -230,6 +235,11 @@ const FR: Dict = {
   "profile.signIn": "Se connecter",
   "profile.signOut": "Se déconnecter",
   "profile.connectAccount": "Connecter un compte",
+  "profile.tab.account": "Compte",
+  "profile.tab.prefs": "Préfs",
+  "profile.tab.storage": "Stockage",
+  "profile.tab.history": "Historique",
+  "profile.account": "Compte",
   "auth.titleUpgrade": "Sauvegarder mes études",
   "auth.titleSoftGate": "Garde tes surlignages",
   "auth.leadUpgrade":
@@ -413,6 +423,11 @@ const HT: Dict = {
   "profile.signIn": "Konekte",
   "profile.signOut": "Dekonekte",
   "profile.connectAccount": "Konekte yon kont",
+  "profile.tab.account": "Kont",
+  "profile.tab.prefs": "Preferans",
+  "profile.tab.storage": "Depo",
+  "profile.tab.history": "Istorik",
+  "profile.account": "Kont",
   "auth.titleUpgrade": "Sove etid mwen yo",
   "auth.titleSoftGate": "Kenbe souliyman ou yo",
   "auth.leadUpgrade":
