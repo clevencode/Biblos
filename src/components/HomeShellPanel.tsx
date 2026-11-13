@@ -20,6 +20,7 @@ import {
 } from "../features/reading-plans/domain/planProgress";
 import { useReadingPlansCatalog } from "../features/reading-plans/presentation/hooks/useReadingPlansCatalog";
 import type { ReadingPlan } from "../features/reading-plans";
+import { useUiLocale } from "../i18n/UiLocaleContext";
 
 type HomeShellPanelProps = {
   active: boolean;
@@ -29,11 +30,10 @@ type HomeShellPanelProps = {
   onResumePlan: (plan: ReadingPlan) => void;
 };
 
-function greetingWord(): string {
-  const h = new Date().getHours();
-  if (h < 12) return "Bonjour";
-  if (h < 18) return "Bon après-midi";
-  return "Bonsoir";
+function greetingKey(hour: number) {
+  if (hour < 12) return "home.greeting.morning" as const;
+  if (hour < 18) return "home.greeting.afternoon" as const;
+  return "home.greeting.evening" as const;
 }
 
 function pickActivePlan(
@@ -77,6 +77,7 @@ export function HomeShellPanel({
   onOpenPlan,
   onResumePlan,
 }: HomeShellPanelProps) {
+  const { t } = useUiLocale();
   const profile = loadOrCreateProfile();
   const catalog = useReadingPlansCatalog(active);
   const [planTick, setPlanTick] = useState(0);
@@ -147,7 +148,7 @@ export function HomeShellPanel({
     >
       <header className="home-head">
         <h1 className="home-greeting">
-          {greetingWord()}, Biblos
+          {t(greetingKey(new Date().getHours()))}, Biblos
         </h1>
       </header>
 
@@ -156,7 +157,7 @@ export function HomeShellPanel({
           <YvIcon name="menu_book" className="home-resume-icon" opsz={24} />
           <div className="home-card-main">
             <p id="home-resume-title" className="home-card-eyebrow">
-              Reprendre
+              {t("home.resumePlan")}
             </p>
             <p className="home-card-title">{resumeLabel}</p>
             <p className="home-card-meta">{versionTitle}</p>
@@ -166,7 +167,7 @@ export function HomeShellPanel({
             className="home-pill"
             onClick={() => onOpenBible(resumeRef)}
           >
-            Lire →
+            {t("home.read")}
           </button>
         </div>
       </section>
@@ -174,10 +175,10 @@ export function HomeShellPanel({
       <section className="home-section" aria-labelledby="home-daily-title">
         <div className="home-card">
           <p id="home-daily-title" className="home-card-eyebrow">
-            Verset du jour
+            {t("home.dailyVerse")}
           </p>
           <p className="home-daily-text">
-            {daily?.text ?? "Chargement…"}
+            {daily?.text ?? t("common.loading")}
           </p>
           <div className="home-daily-foot">
             <p className="home-daily-ref">
@@ -187,7 +188,7 @@ export function HomeShellPanel({
               <button
                 type="button"
                 className="home-icon-btn"
-                aria-label="Partager"
+                aria-label={t("home.share")}
                 disabled={!daily || shareBusy}
                 onClick={() => void handleShareDaily()}
               >
@@ -196,7 +197,7 @@ export function HomeShellPanel({
               <button
                 type="button"
                 className="home-icon-btn"
-                aria-label="Ouvrir dans la Bible"
+                aria-label={t("home.openBible")}
                 disabled={!daily}
                 onClick={() =>
                   daily && onOpenBible(dailyVerseOpenRef(daily.usfm))
@@ -212,10 +213,10 @@ export function HomeShellPanel({
       <section className="home-section" aria-labelledby="home-plans-title">
         <div className="home-section-head">
           <h2 id="home-plans-title" className="home-section-title">
-            Plans de lecture
+            {t("home.plans")}
           </h2>
           <button type="button" className="home-section-link" onClick={onOpenPlan}>
-            Voir tout
+            {t("home.seeAll")}
           </button>
         </div>
 
@@ -225,7 +226,10 @@ export function HomeShellPanel({
               <div className="home-card-main">
                 <p className="home-card-title">{activePlan.plan.title}</p>
                 <p className="home-card-meta">
-                  {activePlan.done}/{activePlan.total} jours
+                  {t("home.days", {
+                    done: activePlan.done,
+                    total: activePlan.total,
+                  })}
                 </p>
               </div>
               <button
@@ -233,7 +237,7 @@ export function HomeShellPanel({
                 className="home-pill is-compact"
                 onClick={() => onResumePlan(activePlan.plan)}
               >
-                Reprendre
+                {t("home.resumePlan")}
               </button>
             </div>
             <div className="home-progress">
@@ -248,13 +252,13 @@ export function HomeShellPanel({
           </div>
         ) : (
           <div className="home-empty">
-            <p>Choisissez un parcours guidé dans l&apos;onglet Plan.</p>
+            <p>{t("home.plansEmpty")}</p>
             <button
               type="button"
               className="home-pill is-accent home-empty-cta"
               onClick={onOpenPlan}
             >
-              Parcourir les plans
+              {t("home.browsePlans")}
             </button>
           </div>
         )}

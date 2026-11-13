@@ -13,6 +13,7 @@ import {
   type HistorySelectPayload,
 } from "../bible/readingHistoryRepository";
 import type { ReadingHistoryItem } from "../bible/readingScope";
+import { useUiLocale } from "../i18n/UiLocaleContext";
 
 export type BibleHistorySelect = HistorySelectPayload;
 
@@ -54,6 +55,7 @@ export function BibleHistorySheet({
   onSelect,
   onHistoryChange,
 }: BibleHistorySheetProps) {
+  const { t, dateLocale } = useUiLocale();
   const titleId = useId();
   const [rows, setRows] = useState<HistoryRow[]>([]);
 
@@ -83,7 +85,7 @@ export function BibleHistorySheet({
 
   function clearAll() {
     if (rows.length === 0) return;
-    const ok = window.confirm("Effacer tout l’historique de lecture ?");
+    const ok = window.confirm(t("history.clearAllConfirm"));
     if (!ok) return;
     clearBibleReadingHistory();
     refresh();
@@ -101,7 +103,7 @@ export function BibleHistorySheet({
     >
       <header className="bible-yv-history-panel-head">
         <p id={titleId} className="bible-yv-history-panel-title">
-          Historique
+          {t("history.title")}
         </p>
         <div className="bible-yv-history-panel-actions">
           {rows.length > 0 ? (
@@ -109,8 +111,8 @@ export function BibleHistorySheet({
               type="button"
               className="bible-yv-history-panel-icon-btn"
               onClick={clearAll}
-              aria-label="Effacer tout l’historique"
-              title="Effacer tout"
+              aria-label={t("history.clearAll")}
+              title={t("history.clearAll")}
             >
               <YvIcon name="delete" className="bible-yv-history-panel-icon" />
             </button>
@@ -119,7 +121,7 @@ export function BibleHistorySheet({
             type="button"
             className="bible-yv-history-panel-icon-btn"
             onClick={onClose}
-            aria-label="Fermer l’historique"
+            aria-label={t("history.close")}
           >
             <YvIcon name="close" className="bible-yv-history-panel-icon" />
           </button>
@@ -128,19 +130,19 @@ export function BibleHistorySheet({
 
       <div className="bible-yv-history-panel-meta" aria-live="polite">
         {rows.length === 0 ? (
-          <span>Chapitres ouverts récemment</span>
+          <span>{t("history.recent")}</span>
         ) : (
           <span>
-            {rows.length} lecture{rows.length === 1 ? "" : "s"}
+            {rows.length === 1
+              ? t("history.countOne", { n: rows.length })
+              : t("history.count", { n: rows.length })}
           </span>
         )}
       </div>
 
-      <ul className="bible-yv-history-panel-list" aria-label="Historique de lecture">
+      <ul className="bible-yv-history-panel-list" aria-label={t("history.title")}>
         {rows.length === 0 ? (
-          <li className="bible-yv-history-panel-empty">
-            Aucune lecture enregistrée pour l’instant.
-          </li>
+          <li className="bible-yv-history-panel-empty">{t("history.empty")}</li>
         ) : (
           rows.map(({ eventId, at, item }) => {
             const label = readingLabelForItem(item);
@@ -161,13 +163,13 @@ export function BibleHistorySheet({
                     {label}
                   </span>
                   <span className="bible-yv-history-panel-when">
-                    {formatActivityWhen(at)}
+                    {formatActivityWhen(at, dateLocale)}
                   </span>
                 </button>
                 <button
                   type="button"
                   className="bible-history-delete"
-                  aria-label={`Supprimer ${label}`}
+                  aria-label={`${t("history.delete")} ${label}`}
                   onClick={(e) => {
                     e.stopPropagation();
                     deleteOne(eventId);

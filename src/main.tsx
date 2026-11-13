@@ -4,6 +4,7 @@ import { Component, StrictMode, type ErrorInfo, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
 import { AppReadinessProvider } from "./context/AppReadinessContext";
+import { UiLocaleProvider } from "./i18n/UiLocaleContext";
 import { SkeletonTheme } from "./skeleton";
 import { ensureBibleIndexedFromBundle } from "./bibleEngine";
 import {
@@ -50,7 +51,9 @@ async function boot() {
         <SkeletonTheme>
           <AppReadinessProvider>
             <ConsumerAuthProvider>
-              <App />
+              <UiLocaleProvider>
+                <App />
+              </UiLocaleProvider>
             </ConsumerAuthProvider>
           </AppReadinessProvider>
         </SkeletonTheme>

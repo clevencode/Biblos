@@ -1,4 +1,5 @@
 import { YvIcon } from "./YvIcon";
+import { useUiLocale } from "../i18n/UiLocaleContext";
 
 type BibleOfflineChapterGateProps = {
   onDownload: () => void;
@@ -12,6 +13,8 @@ export function BibleOfflineChapterGate({
   offlineBusy = false,
   needsReconnect = false,
 }: BibleOfflineChapterGateProps) {
+  const { t } = useUiLocale();
+
   return (
     <div className="bible-offline-chapter-gate" role="region" aria-labelledby="bible-offline-gate-title">
       <YvIcon
@@ -19,14 +22,10 @@ export function BibleOfflineChapterGate({
         className="bible-offline-chapter-gate-icon"
       />
       <h2 id="bible-offline-gate-title" className="bible-offline-chapter-gate-title">
-        {needsReconnect
-          ? "Connexion requise pour télécharger"
-          : "Chapitre hors ligne indisponible"}
+        {needsReconnect ? t("offline.reconnectTitle") : t("offline.title")}
       </h2>
       <p className="bible-offline-chapter-gate-lead bible-yv-muted">
-        {needsReconnect
-          ? "Cette version n’est pas encore disponible hors ligne. Reconnectez-vous pour la télécharger ; ensuite la lecture et la recherche fonctionneront sans réseau."
-          : "Ce chapitre doit être téléchargé pour une lecture sans connexion. Vos marques et l’avancement restent enregistrés sur l’appareil."}
+        {needsReconnect ? t("offline.reconnectLead") : t("offline.lead")}
       </p>
       <button
         type="button"
@@ -35,10 +34,10 @@ export function BibleOfflineChapterGate({
         onClick={onDownload}
       >
         {offlineBusy
-          ? "Téléchargement…"
+          ? t("offline.downloading")
           : needsReconnect
-            ? "En attente de connexion"
-            : "Télécharger la Bible hors ligne"}
+            ? t("offline.waiting")
+            : t("offline.downloadCta")}
       </button>
     </div>
   );

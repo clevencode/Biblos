@@ -12,13 +12,13 @@ import {
   isNtBook,
   isOtBook,
 } from "../bible/searchTestamentSets";
-import { wordSearchUi } from "../bible/wordSearchUi";
 import {
   normalizeSearchText,
   resolveCanonicalBookId,
   type MatchMode,
   type SearchFacets,
 } from "../bible/verseSearchEngine";
+import { useUiLocale } from "../i18n/UiLocaleContext";
 import type { SearchScopeFilter } from "../hooks/usePersistentSearchSession";
 import { useRecentWordSearches } from "../hooks/useRecentWordSearches";
 import {
@@ -124,7 +124,7 @@ export function BiblePassageWordSearchPanel({
   currentBookTitle,
   onPickVerse,
 }: BiblePassageWordSearchPanelProps) {
-  const ui = useMemo(() => wordSearchUi(textVersion), [textVersion]);
+  const { t } = useUiLocale();
   const showDcPill = textVersion === "ht98";
   const inputRef = useRef<HTMLInputElement>(null);
   const { chips, isSuggestions, pushRecent } = useRecentWordSearches(textVersion);
@@ -222,16 +222,16 @@ export function BiblePassageWordSearchPanel({
     !isBookPickerOpen &&
     verseHits.length > 0 &&
     (matchMode === "fuzzy"
-      ? ui.fuzzyBanner
+      ? t("word.fuzzy")
       : matchMode === "partial_or"
-        ? ui.orBanner
+        ? t("word.or")
         : null);
 
   const bookLabel =
     currentBookTitle.trim() ||
     titleById.get(readerBookId) ||
     currentBookId ||
-    ui.bookFallback;
+    t("common.book");
   const byBook = facets?.byBook ?? {};
 
   const booksWithHits = useMemo(() => {
@@ -421,13 +421,17 @@ export function BiblePassageWordSearchPanel({
 
   function countLabel(scope: PickerMode): string {
     const base =
-      scope === "nt" ? ui.nt : scope === "ot" ? ui.ot : ui.dc;
+      scope === "nt"
+        ? t("word.nt")
+        : scope === "ot"
+          ? t("word.ot")
+          : t("word.dc");
     if (!hasActiveQuery || !scopeCounts) return base;
     return `${base} (${scopeCounts[scope]})`;
   }
 
   const displayError =
-    contentError === "unavailable" ? ui.unavailable : contentError;
+    contentError === "unavailable" ? t("word.unavailable") : contentError;
 
   return (
     <div
@@ -437,7 +441,7 @@ export function BiblePassageWordSearchPanel({
       }${isBookPickerOpen ? " is-book-picker" : ""}`}
       role="dialog"
       aria-modal="false"
-      aria-label={ui.ariaPanel}
+      aria-label={t("word.panel")}
     >
       <div className="bible-yv-word-search-field">
         <YvIcon name="search" opsz={20} className="bible-yv-word-search-field-icon" />
@@ -446,12 +450,12 @@ export function BiblePassageWordSearchPanel({
           type="search"
           className="bible-yv-word-search-input"
           value={query}
-          placeholder={ui.placeholder}
+          placeholder={t("word.placeholder")}
           autoComplete="off"
           autoCorrect="off"
           spellCheck={false}
           enterKeyHint="search"
-          aria-label={ui.ariaLabel}
+          aria-label={t("word.aria")}
           onChange={(event) => handleQueryChange(event.target.value)}
           onKeyDown={handleKeyDown}
         />
@@ -459,7 +463,7 @@ export function BiblePassageWordSearchPanel({
           type="button"
           className="bible-yv-word-search-clear"
           onClick={handleClearOrClose}
-          aria-label={trimmed ? ui.clear : ui.close}
+          aria-label={trimmed ? t("common.clear") : t("common.close")}
         >
           <YvIcon name="close" opsz={20} className="bible-yv-word-search-clear-icon" />
         </button>
@@ -468,7 +472,7 @@ export function BiblePassageWordSearchPanel({
       <div
         className="bible-yv-word-search-pills"
         role="tablist"
-        aria-label={ui.ariaPanel}
+        aria-label={t("word.panel")}
       >
         <button
           type="button"
@@ -549,7 +553,7 @@ export function BiblePassageWordSearchPanel({
       {!hasActiveQuery ? (
         <div className="bible-yv-word-search-recents">
           <p className="bible-yv-word-search-recents-label">
-            {isSuggestions ? ui.suggestions : ui.recents}
+            {isSuggestions ? t("word.suggestions") : t("word.recents")}
           </p>
           <div className="bible-yv-word-search-recents-chips">
             {chips.map((term) => (
@@ -574,7 +578,7 @@ export function BiblePassageWordSearchPanel({
               type="search"
               className="bible-yv-word-search-book-filter"
               value={bookFilterQuery}
-              placeholder={ui.filterBook}
+              placeholder={t("word.filterBook")}
               autoComplete="off"
               spellCheck={false}
               onChange={(event) => setBookFilterQuery(event.target.value)}
@@ -585,13 +589,13 @@ export function BiblePassageWordSearchPanel({
               disabled={draftBookIds.length === 0 && selectedBookIds.length === 0}
               onClick={handleEffacerBooks}
             >
-              {ui.clear}
+              {t("common.clear")}
             </button>
           </div>
           <ul className="bible-yv-word-search-book-list" role="listbox">
             {filteredBooks.length === 0 ? (
               <li className="bible-yv-word-search-book-empty bible-yv-muted">
-                {ui.empty}
+                {t("word.empty")}
               </li>
             ) : (
               filteredBooks.map((book) => {
@@ -636,8 +640,8 @@ export function BiblePassageWordSearchPanel({
               onClick={handleApplyBooks}
             >
               {draftBookIds.length > 0
-                ? ui.applyPassages(draftPassages)
-                : ui.showAll(applyEmptyTotal)}
+                ? t("word.apply", { n: draftPassages })
+                : t("word.showAll", { n: applyEmptyTotal })}
             </button>
           </div>
         </div>
@@ -646,8 +650,8 @@ export function BiblePassageWordSearchPanel({
           {!showSkeleton && verseHits.length > 0 ? (
             <p className="bible-yv-word-search-meta bible-yv-muted" aria-live="polite">
               {verseTotal > verseHits.length
-                ? ui.passagesPartial(verseHits.length, verseTotal)
-                : ui.passagesCount(verseHits.length)}
+                ? t("word.partial", { shown: verseHits.length, total: verseTotal })
+                : t("word.count", { n: verseHits.length })}
             </p>
           ) : null}
 
@@ -661,7 +665,7 @@ export function BiblePassageWordSearchPanel({
             ref={listRef}
             className="bible-yv-pick-grid is-word-search"
             role="listbox"
-            aria-label={ui.ariaPanel}
+            aria-label={t("word.panel")}
             style={{ overflowAnchor: "none" }}
             onScroll={handleScroll}
           >
@@ -673,7 +677,7 @@ export function BiblePassageWordSearchPanel({
               </p>
             ) : showEmptyResults ? (
               <p className="bible-yv-pick-loading bible-yv-muted bible-yv-pick-roll-empty">
-                {ui.empty}
+                {t("word.empty")}
               </p>
             ) : (
               <ul className="bible-yv-pick-verse-hits is-word-search-passages">

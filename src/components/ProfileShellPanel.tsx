@@ -40,6 +40,7 @@ import {
 import { downloadOfflineBible } from "../bibleOffline";
 import { downloadHt1998Offline } from "../bible/ht1998Offline";
 import { localS21Books } from "../bibleEngine";
+import { useUiLocale } from "../i18n/UiLocaleContext";
 
 type ProfileShellPanelProps = {
   active: boolean;
@@ -84,6 +85,7 @@ export function ProfileShellPanel({
   onHistoryChange,
   onRequestSignIn,
 }: ProfileShellPanelProps) {
+  const { t, dateLocale } = useUiLocale();
   const {
     session,
     profile,
@@ -471,7 +473,7 @@ export function ProfileShellPanel({
 
       <section className="profile-section" aria-labelledby="profile-prefs-title">
         <h3 id="profile-prefs-title" className="type-eyebrow">
-          {showAdminEntry ? "Édition & Préférences" : "Préférences"}
+          {showAdminEntry ? "Édition & Préférences" : t("profile.settings")}
         </h3>
         <div className="profile-card profile-card-rows">
           {showAdminEntry ? (
@@ -484,22 +486,22 @@ export function ProfileShellPanel({
           ) : null}
           <div className="profile-inset-row profile-inset-static">
             <span className="profile-row-body">
-              <span className="profile-row-label">Apparence</span>
+              <span className="profile-row-label">{t("profile.appearance")}</span>
             </span>
-            <div className="profile-theme-seg" role="group" aria-label="Thème">
+            <div className="profile-theme-seg" role="group" aria-label={t("profile.theme")}>
               <button
                 type="button"
                 className={resolvedTheme === "light" ? "is-active" : undefined}
                 onClick={() => onSetTheme("light")}
               >
-                Clair
+                {t("profile.themeLight")}
               </button>
               <button
                 type="button"
                 className={resolvedTheme === "dark" ? "is-active" : undefined}
                 onClick={() => onSetTheme("dark")}
               >
-                Sombre
+                {t("profile.themeDark")}
               </button>
             </div>
           </div>
@@ -508,21 +510,21 @@ export function ProfileShellPanel({
 
       <section className="profile-section" aria-labelledby="profile-storage-title">
         <h3 id="profile-storage-title" className="type-eyebrow">
-          Stockage
+          {t("profile.storage")}
         </h3>
         <div className="profile-card profile-card-rows">
           <div className="profile-inset-row profile-inset-static" role="status">
             <span className="profile-row-body">
               <span className="profile-row-label">
                 {storageHealth
-                  ? `${storageHealth.usedMB} Mo utilisés`
-                  : "Calcul…"}
+                  ? `${storageHealth.usedMB} Mo`
+                  : t("profile.calculating")}
               </span>
               <span className="profile-row-value muted">
                 {storageHealth
                   ? storageHealth.isPersisted
-                    ? "Stockage persistant"
-                    : "Cache navigateur"
+                    ? t("profile.storage")
+                    : "Cache"
                   : "…"}
               </span>
             </span>
@@ -532,7 +534,7 @@ export function ProfileShellPanel({
               <span className="profile-row-label">Segond 21 (S21)</span>
             </span>
             {isReady(s21Status) ? (
-              <span className="profile-ready-badge">Prêt</span>
+              <span className="profile-ready-badge">{t("profile.ready")}</span>
             ) : (
               <button
                 type="button"
@@ -544,7 +546,7 @@ export function ProfileShellPanel({
                   ? s21Status?.status === "downloading"
                     ? `${s21Status.progressPercent}%`
                     : "…"
-                  : "Télécharger"}
+                  : t("profile.download")}
               </button>
             )}
           </div>
@@ -553,7 +555,7 @@ export function ProfileShellPanel({
               <span className="profile-row-label">Bib la (HT98)</span>
             </span>
             {isReady(htStatus) ? (
-              <span className="profile-ready-badge">Prêt</span>
+              <span className="profile-ready-badge">{t("profile.ready")}</span>
             ) : (
               <button
                 type="button"
@@ -565,7 +567,7 @@ export function ProfileShellPanel({
                   ? htStatus?.status === "downloading"
                     ? `${htStatus.progressPercent}%`
                     : "…"
-                  : "Télécharger"}
+                  : t("profile.download")}
               </button>
             )}
           </div>
@@ -575,7 +577,7 @@ export function ProfileShellPanel({
       <section className="profile-section" aria-labelledby="profile-history-title">
         <div className="profile-section-head">
           <h3 id="profile-history-title" className="type-eyebrow">
-            Historique
+            {t("profile.history")}
           </h3>
           {history.length ? (
             <button
@@ -583,7 +585,9 @@ export function ProfileShellPanel({
               className={`profile-text-btn${confirmClear ? " is-confirm-warn" : ""}`}
               onClick={requestClearHistory}
             >
-              {confirmClear ? "Confirmer ?" : "Effacer"}
+              {confirmClear
+                ? t("profile.clearHistoryConfirm")
+                : t("profile.clearHistory")}
             </button>
           ) : null}
         </div>
@@ -618,7 +622,7 @@ export function ProfileShellPanel({
                         {label}
                       </span>
                       <span className="profile-history-when muted">
-                        {formatActivityWhen(event.at)}
+                        {formatActivityWhen(event.at, dateLocale)}
                       </span>
                     </button>
                   </li>
@@ -627,7 +631,7 @@ export function ProfileShellPanel({
             </ul>
           </div>
         ) : (
-          <p className="muted">Aucune lecture enregistrée pour le moment.</p>
+          <p className="muted">{t("profile.historyEmpty")}</p>
         )}
       </section>
     </div>

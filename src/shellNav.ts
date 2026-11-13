@@ -1,16 +1,17 @@
-/** Onglets principaux : Accueil · Plan · Bible · Profil */
+/** Onglets principaux : Accueil · Plan · Bible · Profil (labels via i18n). */
 export type ShellTab = "home" | "today" | "bible" | "profile";
 
 export type ShellTabDef = {
   id: ShellTab;
-  label: string;
+  /** Chave i18n em uiCopy (shell.*). */
+  labelKey: "shell.home" | "shell.plan" | "shell.bible" | "shell.profile";
 };
 
 export const SHELL_TABS: readonly ShellTabDef[] = [
-  { id: "home", label: "Accueil" },
-  { id: "today", label: "Plan" },
-  { id: "bible", label: "Bible" },
-  { id: "profile", label: "Profil" },
+  { id: "home", labelKey: "shell.home" },
+  { id: "today", labelKey: "shell.plan" },
+  { id: "bible", labelKey: "shell.bible" },
+  { id: "profile", labelKey: "shell.profile" },
 ] as const;
 
 export const DEFAULT_SHELL_TAB: ShellTab = "bible";

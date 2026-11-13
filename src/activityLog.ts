@@ -169,9 +169,9 @@ export function recordBibleRead(input: {
   );
 }
 
-export function formatActivityWhen(iso: string): string {
+export function formatActivityWhen(iso: string, localeTag = "fr-FR"): string {
   try {
-    return new Intl.DateTimeFormat("fr-FR", {
+    return new Intl.DateTimeFormat(localeTag, {
       day: "numeric",
       month: "short",
       hour: "2-digit",

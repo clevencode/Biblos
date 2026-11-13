@@ -9,6 +9,7 @@ import { normalizeQuery } from "../bible/passageDiscovery/normalizeQuery";
 import type { BibleTextVersionId } from "../bible/bibleVersions";
 import type { YouVersionBook } from "../youversion/client";
 import { versionBadgeFor } from "../bible/readingScope";
+import { useUiLocale } from "../i18n/UiLocaleContext";
 
 export type SearchBooksPick = {
   usfm: string;
@@ -35,6 +36,7 @@ export function SearchBooksModal({
   versionId,
   onPick,
 }: SearchBooksModalProps) {
+  const { t } = useUiLocale();
   const titleId = useId();
   const inputId = useId();
   const [query, setQuery] = useState("");
@@ -75,6 +77,7 @@ export function SearchBooksModal({
   if (!open) return null;
 
   const badge = versionBadgeFor(versionId);
+  const nCh = selected ? chaptersCount(selected) : 0;
 
   return (
     <div
@@ -94,14 +97,14 @@ export function SearchBooksModal({
             }
             onClose();
           }}
-          aria-label={selected ? "Retour aux livres" : "Fermer"}
+          aria-label={selected ? t("searchBooks.back") : t("searchBooks.close")}
         >
           <YvIcon name="chevron_left" className="bible-search-sheet-back-icon" />
         </button>
         <h2 className="bible-search-sheet-title" id={titleId}>
           {selected
             ? selected.title || selected.id
-            : `Livres · ${badge}`}
+            : `${t("searchBooks.title")} · ${badge}`}
         </h2>
         <span className="bible-search-sheet-spacer" aria-hidden />
       </header>
@@ -110,7 +113,7 @@ export function SearchBooksModal({
         <>
           <div className="bible-search-sheet-field">
             <label className="sr-only" htmlFor={inputId}>
-              Rechercher un livre
+              {t("searchBooks.search")}
             </label>
             <div className="bible-search-sheet-input-wrap">
               <YvIcon name="search" className="bible-search-sheet-search-icon" />
@@ -120,11 +123,7 @@ export function SearchBooksModal({
                 className="bible-search-sheet-input"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder={
-                  versionId === "ht98"
-                    ? "Jenèz, Sòm, Jan…"
-                    : "Genèse, Psaumes, Jean…"
-                }
+                placeholder={t("searchBooks.placeholder")}
                 autoComplete="off"
                 autoCorrect="off"
                 spellCheck={false}
@@ -132,9 +131,9 @@ export function SearchBooksModal({
             </div>
           </div>
 
-          <ul className="bible-search-books-list" aria-label="Livres">
+          <ul className="bible-search-books-list" aria-label={t("searchBooks.title")}>
             {filtered.length === 0 ? (
-              <li className="bible-search-books-empty muted">Aucun livre</li>
+              <li className="bible-search-books-empty muted">{t("searchBooks.empty")}</li>
             ) : (
               filtered.map((book) => (
                 <li key={book.id}>
@@ -147,7 +146,7 @@ export function SearchBooksModal({
                       {book.title || book.fullTitle || book.id}
                     </span>
                     <span className="bible-search-books-meta muted">
-                      {chaptersCount(book)} ch.
+                      {t("searchBooks.chAbbr", { n: chaptersCount(book) })}
                     </span>
                   </button>
                 </li>
@@ -158,13 +157,12 @@ export function SearchBooksModal({
       ) : (
         <div className="bible-search-books-chapters">
           <p className="bible-search-sheet-meta">
-            {chaptersCount(selected)} chapitre
-            {chaptersCount(selected) === 1 ? "" : "s"}
+            {t("searchBooks.chaptersCount", { n: nCh })}
           </p>
           <div
             className="bible-search-books-grid"
             role="list"
-            aria-label="Chapitres"
+            aria-label={t("searchBooks.chapters")}
           >
             {selected.chapters.map((ch) => {
               const n = Number(ch.id) || 1;

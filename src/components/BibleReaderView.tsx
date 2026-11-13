@@ -52,6 +52,8 @@ import {
   languageForVersion,
   versionBadgeFor,
 } from "../bible/readingScope";
+import { useUiLocale } from "../i18n/UiLocaleContext";
+import { notifyUiLocale } from "../i18n/uiLocale";
 import {
   formatPassagePillRef,
   isPassagePillUnified,
@@ -509,6 +511,7 @@ export function BibleReaderView({
   compactToolsMenu = false,
   compactViewport = false,
 }: BibleReaderViewProps) {
+  const { t } = useUiLocale();
   const prefs = readPrefs();
   const prefsBookOk = isUsfmBookId(prefs.bookId || "");
   const initialParts = parseUsfmParts(
@@ -1308,7 +1311,7 @@ export function BibleReaderView({
           aria-label={
             planSkips
               ? isPrev
-                ? "Passage précédent du plan"
+                ? t("bible.planPrev")
                 : stageComplete
                   ? planReading!.isLast
                     ? stageTitle
@@ -1317,10 +1320,10 @@ export function BibleReaderView({
                     : stageTitle
                       ? `Terminer l’étape · ${stageTitle}`
                       : "Terminer l’étape"
-                  : "Passage suivant du plan"
+                  : t("bible.planNext")
               : isPrev
-                ? "Chapitre précédent"
-                : "Chapitre suivant"
+                ? t("bible.prevChapter")
+                : t("bible.nextChapter")
           }
         >
           <YvIcon
@@ -1340,7 +1343,7 @@ export function BibleReaderView({
     return (
       <div
         className={`bible-yv-top-passage-skips${floatSkips ? " is-float-br" : ""}${stageComplete ? " is-stage-end" : ""}`.trim()}
-        aria-label={planSkips ? "Progression du plan" : "Chapitres"}
+        aria-label={planSkips ? t("bible.planProgress") : t("bible.chapters")}
       >
         {renderChapterSkipButton(-1)}
         {renderChapterSkipButton(1)}
@@ -1373,11 +1376,11 @@ export function BibleReaderView({
           aria-label={
             planBound
               ? isPrev
-                ? "Passage précédent du plan"
-                : "Passage suivant du plan"
+                ? t("bible.planPrev")
+                : t("bible.planNext")
               : isPrev
-                ? "Chapitre précédent"
-                : "Chapitre suivant"
+                ? t("bible.prevChapter")
+                : t("bible.nextChapter")
           }
         >
           <YvIcon
@@ -1393,7 +1396,7 @@ export function BibleReaderView({
         className={`bible-yv-compact-ref bible-yv-top-passage${extraClass}${
           splitChrome ? " is-split-chrome" : ""
         }`.trim()}
-        aria-label="Livre et chapitre"
+        aria-label={t("bible.bookChapter")}
       >
         <div
           className={`bible-yv-top-passage-bar${compactBar ? " is-compact" : ""}${
@@ -1462,7 +1465,7 @@ export function BibleReaderView({
                       ? `Replier · chapitre ${chapterId}`
                       : `Choisir un chapitre · ${chapterId}`
                   }
-                  title={`Chapitre ${chapterId}`}
+                  title={t("bible.chapterN", { n: chapterId })}
                   panelId={passagePickerPanelId}
                   onClick={() => togglePassagePicker("chapter")}
                 />
@@ -2105,6 +2108,7 @@ export function BibleReaderView({
       fontSize,
       fontFamily,
     });
+    notifyUiLocale(next);
     if (next === "ht98") {
       setHtCatalogLoading(true);
       setHtCatalogError(null);
@@ -2145,7 +2149,7 @@ export function BibleReaderView({
         <button
           type="button"
           className={`bible-yv-tools-menu-btn${toolsMenuOpen ? " is-on" : ""}`}
-          aria-label="Menu"
+          aria-label={t("bible.menu")}
           aria-haspopup="menu"
           aria-expanded={toolsMenuOpen}
           onClick={() => {
@@ -2159,14 +2163,14 @@ export function BibleReaderView({
           <div
             className="bible-yv-tools-popover"
             role="menu"
-            aria-label="Menu Bible"
+            aria-label={t("bible.menuBible")}
           >
             <div
               className="bible-yv-tools-version"
               role="group"
-              aria-label="Version de la Bible"
+              aria-label={t("bible.versionGroup")}
             >
-              <span className="bible-yv-tools-version-label">Version</span>
+              <span className="bible-yv-tools-version-label">{t("bible.version")}</span>
               <div className="bible-yv-tools-version-options">
                 {BIBLE_TEXT_VERSIONS.map((version) => (
                   <button
@@ -2216,12 +2220,13 @@ export function BibleReaderView({
               }}
               aria-label={
                 offlineBusy
-                  ? `Téléchargement… ${offlineProgress?.done ?? 0}/${offlineProgress?.total ?? (textVersion === "ht98" ? 2 : 66)} (toucher pour annuler)`
+                  ? t("bible.offlineBusy", {
+                      done: offlineProgress?.done ?? 0,
+                      total: offlineProgress?.total ?? (textVersion === "ht98" ? 2 : 66),
+                    })
                   : versionOfflineReady
-                    ? "Bible hors ligne disponible (toucher pour supprimer)"
-                    : textVersion === "ht98"
-                      ? "Télécharger la Bible haïtienne hors ligne (~8 Mo)"
-                      : "Télécharger la Bible hors ligne (~6 Mo)"
+                    ? t("bible.offlineReady")
+                    : t("bible.offlineDownload")
               }
             >
               {versionOfflineReady ? (
@@ -2231,19 +2236,22 @@ export function BibleReaderView({
               )}
               <span>
                 {offlineBusy
-                  ? `Téléchargement… ${offlineProgress?.done ?? 0}/${offlineProgress?.total ?? (textVersion === "ht98" ? 2 : 66)}`
+                  ? t("bible.offlineDownloading", {
+                      done: offlineProgress?.done ?? 0,
+                      total: offlineProgress?.total ?? (textVersion === "ht98" ? 2 : 66),
+                    })
                   : versionOfflineReady
-                    ? "Bible hors ligne"
-                    : "Télécharger hors ligne"}
+                    ? t("bible.offlineReady")
+                    : t("bible.offlineDownload")}
               </span>
             </button>
             )}
             <div
               className="bible-yv-tools-version bible-yv-tools-font-family"
               role="group"
-              aria-label="Police du texte"
+              aria-label={t("bible.font")}
             >
-              <span className="bible-yv-tools-version-label">Police</span>
+              <span className="bible-yv-tools-version-label">{t("bible.font")}</span>
               <div className="bible-yv-tools-version-options">
                 {BIBLE_FONT_FAMILIES.map((family) => (
                   <button
@@ -2260,15 +2268,15 @@ export function BibleReaderView({
                 ))}
               </div>
             </div>
-            <div className="bible-yv-tools-font" role="group" aria-label="Taille du texte">
-              <span className="bible-yv-tools-font-label">Texte</span>
+            <div className="bible-yv-tools-font" role="group" aria-label={t("bible.fontSize")}>
+              <span className="bible-yv-tools-font-label">{t("bible.text")}</span>
               <div className="bible-yv-font">
                 <button
                   type="button"
                   className="bible-yv-font-btn"
                   onClick={() => setFontSize((n) => clampFontSize(n - FONT_STEP))}
                   disabled={fontSize <= FONT_MIN}
-                  aria-label="Réduire la taille du texte"
+                  aria-label={t("bible.fontSmaller")}
                 >
                   A−
                 </button>
@@ -2280,7 +2288,7 @@ export function BibleReaderView({
                   className="bible-yv-font-btn"
                   onClick={() => setFontSize((n) => clampFontSize(n + FONT_STEP))}
                   disabled={fontSize >= FONT_MAX}
-                  aria-label="Augmenter la taille du texte"
+                  aria-label={t("bible.fontLarger")}
                 >
                   A+
                 </button>
@@ -2668,7 +2676,7 @@ export function BibleReaderView({
     >
       <header
         className={`bible-yv-top is-free${surfaceChrome.rootClassPassageRollOpen ? " is-passage-roll-open" : ""}${catalogOfflineHint ? " is-catalog-offline" : ""}${compactToolsMenu ? " is-compact-tools" : ""}`}
-        aria-label="Navigation biblique"
+        aria-label={t("bible.nav")}
       >
         {discoverySplitSearch ? (
           <div
@@ -2697,7 +2705,7 @@ export function BibleReaderView({
                 className={`bible-yv-passage-word-search-trigger${
                   wordSearchOpen ? " is-on" : ""
                 }`}
-                aria-label="Rechercher un mot dans la Bible"
+                aria-label={t("bible.searchWord")}
                 aria-expanded={wordSearchOpen}
                 aria-controls={wordSearchPanelId}
                 onClick={toggleWordSearch}
@@ -2746,7 +2754,7 @@ export function BibleReaderView({
               <button
                 type="button"
                 className={`bible-yv-history-btn${historyOpen ? " is-on" : ""}`}
-                aria-label="Historique"
+                aria-label={t("bible.history")}
                 aria-haspopup="dialog"
                 aria-expanded={historyOpen}
                 onClick={() => {
@@ -2816,7 +2824,7 @@ export function BibleReaderView({
             }${surfaceChrome.scrimIsPickerDismiss ? " is-picker-dismiss" : ""}${
               wordSearchOpen ? " is-word-search" : ""
             }`}
-            aria-label="Fermer"
+            aria-label={t("common.close")}
             onPointerDown={(event) => {
               event.preventDefault();
             }}
@@ -3062,7 +3070,7 @@ export function BibleReaderView({
                 type="button"
                 className="bible-verse-actions-close"
                 onClick={closeCreateCard}
-                aria-label="Fermer"
+                aria-label={t("common.close")}
               >
                 <YvIcon name="close" className="bible-verse-actions-close-icon" />
               </button>
@@ -3198,7 +3206,7 @@ export function BibleReaderView({
           return (
             <footer
               className={`bible-yv-dock is-plan-progress${showCreateCard ? " has-verse-actions" : ""}${compactDock ? " is-floating" : ""} is-play-only`}
-              aria-label="Progression du plan"
+              aria-label={t("bible.planProgress")}
             >
               <div
                 className="bible-yv-plan-progress-chip"

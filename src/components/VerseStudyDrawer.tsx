@@ -18,6 +18,8 @@ import {
   versionBadgeFor,
 } from "../bible/readingScope";
 import type { BibleTextVersionId } from "../bible/bibleVersions";
+import { useUiLocale } from "../i18n/UiLocaleContext";
+import type { UiCopyKey } from "../i18n/uiCopy";
 
 export type VerseStudyTab =
   | "context"
@@ -38,26 +40,24 @@ export type VerseStudyDrawerProps = {
   initialTab?: VerseStudyTab;
 };
 
-const TABS: Array<{ id: VerseStudyTab; label: string }> = [
-  { id: "context", label: "Contexte" },
-  { id: "refs", label: "Références" },
-  { id: "application", label: "Application" },
-  { id: "notes", label: "Notes" },
+const TAB_KEYS: Array<{ id: VerseStudyTab; labelKey: UiCopyKey }> = [
+  { id: "context", labelKey: "study.context" },
+  { id: "refs", labelKey: "study.refs" },
+  { id: "application", labelKey: "study.application" },
+  { id: "notes", labelKey: "study.notes" },
 ];
 
 function RefList({
   refs,
   onOpenRef,
+  emptyLabel,
 }: {
   refs: TskeRef[];
   onOpenRef: (usfm: string) => void;
+  emptyLabel: string;
 }) {
   if (!refs.length) {
-    return (
-      <p className="bible-study-empty muted">
-        Aucune référence croisée pour ce verset.
-      </p>
-    );
+    return <p className="bible-study-empty muted">{emptyLabel}</p>;
   }
   return (
     <ul className="bible-study-ref-list" role="list">
@@ -94,6 +94,7 @@ export function VerseStudyDrawer({
   onOpenRef,
   initialTab = "refs",
 }: VerseStudyDrawerProps) {
+  const { t } = useUiLocale();
   const titleId = useId();
   const noteId = useId();
   const [tab, setTab] = useState<VerseStudyTab>(initialTab);
@@ -126,12 +127,12 @@ export function VerseStudyDrawer({
       })
       .catch((err) => {
         if (gen !== reqGen.current) return;
-        setError(err instanceof Error ? err.message : "Erreur de chargement");
+        setError(err instanceof Error ? err.message : t("study.loadError"));
       })
       .finally(() => {
         if (gen === reqGen.current) setBusy(false);
       });
-  }, [open, bookId, chapterId, verse]);
+  }, [open, bookId, chapterId, verse, t]);
 
   useEffect(() => {
     if (!open) return;
@@ -194,12 +195,12 @@ export function VerseStudyDrawer({
           type="button"
           className="bible-search-sheet-back"
           onClick={onClose}
-          aria-label="Fermer l’étude"
+          aria-label={t("study.close")}
         >
           <YvIcon name="chevron_left" className="bible-search-sheet-back-icon" />
         </button>
         <h2 className="bible-search-sheet-title" id={titleId}>
-          Étude
+          {t("study.title")}
         </h2>
         <span className="bible-search-sheet-spacer" aria-hidden />
       </header>
@@ -211,8 +212,8 @@ export function VerseStudyDrawer({
         <span>{refLabel}</span>
       </div>
 
-      <div className="verse-study-tabs" role="tablist" aria-label="Sections d’étude">
-        {TABS.map((item) => (
+      <div className="verse-study-tabs" role="tablist" aria-label={t("study.tabs")}>
+        {TAB_KEYS.map((item) => (
           <button
             key={item.id}
             type="button"
@@ -221,7 +222,7 @@ export function VerseStudyDrawer({
             aria-selected={tab === item.id}
             onClick={() => setTab(item.id)}
           >
-            {item.label}
+            {t(item.labelKey)}
           </button>
         ))}
       </div>
@@ -232,9 +233,7 @@ export function VerseStudyDrawer({
             {heading ? (
               <p className="bible-study-heading">{heading}</p>
             ) : (
-              <p className="bible-study-empty muted">
-                Contexte historique non disponible pour ce verset.
-              </p>
+              <p className="bible-study-empty muted">{t("study.contextEmpty")}</p>
             )}
           </div>
         ) : null}
@@ -250,23 +249,25 @@ export function VerseStudyDrawer({
                 {error}
               </p>
             ) : (
-              <RefList refs={refs} onOpenRef={onOpenRef} />
+              <RefList
+                refs={refs}
+                onOpenRef={onOpenRef}
+                emptyLabel={t("study.refsEmpty")}
+              />
             )}
           </div>
         ) : null}
 
         {tab === "application" ? (
           <div className="verse-study-block">
-            <p className="bible-study-empty muted">
-              Application pratique à venir pour ce passage.
-            </p>
+            <p className="bible-study-empty muted">{t("study.appEmpty")}</p>
           </div>
         ) : null}
 
         {tab === "notes" ? (
           <div className="verse-study-block verse-study-notes">
             <label className="sr-only" htmlFor={noteId}>
-              Mes notes
+              {t("study.notesLabel")}
             </label>
             <textarea
               id={noteId}
@@ -274,12 +275,10 @@ export function VerseStudyDrawer({
               rows={8}
               value={noteText}
               onChange={(e) => scheduleSave(e.target.value)}
-              placeholder="Écrire une note personnelle…"
+              placeholder={t("study.notesPlaceholder")}
             />
             <p className="verse-study-notes-meta muted">
-              {noteSavedAt
-                ? `Enregistré · sync si connecté`
-                : "Brouillon local"}
+              {noteSavedAt ? t("study.notesSaved") : t("study.notesDraft")}
             </p>
           </div>
         ) : null}

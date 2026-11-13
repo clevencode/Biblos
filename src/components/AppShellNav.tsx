@@ -1,6 +1,7 @@
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import { ModeTabIcon } from "./ModeTabIcon";
 import { SHELL_TABS, type ShellTab } from "../shellNav";
+import { useUiLocale } from "../i18n/UiLocaleContext";
 
 type AppShellNavProps = {
   active: ShellTab;
@@ -9,6 +10,8 @@ type AppShellNavProps = {
 };
 
 export function AppShellNav({ active, onSelect, immersiveHidden = false }: AppShellNavProps) {
+  const { t } = useUiLocale();
+
   function onTabKey(event: ReactKeyboardEvent<HTMLDivElement>) {
     if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
     event.preventDefault();
@@ -28,11 +31,12 @@ export function AppShellNav({ active, onSelect, immersiveHidden = false }: AppSh
       <div
         className="mode-tabs-nav"
         role="tablist"
-        aria-label="Navigation"
+        aria-label={t("shell.nav")}
         onKeyDown={onTabKey}
       >
         {SHELL_TABS.map((item) => {
           const on = active === item.id;
+          const label = t(item.labelKey);
           return (
             <button
               key={item.id}
@@ -42,12 +46,12 @@ export function AppShellNav({ active, onSelect, immersiveHidden = false }: AppSh
               className={on ? "is-on" : ""}
               aria-selected={on}
               aria-controls={`panel-${item.id}`}
-              title={item.label}
+              title={label}
               tabIndex={on ? 0 : -1}
               onClick={() => onSelect(item.id)}
             >
               <ModeTabIcon name={item.id} active={on} />
-              <span className="mode-tab-label">{item.label}</span>
+              <span className="mode-tab-label">{label}</span>
             </button>
           );
         })}

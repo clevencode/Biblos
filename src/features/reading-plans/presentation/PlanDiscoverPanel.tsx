@@ -12,6 +12,7 @@ import { PlanCardRow } from "./PlanCardRow";
 import { PlanDiscoverSkeleton } from "./PlanDiscoverSkeleton";
 import type { PlanFlowReturn } from "./PlanWorkspacePanel";
 import { PlanWorkspacePanel } from "./PlanWorkspacePanel";
+import { useUiLocale } from "../../../i18n/UiLocaleContext";
 
 type PlanDiscoverPanelProps = {
   active: boolean;
@@ -53,6 +54,7 @@ export function PlanDiscoverPanel({
   onMarkRead,
   onRestartPlan,
 }: PlanDiscoverPanelProps) {
+  const { t } = useUiLocale();
   const { status, plans, error, showSkeleton } = useReadingPlansCatalog(
     active && !workspacePlan,
   );
@@ -113,7 +115,7 @@ export function PlanDiscoverPanel({
       className="pane-body today-view plan-discover"
     >
       <header className="plan-discover-head">
-        <h1 className="plan-discover-title type-headline">Plans de lecture</h1>
+        <h1 className="plan-discover-title type-headline">{t("home.plans")}</h1>
       </header>
 
       <div
@@ -136,7 +138,7 @@ export function PlanDiscoverPanel({
                       id="plan-section-active"
                       className="plan-discover-section-title type-eyebrow"
                     >
-                      En cours
+                      {t("plan.inProgress")}
                     </h2>
                     <ul className="plan-discover-grid is-stack" role="list">
                       {inProgress.map((plan) => (
@@ -159,7 +161,7 @@ export function PlanDiscoverPanel({
                         id="plan-section-all"
                         className="plan-discover-section-title type-eyebrow"
                       >
-                        Tous les plans
+                        {t("plan.all")}
                       </h2>
                       <ul className="plan-discover-grid is-stack" role="list">
                         {rest.map((plan) => (
@@ -191,50 +193,43 @@ export function PlanDiscoverPanel({
 
           {showEmpty ? (
             <div className="plan-discover-empty" role="status">
-              <p className="plan-discover-empty-title">Aucun plan disponible</p>
-              <p className="muted">
-                Les parcours guidés apparaîtront ici dès qu’ils seront publiés.
-              </p>
+              <p className="plan-discover-empty-title">{t("plan.empty")}</p>
+              <p className="muted">{t("plan.emptyHint")}</p>
               <button
                 type="button"
                 className="home-empty-cta type-label"
                 onClick={onOpenBible}
               >
                 <YvIcon name="menu_book" opsz={20} className="yv-icon" aria-hidden />
-                Ouvrir la Bible
+                {t("home.openBible")}
               </button>
             </div>
           ) : null}
 
           {showError ? (
             <div className="plan-discover-empty" role="alert">
-              <p className="plan-discover-empty-title">Catalogue indisponible</p>
-              <p className="muted">
-                {error ?? "Impossible de charger les plans pour le moment."}
-              </p>
+              <p className="plan-discover-empty-title">{t("plan.catalogError")}</p>
+              <p className="muted">{error ?? t("plan.catalogErrorHint")}</p>
               <button
                 type="button"
                 className="home-empty-cta type-label"
                 onClick={onOpenBible}
               >
-                Ouvrir la Bible
+                {t("home.openBible")}
               </button>
             </div>
           ) : null}
 
           {showUnconfigured ? (
             <div className="plan-discover-empty" role="status">
-              <p className="plan-discover-empty-title">Plans hors ligne</p>
-              <p className="muted">
-                Le catalogue n’est pas configuré sur cet appareil. Vous pouvez
-                toujours ouvrir la Bible.
-              </p>
+              <p className="plan-discover-empty-title">{t("plan.offline")}</p>
+              <p className="muted">{t("plan.offlineHint")}</p>
               <button
                 type="button"
                 className="home-empty-cta type-label"
                 onClick={onOpenBible}
               >
-                Ouvrir la Bible
+                {t("home.openBible")}
               </button>
             </div>
           ) : null}
