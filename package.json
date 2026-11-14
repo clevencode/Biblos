@@ -3,6 +3,11 @@
   "private": true,
   "version": "0.2.7",
   "type": "module",
+  "packageManager": "npm@12.2.2",
+  "engines": {
+    "node": ">=22.22.2",
+    "npm": ">=12"
+  },
   "scripts": {
     "dev": "vite",
     "build": "node scripts/stage-bible-assets.mjs && node scripts/stage-study-assets.mjs && tsc && vite build",
