@@ -1,10 +1,8 @@
 import { useEffect, useId, useState } from "react";
-import { YvIcon } from "./YvIcon";
 import {
   clearBibleReadingHistory,
   formatActivityWhen,
   listBibleReadingHistory,
-  removeActivityById,
   type ActivityEvent,
 } from "../activityLog";
 import {
@@ -71,17 +69,14 @@ export function BibleHistorySheet({
   useEffect(() => {
     if (!open) return;
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      event.stopPropagation();
+      onClose();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
-
-  function deleteOne(id: string) {
-    if (!removeActivityById(id)) return;
-    refresh();
-    onHistoryChange?.();
-  }
 
   function clearAll() {
     if (rows.length === 0) return;
@@ -96,9 +91,9 @@ export function BibleHistorySheet({
 
   return (
     <div
-      className="bible-yv-history-panel top-floating-sheet"
+      className="bible-yv-history-panel top-floating-sheet is-open"
       role="dialog"
-      aria-modal="true"
+      aria-modal="false"
       aria-labelledby={titleId}
     >
       <header className="bible-yv-history-panel-head">
@@ -109,12 +104,12 @@ export function BibleHistorySheet({
           {rows.length > 0 ? (
             <button
               type="button"
-              className="bible-yv-history-panel-icon-btn"
+              className="bible-yv-history-panel-clear"
               onClick={clearAll}
-              aria-label={t("history.clearAll")}
+              aria-label={t("common.clear")}
               title={t("history.clearAll")}
             >
-              <YvIcon name="delete" className="bible-yv-history-panel-icon" />
+              {t("common.clear")}
             </button>
           ) : null}
         </div>
@@ -157,17 +152,6 @@ export function BibleHistorySheet({
                   <span className="bible-yv-history-panel-when">
                     {formatActivityWhen(at, dateLocale)}
                   </span>
-                </button>
-                <button
-                  type="button"
-                  className="bible-history-delete"
-                  aria-label={`${t("history.delete")} ${label}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    deleteOne(eventId);
-                  }}
-                >
-                  <YvIcon name="delete" className="bible-history-delete-icon" />
                 </button>
               </li>
             );

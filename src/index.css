@@ -10308,29 +10308,144 @@ html[data-passage-bar-panel="test"]
   contain: none !important;
 }
 
-/* Histórico / Menu: ancorados à direita, nunca cortados */
-.bible-yv-history-panel.top-floating-sheet,
-.bible-yv-tools-popover.top-floating-sheet,
-html[data-passage-bar-panel="test"] .bible-yv-history-panel.top-floating-sheet,
-html[data-passage-bar-panel="test"] .bible-yv-tools-popover.top-floating-sheet {
+/*
+ * Histórico: herança search/book — fixed, instant, opaco, altura útil, âncora direita.
+ * Sheet montado como IRMÃO do trigger (não filho de contentor z elevado).
+ */
+.bible-reader--yv .bible-yv-history-panel.top-floating-sheet,
+html[data-passage-bar-panel="test"]
+  .bible-reader--yv
+  .bible-yv-history-panel.top-floating-sheet,
+html[data-passage-bar-panel="test"]
+  .bible-reader--yv.is-history-open
+  .bible-yv-history-panel.top-floating-sheet {
+  --bible-history-sheet-top: calc(
+    max(
+      var(--bible-top-chrome, 68px),
+      calc(56px + env(safe-area-inset-top, 0px))
+    ) + var(--bible-chrome-panel-offset-y, 10px)
+  );
+  --bible-history-sheet-max-h: calc(
+    100dvh - var(--bible-history-sheet-top) -
+      max(12px, env(safe-area-inset-bottom, 0px)) -
+      var(--shell-tab-clearance, 72px) - 8px
+  );
+  position: fixed !important;
+  top: var(--bible-history-sheet-top) !important;
   left: auto !important;
-  right: 16px !important;
-  width: min(290px, calc(100vw - 32px)) !important;
-  max-width: calc(100vw - 32px) !important;
+  right: max(
+    var(--mobile-gutter, 12px),
+    14px,
+    env(safe-area-inset-right, 0px)
+  ) !important;
+  bottom: auto !important;
+  width: min(290px, calc(100vw - 2 * max(var(--mobile-gutter, 12px), 14px))) !important;
+  max-width: calc(
+    100vw - 2 * max(var(--mobile-gutter, 12px), 14px, env(safe-area-inset-right, 0px))
+  ) !important;
   min-width: 0 !important;
-  transform: none;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: var(--bible-history-sheet-max-h) !important;
+  margin: 0 !important;
+  padding: 10px 10px 12px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px;
+  overflow: hidden !important;
+  contain: none !important;
+  transform: none !important;
+  transform-origin: top right;
+  z-index: var(--bible-z-top-sheet) !important;
+  box-sizing: border-box;
+  pointer-events: auto;
+  animation: none !important;
+  transition: none !important;
+  opacity: 1 !important;
+  background: var(--yv-overlay-surface, var(--surface)) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  border: var(--yv-overlay-border);
+  box-shadow: var(--top-sheet-shadow) !important;
+  border-radius: var(--top-sheet-radius) !important;
 }
 
-/* Menu float (compact): sheet sobe a partir do FAB */
-.bible-yv-tools-menu.is-float-br .bible-yv-tools-popover.top-floating-sheet {
-  position: absolute;
-  top: auto;
-  bottom: calc(100% + 10px);
-  left: auto;
-  right: 0;
-  width: min(290px, calc(100vw - 32px));
-  max-width: calc(100vw - 32px);
+/*
+ * Menu header: herança search/book/history — fixed, instant, opaco, âncora direita.
+ * Float FAB: exceção absolute (bloco seguinte).
+ */
+.bible-reader--yv
+  .bible-yv-tools-popover.top-floating-sheet:not(.is-float-anchor),
+html[data-passage-bar-panel="test"]
+  .bible-reader--yv
+  .bible-yv-tools-popover.top-floating-sheet:not(.is-float-anchor),
+html[data-passage-bar-panel="test"]
+  .bible-reader--yv.is-tools-menu-open
+  .bible-yv-tools-popover.top-floating-sheet:not(.is-float-anchor) {
+  --bible-menu-sheet-top: calc(
+    max(
+      var(--bible-top-chrome, 68px),
+      calc(56px + env(safe-area-inset-top, 0px))
+    ) + var(--bible-chrome-panel-offset-y, 10px)
+  );
+  --bible-menu-sheet-max-h: calc(
+    100dvh - var(--bible-menu-sheet-top) -
+      max(12px, env(safe-area-inset-bottom, 0px)) -
+      var(--shell-tab-clearance, 72px) - 8px
+  );
+  position: fixed !important;
+  top: var(--bible-menu-sheet-top) !important;
+  left: auto !important;
+  right: max(
+    var(--mobile-gutter, 12px),
+    14px,
+    env(safe-area-inset-right, 0px)
+  ) !important;
+  bottom: auto !important;
+  width: min(290px, calc(100vw - 2 * max(var(--mobile-gutter, 12px), 14px))) !important;
+  max-width: calc(
+    100vw - 2 * max(var(--mobile-gutter, 12px), 14px, env(safe-area-inset-right, 0px))
+  ) !important;
+  min-width: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: var(--bible-menu-sheet-max-h) !important;
+  margin: 0 !important;
+  padding: 10px 10px 12px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px;
+  overflow: auto !important;
+  contain: none !important;
+  transform: none !important;
+  transform-origin: top right;
+  z-index: var(--bible-z-top-sheet) !important;
+  box-sizing: border-box;
+  pointer-events: auto;
+  animation: none !important;
+  transition: none !important;
+  opacity: 1 !important;
+  background: var(--yv-overlay-surface, var(--surface)) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  border: var(--yv-overlay-border);
+  box-shadow: var(--top-sheet-shadow) !important;
+  border-radius: var(--top-sheet-radius) !important;
+  scrollbar-width: none;
+}
+
+/* Menu float (compact): sheet sobe a partir do FAB — não herda fixed header */
+.bible-yv-tools-menu.is-float-br .bible-yv-tools-popover.top-floating-sheet.is-float-anchor {
+  position: absolute !important;
+  top: auto !important;
+  bottom: calc(100% + 10px) !important;
+  left: auto !important;
+  right: 0 !important;
+  width: min(290px, calc(100vw - 32px)) !important;
+  max-width: calc(100vw - 32px) !important;
+  max-height: min(58dvh, 26rem) !important;
   transform-origin: bottom right;
+  z-index: var(--bible-z-popover) !important;
 }
 
 .hdr-trigger-caret {
@@ -11366,19 +11481,8 @@ html[data-passage-bar-panel="test"] .bible-yv-tool-icon {
   font-size: var(--bible-chrome-trigger-icon);
 }
 
-/* Hamburger modal → mesmo cartão frosted do book / word-search */
+/* Legacy tools absolute/frost — header herança ganha com !important; float usa is-float-anchor */
 html[data-passage-bar-panel="test"] .bible-yv-tools-popover {
-  top: calc(100% + var(--bible-chrome-panel-offset-y));
-  width: min(22rem, calc(100vw - 1.5rem));
-  min-width: 0;
-  max-width: min(22rem, calc(100vw - 1.5rem));
-  padding: 10px 10px 12px;
-  border-radius: var(--bible-chrome-panel-radius, 16px);
-  background: var(--yv-overlay-frost-bg, var(--yv-overlay-surface));
-  -webkit-backdrop-filter: var(--yv-overlay-backdrop-filter);
-  backdrop-filter: var(--yv-overlay-backdrop-filter);
-  border: var(--yv-overlay-border);
-  box-shadow: var(--yv-overlay-shadow);
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -13105,41 +13209,14 @@ html[data-colortest*="BiblePassageChip:red"] .bible-yv-passage-chip {
   background: color-mix(in srgb, var(--yv-text) 6%, transparent);
 }
 
-/* Mesma coluna de largura do tools popover, ancorado à direita do top-tools */
+/* Legacy history absolute — top-floating-sheet + bloco herança ganham com !important */
 .bible-yv-history-panel {
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
-  left: auto;
-  z-index: var(--bible-z-popover);
   pointer-events: auto;
   box-sizing: border-box;
-  width: min(22rem, calc(100vw - 1.5rem));
-  min-width: 0;
-  max-width: min(22rem, calc(100vw - 1.5rem));
-  max-height: min(74vh, 28rem);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  overflow: hidden;
-  padding: 10px 10px 12px;
-  border: var(--yv-overlay-border);
-  border-radius: var(--bible-chrome-panel-radius, 16px);
-  background: var(--yv-overlay-frost-bg, var(--yv-overlay-surface));
-  -webkit-backdrop-filter: var(--yv-overlay-backdrop-filter);
-  backdrop-filter: var(--yv-overlay-backdrop-filter);
-  box-shadow: var(--yv-overlay-shadow);
-  animation: bible-popup-in 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   gap: 8px;
-}
-
-html[data-passage-bar-panel="test"] .bible-yv-history-panel {
-  top: calc(100% + var(--bible-chrome-panel-offset-y));
-  width: min(22rem, calc(100vw - 1.5rem));
-  max-width: min(22rem, calc(100vw - 1.5rem));
 }
 
 .bible-yv-history-panel-head {
@@ -13164,29 +13241,28 @@ html[data-passage-bar-panel="test"] .bible-yv-history-panel {
   gap: 2px;
 }
 
-.bible-yv-history-panel-icon-btn {
-  width: 36px;
-  height: 36px;
+.bible-yv-history-panel-clear {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   margin: 0;
-  padding: 0;
-  display: grid;
-  place-items: center;
+  padding: 6px 10px;
   border: 0;
-  border-radius: 10px;
+  border-radius: 999px;
   background: transparent;
-  color: var(--yv-muted, var(--muted));
+  color: color-mix(in srgb, var(--text) 72%, transparent);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
   cursor: pointer;
 }
 
-.bible-yv-history-panel-icon-btn:hover {
-  background: color-mix(in srgb, var(--yv-text) 7%, transparent);
-  color: var(--yv-text);
-}
-
-.bible-yv-history-panel-icon {
-  width: 20px;
-  height: 20px;
-  font-size: 20px;
+.bible-yv-history-panel-clear:hover {
+  color: var(--text);
+  background: color-mix(in srgb, var(--text) 6%, transparent);
 }
 
 .bible-yv-history-panel-meta {

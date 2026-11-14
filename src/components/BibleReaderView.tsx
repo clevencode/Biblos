@@ -580,6 +580,10 @@ export function BibleReaderView({
   const [dayNoteReturnsToPlans, setDayNoteReturnsToPlans] = useState(false);
   const toolsMenuRef = useRef<HTMLDivElement | null>(null);
   const historyToolsRef = useRef<HTMLDivElement | null>(null);
+  const restoreHistoryFocusRef = useRef(true);
+  const historyWasOpenRef = useRef(false);
+  const restoreToolsFocusRef = useRef(true);
+  const toolsWasOpenRef = useRef(false);
   const overlayDismissSwallowRef = useRef(false);
   const overlayDismissSwallowTimerRef = useRef<number | undefined>(undefined);
 
@@ -629,6 +633,42 @@ export function BibleReaderView({
   const hasActiveModalRef = useRef(hasActiveModal);
   hasActiveModalRef.current = hasActiveModal;
 
+  /** WAI: ao fechar histórico, focus no trigger (exceto ao escolher um item). */
+  useLayoutEffect(() => {
+    if (historyOpen) {
+      historyWasOpenRef.current = true;
+      return;
+    }
+    if (!historyWasOpenRef.current) return;
+    historyWasOpenRef.current = false;
+    if (!restoreHistoryFocusRef.current) {
+      restoreHistoryFocusRef.current = true;
+      return;
+    }
+    const trigger = historyToolsRef.current?.querySelector(
+      "button.bible-yv-history-btn",
+    ) as HTMLButtonElement | null;
+    trigger?.focus({ preventScroll: true });
+  }, [historyOpen]);
+
+  /** WAI: ao fechar menu, focus no trigger hamburger. */
+  useLayoutEffect(() => {
+    if (toolsMenuOpen) {
+      toolsWasOpenRef.current = true;
+      return;
+    }
+    if (!toolsWasOpenRef.current) return;
+    toolsWasOpenRef.current = false;
+    if (!restoreToolsFocusRef.current) {
+      restoreToolsFocusRef.current = true;
+      return;
+    }
+    const trigger = toolsMenuRef.current?.querySelector(
+      "button.bible-yv-tools-menu-btn",
+    ) as HTMLButtonElement | null;
+    trigger?.focus({ preventScroll: true });
+  }, [toolsMenuOpen]);
+
   const requestOpenPassagePicker = useCallback(() => {
     setShareSheetOpen(false);
     openOverlay({ type: "passage_picker" });
@@ -647,9 +687,13 @@ export function BibleReaderView({
     toggleOverlay("word_search");
   }, [toggleOverlay]);
 
-  const closeToolsMenu = useCallback(() => {
-    closeOverlay();
-  }, [closeOverlay]);
+  const closeToolsMenu = useCallback(
+    (options?: { restoreFocus?: boolean }) => {
+      restoreToolsFocusRef.current = options?.restoreFocus !== false;
+      closeOverlay();
+    },
+    [closeOverlay],
+  );
 
   const [offlineReady, setOfflineReady] = useState(false);
   const [htOfflineReady, setHtOfflineReady] = useState(false);
@@ -2008,11 +2052,12 @@ export function BibleReaderView({
       return;
     }
     if (target === "bookSearch" || target === "history") {
+      restoreHistoryFocusRef.current = target === "history";
       closeOverlay();
       return;
     }
     if (target === "tools") {
-      closeToolsMenu();
+      closeToolsMenu({ restoreFocus: true });
       return;
     }
     if (target === "share") {
@@ -2027,20 +2072,21 @@ export function BibleReaderView({
   useEffect(() => {
     if (!toolsMenuOpen) return;
     const onPointer = (event: PointerEvent) => {
-      const root = toolsMenuRef.current;
-      if (!root || !(event.target instanceof Node)) return;
-      if (!root.contains(event.target)) {
-        event.preventDefault();
-        event.stopPropagation();
-        markOverlayDismissSwallow();
-        closeToolsMenu();
-      }
+      const target = event.target;
+      if (!(target instanceof Node) || !(target instanceof Element)) return;
+      if (toolsMenuRef.current?.contains(target)) return;
+      if (target.closest(".bible-yv-tools-popover")) return;
+      event.preventDefault();
+      event.stopPropagation();
+      markOverlayDismissSwallow();
+      closeToolsMenu();
     };
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        markOverlayDismissSwallow();
-        closeToolsMenu();
-      }
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      event.stopPropagation();
+      markOverlayDismissSwallow();
+      closeToolsMenu();
     };
     window.addEventListener("pointerdown", onPointer, true);
     window.addEventListener("keydown", onKey);
@@ -2132,161 +2178,179 @@ export function BibleReaderView({
   function renderTopToolsMenu(placement: "header" | "float" = "header") {
     const themeResolved = resolveTheme(themePref);
     const themeLabel = themePrefLabel(themePref);
-    return (
+    const isFloat = placement === "float";
+    const trigger = (
+      <HeaderTriggerButton
+        open={toolsMenuOpen}
+        shape="circle"
+        idleIcon="menu"
+        ariaLabel={t("bible.menu")}
+        ariaHaspopup="menu"
+        className={`bible-yv-tools-menu-btn${toolsMenuOpen ? " is-on" : ""}`}
+        onClick={() => {
+          setShareSheetOpen(false);
+          restoreToolsFocusRef.current = true;
+          toggleOverlay("reader_settings");
+        }}
+      />
+    );
+    const popover = toolsMenuOpen ? (
       <div
-        className={`bible-yv-tools-menu${placement === "float" ? " is-float-br" : ""}`}
-        ref={toolsMenuRef}
+        className={`bible-yv-tools-popover top-floating-sheet is-open${
+          isFloat ? " is-float-anchor" : ""
+        }`}
+        role="menu"
+        aria-label={t("bible.menuBible")}
       >
-        <HeaderTriggerButton
-          open={toolsMenuOpen}
-          shape="circle"
-          idleIcon="menu"
-          ariaLabel={t("bible.menu")}
-          ariaHaspopup="menu"
-          className={`bible-yv-tools-menu-btn${toolsMenuOpen ? " is-on" : ""}`}
-          onClick={() => {
-            setShareSheetOpen(false);
-            toggleOverlay("reader_settings");
-          }}
-        />
-        {toolsMenuOpen ? (
-          <div
-            className="bible-yv-tools-popover top-floating-sheet"
-            role="menu"
-            aria-label={t("bible.menuBible")}
-          >
-            <div
-              className="bible-yv-tools-version"
-              role="group"
-              aria-label={t("bible.versionGroup")}
-            >
-              <span className="bible-yv-tools-version-label">{t("bible.version")}</span>
-              <div className="bible-yv-tools-version-options">
-                {BIBLE_TEXT_VERSIONS.map((version) => (
-                  <button
-                    key={version.id}
-                    type="button"
-                    className={`bible-yv-tools-version-chip${textVersion === version.id ? " is-on" : ""}${
-                      htCatalogLoading && version.id === "ht98" ? " is-busy" : ""
-                    }`}
-                    disabled={htCatalogLoading && version.id === "ht98"}
-                    aria-pressed={textVersion === version.id}
-                    title={version.title}
-                    onClick={() => void switchTextVersion(version.id)}
-                  >
-                    {version.abbreviation}
-                  </button>
-                ))}
-              </div>
-            </div>
-            {htCatalogError ? (
-              <p className="bible-yv-tools-version-msg" role="alert">
-                {htCatalogError}
-              </p>
-            ) : null}
-            {onCycleTheme ? (
+        <div
+          className="bible-yv-tools-version"
+          role="group"
+          aria-label={t("bible.versionGroup")}
+        >
+          <span className="bible-yv-tools-version-label">{t("bible.version")}</span>
+          <div className="bible-yv-tools-version-options">
+            {BIBLE_TEXT_VERSIONS.map((version) => (
               <button
+                key={version.id}
                 type="button"
-                role="menuitem"
-                className="bible-yv-tools-item"
-                onClick={() => onCycleTheme()}
+                className={`bible-yv-tools-version-chip${textVersion === version.id ? " is-on" : ""}${
+                  htCatalogLoading && version.id === "ht98" ? " is-busy" : ""
+                }`}
+                disabled={htCatalogLoading && version.id === "ht98"}
+                aria-pressed={textVersion === version.id}
+                title={version.title}
+                onClick={() => void switchTextVersion(version.id)}
               >
-                {themeResolved === "light" ? (
-                  <YvIcon name="light_mode" className="bible-yv-tools-item-icon" />
-                ) : (
-                  <YvIcon name="dark_mode" className="bible-yv-tools-item-icon" />
-                )}
-                <span>{themeLabel}</span>
+                {version.abbreviation}
               </button>
-            ) : null}
-            {textVersion === "s21" && useLocalBundledBible() ? null : (
+            ))}
+          </div>
+        </div>
+        {htCatalogError ? (
+          <p className="bible-yv-tools-version-msg" role="alert">
+            {htCatalogError}
+          </p>
+        ) : null}
+        {onCycleTheme ? (
+          <button
+            type="button"
+            role="menuitem"
+            className="bible-yv-tools-item"
+            onClick={() => onCycleTheme()}
+          >
+            {themeResolved === "light" ? (
+              <YvIcon name="light_mode" className="bible-yv-tools-item-icon" />
+            ) : (
+              <YvIcon name="dark_mode" className="bible-yv-tools-item-icon" />
+            )}
+            <span>{themeLabel}</span>
+          </button>
+        ) : null}
+        {textVersion === "s21" && useLocalBundledBible() ? null : (
+          <button
+            type="button"
+            role="menuitem"
+            className={`bible-yv-tools-item${versionOfflineReady ? " is-ready" : ""}${offlineBusy ? " is-busy" : ""}`}
+            onClick={() => {
+              if (!offlineBusy) closeToolsMenu();
+              void toggleOfflineBible();
+            }}
+            aria-label={
+              offlineBusy
+                ? t("bible.offlineBusy", {
+                    done: offlineProgress?.done ?? 0,
+                    total: offlineProgress?.total ?? (textVersion === "ht98" ? 2 : 66),
+                  })
+                : versionOfflineReady
+                  ? t("bible.offlineReady")
+                  : t("bible.offlineDownload")
+            }
+          >
+            {versionOfflineReady ? (
+              <YvIcon name="check_circle" filled className="bible-yv-tools-item-icon" />
+            ) : (
+              <YvIcon name="download" className="bible-yv-tools-item-icon" />
+            )}
+            <span>
+              {offlineBusy
+                ? t("bible.offlineDownloading", {
+                    done: offlineProgress?.done ?? 0,
+                    total: offlineProgress?.total ?? (textVersion === "ht98" ? 2 : 66),
+                  })
+                : versionOfflineReady
+                  ? t("bible.offlineReady")
+                  : t("bible.offlineDownload")}
+            </span>
+          </button>
+        )}
+        <div
+          className="bible-yv-tools-version bible-yv-tools-font-family"
+          role="group"
+          aria-label={t("bible.font")}
+        >
+          <span className="bible-yv-tools-version-label">{t("bible.font")}</span>
+          <div className="bible-yv-tools-version-options">
+            {BIBLE_FONT_FAMILIES.map((family) => (
+              <button
+                key={family.id}
+                type="button"
+                className={`bible-yv-tools-version-chip${
+                  fontFamily === family.id ? " is-on" : ""
+                }`}
+                aria-pressed={fontFamily === family.id}
+                onClick={() => setFontFamily(family.id)}
+              >
+                {family.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="bible-yv-tools-font" role="group" aria-label={t("bible.fontSize")}>
+          <span className="bible-yv-tools-font-label">{t("bible.text")}</span>
+          <div className="bible-yv-font">
             <button
               type="button"
-              role="menuitem"
-              className={`bible-yv-tools-item${versionOfflineReady ? " is-ready" : ""}${offlineBusy ? " is-busy" : ""}`}
-              onClick={() => {
-                if (!offlineBusy) closeToolsMenu();
-                void toggleOfflineBible();
-              }}
-              aria-label={
-                offlineBusy
-                  ? t("bible.offlineBusy", {
-                      done: offlineProgress?.done ?? 0,
-                      total: offlineProgress?.total ?? (textVersion === "ht98" ? 2 : 66),
-                    })
-                  : versionOfflineReady
-                    ? t("bible.offlineReady")
-                    : t("bible.offlineDownload")
-              }
+              className="bible-yv-font-btn"
+              onClick={() => setFontSize((n) => clampFontSize(n - FONT_STEP))}
+              disabled={fontSize <= FONT_MIN}
+              aria-label={t("bible.fontSmaller")}
             >
-              {versionOfflineReady ? (
-                <YvIcon name="check_circle" filled className="bible-yv-tools-item-icon" />
-              ) : (
-                <YvIcon name="download" className="bible-yv-tools-item-icon" />
-              )}
-              <span>
-                {offlineBusy
-                  ? t("bible.offlineDownloading", {
-                      done: offlineProgress?.done ?? 0,
-                      total: offlineProgress?.total ?? (textVersion === "ht98" ? 2 : 66),
-                    })
-                  : versionOfflineReady
-                    ? t("bible.offlineReady")
-                    : t("bible.offlineDownload")}
-              </span>
+              A−
             </button>
-            )}
-            <div
-              className="bible-yv-tools-version bible-yv-tools-font-family"
-              role="group"
-              aria-label={t("bible.font")}
+            <span className="bible-yv-font-value" aria-live="polite">
+              {Number.isInteger(fontSize) ? fontSize : fontSize.toFixed(1)}
+            </span>
+            <button
+              type="button"
+              className="bible-yv-font-btn"
+              onClick={() => setFontSize((n) => clampFontSize(n + FONT_STEP))}
+              disabled={fontSize >= FONT_MAX}
+              aria-label={t("bible.fontLarger")}
             >
-              <span className="bible-yv-tools-version-label">{t("bible.font")}</span>
-              <div className="bible-yv-tools-version-options">
-                {BIBLE_FONT_FAMILIES.map((family) => (
-                  <button
-                    key={family.id}
-                    type="button"
-                    className={`bible-yv-tools-version-chip${
-                      fontFamily === family.id ? " is-on" : ""
-                    }`}
-                    aria-pressed={fontFamily === family.id}
-                    onClick={() => setFontFamily(family.id)}
-                  >
-                    {family.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="bible-yv-tools-font" role="group" aria-label={t("bible.fontSize")}>
-              <span className="bible-yv-tools-font-label">{t("bible.text")}</span>
-              <div className="bible-yv-font">
-                <button
-                  type="button"
-                  className="bible-yv-font-btn"
-                  onClick={() => setFontSize((n) => clampFontSize(n - FONT_STEP))}
-                  disabled={fontSize <= FONT_MIN}
-                  aria-label={t("bible.fontSmaller")}
-                >
-                  A−
-                </button>
-                <span className="bible-yv-font-value" aria-live="polite">
-                  {Number.isInteger(fontSize) ? fontSize : fontSize.toFixed(1)}
-                </span>
-                <button
-                  type="button"
-                  className="bible-yv-font-btn"
-                  onClick={() => setFontSize((n) => clampFontSize(n + FONT_STEP))}
-                  disabled={fontSize >= FONT_MAX}
-                  aria-label={t("bible.fontLarger")}
-                >
-                  A+
-                </button>
-              </div>
-            </div>
+              A+
+            </button>
           </div>
-        ) : null}
+        </div>
       </div>
+    ) : null;
+
+    /* Header: sheet IRMÃO do trigger. Float: sheet filho (âncora no FAB). */
+    if (isFloat) {
+      return (
+        <div className="bible-yv-tools-menu is-float-br" ref={toolsMenuRef}>
+          {trigger}
+          {popover}
+        </div>
+      );
+    }
+
+    return (
+      <>
+        <div className="bible-yv-tools-menu" ref={toolsMenuRef}>
+          {trigger}
+        </div>
+        {popover}
+      </>
     );
   }
 
@@ -2722,23 +2786,31 @@ export function BibleReaderView({
         )}
         <div className="bible-yv-top-tools">
           {ACTIVITY_UI_ENABLED ? (
-            <div className="bible-yv-history-menu" ref={historyToolsRef}>
-              <HeaderTriggerButton
-                open={historyOpen}
-                shape="circle"
-                idleIcon="history"
-                ariaLabel={t("bible.history")}
-                ariaHaspopup="dialog"
-                className={`bible-yv-history-btn${historyOpen ? " is-on" : ""}`}
-                onClick={() => {
-                  setShareSheetOpen(false);
-                  toggleOverlay("history");
-                }}
-              />
+            <>
+              {/* Trigger só — sheet IRMÃO (evita trap z sob o scrim, como book/search) */}
+              <div className="bible-yv-history-menu" ref={historyToolsRef}>
+                <HeaderTriggerButton
+                  open={historyOpen}
+                  shape="circle"
+                  idleIcon="history"
+                  ariaLabel={t("bible.history")}
+                  ariaHaspopup="dialog"
+                  className={`bible-yv-history-btn${historyOpen ? " is-on" : ""}`}
+                  onClick={() => {
+                    setShareSheetOpen(false);
+                    restoreHistoryFocusRef.current = true;
+                    toggleOverlay("history");
+                  }}
+                />
+              </div>
               <BibleHistorySheet
                 open={historyOpen}
-                onClose={() => closeOverlay()}
+                onClose={() => {
+                  restoreHistoryFocusRef.current = true;
+                  closeOverlay();
+                }}
                 onSelect={({ versionId, bookId, chapterId, verse }) => {
+                  restoreHistoryFocusRef.current = false;
                   closeOverlay();
                   void (async () => {
                     if (versionId !== textVersionRef.current) {
@@ -2749,7 +2821,7 @@ export function BibleReaderView({
                 }}
                 onHistoryChange={onReadingHistoryChange}
               />
-            </div>
+            </>
           ) : null}
           {!compactToolsMenu || isPassageBarPanelCompactTopbar()
             ? renderTopToolsMenu("header")
