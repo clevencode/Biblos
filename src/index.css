@@ -1142,6 +1142,36 @@ html[data-theme="dark"] .mode-tabs {
   font-size: var(--bible-chrome-trigger-icon, 20px);
 }
 
+/* Nome da interface activa — sob o hub (só com radial fechado) */
+.mode-tabs-hub-caption {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 4px);
+  z-index: 2;
+  max-width: 7.5rem;
+  margin: 0;
+  padding: 0;
+  transform: translateX(-50%);
+  color: var(--mode-tabs-fg-muted, var(--muted));
+  font-family: var(--font-ui);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity var(--mode-tabs-ms) var(--mode-tabs-ease);
+}
+
+.mode-tabs.is-open .mode-tabs-hub-caption,
+.mode-tabs.is-immersive-hidden .mode-tabs-hub-caption {
+  opacity: 0;
+}
+
 /* Roleta: saída suave e curta; entrada um pouco mais longa */
 .mode-tabs-arc {
   position: absolute;

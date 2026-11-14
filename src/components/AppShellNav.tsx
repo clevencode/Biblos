@@ -180,6 +180,13 @@ export function AppShellNav({
               <ModeTabIcon name={active} active />
             )}
           </button>
+
+          <span
+            className="mode-tabs-hub-caption"
+            aria-hidden={open || immersiveHidden}
+          >
+            {activeLabel}
+          </span>
         </div>
       </div>
     </div>
