@@ -740,6 +740,10 @@ export function BibleReaderView({
     wordDiscoveryBusy,
     wordVerseHits,
     wordVerseTotal,
+    wordSearchPage,
+    wordSearchPageCount,
+    setWordSearchPage,
+    wordSearchPaging,
     wordMatchMode,
     wordMatchedTerms,
     passageRollRef,
@@ -2701,6 +2705,10 @@ export function BibleReaderView({
                 discoveryBusy={wordDiscoveryBusy}
                 verseHits={wordVerseHits}
                 verseTotal={wordVerseTotal}
+                page={wordSearchPage}
+                pageCount={wordSearchPageCount}
+                onPageChange={setWordSearchPage}
+                paging={wordSearchPaging}
                 contentError={wordDiscovery.contentError}
                 textVersion={textVersion}
                 books={books}

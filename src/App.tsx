@@ -138,6 +138,8 @@ function BiblosConsumerApp() {
   const [firstInstallError, setFirstInstallError] = useState<string | null>(
     null,
   );
+  const [firstInstallBannerDismissed, setFirstInstallBannerDismissed] =
+    useState(false);
   const [signInOpen, setSignInOpen] = useState(false);
   const [signInVariant, setSignInVariant] = useState<"upgrade" | "soft_gate">(
     "upgrade",
@@ -442,7 +444,7 @@ function BiblosConsumerApp() {
           </button>
         </div>
       ) : null}
-      {firstInstallNeeded && !bibleMode ? (
+      {firstInstallNeeded && !firstInstallBannerDismissed && !bibleMode ? (
         <div className="sw-update-banner" role="status" aria-live="polite">
           <div className="sw-update-banner-copy">
             <p className="sw-update-banner-title">{t("install.bannerTitle")}</p>
@@ -455,6 +457,15 @@ function BiblosConsumerApp() {
             onClick={() => void handleFirstInstall()}
           >
             {firstInstallBusy ? t("install.bannerBusy") : t("install.bannerCta")}
+          </button>
+          <button
+            type="button"
+            className="sw-update-banner-dismiss"
+            aria-label={t("common.close")}
+            disabled={firstInstallBusy}
+            onClick={() => setFirstInstallBannerDismissed(true)}
+          >
+            ×
           </button>
         </div>
       ) : null}

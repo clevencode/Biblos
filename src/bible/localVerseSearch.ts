@@ -56,6 +56,7 @@ export async function runLocalVerseSearch(input: {
   version: BibleTextVersionId;
   q: string;
   limit?: number;
+  offset?: number;
   /** Legado: pré-filtra o índice. Ignorado quando `scope` está definido. */
   bookFilter?: Iterable<string> | null;
   bookOrder?: Map<string, number>;
@@ -115,9 +116,9 @@ export async function runLocalVerseSearch(input: {
     }
   }
 
-  const capped = Math.min(80, Math.max(1, Number(input.limit) || 40));
   const found = searchVersesCascadeOnIndex(searchIndex, query, {
-    limit: capped,
+    limit: input.limit,
+    offset: input.offset,
     profile: profileForVersion(input.version),
     scope: input.scope ?? { type: "all" },
   });

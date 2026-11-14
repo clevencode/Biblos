@@ -4,7 +4,6 @@ import { normalizeSearchText } from "../bible/verseSearchEngine";
 export type PersistedScrollData = {
   signature: string;
   scrollTop: number;
-  loadedLimit: number;
 };
 
 export const SESSION_SCROLL_KEY = "biblos_word_search_scroll_v1";
@@ -12,23 +11,21 @@ export const SESSION_SCROLL_KEY = "biblos_word_search_scroll_v1";
 const EMPTY_SCROLL: PersistedScrollData = {
   signature: "",
   scrollTop: 0,
-  loadedLimit: 0,
 };
 
 /** Fallback em memória se sessionStorage estiver indisponível. */
 let memoryFallback: PersistedScrollData = { ...EMPTY_SCROLL };
 
+/** Assinatura da busca (sem página — paginação reseta scroll à parte). */
 export function buildSearchSignature(input: {
   versionId: string;
   query: string;
   filter?: string;
-  loadedLimit: number;
 }): string {
   const versionId = String(input.versionId || "s21");
   const query = normalizeSearchText(input.query);
   const filter = String(input.filter || "all");
-  const loadedLimit = Math.max(0, Number(input.loadedLimit) || 0);
-  return `${versionId}::${query}::${filter}::${loadedLimit}`;
+  return `${versionId}::${query}::${filter}`;
 }
 
 export function readScrollData(): PersistedScrollData {
@@ -42,10 +39,6 @@ export function readScrollData(): PersistedScrollData {
         typeof parsed.scrollTop === "number" && Number.isFinite(parsed.scrollTop)
           ? Math.max(0, parsed.scrollTop)
           : 0,
-      loadedLimit:
-        typeof parsed.loadedLimit === "number" && Number.isFinite(parsed.loadedLimit)
-          ? Math.max(0, parsed.loadedLimit)
-          : 0,
     };
   } catch {
     return { ...memoryFallback };
@@ -56,7 +49,6 @@ export function writeScrollData(data: PersistedScrollData): void {
   memoryFallback = {
     signature: data.signature,
     scrollTop: Math.max(0, data.scrollTop),
-    loadedLimit: Math.max(0, data.loadedLimit),
   };
   try {
     sessionStorage.setItem(SESSION_SCROLL_KEY, JSON.stringify(memoryFallback));
@@ -74,7 +66,8 @@ export function useSearchScrollRestoration(params: {
   isOpen: boolean;
   searchSignature: string;
   resultsCount: number;
-  loadedLimit: number;
+  /** Página atual — mudança força scrollTop 0 sem alterar a assinatura. */
+  page?: number;
   /** Só restaurar quando a lista estiver pronta (não em loading). */
   resultsReady?: boolean;
 }) {
@@ -82,16 +75,16 @@ export function useSearchScrollRestoration(params: {
     isOpen,
     searchSignature,
     resultsCount,
-    loadedLimit,
+    page = 1,
     resultsReady = resultsCount > 0,
   } = params;
 
   const listRef = useRef<HTMLDivElement | null>(null);
   const currentScrollRef = useRef(0);
   const signatureRef = useRef(searchSignature);
-  const loadedLimitRef = useRef(loadedLimit);
+  const pageRef = useRef(page);
   signatureRef.current = searchSignature;
-  loadedLimitRef.current = loadedLimit;
+  pageRef.current = page;
 
   const handleScroll = useCallback(() => {
     const el = listRef.current;
@@ -108,7 +101,6 @@ export function useSearchScrollRestoration(params: {
     writeScrollData({
       signature: signatureRef.current,
       scrollTop: currentScrollRef.current,
-      loadedLimit: loadedLimitRef.current,
     });
   }, []);
 
@@ -126,22 +118,21 @@ export function useSearchScrollRestoration(params: {
     if (!el) return;
 
     const saved = readScrollData();
-    if (saved.signature === searchSignature && saved.scrollTop > 0) {
+    if (saved.signature === searchSignature && page === 1 && saved.scrollTop > 0) {
       el.scrollTop = saved.scrollTop;
       currentScrollRef.current = saved.scrollTop;
     } else {
       el.scrollTop = 0;
       currentScrollRef.current = 0;
     }
-  }, [isOpen, searchSignature, resultsCount, resultsReady]);
+  }, [isOpen, searchSignature, resultsCount, resultsReady, page]);
 
   useEffect(() => {
     if (!isOpen) return;
     return () => {
       writeScrollData({
         signature: signatureRef.current,
-        scrollTop: currentScrollRef.current,
-        loadedLimit: loadedLimitRef.current,
+        scrollTop: pageRef.current === 1 ? currentScrollRef.current : 0,
       });
     };
   }, [isOpen]);

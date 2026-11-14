@@ -214,8 +214,12 @@ export type UiCopyKey =
   | "word.apply"
   | "word.showAll"
   | "word.partial"
+  | "word.range"
   | "word.count"
+  | "word.pagination"
+  | "word.page"
   | "word.empty"
+  | "word.emptyBooks"
   | "word.fuzzy"
   | "word.or"
   | "word.unavailable";
@@ -447,8 +451,12 @@ const FR: Dict = {
   "word.apply": "Appliquer ({n} passages)",
   "word.showAll": "Tout afficher ({n})",
   "word.partial": "{shown} sur {total} passages",
+  "word.range": "{start}–{end} sur {total} passages",
   "word.count": "{n} passage(s)",
+  "word.pagination": "Pagination des résultats",
+  "word.page": "Page {n}",
   "word.empty": "Aucun passage trouvé",
+  "word.emptyBooks": "Aucun livre trouvé",
   "word.fuzzy":
     "Aucun résultat exact. Affichage des passages pour des termes proches.",
   "word.or":
@@ -679,8 +687,12 @@ const HT: Dict = {
   "word.apply": "Aplike ({n} pasaj)",
   "word.showAll": "Montre tout ({n})",
   "word.partial": "{shown} sou {total} pasaj",
+  "word.range": "{start}–{end} sou {total} pasaj",
   "word.count": "{n} pasaj",
+  "word.pagination": "Pajinasyon rezilta yo",
+  "word.page": "Paj {n}",
   "word.empty": "Pa gen pasaj jwenn",
+  "word.emptyBooks": "Pa gen liv jwenn",
   "word.fuzzy":
     "Pa gen rezilta egzak. Nou montre pasaj pou mo ki sanble.",
   "word.or":

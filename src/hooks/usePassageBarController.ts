@@ -68,9 +68,11 @@ export function usePassageBarController({
     query: wordSearchQuery,
     scopeFilter: wordSearchScopeFilter,
     selectedBookIds: wordSearchSelectedBookIds,
+    page: wordSearchSessionPage,
     setQuery: setWordSearchQuery,
     setScopeFilter: setWordSearchScopeFilter,
     setSelectedBookIds: setWordSearchSelectedBookIds,
+    setPage: setWordSearchSessionPage,
     clearSearch: clearWordSearchSession,
     resetForVersion: resetWordSearchForVersion,
   } = usePersistentSearchSession(textVersion);
@@ -130,7 +132,11 @@ export function usePassageBarController({
   const {
     hits: wordVerseHits,
     total: wordVerseTotal,
+    page: wordSearchPage,
+    pageCount: wordSearchPageCount,
+    setPage: setWordSearchPage,
     busy: wordDiscoveryBusy,
+    paging: wordSearchPaging,
     error: wordSearchError,
     matchMode: wordMatchMode,
     matchedTerms: wordMatchedTerms,
@@ -140,6 +146,8 @@ export function usePassageBarController({
     scopeFilter: wordSearchScopeFilter,
     selectedBookIds: wordSearchSelectedBookIds,
     currentBookId: bookId,
+    page: wordSearchSessionPage,
+    onPageChange: setWordSearchSessionPage,
   });
 
   /** Compatível com o painel (só `contentError`). */
@@ -391,6 +399,10 @@ export function usePassageBarController({
     wordDiscoveryBusy,
     wordVerseHits,
     wordVerseTotal,
+    wordSearchPage,
+    wordSearchPageCount,
+    setWordSearchPage,
+    wordSearchPaging,
     wordMatchMode,
     wordMatchedTerms,
     passageRollRef,

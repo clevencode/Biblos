@@ -25,14 +25,16 @@ import {
   buildSearchSignature,
   useSearchScrollRestoration,
 } from "../hooks/useSearchScrollRestoration";
-import type { WordSearchScopeCounts } from "../hooks/useWordPassageSearch";
+import {
+  WORD_SEARCH_PAGE_SIZE,
+  type WordSearchScopeCounts,
+} from "../hooks/useWordPassageSearch";
 import type { BibleSearchHit, YouVersionBook } from "../youversion/client";
 import { YvIcon } from "./YvIcon";
 import { BibleSearchHighlight } from "./BibleSearchHighlight";
 import { WordSearchSkeleton } from "./WordSearchSkeleton";
 
 const MIN_WORD_CHARS = 2;
-const HIT_LIMIT = 40;
 
 /** Gaveta multi-livros: OT / NT / DC. */
 type PickerMode = "nt" | "ot" | "dc";
@@ -68,6 +70,29 @@ function sectionForBook(id: string): PickerMode {
   return "dc";
 }
 
+/** Janela compacta: 1 … 4 5 6 … N */
+function buildPageItems(
+  current: number,
+  total: number,
+): Array<number | "gap"> {
+  if (total <= 1) return [];
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }
+  const pages = new Set<number>([1, total]);
+  for (let p = current - 1; p <= current + 1; p += 1) {
+    if (p >= 1 && p <= total) pages.add(p);
+  }
+  const sorted = [...pages].sort((a, b) => a - b);
+  const out: Array<number | "gap"> = [];
+  for (let i = 0; i < sorted.length; i += 1) {
+    const n = sorted[i]!;
+    if (i > 0 && n - sorted[i - 1]! > 1) out.push("gap");
+    out.push(n);
+  }
+  return out;
+}
+
 type BiblePassageWordSearchPanelProps = {
   id: string;
   open: boolean;
@@ -78,6 +103,11 @@ type BiblePassageWordSearchPanelProps = {
   discoveryBusy: boolean;
   verseHits: BibleSearchHit[];
   verseTotal: number;
+  page?: number;
+  pageCount?: number;
+  onPageChange?: (page: number) => void;
+  /** Troca de página sem skeleton (stale-while-revalidate). */
+  paging?: boolean;
   contentError: string | null;
   textVersion: BibleTextVersionId;
   /** Catálogo da versão ativa (títulos localizados; HT inclui deuterocanônicos). */
@@ -109,6 +139,10 @@ export function BiblePassageWordSearchPanel({
   discoveryBusy,
   verseHits,
   verseTotal,
+  page = 1,
+  pageCount = 0,
+  onPageChange,
+  paging = false,
   contentError,
   textVersion,
   books,
@@ -160,10 +194,13 @@ export function BiblePassageWordSearchPanel({
 
   const trimmed = query.trim();
   const hasActiveQuery = trimmed.length >= MIN_WORD_CHARS;
-  const showSkeleton = discoveryBusy && hasActiveQuery;
+  /** Skeleton só em nova query/escopo — nunca em paging. */
+  const showSkeleton = discoveryBusy && hasActiveQuery && !paging;
+  const listBusy = (discoveryBusy || paging) && hasActiveQuery;
   const showEmptyResults =
     hasActiveQuery &&
     !discoveryBusy &&
+    !paging &&
     !contentError &&
     verseHits.length === 0 &&
     !isBookPickerOpen;
@@ -182,7 +219,13 @@ export function BiblePassageWordSearchPanel({
   const otActive = scopeFilter === "ot";
   const dcActive = scopeFilter === "dc";
 
-  const loadedLimit = Math.max(verseHits.length, HIT_LIMIT);
+  const rangeStart =
+    verseHits.length > 0 ? (Math.max(page, 1) - 1) * WORD_SEARCH_PAGE_SIZE + 1 : 0;
+  const rangeEnd = rangeStart > 0 ? rangeStart + verseHits.length - 1 : 0;
+  const pageItems = useMemo(
+    () => buildPageItems(Math.max(page, 1), pageCount),
+    [page, pageCount],
+  );
   const booksSignature = useMemo(() => {
     if (scopeFilter === "books" && selectedBookIds.length > 0) {
       return `books:${[...selectedBookIds].sort().join(",")}`;
@@ -203,9 +246,8 @@ export function BiblePassageWordSearchPanel({
         versionId: textVersion,
         query: trimmed,
         filter: booksSignature,
-        loadedLimit,
       }),
-    [textVersion, trimmed, booksSignature, loadedLimit],
+    [textVersion, trimmed, booksSignature],
   );
 
   const { listRef, handleScroll, flushScroll, resetScroll } =
@@ -213,7 +255,7 @@ export function BiblePassageWordSearchPanel({
       isOpen: open,
       searchSignature,
       resultsCount: verseHits.length,
-      loadedLimit,
+      page,
       resultsReady,
     });
 
@@ -430,8 +472,11 @@ export function BiblePassageWordSearchPanel({
     return `${base} (${scopeCounts[scope]})`;
   }
 
-  const displayError =
-    contentError === "unavailable" ? t("word.unavailable") : contentError;
+  const displayError = contentError
+    ? contentError === "unavailable" || /indisponible|unavailable/i.test(contentError)
+      ? t("word.unavailable")
+      : contentError
+    : null;
 
   return (
     <div
@@ -595,7 +640,7 @@ export function BiblePassageWordSearchPanel({
           <ul className="bible-yv-word-search-book-list" role="listbox">
             {filteredBooks.length === 0 ? (
               <li className="bible-yv-word-search-book-empty bible-yv-muted">
-                {t("word.empty")}
+                {t("word.emptyBooks")}
               </li>
             ) : (
               filteredBooks.map((book) => {
@@ -649,9 +694,13 @@ export function BiblePassageWordSearchPanel({
         <>
           {!showSkeleton && verseHits.length > 0 ? (
             <p className="bible-yv-word-search-meta bible-yv-muted" aria-live="polite">
-              {verseTotal > verseHits.length
-                ? t("word.partial", { shown: verseHits.length, total: verseTotal })
-                : t("word.count", { n: verseHits.length })}
+              {pageCount > 1
+                ? t("word.range", {
+                    start: rangeStart,
+                    end: rangeEnd,
+                    total: verseTotal,
+                  })
+                : t("word.count", { n: verseTotal || verseHits.length })}
             </p>
           ) : null}
 
@@ -663,9 +712,12 @@ export function BiblePassageWordSearchPanel({
 
           <div
             ref={listRef}
-            className="bible-yv-pick-grid is-word-search"
+            className={`bible-yv-pick-grid is-word-search${
+              paging ? " is-paging" : ""
+            }`}
             role="listbox"
             aria-label={t("word.panel")}
+            aria-busy={listBusy || undefined}
             style={{ overflowAnchor: "none" }}
             onScroll={handleScroll}
           >
@@ -715,6 +767,41 @@ export function BiblePassageWordSearchPanel({
                 })}
               </ul>
             )}
+            {pageCount > 1 &&
+            !showSkeleton &&
+            !displayError &&
+            verseHits.length > 0 ? (
+              <nav
+                className="bible-yv-word-search-pagination"
+                aria-label={t("word.pagination")}
+              >
+                {pageItems.map((item, index) =>
+                  item === "gap" ? (
+                    <span
+                      key={`gap-${index}`}
+                      className="bible-yv-word-search-page-gap"
+                      aria-hidden
+                    >
+                      …
+                    </span>
+                  ) : (
+                    <button
+                      key={item}
+                      type="button"
+                      className={`bible-yv-word-search-page${
+                        item === page ? " is-current" : ""
+                      }`}
+                      aria-label={t("word.page", { n: item })}
+                      aria-current={item === page ? "page" : undefined}
+                      disabled={discoveryBusy || paging || item === page}
+                      onClick={() => onPageChange?.(item)}
+                    >
+                      {item}
+                    </button>
+                  ),
+                )}
+              </nav>
+            ) : null}
           </div>
           <div className="bible-yv-passage-scroll-edge" aria-hidden />
         </>

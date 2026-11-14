@@ -70,10 +70,16 @@ export type VerseSearchResult = {
 };
 
 export type SearchVersesCascadeOptions = {
+  /** Tamanho da página (1–100). Default 40. */
   limit?: number;
+  /** Índice do primeiro hit da página (default 0). */
+  offset?: number;
   profile: VerseSearchProfile;
   scope?: SearchScope;
 };
+
+/** Limite por pedido de página — não teto do universo de hits. */
+export const SEARCH_PAGE_LIMIT_MAX = 100;
 
 export function emptySearchFacets(): SearchFacets {
   return { total: 0, otCount: 0, ntCount: 0, dcCount: 0, byBook: {} };
@@ -472,6 +478,9 @@ function compareRank(
   return 0;
 }
 
+/** Amostra máxima para extrair termos fuzzy do universo escopado. */
+const MATCHED_TERMS_HIT_CAP = 200;
+
 function collectMatchedTerms(
   mode: MatchMode,
   tokens: string[],
@@ -492,7 +501,11 @@ function collectMatchedTerms(
   if (mode === "fuzzy") {
     const token = tokens[0];
     if (token) {
-      for (const hit of hits) {
+      const sample =
+        hits.length > MATCHED_TERMS_HIT_CAP
+          ? hits.slice(0, MATCHED_TERMS_HIT_CAP)
+          : hits;
+      for (const hit of sample) {
         for (const w of hit.verse.words) {
           if (fuzzyTokenMatches(w, token)) add(w);
         }
@@ -629,7 +642,11 @@ export function searchVersesCascadeOnIndex(
   options: SearchVersesCascadeOptions,
 ): VerseSearchResult {
   const profile = options.profile;
-  const limit = Math.min(80, Math.max(1, Number(options.limit) || 40));
+  const limit = Math.min(
+    SEARCH_PAGE_LIMIT_MAX,
+    Math.max(1, Number(options.limit) || 40),
+  );
+  const offset = Math.max(0, Math.floor(Number(options.offset) || 0));
   const { verses, tokenMap, uniqueTokens } = index;
   const { normQuery, tokenGroups, tokens, stemmedGroups, stemmed } =
     prepareQueryTokens(rawQuery, profile);
@@ -760,8 +777,9 @@ export function searchVersesCascadeOnIndex(
   const facets = buildSearchFacets(matched);
   const scoped = applySearchScope(matched, options.scope);
   const totalCount = scoped.length;
-  const results = scoped.slice(0, limit);
-  const matchedTerms = collectMatchedTerms(mode, tokens, stemmed, results);
+  const results = scoped.slice(offset, offset + limit);
+  // Terms no universo escopado (não só a página) — highlight estável entre páginas.
+  const matchedTerms = collectMatchedTerms(mode, tokens, stemmed, scoped);
 
   return {
     results,

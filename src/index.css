@@ -575,6 +575,32 @@ html[data-theme="dark"] .sw-update-banner-cta {
   cursor: wait;
 }
 
+.sw-update-banner-dismiss {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+  color: var(--muted);
+  font: inherit;
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.sw-update-banner-dismiss:hover:not(:disabled) {
+  color: var(--text);
+  background: color-mix(in srgb, var(--text) 12%, transparent);
+}
+
+.sw-update-banner-dismiss:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .sw-update-banner {
     animation: none;
@@ -9976,6 +10002,68 @@ html[data-passage-bar-panel="test"]
   /* Scroll no .pick-grid pai — evita max-height aninhado a colapsar */
   max-height: none;
   overflow: visible;
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-pick-grid.is-word-search.is-paging {
+  opacity: 0.72;
+  pointer-events: none;
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-word-search-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 0 10px;
+  flex: none;
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-word-search-page {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  min-height: 2rem;
+  margin: 0;
+  padding: 0 6px;
+  border: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 5%, transparent);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-word-search-page:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--text) 10%, transparent);
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-word-search-page.is-current,
+html[data-passage-bar-panel="test"] .bible-yv-word-search-page:disabled.is-current {
+  background: var(--bible-word-search-pill-on, var(--accent));
+  border-color: transparent;
+  color: var(--surface, #fff);
+  cursor: default;
+  opacity: 1;
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-word-search-page:disabled:not(.is-current) {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-word-search-page-gap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1;
+  user-select: none;
 }
 
 html[data-passage-bar-panel="test"]

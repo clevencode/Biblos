@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { BibleTextVersionId } from "../bible/bibleVersions";
 import {
   bookIdsForSearchScope,
@@ -14,11 +14,11 @@ import type { BibleSearchHit } from "../youversion/client";
 import { passageJumpsFromQuery } from "../youversion/bibleRefs";
 
 /**
- * Pesquisa por palavras — uma busca (worker), facets pré-filtro, debounce 280ms.
+ * Pesquisa por palavras — worker + facets pré-filtro, debounce 280ms, páginas de 40.
  */
 const DEBOUNCE_MS = 280;
 const MIN_CHARS = 2;
-const HIT_LIMIT = 40;
+export const WORD_SEARCH_PAGE_SIZE = 40;
 
 export type WordSearchScopeCounts = {
   all: number;
@@ -34,6 +34,9 @@ export type WordPassageSearchOptions = {
   scopeFilter?: SearchScopeFilter;
   selectedBookIds?: string[];
   currentBookId?: string | null;
+  /** Página 1-based controlada pela sessão (opcional). */
+  page?: number;
+  onPageChange?: (page: number) => void;
 };
 
 export function buildEngineScope(
@@ -115,7 +118,11 @@ export function useWordPassageSearch(
 ): {
   hits: BibleSearchHit[];
   total: number;
+  page: number;
+  pageCount: number;
+  setPage: (page: number) => void;
   busy: boolean;
+  paging: boolean;
   error: string | null;
   matchMode: MatchMode | null;
   matchedTerms: string[];
@@ -126,21 +133,13 @@ export function useWordPassageSearch(
   const scopeFilter = options?.scopeFilter ?? "all";
   const selectedBookIds = options?.selectedBookIds ?? [];
   const currentBookId = options?.currentBookId ?? null;
+  const controlledPage = options?.page;
+  const onPageChange = options?.onPageChange;
 
   const engineScope = useMemo(
     () => buildEngineScope(scopeFilter, selectedBookIds, currentBookId),
     [scopeFilter, selectedBookIds, currentBookId],
   );
-
-  const [hits, setHits] = useState<BibleSearchHit[]>([]);
-  const [total, setTotal] = useState(0);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [matchMode, setMatchMode] = useState<MatchMode | null>(null);
-  const [matchedTerms, setMatchedTerms] = useState<string[]>([]);
-  const [facets, setFacets] = useState<SearchFacets>(() => emptySearchFacets());
-  const [scopeCounts, setScopeCounts] = useState<WordSearchScopeCounts>(EMPTY_COUNTS);
-  const reqGen = useRef(0);
 
   const scopeKey = useMemo(() => {
     if (engineScope.type === "books") {
@@ -149,16 +148,59 @@ export function useWordPassageSearch(
     return engineScope.type;
   }, [engineScope]);
 
+  const searchKey = `${textVersion}::${query.trim()}::${scopeKey}`;
+
+  const [hits, setHits] = useState<BibleSearchHit[]>([]);
+  const [total, setTotal] = useState(0);
+  const [internalPage, setInternalPage] = useState(1);
+  const [busy, setBusy] = useState(false);
+  const [paging, setPaging] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [matchMode, setMatchMode] = useState<MatchMode | null>(null);
+  const [matchedTerms, setMatchedTerms] = useState<string[]>([]);
+  const [facets, setFacets] = useState<SearchFacets>(() => emptySearchFacets());
+  const [scopeCounts, setScopeCounts] = useState<WordSearchScopeCounts>(EMPTY_COUNTS);
+
+  const reqGen = useRef(0);
+  const committedSearchKeyRef = useRef(searchKey);
+  const hitsLenRef = useRef(0);
+  hitsLenRef.current = hits.length;
+
+  const pageFromProps =
+    controlledPage != null ? Math.max(1, Math.floor(controlledPage)) : null;
+  const page = pageFromProps ?? internalPage;
+
+  // UI page: if search identity changed since last committed fetch, show 1.
+  const displayPage =
+    committedSearchKeyRef.current !== searchKey ? 1 : page;
+
+  const pageCount =
+    total === 0 ? 0 : Math.max(1, Math.ceil(total / WORD_SEARCH_PAGE_SIZE));
+
+  const setPage = useCallback(
+    (next: number) => {
+      const max = pageCount > 0 ? pageCount : 1;
+      const clamped = Math.min(max, Math.max(1, Math.floor(next)));
+      if (pageFromProps == null) {
+        setInternalPage(clamped);
+      }
+      onPageChange?.(clamped);
+    },
+    [pageCount, pageFromProps, onPageChange],
+  );
+
   useEffect(() => {
     if (!enabled) return;
 
     const q = query.trim();
     if (q.length < MIN_CHARS || passageJumpsFromQuery(q).length > 0) {
       reqGen.current += 1;
+      committedSearchKeyRef.current = searchKey;
       setHits([]);
       setTotal(0);
       setError(null);
       setBusy(false);
+      setPaging(false);
       setMatchMode(null);
       setMatchedTerms([]);
       setFacets(emptySearchFacets());
@@ -166,46 +208,81 @@ export function useWordPassageSearch(
       return;
     }
 
+    const keyChanged = committedSearchKeyRef.current !== searchKey;
+    const effectivePage = keyChanged ? 1 : Math.max(1, page);
+    const keepHits = !keyChanged && hitsLenRef.current > 0;
+
+    if (keyChanged) {
+      if (pageFromProps == null) {
+        setInternalPage(1);
+      } else if (page !== 1) {
+        onPageChange?.(1);
+      }
+    }
+
     const gen = ++reqGen.current;
-    setBusy(true);
+    if (keepHits) {
+      setPaging(true);
+      setBusy(false);
+    } else {
+      setBusy(true);
+      setPaging(false);
+    }
     setError(null);
 
+    const delay = keyChanged ? DEBOUNCE_MS : 0;
     const timer = window.setTimeout(() => {
       void (async () => {
         const res = await searchInWorker({
           versionId: textVersion,
           q,
-          limit: HIT_LIMIT,
+          limit: WORD_SEARCH_PAGE_SIZE,
+          offset: (effectivePage - 1) * WORD_SEARCH_PAGE_SIZE,
           scope: engineScope,
         });
         if (gen !== reqGen.current) return;
 
+        committedSearchKeyRef.current = searchKey;
+
         if (!res.ok) {
           setError(res.error || "unavailable");
-          setHits([]);
-          setTotal(0);
-          setMatchMode(null);
-          setMatchedTerms([]);
-          setFacets(emptySearchFacets());
-          setScopeCounts(EMPTY_COUNTS);
+          if (!keepHits) {
+            setHits([]);
+            setTotal(0);
+            setMatchMode(null);
+            setMatchedTerms([]);
+            setFacets(emptySearchFacets());
+            setScopeCounts(EMPTY_COUNTS);
+          }
           setBusy(false);
+          setPaging(false);
           return;
         }
 
-        // Facetas já vêm do universo pré-filtro (uma única passagem no motor)
         const nextFacets = resolveFacets(res);
+        const nextTotal = res.total ?? res.results?.length ?? 0;
         setFacets(nextFacets);
         setScopeCounts(
           buildScopeCounts(nextFacets, currentBookId, selectedBookIds),
         );
         setHits(res.results ?? []);
-        setTotal(res.total ?? res.results?.length ?? 0);
+        setTotal(nextTotal);
         setMatchMode(res.matchMode ?? null);
         setMatchedTerms(res.matchedTerms ?? []);
         setError(null);
         setBusy(false);
+        setPaging(false);
+
+        const maxPage = Math.max(
+          1,
+          Math.ceil(nextTotal / WORD_SEARCH_PAGE_SIZE) || 1,
+        );
+        if (effectivePage > maxPage) {
+          if (pageFromProps == null) setInternalPage(maxPage);
+          onPageChange?.(maxPage);
+        }
       })();
-    }, DEBOUNCE_MS);
+    }, delay);
 
     return () => {
       window.clearTimeout(timer);
@@ -214,16 +291,23 @@ export function useWordPassageSearch(
     query,
     enabled,
     textVersion,
-    scopeKey,
+    searchKey,
     engineScope,
     currentBookId,
     selectedBookIds,
+    page,
+    pageFromProps,
+    onPageChange,
   ]);
 
   return {
     hits,
     total,
+    page: displayPage,
+    pageCount,
+    setPage,
     busy,
+    paging,
     error,
     matchMode,
     matchedTerms,

@@ -32,6 +32,8 @@ export type ClientSearchResult = ClientSearchOk | ClientSearchErr;
 let worker: Worker | null = null;
 let workerFailed = false;
 let nextRequestId = 1;
+/** Último search enviado — resolves obsoletos recebem unavailable sem aplicar. */
+let latestSearchId = 0;
 
 type Pending = {
   resolve: (value: ClientSearchResult) => void;
@@ -83,7 +85,7 @@ function getWorker(): Worker | null {
     worker.onerror = () => {
       workerFailed = true;
       for (const [, wait] of pending) {
-        wait.resolve({ ok: false, error: "Worker de recherche indisponible" });
+        wait.resolve({ ok: false, error: "unavailable" });
       }
       pending.clear();
       worker?.terminate();
@@ -104,6 +106,7 @@ export async function searchInWorker(input: {
   versionId: BibleTextVersionId;
   q: string;
   limit?: number;
+  offset?: number;
   scope?: SearchScope;
 }): Promise<ClientSearchResult> {
   const w = getWorker();
@@ -112,19 +115,40 @@ export async function searchInWorker(input: {
       version: input.versionId,
       q: input.q,
       limit: input.limit,
+      offset: input.offset,
       scope: input.scope,
     });
   }
 
   const requestId = nextRequestId++;
+  latestSearchId = requestId;
+  // Liberta promises antigas (worker já não posta resultados obsoletos).
+  for (const [id, wait] of pending) {
+    if (id === requestId) continue;
+    pending.delete(id);
+    wait.resolve({ ok: false, error: "unavailable" });
+  }
   return new Promise((resolve) => {
-    pending.set(requestId, { resolve });
+    pending.set(requestId, {
+      resolve: (value) => {
+        if (requestId !== latestSearchId) {
+          resolve({ ok: false, error: "unavailable" });
+          return;
+        }
+        if (!value.ok) {
+          resolve({ ok: false, error: "unavailable" });
+          return;
+        }
+        resolve(value);
+      },
+    });
     const msg: WorkerInbound = {
       type: "search",
       requestId,
       versionId: input.versionId,
       q: input.q,
       limit: input.limit ?? 40,
+      offset: input.offset ?? 0,
       scope: input.scope,
     };
     w.postMessage(msg);

@@ -14,6 +14,7 @@ export type WorkerSearchRequest = {
   versionId: BibleTextVersionId;
   q: string;
   limit: number;
+  offset?: number;
   scope?: SearchScope;
 };
 
@@ -71,6 +72,9 @@ export type WorkerOutbound =
 
 const ctx: DedicatedWorkerGlobalScope = self as unknown as DedicatedWorkerGlobalScope;
 
+/** Último searchId aceite — respostas antigas não são postadas. */
+let latestSearchId = 0;
+
 ctx.onmessage = (event: MessageEvent<WorkerInbound>) => {
   const msg = event.data;
   void (async () => {
@@ -89,18 +93,21 @@ ctx.onmessage = (event: MessageEvent<WorkerInbound>) => {
         return;
       }
       if (msg.type === "search") {
+        latestSearchId = msg.requestId;
         const found = await runLocalVerseSearch({
           version: msg.versionId,
           q: msg.q,
           limit: msg.limit,
+          offset: msg.offset,
           scope: msg.scope ?? { type: "all" },
         });
+        if (msg.requestId !== latestSearchId) return;
         if (!found.ok) {
           const err: WorkerSearchErrorMessage = {
             type: "searchResult",
             requestId: msg.requestId,
             ok: false,
-            error: found.error,
+            error: "unavailable",
           };
           ctx.postMessage(err);
           return;
@@ -120,12 +127,11 @@ ctx.onmessage = (event: MessageEvent<WorkerInbound>) => {
         ctx.postMessage(ok);
       }
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Erreur de recherche (worker)";
+      if (msg.type === "search" && msg.requestId !== latestSearchId) return;
       const out: WorkerErrorMessage = {
         type: "error",
         requestId: msg.type === "search" ? msg.requestId : undefined,
-        message,
+        message: "unavailable",
       };
       ctx.postMessage(out);
     }

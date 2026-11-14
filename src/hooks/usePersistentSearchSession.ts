@@ -17,6 +17,8 @@ export type SearchSessionState = {
   query: string;
   scopeFilter: SearchScopeFilter;
   selectedBookIds: string[];
+  /** Página 1-based da lista de hits. */
+  page: number;
   versionId?: BibleTextVersionId;
 };
 
@@ -26,7 +28,14 @@ export const EMPTY_SEARCH_SESSION: SearchSessionState = {
   query: "",
   scopeFilter: "all",
   selectedBookIds: [],
+  page: 1,
 };
+
+function normalizePage(value: unknown): number {
+  const n = Math.floor(Number(value));
+  if (!Number.isFinite(n) || n < 1) return 1;
+  return n;
+}
 
 function sessionKeyForVersion(versionId?: BibleTextVersionId): string {
   return versionId
@@ -108,6 +117,7 @@ export function readSearchSession(
       query: typeof parsed.query === "string" ? parsed.query : "",
       scopeFilter,
       selectedBookIds,
+      page: normalizePage(parsed.page),
       versionId,
     };
   } catch {
@@ -154,7 +164,7 @@ export function usePersistentSearchSession(versionId: BibleTextVersionId) {
     (query: string) => {
       const prev = stateRef.current;
       if (query === prev.query) return;
-      persist({ ...prev, query });
+      persist({ ...prev, query, page: 1 });
     },
     [persist],
   );
@@ -169,6 +179,7 @@ export function usePersistentSearchSession(versionId: BibleTextVersionId) {
         persist({
           ...prev,
           scopeFilter: nextFilter,
+          page: 1,
         });
         return;
       }
@@ -183,6 +194,7 @@ export function usePersistentSearchSession(versionId: BibleTextVersionId) {
           ...prev,
           scopeFilter: "all",
           selectedBookIds: [],
+          page: 1,
         });
         return;
       }
@@ -191,6 +203,7 @@ export function usePersistentSearchSession(versionId: BibleTextVersionId) {
         ...prev,
         scopeFilter: "books",
         selectedBookIds: prev.selectedBookIds,
+        page: 1,
       });
     },
     [persist],
@@ -212,6 +225,7 @@ export function usePersistentSearchSession(versionId: BibleTextVersionId) {
           ...prev,
           scopeFilter: "all",
           selectedBookIds: [],
+          page: 1,
         });
         return;
       }
@@ -219,7 +233,18 @@ export function usePersistentSearchSession(versionId: BibleTextVersionId) {
         ...prev,
         scopeFilter: "books",
         selectedBookIds: nextIds,
+        page: 1,
       });
+    },
+    [persist],
+  );
+
+  const setPage = useCallback(
+    (page: number) => {
+      const prev = stateRef.current;
+      const next = normalizePage(page);
+      if (next === prev.page) return;
+      persist({ ...prev, page: next });
     },
     [persist],
   );
@@ -231,6 +256,7 @@ export function usePersistentSearchSession(versionId: BibleTextVersionId) {
       query: "",
       scopeFilter: stateRef.current.scopeFilter,
       selectedBookIds: stateRef.current.selectedBookIds,
+      page: 1,
       versionId: versionRef.current,
     });
   }, [persist]);
@@ -240,6 +266,7 @@ export function usePersistentSearchSession(versionId: BibleTextVersionId) {
       query: "",
       scopeFilter: "all",
       selectedBookIds: [],
+      page: 1,
       versionId: versionRef.current,
     });
   }, [persist]);
@@ -249,10 +276,12 @@ export function usePersistentSearchSession(versionId: BibleTextVersionId) {
     query: state.query,
     scopeFilter: state.scopeFilter,
     selectedBookIds: state.selectedBookIds,
+    page: state.page,
     testamentFilter: state.scopeFilter,
     setQuery,
     setScopeFilter,
     setSelectedBookIds,
+    setPage,
     setTestamentFilter,
     clearSearch,
     resetForVersion,

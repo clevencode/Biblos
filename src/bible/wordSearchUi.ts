@@ -20,8 +20,12 @@ export type WordSearchUiCopy = {
   applyPassages: (n: number) => string;
   showAll: (n: number) => string;
   passagesPartial: (shown: number, total: number) => string;
+  passagesRange: (start: number, end: number, total: number) => string;
   passagesCount: (n: number) => string;
+  pagination: string;
+  page: (n: number) => string;
   empty: string;
+  emptyBooks: string;
   bookFallback: string;
   fuzzyBanner: string;
   orBanner: string;
@@ -43,8 +47,12 @@ const FR: WordSearchUiCopy = {
   applyPassages: (n) => `Appliquer (${n} passages)`,
   showAll: (n) => `Tout afficher (${n})`,
   passagesPartial: (shown, total) => `${shown} sur ${total} passages`,
+  passagesRange: (start, end, total) => `${start}–${end} sur ${total} passages`,
   passagesCount: (n) => `${n} passage${n === 1 ? "" : "s"}`,
+  pagination: "Pagination des résultats",
+  page: (n) => `Page ${n}`,
   empty: "Aucun passage trouvé",
+  emptyBooks: "Aucun livre trouvé",
   bookFallback: "Livre",
   fuzzyBanner:
     "Aucun résultat exact. Affichage des passages pour des termes proches.",
@@ -68,8 +76,12 @@ const HT: WordSearchUiCopy = {
   applyPassages: (n) => `Aplike (${n} pasaj)`,
   showAll: (n) => `Montre tout (${n})`,
   passagesPartial: (shown, total) => `${shown} sou ${total} pasaj`,
+  passagesRange: (start, end, total) => `${start}–${end} sou ${total} pasaj`,
   passagesCount: (n) => `${n} pasaj`,
+  pagination: "Pajinasyon rezilta yo",
+  page: (n) => `Paj ${n}`,
   empty: "Pa gen pasaj jwenn",
+  emptyBooks: "Pa gen liv jwenn",
   bookFallback: "Liv",
   fuzzyBanner:
     "Pa gen rezilta egzak. Nou montre pasaj pou mo ki sanble.",
