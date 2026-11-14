@@ -135,7 +135,7 @@ export function BiblePassageWordSearchPanel({
   query,
   onQueryChange,
   onQueryClear,
-  onClose,
+  onClose: _onClose,
   discoveryBusy,
   verseHits,
   verseTotal,
@@ -380,14 +380,12 @@ export function BiblePassageWordSearchPanel({
     onPickVerse(hit);
   }
 
-  function handleClearOrClose() {
-    if (trimmed) {
-      resetScroll();
-      onQueryClear();
-      window.setTimeout(() => inputRef.current?.focus(), 0);
-      return;
-    }
-    onClose();
+  /** Clear só com texto — fecho do sheet fica no trigger / backdrop / Escape. */
+  function handleClearQuery() {
+    if (!trimmed) return;
+    resetScroll();
+    onQueryClear();
+    window.setTimeout(() => inputRef.current?.focus(), 0);
   }
 
   function handleQueryChange(value: string) {
@@ -504,7 +502,7 @@ export function BiblePassageWordSearchPanel({
   return (
     <div
       id={panelId}
-      className={`bible-yv-passage-word-search-panel is-open${
+      className={`bible-yv-passage-word-search-panel top-floating-sheet is-open${
         hasResultsChrome || isBookPickerOpen ? " has-results" : " is-compact"
       }${isBookPickerOpen ? " is-book-picker" : ""}`}
       role="dialog"
@@ -527,14 +525,16 @@ export function BiblePassageWordSearchPanel({
           onChange={(event) => handleQueryChange(event.target.value)}
           onKeyDown={handleKeyDown}
         />
-        <button
-          type="button"
-          className="bible-yv-word-search-clear"
-          onClick={handleClearOrClose}
-          aria-label={trimmed ? t("common.clear") : t("common.close")}
-        >
-          <YvIcon name="close" opsz={20} className="bible-yv-word-search-clear-icon" />
-        </button>
+        {trimmed ? (
+          <button
+            type="button"
+            className="bible-yv-word-search-clear"
+            onClick={handleClearQuery}
+            aria-label={t("common.clear")}
+          >
+            {t("common.clear")}
+          </button>
+        ) : null}
       </div>
 
       <div

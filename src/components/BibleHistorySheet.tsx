@@ -96,7 +96,7 @@ export function BibleHistorySheet({
 
   return (
     <div
-      className="bible-yv-history-panel"
+      className="bible-yv-history-panel top-floating-sheet"
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
@@ -117,14 +117,6 @@ export function BibleHistorySheet({
               <YvIcon name="delete" className="bible-yv-history-panel-icon" />
             </button>
           ) : null}
-          <button
-            type="button"
-            className="bible-yv-history-panel-icon-btn"
-            onClick={onClose}
-            aria-label={t("history.close")}
-          >
-            <YvIcon name="close" className="bible-yv-history-panel-icon" />
-          </button>
         </div>
       </header>
 

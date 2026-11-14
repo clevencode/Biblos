@@ -1,7 +1,8 @@
 /**
- * Backdrop do menu radial — desfoque só do conteúdo atrás.
- * Irmão de .mode-tabs (mesmo stacking context de .note-shell),
- * z-index abaixo da barra/arco para não ofuscar chrome nem botões.
+ * Backdrop contextual do menu radial (fog + blur).
+ * Visual partilhado com modais do leitor via `.contextual-ui-backdrop`
+ * (picker, tools, history, share, word search — não verse_actions).
+ * Irmão de .mode-tabs; z-index abaixo da barra/arco.
  */
 
 import { useEffect, type CSSProperties } from "react";
@@ -52,7 +53,7 @@ export function RadialUiBackdrop({
   return (
     <button
       type="button"
-      className={`radial-ui-backdrop${isOpen ? " is-open" : ""}${className ? ` ${className}` : ""}`}
+      className={`contextual-ui-backdrop radial-ui-backdrop${isOpen ? " is-open" : ""}${className ? ` ${className}` : ""}`}
       style={style}
       aria-label={closeLabel}
       aria-hidden={!isOpen}

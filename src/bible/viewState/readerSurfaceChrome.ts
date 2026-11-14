@@ -57,13 +57,16 @@ export function readerSurfaceChrome(
   const verseStudyOpen = Boolean(input.verseStudyOpen);
   /** Chip roll ou painel palavras — mesma elevação de chrome + scrim dismiss. */
   const barOverlayOpen = rollOpen || wordSearchOpen || bookSearchOpen;
+  /**
+   * Modais com `.top-sheet-backdrop` (padrão hub do cabeçalho).
+   * Exclui verse_actions (sheet de versículo selecionado) — sem scrim.
+   */
   const passageInputBlocked =
     barOverlayOpen ||
     input.toolsMenuOpen ||
     input.historyOpen ||
     input.shareSheetOpen ||
     verseStudyOpen;
-  /** Mesmo fundo escuro do book modal — tools incluso. */
   const passageSurfaceScrimOpen =
     barOverlayOpen ||
     input.toolsMenuOpen ||

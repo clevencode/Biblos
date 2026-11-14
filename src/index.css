@@ -360,9 +360,12 @@ body {
   --menu-shadow: none;
 }
 
-/* Ombres portées désactivées ; conserver inset sur versets / grille picker */
+/* Ombres portées désactivées ; conserver inset sur versets / grille picker;
+   top-floating-sheet + trigger ativo mantêm sombra do padrão hub. */
 .biblos-shell
-  *:not(.bible-verse):not(.bible-verse *):not(.bible-yv-pick-cell):not(.bible-yv-pick-cell *) {
+  *:not(.bible-verse):not(.bible-verse *):not(.bible-yv-pick-cell):not(
+    .bible-yv-pick-cell *
+  ):not(.top-floating-sheet):not(.hdr-trigger.is-active):not(.hdr-trigger.is-open) {
   box-shadow: none !important;
 }
 
@@ -1050,9 +1053,10 @@ html[data-theme="dark"] .mode-tabs {
 }
 
 /*
- * Radial UI Backdrop — irmão de .mode-tabs dentro de .note-shell.
- * z-index abaixo de .mode-tabs (40): fog no texto, barra + arco nítidos.
- * Zona 0 → --radial-backdrop-clear: transparente sob a wave.
+ * Contextual UI Backdrop — fog + blur partilhado:
+ * - Shell radial (.radial-ui-backdrop, fixed)
+ * - Modais do leitor (.bible-yv-passage-roll-scrim, absolute) — exceto verse_actions
+ * Clear: shell = topo plano da barra; surface = 0 (já abaixo da topbar).
  */
 :root {
   /* = CONVEX_BAR_BODY_PX — topo plano da barra (não incluir DOME_RISE) */
@@ -1060,7 +1064,6 @@ html[data-theme="dark"] .mode-tabs {
   --radial-backdrop-clear: calc(
     var(--radial-backdrop-bar) + env(safe-area-inset-bottom, 0px)
   );
-  /* Fog denso já no encontro com a barra; fade longo para cima */
   --radial-backdrop-0: rgba(248, 249, 250, 0.62);
   --radial-backdrop-1: rgba(248, 249, 250, 0.4);
   --radial-backdrop-2: rgba(248, 249, 250, 0.18);
@@ -1075,11 +1078,8 @@ html[data-theme="dark"] {
   --radial-backdrop-3: rgba(10, 12, 16, 0.08);
 }
 
+.contextual-ui-backdrop,
 .radial-ui-backdrop {
-  position: fixed;
-  inset: 0;
-  /* Mesmo SC que .mode-tabs; abaixo da nav (40 / +25) */
-  z-index: 25;
   margin: 0;
   padding: 0;
   border: 0;
@@ -1088,11 +1088,6 @@ html[data-theme="dark"] {
   filter: none;
   transform: none;
   cursor: pointer;
-  pointer-events: none;
-  opacity: 0;
-  will-change: opacity;
-  transition: opacity 220ms ease;
-  /* Fog começa no topo plano; rampa curta evita faixa de texto nítido */
   background: linear-gradient(
     to top,
     transparent 0px,
@@ -1105,6 +1100,7 @@ html[data-theme="dark"] {
   );
 }
 
+.contextual-ui-backdrop::before,
 .radial-ui-backdrop::before {
   content: "";
   position: absolute;
@@ -1134,9 +1130,31 @@ html[data-theme="dark"] {
   );
 }
 
+.radial-ui-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 25;
+  pointer-events: none;
+  opacity: 0;
+  will-change: opacity;
+  transition: opacity 220ms ease;
+}
+
 .radial-ui-backdrop.is-open {
   opacity: 1;
   pointer-events: auto;
+}
+
+/* Leitor: mesmo fog; clear 0 — superfície já está abaixo da topbar */
+.bible-yv-passage-roll-scrim.contextual-ui-backdrop {
+  --radial-backdrop-clear: 0px;
+  position: absolute;
+  inset: 0;
+  z-index: var(--bible-z-scrim);
+  pointer-events: auto;
+  opacity: 1;
+  will-change: opacity;
+  transition: opacity 220ms ease;
 }
 
 /*
@@ -1155,6 +1173,10 @@ html[data-theme="dark"] {
 .app.is-bible-mode.is-narrow .radial-ui-backdrop.is-open {
   top: var(--bible-top-chrome);
 }
+/*
+ * Play / skip (e tools float) cedem com radial OU modais com contextual backdrop.
+ * verse_actions (has-verse-actions): fora desta regra — sheet próprio.
+ */
 html[data-radial-open="true"] .bible-yv-dock.is-play-only,
 html[data-radial-open="true"] .bible-yv-dock.is-floating,
 html[data-radial-open="true"] .bible-yv-top-passage-skips.is-float-br,
@@ -1162,7 +1184,48 @@ html[data-radial-open="true"] .bible-yv-tools-menu.is-float-br,
 html.is-radial-open .bible-yv-dock.is-play-only,
 html.is-radial-open .bible-yv-dock.is-floating,
 html.is-radial-open .bible-yv-top-passage-skips.is-float-br,
-html.is-radial-open .bible-yv-tools-menu.is-float-br {
+html.is-radial-open .bible-yv-tools-menu.is-float-br,
+.bible-reader--yv:is(
+    .is-top-sheet-open,
+    .is-passage-roll-open,
+    .is-tools-menu-open,
+    .is-history-open,
+    .is-share-open
+  )
+  .bible-yv-dock.is-play-only,
+.bible-reader--yv:is(
+    .is-top-sheet-open,
+    .is-passage-roll-open,
+    .is-tools-menu-open,
+    .is-history-open,
+    .is-share-open
+  )
+  .bible-yv-dock.is-floating,
+.bible-reader--yv:is(
+    .is-top-sheet-open,
+    .is-passage-roll-open,
+    .is-tools-menu-open,
+    .is-history-open,
+    .is-share-open
+  )
+  .bible-yv-top-passage-skips.is-float-br {
+  opacity: 0 !important;
+  transform: scale(0.92);
+  pointer-events: none !important;
+  visibility: hidden;
+  transition:
+    opacity 0.2s ease,
+    transform 0.22s ease,
+    visibility 0.2s ease;
+}
+
+/* Outros modais: esconde FAB tools (single modal). Tools aberto mantém o trigger. */
+.bible-reader--yv:is(
+    .is-passage-roll-open,
+    .is-history-open,
+    .is-share-open
+  ):not(.is-tools-menu-open)
+  .bible-yv-tools-menu.is-float-br {
   opacity: 0 !important;
   transform: scale(0.92);
   pointer-events: none !important;
@@ -1441,6 +1504,7 @@ html.is-radial-open .bible-reader--yv .bible-passage {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .contextual-ui-backdrop,
   .radial-ui-backdrop,
   .mode-tabs-arc,
   .mode-tabs-item,
@@ -1456,7 +1520,35 @@ html.is-radial-open .bible-reader--yv .bible-passage {
   html.is-radial-open .bible-yv-dock.is-play-only,
   html.is-radial-open .bible-yv-dock.is-floating,
   html.is-radial-open .bible-yv-top-passage-skips.is-float-br,
-  html.is-radial-open .bible-yv-tools-menu.is-float-br {
+  html.is-radial-open .bible-yv-tools-menu.is-float-br,
+  .bible-reader--yv:is(
+      .is-top-sheet-open,
+      .is-passage-roll-open,
+      .is-tools-menu-open,
+      .is-history-open,
+      .is-share-open
+    )
+    .bible-yv-dock.is-play-only,
+  .bible-reader--yv:is(
+      .is-top-sheet-open,
+      .is-passage-roll-open,
+      .is-tools-menu-open,
+      .is-history-open,
+      .is-share-open
+    )
+    .bible-yv-dock.is-floating,
+  .bible-reader--yv:is(
+      .is-top-sheet-open,
+      .is-passage-roll-open,
+      .is-tools-menu-open,
+      .is-history-open,
+      .is-share-open
+    )
+    .bible-yv-top-passage-skips.is-float-br,
+  .bible-reader--yv:is(.is-passage-roll-open, .is-history-open, .is-share-open):not(
+      .is-tools-menu-open
+    )
+    .bible-yv-tools-menu.is-float-br {
     transition: none !important;
   }
 
@@ -9571,10 +9663,20 @@ ul.plan-yv-day-note-ref {
   --bible-z-scrim-tools: 7;
   --bible-z-scrim: 8;
   --bible-z-chrome-elevated: 12;
+  --bible-z-hdr-idle: 20;
   --bible-z-verse-sheet: 20;
   --bible-z-tools-chrome: 24;
   --bible-z-tools-fab: 9;
   --bible-z-popover: 40;
+  /* Header sheets (padrão hub): backdrop < sheet < trigger ativo */
+  --bible-z-top-backdrop: 60;
+  --bible-z-top-sheet: 70;
+  --bible-z-hdr-active: 80;
+  --hdr-trigger-active-bg: #111318;
+  --hdr-trigger-active-fg: #ffffff;
+  --top-sheet-shadow: 0 20px 44px rgba(17, 19, 24, 0.18);
+  --top-sheet-radius: 24px;
+  --top-sheet-ease: cubic-bezier(0.34, 1.56, 0.64, 1);
   /* Acima do sheet + roleta aberta (popover+20) */
   --bible-z-color-editor: calc(var(--bible-z-popover) + 30);
   /* L3 FAB — idle = chrome; playing = inverse */
@@ -9638,6 +9740,12 @@ ul.plan-yv-day-note-ref {
   padding-bottom: 8px;
 }
 
+html[data-theme="dark"] .bible-reader--yv {
+  --hdr-trigger-active-bg: var(--paper);
+  --hdr-trigger-active-fg: var(--ink);
+  --top-sheet-shadow: 0 20px 44px rgba(0, 0, 0, 0.45);
+}
+
 .bible-yv-top {
   position: absolute;
   top: 0;
@@ -9659,30 +9767,514 @@ ul.plan-yv-day-note-ref {
   contain: layout style;
 }
 
+/*
+ * Sheet aberto: header + ancestrais sem stacking trap —
+ * backdrop 60 < sheet 70 < trigger ativo 80.
+ */
+.bible-reader--yv.is-top-sheet-open .bible-yv-top,
 .bible-reader--yv.is-tools-menu-open .bible-yv-top,
-.bible-reader--yv.is-history-open .bible-yv-top {
-  z-index: var(--bible-z-tools-chrome);
-  overflow: visible;
-  contain: none;
-}
-
+.bible-reader--yv.is-history-open .bible-yv-top,
 .bible-reader--yv.is-passage-roll-open .bible-yv-top,
 .bible-yv-top.is-passage-roll-open {
+  z-index: auto;
   overflow: visible;
   contain: none;
-  z-index: var(--bible-z-chrome-elevated);
+  transform: none;
+  isolation: auto;
+  background: transparent;
+  border-bottom-color: transparent;
 }
 
+.bible-reader--yv.is-top-sheet-open .bible-yv-passage-chrome-cluster,
+.bible-reader--yv.is-top-sheet-open .bible-yv-passage-roll,
+.bible-reader--yv.is-top-sheet-open .bible-yv-top-tools,
+.bible-reader--yv.is-top-sheet-open .bible-yv-history-menu,
+.bible-reader--yv.is-top-sheet-open .bible-yv-tools-menu,
 .bible-reader--yv.is-tools-menu-open .bible-yv-top-tools,
 .bible-reader--yv.is-tools-menu-open .bible-yv-tools-menu,
 .bible-reader--yv.is-history-open .bible-yv-top-tools,
 .bible-reader--yv.is-history-open .bible-yv-history-menu {
+  position: relative;
+  z-index: auto;
   overflow: visible;
+  transform: none;
+  isolation: auto;
+  contain: none;
 }
 
 .bible-reader--yv.is-tools-menu-open .bible-yv-read-surface,
 .bible-reader--yv.is-history-open .bible-yv-read-surface {
   z-index: var(--bible-z-read-below);
+}
+
+/* —— HeaderTriggerButton (padrão hub radial) —— */
+.hdr-trigger {
+  --hdr-size: var(--mobile-touch, 44px);
+  position: relative;
+  z-index: var(--bible-z-hdr-idle);
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: inline-grid;
+  place-items: center;
+  appearance: none;
+  -webkit-appearance: none;
+  background: color-mix(in srgb, var(--yv-text) 6%, transparent);
+  color: var(--yv-text);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background 220ms ease,
+    color 220ms ease,
+    box-shadow 220ms ease;
+}
+
+.hdr-trigger.is-circle,
+button.hdr-trigger.is-circle.bible-yv-history-btn,
+button.hdr-trigger.is-circle.bible-yv-tools-menu-btn,
+button.hdr-trigger.is-circle.bible-yv-passage-word-search-trigger {
+  width: var(--hdr-size);
+  height: var(--hdr-size);
+  min-width: var(--hdr-size);
+  min-height: var(--hdr-size);
+  border-radius: 50%;
+}
+
+.hdr-trigger.is-pill {
+  height: var(--hdr-size);
+  min-height: var(--hdr-size);
+  padding: 0 14px;
+  border-radius: 9999px;
+}
+
+.hdr-trigger.is-open,
+.hdr-trigger.is-active,
+button.hdr-trigger.is-open,
+button.hdr-trigger.is-active,
+.bible-yv-passage-word-search-trigger.hdr-trigger.is-on,
+.bible-yv-passage-word-search-trigger.hdr-trigger.is-open {
+  z-index: var(--bible-z-hdr-active);
+  background: var(--hdr-trigger-active-bg) !important;
+  color: var(--hdr-trigger-active-fg) !important;
+  box-shadow: 0 6px 18px rgba(17, 19, 24, 0.16);
+}
+
+html[data-theme="dark"] .hdr-trigger.is-open,
+html[data-theme="dark"] .hdr-trigger.is-active,
+html[data-theme="dark"] .bible-yv-passage-word-search-trigger.hdr-trigger.is-on {
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+
+/* Circle open: só o ✕ — sem fantasma do ícone idle */
+.hdr-trigger.is-circle.is-open .hdr-icon-idle,
+.hdr-trigger.is-circle.is-active .hdr-icon-idle {
+  opacity: 0 !important;
+  transform: rotate(-90deg) scale(0.55);
+  pointer-events: none !important;
+  visibility: hidden;
+}
+
+.hdr-trigger.is-circle.is-open .hdr-icon-exit.is-shown,
+.hdr-trigger.is-circle.is-active .hdr-icon-exit.is-shown {
+  opacity: 1 !important;
+  visibility: visible;
+  color: inherit;
+  transform: rotate(90deg) scale(1);
+}
+
+/* Pílula aberta: label + ✕ lado a lado (não esconde o rótulo) */
+.hdr-trigger.is-pill.is-open .hdr-trigger-swap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4em;
+  width: auto;
+  height: auto;
+}
+
+.hdr-trigger.is-pill.is-open .hdr-icon-idle,
+.hdr-trigger.is-pill.is-open .hdr-icon-exit {
+  position: static;
+  grid-area: auto;
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+.hdr-trigger.is-pill.is-open .hdr-icon-idle.is-hidden {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+.hdr-trigger.is-pill.is-open .hdr-icon-exit.is-shown {
+  transform: rotate(90deg) scale(1);
+}
+
+.hdr-trigger.is-pill.is-open .hdr-trigger-label,
+.hdr-trigger.is-pill.is-open .hdr-trigger-icon,
+.hdr-trigger.is-pill.is-open .bible-yv-passage-chip-value,
+.hdr-trigger.is-pill.is-open .bible-yv-passage-chip-ref-book,
+.hdr-trigger.is-pill.is-open .bible-yv-passage-chip-ref-chapter {
+  color: var(--hdr-trigger-active-fg);
+}
+
+.hdr-trigger.is-pill.is-open .hdr-trigger-caret {
+  display: none;
+}
+
+.hdr-trigger:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  outline-offset: 2px;
+}
+
+.hdr-trigger-swap {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+.hdr-icon-idle,
+.hdr-icon-exit {
+  grid-area: 1 / 1;
+  display: grid;
+  place-items: center;
+  transition:
+    opacity 200ms ease,
+    transform 320ms var(--top-sheet-ease);
+}
+
+.hdr-icon-idle {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+}
+
+.hdr-icon-idle.is-hidden {
+  opacity: 0;
+  transform: rotate(-90deg) scale(0.6);
+  pointer-events: none;
+}
+
+.hdr-icon-exit {
+  opacity: 0;
+  transform: rotate(-90deg) scale(0.6);
+  pointer-events: none;
+}
+
+.hdr-icon-exit.is-shown {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+  pointer-events: auto;
+}
+
+.hdr-trigger.is-open .hdr-icon-exit.is-shown {
+  transform: rotate(90deg) scale(1);
+}
+
+.hdr-trigger-icon {
+  width: 22px;
+  height: 22px;
+  font-size: 22px;
+  color: inherit;
+}
+
+.hdr-trigger-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  max-width: 9.5rem;
+  font-family: var(--font-ui);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Compat: triggers legados adotam stacking do hdr */
+.bible-reader--yv.is-top-sheet-open .bible-yv-passage-word-search-trigger,
+.bible-reader--yv.is-top-sheet-open .bible-yv-history-btn,
+.bible-reader--yv.is-top-sheet-open .bible-yv-tools-menu-btn,
+.bible-reader--yv.is-top-sheet-open .bible-yv-passage-chip {
+  position: relative;
+  z-index: var(--bible-z-hdr-idle);
+}
+
+.bible-reader--yv.is-top-sheet-open .hdr-trigger.is-active,
+.bible-reader--yv.is-top-sheet-open .bible-yv-passage-word-search-trigger.is-on,
+.bible-reader--yv.is-top-sheet-open .bible-yv-history-btn.is-on,
+.bible-reader--yv.is-top-sheet-open .bible-yv-tools-menu-btn.is-on,
+.bible-reader--yv.is-top-sheet-open .bible-yv-passage-chip.is-open {
+  z-index: var(--bible-z-hdr-active);
+}
+
+/* —— Top sheet backdrop (header modals) —— */
+.top-sheet-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: var(--bible-z-top-backdrop);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  pointer-events: auto;
+  background: linear-gradient(
+    to bottom,
+    rgba(17, 19, 24, 0.56) 0px,
+    rgba(17, 19, 24, 0.42) 340px,
+    rgba(17, 19, 24, 0.14) 520px,
+    rgba(17, 19, 24, 0.04) 100%
+  );
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  opacity: 1;
+  transition: opacity 220ms ease;
+}
+
+html[data-theme="dark"] .top-sheet-backdrop {
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.62) 0px,
+    rgba(0, 0, 0, 0.48) 340px,
+    rgba(0, 0, 0, 0.2) 520px,
+    rgba(0, 0, 0, 0.06) 100%
+  );
+}
+
+/* —— Cards flutuantes do cabeçalho (fixed → acima do backdrop z60) —— */
+.top-floating-sheet,
+.bible-yv-history-panel.top-floating-sheet,
+.bible-yv-tools-popover.top-floating-sheet,
+.bible-yv-passage-word-search-panel.top-floating-sheet,
+.bible-yv-passage-scroll-panel.top-floating-sheet {
+  position: fixed;
+  top: calc(68px + env(safe-area-inset-top, 0px));
+  z-index: var(--bible-z-top-sheet) !important;
+  box-sizing: border-box;
+  border-radius: var(--top-sheet-radius);
+  background: var(--yv-overlay-surface, var(--surface));
+  box-shadow: var(--top-sheet-shadow) !important;
+  overflow: hidden;
+  transform-origin: top center;
+  animation: top-floating-sheet-in 280ms var(--top-sheet-ease) both;
+  max-height: min(58dvh, 28rem);
+  min-height: 0;
+  opacity: 1;
+  pointer-events: auto;
+  border: var(--yv-overlay-border);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/*
+ * Search modal (referência): margens do app + sempre abre por completo
+ * (cabe no ecrã abaixo do chrome; compacto abraça o conteúdo).
+ * Ganha das regras legadas `data-passage-bar-panel=test` (left:0 + width 22rem).
+ */
+.bible-reader--yv .bible-yv-passage-word-search-panel.top-floating-sheet,
+.bible-reader--yv .bible-yv-passage-word-search-panel.top-floating-sheet.is-open,
+html[data-passage-bar-panel="test"]
+  .bible-reader--yv
+  .bible-yv-passage-word-search-panel.top-floating-sheet,
+html[data-passage-bar-panel="test"]
+  .bible-reader--yv
+  .bible-yv-passage-word-search-panel.top-floating-sheet.is-open,
+html[data-passage-bar-panel="test"]
+  .app.is-bible-mode.is-narrow
+  .bible-yv-passage-word-search-panel.top-floating-sheet.is-open,
+html[data-passage-bar-panel="test"]
+  .app.is-bible-mode.is-narrow
+  .bible-yv-passage-word-search-panel.top-floating-sheet.is-open.is-compact,
+html[data-passage-bar-panel="test"]
+  .app.is-bible-mode.is-narrow
+  .bible-yv-passage-word-search-panel.top-floating-sheet.is-open.has-results {
+  --bible-search-sheet-top: calc(
+    max(
+      var(--bible-top-chrome, 68px),
+      calc(56px + env(safe-area-inset-top, 0px))
+    ) + var(--bible-chrome-panel-offset-y, 10px)
+  );
+  --bible-search-sheet-max-h: calc(
+    100dvh - var(--bible-search-sheet-top) -
+      max(12px, env(safe-area-inset-bottom, 0px)) -
+      var(--shell-tab-clearance, 72px) - 8px
+  );
+  position: fixed !important;
+  top: var(--bible-search-sheet-top) !important;
+  left: max(
+    var(--mobile-gutter, 12px),
+    14px,
+    env(safe-area-inset-left, 0px)
+  ) !important;
+  right: max(
+    var(--mobile-gutter, 12px),
+    14px,
+    env(safe-area-inset-right, 0px)
+  ) !important;
+  bottom: auto !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: var(--bible-search-sheet-max-h) !important;
+  margin: 0 !important;
+  margin-inline: 0 !important;
+  inset-inline: auto;
+  padding: 10px 10px 12px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: var(--bible-chrome-panel-gap, 6px);
+  overflow: hidden !important;
+  contain: none !important;
+  transform: none !important;
+  transform-origin: top center;
+  z-index: var(--bible-z-top-sheet) !important;
+  box-sizing: border-box;
+  pointer-events: auto;
+  opacity: 1;
+}
+
+/* Compacto (campo + pills + sugestões): altura = conteúdo, sem corte artificial */
+.bible-reader--yv
+  .bible-yv-passage-word-search-panel.top-floating-sheet.is-open.is-compact,
+html[data-passage-bar-panel="test"]
+  .bible-reader--yv
+  .bible-yv-passage-word-search-panel.top-floating-sheet.is-open.is-compact,
+html[data-passage-bar-panel="test"]
+  .app.is-bible-mode.is-narrow
+  .bible-yv-passage-word-search-panel.top-floating-sheet.is-open.is-compact {
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: var(--bible-search-sheet-max-h) !important;
+  overflow: visible !important;
+}
+
+/* Com resultados / book picker: usa a altura útil e scroll interno */
+.bible-reader--yv
+  .bible-yv-passage-word-search-panel.top-floating-sheet.is-open.has-results,
+html[data-passage-bar-panel="test"]
+  .bible-reader--yv
+  .bible-yv-passage-word-search-panel.top-floating-sheet.is-open.has-results,
+html[data-passage-bar-panel="test"]
+  .app.is-bible-mode.is-narrow
+  .bible-yv-passage-word-search-panel.top-floating-sheet.is-open.has-results {
+  max-height: var(--bible-search-sheet-max-h) !important;
+  overflow: hidden !important;
+}
+
+/* Sheet aberto: leitor não clipa o card fixed */
+.bible-reader--yv.is-top-sheet-open {
+  overflow: visible;
+}
+
+/* Livro (picker): mesma faixa horizontal; herda depois se pedido */
+.bible-yv-passage-scroll-panel.top-floating-sheet,
+.bible-yv-passage-scroll-panel.top-floating-sheet.is-open,
+html[data-passage-bar-panel="test"]
+  .bible-yv-passage-scroll-panel.top-floating-sheet {
+  left: max(
+    var(--mobile-gutter, 12px),
+    14px,
+    env(safe-area-inset-left, 0px)
+  ) !important;
+  right: max(
+    var(--mobile-gutter, 12px),
+    14px,
+    env(safe-area-inset-right, 0px)
+  ) !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  transform: none !important;
+}
+
+/* Histórico / Menu: ancorados à direita, nunca cortados */
+.bible-yv-history-panel.top-floating-sheet,
+.bible-yv-tools-popover.top-floating-sheet,
+html[data-passage-bar-panel="test"] .bible-yv-history-panel.top-floating-sheet,
+html[data-passage-bar-panel="test"] .bible-yv-tools-popover.top-floating-sheet {
+  left: auto !important;
+  right: 16px !important;
+  width: min(290px, calc(100vw - 32px)) !important;
+  max-width: calc(100vw - 32px) !important;
+  min-width: 0 !important;
+  transform: none;
+}
+
+/* Menu float (compact): sheet sobe a partir do FAB */
+.bible-yv-tools-menu.is-float-br .bible-yv-tools-popover.top-floating-sheet {
+  position: absolute;
+  top: auto;
+  bottom: calc(100% + 10px);
+  left: auto;
+  right: 0;
+  width: min(290px, calc(100vw - 32px));
+  max-width: calc(100vw - 32px);
+  transform-origin: bottom right;
+}
+
+.hdr-trigger-caret {
+  margin-left: 0.2em;
+  font-size: 0.85em;
+  opacity: 0.72;
+}
+
+.bible-yv-passage-chip.hdr-trigger.is-pill {
+  max-width: min(12rem, 46vw);
+}
+
+.bible-yv-passage-chip.hdr-trigger.is-pill.is-open {
+  max-width: min(14rem, 70vw);
+  padding-inline: 12px 10px;
+}
+
+.top-floating-sheet .bible-yv-tools-version-chip.is-on,
+.top-floating-sheet .bible-yv-word-search-pill.is-on {
+  background: var(--hdr-trigger-active-bg);
+  color: var(--hdr-trigger-active-fg);
+  border-radius: 9999px;
+}
+
+.bible-yv-passage-roll.is-open
+  .bible-yv-passage-scroll-panel.top-floating-sheet.is-header-roll.is-open {
+  border-radius: var(--top-sheet-radius);
+  border-top: var(--yv-overlay-border);
+}
+
+@keyframes top-floating-sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hdr-icon-idle,
+  .hdr-icon-exit,
+  .top-floating-sheet,
+  .top-sheet-backdrop {
+    transition: none !important;
+    animation: none !important;
+  }
+
+  .hdr-icon-idle.is-hidden,
+  .hdr-icon-exit,
+  .hdr-icon-exit.is-shown,
+  .hdr-trigger.is-open .hdr-icon-exit.is-shown {
+    transform: none;
+  }
 }
 
 .bible-yv-top.is-plan {
@@ -9814,10 +10406,25 @@ html[data-passage-bar-panel="test"] .bible-yv-passage-word-search-trigger:hover:
   background: var(--yv-chrome-hover);
 }
 
-html[data-passage-bar-panel="test"] .bible-yv-passage-word-search-trigger.is-on {
+html[data-passage-bar-panel="test"] .bible-yv-passage-word-search-trigger.is-on:not(.hdr-trigger) {
   background: var(--yv-chrome-surface);
   border: var(--yv-chrome-active-border);
   outline: none;
+}
+
+/* Search trigger ativo = hub ink + ✕ branco (acima do backdrop) */
+html[data-passage-bar-panel="test"]
+  .bible-yv-passage-word-search-trigger.hdr-trigger.is-on,
+html[data-passage-bar-panel="test"]
+  .bible-yv-passage-word-search-trigger.hdr-trigger.is-open,
+html[data-passage-bar-panel="test"]
+  .bible-yv-passage-word-search-trigger.hdr-trigger.is-active {
+  background: var(--hdr-trigger-active-bg) !important;
+  color: var(--hdr-trigger-active-fg) !important;
+  border: 0 !important;
+  outline: none;
+  box-shadow: 0 6px 18px rgba(17, 19, 24, 0.16) !important;
+  z-index: var(--bible-z-hdr-active);
 }
 
 html[data-passage-bar-panel="test"] .bible-yv-passage-word-search-icon {
@@ -9946,22 +10553,33 @@ html[data-passage-bar-panel="test"]
 
 html[data-passage-bar-panel="test"] .bible-yv-word-search-clear {
   flex: none;
-  display: inline-grid;
-  place-items: center;
-  width: var(--mobile-touch, 44px);
-  height: var(--mobile-touch, 44px);
-  margin: 0;
-  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  height: auto;
+  min-height: 36px;
+  margin: 0 2px 0 0;
+  padding: 6px 10px;
   border: 0;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--text) 8%, transparent);
-  color: inherit;
+  background: transparent;
+  color: color-mix(in srgb, var(--text) 72%, transparent);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
   cursor: pointer;
 }
 
+html[data-passage-bar-panel="test"] .bible-yv-word-search-clear:hover {
+  color: var(--text);
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+}
+
 html[data-passage-bar-panel="test"] .bible-yv-word-search-clear-icon {
-  width: 16px;
-  height: 16px;
+  display: none;
 }
 
 /* Pills de escopo — peek do último item */
@@ -12827,62 +13445,31 @@ html[data-passage-bar-panel="test"] .bible-yv-history-panel {
   min-width: 0;
 }
 
-.bible-yv-passage-roll-scrim {
+/* Scrim legado sem contextual: hit-target transparente (fallback) */
+.bible-yv-passage-roll-scrim:not(.contextual-ui-backdrop) {
   position: absolute;
   inset: 0;
   z-index: var(--bible-z-scrim);
   margin: 0;
   padding: 0;
   border: 0;
-  cursor: default;
+  cursor: pointer;
   pointer-events: auto;
   background: transparent;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }
 
+/* Fog do contextual substitui opacity no texto; só bloqueia input */
 .bible-reader--yv.is-passage-roll-open .bible-yv-read-surface.is-overlay-occluding .bible-passage,
 .bible-reader--yv.is-tools-menu-open .bible-yv-read-surface.is-overlay-occluding .bible-passage,
 .bible-reader--yv.is-history-open .bible-yv-read-surface.is-overlay-occluding .bible-passage,
 .bible-reader--yv.is-share-open .bible-yv-read-surface.is-overlay-occluding .bible-passage {
   pointer-events: none;
   user-select: none;
-  opacity: var(--yv-overlay-passage-dim);
-  transition: opacity 0.2s ease;
-}
-
-/* Scrim escuro — book modal, word-search, tools e historique (mesmo fundo) */
-html[data-passage-bar-panel="test"]
-  .bible-reader--yv.is-passage-roll-open
-  .bible-yv-passage-roll-scrim.is-picker-dismiss,
-html[data-passage-bar-panel="test"]
-  .bible-reader--yv.is-tools-menu-open
-  .bible-yv-passage-roll-scrim.is-picker-dismiss,
-html[data-passage-bar-panel="test"]
-  .bible-reader--yv.is-tools-menu-open
-  .bible-yv-passage-roll-scrim.is-tools,
-html[data-passage-bar-panel="test"]
-  .bible-reader--yv.is-history-open
-  .bible-yv-passage-roll-scrim.is-picker-dismiss,
-html[data-passage-bar-panel="test"]
-  .bible-reader--yv.is-history-open
-  .bible-yv-passage-roll-scrim.is-tools {
-  background: var(--bible-word-search-scrim, rgba(0, 0, 0, 0.35));
-}
-
-html[data-passage-bar-panel="test"]
-  .bible-reader--yv.is-passage-roll-open
-  .bible-yv-read-surface.is-overlay-occluding
-  .bible-passage,
-html[data-passage-bar-panel="test"]
-  .bible-reader--yv.is-tools-menu-open
-  .bible-yv-read-surface.is-overlay-occluding
-  .bible-passage,
-html[data-passage-bar-panel="test"]
-  .bible-reader--yv.is-history-open
-  .bible-yv-read-surface.is-overlay-occluding
-  .bible-passage {
-  opacity: 0.55;
+  transform: scale(0.985);
+  transform-origin: center top;
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .bible-reader--yv .bible-passage {
@@ -15903,8 +16490,11 @@ html[data-passage-bar-panel="test"]
   }
 
   .bible-reader--yv.is-passage-roll-open .bible-yv-read-surface.is-overlay-occluding .bible-passage,
-  .bible-reader--yv.is-tools-menu-open .bible-yv-read-surface.is-overlay-occluding .bible-passage {
+  .bible-reader--yv.is-tools-menu-open .bible-yv-read-surface.is-overlay-occluding .bible-passage,
+  .bible-reader--yv.is-history-open .bible-yv-read-surface.is-overlay-occluding .bible-passage,
+  .bible-reader--yv.is-share-open .bible-yv-read-surface.is-overlay-occluding .bible-passage {
     transition: none;
+    transform: none;
   }
 
   .bible-reader--yv.is-chrome-hidden .bible-yv-dock:not(.is-play-only) {

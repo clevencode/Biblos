@@ -1,4 +1,4 @@
-import { YvIcon } from "./YvIcon";
+import { HeaderTriggerButton } from "./HeaderTriggerButton";
 
 type BiblePassageChipProps = {
   variant: "book" | "chapter" | "ref";
@@ -38,38 +38,42 @@ export function BiblePassageChip({
   const placeholder = variant === "chapter" ? "88" : variant === "ref" ? "Livre 88" : "Livre";
   const visibleLabel = showSkeleton ? (trimmed || placeholder) : trimmed;
 
+  const idleLabel =
+    variant === "ref" ? (
+      <span className="bible-yv-passage-chip-value bible-yv-passage-chip-ref">
+        <span className="bible-yv-passage-chip-ref-book">
+          {showSkeleton ? trimmed || "Livre" : trimmed}
+        </span>
+        <span
+          className="bible-yv-passage-chip-ref-chapter"
+          aria-hidden={showSkeleton}
+        >
+          {showSkeleton ? chapterTrimmed || "88" : chapterTrimmed}
+        </span>
+      </span>
+    ) : (
+      <span className="bible-yv-passage-chip-value">
+        {visibleLabel}
+        <span className="hdr-trigger-caret" aria-hidden>
+          ⌄
+        </span>
+      </span>
+    );
+
   return (
-    <button
-      type="button"
-      className={`bible-yv-passage-chip is-${variant}${open ? " is-open" : ""}${
+    <HeaderTriggerButton
+      open={open}
+      onClick={onClick}
+      shape="pill"
+      idleLabel={idleLabel}
+      ariaLabel={ariaLabel}
+      ariaControls={panelId}
+      ariaHaspopup="dialog"
+      title={showSkeleton ? undefined : title}
+      disabled={disabled || showSkeleton}
+      className={`bible-yv-passage-chip is-${variant}${
         showSkeleton ? " is-hydrating" : ""
       }`}
-      onClick={onClick}
-      disabled={disabled || showSkeleton}
-      aria-expanded={open}
-      aria-controls={panelId}
-      aria-haspopup="dialog"
-      aria-busy={showSkeleton || undefined}
-      aria-label={ariaLabel}
-      title={showSkeleton ? undefined : title}
-    >
-      {variant === "ref" ? (
-        <span className="bible-yv-passage-chip-value bible-yv-passage-chip-ref">
-          <span className="bible-yv-passage-chip-ref-book">
-            {showSkeleton ? trimmed || "Livre" : trimmed}
-          </span>
-          <span className="bible-yv-passage-chip-ref-chapter" aria-hidden={showSkeleton}>
-            {showSkeleton ? chapterTrimmed || "88" : chapterTrimmed}
-          </span>
-        </span>
-      ) : (
-        <span className="bible-yv-passage-chip-value">{visibleLabel}</span>
-      )}
-      <YvIcon
-        name="keyboard_arrow_down"
-        opsz={20}
-        className="bible-yv-passage-chip-caret"
-      />
-    </button>
+    />
   );
 }

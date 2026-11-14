@@ -9,6 +9,7 @@ import {
   type CSSProperties,
 } from "react";
 import { flushSync } from "react-dom";
+import { HeaderTriggerButton } from "./HeaderTriggerButton";
 import { YvIcon } from "./YvIcon";
 import {
   adjacentChapter,
@@ -2126,22 +2127,21 @@ export function BibleReaderView({
         className={`bible-yv-tools-menu${placement === "float" ? " is-float-br" : ""}`}
         ref={toolsMenuRef}
       >
-        <button
-          type="button"
+        <HeaderTriggerButton
+          open={toolsMenuOpen}
+          shape="circle"
+          idleIcon="menu"
+          ariaLabel={t("bible.menu")}
+          ariaHaspopup="menu"
           className={`bible-yv-tools-menu-btn${toolsMenuOpen ? " is-on" : ""}`}
-          aria-label={t("bible.menu")}
-          aria-haspopup="menu"
-          aria-expanded={toolsMenuOpen}
           onClick={() => {
             setShareSheetOpen(false);
             toggleOverlay("reader_settings");
           }}
-        >
-          <YvIcon name="menu" className="bible-yv-tool-icon" />
-        </button>
+        />
         {toolsMenuOpen ? (
           <div
-            className="bible-yv-tools-popover"
+            className="bible-yv-tools-popover top-floating-sheet"
             role="menu"
             aria-label={t("bible.menuBible")}
           >
@@ -2537,10 +2537,16 @@ export function BibleReaderView({
     );
   }
 
+  const topSheetOpen =
+    wordSearchOpen ||
+    surfaceChrome.passagePickerRollOpen ||
+    historyOpen ||
+    toolsMenuOpen;
+
   return (
     <section
       ref={readerRef}
-      className={`bible-reader bible-reader--yv${hideChrome ? " is-chrome-hidden" : ""}${hasActiveModal ? " is-overlay-active" : ""}${audioPlaying ? " is-audio-playing" : ""}${showCreateCard ? " has-verse-actions" : ""}${shareSheetOpen ? " is-share-open" : ""}${headCompact ? " is-head-compact" : ""}${surfaceChrome.rootClassPassageRollOpen ? " is-passage-roll-open" : ""}${compactToolsMenu ? " is-compact-tools" : ""}${toolsMenuOpen ? " is-tools-menu-open" : ""}${historyOpen ? " is-history-open" : ""}${fontFamily === "sans" ? " is-font-sans" : " is-font-serif"}`}
+      className={`bible-reader bible-reader--yv${hideChrome ? " is-chrome-hidden" : ""}${hasActiveModal ? " is-overlay-active" : ""}${audioPlaying ? " is-audio-playing" : ""}${showCreateCard ? " has-verse-actions" : ""}${shareSheetOpen ? " is-share-open" : ""}${headCompact ? " is-head-compact" : ""}${surfaceChrome.rootClassPassageRollOpen ? " is-passage-roll-open" : ""}${topSheetOpen ? " is-top-sheet-open" : ""}${compactToolsMenu ? " is-compact-tools" : ""}${toolsMenuOpen ? " is-tools-menu-open" : ""}${historyOpen ? " is-history-open" : ""}${fontFamily === "sans" ? " is-font-sans" : " is-font-serif"}`}
       style={{ ["--bible-font-size" as string]: `${fontSize}px` }}
       onKeyDown={(event) => {
         if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement) {
@@ -2553,8 +2559,12 @@ export function BibleReaderView({
               setShareSheetOpen(false);
               return;
             }
-            if (pickerOpen) {
-              closePicker();
+            if (toolsMenuOpen || historyOpen) {
+              closeOverlay();
+              return;
+            }
+            if (pickerOpen || wordSearchOpen) {
+              closeAll();
               return;
             }
             if (showCreateCard) {
@@ -2569,7 +2579,8 @@ export function BibleReaderView({
             showCreateCard ||
             toolsMenuOpen ||
             historyOpen ||
-            shareSheetOpen
+            shareSheetOpen ||
+            wordSearchOpen
           ) {
             return;
           }
@@ -2588,6 +2599,10 @@ export function BibleReaderView({
             setShareSheetOpen(false);
             return;
           }
+          if (toolsMenuOpen || historyOpen) {
+            closeOverlay();
+            return;
+          }
           if (pickerOpen || wordSearchOpen) {
             closeAll();
             return;
@@ -2597,7 +2612,7 @@ export function BibleReaderView({
             return;
           }
         }
-        if (pickerOpen || wordSearchOpen) return;
+        if (topSheetOpen || pickerOpen || wordSearchOpen) return;
         if (event.key === "ArrowLeft") {
           event.preventDefault();
           goAdjacent(-1);
@@ -2634,18 +2649,17 @@ export function BibleReaderView({
                 />
               </button>
             ) : (
-              <button
-                type="button"
+              <HeaderTriggerButton
+                open={wordSearchOpen}
+                shape="circle"
+                idleIcon="search"
+                ariaLabel={t("bible.searchWord")}
+                ariaControls={wordSearchPanelId}
                 className={`bible-yv-passage-word-search-trigger${
                   wordSearchOpen ? " is-on" : ""
                 }`}
-                aria-label={t("bible.searchWord")}
-                aria-expanded={wordSearchOpen}
-                aria-controls={wordSearchPanelId}
                 onClick={toggleWordSearch}
-              >
-                <YvIcon name="search" className="bible-yv-passage-word-search-icon" />
-              </button>
+              />
             )}
             {renderPassageRoll()}
             {!planReading ? (
@@ -2689,19 +2703,18 @@ export function BibleReaderView({
         <div className="bible-yv-top-tools">
           {ACTIVITY_UI_ENABLED ? (
             <div className="bible-yv-history-menu" ref={historyToolsRef}>
-              <button
-                type="button"
+              <HeaderTriggerButton
+                open={historyOpen}
+                shape="circle"
+                idleIcon="history"
+                ariaLabel={t("bible.history")}
+                ariaHaspopup="dialog"
                 className={`bible-yv-history-btn${historyOpen ? " is-on" : ""}`}
-                aria-label={t("bible.history")}
-                aria-haspopup="dialog"
-                aria-expanded={historyOpen}
                 onClick={() => {
                   setShareSheetOpen(false);
                   toggleOverlay("history");
                 }}
-              >
-                <YvIcon name="history" className="bible-yv-tool-icon" />
-              </button>
+              />
               <BibleHistorySheet
                 open={historyOpen}
                 onClose={() => closeOverlay()}
@@ -2723,6 +2736,26 @@ export function BibleReaderView({
             : null}
         </div>
       </header>
+
+      {surfaceChrome.passageSurfaceScrimOpen ? (
+        <button
+          type="button"
+          className={`top-sheet-backdrop${
+            surfaceChrome.scrimIsTools ? " is-tools" : ""
+          }${surfaceChrome.scrimIsPickerDismiss ? " is-picker-dismiss" : ""}${
+            wordSearchOpen ? " is-word-search" : ""
+          }`}
+          aria-label={t("common.close")}
+          onPointerDown={(event) => {
+            event.preventDefault();
+          }}
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            dismissPassageSurfaceOverlay();
+          }}
+        />
+      ) : null}
 
       <div id={statusId} className="sr-only" aria-live="polite">
         {passageLiveStatusLabel({ presentation, locationLabel, error })}
@@ -2754,25 +2787,6 @@ export function BibleReaderView({
           closeToolsMenu();
         }}
       >
-        {surfaceChrome.passageSurfaceScrimOpen ? (
-          <button
-            type="button"
-            className={`bible-yv-passage-roll-scrim${
-              surfaceChrome.scrimIsTools ? " is-tools" : ""
-            }${surfaceChrome.scrimIsPickerDismiss ? " is-picker-dismiss" : ""}${
-              wordSearchOpen ? " is-word-search" : ""
-            }`}
-            aria-label={t("common.close")}
-            onPointerDown={(event) => {
-              event.preventDefault();
-            }}
-            onClick={(event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              dismissPassageSurfaceOverlay();
-            }}
-          />
-        ) : null}
 
         {error && passageErrorKind !== "offline_not_cached" ? (
           <div className="bible-yv-error-bar" role="alert" aria-live="assertive">
