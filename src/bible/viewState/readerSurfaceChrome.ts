@@ -58,8 +58,8 @@ export function readerSurfaceChrome(
   /** Chip roll ou painel palavras — mesma elevação de chrome. */
   const barOverlayOpen = rollOpen || wordSearchOpen || bookSearchOpen;
   /**
-   * Modais com `.top-sheet-backdrop` (padrão hub do cabeçalho).
-   * Exclui verse_actions, word search e book picker (painéis full-bleed).
+   * Modais com `.top-sheet-backdrop`.
+   * Full-bleed (search / book roll / history / menu header) — sem scrim.
    */
   const passageInputBlocked =
     barOverlayOpen ||
@@ -68,11 +68,7 @@ export function readerSurfaceChrome(
     input.shareSheetOpen ||
     verseStudyOpen;
   const passageSurfaceScrimOpen =
-    bookSearchOpen ||
-    input.toolsMenuOpen ||
-    input.historyOpen ||
-    input.shareSheetOpen ||
-    verseStudyOpen;
+    bookSearchOpen || input.shareSheetOpen || verseStudyOpen;
   const toolsMenuPassThroughDismiss = false;
 
   return {

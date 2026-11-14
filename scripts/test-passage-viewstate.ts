@@ -105,7 +105,7 @@ const surfaceTools = readerSurfaceChrome({
   verseActionsOpen: false,
 });
 assert.equal(surfaceTools.passageInputBlocked, true);
-assert.equal(surfaceTools.passageSurfaceScrimOpen, true);
+assert.equal(surfaceTools.passageSurfaceScrimOpen, false);
 assert.equal(surfaceTools.toolsMenuPassThroughDismiss, false);
 assert.equal(surfaceTools.scrimIsTools, true);
 assert.equal(surfaceTools.scrimIsPickerDismiss, true);
@@ -136,6 +136,18 @@ assert.equal(surfaceBookPicker.passageInputBlocked, true);
 assert.equal(surfaceBookPicker.passageSurfaceScrimOpen, false);
 assert.equal(surfaceBookPicker.rootClassPassageRollOpen, true);
 assert.equal(surfaceBookPicker.passagePickerRollOpen, true);
+
+const surfaceHistory = readerSurfaceChrome({
+  pickerOpen: false,
+  pickerPanelOpenAllowed: true,
+  toolsMenuOpen: false,
+  historyOpen: true,
+  shareSheetOpen: false,
+  verseActionsOpen: false,
+});
+assert.equal(surfaceHistory.passageInputBlocked, true);
+assert.equal(surfaceHistory.passageSurfaceScrimOpen, false);
+assert.equal(surfaceHistory.scrimIsTools, true);
 
 const surfacePickerNoCatalog = readerSurfaceChrome({
   pickerOpen: true,
