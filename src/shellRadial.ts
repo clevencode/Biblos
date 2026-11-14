@@ -2,6 +2,9 @@
  * Estado canónico do menu radial da shell.
  * Espelha padrões do projeto (data-* no <html> + CustomEvent), para
  * leitores / FABs / overlays reagirem sem acoplar AppShellNav ↔ Bible.
+ *
+ * Não usa inert no main: a topbar (.bible-yv-top) permanece tocável;
+ * single-modal = radial fecha ao usar topbar / ao abrir overlay do leitor.
  */
 
 export const SHELL_RADIAL_EVENT = "biblos-shell-radial";
@@ -10,20 +13,12 @@ export type ShellRadialDetail = {
   open: boolean;
 };
 
-const MAIN_INERT_SELECTOR = ".note-shell-main";
-
 function syncDocumentFlag(open: boolean): void {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
   root.classList.toggle("is-radial-open", open);
   if (open) root.setAttribute("data-radial-open", "true");
   else root.removeAttribute("data-radial-open");
-
-  const main = document.querySelector(MAIN_INERT_SELECTOR);
-  if (main instanceof HTMLElement) {
-    if (open) main.setAttribute("inert", "");
-    else main.removeAttribute("inert");
-  }
 }
 
 /** Publica abertura/fecho do radial (DOM + evento). Idempotente. */
@@ -60,7 +55,7 @@ export function subscribeShellRadial(
   return () => window.removeEventListener(SHELL_RADIAL_EVENT, handler);
 }
 
-/** Limpa flag/inert (unmount da nav). */
+/** Limpa flag (unmount da nav). */
 export function clearShellRadialOpen(): void {
   if (typeof document === "undefined") return;
   if (!isShellRadialOpen()) {

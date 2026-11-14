@@ -545,7 +545,7 @@ function BiblosConsumerApp() {
               </div>
             </section>
           </div>
-          {/* Fora de .note-shell-main: conteúdo pode ficar inert com radial aberto */}
+          {/* Fora de .note-shell-main: scrim/radial não empilham dentro do main */}
           <AppShellNav
             active={tab}
             onSelect={selectTab}

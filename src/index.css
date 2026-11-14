@@ -1141,8 +1141,20 @@ html[data-theme="dark"] {
 
 /*
  * Radial aberto: FABs / docks do leitor cedem (estado via data-radial-open).
- * Conteúdo em .note-shell-main fica inert (shellRadial.ts).
+ * Topbar (.bible-yv-top) fica fora do scrim — toque livre; single-modal
+ * fecha o radial no pointerdown (AppShellNav).
  */
+.app.is-bible-mode.is-narrow {
+  --bible-passage-bar-h: var(--mobile-touch, 44px);
+  --bible-top-chrome: calc(
+    max(8px, env(safe-area-inset-top, 0px)) + 8px + var(--bible-passage-bar-h) +
+      1px + 8px
+  );
+}
+
+.app.is-bible-mode.is-narrow .radial-ui-backdrop.is-open {
+  top: var(--bible-top-chrome);
+}
 html[data-radial-open="true"] .bible-yv-dock.is-play-only,
 html[data-radial-open="true"] .bible-yv-dock.is-floating,
 html[data-radial-open="true"] .bible-yv-top-passage-skips.is-float-br,
@@ -9597,11 +9609,7 @@ ul.plan-yv-day-note-ref {
 
 .app.is-bible-mode.is-narrow .bible-reader--yv {
   --yv-dock-hide-y: calc(100% + var(--mobile-tabbar-h, 58px) + 14px + env(safe-area-inset-bottom, 0px));
-  --bible-passage-bar-h: var(--mobile-touch, 44px);
-  /* Bandeau livre/chapitre (position absolute) — réserve dans .bible-passage */
-  --bible-top-chrome: calc(
-    max(8px, env(safe-area-inset-top, 0px)) + 8px + var(--bible-passage-bar-h) + 1px + 8px
-  );
+  /* --bible-passage-bar-h / --bible-top-chrome: herdados de .app.is-bible-mode.is-narrow */
 }
 
 .app.is-bible-mode.is-narrow .bible-yv-top-passage-bar {

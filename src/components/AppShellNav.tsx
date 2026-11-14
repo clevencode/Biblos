@@ -87,6 +87,21 @@ export function AppShellNav({
     hubRef.current?.focus({ preventScroll: true });
   }, [open]);
 
+  /**
+   * Single modal: toque na topbar do leitor cede o radial
+   * (não preventDefault — a ação da topbar segue).
+   */
+  useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      if (target.closest(".bible-yv-top")) setOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointerDown, true);
+    return () => document.removeEventListener("pointerdown", onPointerDown, true);
+  }, [open]);
+
   function onArcKey(event: ReactKeyboardEvent<HTMLDivElement>) {
     if (!open) return;
     if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
