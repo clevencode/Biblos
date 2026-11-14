@@ -1334,63 +1334,70 @@ export function BibleReaderView({
     goAdjacent(delta);
   }
 
-  function renderPassageChapterSkips() {
+  function renderPassageChapterSkipButton(delta: -1 | 1) {
     const chapterSkipIcons = passageBarSkipIcons();
     const planSkips = Boolean(planReading);
     const stageComplete = Boolean(planSkips && planReading?.isStageLast);
-    const renderChapterSkipButton = (delta: -1 | 1) => {
-      const isPrev = delta === -1;
-      const planDisabled = planSkips
-        ? (isPrev ? planReading!.isFirst : false) || presentation.inFlight
-        : (isPrev ? !canPrev : !canNext) || pickerChrome.controlsDisabled;
-      const nextIsCheck = !isPrev && stageComplete;
-      const stageTitle = planReading?.stageName?.trim();
-      return (
-        <button
-          key={isPrev ? "prev" : "next"}
-          type="button"
-          className={`bible-yv-top-passage-arrow${nextIsCheck ? " is-stage-complete" : ""}`}
-          onClick={() => planOrChapterSkip(delta)}
-          disabled={planDisabled}
-          aria-label={
-            planSkips
-              ? isPrev
-                ? t("bible.planPrev")
-                : stageComplete
-                  ? planReading!.isLast
-                    ? stageTitle
-                      ? `Terminer l’étape · ${stageTitle}`
-                      : "Terminer la dernière étape"
-                    : stageTitle
-                      ? `Terminer l’étape · ${stageTitle}`
-                      : "Terminer l’étape"
-                  : t("bible.planNext")
-              : isPrev
-                ? t("bible.prevChapter")
-                : t("bible.nextChapter")
+    const isPrev = delta === -1;
+    const planDisabled = planSkips
+      ? (isPrev ? planReading!.isFirst : false) || presentation.inFlight
+      : (isPrev ? !canPrev : !canNext) || pickerChrome.controlsDisabled;
+    const nextIsCheck = !isPrev && stageComplete;
+    const stageTitle = planReading?.stageName?.trim();
+    return (
+      <button
+        key={isPrev ? "prev" : "next"}
+        type="button"
+        className={`bible-yv-top-passage-arrow${nextIsCheck ? " is-stage-complete" : ""}`}
+        onClick={() => planOrChapterSkip(delta)}
+        disabled={planDisabled}
+        aria-label={
+          planSkips
+            ? isPrev
+              ? t("bible.planPrev")
+              : stageComplete
+                ? planReading!.isLast
+                  ? stageTitle
+                    ? `Terminer l’étape · ${stageTitle}`
+                    : "Terminer la dernière étape"
+                  : stageTitle
+                    ? `Terminer l’étape · ${stageTitle}`
+                    : "Terminer l’étape"
+                : t("bible.planNext")
+            : isPrev
+              ? t("bible.prevChapter")
+              : t("bible.nextChapter")
+        }
+      >
+        <YvIcon
+          name={
+            isPrev
+              ? chapterSkipIcons.previous
+              : nextIsCheck
+                ? "check"
+                : chapterSkipIcons.next
           }
-        >
-          <YvIcon
-            name={
-              isPrev
-                ? chapterSkipIcons.previous
-                : nextIsCheck
-                  ? "check"
-                  : chapterSkipIcons.next
-            }
-            className="bible-yv-top-passage-arrow-icon"
-          />
-        </button>
-      );
-    };
-    const floatSkips = isPassageBarPanelCompactTopbar();
+          className="bible-yv-top-passage-arrow-icon"
+        />
+      </button>
+    );
+  }
+
+  /** Topbar: ← · book picker · → (skips hidden com picker aberto; layout intacto) */
+  function renderPassageSkipPickerCluster() {
+    const planSkips = Boolean(planReading);
+    const stageComplete = Boolean(planSkips && planReading?.isStageLast);
+    const rollOpen = passageRollOpen;
     return (
       <div
-        className={`bible-yv-top-passage-skips${floatSkips ? " is-float-br" : ""}${stageComplete ? " is-stage-end" : ""}`.trim()}
+        className={`bible-yv-top-passage-skips is-topbar is-decoupled${
+          stageComplete ? " is-stage-end" : ""
+        }${rollOpen ? " is-roll-open" : ""}`.trim()}
         aria-label={planSkips ? t("bible.planProgress") : t("bible.chapters")}
       >
-        {renderChapterSkipButton(-1)}
-        {renderChapterSkipButton(1)}
+        {renderPassageChapterSkipButton(-1)}
+        {renderPassageRoll()}
+        {renderPassageChapterSkipButton(1)}
       </div>
     );
   }
@@ -2080,6 +2087,12 @@ export function BibleReaderView({
       if (!(target instanceof Node) || !(target instanceof Element)) return;
       if (toolsMenuRef.current?.contains(target)) return;
       if (target.closest(".bible-yv-tools-popover")) return;
+      /*
+       * Topbar: fechar só pelo pill (hamburger ✕). Resto do `.bible-yv-top`
+       * não dismissa — evita fecho ao tocar no chrome vazio.
+       */
+      if (target.closest(".bible-yv-top")) return;
+      if (target.closest(".top-sheet-layer")) return;
       event.preventDefault();
       event.stopPropagation();
       markOverlayDismissSwallow();
@@ -2853,8 +2866,12 @@ export function BibleReaderView({
                   />
                 </button>
               ) : null}
-              {renderPassageRoll()}
+              {isPassageBarPanelCompactTopbar()
+                ? renderPassageSkipPickerCluster()
+                : renderPassageRoll()}
             </div>
+          ) : isPassageBarPanelCompactTopbar() ? (
+            renderPassageSkipPickerCluster()
           ) : (
             renderPassageRoll()
           )
@@ -3348,8 +3365,6 @@ export function BibleReaderView({
       !pickerOpen
         ? renderTopToolsMenu("float")
         : null}
-
-      {isPassageBarPanelCompactTopbar() ? renderPassageChapterSkips() : null}
 
       {(() => {
         const compactDock = compactViewport || narrowChrome;

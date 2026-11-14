@@ -11351,66 +11351,134 @@ html[data-passage-bar-panel="test"] .bible-yv-top-passage-bar.is-chip-trigger {
   align-items: center;
 }
 
-/* Setas capítulo: família FAB = superfície navbar (como o play). */
-html[data-passage-bar-panel="test"] .bible-yv-top-passage-skips.is-float-br {
-  position: fixed;
-  right: var(--bible-tools-float-inset-x);
-  bottom: var(--bible-tools-float-bottom);
-  z-index: var(--bible-z-tools-fab);
-  pointer-events: auto;
-  display: inline-flex;
+/* Setas + chip: ← · book · → — grelha 1·auto·1, gap e padding simétricos */
+html[data-passage-bar-panel="test"] .bible-yv-top-passage-skips.is-topbar {
+  --bible-skip-cluster-gap: 4px;
+  position: relative;
+  display: grid;
+  grid-template-columns:
+    var(--bible-chrome-trigger-h) minmax(0, auto) var(--bible-chrome-trigger-h);
   align-items: center;
-  gap: 0;
-  height: var(--bible-chrome-fab-size);
+  justify-items: center;
+  column-gap: var(--bible-skip-cluster-gap);
+  flex: none;
+  min-width: 0;
+  max-width: 100%;
+  height: var(--bible-chrome-trigger-h);
   padding: 0;
-  border: var(--bible-chrome-fab-border);
-  border-radius: 999px;
-  background: var(--bible-nav-surface, var(--yv-audio-fab-idle));
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   color: var(--yv-text);
-  box-shadow: var(--bible-chrome-fab-shadow, var(--yv-audio-fab-shadow)) !important;
-  overflow: hidden;
+  box-shadow: none;
+  overflow: visible;
+}
+
+/* Picker aberto: setas invisíveis, grelha igual — chip não salta */
+html[data-passage-bar-panel="test"]
+  .bible-yv-top-passage-skips.is-topbar.is-roll-open
+  .bible-yv-top-passage-arrow {
+  visibility: hidden;
+  pointer-events: none;
 }
 
 html[data-passage-bar-panel="test"]
-  .bible-yv-top-passage-skips.is-float-br
+  .bible-yv-top-passage-skips.is-topbar.is-decoupled
+  .bible-yv-passage-roll {
+  grid-column: 2;
+  justify-self: center;
+  width: max-content;
+  max-width: min(100%, 12rem);
+  min-width: 0;
+  margin: 0;
+}
+
+html[data-passage-bar-panel="test"]
+  .bible-yv-top-passage-skips.is-topbar.is-decoupled
+  .bible-yv-top-passage,
+html[data-passage-bar-panel="test"]
+  .bible-yv-top-passage-skips.is-topbar.is-decoupled
+  .bible-yv-top-passage-bar,
+html[data-passage-bar-panel="test"]
+  .bible-yv-top-passage-skips.is-topbar.is-decoupled
+  .bible-yv-top-passage-segments {
+  width: max-content;
+  max-width: 100%;
+  margin: 0;
+  padding-inline: 0;
+}
+
+html[data-passage-bar-panel="test"]
+  .bible-yv-top-passage-skips.is-topbar.is-decoupled
+  .bible-yv-passage-chip {
+  padding-inline: 12px;
+}
+
+html[data-passage-bar-panel="test"]
+  .bible-yv-top-passage-skips.is-topbar
   .bible-yv-top-passage-arrow {
-  width: var(--bible-chrome-fab-size);
-  min-width: var(--bible-chrome-fab-size);
-  height: var(--bible-chrome-fab-size);
-  min-height: var(--bible-chrome-fab-size);
+  width: var(--bible-chrome-trigger-h);
+  min-width: var(--bible-chrome-trigger-h);
+  height: var(--bible-chrome-trigger-h);
+  min-height: var(--bible-chrome-trigger-h);
   margin: 0;
   padding: 0;
   display: grid;
   place-items: center;
   border: 0;
-  border-radius: 0;
+  border-radius: 999px;
   background: transparent;
+  color: inherit;
+  cursor: pointer;
 }
 
 html[data-passage-bar-panel="test"]
-  .bible-yv-top-passage-skips.is-float-br
+  .bible-yv-top-passage-skips.is-topbar
+  .bible-yv-top-passage-arrow:first-child {
+  grid-column: 1;
+}
+
+html[data-passage-bar-panel="test"]
+  .bible-yv-top-passage-skips.is-topbar
+  .bible-yv-top-passage-arrow:last-child {
+  grid-column: 3;
+}
+
+html[data-passage-bar-panel="test"]
+  .bible-yv-top-passage-skips.is-topbar
   .bible-yv-top-passage-arrow-icon {
-  width: 22px;
-  height: 22px;
-  font-size: 22px;
+  width: var(--bible-chrome-trigger-icon);
+  height: var(--bible-chrome-trigger-icon);
+  font-size: var(--bible-chrome-trigger-icon);
+  display: block;
+}
+
+/* Chevron Material: centro óptico ≈ geométrico */
+html[data-passage-bar-panel="test"]
+  .bible-yv-top-passage-skips.is-topbar
+  .bible-yv-top-passage-arrow:first-child
+  .bible-yv-top-passage-arrow-icon {
+  transform: translateX(-0.5px);
 }
 
 html[data-passage-bar-panel="test"]
-  .bible-yv-top-passage-skips.is-float-br
+  .bible-yv-top-passage-skips.is-topbar
+  .bible-yv-top-passage-arrow:last-child
+  .bible-yv-top-passage-arrow-icon {
+  transform: translateX(0.5px);
+}
+
+html[data-passage-bar-panel="test"]
+  .bible-yv-top-passage-skips.is-topbar
   .bible-yv-top-passage-arrow:hover:not(:disabled) {
-  background: var(--bible-chrome-fab-hover);
+  background: var(--yv-chrome-hover);
 }
 
 html[data-passage-bar-panel="test"]
-  .bible-yv-top-passage-skips.is-float-br
-  .bible-yv-top-passage-arrow:active:not(:disabled) {
-  background: var(--bible-nav-surface-press, var(--yv-audio-fab-idle-active));
-}
-
-html[data-passage-bar-panel="test"]
-  .bible-yv-top-passage-skips.is-float-br
+  .bible-yv-top-passage-skips.is-topbar
   .bible-yv-top-passage-arrow:disabled {
   opacity: 0.42;
+  cursor: default;
 }
 
 html[data-passage-bar-panel="test"] .bible-yv-top-tools {
@@ -11756,6 +11824,17 @@ html[data-passage-bar-panel="test"] .bible-yv-top.is-free .bible-yv-passage-roll
   margin-inline-end: 0;
 }
 
+html[data-passage-bar-panel="test"]
+  .bible-yv-top.is-free
+  .bible-yv-top-passage-skips.is-topbar
+  .bible-yv-passage-roll {
+  margin-inline-start: 0;
+  margin-inline-end: 0;
+}
+
+html[data-passage-bar-panel="test"]
+  .bible-yv-top.is-free
+  > .bible-yv-top-passage-skips.is-topbar,
 html[data-passage-bar-panel="test"]
   .bible-yv-top.is-free
   .bible-yv-passage-chrome-cluster {
@@ -13207,7 +13286,8 @@ html[data-colortest*="BiblePassageChip:red"] .bible-yv-passage-chip {
 
 /* Chip/passagem à direita — hamburger fica à esquerda */
 .bible-yv-top.is-free .bible-yv-passage-chrome-cluster,
-.bible-yv-top.is-free > .bible-yv-passage-roll {
+.bible-yv-top.is-free > .bible-yv-passage-roll,
+.bible-yv-top.is-free > .bible-yv-top-passage-skips.is-topbar {
   margin-left: auto;
 }
 

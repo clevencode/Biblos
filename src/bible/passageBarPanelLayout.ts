@@ -1,9 +1,9 @@
 /**
  * BiblePassageBar (test): padrão chip + dropdown desanexado.
  * - Hit targets = `--mobile-touch` (44px); search/☰ ghost; chip com superfície.
- * - Setas capítulo no FAB inf. direito (ex-hamburger); play FAB = mesmo touch size.
+ * - Setas capítulo na topbar (junto ao chip); play FAB = mesmo touch size.
  * - Painel como cartão (offset `--mobile-chrome-gap`), não “pergaminho” colado.
- * - Layout split (test): ícone search + chip; hamburger topo direita; skips FAB inf. direito.
+ * - Layout split (test): hamburger esquerda; ← · chip · → desacoplados à direita.
  * - Aberto: caret ↑; 2.º clique no chip fecha o painel.
  *
  * `test` (default) — `?passage-bar-panel=legacy` | `off` (DEV) ou `VITE_PASSAGE_BAR_PANEL_LAYOUT=legacy`.

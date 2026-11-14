@@ -339,11 +339,17 @@ export function usePassageBarController({
       if (!(target instanceof Element)) return;
       if (target.closest(".bible-yv-dock")) return;
       if (target.closest(".bible-yv-passage-roll-scrim")) return;
+      /*
+       * Topbar: fechar só pelo pill (toggle no chip). Toques no resto do
+       * `.bible-yv-top` (skips, vazio, etc.) não dismissam.
+       */
+      if (target.closest(".bible-yv-top")) return;
       /* Painel / cluster / roll — não fechar ao digitar ou fazer scroll */
       if (
         target.closest(".bible-yv-passage-scroll-panel") ||
         target.closest(".bible-yv-passage-chrome-cluster") ||
         target.closest(".bible-yv-passage-roll") ||
+        target.closest(".top-sheet-layer") ||
         passageRollRef.current?.contains(target)
       ) {
         return;
