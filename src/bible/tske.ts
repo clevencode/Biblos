@@ -38,22 +38,34 @@ function formatJump(jump: ParsedPassage): string {
   return `${title} ${jump.chapter}.${jump.verse}`;
 }
 
+/**
+ * Resolve um chunk TSK.
+ * `lineBook` = livro herdado na mesma linha (ex. após « Psa 33:6 ; 104:30 »).
+ * Refs nuas « 104:30 » só usam `lineBook` — nunca o livro do versículo de estudo
+ * (senão GEN 1:2 + « 104:30 » vira Genèse 104.30).
+ */
 function jumpsFromChunk(
   chunk: string,
-  lineBook: string,
+  lineBook: string | null,
+  contextBook: string,
   contextChapter: number,
 ): ParsedPassage[] {
   const trimmed = String(chunk || "").trim();
   if (!trimmed) return [];
   const direct = passageJumpsFromQuery(trimmed);
   if (direct.length) return direct;
-  if (/^\d{1,3}:\d/.test(trimmed)) {
-    const loc = parseUsfmLocation(toUsfm(`${lineBook} ${trimmed}`));
+  // « 104:30 » / « 104.30 » — capítulo:verso do livro já citado na linha
+  if (/^\d{1,3}[:.]\d/.test(trimmed)) {
+    if (!lineBook) return [];
+    const loc = parseUsfmLocation(
+      toUsfm(`${lineBook} ${trimmed.replace(".", ":")}`),
+    );
     return loc ? [loc] : [];
   }
-  if (/^\d{1,3}[,.]\s*\d/.test(trimmed)) {
+  // « 3, 5 » — versículos do capítulo de estudo (mesmo livro)
+  if (/^\d{1,3},\s*\d/.test(trimmed)) {
     const loc = parseUsfmLocation(
-      toUsfm(`${lineBook} ${contextChapter}.${trimmed.replace(",", ".")}`),
+      toUsfm(`${lineBook ?? contextBook} ${contextChapter}.${trimmed.replace(",", ".")}`),
     );
     return loc ? [loc] : [];
   }
@@ -64,7 +76,8 @@ export function parseTskeBody(body: string, contextBook: string, contextChapter:
   const out: TskeRef[] = [];
   const seen = new Set<string>();
   for (const line of String(body || "").split("\n")) {
-    let lineBook = contextBook;
+    /** Só herda livro após um jump com livro explícito na linha. */
+    let lineBook: string | null = null;
     for (const part of line.split(";")) {
       const piece = part.trim();
       if (!piece) continue;
@@ -72,7 +85,12 @@ export function parseTskeBody(body: string, contextBook: string, contextChapter:
       if (/^Reciprocal:/i.test(piece)) continue;
       if (/^Heb\./i.test(piece)) continue;
       if (/^Or,/i.test(piece)) continue;
-      const jumps = jumpsFromChunk(piece, lineBook, contextChapter);
+      const jumps = jumpsFromChunk(
+        piece,
+        lineBook,
+        contextBook,
+        contextChapter,
+      );
       if (!jumps.length) continue;
       lineBook = jumps[jumps.length - 1]!.bookId;
       for (const jump of jumps) {
