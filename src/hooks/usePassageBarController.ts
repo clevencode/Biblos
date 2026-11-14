@@ -373,7 +373,13 @@ export function usePassageBarController({
       if (target.closest(".bible-yv-passage-roll-scrim")) return;
       if (target.closest(".bible-yv-dock")) return;
       if (target.closest(".bible-yv-passage-word-search-trigger")) return;
-      /* Hamburger fecha via onClick (X) — não engolir o pointerdown. */
+      /*
+       * Topbar: sair só pelo pill «Rechèch» (volta ao menu). Resto do
+       * `.bible-yv-top` não dismissa.
+       */
+      if (target.closest(".bible-yv-top")) return;
+      if (target.closest(".top-sheet-layer")) return;
+      /* Hamburger / section pill fecha via onClick — não engolir. */
       if (target.closest(".bible-yv-tools-menu")) return;
       if (
         target.closest(".bible-yv-passage-word-search-panel") ||
