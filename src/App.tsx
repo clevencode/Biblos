@@ -490,8 +490,14 @@ function BiblosConsumerApp() {
                   role="tabpanel"
                   aria-labelledby="tab-bible"
                   hidden={!bibleMode}
-                  className="pane-body"
+                  className="pane-body bible-view"
                 >
+                  <header className="shell-page-head bible-head">
+                    <div className="shell-page-head-copy">
+                      <h1 className="type-headline">{t("shell.bible")}</h1>
+                      <p className="muted type-caption">{t("bible.nav")}</p>
+                    </div>
+                  </header>
                   {bibleMounted ? (
                     <BibleReaderView
                       initialRef="Jean 3.16"

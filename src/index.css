@@ -6687,10 +6687,17 @@ html[data-theme="dark"] .profile-download-btn {
   }
 
   .home-view,
+  .plan-discover,
   .notif-view {
     padding-left: max(var(--mobile-gutter), 16px, env(safe-area-inset-left, 0px));
     padding-right: max(var(--mobile-gutter), 16px, env(safe-area-inset-right, 0px));
     padding-top: 10px;
+  }
+
+  .bible-head {
+    padding-top: 10px;
+    padding-left: max(var(--mobile-gutter), 16px, env(safe-area-inset-left, 0px));
+    padding-right: max(var(--mobile-gutter), 16px, env(safe-area-inset-right, 0px));
   }
 
   .home-view {
@@ -7194,6 +7201,16 @@ html[data-theme="dark"] .profile-download-btn {
     );
   }
 
+  .plan-discover {
+    padding-left: max(var(--mobile-gutter), env(safe-area-inset-left, 0px));
+    padding-right: max(var(--mobile-gutter), env(safe-area-inset-right, 0px));
+  }
+
+  .bible-head {
+    padding-left: max(var(--mobile-gutter), env(safe-area-inset-left, 0px));
+    padding-right: max(var(--mobile-gutter), env(safe-area-inset-right, 0px));
+  }
+
   .bible-yv-top {
     padding-top: max(6px, env(safe-area-inset-top, 0px));
     padding-left: max(14px, env(safe-area-inset-left, 0px));
@@ -7213,15 +7230,14 @@ html[data-theme="dark"] .profile-download-btn {
   min-height: 0;
   height: 100%;
   background: var(--bg);
+  box-sizing: border-box;
+  padding-top: 12px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
 }
 
 .plan-discover-head {
   flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 2px 16px 6px;
 }
 
 .plan-discover-head .flash-deck-tabs,
@@ -7263,7 +7279,7 @@ html[data-theme="dark"] .profile-download-btn {
   flex: 1;
   min-height: 0;
   overflow: auto;
-  padding: 0 16px 24px;
+  padding: 0 0 24px;
 }
 
 /* Andaime fixo — evita colapso skeleton ↔ lista ↔ vazio (CLS). */
@@ -7571,10 +7587,6 @@ html[data-theme="dark"] .profile-download-btn {
 }
 
 @media (max-width: 860px) {
-  .plan-discover-head {
-    padding: 0 12px 4px;
-  }
-
   .plan-discover-tabs .flash-deck-tab {
     padding: 10px 10px 12px;
   }
@@ -7597,15 +7609,32 @@ html[data-theme="dark"] .profile-download-btn {
   }
 }
 
-.biblos-shell #panel-bible {
+.biblos-shell #panel-bible,
+.bible-view {
   background: var(--yv-bg, var(--bg));
   padding: 0;
   min-height: 100%;
 }
 
-.biblos-shell #panel-bible .bible-reader {
+.bible-head {
+  flex-shrink: 0;
+  box-sizing: border-box;
+  /* Gutters da Home no head; leitor fica full-bleed abaixo */
+  padding-top: 12px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-bottom: 0;
+}
+
+.bible-head .shell-page-head-copy {
+  padding: 0 2px;
+}
+
+.biblos-shell #panel-bible .bible-reader,
+.biblos-shell #panel-bible .bible-reader--yv {
   flex: 1;
   min-height: 0;
+  height: auto;
 }
 
 .today-view {
@@ -7632,9 +7661,15 @@ html[data-theme="dark"] .profile-download-btn {
   padding-right: max(16px, env(safe-area-inset-right, 0px));
 }
 
-.home-head {
+.home-head,
+.plan-discover-head,
+.bible-head {
   display: block;
   min-width: 0;
+}
+
+.home-head,
+.plan-discover-head {
   padding: 0 2px;
 }
 
