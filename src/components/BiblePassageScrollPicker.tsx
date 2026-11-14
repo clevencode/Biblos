@@ -157,6 +157,7 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
         ref={ref}
         id={panelId}
         className={`bible-yv-passage-scroll-panel top-floating-sheet is-open is-header-roll is-${step}`}
+        data-top-sheet="book"
         role="dialog"
         aria-modal="false"
         aria-label={ariaLabel}

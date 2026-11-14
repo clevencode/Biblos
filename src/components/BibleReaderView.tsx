@@ -2741,87 +2741,27 @@ export function BibleReaderView({
               />
             )}
             {renderPassageRoll()}
-            {/* Sheet book = irmão do roll/search — acima do scrim (z70), sem blur */}
-            {renderPassageBookSheet()}
-            {!planReading ? (
-              <BiblePassageWordSearchPanel
-                id={wordSearchPanelId}
-                open={wordSearchOpen}
-                query={wordSearchQuery}
-                onQueryChange={setWordSearchQuery}
-                onQueryClear={clearWordSearch}
-                onClose={closeWordSearch}
-                discoveryBusy={wordDiscoveryBusy}
-                verseHits={wordVerseHits}
-                verseTotal={wordVerseTotal}
-                page={wordSearchPage}
-                pageCount={wordSearchPageCount}
-                onPageChange={setWordSearchPage}
-                paging={wordSearchPaging}
-                contentError={wordDiscovery.contentError}
-                textVersion={textVersion}
-                books={books}
-                matchMode={wordMatchMode}
-                matchedTerms={wordMatchedTerms}
-                scopeFilter={wordSearchScopeFilter}
-                onScopeFilterChange={setWordSearchScopeFilter}
-                selectedBookIds={wordSearchSelectedBookIds}
-                onSelectedBookIdsChange={setWordSearchSelectedBookIds}
-                scopeCounts={wordSearchScopeCounts}
-                facets={wordSearchFacets}
-                currentBookId={bookId}
-                currentBookTitle={bookTitle}
-                onPickVerse={(hit) => {
-                  closeWordSearch({ restoreFocus: false });
-                  pickVerseSearchHit(hit);
-                }}
-              />
-            ) : null}
           </div>
         ) : (
-          <>
-            {renderPassageRoll()}
-            {renderPassageBookSheet()}
-          </>
+          renderPassageRoll()
         )}
         <div className="bible-yv-top-tools">
           {ACTIVITY_UI_ENABLED ? (
-            <>
-              {/* Trigger só — sheet IRMÃO (evita trap z sob o scrim, como book/search) */}
-              <div className="bible-yv-history-menu" ref={historyToolsRef}>
-                <HeaderTriggerButton
-                  open={historyOpen}
-                  shape="circle"
-                  idleIcon="history"
-                  ariaLabel={t("bible.history")}
-                  ariaHaspopup="dialog"
-                  className={`bible-yv-history-btn${historyOpen ? " is-on" : ""}`}
-                  onClick={() => {
-                    setShareSheetOpen(false);
-                    restoreHistoryFocusRef.current = true;
-                    toggleOverlay("history");
-                  }}
-                />
-              </div>
-              <BibleHistorySheet
+            <div className="bible-yv-history-menu" ref={historyToolsRef}>
+              <HeaderTriggerButton
                 open={historyOpen}
-                onClose={() => {
+                shape="circle"
+                idleIcon="history"
+                ariaLabel={t("bible.history")}
+                ariaHaspopup="dialog"
+                className={`bible-yv-history-btn${historyOpen ? " is-on" : ""}`}
+                onClick={() => {
+                  setShareSheetOpen(false);
                   restoreHistoryFocusRef.current = true;
-                  closeOverlay();
+                  toggleOverlay("history");
                 }}
-                onSelect={({ versionId, bookId, chapterId, verse }) => {
-                  restoreHistoryFocusRef.current = false;
-                  closeOverlay();
-                  void (async () => {
-                    if (versionId !== textVersionRef.current) {
-                      await switchTextVersion(versionId);
-                    }
-                    void loadChapter(bookId, chapterId, verse);
-                  })();
-                }}
-                onHistoryChange={onReadingHistoryChange}
               />
-            </>
+            </div>
           ) : null}
           {!compactToolsMenu || isPassageBarPanelCompactTopbar()
             ? renderTopToolsMenu("header")
@@ -2836,7 +2776,7 @@ export function BibleReaderView({
             surfaceChrome.scrimIsTools ? " is-tools" : ""
           }${surfaceChrome.scrimIsPickerDismiss ? " is-picker-dismiss" : ""}${
             wordSearchOpen ? " is-word-search" : ""
-          }`}
+          }${surfaceChrome.passagePickerRollOpen ? " is-book-pill" : ""}`}
           aria-label={t("common.close")}
           onPointerDown={(event) => {
             event.preventDefault();
@@ -2848,6 +2788,69 @@ export function BibleReaderView({
           }}
         />
       ) : null}
+
+      {/*
+        Layer z70 acima do scrim (z60). Book/search/history montam AQUI —
+        nunca dentro do header (trap) nem como irmão “nu” do scrim com
+        backdrop-filter (bug de compositing: sheet parece sob o blur).
+      */}
+      <div className="top-sheet-layer" data-top-sheet-layer="">
+        {renderPassageBookSheet()}
+        {discoverySplitSearch && !planReading ? (
+          <BiblePassageWordSearchPanel
+            id={wordSearchPanelId}
+            open={wordSearchOpen}
+            query={wordSearchQuery}
+            onQueryChange={setWordSearchQuery}
+            onQueryClear={clearWordSearch}
+            onClose={closeWordSearch}
+            discoveryBusy={wordDiscoveryBusy}
+            verseHits={wordVerseHits}
+            verseTotal={wordVerseTotal}
+            page={wordSearchPage}
+            pageCount={wordSearchPageCount}
+            onPageChange={setWordSearchPage}
+            paging={wordSearchPaging}
+            contentError={wordDiscovery.contentError}
+            textVersion={textVersion}
+            books={books}
+            matchMode={wordMatchMode}
+            matchedTerms={wordMatchedTerms}
+            scopeFilter={wordSearchScopeFilter}
+            onScopeFilterChange={setWordSearchScopeFilter}
+            selectedBookIds={wordSearchSelectedBookIds}
+            onSelectedBookIdsChange={setWordSearchSelectedBookIds}
+            scopeCounts={wordSearchScopeCounts}
+            facets={wordSearchFacets}
+            currentBookId={bookId}
+            currentBookTitle={bookTitle}
+            onPickVerse={(hit) => {
+              closeWordSearch({ restoreFocus: false });
+              pickVerseSearchHit(hit);
+            }}
+          />
+        ) : null}
+        {ACTIVITY_UI_ENABLED ? (
+          <BibleHistorySheet
+            open={historyOpen}
+            onClose={() => {
+              restoreHistoryFocusRef.current = true;
+              closeOverlay();
+            }}
+            onSelect={({ versionId, bookId, chapterId, verse }) => {
+              restoreHistoryFocusRef.current = false;
+              closeOverlay();
+              void (async () => {
+                if (versionId !== textVersionRef.current) {
+                  await switchTextVersion(versionId);
+                }
+                void loadChapter(bookId, chapterId, verse);
+              })();
+            }}
+            onHistoryChange={onReadingHistoryChange}
+          />
+        ) : null}
+      </div>
 
       <div id={statusId} className="sr-only" aria-live="polite">
         {passageLiveStatusLabel({ presentation, locationLabel, error })}
