@@ -7,7 +7,8 @@ export type ActiveBibleOverlay =
   | { type: "book_search" }
   | { type: "verse_actions"; selectedVerseIds: string[] }
   | { type: "reader_settings" }
-  | { type: "history" };
+  | { type: "history" }
+  | { type: "marks" };
 
 export type ActiveBibleOverlayType = ActiveBibleOverlay["type"];
 

@@ -10029,6 +10029,7 @@ html[data-theme="dark"] .bible-yv-passage-chip.hdr-trigger.is-open {
   transform: none;
 }
 
+
 /* Pílula aberta: label + ✕ lado a lado (não esconde o rótulo) */
 .hdr-trigger.is-pill.is-open .hdr-trigger-swap {
   display: inline-flex;
@@ -10037,6 +10038,49 @@ html[data-theme="dark"] .bible-yv-passage-chip.hdr-trigger.is-open {
   gap: 0.4em;
   width: auto;
   height: auto;
+}
+
+/* Menu / secção: ícone à esquerda; só o texto centrado na pílula */
+.hdr-trigger.is-pill.is-open.is-section-pill .hdr-trigger-swap {
+  position: relative;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+}
+
+.hdr-trigger.is-pill.is-open.is-section-pill .hdr-icon-exit {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  flex: none;
+  z-index: 1;
+}
+
+.hdr-trigger.is-pill.is-open.is-section-pill .hdr-icon-exit.is-shown,
+.hdr-trigger.is-pill.is-open.is-section-pill.is-exit-back .hdr-icon-exit,
+.hdr-trigger.is-pill.is-open.is-section-pill.is-exit-back .hdr-icon-exit.is-shown {
+  transform: translateY(-50%);
+}
+
+.hdr-trigger.is-pill.is-open.is-section-pill .hdr-icon-idle {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: grid;
+  place-items: center;
+  padding-inline: 1.35em;
+}
+
+.hdr-trigger.is-pill.is-open.is-section-pill .hdr-trigger-label {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.92rem;
+  font-weight: 650;
+  line-height: 1.2;
+  text-align: center;
 }
 
 .hdr-trigger.is-pill.is-open .hdr-icon-idle,
@@ -11401,6 +11445,18 @@ html[data-passage-bar-panel="test"] .bible-yv-history-btn {
     background 0.18s ease,
     border-color 0.18s ease,
     outline-color 0.18s ease;
+}
+
+html[data-passage-bar-panel="test"]
+  .bible-yv-tools-menu-btn.hdr-trigger.is-pill.is-section-pill,
+html[data-passage-bar-panel="test"]
+  button.hdr-trigger.is-pill.bible-yv-tools-menu-btn.is-section-pill {
+  --bible-section-pill-w: 9.75rem;
+  width: var(--bible-section-pill-w);
+  min-width: var(--bible-section-pill-w);
+  max-width: var(--bible-section-pill-w);
+  padding: 0 14px 0 10px;
+  border-radius: 9999px;
 }
 
 html[data-passage-bar-panel="test"] .bible-yv-tools-menu-btn:hover,
@@ -13199,6 +13255,17 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   padding: 2px 2px 0;
 }
 
+.bible-yv-history-panel-head.is-actions-only {
+  justify-content: flex-end;
+}
+
+.bible-yv-history-panel-head.is-actions-only .bible-yv-history-panel-meta {
+  flex: 1;
+  min-width: 0;
+  padding: 0 4px;
+  text-align: left;
+}
+
 .bible-yv-history-panel-title {
   margin: 0;
   font-size: 0.92rem;
@@ -13457,6 +13524,17 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   color: var(--yv-text);
   line-height: 1;
   cursor: pointer;
+}
+
+.bible-yv-tools-menu-btn.hdr-trigger.is-pill.is-section-pill {
+  --bible-section-pill-w: 9.75rem;
+  width: var(--bible-section-pill-w);
+  min-width: var(--bible-section-pill-w);
+  max-width: var(--bible-section-pill-w);
+  height: var(--hdr-size, 44px);
+  min-height: var(--hdr-size, 44px);
+  padding: 0 14px 0 10px;
+  border-radius: 9999px;
 }
 
 .bible-yv-tools-menu-btn:hover,

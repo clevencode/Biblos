@@ -204,6 +204,7 @@ export type UiCopyKey =
   | "word.placeholder"
   | "word.aria"
   | "word.panel"
+  | "word.short"
   | "word.ot"
   | "word.nt"
   | "word.dc"
@@ -444,6 +445,7 @@ const FR: Dict = {
   "word.placeholder": "Mot ou expression…",
   "word.aria": "Rechercher un mot ou une expression dans la Bible",
   "word.panel": "Recherche dans la Bible",
+  "word.short": "Recherche",
   "word.ot": "Ancien",
   "word.nt": "Nouveau",
   "word.dc": "Deutéro.",
@@ -685,6 +687,7 @@ const HT: Dict = {
   "word.placeholder": "Chèche nan Bib la…",
   "word.aria": "Chèche yon mo oswa yon ekspresyon nan Bib la",
   "word.panel": "Rechèch nan Bib la",
+  "word.short": "Rechèch",
   "word.ot": "Ansyen",
   "word.nt": "Nouvo",
   "word.dc": "Dewoterokanonik",

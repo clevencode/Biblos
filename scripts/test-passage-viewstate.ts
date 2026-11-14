@@ -149,6 +149,30 @@ assert.equal(surfaceHistory.passageInputBlocked, true);
 assert.equal(surfaceHistory.passageSurfaceScrimOpen, false);
 assert.equal(surfaceHistory.scrimIsTools, true);
 
+const surfaceMarks = readerSurfaceChrome({
+  pickerOpen: false,
+  pickerPanelOpenAllowed: true,
+  toolsMenuOpen: false,
+  historyOpen: false,
+  marksOpen: true,
+  shareSheetOpen: false,
+  verseActionsOpen: false,
+});
+assert.equal(surfaceMarks.passageInputBlocked, true);
+assert.equal(surfaceMarks.passageSurfaceScrimOpen, false);
+assert.equal(
+  overlayDismissTarget({
+    pickerOpen: false,
+    pickerPanelOpenAllowed: true,
+    toolsMenuOpen: false,
+    historyOpen: false,
+    marksOpen: true,
+    shareSheetOpen: false,
+    verseActionsOpen: false,
+  }),
+  "marks",
+);
+
 const surfacePickerNoCatalog = readerSurfaceChrome({
   pickerOpen: true,
   pickerPanelOpenAllowed: false,

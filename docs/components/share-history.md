@@ -17,7 +17,7 @@
 | `BibleHistorySheet` | Menu leitor se `ACTIVITY_UI_ENABLED` |
 | `BibleHistoryPanel` | Variante painel (não usada na shell actual) |
 
-**Accueil** (`HomeShellPanel`) resume a última leitura. Surlignages + histórico completo vivem em `BibleHistorySheet`.
+**Accueil** (`HomeShellPanel`) resume a última leitura. Histórico vive em `BibleHistorySheet`; surlignages em `BibleMarksSheet` (menu hamburger, full-bleed como search).
 
 ---
 

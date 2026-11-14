@@ -9,6 +9,7 @@ export type ReaderSurfaceChromeInput = {
   bookSearchOpen?: boolean;
   toolsMenuOpen: boolean;
   historyOpen: boolean;
+  marksOpen?: boolean;
   shareSheetOpen: boolean;
   verseActionsOpen: boolean;
   verseStudyOpen?: boolean;
@@ -32,6 +33,7 @@ export type OverlayDismissTarget =
   | "bookSearch"
   | "tools"
   | "history"
+  | "marks"
   | "share"
   | "verseStudy";
 
@@ -54,17 +56,19 @@ export function readerSurfaceChrome(
   );
   const wordSearchOpen = Boolean(input.wordSearchOpen);
   const bookSearchOpen = Boolean(input.bookSearchOpen);
+  const marksOpen = Boolean(input.marksOpen);
   const verseStudyOpen = Boolean(input.verseStudyOpen);
   /** Chip roll ou painel palavras — mesma elevação de chrome. */
   const barOverlayOpen = rollOpen || wordSearchOpen || bookSearchOpen;
   /**
    * Modais com `.top-sheet-backdrop`.
-   * Full-bleed (search / book roll / history / menu header) — sem scrim.
+   * Full-bleed (search / book roll / history / marks / menu header) — sem scrim.
    */
   const passageInputBlocked =
     barOverlayOpen ||
     input.toolsMenuOpen ||
     input.historyOpen ||
+    marksOpen ||
     input.shareSheetOpen ||
     verseStudyOpen;
   const passageSurfaceScrimOpen =
@@ -85,11 +89,13 @@ export function readerSurfaceChrome(
       input.verseActionsOpen,
     /* Classe no root/header p/ roll aberto; elevação topbar = .is-top-sheet-open */
     rootClassPassageRollOpen: barOverlayOpen,
-    scrimIsTools: input.toolsMenuOpen || input.historyOpen || verseStudyOpen,
+    scrimIsTools:
+      input.toolsMenuOpen || input.historyOpen || marksOpen || verseStudyOpen,
     scrimIsPickerDismiss:
       barOverlayOpen ||
       input.toolsMenuOpen ||
       input.historyOpen ||
+      marksOpen ||
       verseStudyOpen,
   };
 }
@@ -104,6 +110,7 @@ export function overlayDismissTarget(
   if (input.bookSearchOpen) return "bookSearch";
   if (input.verseStudyOpen) return "verseStudy";
   if (input.toolsMenuOpen) return "tools";
+  if (input.marksOpen) return "marks";
   if (input.historyOpen) return "history";
   if (input.shareSheetOpen) return "share";
   return null;
