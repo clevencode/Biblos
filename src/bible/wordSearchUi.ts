@@ -25,6 +25,8 @@ export type WordSearchUiCopy = {
   pagination: string;
   page: (n: number) => string;
   empty: string;
+  emptyInBook: (query: string, book: string) => string;
+  outsideBook: (book: string) => string;
   emptyBooks: string;
   bookFallback: string;
   fuzzyBanner: string;
@@ -52,6 +54,10 @@ const FR: WordSearchUiCopy = {
   pagination: "Pagination des résultats",
   page: (n) => `Page ${n}`,
   empty: "Aucun passage trouvé",
+  emptyInBook: (query, book) =>
+    `Aucun résultat pour « ${query} » dans ${book}.`,
+  outsideBook: (book) =>
+    `Aucun passage dans ${book}. Affichage hors de ce livre.`,
   emptyBooks: "Aucun livre trouvé",
   bookFallback: "Livre",
   fuzzyBanner:
@@ -81,6 +87,10 @@ const HT: WordSearchUiCopy = {
   pagination: "Pajinasyon rezilta yo",
   page: (n) => `Paj ${n}`,
   empty: "Pa gen pasaj jwenn",
+  emptyInBook: (query, book) =>
+    `Pa gen rezilta pou « ${query} » nan ${book}.`,
+  outsideBook: (book) =>
+    `Pa gen pasaj nan ${book}. Nou montre rezilta deyò liv sa a.`,
   emptyBooks: "Pa gen liv jwenn",
   bookFallback: "Liv",
   fuzzyBanner:

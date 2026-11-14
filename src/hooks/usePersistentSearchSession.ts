@@ -1,7 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { BibleTextVersionId } from "../bible/bibleVersions";
 
-/** Escopo das pills. `books` = seleção multi-livros. `dc` = deuterocanônicos. */
+/**
+ * Escopo das pills.
+ * - `current_book`: livro aberto no leitor (dinâmico; default).
+ * - `books`: seleção explícita multi-livros (ids na sessão).
+ * - `nt` / `ot` / `dc`: testamento / deuterocanônicos.
+ * - `all`: Bíblia inteira (sem filtro de livro).
+ */
 export type SearchScopeFilter =
   | "all"
   | "books"
@@ -26,7 +32,8 @@ export const SEARCH_SESSION_STORAGE_KEY = "biblos_search_session_v1";
 
 export const EMPTY_SEARCH_SESSION: SearchSessionState = {
   query: "",
-  scopeFilter: "all",
+  /** Default de negócio: filtrar pelo livro aberto no leitor. */
+  scopeFilter: "current_book",
   selectedBookIds: [],
   page: 1,
 };
@@ -94,22 +101,22 @@ export function readSearchSession(
       // Chave já é por versão — ignorar mismatch
     }
     const legacy = parsed.scopeFilter ?? parsed.testamentFilter;
-    let scopeFilter: SearchScopeFilter = isScopeFilter(legacy) ? legacy : "all";
+    let scopeFilter: SearchScopeFilter = isScopeFilter(legacy)
+      ? legacy
+      : "current_book";
     let selectedBookIds = normalizeBookIds(parsed.selectedBookIds);
 
-    if (scopeFilter === "current_book" && selectedBookIds.length > 0) {
-      scopeFilter = "books";
+    // `current_book` é dinâmico (segue o leitor) — nunca congela bookIds.
+    if (scopeFilter === "current_book") {
+      selectedBookIds = [];
     }
     if (scopeFilter === "books" && selectedBookIds.length === 0) {
-      scopeFilter = "all";
+      scopeFilter = "current_book";
     }
     if (scopeFilter === "dc" && versionId === "s21") {
-      scopeFilter = "all";
+      scopeFilter = "current_book";
     }
-    if (
-      scopeFilter !== "books" &&
-      scopeFilter !== "current_book"
-    ) {
+    if (scopeFilter !== "books") {
       selectedBookIds = [];
     }
 
@@ -172,18 +179,35 @@ export function usePersistentSearchSession(versionId: BibleTextVersionId) {
   const setScopeFilter = useCallback(
     (scopeFilter: SearchScopeFilter) => {
       const prev = stateRef.current;
-      const nextFilter =
-        scopeFilter === "current_book" ? "books" : scopeFilter;
-      if (nextFilter === "nt" || nextFilter === "ot" || nextFilter === "dc") {
-        if (prev.scopeFilter === nextFilter) return;
+
+      if (scopeFilter === "current_book") {
+        if (
+          prev.scopeFilter === "current_book" &&
+          prev.selectedBookIds.length === 0
+        ) {
+          return;
+        }
         persist({
           ...prev,
-          scopeFilter: nextFilter,
+          scopeFilter: "current_book",
+          selectedBookIds: [],
           page: 1,
         });
         return;
       }
-      if (nextFilter === "all") {
+
+      if (scopeFilter === "nt" || scopeFilter === "ot" || scopeFilter === "dc") {
+        if (prev.scopeFilter === scopeFilter) return;
+        persist({
+          ...prev,
+          scopeFilter,
+          selectedBookIds: [],
+          page: 1,
+        });
+        return;
+      }
+
+      if (scopeFilter === "all") {
         if (
           prev.scopeFilter === "all" &&
           prev.selectedBookIds.length === 0
@@ -193,6 +217,18 @@ export function usePersistentSearchSession(versionId: BibleTextVersionId) {
         persist({
           ...prev,
           scopeFilter: "all",
+          selectedBookIds: [],
+          page: 1,
+        });
+        return;
+      }
+
+      // "books" sem ids — volta ao livro atual (default de negócio)
+      if (prev.selectedBookIds.length === 0) {
+        if (prev.scopeFilter === "current_book") return;
+        persist({
+          ...prev,
+          scopeFilter: "current_book",
           selectedBookIds: [],
           page: 1,
         });
@@ -223,7 +259,7 @@ export function usePersistentSearchSession(versionId: BibleTextVersionId) {
       if (nextIds.length === 0) {
         persist({
           ...prev,
-          scopeFilter: "all",
+          scopeFilter: "current_book",
           selectedBookIds: [],
           page: 1,
         });
@@ -263,10 +299,7 @@ export function usePersistentSearchSession(versionId: BibleTextVersionId) {
 
   const resetForVersion = useCallback(() => {
     persist({
-      query: "",
-      scopeFilter: "all",
-      selectedBookIds: [],
-      page: 1,
+      ...EMPTY_SEARCH_SESSION,
       versionId: versionRef.current,
     });
   }, [persist]);

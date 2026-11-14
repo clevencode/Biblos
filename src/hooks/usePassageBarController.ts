@@ -87,22 +87,22 @@ export function usePassageBarController({
     () => ({ ...EMPTY_PASSAGE_DISCOVERY_SESSION }),
   );
 
-  // Migrar current_book legado → books:[currentBookId]
+  // Sessões antigas em "all" sem livros → default de negócio (livro atual).
   useEffect(() => {
-    if (wordSearchScopeFilter !== "current_book") return;
+    if (!wordSearchOpen) return;
+    if (wordSearchScopeFilter !== "all") return;
+    if (wordSearchSelectedBookIds.length > 0) return;
     const id = String(bookId || "")
       .trim()
       .toUpperCase();
-    if (!id) {
-      setWordSearchScopeFilter("all");
-      return;
-    }
-    setWordSearchSelectedBookIds([id]);
+    if (!id) return;
+    setWordSearchScopeFilter("current_book");
   }, [
+    wordSearchOpen,
     wordSearchScopeFilter,
+    wordSearchSelectedBookIds.length,
     bookId,
     setWordSearchScopeFilter,
-    setWordSearchSelectedBookIds,
   ]);
 
   const discoveryListScrollRaf = useRef(0);

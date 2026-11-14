@@ -219,6 +219,8 @@ export type UiCopyKey =
   | "word.pagination"
   | "word.page"
   | "word.empty"
+  | "word.emptyInBook"
+  | "word.outsideBook"
   | "word.emptyBooks"
   | "word.fuzzy"
   | "word.or"
@@ -456,6 +458,10 @@ const FR: Dict = {
   "word.pagination": "Pagination des résultats",
   "word.page": "Page {n}",
   "word.empty": "Aucun passage trouvé",
+  "word.emptyInBook":
+    "Aucun résultat pour « {query} » dans {book}.",
+  "word.outsideBook":
+    "Aucun passage dans {book}. Affichage hors de ce livre.",
   "word.emptyBooks": "Aucun livre trouvé",
   "word.fuzzy":
     "Aucun résultat exact. Affichage des passages pour des termes proches.",
@@ -692,6 +698,10 @@ const HT: Dict = {
   "word.pagination": "Pajinasyon rezilta yo",
   "word.page": "Paj {n}",
   "word.empty": "Pa gen pasaj jwenn",
+  "word.emptyInBook":
+    "Pa gen rezilta pou « {query} » nan {book}.",
+  "word.outsideBook":
+    "Pa gen pasaj nan {book}. Nou montre rezilta deyò liv sa a.",
   "word.emptyBooks": "Pa gen liv jwenn",
   "word.fuzzy":
     "Pa gen rezilta egzak. Nou montre pasaj pou mo ki sanble.",

@@ -211,10 +211,7 @@ export function BiblePassageWordSearchPanel({
     verseHits.length > 0 &&
     !isBookPickerOpen;
   const hasResultsChrome = hasActiveQuery && !showSkeleton;
-  const currentBookActive =
-    scopeFilter === "books" &&
-    selectedBookIds.length === 1 &&
-    resolveCanonicalBookId(selectedBookIds[0]) === readerBookId;
+  const currentBookActive = scopeFilter === "current_book";
   const ntActive = scopeFilter === "nt";
   const otActive = scopeFilter === "ot";
   const dcActive = scopeFilter === "dc";
@@ -227,6 +224,9 @@ export function BiblePassageWordSearchPanel({
     [page, pageCount],
   );
   const booksSignature = useMemo(() => {
+    if (scopeFilter === "current_book") {
+      return `current_book:${readerBookId || ""}`;
+    }
     if (scopeFilter === "books" && selectedBookIds.length > 0) {
       return `books:${[...selectedBookIds].sort().join(",")}`;
     }
@@ -238,7 +238,7 @@ export function BiblePassageWordSearchPanel({
       return scopeFilter;
     }
     return "all";
-  }, [selectedBookIds, scopeFilter]);
+  }, [selectedBookIds, scopeFilter, readerBookId]);
 
   const searchSignature = useMemo(
     () =>
@@ -256,10 +256,27 @@ export function BiblePassageWordSearchPanel({
       searchSignature,
       resultsCount: verseHits.length,
       page,
+      versionId: textVersion,
       resultsReady,
     });
 
-  const fallbackBanner =
+  const bookLabel =
+    currentBookTitle.trim() ||
+    titleById.get(readerBookId) ||
+    currentBookId ||
+    t("common.book");
+
+  const outsideBookBanner =
+    !showSkeleton &&
+    !isBookPickerOpen &&
+    scopeFilter !== "current_book" &&
+    verseHits.length > 0 &&
+    readerBookId &&
+    (scopeCounts?.current_book ?? 0) === 0
+      ? t("word.outsideBook", { book: bookLabel })
+      : null;
+
+  const matchModeBanner =
     !showSkeleton &&
     !isBookPickerOpen &&
     verseHits.length > 0 &&
@@ -269,11 +286,7 @@ export function BiblePassageWordSearchPanel({
         ? t("word.or")
         : null);
 
-  const bookLabel =
-    currentBookTitle.trim() ||
-    titleById.get(readerBookId) ||
-    currentBookId ||
-    t("common.book");
+  const fallbackBanner = outsideBookBanner || matchModeBanner;
   const byBook = facets?.byBook ?? {};
 
   const booksWithHits = useMemo(() => {
@@ -387,7 +400,7 @@ export function BiblePassageWordSearchPanel({
     if (!readerBookId) return;
     if (currentBookActive) return;
     resetScroll();
-    onSelectedBookIdsChange([readerBookId]);
+    onScopeFilterChange("current_book");
   }
 
   function handleTestamentPillTap(next: PickerMode) {
@@ -415,8 +428,12 @@ export function BiblePassageWordSearchPanel({
 
   function handleEffacerBooks() {
     setDraftBookIds([]);
-    if (selectedBookIds.length > 0 || scopeFilter === "books") {
-      onScopeFilterChange("all");
+    if (
+      selectedBookIds.length > 0 ||
+      scopeFilter === "books" ||
+      scopeFilter === "all"
+    ) {
+      onScopeFilterChange("current_book");
     }
   }
 
@@ -437,8 +454,14 @@ export function BiblePassageWordSearchPanel({
       if (pickerMode === "nt" || pickerMode === "ot" || pickerMode === "dc") {
         onScopeFilterChange(pickerMode);
       } else {
-        onScopeFilterChange("all");
+        onScopeFilterChange("current_book");
       }
+    } else if (
+      nextIds.length === 1 &&
+      nextIds[0] === readerBookId
+    ) {
+      // Um único livro = o do leitor → escopo dinâmico (segue a navegação)
+      onScopeFilterChange("current_book");
     } else {
       onSelectedBookIdsChange(nextIds);
     }
@@ -728,8 +751,16 @@ export function BiblePassageWordSearchPanel({
                 {displayError}
               </p>
             ) : showEmptyResults ? (
-              <p className="bible-yv-pick-loading bible-yv-muted bible-yv-pick-roll-empty">
-                {t("word.empty")}
+              <p
+                className="bible-yv-pick-loading bible-yv-muted bible-yv-pick-roll-empty"
+                role="status"
+              >
+                {scopeFilter === "current_book"
+                  ? t("word.emptyInBook", {
+                      query: trimmed,
+                      book: bookLabel,
+                    })
+                  : t("word.empty")}
               </p>
             ) : (
               <ul className="bible-yv-pick-verse-hits is-word-search-passages">

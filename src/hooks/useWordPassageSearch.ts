@@ -47,13 +47,18 @@ export function buildEngineScope(
   if (scopeFilter === "nt") return { type: "nt" };
   if (scopeFilter === "ot") return { type: "ot" };
   if (scopeFilter === "dc") return { type: "dc" };
-  if (scopeFilter === "books" || scopeFilter === "current_book") {
-    const ids =
-      selectedBookIds.length > 0
-        ? selectedBookIds
-        : currentBookId
-          ? [String(currentBookId).toUpperCase()]
-          : [];
+  // Livro atual: sempre o do leitor (não congela id na sessão).
+  if (scopeFilter === "current_book") {
+    const id = String(currentBookId || "")
+      .trim()
+      .toUpperCase();
+    if (!id) return { type: "all" };
+    return { type: "books", bookIds: [id] };
+  }
+  if (scopeFilter === "books") {
+    const ids = selectedBookIds
+      .map((id) => String(id || "").trim().toUpperCase())
+      .filter(Boolean);
     if (ids.length === 0) return { type: "all" };
     return { type: "books", bookIds: ids };
   }
@@ -78,18 +83,20 @@ function buildScopeCounts(
   facets: SearchFacets,
   currentBookId: string | null | undefined,
   selectedBookIds: string[],
+  scopeFilter: SearchScopeFilter,
 ): WordSearchScopeCounts {
   const current = String(currentBookId || "")
     .trim()
     .toUpperCase();
+  const currentCount = current ? facets.byBook[current] ?? 0 : 0;
   const booksSum =
-    selectedBookIds.length > 0
-      ? selectedBookIds.reduce(
-          (sum, id) => sum + (facets.byBook[String(id).toUpperCase()] ?? 0),
-          0,
-        )
-      : current
-        ? facets.byBook[current] ?? 0
+    scopeFilter === "current_book"
+      ? currentCount
+      : selectedBookIds.length > 0
+        ? selectedBookIds.reduce(
+            (sum, id) => sum + (facets.byBook[String(id).toUpperCase()] ?? 0),
+            0,
+          )
         : 0;
   return {
     all: facets.total,
@@ -97,7 +104,7 @@ function buildScopeCounts(
     nt: facets.ntCount,
     ot: facets.otCount,
     dc: facets.dcCount ?? 0,
-    current_book: current ? facets.byBook[current] ?? 0 : 0,
+    current_book: currentCount,
   };
 }
 
@@ -233,12 +240,16 @@ export function useWordPassageSearch(
     const delay = keyChanged ? DEBOUNCE_MS : 0;
     const timer = window.setTimeout(() => {
       void (async () => {
+        const preferBookId = String(currentBookId || "")
+          .trim()
+          .toUpperCase() || undefined;
         const res = await searchInWorker({
           versionId: textVersion,
           q,
           limit: WORD_SEARCH_PAGE_SIZE,
           offset: (effectivePage - 1) * WORD_SEARCH_PAGE_SIZE,
           scope: engineScope,
+          preferBookId,
         });
         if (gen !== reqGen.current) return;
 
@@ -263,7 +274,12 @@ export function useWordPassageSearch(
         const nextTotal = res.total ?? res.results?.length ?? 0;
         setFacets(nextFacets);
         setScopeCounts(
-          buildScopeCounts(nextFacets, currentBookId, selectedBookIds),
+          buildScopeCounts(
+            nextFacets,
+            currentBookId,
+            selectedBookIds,
+            scopeFilter,
+          ),
         );
         setHits(res.results ?? []);
         setTotal(nextTotal);
@@ -295,6 +311,7 @@ export function useWordPassageSearch(
     engineScope,
     currentBookId,
     selectedBookIds,
+    scopeFilter,
     page,
     pageFromProps,
     onPageChange,

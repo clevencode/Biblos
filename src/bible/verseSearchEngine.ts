@@ -76,6 +76,8 @@ export type SearchVersesCascadeOptions = {
   offset?: number;
   profile: VerseSearchProfile;
   scope?: SearchScope;
+  /** Livro do leitor — sobe no ranking antes do cânon (evita “começar” em Gênesis). */
+  preferBookId?: string;
 };
 
 /** Limite por pedido de página — não teto do universo de hits. */
@@ -447,14 +449,30 @@ function rankKey(
   stemmed: string[],
   matchCount: number,
   profile: VerseSearchProfile,
-): [number, number, number, number, number, number, number, number] {
+  preferBookId?: string,
+): [
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+] {
   const exactPhrase = normQuery && v.norm.includes(normQuery) ? 1 : 0;
+  const prefer =
+    preferBookId && String(v.bookId || "").toUpperCase() === preferBookId
+      ? 0
+      : 1;
   return [
     -exactPhrase,
     -matchCount,
     -countWholeWordHits(v, tokens),
     -countPrefixHits(v, tokens),
     -countSubstringOrStemHits(v, tokens, stemmed, profile),
+    prefer,
     v.canonIndex,
     v.chapter,
     v.verse,
@@ -468,9 +486,26 @@ function compareRank(
   tokens: string[],
   stemmed: string[],
   profile: VerseSearchProfile,
+  preferBookId?: string,
 ): number {
-  const ka = rankKey(a.verse, normQuery, tokens, stemmed, a.matchCount, profile);
-  const kb = rankKey(b.verse, normQuery, tokens, stemmed, b.matchCount, profile);
+  const ka = rankKey(
+    a.verse,
+    normQuery,
+    tokens,
+    stemmed,
+    a.matchCount,
+    profile,
+    preferBookId,
+  );
+  const kb = rankKey(
+    b.verse,
+    normQuery,
+    tokens,
+    stemmed,
+    b.matchCount,
+    profile,
+    preferBookId,
+  );
   for (let i = 0; i < ka.length; i++) {
     const d = ka[i]! - kb[i]!;
     if (d !== 0) return d;
@@ -772,7 +807,12 @@ export function searchVersesCascadeOnIndex(
     }
   }
 
-  matched.sort((a, b) => compareRank(a, b, normQuery, tokens, stemmed, profile));
+  const preferBookId = String(options.preferBookId || "")
+    .trim()
+    .toUpperCase() || undefined;
+  matched.sort((a, b) =>
+    compareRank(a, b, normQuery, tokens, stemmed, profile, preferBookId),
+  );
   // Facetas no universo completo (pré-filtro de escopo)
   const facets = buildSearchFacets(matched);
   const scoped = applySearchScope(matched, options.scope);

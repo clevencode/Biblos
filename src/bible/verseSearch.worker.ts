@@ -16,6 +16,7 @@ export type WorkerSearchRequest = {
   limit: number;
   offset?: number;
   scope?: SearchScope;
+  preferBookId?: string;
 };
 
 export type WorkerWarmRequest = {
@@ -100,6 +101,7 @@ ctx.onmessage = (event: MessageEvent<WorkerInbound>) => {
           limit: msg.limit,
           offset: msg.offset,
           scope: msg.scope ?? { type: "all" },
+          preferBookId: msg.preferBookId,
         });
         if (msg.requestId !== latestSearchId) return;
         if (!found.ok) {

@@ -62,6 +62,8 @@ export async function runLocalVerseSearch(input: {
   bookOrder?: Map<string, number>;
   /** Escopo pós-rank (preferido para word-search). */
   scope?: SearchScope;
+  /** Livro do leitor — boost de ranking. */
+  preferBookId?: string;
 }): Promise<LocalVerseSearchResult> {
   const query = String(input.q || "").trim();
   const queryNorm = normalizeSearchText(query);
@@ -121,6 +123,7 @@ export async function runLocalVerseSearch(input: {
     offset: input.offset,
     profile: profileForVersion(input.version),
     scope: input.scope ?? { type: "all" },
+    preferBookId: input.preferBookId,
   });
   const snippetNeedle =
     found.matchedTerms.find((t) => t.length >= 2) ?? queryNorm;

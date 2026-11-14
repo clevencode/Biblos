@@ -108,6 +108,7 @@ export async function searchInWorker(input: {
   limit?: number;
   offset?: number;
   scope?: SearchScope;
+  preferBookId?: string;
 }): Promise<ClientSearchResult> {
   const w = getWorker();
   if (!w) {
@@ -117,6 +118,7 @@ export async function searchInWorker(input: {
       limit: input.limit,
       offset: input.offset,
       scope: input.scope,
+      preferBookId: input.preferBookId,
     });
   }
 
@@ -150,6 +152,7 @@ export async function searchInWorker(input: {
       limit: input.limit ?? 40,
       offset: input.offset ?? 0,
       scope: input.scope,
+      preferBookId: input.preferBookId,
     };
     w.postMessage(msg);
   });
