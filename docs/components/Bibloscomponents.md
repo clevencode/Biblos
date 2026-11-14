@@ -53,7 +53,7 @@ flowchart TB
 | `passage-verse-selector` | Grelha de versículos | [barra-seletor-versiculo.md](./barra-seletor-versiculo.md) |
 | `audio-float` | Play/seek áudio S21 | [audio-float.md](./audio-float.md) |
 | `share-history` | Partilha e histórico | [share-history.md](./share-history.md) |
-| `study-sheets` | TSKe, Strong, busca global | [study-sheets.md](./study-sheets.md) |
+| `study-sheets` | TSKe, busca global | [study-sheets.md](./study-sheets.md) |
 
 ---
 
@@ -135,7 +135,7 @@ Passo `verse`: `pickerVerseNumberOptions`, skeleton até `PassagePresentation` e
 
 ## Estudo e busca (`study-sheets`)
 
-`BibleStudySheet`, `BibleStrongSheet`, `BibleSearchSheet` — implementados, **sem mount** no leitor actual; ver [bible-study.md](../bible-study.md) para âmbito de dados.
+`BibleStudySheet`, `BibleSearchSheet` — ver [bible-study.md](../bible-study.md) para âmbito de dados (TSKE activo; Strong removido).
 
 → [study-sheets.md](./study-sheets.md)
 

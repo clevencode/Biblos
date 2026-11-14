@@ -1,7 +1,7 @@
 # Bíblia de estudo (âmbito Biblos)
 
 > **État app :** as **références croisées (TSKe)** estão activas no painel de estudo do versículo.
-> Strong / Sg1910 permanecem no ETL para trabalho posterior.
+> Strong / Sg1910 foram removidos do projeto.
 
 Recursos suportados na app:
 
@@ -10,12 +10,10 @@ Recursos suportados na app:
 | Segond 21 | `s21` | Texto principal, áudio, offline, busca |
 | Haïtienne 1998 | `ht98` | Texto (`/bibles/ht1998.json`) |
 | Références croisées | TSKe | Painel « Référence croisée » (`/bible/study/tske/{USFM}.{ch}.json`) |
-| Segond 1910 + Strong | `sg1910` | ETL local (não obrigatório no deploy) |
-| Léxico Strong | H/G | ETL local (não obrigatório no deploy) |
 
 ## Gerar e incluir no deploy
 
-O ficheiro `estudo-biblia-compilado.txt` **não** vai para o git. Extração local:
+O ficheiro `estudo-biblia-compilado.txt` **não** vai para o git. Extração local (só TSKE):
 
 ```bash
 npm run bible:study:export
@@ -24,7 +22,6 @@ npm run bible:study:stage
 
 - `data/bible/study/tske/` — **versionado** (necessário para Vercel/APK)
 - `public/bible/study/` — gerado no `npm run build` via `stage-study-assets.mjs`
-- `strong/` e `sg1910/` — locais / opcionais no stage
 
 `npm run build` e `build:mobile` já correm o stage de study depois do S21.
 
@@ -32,12 +29,11 @@ npm run bible:study:stage
 
 | Camada | Comportamento |
 |--------|----------------|
-| Leitura | `loadTskeChapter`: RAM → IndexedDB (`biblos-tske-offline`) → fetch asset |
-| Pack | Ao descarregar / seed da Bible S21 hors ligne, corre `ensureTskeOfflinePack()` (manifest) |
+| Leitura | `loadTskeChapter`: RAM → fetch asset (APK / Cache Storage) |
 | PWA | Workbox `CacheFirst` em `/bible/study/tske/` |
 | Manifest | `public/bible/study/tske/manifest.json` gerado no stage |
 
-Sem rede, as refs usam o pack IDB (ou o cache HTTP / assets Capacitor).
+Sem rede, as refs usam assets Capacitor ou o cache HTTP da PWA.
 
 ## Licenças
 
@@ -96,7 +92,7 @@ flowchart TD
 
 - Reescrever o TSKe protestante
 - Mostrar refs DC como se fossem TSKe
-- Strong / léxico para livros DC
+- Léxico / estudo lexical para livros DC (fora do escopo actual)
 - Implementação ou ETL nesta entrega
 
 ### Ficheiros que tocariam numa implementação futura

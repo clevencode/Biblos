@@ -172,8 +172,7 @@ export const STORAGE_PREF_KEYS = {
   theme: "biblos-theme",
   reader: "biblos-bible-reader",
   cleanSlate: "biblos-clean-slate",
-  firstInstallPack: "biblos-first-install-pack",
-  pwaInstallDismissed: "biblos-pwa-install-dismissed",
+  apkBannerDismissed: "biblos-apk-banner-dismissed",
 } as const;
 
 export const STORAGE_PREF_KEY_LIST = Object.values(STORAGE_PREF_KEYS);

@@ -3,7 +3,7 @@
 ## Incluído
 
 - Textos : **Segond 21** (`s21`) et **Haïtienne 1998** (`ht98`)
-- **TSKE** + **Strong** (références croisées) — cânon protestante (66 livros)
+- **TSKE** (références croisées) — cânon protestante (66 livros)
 - Audio S21, marques locales, partage verset, historique de lecture local
 
 ## Backlog (não incluído)

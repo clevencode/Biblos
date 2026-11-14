@@ -1,7 +1,7 @@
 /**
- * Copia data/bible/study → public/bible/study (TSKE etc.) para o Vite embutir no dist.
- * TSKE é obrigatório para refs cruzadas no deploy; outros módulos são opcionais.
- * Gera also `tske/manifest.json` para o pack offline IndexedDB.
+ * Copia data/bible/study/tske → public/bible/study/tske para o Vite embutir no dist.
+ * TSKE é obrigatório para refs cruzadas no deploy.
+ * Gera `tske/manifest.json` para listagem offline.
  */
 import {
   cpSync,
@@ -48,12 +48,6 @@ writeFileSync(
   `${JSON.stringify({ version: 1, files }, null, 0)}\n`,
   "utf8",
 );
-
-for (const name of ["strong", "sg1910"]) {
-  const from = join(SRC, name);
-  if (!existsSync(from)) continue;
-  cpSync(from, join(DEST, name), { recursive: true });
-}
 
 console.log(
   `OK: staged study assets → public/bible/study (tske ${files.length} + manifest)`,

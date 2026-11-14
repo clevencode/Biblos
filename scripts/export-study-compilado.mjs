@@ -1,5 +1,6 @@
 /**
- * Extrai Sg1910 (Strong) + TSKe (références) de estudo-biblia-compilado.txt
+ * Extrai TSKe (références croisées) de estudo-biblia-compilado.txt
+ * (Sg1910 / Strong removidos do projeto.)
  *
  * Usage:
  *   node scripts/export-study-compilado.mjs [caminho-compilado.txt]
@@ -17,8 +18,6 @@ const DEFAULT_COMPILADO = resolve(
   "Downloads",
   "estudo-biblia-compilado.txt",
 );
-
-const STRONG_W = /<w strong="([^"]+)">([^<]*)<\/w>/gi;
 
 const BOOK_TO_USFM = new Map(
   [
@@ -139,26 +138,6 @@ const BOOK_TO_USFM = new Map(
 
 const VERSE_LINE = /^([1-3]?[A-Za-z]{2,5})\s+(\d+):(\d+)\s*(.*)$/;
 
-function parseStrongSegments(raw) {
-  const segments = [];
-  let last = 0;
-  const re = new RegExp(STRONG_W.source, "gi");
-  let m;
-  while ((m = re.exec(raw))) {
-    if (m.index > last) {
-      const plain = raw.slice(last, m.index);
-      if (plain) segments.push({ text: plain });
-    }
-    segments.push({ text: m[2], strong: m[1].replace(/^0+/, "0") || m[1] });
-    last = m.index + m[0].length;
-  }
-  if (last < raw.length) {
-    segments.push({ text: raw.slice(last) });
-  }
-  const text = segments.map((s) => s.text).join("");
-  return { text, segments: segments.some((s) => s.strong) ? segments : undefined };
-}
-
 function usfmBook(tag) {
   return BOOK_TO_USFM.get(tag) || tag.toUpperCase();
 }
@@ -181,7 +160,6 @@ function splitTskeRefs(line) {
 async function main() {
   const input = resolve(process.argv[2] || DEFAULT_COMPILADO);
   let mode = null;
-  const sgBooks = new Map();
   const tskeChapters = new Map();
 
   let tskeCurrent = null;
@@ -195,7 +173,7 @@ async function main() {
   for await (const line of rl) {
     lineNo++;
     if (line.includes("Sg1910 —")) {
-      mode = "sg1910";
+      mode = null;
       continue;
     }
     if (line.includes("TSKe —")) {
@@ -219,18 +197,6 @@ async function main() {
       const verse = Number(vm[3]);
       const rest = vm[4] || "";
 
-      if (mode === "sg1910") {
-        if (!Number.isFinite(chapter) || !Number.isFinite(verse)) continue;
-        const { text, segments } = parseStrongSegments(rest);
-        if (!text.trim()) continue;
-        if (!sgBooks.has(book)) {
-          sgBooks.set(book, { usfm: book, chapters: new Map() });
-        }
-        const bk = sgBooks.get(book);
-        if (!bk.chapters.has(chapter)) bk.chapters.set(chapter, []);
-        bk.chapters.get(chapter).push({ number: verse, text, segments });
-      }
-
       if (mode === "tske") {
         const key = `${book}.${chapter}`;
         tskeCurrent = { book, chapter, verse, heading: rest.trim(), lines: [] };
@@ -245,21 +211,7 @@ async function main() {
     }
   }
 
-  await mkdir(join(OUT, "sg1910", "books"), { recursive: true });
   await mkdir(join(OUT, "tske"), { recursive: true });
-
-  for (const [book, data] of sgBooks) {
-    const chapters = [...data.chapters.entries()]
-      .sort((a, b) => a[0] - b[0])
-      .map(([chapter, verses]) => ({
-        chapter,
-        verses: verses.sort((a, b) => a.number - b.number),
-      }));
-    await writeFile(
-      join(OUT, "sg1910", "books", `${book}.json`),
-      JSON.stringify({ version: "sg1910", usfm: book, chapters }),
-    );
-  }
 
   for (const [key, verses] of tskeChapters) {
     const out = {};
@@ -281,17 +233,14 @@ async function main() {
     version: 1,
     generatedFrom: "estudo-biblia-compilado.txt",
     resources: {
-      sg1910: { tier: "B", books: sgBooks.size, format: "books/{USFM}.json" },
       tske: { tier: "A", chapters: tskeChapters.size, format: "tske/{USFM}.{ch}.json" },
     },
-    textVersions: ["s21", "ht98", "sg1910"],
+    textVersions: ["s21", "ht98"],
     study: ["tske"],
   };
   await writeFile(join(OUT, "manifest.json"), JSON.stringify(manifest, null, 2));
 
-  console.log(
-    `OK: sg1910 books=${sgBooks.size}, tske chapters=${tskeChapters.size}, lines=${lineNo}`,
-  );
+  console.log(`OK: tske chapters=${tskeChapters.size}, lines=${lineNo}`);
 }
 
 main().catch((err) => {

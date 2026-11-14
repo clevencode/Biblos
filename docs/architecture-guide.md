@@ -144,7 +144,7 @@ _(adicionar linhas à medida que decidir)_
 | [skeleton-architecture.md](./skeleton-architecture.md) | Camada skeleton / loading |
 | [bible-offline-first-ui.md](./bible-offline-first-ui.md) | Offline-first na UI |
 | [bible-mobile-audio-sync.md](./bible-mobile-audio-sync.md) | Áudio e sync mobile |
-| [bible-study.md](./bible-study.md) | Estudo (TSKE, Strong, etc.) |
+| [bible-study.md](./bible-study.md) | Estudo (TSKE / refs cruzadas) |
 | [reading-plans-firestore.md](./reading-plans-firestore.md) | Planos de leitura / Firestore |
 | [typography.md](./typography.md) | Tipografia |
 | [icons.md](./icons.md) | Ícones |

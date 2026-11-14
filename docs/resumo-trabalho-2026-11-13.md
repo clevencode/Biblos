@@ -159,7 +159,7 @@ npm run build
 
 ## 10. Follow-ups opcionais
 
-- Strong / Sg1910: ETL local, fora do pack obrigatório  
+- Strong / Sg1910: removidos do projeto (só TSKE no estudo)
 - Facetas da busca vs escopo filtrado (pills)  
 - Actualizar `docs/components/*` com hub admin embutido  
 - Política `#admin` vs tab Admin  

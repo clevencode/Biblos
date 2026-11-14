@@ -16,7 +16,6 @@
     "preview": "vite preview",
     "bible:s21": "node scripts/convert-s21.mjs",
     "bible:study:export": "node scripts/export-study-compilado.mjs",
-    "bible:study:strong": "node scripts/export-strong-lexicon.mjs",
     "bible:study:stage": "node scripts/stage-study-assets.mjs",
     "test:passage-viewstate": "npx --yes tsx scripts/test-passage-viewstate.ts",
     "test:s21-search": "npx --yes tsx scripts/test-s21-search-engine.ts",

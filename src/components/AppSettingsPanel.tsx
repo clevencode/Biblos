@@ -36,7 +36,7 @@ export function AppSettingsPanel({ active, themePref, onCycleTheme }: AppSetting
         </li>
       </ul>
       <p className="bible-settings-foot muted">
-        Biblos — Segond 21, Bible haïtienne 1998, références croisées (TSKE / Strong).
+        Biblos — Segond 21, Bible haïtienne 1998, références croisées (TSKE).
       </p>
     </div>
   );

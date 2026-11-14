@@ -1,5 +1,8 @@
 /**
- * Instalação PWA: beforeinstallprompt + iOS hint + exclusão Capacitor/standalone.
+ * Banner de instalação híbrido:
+ * - Android web → download APK (não A2HS / beforeinstallprompt CTA)
+ * - iOS web → hint « Ajouter à l’écran d’accueil »
+ * - Capacitor / standalone / desktop → hidden
  */
 
 import { Capacitor } from "@capacitor/core";
@@ -9,15 +12,12 @@ import {
   STORAGE_PREF_KEYS,
 } from "../services/storage/StorageAdapter";
 
-const DISMISS_KEY = STORAGE_PREF_KEYS.pwaInstallDismissed;
+const DISMISS_KEY = STORAGE_PREF_KEYS.apkBannerDismissed;
 const DISMISS_VALUE = "1";
 
-type BeforeInstallPromptEvent = Event & {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
-};
+const DEFAULT_APK_URL = "/downloads/biblos.apk";
 
-export type PwaInstallMode = "hidden" | "prompt" | "ios-hint";
+export type PwaInstallMode = "hidden" | "apk-download" | "ios-hint";
 
 export type PwaInstallState = {
   mode: PwaInstallMode;
@@ -26,6 +26,11 @@ export type PwaInstallState = {
   install: () => Promise<void>;
   dismiss: () => void;
 };
+
+function apkDownloadUrl(): string {
+  const raw = String(import.meta.env.VITE_APK_DOWNLOAD_URL ?? "").trim();
+  return raw || DEFAULT_APK_URL;
+}
 
 function isStandaloneDisplay(): boolean {
   if (typeof window === "undefined") return false;
@@ -39,15 +44,18 @@ function isStandaloneDisplay(): boolean {
   );
 }
 
+function isAndroidBrowser(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return /Android/i.test(navigator.userAgent);
+}
+
 function isIosSafariFamily(): boolean {
   if (typeof navigator === "undefined") return false;
   const ua = navigator.userAgent;
-  const iOS =
+  return (
     /iPad|iPhone|iPod/.test(ua) ||
-    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-  if (!iOS) return false;
-  // Chrome/Firefox iOS also lack beforeinstallprompt — same A2HS path.
-  return true;
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
+  );
 }
 
 function readDismissedSync(): boolean {
@@ -58,36 +66,31 @@ function readDismissedSync(): boolean {
   }
 }
 
+function triggerApkDownload(url: string): void {
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.setAttribute("download", "biblos.apk");
+  anchor.rel = "noopener";
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+}
+
 export function usePwaInstall(): PwaInstallState {
   const [dismissed, setDismissed] = useState(readDismissedSync);
-  const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(
-    null,
-  );
-  const [installed, setInstalled] = useState(false);
   const [busy, setBusy] = useState(false);
   const [standalone, setStandalone] = useState(isStandaloneDisplay);
 
   useEffect(() => {
     if (Capacitor.isNativePlatform()) return;
 
+    // Bloqueia o mini-infobar PWA do Chrome; não usamos o evento como CTA.
     const onBip = (event: Event) => {
       event.preventDefault();
-      setDeferred(event as BeforeInstallPromptEvent);
-    };
-    const onInstalled = () => {
-      setInstalled(true);
-      setDeferred(null);
-      try {
-        localStorage.setItem(DISMISS_KEY, DISMISS_VALUE);
-      } catch {
-        /* ignore */
-      }
-      void getStorageAdapter().setString(DISMISS_KEY, DISMISS_VALUE);
     };
     const onDisplayChange = () => setStandalone(isStandaloneDisplay());
 
     window.addEventListener("beforeinstallprompt", onBip);
-    window.addEventListener("appinstalled", onInstalled);
     const mq =
       typeof window.matchMedia === "function"
         ? window.matchMedia("(display-mode: standalone)")
@@ -96,7 +99,6 @@ export function usePwaInstall(): PwaInstallState {
 
     return () => {
       window.removeEventListener("beforeinstallprompt", onBip);
-      window.removeEventListener("appinstalled", onInstalled);
       mq?.removeEventListener("change", onDisplayChange);
     };
   }, []);
@@ -112,36 +114,34 @@ export function usePwaInstall(): PwaInstallState {
   }, []);
 
   const install = useCallback(async () => {
-    if (!deferred || busy) return;
+    if (busy) return;
+    if (!isAndroidBrowser() || Capacitor.isNativePlatform() || standalone) {
+      return;
+    }
     setBusy(true);
     try {
-      await deferred.prompt();
-      const { outcome } = await deferred.userChoice;
-      if (outcome === "accepted") {
-        setInstalled(true);
-        setDeferred(null);
-      }
+      triggerApkDownload(apkDownloadUrl());
     } catch (error) {
-      console.warn("[pwa] install prompt failed", error);
+      console.warn("[apk] download failed", error);
+      try {
+        window.location.assign(apkDownloadUrl());
+      } catch {
+        /* ignore */
+      }
     } finally {
       setBusy(false);
     }
-  }, [deferred, busy]);
+  }, [busy, standalone]);
 
   let mode: PwaInstallMode = "hidden";
-  if (
-    !Capacitor.isNativePlatform() &&
-    !standalone &&
-    !installed &&
-    !dismissed
-  ) {
-    if (deferred) mode = "prompt";
+  if (!Capacitor.isNativePlatform() && !standalone && !dismissed) {
+    if (isAndroidBrowser()) mode = "apk-download";
     else if (isIosSafariFamily()) mode = "ios-hint";
   }
 
   return {
     mode,
-    canInstall: mode === "prompt",
+    canInstall: mode === "apk-download",
     busy,
     install,
     dismiss,
