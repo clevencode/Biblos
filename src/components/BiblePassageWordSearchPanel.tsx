@@ -847,7 +847,6 @@ export function BiblePassageWordSearchPanel({
               </nav>
             ) : null}
           </div>
-          <div className="bible-yv-passage-scroll-edge" aria-hidden />
         </>
       )}
     </div>

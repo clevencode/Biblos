@@ -59,7 +59,7 @@ export function readerSurfaceChrome(
   const barOverlayOpen = rollOpen || wordSearchOpen || bookSearchOpen;
   /**
    * Modais com `.top-sheet-backdrop` (padrão hub do cabeçalho).
-   * Exclui verse_actions (sheet de versículo) e word search (painel full-bleed).
+   * Exclui verse_actions, word search e book picker (painéis full-bleed).
    */
   const passageInputBlocked =
     barOverlayOpen ||
@@ -68,7 +68,6 @@ export function readerSurfaceChrome(
     input.shareSheetOpen ||
     verseStudyOpen;
   const passageSurfaceScrimOpen =
-    rollOpen ||
     bookSearchOpen ||
     input.toolsMenuOpen ||
     input.historyOpen ||

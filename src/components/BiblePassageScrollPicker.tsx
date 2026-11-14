@@ -307,7 +307,6 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
         {step === "verse" && !showDeferredUi && !verseOptions.length ? (
           <p className="bible-yv-pick-loading bible-yv-muted bible-yv-pick-roll-empty">Aucun verset</p>
         ) : null}
-        <div className="bible-yv-passage-scroll-edge" aria-hidden />
       </div>
     );
   },

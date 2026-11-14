@@ -374,7 +374,11 @@ html[data-theme="dark"] .biblos-shell {
 .biblos-shell
   *:not(.bible-verse):not(.bible-verse *):not(.bible-yv-pick-cell):not(
     .bible-yv-pick-cell *
-  ):not(.top-floating-sheet):not(.hdr-trigger.is-active):not(.hdr-trigger.is-open):not(
+  ):not(
+    .top-floating-sheet:not(.bible-yv-passage-word-search-panel):not(
+        .bible-yv-passage-scroll-panel
+      )
+  ):not(.hdr-trigger.is-active):not(.hdr-trigger.is-open):not(
     .hdr-trigger.is-on
   ):not(.bible-yv-top):not(.bible-yv-dock-play):not(.bible-yv-audio-player):not(
     .bible-yv-top-passage-skips
@@ -10226,8 +10230,14 @@ html[data-theme="dark"] .top-sheet-backdrop {
   }
 }
 
-.top-floating-sheet:not(.is-float-anchor),
-.top-sheet-layer > .top-floating-sheet {
+/* Cards flutuantes — search + book picker full-bleed ficam de fora. */
+.top-floating-sheet:not(.is-float-anchor):not(.bible-yv-passage-word-search-panel):not(
+    .bible-yv-passage-scroll-panel
+  ),
+.top-sheet-layer
+  > .top-floating-sheet:not(.bible-yv-passage-word-search-panel):not(
+    .bible-yv-passage-scroll-panel
+  ) {
   position: fixed !important;
   top: var(--top-sheet-top) !important;
   left: var(--top-sheet-inset-x) !important;
@@ -10267,34 +10277,96 @@ html[data-theme="dark"] .top-sheet-backdrop {
 }
 
 /*
- * Word search: full-bleed encostado na topbar (--bible-top-chrome-flush).
+ * Full-bleed shell (word search + book picker): substitui o card legado.
+ * Topo flush, fundo até ao ecrã, fade + folga da navbar no scroller.
  */
 .bible-yv-passage-word-search-panel.top-floating-sheet.is-open,
 .top-sheet-layer > .bible-yv-passage-word-search-panel.top-floating-sheet.is-open,
-.bible-yv-passage-word-search-panel.top-floating-sheet.is-open.is-compact,
-.bible-yv-passage-word-search-panel.top-floating-sheet.is-open.has-results {
-  position: absolute !important;
+.bible-yv-passage-scroll-panel.top-floating-sheet.is-open,
+.top-sheet-layer > .bible-yv-passage-scroll-panel.top-floating-sheet.is-open {
+  position: fixed !important;
   top: var(--bible-top-chrome-flush, var(--bible-top-chrome, 68px)) !important;
   left: 0 !important;
   right: 0 !important;
   bottom: 0 !important;
   width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
   height: auto !important;
   min-height: 0 !important;
   max-height: none !important;
-  padding-top: 8px !important;
-  padding-right: max(16px, env(safe-area-inset-right, 0px)) !important;
-  padding-bottom: calc(
-    16px + var(--shell-tab-clearance, 72px)
+  margin: 0 !important;
+  padding-top: var(--mobile-gutter, 12px) !important;
+  padding-right: max(
+    var(--mobile-gutter, 12px),
+    env(safe-area-inset-right, 0px)
   ) !important;
-  padding-left: max(16px, env(safe-area-inset-left, 0px)) !important;
+  padding-bottom: 0 !important;
+  padding-left: max(
+    var(--mobile-gutter, 12px),
+    env(safe-area-inset-left, 0px)
+  ) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: var(--bible-chrome-panel-gap, 6px);
+  box-sizing: border-box;
+  overflow: hidden !important;
+  contain: none !important;
+  z-index: var(--bible-z-top-sheet) !important;
+  pointer-events: auto;
+  opacity: 1;
   border-radius: 0 !important;
   border: 0 !important;
   box-shadow: none !important;
-  overflow: hidden !important;
   background: var(--yv-bg, var(--bg)) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
   animation: none !important;
   transform: none !important;
+}
+
+.bible-yv-passage-word-search-panel.is-open .bible-yv-pick-grid.is-word-search,
+.bible-yv-passage-word-search-panel.is-open .bible-yv-word-search-book-picker,
+.bible-yv-passage-word-search-panel.is-open .bible-yv-word-search-recents,
+.bible-yv-passage-scroll-panel.is-open .bible-yv-pick-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding-bottom: calc(
+    var(--shell-tab-clearance, var(--mobile-bottom-chrome, 72px)) +
+      var(--mobile-gutter, 12px)
+  );
+  scroll-padding-bottom: calc(
+    var(--shell-tab-clearance, var(--mobile-bottom-chrome, 72px)) +
+      var(--mobile-gutter, 12px)
+  );
+}
+
+.bible-yv-passage-word-search-panel.is-open::after,
+.bible-yv-passage-scroll-panel.is-open::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  height: calc(
+    var(--shell-tab-clearance, var(--mobile-bottom-chrome, 72px)) + 28px
+  );
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--yv-bg, var(--bg)) 0%, transparent) 0%,
+    color-mix(in srgb, var(--yv-bg, var(--bg)) 55%, transparent) 42%,
+    var(--yv-bg, var(--bg)) 78%,
+    var(--yv-bg, var(--bg)) 100%
+  );
+}
+
+html:has(.bible-yv-passage-word-search-panel.is-open) .note-shell .mode-tabs,
+.app:has(.bible-yv-passage-word-search-panel.is-open) .note-shell .mode-tabs,
+html:has(.bible-yv-passage-scroll-panel.is-open) .note-shell .mode-tabs,
+.app:has(.bible-yv-passage-scroll-panel.is-open) .note-shell .mode-tabs {
+  z-index: calc(var(--bible-z-top-sheet, 70) + 10);
 }
 
 /* Menu: scroll interno (lista de opções) */
@@ -10319,18 +10391,9 @@ html[data-theme="dark"] .top-sheet-backdrop {
 }
 
 /* Neutraliza legado (scaleY / absolute / frost) — sem matar a entrada amigável */
-.bible-yv-passage-scroll-panel.top-floating-sheet,
 .bible-yv-tools-popover.top-floating-sheet:not(.is-float-anchor),
 .bible-yv-history-panel.top-floating-sheet {
   max-height: var(--top-sheet-max-h, min(58dvh, 28rem)) !important;
-  min-height: 0 !important;
-  pointer-events: auto !important;
-  contain: none !important;
-  -webkit-backdrop-filter: none !important;
-  backdrop-filter: none !important;
-}
-
-.bible-yv-passage-word-search-panel.top-floating-sheet {
   min-height: 0 !important;
   pointer-events: auto !important;
   contain: none !important;
@@ -10393,10 +10456,7 @@ html[data-theme="dark"] .top-sheet-backdrop {
   border-radius: 9999px;
 }
 
-.bible-yv-passage-scroll-panel.top-floating-sheet.is-header-roll.is-open {
-  border-radius: var(--top-sheet-radius);
-  border-top: var(--yv-overlay-border);
-}
+/* is-header-roll: geometria full-bleed partilhada com word search (sem card) */
 
 @media (prefers-reduced-motion: reduce) {
   .hdr-icon-idle,
@@ -10407,8 +10467,13 @@ html[data-theme="dark"] .top-sheet-backdrop {
     animation: none !important;
   }
 
-  .top-floating-sheet:not(.is-float-anchor),
-  .top-sheet-layer > .top-floating-sheet,
+  .top-floating-sheet:not(.is-float-anchor):not(.bible-yv-passage-word-search-panel):not(
+      .bible-yv-passage-scroll-panel
+    ),
+  .top-sheet-layer
+    > .top-floating-sheet:not(.bible-yv-passage-word-search-panel):not(
+      .bible-yv-passage-scroll-panel
+    ),
   .bible-yv-tools-menu.is-float-br .bible-yv-tools-popover.top-floating-sheet.is-float-anchor {
     opacity: 1 !important;
     transform: none !important;

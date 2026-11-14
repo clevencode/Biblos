@@ -124,6 +124,19 @@ assert.equal(surfaceWordSearch.passageInputBlocked, true);
 assert.equal(surfaceWordSearch.passageSurfaceScrimOpen, false);
 assert.equal(surfaceWordSearch.rootClassPassageRollOpen, true);
 
+const surfaceBookPicker = readerSurfaceChrome({
+  pickerOpen: true,
+  pickerPanelOpenAllowed: true,
+  toolsMenuOpen: false,
+  historyOpen: false,
+  shareSheetOpen: false,
+  verseActionsOpen: false,
+});
+assert.equal(surfaceBookPicker.passageInputBlocked, true);
+assert.equal(surfaceBookPicker.passageSurfaceScrimOpen, false);
+assert.equal(surfaceBookPicker.rootClassPassageRollOpen, true);
+assert.equal(surfaceBookPicker.passagePickerRollOpen, true);
+
 const surfacePickerNoCatalog = readerSurfaceChrome({
   pickerOpen: true,
   pickerPanelOpenAllowed: false,
