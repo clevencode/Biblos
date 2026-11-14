@@ -2175,29 +2175,14 @@ export function BibleReaderView({
   }
   switchTextVersionRef.current = switchTextVersion;
 
-  function renderTopToolsMenu(placement: "header" | "float" = "header") {
+  function renderToolsPopover(floatAnchor = false) {
+    if (!toolsMenuOpen) return null;
     const themeResolved = resolveTheme(themePref);
     const themeLabel = themePrefLabel(themePref);
-    const isFloat = placement === "float";
-    const trigger = (
-      <HeaderTriggerButton
-        open={toolsMenuOpen}
-        shape="circle"
-        idleIcon="menu"
-        ariaLabel={t("bible.menu")}
-        ariaHaspopup="menu"
-        className={`bible-yv-tools-menu-btn${toolsMenuOpen ? " is-on" : ""}`}
-        onClick={() => {
-          setShareSheetOpen(false);
-          restoreToolsFocusRef.current = true;
-          toggleOverlay("reader_settings");
-        }}
-      />
-    );
-    const popover = toolsMenuOpen ? (
+    return (
       <div
         className={`bible-yv-tools-popover top-floating-sheet is-open${
-          isFloat ? " is-float-anchor" : ""
+          floatAnchor ? " is-float-anchor" : ""
         }`}
         role="menu"
         aria-label={t("bible.menuBible")}
@@ -2332,25 +2317,41 @@ export function BibleReaderView({
           </div>
         </div>
       </div>
-    ) : null;
+    );
+  }
 
-    /* Header: sheet IRMÃO do trigger. Float: sheet filho (âncora no FAB). */
+  function renderTopToolsMenu(placement: "header" | "float" = "header") {
+    const isFloat = placement === "float";
+    const trigger = (
+      <HeaderTriggerButton
+        open={toolsMenuOpen}
+        shape="circle"
+        idleIcon="menu"
+        ariaLabel={t("bible.menu")}
+        ariaHaspopup="menu"
+        className={`bible-yv-tools-menu-btn${toolsMenuOpen ? " is-on" : ""}`}
+        onClick={() => {
+          setShareSheetOpen(false);
+          restoreToolsFocusRef.current = true;
+          toggleOverlay("reader_settings");
+        }}
+      />
+    );
+
+    /* Float: sheet no FAB. Header: só trigger — sheet na top-sheet-layer (instantâneo). */
     if (isFloat) {
       return (
         <div className="bible-yv-tools-menu is-float-br" ref={toolsMenuRef}>
           {trigger}
-          {popover}
+          {renderToolsPopover(true)}
         </div>
       );
     }
 
     return (
-      <>
-        <div className="bible-yv-tools-menu" ref={toolsMenuRef}>
-          {trigger}
-        </div>
-        {popover}
-      </>
+      <div className="bible-yv-tools-menu" ref={toolsMenuRef}>
+        {trigger}
+      </div>
     );
   }
 
@@ -2850,6 +2851,10 @@ export function BibleReaderView({
             onHistoryChange={onReadingHistoryChange}
           />
         ) : null}
+        {/* Menu header: na layer (como search/history) — abertura sem delay/animação */}
+        {!compactToolsMenu || isPassageBarPanelCompactTopbar()
+          ? renderToolsPopover(false)
+          : null}
       </div>
 
       <div id={statusId} className="sr-only" aria-live="polite">
