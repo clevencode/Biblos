@@ -68,6 +68,22 @@ function lanUrlHintPlugin(): Plugin {
   };
 }
 
+/** Stub do virtual module quando VitePWA está desligado (build Capacitor). */
+function stubPwaRegisterPlugin(): Plugin {
+  const id = "virtual:pwa-register";
+  return {
+    name: "biblos-stub-pwa-register",
+    resolveId(source) {
+      if (source === id) return id;
+      return undefined;
+    },
+    load(source) {
+      if (source !== id) return undefined;
+      return "export function registerSW() { return async () => {}; }\n";
+    },
+  };
+}
+
 export default defineConfig(({ mode }) => ({
   base: "/",
   define: {
@@ -78,6 +94,7 @@ export default defineConfig(({ mode }) => ({
     notionFlashcardPlugin(mode),
     lanUrlHintPlugin(),
     // PWA / SW só na web — Capacitor usa assets nativos.
+    isCapacitorBuild ? stubPwaRegisterPlugin() : null,
     !isCapacitorBuild
       ? VitePWA({
           registerType: "prompt",

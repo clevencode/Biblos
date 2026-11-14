@@ -2,9 +2,12 @@
   color-scheme: light;
 
   /*
-   * Color system — âncoras + escala tonal (ink ↔ paper).
-   * Hierarquia light: canvas claro → superfície → elevado branco → texto ink.
-   * Hierarquia dark:  canvas ink → superfície → elevado mais claro → texto paper.
+   * Color system — âncoras ink/paper + paleta oficial (hex).
+   * Light: bg #FFFFFF · surface #F6F8FA · elevated #EAEEF2 · border #D0D7DE
+   *         text #0D1117 · secondary #57606A
+   * Dark:  bg #0D1117 · surface #161B22 · elevated #21262D · border #30363D
+   *         text #F0F6FC · secondary #8B949E
+   * Escala --tone-* permanece para mixes pontuais; semântica usa hex literais.
    */
   --ink: #0d1117;
   --paper: #ffffff;
@@ -22,21 +25,21 @@
   --tone-900: color-mix(in srgb, var(--ink) 94%, var(--paper));
   --tone-950: var(--ink);
 
-  /* Semântica — light */
-  --bg: var(--tone-0);
-  --panel: var(--tone-0);
-  --surface: var(--tone-50);
-  --elevated: var(--tone-0);
-  --sheet-bg: var(--tone-50);
-  --sheet-bg-mid: var(--tone-100);
-  --sheet-bg-deep: var(--tone-200);
-  --line: var(--tone-200);
-  --text: var(--tone-950);
-  --muted: var(--tone-500);
-  --fg-subtle: var(--tone-400);
+  /* Semântica — light (paleta oficial) */
+  --bg: #ffffff;
+  --panel: #ffffff;
+  --surface: #f6f8fa;
+  --elevated: #eaeef2;
+  --sheet-bg: #f6f8fa;
+  --sheet-bg-mid: #eaeef2;
+  --sheet-bg-deep: #d0d7de;
+  --line: #d0d7de;
+  --text: #0d1117;
+  --muted: #57606a;
+  --fg-subtle: #57606a;
   /* Accent neutro — contraste por encre / surface (sem dourado) */
   --accent: var(--tone-700);
-  --accent-soft: var(--tone-100);
+  --accent-soft: var(--elevated);
   --danger: #c4554d;
   --danger-soft: #fdebec;
   --answer: var(--tone-600);
@@ -120,6 +123,7 @@
   --type-eyebrow-tracking: 0.06em;
 
   font-family: var(--font-ui);
+  font-size: 16px;
   font-optical-sizing: auto;
   font-kerning: normal;
   font-synthesis: none;
@@ -130,22 +134,22 @@
 
 html[data-theme="dark"] {
   color-scheme: dark;
-  /* Semântica — dark (mesma escala, hierarquia invertida) */
-  --bg: var(--tone-950);
-  --panel: var(--tone-950);
-  --surface: var(--tone-900);
-  --elevated: var(--tone-800);
-  --sheet-bg: var(--tone-900);
-  --sheet-bg-mid: var(--tone-800);
-  --sheet-bg-deep: var(--tone-950);
-  --line: var(--tone-800);
-  --text: var(--tone-0);
-  --muted: var(--tone-400);
-  --fg-subtle: var(--tone-500);
+  /* Semântica — dark (paleta oficial) */
+  --bg: #0d1117;
+  --panel: #0d1117;
+  --surface: #161b22;
+  --elevated: #21262d;
+  --sheet-bg: #161b22;
+  --sheet-bg-mid: #21262d;
+  --sheet-bg-deep: #0d1117;
+  --line: #30363d;
+  --text: #f0f6fc;
+  --muted: #8b949e;
+  --fg-subtle: #8b949e;
   --accent: var(--tone-400);
-  --accent-soft: var(--tone-800);
+  --accent-soft: var(--elevated);
   --danger: #f85149;
-  --danger-soft: color-mix(in srgb, var(--danger) 22%, var(--tone-950));
+  --danger-soft: color-mix(in srgb, var(--danger) 22%, var(--bg));
   --answer: var(--tone-400);
   --hover: color-mix(in srgb, var(--paper) 6%, transparent);
   --sheen: color-mix(in srgb, var(--paper) 55%, transparent);
@@ -158,19 +162,19 @@ html[data-theme="dark"] {
 
 html[data-theme="light"] {
   color-scheme: light;
-  --bg: var(--tone-0);
-  --panel: var(--tone-0);
-  --surface: var(--tone-50);
-  --elevated: var(--tone-0);
-  --sheet-bg: var(--tone-50);
-  --sheet-bg-mid: var(--tone-100);
-  --sheet-bg-deep: var(--tone-200);
-  --line: var(--tone-200);
-  --text: var(--tone-950);
-  --muted: var(--tone-500);
-  --fg-subtle: var(--tone-400);
+  --bg: #ffffff;
+  --panel: #ffffff;
+  --surface: #f6f8fa;
+  --elevated: #eaeef2;
+  --sheet-bg: #f6f8fa;
+  --sheet-bg-mid: #eaeef2;
+  --sheet-bg-deep: #d0d7de;
+  --line: #d0d7de;
+  --text: #0d1117;
+  --muted: #57606a;
+  --fg-subtle: #57606a;
   --accent: var(--tone-700);
-  --accent-soft: var(--tone-100);
+  --accent-soft: var(--elevated);
   --answer: var(--tone-600);
   --hover: color-mix(in srgb, var(--ink) 6%, transparent);
   --sheen: var(--paper);
@@ -6109,7 +6113,6 @@ html[data-theme="dark"] .profile-download-btn {
   :root {
     --mobile-gutter: 12px;
     --mobile-touch: 44px;
-    --mobile-tab-min: 48px;
     --mobile-chrome-gap: 10px;
     /* Chrome inferior: Convex bar + overhang do hub + safe-area */
     --mobile-float-inset-x: var(--mobile-gutter);
@@ -6150,8 +6153,8 @@ html[data-theme="dark"] .profile-download-btn {
     --bible-actions-lift: calc(var(--bible-dock-lift) + var(--shell-float-gap));
     --bible-pick-lift: var(--mobile-bottom-chrome);
     /* Fallbacks avant mesure ResizeObserver (contenu sans scroll interne). */
-    --bible-verse-actions-sheet-fallback: 20.5rem;
-    --bible-share-sheet-fallback: 24rem;
+    --bible-verse-actions-sheet-fallback: 340px;
+    --bible-share-sheet-fallback: 400px;
     --panel-gutter: var(--mobile-gutter);
   }
 
@@ -9688,8 +9691,8 @@ html[data-passage-bar-panel="test"] .bible-yv-word-search-clear {
   flex: none;
   display: inline-grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
+  width: var(--mobile-touch, 44px);
+  height: var(--mobile-touch, 44px);
   margin: 0;
   padding: 0;
   border: 0;
@@ -12665,44 +12668,44 @@ html[data-passage-bar-panel="test"]
 
 .bible-reader--yv.has-verse-actions .bible-passage {
   padding-bottom: calc(
-    var(--verse-actions-sheet-h, var(--bible-verse-actions-sheet-fallback, 20.5rem)) + 16px +
+    var(--verse-actions-sheet-h, var(--bible-verse-actions-sheet-fallback, 340px)) + 16px +
       env(safe-area-inset-bottom, 0px)
   );
   scroll-padding-bottom: calc(
-    var(--verse-actions-sheet-h, var(--bible-verse-actions-sheet-fallback, 20.5rem)) + 12px +
+    var(--verse-actions-sheet-h, var(--bible-verse-actions-sheet-fallback, 340px)) + 12px +
       env(safe-area-inset-bottom, 0px)
   );
 }
 
 .app.is-bible-mode.is-narrow .bible-reader--yv.has-verse-actions .bible-passage {
   padding-bottom: calc(
-    var(--verse-actions-sheet-h, var(--bible-verse-actions-sheet-fallback, 20.5rem)) +
+    var(--verse-actions-sheet-h, var(--bible-verse-actions-sheet-fallback, 340px)) +
       var(--mobile-bottom-chrome) + 8px
   );
   scroll-padding-bottom: calc(
-    var(--verse-actions-sheet-h, var(--bible-verse-actions-sheet-fallback, 20.5rem)) +
+    var(--verse-actions-sheet-h, var(--bible-verse-actions-sheet-fallback, 340px)) +
       var(--mobile-bottom-chrome) + 8px
   );
 }
 
 .bible-reader--yv.is-share-open .bible-passage {
   padding-bottom: calc(
-    var(--bible-share-sheet-measured-h, var(--bible-share-sheet-fallback, 24rem)) + 16px +
+    var(--bible-share-sheet-measured-h, var(--bible-share-sheet-fallback, 400px)) + 16px +
       env(safe-area-inset-bottom, 0px)
   );
   scroll-padding-bottom: calc(
-    var(--bible-share-sheet-measured-h, var(--bible-share-sheet-fallback, 24rem)) + 12px +
+    var(--bible-share-sheet-measured-h, var(--bible-share-sheet-fallback, 400px)) + 12px +
       env(safe-area-inset-bottom, 0px)
   );
 }
 
 .app.is-bible-mode.is-narrow .bible-reader--yv.is-share-open .bible-passage {
   padding-bottom: calc(
-    var(--bible-share-sheet-measured-h, var(--bible-share-sheet-fallback, 24rem)) +
+    var(--bible-share-sheet-measured-h, var(--bible-share-sheet-fallback, 400px)) +
       var(--mobile-bottom-chrome) + 8px
   );
   scroll-padding-bottom: calc(
-    var(--bible-share-sheet-measured-h, var(--bible-share-sheet-fallback, 24rem)) +
+    var(--bible-share-sheet-measured-h, var(--bible-share-sheet-fallback, 400px)) +
       var(--mobile-bottom-chrome) + 8px
   );
 }
@@ -13021,7 +13024,7 @@ html[data-passage-bar-panel="test"]
   max-width: none;
   margin: 0;
   height: auto;
-  max-height: min(48dvh, 22rem);
+  max-height: min(48dvh, 340px);
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -14594,7 +14597,7 @@ body:has(.bible-study-ref-modal) .bible-reader--yv .bible-verse-actions-close {
   width: 100%;
   max-width: none;
   height: auto;
-  max-height: none;
+  max-height: min(56dvh, 400px);
   margin: 0;
   display: flex;
   flex-direction: column;
@@ -14606,7 +14609,7 @@ body:has(.bible-study-ref-modal) .bible-reader--yv .bible-verse-actions-close {
   border: 0;
   border-top: 1px solid color-mix(in srgb, var(--yv-line, var(--line)) 88%, transparent);
   border-radius: 16px 16px 0 0;
-  overflow: visible;
+  overflow: auto;
   box-shadow:
     0 -10px 36px color-mix(in srgb, #000 10%, transparent),
     0 -1px 0 color-mix(in srgb, var(--yv-text, var(--text)) 6%, transparent);
@@ -14668,8 +14671,8 @@ body:has(.bible-study-ref-modal) .bible-reader--yv .bible-verse-actions-close {
 
 .bible-share-sheet-close {
   flex: none;
-  width: 40px;
-  height: 40px;
+  width: var(--mobile-touch, 44px);
+  height: var(--mobile-touch, 44px);
   margin: -4px -6px 0 0;
   padding: 0;
   display: grid;

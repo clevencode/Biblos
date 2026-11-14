@@ -1,0 +1,6 @@
+# Copia para android/key.properties (gitignored) e preenche.
+# Usado só pelo assembleRelease.
+storePassword=CHANGE_ME
+keyPassword=CHANGE_ME
+keyAlias=biblos
+storeFile=keystore/biblos-upload.jks
