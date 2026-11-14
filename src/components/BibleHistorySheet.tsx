@@ -11,6 +11,8 @@ import {
   type HistorySelectPayload,
 } from "../bible/readingHistoryRepository";
 import type { ReadingHistoryItem } from "../bible/readingScope";
+import { offlinePassage } from "../bibleOffline";
+import { ht1998Books, ht1998Passage } from "../bible/ht1998";
 import { useUiLocale } from "../i18n/UiLocaleContext";
 
 export type BibleHistorySelect = HistorySelectPayload;
@@ -47,6 +49,75 @@ function toSelect(item: ReadingHistoryItem): BibleHistorySelect {
   };
 }
 
+/** HT98: título do livro na língua de origem (ex. Jan, não Jean). */
+function historyDisplayLabel(
+  item: ReadingHistoryItem,
+  htTitles: ReadonlyMap<string, string>,
+): string {
+  if (item.versionId === "ht98") {
+    const title = htTitles.get(item.usfm.toUpperCase())?.trim();
+    if (title) {
+      return item.verse != null
+        ? `${title} ${item.chapter}.${item.verse}`
+        : `${title} ${item.chapter}`;
+    }
+  }
+  return readingLabelForItem(item);
+}
+
+async function loadHistoryVerseTexts(
+  rows: HistoryRow[],
+): Promise<Record<string, string>> {
+  const byChapter = new Map<
+    string,
+    { versionId: ReadingHistoryItem["versionId"]; bookId: string; chapter: number; rows: HistoryRow[] }
+  >();
+
+  for (const row of rows) {
+    const key = `${row.item.versionId}:${row.item.usfm}.${row.item.chapter}`;
+    const existing = byChapter.get(key);
+    if (existing) existing.rows.push(row);
+    else {
+      byChapter.set(key, {
+        versionId: row.item.versionId,
+        bookId: row.item.usfm,
+        chapter: row.item.chapter,
+        rows: [row],
+      });
+    }
+  }
+
+  const out: Record<string, string> = {};
+  await Promise.all(
+    [...byChapter.values()].map(async (group) => {
+      try {
+        const chapterKey = `${group.bookId}.${group.chapter}`;
+        const result =
+          group.versionId === "ht98"
+            ? await ht1998Passage(chapterKey)
+            : await offlinePassage(chapterKey);
+        if (!result.ok) return;
+        const verses = result.passage.verses ?? [];
+        const byNumber = new Map(
+          verses.map((verse) => [verse.number, String(verse.text || "").trim()]),
+        );
+        const firstText = verses[0]
+          ? String(verses[0].text || "").trim()
+          : "";
+        for (const row of group.rows) {
+          const verse = row.item.verse;
+          const text =
+            verse != null ? byNumber.get(verse) || firstText : firstText;
+          if (text) out[row.eventId] = text;
+        }
+      } catch {
+        /* ignore chapter */
+      }
+    }),
+  );
+  return out;
+}
+
 export function BibleHistorySheet({
   open,
   onClose,
@@ -56,6 +127,11 @@ export function BibleHistorySheet({
   const { t, dateLocale } = useUiLocale();
   const titleId = useId();
   const [rows, setRows] = useState<HistoryRow[]>([]);
+  const [verseTexts, setVerseTexts] = useState<Record<string, string>>({});
+  const [textsBusy, setTextsBusy] = useState(false);
+  const [htTitles, setHtTitles] = useState<ReadonlyMap<string, string>>(
+    () => new Map(),
+  );
 
   function refresh() {
     setRows(rowsFromEvents(listBibleReadingHistory(undefined, 40)));
@@ -65,6 +141,47 @@ export function BibleHistorySheet({
     if (!open) return;
     refresh();
   }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    void ht1998Books()
+      .then((books) => {
+        if (cancelled) return;
+        setHtTitles(
+          new Map(
+            books.map((book) => [
+              String(book.id || "").toUpperCase(),
+              String(book.title || "").trim(),
+            ]),
+          ),
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setHtTitles(new Map());
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open || rows.length === 0) {
+      setVerseTexts({});
+      setTextsBusy(false);
+      return;
+    }
+    let cancelled = false;
+    setTextsBusy(true);
+    void loadHistoryVerseTexts(rows).then((map) => {
+      if (cancelled) return;
+      setVerseTexts(map);
+      setTextsBusy(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, rows]);
 
   useEffect(() => {
     if (!open) return;
@@ -132,7 +249,8 @@ export function BibleHistorySheet({
             <li className="bible-yv-history-panel-empty">{t("history.empty")}</li>
           ) : (
             rows.map(({ eventId, at, item }) => {
-              const label = readingLabelForItem(item);
+              const label = historyDisplayLabel(item, htTitles);
+              const text = verseTexts[eventId];
               return (
                 <li key={eventId} className="bible-history-row">
                   <button
@@ -148,6 +266,9 @@ export function BibleHistorySheet({
                         {item.versionBadge}
                       </span>
                       {label}
+                    </span>
+                    <span className="bible-yv-history-panel-verse">
+                      {text || (textsBusy ? t("common.loading") : "…")}
                     </span>
                     <span className="bible-yv-history-panel-when">
                       {formatActivityWhen(at, dateLocale)}

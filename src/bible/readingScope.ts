@@ -22,7 +22,7 @@ export type ReadingHistoryItem = {
   id: string;
   versionId: BibleTextVersionId;
   language: string;
-  /** Ex.: "S21", "KREYÒL" */
+  /** Ex.: "S21", "HT98" */
   versionBadge: string;
   usfm: string;
   localizedBookName: string;
@@ -31,9 +31,9 @@ export type ReadingHistoryItem = {
   timestamp: number;
 };
 
-/** Badge curto para UI (histórico, tags). */
+/** Badge curto para UI (histórico, tags). HT98 = código da versão; livro na língua de origem. */
 export function versionBadgeFor(versionId: BibleTextVersionId): string {
-  if (versionId === "ht98") return "KREYÒL";
+  if (versionId === "ht98") return "HT98";
   return bibleVersionDef(versionId).abbreviation;
 }
 

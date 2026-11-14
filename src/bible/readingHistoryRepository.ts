@@ -53,7 +53,6 @@ export function toReadingHistoryItem(
   const versionId = parseVersionId(event.meta?.versionId, "s21");
   const language =
     metaString(event.meta, "language") || languageForVersion(versionId);
-  const badgeRaw = metaString(event.meta, "versionBadge");
   const localizedBookName =
     metaString(event.meta, "localizedBookName") || bookId;
   const verse = metaNumber(event.meta, "verse");
@@ -62,7 +61,8 @@ export function toReadingHistoryItem(
     id: makeHistoryItemId(versionId, bookId, chapter),
     versionId,
     language,
-    versionBadge: badgeRaw || versionBadgeFor(versionId),
+    /* Sempre a partir da versão — evita legado « KREYÒL » / título FR em HT98. */
+    versionBadge: versionBadgeFor(versionId),
     usfm: bookId,
     localizedBookName,
     chapter,

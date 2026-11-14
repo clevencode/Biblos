@@ -2944,6 +2944,7 @@ export function BibleReaderView({
         ) : null}
         <BibleMarksSheet
           open={marksOpen}
+          resolveBookTitle={resolveBookTitleActive}
           onClose={() => {
             openOverlay({ type: "reader_settings" });
           }}

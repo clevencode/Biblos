@@ -13413,6 +13413,15 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   color: var(--yv-muted, var(--muted));
 }
 
+.bible-yv-history-panel-verse {
+  font-size: 0.88rem;
+  font-weight: 450;
+  line-height: 1.45;
+  color: var(--yv-text);
+  white-space: normal;
+  text-align: left;
+}
+
 .bible-reader--yv.is-compact-tools .bible-yv-top.is-compact-tools {
   gap: 8px;
 }

@@ -1,5 +1,6 @@
 import { useEffect, useId, useState } from "react";
 import type { HistorySelectPayload } from "../bible/readingHistoryRepository";
+import { offlinePassage } from "../bibleOffline";
 import {
   listAllVerseMarks,
   subscribeVerseMarksRevision,
@@ -13,6 +14,8 @@ export type BibleMarksSheetProps = {
   open: boolean;
   onClose: () => void;
   onSelect: (ref: BibleMarksSelect) => void;
+  /** Título localizado do livro (ex. Jean) — evita USFM na lista. */
+  resolveBookTitle?: (bookId: string) => string;
 };
 
 function markToSelect(mark: SavedVerseMark): BibleMarksSelect {
@@ -24,15 +27,62 @@ function markToSelect(mark: SavedVerseMark): BibleMarksSelect {
   };
 }
 
+function markDisplayLabel(
+  mark: SavedVerseMark,
+  resolveBookTitle?: (bookId: string) => string,
+): string {
+  const book = resolveBookTitle?.(mark.bookId)?.trim() || mark.bookId;
+  return `${book} ${mark.chapterId}.${mark.verse}`;
+}
+
+/** Texto dos versículos por chave de mark — um fetch por capítulo. */
+async function loadMarkVerseTexts(
+  marks: SavedVerseMark[],
+): Promise<Record<string, string>> {
+  const byChapter = new Map<string, SavedVerseMark[]>();
+  for (const mark of marks) {
+    const key = `${mark.bookId}.${mark.chapterId}`;
+    const list = byChapter.get(key);
+    if (list) list.push(mark);
+    else byChapter.set(key, [mark]);
+  }
+
+  const out: Record<string, string> = {};
+  await Promise.all(
+    [...byChapter.entries()].map(async ([chapterKey, group]) => {
+      try {
+        const result = await offlinePassage(chapterKey);
+        if (!result.ok) return;
+        const byNumber = new Map(
+          (result.passage.verses ?? []).map((verse) => [
+            verse.number,
+            String(verse.text || "").trim(),
+          ]),
+        );
+        for (const mark of group) {
+          const text = byNumber.get(mark.verse);
+          if (text) out[mark.key] = text;
+        }
+      } catch {
+        /* ignore chapter */
+      }
+    }),
+  );
+  return out;
+}
+
 /** Full-bleed surlignages — mesmo contrato visual que search/history. */
 export function BibleMarksSheet({
   open,
   onClose,
   onSelect,
+  resolveBookTitle,
 }: BibleMarksSheetProps) {
   const { t } = useUiLocale();
   const titleId = useId();
   const [marks, setMarks] = useState<SavedVerseMark[]>([]);
+  const [verseTexts, setVerseTexts] = useState<Record<string, string>>({});
+  const [textsBusy, setTextsBusy] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -45,6 +95,24 @@ export function BibleMarksSheet({
       setMarks(listAllVerseMarks());
     });
   }, [open]);
+
+  useEffect(() => {
+    if (!open || marks.length === 0) {
+      setVerseTexts({});
+      setTextsBusy(false);
+      return;
+    }
+    let cancelled = false;
+    setTextsBusy(true);
+    void loadMarkVerseTexts(marks).then((map) => {
+      if (cancelled) return;
+      setVerseTexts(map);
+      setTextsBusy(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, marks]);
 
   useEffect(() => {
     if (!open) return;
@@ -84,24 +152,32 @@ export function BibleMarksSheet({
             className="bible-yv-history-panel-list"
             aria-label={t("profile.marks")}
           >
-            {marks.map((mark) => (
-              <li key={mark.key} className="bible-history-row">
-                <button
-                  type="button"
-                  className="bible-yv-history-panel-item"
-                  onClick={() => onSelect(markToSelect(mark))}
-                >
-                  <span className="bible-yv-history-panel-ref">
-                    <span
-                      className="bible-history-mark-swatch"
-                      style={{ background: mark.color }}
-                      aria-hidden
-                    />
-                    {mark.label}
-                  </span>
-                </button>
-              </li>
-            ))}
+            {marks.map((mark) => {
+              const refLabel = markDisplayLabel(mark, resolveBookTitle);
+              const text = verseTexts[mark.key];
+              return (
+                <li key={mark.key} className="bible-history-row">
+                  <button
+                    type="button"
+                    className="bible-yv-history-panel-item"
+                    onClick={() => onSelect(markToSelect(mark))}
+                  >
+                    <span className="bible-yv-history-panel-ref">
+                      <span
+                        className="bible-history-mark-swatch"
+                        style={{ background: mark.color }}
+                        aria-hidden
+                      />
+                      {refLabel}
+                    </span>
+                    <span className="bible-yv-history-panel-verse">
+                      {text ||
+                        (textsBusy ? t("common.loading") : "…")}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>
