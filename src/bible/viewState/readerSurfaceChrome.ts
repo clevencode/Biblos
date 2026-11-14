@@ -87,7 +87,7 @@ export function readerSurfaceChrome(
       bookSearchOpen ||
       verseStudyOpen ||
       input.verseActionsOpen,
-    /* Eleva `.bible-yv-top` acima do scrim — igual ao chip book */
+    /* Classe no root/header p/ roll aberto; elevação topbar = .is-top-sheet-open */
     rootClassPassageRollOpen: barOverlayOpen,
     scrimIsTools: input.toolsMenuOpen || input.historyOpen || verseStudyOpen,
     scrimIsPickerDismiss:

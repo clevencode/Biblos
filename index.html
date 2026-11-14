@@ -5,7 +5,27 @@
     <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex" />
     <meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet, noimageindex" />
     <meta name="bingbot" content="noindex, nofollow, noarchive, nosnippet, noimageindex" />
-    <meta name="referrer" content="no-referrer" />
+    <!-- Web: no-referrer. Capacitor: strict-origin — auth/planos remotos (Firebase/Google). -->
+    <meta name="referrer" content="no-referrer" id="biblos-referrer" />
+    <script>
+      (function () {
+        try {
+          var native =
+            typeof window !== "undefined" &&
+            window.Capacitor &&
+            typeof window.Capacitor.isNativePlatform === "function" &&
+            window.Capacitor.isNativePlatform();
+          if (!native) {
+            var proto = (window.location && window.location.protocol) || "";
+            native = proto === "capacitor:" || proto === "ionic:";
+          }
+          if (native) {
+            var meta = document.getElementById("biblos-referrer");
+            if (meta) meta.setAttribute("content", "strict-origin-when-cross-origin");
+          }
+        } catch (_) {}
+      })();
+    </script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="alternate icon" type="image/png" href="/favicon.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />

@@ -375,8 +375,8 @@ html[data-theme="dark"] .biblos-shell {
   *:not(.bible-verse):not(.bible-verse *):not(.bible-yv-pick-cell):not(
     .bible-yv-pick-cell *
   ):not(.top-floating-sheet):not(.hdr-trigger.is-active):not(.hdr-trigger.is-open):not(
-    .bible-yv-top
-  ):not(.bible-yv-dock-play):not(.bible-yv-audio-player):not(
+    .hdr-trigger.is-on
+  ):not(.bible-yv-top):not(.bible-yv-dock-play):not(.bible-yv-audio-player):not(
     .bible-yv-top-passage-skips
   ):not(.bible-yv-top-passage-skips *):not(.bible-yv-tools-menu-btn):not(
     .mode-tabs-hub
@@ -9702,16 +9702,19 @@ ul.plan-yv-day-note-ref {
   --bible-z-tools-chrome: 24;
   --bible-z-tools-fab: 9;
   --bible-z-popover: 40;
-  /* Header sheets (padrão hub): backdrop < sheet < trigger ativo */
+  /* Header sheets: scrim < sheet < chrome topbar (faixa inteira) */
   --bible-z-top-backdrop: 60;
   --bible-z-top-sheet: 70;
+  --bible-z-top-chrome: 80;
   --bible-z-hdr-active: 80;
   /* Trigger aberto = mesma superfície do modal (não preto hub) */
   --hdr-trigger-active-bg: var(--yv-overlay-surface, var(--surface));
   --hdr-trigger-active-fg: var(--yv-text, var(--text));
   --top-sheet-shadow: 0 20px 44px rgba(17, 19, 24, 0.18);
   --top-sheet-radius: 24px;
-  --top-sheet-ease: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --top-sheet-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --top-sheet-in-ms: 200ms;
+  --top-sheet-backdrop-ms: 180ms;
   /* Acima do sheet + roleta aberta (popover+20) */
   --bible-z-color-editor: calc(var(--bible-z-popover) + 30);
   /*
@@ -9815,6 +9818,7 @@ html[data-theme="dark"] .bible-reader--yv {
     0 6px 16px color-mix(in srgb, var(--ink) 12%, transparent) !important;
   transform: translate3d(0, 0, 0);
   opacity: 1;
+  visibility: visible;
   transition:
     transform var(--yv-chrome-ms) var(--yv-chrome-ease),
     opacity calc(var(--yv-chrome-ms) * 0.85) var(--yv-chrome-ease),
@@ -9824,56 +9828,50 @@ html[data-theme="dark"] .bible-reader--yv {
 
 /*
  * ═══════════════════════════════════════════════════════════════════════════
- * CONTRATO PERMANENTE — topbar com modal aberto (.is-top-sheet-open)
- * search | book pill | history | menu — um único bloco, sem :has() frágil.
- * 1) Top bar mantém superfície (não transparent)
- * 2) Ancestrais sem stacking trap
- * 3) Trigger ativo / roll.is-open → z80 (acima do scrim z60)
- * 4) Sheets → .top-sheet-layer z70
+ * CONTRATO DEFINITIVO — topbar com modal (.is-top-sheet-open)
+ * search | book | history | menu — sem :has(), sem z-index:auto.
+ *
+ * Stacking (sempre):
+ *   scrim 60  <  sheet 70  <  faixa topbar inteira 80
+ *
+ * Antes: topbar z:auto → sumia sob o scrim; só o trigger “furava” (inconsistente).
+ * Agora: a faixa inteira fica acima do scrim; sheet nasce abaixo do chrome.
  * ═══════════════════════════════════════════════════════════════════════════
  */
-.bible-reader--yv.is-top-sheet-open .bible-yv-top {
-  z-index: auto !important;
+.bible-reader--yv.is-top-sheet-open .bible-yv-top,
+.bible-yv-top.is-top-sheet-open {
+  z-index: var(--bible-z-top-chrome, var(--bible-z-hdr-active, 80)) !important;
   overflow: visible !important;
   contain: none !important;
   transform: none !important;
-  isolation: auto !important;
+  isolation: isolate !important;
   filter: none !important;
   opacity: 1 !important;
   visibility: visible !important;
+  pointer-events: auto !important;
   background: var(--bible-nav-surface, var(--yv-bg)) !important;
   border-bottom: var(--yv-separator, 1px solid var(--yv-outline, var(--line))) !important;
   box-shadow:
     0 1px 0 color-mix(in srgb, var(--ink) 8%, transparent),
     0 6px 16px color-mix(in srgb, var(--ink) 12%, transparent) !important;
+  /* sem fade/slide ao abrir modal — evita “piscar” / sumir */
+  transition: none !important;
 }
 
 .bible-reader--yv.is-top-sheet-open .bible-yv-passage-chrome-cluster,
 .bible-reader--yv.is-top-sheet-open .bible-yv-top-tools,
 .bible-reader--yv.is-top-sheet-open .bible-yv-history-menu,
 .bible-reader--yv.is-top-sheet-open .bible-yv-tools-menu,
-.bible-reader--yv.is-top-sheet-open .bible-yv-passage-roll:not(.is-open) {
+.bible-reader--yv.is-top-sheet-open .bible-yv-passage-roll {
   position: relative;
-  z-index: auto !important;
   overflow: visible !important;
-  transform: none !important;
-  isolation: auto !important;
-  contain: none !important;
-  filter: none !important;
-}
-
-/* Book pill: roll aberto = mesmo z do search ✕ (sheet já não é filho) */
-.bible-reader--yv.is-top-sheet-open .bible-yv-passage-roll.is-open {
-  position: relative;
-  z-index: var(--bible-z-hdr-active) !important;
-  isolation: isolate !important;
   transform: none !important;
   filter: none !important;
   contain: none !important;
   opacity: 1 !important;
-  overflow: visible !important;
 }
 
+/* Trigger ativo = superfície do modal (não tinta preta / hub ink) */
 .bible-reader--yv.is-top-sheet-open .hdr-trigger.is-open,
 .bible-reader--yv.is-top-sheet-open .hdr-trigger.is-active,
 .bible-reader--yv.is-top-sheet-open .bible-yv-passage-chip.is-open,
@@ -9885,7 +9883,11 @@ html[data-theme="dark"] .bible-reader--yv {
 .bible-reader--yv.is-top-sheet-open .bible-yv-tools-menu-btn.is-on,
 .bible-reader--yv.is-top-sheet-open .bible-yv-tools-menu-btn.is-open {
   position: relative;
-  z-index: var(--bible-z-hdr-active) !important;
+  z-index: 1;
+  background: var(--hdr-trigger-active-bg) !important;
+  color: var(--hdr-trigger-active-fg) !important;
+  border: var(--yv-overlay-border, var(--yv-hairline, 1px solid var(--line))) !important;
+  box-shadow: var(--top-sheet-shadow, 0 6px 18px rgba(17, 19, 24, 0.16)) !important;
 }
 
 .bible-reader--yv.is-tools-menu-open .bible-yv-read-surface,
@@ -10040,10 +10042,12 @@ html[data-theme="dark"] .bible-yv-passage-chip.hdr-trigger.is-open {
     transform 80ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Modal topbar aberto: swap ✕ imediato (sem delay perceptível) */
+/* Modal aberto: swap ✕ curto (amigável, sem atraso perceptível) */
 .bible-reader--yv.is-top-sheet-open .hdr-icon-idle,
 .bible-reader--yv.is-top-sheet-open .hdr-icon-exit {
-  transition: none !important;
+  transition:
+    opacity 120ms var(--top-sheet-ease, ease),
+    transform 140ms var(--top-sheet-ease, ease);
 }
 
 .hdr-icon-idle {
@@ -10094,38 +10098,16 @@ html[data-theme="dark"] .bible-yv-passage-chip.hdr-trigger.is-open {
   text-overflow: ellipsis;
 }
 
-/* Compat: triggers legados adotam stacking do hdr */
-.bible-reader--yv.is-top-sheet-open .bible-yv-passage-word-search-trigger,
-.bible-reader--yv.is-top-sheet-open .bible-yv-history-btn,
-.bible-reader--yv.is-top-sheet-open .bible-yv-tools-menu-btn,
-.bible-reader--yv.is-top-sheet-open .bible-yv-passage-chip {
-  position: relative;
-  z-index: var(--bible-z-hdr-idle);
-}
-
-.bible-reader--yv.is-top-sheet-open .hdr-trigger.is-active,
-.bible-reader--yv.is-top-sheet-open .hdr-trigger.is-open,
-.bible-reader--yv.is-top-sheet-open .bible-yv-passage-word-search-trigger.is-on,
-.bible-reader--yv.is-top-sheet-open .bible-yv-history-btn.is-on,
-.bible-reader--yv.is-top-sheet-open .bible-yv-tools-menu-btn.is-on,
-.bible-reader--yv.is-top-sheet-open .bible-yv-passage-chip.is-open,
-.bible-reader--yv.is-passage-roll-open .bible-yv-passage-chip.is-open,
-.bible-reader--yv.is-passage-roll-open .bible-yv-passage-chip.hdr-trigger.is-open {
-  z-index: var(--bible-z-hdr-active) !important;
-  background: var(--hdr-trigger-active-bg) !important;
-  color: var(--hdr-trigger-active-fg) !important;
-  border: var(--yv-overlay-border, var(--yv-hairline, 1px solid var(--line))) !important;
-  box-shadow: var(--top-sheet-shadow, 0 6px 18px rgba(17, 19, 24, 0.16)) !important;
-}
-
 /* —— Top sheet backdrop (header modals) ——
- * Sem backdrop-filter: em Chromium o blur do scrim pode composite
- * POR CIMA de irmãos com z-index maior (book pill “sob” o overlay).
- * Escurecimento só por gradiente opaco — sheets na .top-sheet-layer (z70).
+ * Nunca cobre a faixa topbar: top = --bible-top-chrome.
+ * Sem backdrop-filter (compositing Chromium). Sheets em .top-sheet-layer z70.
  */
 .top-sheet-backdrop {
   position: absolute;
-  inset: 0;
+  top: var(--bible-top-chrome, 68px);
+  left: 0;
+  right: 0;
+  bottom: 0;
   z-index: var(--bible-z-top-backdrop);
   margin: 0;
   padding: 0;
@@ -10144,7 +10126,8 @@ html[data-theme="dark"] .bible-yv-passage-chip.hdr-trigger.is-open {
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   opacity: 1;
-  transition: none;
+  animation: top-sheet-backdrop-in var(--top-sheet-backdrop-ms, 180ms)
+    var(--top-sheet-ease, ease) both;
 }
 
 /* Layer dos sheets: stacking context próprio acima do scrim (60 → 70) */
@@ -10163,11 +10146,6 @@ html[data-theme="dark"] .bible-yv-passage-chip.hdr-trigger.is-open {
 .top-sheet-layer > .top-floating-sheet,
 .top-sheet-layer > [data-top-sheet] {
   pointer-events: auto;
-}
-
-/* Busca: scrim no mesmo paint que o sheet (sem fade de entrada) */
-.top-sheet-backdrop.is-word-search {
-  transition: none;
 }
 
 html[data-theme="dark"] .top-sheet-backdrop {
@@ -10198,11 +10176,9 @@ html[data-theme="dark"] .top-sheet-backdrop {
     14px,
     env(safe-area-inset-right, 0px)
   );
+  /* Mesma âncora do scrim — topbar nunca fica sob o sheet */
   --top-sheet-top: calc(
-    max(
-      var(--bible-top-chrome, 68px),
-      calc(56px + env(safe-area-inset-top, 0px))
-    ) + var(--bible-chrome-panel-offset-y, 10px)
+    var(--bible-top-chrome, 68px) + var(--bible-chrome-panel-offset-y, 10px)
   );
   --top-sheet-max-h: calc(
     100dvh - var(--top-sheet-top) -
@@ -10212,6 +10188,37 @@ html[data-theme="dark"] .top-sheet-backdrop {
   /* aliases legado → contrato único */
   --bible-search-sheet-top: var(--top-sheet-top);
   --bible-search-sheet-max-h: var(--top-sheet-max-h);
+}
+
+@keyframes top-sheet-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -8px, 0) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes top-sheet-float-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 6px, 0) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes top-sheet-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .top-floating-sheet:not(.is-float-anchor),
@@ -10236,13 +10243,12 @@ html[data-theme="dark"] .top-sheet-backdrop {
   box-sizing: border-box;
   overflow: hidden !important;
   contain: none !important;
-  transform: none !important;
   transform-origin: top center;
   z-index: var(--bible-z-top-sheet) !important;
   pointer-events: auto;
-  opacity: 1 !important;
-  animation: none !important;
-  transition: none !important;
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+  animation: top-sheet-in var(--top-sheet-in-ms, 200ms) var(--top-sheet-ease) both;
   border-radius: var(--top-sheet-radius) !important;
   background: var(--yv-overlay-surface, var(--surface)) !important;
   border: var(--yv-overlay-border);
@@ -10286,32 +10292,20 @@ html[data-theme="dark"] .top-sheet-backdrop {
   max-height: min(58dvh, 26rem) !important;
   transform-origin: bottom right;
   z-index: var(--bible-z-popover) !important;
+  animation: top-sheet-float-in 180ms var(--top-sheet-ease) both;
 }
 
-/* Neutraliza legado (scaleY / absolute / frost) quando o sheet usa o contrato novo */
+/* Neutraliza legado (scaleY / absolute / frost) — sem matar a entrada amigável */
 .bible-yv-passage-scroll-panel.top-floating-sheet,
 .bible-yv-passage-word-search-panel.top-floating-sheet,
 .bible-yv-tools-popover.top-floating-sheet:not(.is-float-anchor),
 .bible-yv-history-panel.top-floating-sheet {
   max-height: var(--top-sheet-max-h, min(58dvh, 28rem)) !important;
   min-height: 0 !important;
-  opacity: 1 !important;
-  transform: none !important;
-  transition: none !important;
-  animation: none !important;
   pointer-events: auto !important;
   contain: none !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
-}
-
-@starting-style {
-  .top-floating-sheet.is-open:not(.is-float-anchor),
-  .top-sheet-layer > .top-floating-sheet.is-open {
-    opacity: 1;
-    transform: none;
-    max-height: var(--top-sheet-max-h, min(58dvh, 28rem));
-  }
 }
 
 .hdr-trigger-caret {
@@ -10381,6 +10375,17 @@ html[data-theme="dark"] .top-sheet-backdrop {
   .top-sheet-backdrop {
     transition: none !important;
     animation: none !important;
+  }
+
+  .top-floating-sheet:not(.is-float-anchor),
+  .top-sheet-layer > .top-floating-sheet,
+  .bible-yv-tools-menu.is-float-br .bible-yv-tools-popover.top-floating-sheet.is-float-anchor {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .top-sheet-backdrop {
+    opacity: 1 !important;
   }
 
   .hdr-icon-idle.is-hidden,
@@ -17615,10 +17620,11 @@ html[data-passage-bar-panel="test"]
 }
 
 /*
- * LOCK FINAL — só o que regras legadas ainda podem sobrescrever
- * (superfície topbar + z do trigger/roll). Geometry dos sheets = contrato único.
+ * LOCK FINAL — reforço do contrato definitivo (nunca z-index:auto na topbar).
  */
-.bible-reader--yv.is-top-sheet-open .bible-yv-top {
+.bible-reader--yv.is-top-sheet-open .bible-yv-top,
+.bible-yv-top.is-top-sheet-open {
+  z-index: var(--bible-z-top-chrome, var(--bible-z-hdr-active, 80)) !important;
   background: var(--bible-nav-surface, var(--yv-bg)) !important;
   border-bottom: var(--yv-separator, 1px solid var(--line)) !important;
   box-shadow:
@@ -17629,20 +17635,7 @@ html[data-passage-bar-panel="test"]
   transform: none !important;
   filter: none !important;
   contain: none !important;
-  isolation: auto !important;
-}
-
-.bible-reader--yv.is-top-sheet-open .bible-yv-passage-roll.is-open {
-  z-index: var(--bible-z-hdr-active, 80) !important;
   isolation: isolate !important;
-}
-
-.bible-reader--yv.is-top-sheet-open .hdr-trigger.is-open,
-.bible-reader--yv.is-top-sheet-open .hdr-trigger.is-active,
-.bible-reader--yv.is-top-sheet-open .bible-yv-passage-chip.is-open,
-.bible-reader--yv.is-top-sheet-open .bible-yv-passage-word-search-trigger.is-on,
-.bible-reader--yv.is-top-sheet-open .bible-yv-history-btn.is-on,
-.bible-reader--yv.is-top-sheet-open .bible-yv-tools-menu-btn.is-on {
-  z-index: var(--bible-z-hdr-active, 80) !important;
+  transition: none !important;
 }
 

@@ -2704,7 +2704,7 @@ export function BibleReaderView({
       tabIndex={-1}
     >
       <header
-        className={`bible-yv-top is-free${surfaceChrome.rootClassPassageRollOpen ? " is-passage-roll-open" : ""}${catalogOfflineHint ? " is-catalog-offline" : ""}${compactToolsMenu ? " is-compact-tools" : ""}`}
+        className={`bible-yv-top is-free${topSheetOpen ? " is-top-sheet-open" : ""}${surfaceChrome.rootClassPassageRollOpen ? " is-passage-roll-open" : ""}${catalogOfflineHint ? " is-catalog-offline" : ""}${compactToolsMenu ? " is-compact-tools" : ""}`}
         aria-label={t("bible.nav")}
       >
         {discoverySplitSearch ? (

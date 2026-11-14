@@ -75,5 +75,9 @@ try {
         apply plugin: 'com.google.gms.google-services'
     }
 } catch(Exception e) {
-    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+    logger.warn(
+        "google-services.json not found — Google Sign-In / Firebase Auth nativo no APK não aplica. " +
+        "Coloque o ficheiro em android/app/ (ver .env.example). " +
+        "Planos/auth JS ainda precisam de VITE_FIREBASE_* no bundle."
+    )
 }

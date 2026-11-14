@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  HTTPS para Firebase Auth/Firestore, Google Sign-In e APIs Vercel.
+  Cleartext desligado em release (live USB usa cleartext só via install-android.ps1).
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+    <!-- Domínios do provedor remoto (auth + planos + APIs) — confiança sistema -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">googleapis.com</domain>
+        <domain includeSubdomains="true">gstatic.com</domain>
+        <domain includeSubdomains="true">google.com</domain>
+        <domain includeSubdomains="true">firebaseio.com</domain>
+        <domain includeSubdomains="true">firebaseapp.com</domain>
+        <domain includeSubdomains="true">web.app</domain>
+        <domain includeSubdomains="true">cloudfunctions.net</domain>
+        <domain includeSubdomains="true">vercel.app</domain>
+        <domain includeSubdomains="false">biblos-two.vercel.app</domain>
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </domain-config>
+</network-security-config>
