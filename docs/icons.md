@@ -2,6 +2,8 @@
 
 O Biblos usa [coolicons](https://github.com/krystonschwarze/coolicons) (`@coolicons/react`) para ícones de interface.
 
+**Ícone oficial da app:** coolicons **Book** fill/round (`BookFill`) — branco em `#0D1117`. Gerar assets com `node scripts/generate-app-icons.mjs` (favicon, PWA, mipmaps Android, splash).
+
 ## Camadas
 
 | Camada | Ficheiro | Uso |

@@ -82,15 +82,41 @@ export default defineConfig(({ mode }) => ({
       ? VitePWA({
           registerType: "prompt",
           injectRegister: false,
-          includeAssets: ["favicon.svg", "apple-touch-icon.png"],
+          includeAssets: [
+            "favicon.svg",
+            "favicon.png",
+            "apple-touch-icon.png",
+            "icon-192.png",
+            "icon-512.png",
+          ],
           manifest: {
             name: "Biblos",
             short_name: "Biblos",
             description: "Lecture biblique offline-first",
             theme_color: "#0D1117",
-            background_color: "#FFFFFF",
+            background_color: "#0D1117",
             display: "standalone",
             start_url: "/",
+            icons: [
+              {
+                src: "icon-192.png",
+                sizes: "192x192",
+                type: "image/png",
+                purpose: "any",
+              },
+              {
+                src: "icon-512.png",
+                sizes: "512x512",
+                type: "image/png",
+                purpose: "any",
+              },
+              {
+                src: "icon-512.png",
+                sizes: "512x512",
+                type: "image/png",
+                purpose: "maskable",
+              },
+            ],
           },
           workbox: {
             globPatterns: ["**/*.{js,css,html,ico,svg,woff2,png,webp}"],
