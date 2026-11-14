@@ -1,8 +1,8 @@
 /**
  * Storage híbrido WebApp + Capacitor (fase 1: prefs KV).
  * Nativo → @capacitor/preferences; Web → localStorage.
- * Packs bíblicos IndexedDB ficam fora desta fatia (fase 2+).
- * Pending: perfil, marks, notes, activity → migrar nas próximas fases.
+ * Conteúdo bíblico: assets APK / Cache Storage (sem IndexedDB).
+ * Pending: perfil, marks, notes, activity → Preferences nas próximas fases.
  */
 
 import { Capacitor } from "@capacitor/core";

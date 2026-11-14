@@ -1,4 +1,3 @@
-import { Capacitor } from "@capacitor/core";
 import "./typography/fonts";
 import { Component, StrictMode, type ErrorInfo, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
@@ -6,7 +5,6 @@ import { App } from "./App";
 import { AppReadinessProvider } from "./context/AppReadinessContext";
 import { UiLocaleProvider } from "./i18n/UiLocaleContext";
 import { SkeletonTheme } from "./skeleton";
-import { ensureBibleIndexedFromBundle } from "./bibleEngine";
 import {
   bootReadingPlansFirestore,
   isReadingPlansFirebaseConfigured,
@@ -42,10 +40,6 @@ async function boot() {
   void syncNativeChrome(applyTheme());
   void requestPersistentStorage();
   void bootSwUpdateManager();
-
-  if (Capacitor.isNativePlatform()) {
-    scheduleIdle(() => void ensureBibleIndexedFromBundle(), 8000);
-  }
 
   if (isReadingPlansFirebaseConfigured()) {
     scheduleIdle(() => void bootReadingPlansFirestore(), 1200);

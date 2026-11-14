@@ -121,9 +121,39 @@ export default defineConfig(({ mode }) => ({
           workbox: {
             globPatterns: ["**/*.{js,css,html,ico,svg,woff2,png,webp}"],
             navigateFallback: "/index.html",
-            // Bíblias grandes ficam no IndexedDB / fetch sob demanda — não precache.
+            // Assets bíblicos: CacheFirst sob demanda (não precache ~39 Mo).
             navigateFallbackDenylist: [/^\/api\//, /^\/bibles\//, /^\/bible\//],
             runtimeCaching: [
+              {
+                urlPattern: ({ url }) =>
+                  url.pathname.startsWith("/bible/s21/"),
+                handler: "CacheFirst",
+                options: {
+                  cacheName: "biblos-s21-json",
+                  expiration: {
+                    maxEntries: 100,
+                    maxAgeSeconds: 60 * 60 * 24 * 365,
+                  },
+                  cacheableResponse: {
+                    statuses: [0, 200],
+                  },
+                },
+              },
+              {
+                urlPattern: ({ url }) =>
+                  url.pathname.startsWith("/bibles/"),
+                handler: "CacheFirst",
+                options: {
+                  cacheName: "biblos-ht98-json",
+                  expiration: {
+                    maxEntries: 4,
+                    maxAgeSeconds: 60 * 60 * 24 * 365,
+                  },
+                  cacheableResponse: {
+                    statuses: [0, 200],
+                  },
+                },
+              },
               {
                 // Refs croisées TSKE — CacheFirst após 1.ª visita (PWA offline).
                 urlPattern: ({ url }) =>

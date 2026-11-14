@@ -114,19 +114,7 @@ export async function loadTskeChapter(
   const key = `${book}.${ch}`;
   if (chapterCache.has(key)) return chapterCache.get(key)!;
 
-  // 1) IndexedDB (pack offline / cache de leituras anteriores)
-  try {
-    const { readTskeChapter } = await import("./idbTskeCache");
-    const cached = await readTskeChapter(book, ch);
-    if (cached) {
-      chapterCache.set(key, cached);
-      return cached;
-    }
-  } catch {
-    /* ignore */
-  }
-
-  // 2) Rede ou asset embutido (Capacitor / Vite public)
+  // Assets embutidos (APK / Vite public) ou Cache Storage — sem IndexedDB.
   try {
     const res = await fetch(chapterUrl(book, ch));
     if (!res.ok) return null;
@@ -136,9 +124,6 @@ export async function loadTskeChapter(
     const json = JSON.parse(raw) as TskeChapterJson;
     if (!json || typeof json !== "object") return null;
     chapterCache.set(key, json);
-    void import("./idbTskeCache").then(({ writeTskeChapter }) =>
-      writeTskeChapter(book, ch, json),
-    );
     return json;
   } catch {
     return null;

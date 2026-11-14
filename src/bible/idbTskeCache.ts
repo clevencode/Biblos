@@ -129,9 +129,24 @@ export async function getTskePackMeta(): Promise<TskePackMeta | null> {
   }
 }
 
+/** APK: assets embutidos. Web: manifest TSKE acessível. */
 export async function isTskeOfflineReady(): Promise<boolean> {
-  const meta = await getTskePackMeta();
-  return Boolean(meta?.complete && (meta.count ?? 0) > 0);
+  try {
+    const { Capacitor } = await import("@capacitor/core");
+    if (Capacitor.isNativePlatform()) return true;
+  } catch {
+    /* ignore */
+  }
+  try {
+    const res = await fetch("/bible/study/tske/manifest.json");
+    if (!res.ok) return false;
+    const raw = (await res.text()).trim();
+    if (!raw || raw.startsWith("<")) return false;
+    const json = JSON.parse(raw) as { files?: string[] };
+    return Array.isArray(json.files) && json.files.length > 0;
+  } catch {
+    return false;
+  }
 }
 
 export async function writeTskePackMeta(

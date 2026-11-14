@@ -67,12 +67,7 @@ export async function loadHt1998Root(): Promise<Ht1998Root> {
   if (cachedRoot) return cachedRoot;
   if (!inflight) {
     inflight = (async () => {
-      const { readHt1998OfflineRoot } = await import("./ht1998Offline");
-      const offline = await readHt1998OfflineRoot();
-      if (offline) {
-        cachedRoot = offline;
-        return offline;
-      }
+      // Assets-first: fetch /bibles/ht1998.json (APK embutido / Workbox na web).
       const res = await fetch(HT1998_JSON_URL);
       if (!res.ok) throw new Error("Traduction haïtienne indisponible");
       const json = (await res.json()) as Ht1998Root;

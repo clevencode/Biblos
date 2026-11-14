@@ -1,5 +1,5 @@
 /**
- * Motor bíblico local (mobile): assets embutidos + IndexedDB — sem /api/youversion.
+ * Motor bíblico local (mobile): assets embutidos — sem seed IndexedDB.
  */
 import { Capacitor } from "@capacitor/core";
 import {
@@ -28,22 +28,11 @@ export function localS21BooksResponse() {
   };
 }
 
-let seedInflight: Promise<void> | null = null;
-
 /**
- * Copia os 66 livros dos assets do APK para IndexedDB (busca + cache rápido).
+ * No-op assets-first: o APK já embute os JSON; não copia para IndexedDB.
  */
 export function ensureBibleIndexedFromBundle(
-  onProgress?: (done: number, total: number, usfm: string) => void,
+  _onProgress?: (done: number, total: number, usfm: string) => void,
 ): Promise<void> {
-  if (!useLocalBundledBible()) return Promise.resolve();
-  if (seedInflight) return seedInflight;
-  seedInflight = (async () => {
-    const { isOfflineBibleReady, seedOfflineBibleFromBundledAssets } = await import("./bibleOffline");
-    if (await isOfflineBibleReady()) return;
-    await seedOfflineBibleFromBundledAssets(localS21Books(), onProgress);
-  })().finally(() => {
-    seedInflight = null;
-  });
-  return seedInflight;
+  return Promise.resolve();
 }

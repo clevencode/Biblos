@@ -1,15 +1,13 @@
 /**
- * Bible S21 hors ligne — IndexedDB (~6 Mo, 66 livres).
- * Mobile : assets embarqués (/bible/s21/…) ; web : fallback /api/youversion.
+ * Bible S21 hors ligne — assets embutidos (/bible/s21/…).
+ * APK: leitura direta dos assets (sem seed IndexedDB).
+ * Web: assets + fallback /api/youversion; Cache Storage via Workbox.
  */
 
 import { Capacitor } from "@capacitor/core";
 import { apiUrl, readApiJson } from "./apiBase";
-import { fetchBundledBookJson } from "./bibleS21Canon";
-import {
-  isQuotaExceededError,
-  requestPersistentStorage,
-} from "./offlineStorageGuard";
+import { buildS21BookList, fetchBundledBookJson } from "./bibleS21Canon";
+import { requestPersistentStorage } from "./offlineStorageGuard";
 import type {
   BibleSearchHit,
   YouVersionBook,
@@ -18,11 +16,6 @@ import type {
 } from "./youversion/client";
 import { toUsfm } from "./youversion/usfm";
 
-const DB_NAME = "biblos-s21-offline";
-const DB_VERSION = 2;
-const STORE_BOOKS = "books";
-const STORE_META = "meta";
-const STORE_CHAPTER_LAYOUT = "chapter_layout";
 const META_KEY = "s21";
 export const OFFLINE_BOOK_TOTAL = 66;
 
@@ -74,77 +67,58 @@ export function cleanVerseText(text: string): string {
 
 export type OfflineBookRow = { usfm: string; book: S21BookJson };
 
-/** Todos os livros no IndexedDB (uma leitura; usado pelo índice de busca em RAM). */
+/** Todos os livros a partir dos assets (índice de busca em RAM). */
 export async function getAllOfflineBooks(): Promise<OfflineBookRow[]> {
-  const db = await openDb();
-  try {
-    const tx = db.transaction(STORE_BOOKS, "readonly");
-    const rows = await idbReq(
-      tx.objectStore(STORE_BOOKS).getAll() as IDBRequest<OfflineBookRow[]>,
+  const list = buildS21BookList();
+  const rows: OfflineBookRow[] = [];
+  const CONCURRENCY = 8;
+  for (let i = 0; i < list.length; i += CONCURRENCY) {
+    const chunk = list.slice(i, i + CONCURRENCY);
+    const loaded = await Promise.all(
+      chunk.map(async (book) => {
+        const usfm = book.id.toUpperCase();
+        const json = await fetchBundledBookJson(usfm);
+        return json ? ({ usfm, book: json } satisfies OfflineBookRow) : null;
+      }),
     );
-    await idbTxDone(tx);
-    return rows ?? [];
-  } finally {
-    db.close();
+    for (const row of loaded) {
+      if (row) rows.push(row);
+    }
   }
+  return rows;
 }
 
-function openDb(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, DB_VERSION);
-    req.onerror = () => reject(req.error ?? new Error("IndexedDB indisponible"));
-    req.onsuccess = () => resolve(req.result);
-    req.onupgradeneeded = () => {
-      const db = req.result;
-      if (!db.objectStoreNames.contains(STORE_BOOKS)) {
-        db.createObjectStore(STORE_BOOKS, { keyPath: "usfm" });
-      }
-      if (!db.objectStoreNames.contains(STORE_META)) {
-        db.createObjectStore(STORE_META, { keyPath: "key" });
-      }
-      if (!db.objectStoreNames.contains(STORE_CHAPTER_LAYOUT)) {
-        db.createObjectStore(STORE_CHAPTER_LAYOUT, { keyPath: "key" });
-      }
-    };
-  });
-}
-
-function idbReq<T>(req: IDBRequest<T>): Promise<T> {
-  return new Promise((resolve, reject) => {
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error ?? new Error("IndexedDB error"));
-  });
-}
-
-function idbTxDone(tx: IDBTransaction): Promise<void> {
-  return new Promise((resolve, reject) => {
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error ?? new Error("IndexedDB tx error"));
-    tx.onabort = () => reject(tx.error ?? new Error("IndexedDB tx abort"));
-  });
+function syntheticOfflineMeta(): OfflineBibleMeta {
+  return {
+    key: META_KEY,
+    complete: true,
+    count: OFFLINE_BOOK_TOTAL,
+    total: OFFLINE_BOOK_TOTAL,
+    at: Date.now(),
+    books: buildS21BookList(),
+  };
 }
 
 export async function getOfflineMeta(): Promise<OfflineBibleMeta | null> {
-  try {
-    const db = await openDb();
-    try {
-      const tx = db.transaction(STORE_META, "readonly");
-      const row = await idbReq(
-        tx.objectStore(STORE_META).get(META_KEY) as IDBRequest<OfflineBibleMeta | undefined>,
-      );
-      await idbTxDone(tx);
-      return row ?? null;
-    } finally {
-      db.close();
-    }
-  } catch {
-    return null;
-  }
+  if (!(await isOfflineBibleReady())) return null;
+  return syntheticOfflineMeta();
 }
 
+let s21ReadyProbe: Promise<boolean> | null = null;
+
+/** APK: sempre pronto (assets no pacote). Web: probe GEN no bundle (1×). */
 export async function isOfflineBibleReady(): Promise<boolean> {
-  const meta = await getOfflineMeta();
-  return Boolean(meta?.complete && (meta.count ?? 0) >= OFFLINE_BOOK_TOTAL);
+  if (Capacitor.isNativePlatform()) return true;
+  if (!s21ReadyProbe) {
+    s21ReadyProbe = (async () => {
+      try {
+        return Boolean(await fetchBundledBookJson("GEN"));
+      } catch {
+        return false;
+      }
+    })();
+  }
+  return s21ReadyProbe;
 }
 
 function chapterLayoutsFromBook(book: S21BookJson): ChapterLayoutRow[] {
@@ -168,34 +142,7 @@ function chapterLayoutsFromBook(book: S21BookJson): ChapterLayoutRow[] {
   });
 }
 
-async function putChapterLayouts(rows: ChapterLayoutRow[]): Promise<void> {
-  if (!rows.length) return;
-  const db = await openDb();
-  try {
-    const tx = db.transaction(STORE_CHAPTER_LAYOUT, "readwrite");
-    const store = tx.objectStore(STORE_CHAPTER_LAYOUT);
-    for (const row of rows) store.put(row);
-    await idbTxDone(tx);
-  } finally {
-    db.close();
-  }
-}
-
-async function putBook(usfm: string, book: S21BookJson): Promise<void> {
-  const db = await openDb();
-  try {
-    const tx = db.transaction([STORE_BOOKS, STORE_CHAPTER_LAYOUT], "readwrite");
-    tx.objectStore(STORE_BOOKS).put({ usfm, book });
-    const layouts = chapterLayoutsFromBook(book);
-    const layoutStore = tx.objectStore(STORE_CHAPTER_LAYOUT);
-    for (const row of layouts) layoutStore.put(row);
-    await idbTxDone(tx);
-  } finally {
-    db.close();
-  }
-}
-
-/** Livro: assets embarquados (mobile) → IndexedDB → API book (web) → null. Grava no IDB em background. */
+/** Livro: assets embarcados → (web) API. Sem escrita IndexedDB. */
 export async function resolveS21Book(usfm: string): Promise<S21BookJson | null> {
   const key = String(usfm || "")
     .trim()
@@ -203,72 +150,24 @@ export async function resolveS21Book(usfm: string): Promise<S21BookJson | null> 
     .split(".")[0];
   if (!key) return null;
 
-  if (Capacitor.isNativePlatform()) {
-    const bundled = await fetchBundledBookJson(key);
-    if (bundled) {
-      void putBook(key, bundled).catch(() => undefined);
-      return bundled;
-    }
-  }
+  const bundled = await fetchBundledBookJson(key);
+  if (bundled) return bundled;
 
-  const cached = await getOfflineBook(key);
-  if (cached) return cached;
+  if (Capacitor.isNativePlatform()) return null;
 
-  if (!Capacitor.isNativePlatform()) {
-    const bundled = await fetchBundledBookJson(key);
-    if (bundled) {
-      void putBook(key, bundled).catch(() => undefined);
-      return bundled;
-    }
-    // Web sem asset estático (ex. deploy sem stage): baixa o livro via /api/youversion.
-    try {
-      const fromApi = validateS21BookPayload(key, await fetchBookPayload(key));
-      void putBook(key, fromApi).catch(() => undefined);
-      return fromApi;
-    } catch {
-      return null;
-    }
-  }
-
-  return null;
-}
-
-export async function getOfflineBook(usfm: string): Promise<S21BookJson | null> {
-  const key = String(usfm || "")
-    .trim()
-    .toUpperCase()
-    .split(".")[0];
-  if (!key) return null;
   try {
-    const db = await openDb();
-    try {
-      const tx = db.transaction(STORE_BOOKS, "readonly");
-      const row = await idbReq(
-        tx.objectStore(STORE_BOOKS).get(key) as IDBRequest<{ usfm: string; book: S21BookJson } | undefined>,
-      );
-      await idbTxDone(tx);
-      return row?.book ?? null;
-    } finally {
-      db.close();
-    }
+    return validateS21BookPayload(key, await fetchBookPayload(key));
   } catch {
     return null;
   }
 }
 
+/** @deprecated Alias assets — sem IDB. */
+export async function getOfflineBook(usfm: string): Promise<S21BookJson | null> {
+  return resolveS21Book(usfm);
+}
+
 export async function clearOfflineBible(): Promise<void> {
-  const db = await openDb();
-  try {
-    const tx = db.transaction([STORE_BOOKS, STORE_META, STORE_CHAPTER_LAYOUT], "readwrite");
-    tx.objectStore(STORE_BOOKS).clear();
-    tx.objectStore(STORE_META).clear();
-    if (tx.objectStoreNames.contains(STORE_CHAPTER_LAYOUT)) {
-      tx.objectStore(STORE_CHAPTER_LAYOUT).clear();
-    }
-    await idbTxDone(tx);
-  } finally {
-    db.close();
-  }
   const { invalidateVerseIndex } = await import("./bible/verseIndexCache");
   invalidateVerseIndex("s21");
   void import("./bible/verseSearchClient").then(({ invalidateSearchIndexInWorker }) => {
@@ -280,36 +179,18 @@ export async function getChapterLayout(
   bookId: string,
   chapterId: string,
 ): Promise<ChapterLayoutRow | null> {
-  const key = chapterLayoutKey(bookId, chapterId);
-  try {
-    const db = await openDb();
-    try {
-      const tx = db.transaction(STORE_CHAPTER_LAYOUT, "readonly");
-      const row = await idbReq(
-        tx.objectStore(STORE_CHAPTER_LAYOUT).get(key) as IDBRequest<ChapterLayoutRow | undefined>,
-      );
-      await idbTxDone(tx);
-      return row ?? null;
-    } finally {
-      db.close();
-    }
-  } catch {
-    return null;
-  }
+  const bookJson = await resolveS21Book(bookId);
+  if (!bookJson) return null;
+  const chapter = String(chapterId || "1");
+  const layouts = chapterLayoutsFromBook(bookJson);
+  return layouts.find((row) => row.chapterId === chapter) ?? null;
 }
 
-/** Lecture hors-ligne du JSON livre — dérive les métriques si le store layout est vide. */
+/** Métricas do capítulo a partir do JSON do livro (assets). */
 export async function resolveChapterVerseCount(
   bookId: string,
   chapterId: string,
 ): Promise<{ verseCount: number; contentCharLength: number } | null> {
-  const cached = await getChapterLayout(bookId, chapterId);
-  if (cached) {
-    return {
-      verseCount: cached.verseCount,
-      contentCharLength: cached.contentCharLength,
-    };
-  }
   const bookJson = await resolveS21Book(bookId);
   if (!bookJson) return null;
   const chapter = Number(chapterId);
@@ -318,7 +199,6 @@ export async function resolveChapterVerseCount(
   const verses = (found.verses ?? []).filter((v) => v.text);
   if (!verses.length) return null;
   const contentCharLength = verses.reduce((acc, v) => acc + String(v.text).length, 0);
-  void putChapterLayouts(chapterLayoutsFromBook(bookJson)).catch(() => undefined);
   return {
     verseCount: verses.length,
     contentCharLength: Math.max(contentCharLength, verses.length * 40),
@@ -474,179 +354,37 @@ export function validateS21BookPayload(usfm: string, book: S21BookJson | null | 
 }
 
 /**
- * Commit atômico: substitui o store final só se a validação passou.
- * Uma versão `complete` anterior permanece intacta se a tx falhar.
- */
-async function commitOfflineBibleAtomic(
-  payloads: Map<string, S21BookJson>,
-  bookList: YouVersionBook[],
-): Promise<OfflineBibleMeta> {
-  if (payloads.size < OFFLINE_BOOK_TOTAL && payloads.size < bookList.length) {
-    throw new Error("Téléchargement incomplet");
-  }
-  for (const [usfm, book] of payloads) {
-    validateS21BookPayload(usfm, book);
-  }
-
-  const meta: OfflineBibleMeta = {
-    key: META_KEY,
-    complete: true,
-    count: payloads.size,
-    total: Math.max(bookList.length, OFFLINE_BOOK_TOTAL),
-    at: Date.now(),
-    books: bookList,
-  };
-
-  const db = await openDb();
-  try {
-    const tx = db.transaction(
-      [STORE_BOOKS, STORE_META, STORE_CHAPTER_LAYOUT],
-      "readwrite",
-    );
-    const booksStore = tx.objectStore(STORE_BOOKS);
-    const layoutStore = tx.objectStore(STORE_CHAPTER_LAYOUT);
-    booksStore.clear();
-    layoutStore.clear();
-    for (const [usfm, book] of payloads) {
-      booksStore.put({ usfm, book });
-      for (const row of chapterLayoutsFromBook(book)) {
-        layoutStore.put(row);
-      }
-    }
-    tx.objectStore(STORE_META).put(meta);
-    await idbTxDone(tx);
-  } catch (err) {
-    if (isQuotaExceededError(err)) {
-      throw new Error("Espace de stockage insuffisant pour la Bible hors ligne");
-    }
-    throw err;
-  } finally {
-    db.close();
-  }
-  return meta;
-}
-
-/**
- * Indexa os 66 livros a partir dos JSON embarcados (APK) — sem rede.
- * Fetch completo em memória → commit atômico.
+ * Assets-first: sem seed IndexedDB. Confirma assets e devolve meta sintética.
  */
 export async function seedOfflineBibleFromBundledAssets(
   bookList: YouVersionBook[],
   onProgress?: (done: number, total: number, usfm: string) => void,
 ): Promise<OfflineBibleMeta> {
   const list = bookList.filter((b) => b?.id);
-  if (!list.length) throw new Error("Liste de livres vide");
-
-  await requestPersistentStorage();
-
-  const total = list.length;
-  let done = 0;
-  const concurrency = 2;
-  let cursor = 0;
-  const payloads = new Map<string, S21BookJson>();
-
-  const yieldMain = () =>
-    new Promise<void>((resolve) => {
-      if (typeof requestIdleCallback === "function") {
-        requestIdleCallback(() => resolve(), { timeout: 48 });
-      } else {
-        setTimeout(resolve, 0);
-      }
-    });
-
-  async function worker() {
-    while (cursor < list.length) {
-      const index = cursor++;
-      const book = list[index]!;
-      const usfm = book.id.toUpperCase();
-      const json = await fetchBundledBookJson(usfm);
-      if (!json) throw new Error(`Asset manquant: ${usfm}`);
-      payloads.set(usfm, validateS21BookPayload(usfm, json));
-      done += 1;
-      onProgress?.(done, total, usfm);
-      await yieldMain();
-    }
-  }
-
-  await Promise.all(Array.from({ length: Math.min(concurrency, list.length) }, () => worker()));
-
-  const meta = await commitOfflineBibleAtomic(payloads, bookList);
-  const { invalidateVerseIndex } = await import("./bible/verseIndexCache");
-  invalidateVerseIndex("s21");
-  void import("./bible/verseSearchClient").then(({ invalidateSearchIndexInWorker }) => {
-    invalidateSearchIndexInWorker("s21");
-  });
-  try {
-    const { ensureTskeOfflinePack } = await import("./bible/tskeOffline");
-    await ensureTskeOfflinePack();
-  } catch {
-    /* refs: cache sob demanda se o pack falhar */
-  }
-  return meta;
+  const total = list.length || OFFLINE_BOOK_TOTAL;
+  onProgress?.(0, total, "GEN");
+  const probe = await fetchBundledBookJson("GEN");
+  if (!probe) throw new Error("Assets S21 manquants");
+  onProgress?.(total, total, "REV");
+  void requestPersistentStorage();
+  return syntheticOfflineMeta();
 }
 
 /**
- * Télécharge les 66 livres S21 dans IndexedDB.
- * Fetch + validation em memória; commit atômico (sem parciais no store final).
+ * Assets-first: sem download para IDB — só confirma disponibilidade / aquece cache HTTP.
  */
 export async function downloadOfflineBible(
   bookList: YouVersionBook[],
   onProgress?: (p: OfflineDownloadProgress) => void,
   signal?: AbortSignal,
 ): Promise<OfflineBibleMeta> {
+  if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
   const list = bookList.filter((b) => b?.id);
-  if (!list.length) throw new Error("Liste de livres vide");
-  if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
-
-  await requestPersistentStorage();
-
-  const total = list.length;
-  let done = 0;
-  const concurrency = 4;
-  let cursor = 0;
-  const payloads = new Map<string, S21BookJson>();
-
-  async function worker() {
-    while (cursor < list.length) {
-      if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
-      const index = cursor++;
-      const book = list[index]!;
-      const usfm = book.id.toUpperCase();
-      const json = await fetchBookPayload(usfm);
-      if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
-      payloads.set(usfm, validateS21BookPayload(usfm, json));
-      done += 1;
-      onProgress?.({ done, total, usfm });
-    }
-  }
-
-  try {
-    await Promise.all(
-      Array.from({ length: Math.min(concurrency, list.length) }, () => worker()),
-    );
-  } catch (err) {
-    if (isQuotaExceededError(err)) {
-      throw new Error("Espace de stockage insuffisant pour la Bible hors ligne");
-    }
-    throw err;
-  }
-
-  if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
-  if (payloads.size !== total) {
-    throw new Error("Téléchargement incomplet");
-  }
-
-  const meta = await commitOfflineBibleAtomic(payloads, bookList);
-  const { invalidateVerseIndex } = await import("./bible/verseIndexCache");
-  invalidateVerseIndex("s21");
-  void import("./bible/verseSearchClient").then(({ invalidateSearchIndexInWorker }) => {
-    invalidateSearchIndexInWorker("s21");
+  const total = list.length || OFFLINE_BOOK_TOTAL;
+  onProgress?.({ done: 0, total, usfm: "GEN" });
+  const meta = await seedOfflineBibleFromBundledAssets(list.length ? list : buildS21BookList(), (done, t, usfm) => {
+    onProgress?.({ done, total: t, usfm });
   });
-  try {
-    const { ensureTskeOfflinePack } = await import("./bible/tskeOffline");
-    await ensureTskeOfflinePack();
-  } catch {
-    /* refs: cache sob demanda se o pack falhar */
-  }
+  if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
   return meta;
 }

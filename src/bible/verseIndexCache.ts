@@ -1,10 +1,9 @@
 /**
  * Índice de busca em memória (verses + tokenMap), keyed por versão.
- * Persistência: idbSearchCache. Warm-up: ensureVerseIndex / warmSearchIndex.
+ * Assets-first: build a partir dos JSON embutidos; sem persistência IndexedDB.
  */
 
 import type { BibleTextVersionId } from "./bibleVersions";
-import { clearSearchIndex, readSearchIndex, writeSearchIndex } from "./idbSearchCache";
 import {
   buildIndexedVerse,
   buildTokenIndex,
@@ -86,48 +85,18 @@ async function loadS21VersesFromBundle(
 async function loadS21Verses(
   bookOrder?: Map<string, number>,
 ): Promise<{ verses: IndexedVerse[]; revision: string }> {
-  const {
-    getAllOfflineBooks,
-    getOfflineMeta,
-    cleanVerseText,
-    isOfflineBibleReady,
-    OFFLINE_BOOK_TOTAL,
-  } = await import("../bibleOffline");
+  const { cleanVerseText, OFFLINE_BOOK_TOTAL } = await import("../bibleOffline");
   const { buildS21BookList } = await import("../bibleS21Canon");
   const canon = buildS21BookList();
   const order =
     bookOrder ??
     new Map(canon.map((b, i) => [String(b.id).toUpperCase(), i]));
 
-  const verses: IndexedVerse[] = [];
-  const offlineReady = await isOfflineBibleReady();
-  if (offlineReady) {
-    const rows = await getAllOfflineBooks();
-    for (const row of rows) {
-      pushBookVerses(
-        verses,
-        {
-          usfm: row.usfm || row.book.usfm,
-          title: row.book.title,
-          chapters: row.book.chapters,
-        },
-        order,
-        cleanVerseText,
-      );
-    }
-  }
-
-  // Sem pack offline completo: indexar a partir dos JSON embutidos (/bible/s21).
-  if (verses.length === 0) {
-    const bundled = await loadS21VersesFromBundle(order, cleanVerseText);
-    verses.push(...bundled);
-  }
-
-  const meta = await getOfflineMeta();
-  const revision = `s21:${verses.length}:${meta?.count ?? 0}:${meta?.at ?? 0}:${offlineReady ? "idb" : "bundle"}`;
+  const verses = await loadS21VersesFromBundle(order, cleanVerseText);
+  const revision = `s21:${verses.length}:bundle`;
   if (verses.length === 0) {
     throw new Error(
-      `Index S21 vide (offline < ${OFFLINE_BOOK_TOTAL} livres et bundle indisponible)`,
+      `Index S21 vide (bundle < ${OFFLINE_BOOK_TOTAL} livres)`,
     );
   }
   return { verses, revision };
@@ -186,12 +155,10 @@ export function invalidateVerseIndex(version?: BibleTextVersionId): void {
   if (version) {
     cache.delete(version);
     warming.delete(version);
-    void clearSearchIndex(version);
     return;
   }
   cache.clear();
   warming.clear();
-  void clearSearchIndex();
 }
 
 /** @deprecated Preferir invalidateVerseIndex("s21") */
@@ -200,7 +167,7 @@ export function invalidateS21VerseIndex(): void {
 }
 
 /**
- * Garante VerseSearchIndex em RAM (IDB → build → write IDB).
+ * Garante VerseSearchIndex em RAM (build a partir dos assets).
  */
 export async function ensureVerseIndex(
   version: BibleTextVersionId,
@@ -213,22 +180,9 @@ export async function ensureVerseIndex(
   if (pending) return pending;
 
   const job = (async () => {
-    const stored = await readSearchIndex(version);
-    if (stored?.verses?.length) {
-      const index: VerseSearchIndex = {
-        verses: stored.verses,
-        tokenMap: stored.tokenMap,
-        uniqueTokens: stored.uniqueTokens,
-      };
-      cache.set(version, index);
-      warming.delete(version);
-      return index;
-    }
-
-    const { index, revision } = await buildIndexFromSource(version, bookOrder);
+    const { index } = await buildIndexFromSource(version, bookOrder);
     cache.set(version, index);
     warming.delete(version);
-    void writeSearchIndex(version, index, revision).catch(() => undefined);
     return index;
   })();
 
