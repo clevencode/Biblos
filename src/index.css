@@ -9822,42 +9822,36 @@ html[data-theme="dark"] .bible-reader--yv {
 }
 
 /*
- * Sheet aberto: ancestrais SEM stacking trap (z < backdrop 60).
- * Contrato partilhado search/book/history/menu — se o ancestral tiver
- * z-index/isolation/filter, o sheet fixed fica sob o blur do scrim.
+ * ═══════════════════════════════════════════════════════════════════════════
+ * CONTRATO PERMANENTE — topbar com modal aberto (.is-top-sheet-open)
+ * search | book pill | history | menu — um único bloco, sem :has() frágil.
+ * 1) Top bar mantém superfície (não transparent)
+ * 2) Ancestrais sem stacking trap
+ * 3) Trigger ativo / roll.is-open → z80 (acima do scrim z60)
+ * 4) Sheets → .top-sheet-layer z70
+ * ═══════════════════════════════════════════════════════════════════════════
  */
-.bible-reader--yv.is-top-sheet-open .bible-yv-top,
-.bible-reader--yv.is-tools-menu-open .bible-yv-top,
-.bible-reader--yv.is-history-open .bible-yv-top,
-.bible-reader--yv.is-passage-roll-open .bible-yv-top,
-.bible-yv-top.is-passage-roll-open,
-.bible-reader--yv.is-top-sheet-open .bible-yv-top:has(.bible-yv-passage-roll.is-open),
-.bible-reader--yv.is-passage-roll-open .bible-yv-top:has(.bible-yv-passage-roll.is-open),
-.bible-reader--yv .bible-yv-top:has(.bible-yv-passage-roll.is-open):has(+ .top-sheet-backdrop),
-.bible-reader--yv.is-top-sheet-open .bible-yv-top:has(.bible-yv-passage-roll.is-open) {
+.bible-reader--yv.is-top-sheet-open .bible-yv-top {
   z-index: auto !important;
   overflow: visible !important;
   contain: none !important;
   transform: none !important;
   isolation: auto !important;
   filter: none !important;
-  background: transparent;
-  border-bottom-color: transparent;
-  box-shadow: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  background: var(--bible-nav-surface, var(--yv-bg)) !important;
+  border-bottom: var(--yv-separator, 1px solid var(--yv-outline, var(--line))) !important;
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--ink) 8%, transparent),
+    0 6px 16px color-mix(in srgb, var(--ink) 12%, transparent) !important;
 }
 
 .bible-reader--yv.is-top-sheet-open .bible-yv-passage-chrome-cluster,
-.bible-reader--yv.is-top-sheet-open .bible-yv-passage-roll,
-.bible-reader--yv.is-top-sheet-open .bible-yv-passage-roll.is-open,
-.bible-reader--yv.is-passage-roll-open .bible-yv-passage-roll,
-.bible-reader--yv.is-passage-roll-open .bible-yv-passage-roll.is-open,
 .bible-reader--yv.is-top-sheet-open .bible-yv-top-tools,
 .bible-reader--yv.is-top-sheet-open .bible-yv-history-menu,
 .bible-reader--yv.is-top-sheet-open .bible-yv-tools-menu,
-.bible-reader--yv.is-tools-menu-open .bible-yv-top-tools,
-.bible-reader--yv.is-tools-menu-open .bible-yv-tools-menu,
-.bible-reader--yv.is-history-open .bible-yv-top-tools,
-.bible-reader--yv.is-history-open .bible-yv-history-menu {
+.bible-reader--yv.is-top-sheet-open .bible-yv-passage-roll:not(.is-open) {
   position: relative;
   z-index: auto !important;
   overflow: visible !important;
@@ -9867,39 +9861,28 @@ html[data-theme="dark"] .bible-reader--yv {
   filter: none !important;
 }
 
-/*
- * Book pill BOTÃO (não o modal): o chip vive DENTRO do .passage-roll.
- * Com z-index:auto/12 o botão fica sob o scrim (z60) — o preto disfarça o
- * escurecimento; search/history/menu sobem a z80 e ficam nítidos.
- * Sheet já NÃO é filho do roll → seguro elevar o roll ao nível do trigger ativo.
- */
-html[data-passage-bar-panel="test"]
-  .bible-reader--yv:is(.is-top-sheet-open, .is-passage-roll-open)
-  .bible-yv-passage-roll.is-open {
+/* Book pill: roll aberto = mesmo z do search ✕ (sheet já não é filho) */
+.bible-reader--yv.is-top-sheet-open .bible-yv-passage-roll.is-open {
+  position: relative;
   z-index: var(--bible-z-hdr-active) !important;
-  isolation: isolate;
+  isolation: isolate !important;
   transform: none !important;
   filter: none !important;
   contain: none !important;
   opacity: 1 !important;
+  overflow: visible !important;
 }
 
-html[data-passage-bar-panel="test"]
-  .bible-reader--yv:is(.is-top-sheet-open, .is-passage-roll-open)
-  .bible-yv-passage-chrome-cluster {
-  z-index: auto !important;
-  isolation: auto !important;
-  transform: none !important;
-  filter: none !important;
-  contain: none !important;
-}
-
-html[data-passage-bar-panel="test"]
-  .bible-reader--yv:is(.is-top-sheet-open, .is-passage-roll-open)
-  .bible-yv-passage-chip.is-open,
-html[data-passage-bar-panel="test"]
-  .bible-reader--yv:is(.is-top-sheet-open, .is-passage-roll-open)
-  .bible-yv-passage-chip.hdr-trigger.is-open {
+.bible-reader--yv.is-top-sheet-open .hdr-trigger.is-open,
+.bible-reader--yv.is-top-sheet-open .hdr-trigger.is-active,
+.bible-reader--yv.is-top-sheet-open .bible-yv-passage-chip.is-open,
+.bible-reader--yv.is-top-sheet-open .bible-yv-passage-chip.hdr-trigger.is-open,
+.bible-reader--yv.is-top-sheet-open .bible-yv-passage-word-search-trigger.is-on,
+.bible-reader--yv.is-top-sheet-open .bible-yv-passage-word-search-trigger.is-open,
+.bible-reader--yv.is-top-sheet-open .bible-yv-history-btn.is-on,
+.bible-reader--yv.is-top-sheet-open .bible-yv-history-btn.is-open,
+.bible-reader--yv.is-top-sheet-open .bible-yv-tools-menu-btn.is-on,
+.bible-reader--yv.is-top-sheet-open .bible-yv-tools-menu-btn.is-open {
   position: relative;
   z-index: var(--bible-z-hdr-active) !important;
 }
@@ -11196,13 +11179,16 @@ html[data-passage-bar-panel="test"] .bible-yv-word-search-recent-chip-icon {
 }
 
 @starting-style {
-  /* Search + book pill: abertura no mesmo paint (sem opacity 0). */
+  /* Search + book: 1.º paint já aberto (sem scaleY/opacity do legado). */
   html[data-passage-bar-panel="test"] .bible-yv-passage-word-search-panel.is-open,
   html[data-passage-bar-panel="test"]
-    .bible-yv-passage-roll.is-open
-    .bible-yv-passage-scroll-panel.is-header-roll.is-open {
+    .bible-yv-passage-scroll-panel.top-floating-sheet.is-open,
+  .top-sheet-layer .bible-yv-passage-scroll-panel.top-floating-sheet.is-open,
+  .top-sheet-layer .bible-yv-passage-word-search-panel.top-floating-sheet.is-open,
+  .bible-reader--yv > .bible-yv-passage-scroll-panel.top-floating-sheet.is-open {
     opacity: 1;
     transform: none;
+    max-height: var(--bible-search-sheet-max-h, min(58dvh, 28rem));
   }
 }
 
@@ -11861,7 +11847,10 @@ html[data-passage-bar-panel="test"] .bible-yv-passage-roll.is-open {
   max-width: min(100%, 16.5rem);
 }
 
-html[data-passage-bar-panel="test"] .bible-yv-passage-roll.is-open {
+/* Só sem modal top-sheet — com .is-top-sheet-open o contrato permanente (z80) manda */
+html[data-passage-bar-panel="test"]
+  .bible-reader--yv:not(.is-top-sheet-open)
+  .bible-yv-passage-roll.is-open {
   z-index: var(--bible-z-chrome-elevated);
 }
 
@@ -12079,17 +12068,11 @@ html[data-passage-bar-panel="test"]
   overflow: visible;
 }
 
+/* Roll aberto sem top-sheet: elevação local legada (z12). Com modal: contrato z80. */
 .bible-yv-passage-roll.is-open {
   z-index: var(--bible-z-chrome-elevated);
 }
 
-/* Com top-sheet aberto: roll = trigger book (z80), não chrome-elevated (12). */
-.bible-reader--yv:is(.is-top-sheet-open, .is-passage-roll-open)
-  .bible-yv-passage-roll.is-open {
-  z-index: var(--bible-z-hdr-active) !important;
-}
-
-/* Sem top-sheet: eleva a topbar com o roll. Com top-sheet: untrap (!important) acima. */
 .bible-reader--yv:not(.is-top-sheet-open) .bible-yv-top:has(.bible-yv-passage-roll.is-open) {
   overflow: visible;
   z-index: var(--bible-z-chrome-elevated);
@@ -12184,6 +12167,23 @@ html[data-passage-bar-panel="test"]
   transform: scaleY(1);
   pointer-events: auto;
   contain: layout;
+}
+
+/*
+ * Book top-sheet: anula o legado scaleY/max-height (0.4s) — abertura instantânea
+ * como a search (monta já .is-open; sem transition/animation).
+ */
+.bible-yv-passage-scroll-panel.top-floating-sheet,
+.bible-yv-passage-scroll-panel.top-floating-sheet.is-open,
+.top-sheet-layer .bible-yv-passage-scroll-panel.top-floating-sheet {
+  max-height: var(--bible-search-sheet-max-h, min(58dvh, 28rem)) !important;
+  min-height: 0 !important;
+  opacity: 1 !important;
+  transform: none !important;
+  transition: none !important;
+  animation: none !important;
+  pointer-events: auto !important;
+  contain: none !important;
 }
 
 /* Pergaminho: painel colado à barra (sem folga) */
@@ -17945,5 +17945,53 @@ html[data-passage-bar-panel="test"]
 
 .bible-search-sheet-meta .bible-history-version-badge {
   margin-right: 0.55em;
+}
+
+/*
+ * LOCK FINAL — contrato topbar modal (ganha a qualquer regra legada acima).
+ * Garante que search/book/history/menu não “perdem” superfície nem z do trigger.
+ */
+.bible-reader--yv.is-top-sheet-open .bible-yv-top {
+  background: var(--bible-nav-surface, var(--yv-bg)) !important;
+  border-bottom: var(--yv-separator, 1px solid var(--line)) !important;
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--ink) 8%, transparent),
+    0 6px 16px color-mix(in srgb, var(--ink) 12%, transparent) !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: none !important;
+  filter: none !important;
+  contain: none !important;
+  isolation: auto !important;
+}
+
+.bible-reader--yv.is-top-sheet-open .bible-yv-passage-roll.is-open {
+  z-index: var(--bible-z-hdr-active, 80) !important;
+  isolation: isolate !important;
+  transform: none !important;
+  filter: none !important;
+  contain: none !important;
+}
+
+.bible-reader--yv.is-top-sheet-open .hdr-trigger.is-open,
+.bible-reader--yv.is-top-sheet-open .hdr-trigger.is-active,
+.bible-reader--yv.is-top-sheet-open .bible-yv-passage-chip.is-open,
+.bible-reader--yv.is-top-sheet-open .bible-yv-passage-word-search-trigger.is-on,
+.bible-reader--yv.is-top-sheet-open .bible-yv-history-btn.is-on,
+.bible-reader--yv.is-top-sheet-open .bible-yv-tools-menu-btn.is-on {
+  z-index: var(--bible-z-hdr-active, 80) !important;
+}
+
+.bible-reader--yv.is-top-sheet-open .top-sheet-layer {
+  z-index: var(--bible-z-top-sheet, 70) !important;
+  pointer-events: none;
+}
+
+.bible-reader--yv.is-top-sheet-open .top-sheet-layer > .top-floating-sheet {
+  pointer-events: auto;
+  animation: none !important;
+  transition: none !important;
+  opacity: 1 !important;
+  transform: none !important;
 }
 
