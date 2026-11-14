@@ -1231,7 +1231,7 @@ export function BibleReaderView({
     setHighlightVerseEnd(null);
     setFocusDim(true);
     setCardMsg(null);
-    closeOverlay();
+    closePicker({ restoreFocus: false });
   }
 
   const onPlanStep = Boolean(
@@ -1477,6 +1477,10 @@ export function BibleReaderView({
     );
   }
 
+  /**
+   * Chip/roll só — o sheet do livro fica IRMÃO (como word-search), nunca filho do
+   * `.passage-roll.is-open` (z=12), senão o scrim z60 cobre o modal com blur.
+   */
   function renderPassageRoll(extraClass = "") {
     const rollOpen = passageRollOpen;
     return (
@@ -1498,40 +1502,46 @@ export function BibleReaderView({
         }}
       >
         {renderTopPassageNav(extraClass, rollOpen)}
-        <BiblePassageScrollPicker
-          id={passagePickerPanelId}
-          open={rollOpen}
-          step={passageStep}
-          bookId={bookId}
-          bookTitle={bookTitle}
-          chapterId={chapterId}
-          bookSearchQuery={bookSearchQuery}
-          books={books}
-          discovery={passageDiscovery}
-          discoveryBusy={passageDiscoveryBusy}
-          textVersion={textVersion}
-          discoverySession={discoverySession}
-          onDiscoveryListScroll={setDiscoveryListScroll}
-          onDiscoveryExpandedBookChange={(bookId) =>
-            patchDiscoverySession({ expandedBookId: bookId })
-          }
-          onDiscoveryVerseListScroll={setDiscoveryVerseListScroll}
-          chapters={chapters}
-          verseOptions={verseOptions}
-          passageChrome={pickerPassageChrome}
-          highlightVerse={highlightVerse}
-          verseSelected={(n) => verseInSelection(selection, n)}
-          onBack={handlePickBack}
-          onSearchChange={setBookSearchQuery}
-          onSearchClear={clearBookSearch}
-          onPickBook={pickBook}
-          onPickJump={pickDiscoveryJump}
-          onPickVerse={pickVerseSearchHit}
-          onPickChapter={pickChapter}
-          onJumpVerse={jumpToVerse}
-          discoveryBooksOnly={discoverySplitSearch}
-        />
       </div>
+    );
+  }
+
+  function renderPassageBookSheet() {
+    return (
+      <BiblePassageScrollPicker
+        id={passagePickerPanelId}
+        open={passageRollOpen}
+        step={passageStep}
+        bookId={bookId}
+        bookTitle={bookTitle}
+        chapterId={chapterId}
+        bookSearchQuery={bookSearchQuery}
+        books={books}
+        discovery={passageDiscovery}
+        discoveryBusy={passageDiscoveryBusy}
+        textVersion={textVersion}
+        discoverySession={discoverySession}
+        onDiscoveryListScroll={setDiscoveryListScroll}
+        onDiscoveryExpandedBookChange={(bookId) =>
+          patchDiscoverySession({ expandedBookId: bookId })
+        }
+        onDiscoveryVerseListScroll={setDiscoveryVerseListScroll}
+        chapters={chapters}
+        verseOptions={verseOptions}
+        passageChrome={pickerPassageChrome}
+        highlightVerse={highlightVerse}
+        verseSelected={(n) => verseInSelection(selection, n)}
+        onBack={handlePickBack}
+        onClose={() => closePicker()}
+        onSearchChange={setBookSearchQuery}
+        onSearchClear={clearBookSearch}
+        onPickBook={pickBook}
+        onPickJump={pickDiscoveryJump}
+        onPickVerse={pickVerseSearchHit}
+        onPickChapter={pickChapter}
+        onJumpVerse={jumpToVerse}
+        discoveryBooksOnly={discoverySplitSearch}
+      />
     );
   }
 
@@ -1561,7 +1571,7 @@ export function BibleReaderView({
       expandedBookId: parts.bookId.toUpperCase(),
       anchorVerseUsfm: hit.usfm.toUpperCase(),
     });
-    closePicker();
+    closePicker({ restoreFocus: false });
     void loadChapter(parts.bookId, String(hit.chapter), hit.verse, null);
   }
 
@@ -1571,7 +1581,7 @@ export function BibleReaderView({
       expandedBookId: jump.passage.bookId.toUpperCase(),
       anchorVerseUsfm: jump.passage.usfm || null,
     });
-    closePicker();
+    closePicker({ restoreFocus: false });
     setPassageStep("book");
     const chapter = String(jump.passage.chapter);
     const verse = jump.passage.verse;
@@ -1589,7 +1599,7 @@ export function BibleReaderView({
       if (nextChapter !== chapterId || !passage?.verses?.length) {
         void loadChapter(bookId, nextChapter, null);
       }
-      closePicker();
+      closePicker({ restoreFocus: false });
       return;
     }
     if (nextChapter === chapterId && passage?.verses?.length) {
@@ -2549,7 +2559,12 @@ export function BibleReaderView({
       className={`bible-reader bible-reader--yv${hideChrome ? " is-chrome-hidden" : ""}${hasActiveModal ? " is-overlay-active" : ""}${audioPlaying ? " is-audio-playing" : ""}${showCreateCard ? " has-verse-actions" : ""}${shareSheetOpen ? " is-share-open" : ""}${headCompact ? " is-head-compact" : ""}${surfaceChrome.rootClassPassageRollOpen ? " is-passage-roll-open" : ""}${topSheetOpen ? " is-top-sheet-open" : ""}${compactToolsMenu ? " is-compact-tools" : ""}${toolsMenuOpen ? " is-tools-menu-open" : ""}${historyOpen ? " is-history-open" : ""}${fontFamily === "sans" ? " is-font-sans" : " is-font-serif"}`}
       style={{ ["--bible-font-size" as string]: `${fontSize}px` }}
       onKeyDown={(event) => {
-        if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement) {
+        /* Escape deve fechar overlays mesmo com focus no input (padrão dialog). */
+        if (
+          (event.target instanceof HTMLInputElement ||
+            event.target instanceof HTMLSelectElement) &&
+          event.key !== "Escape"
+        ) {
           return;
         }
         if (planReading) {
@@ -2662,6 +2677,8 @@ export function BibleReaderView({
               />
             )}
             {renderPassageRoll()}
+            {/* Sheet book = irmão do roll/search — acima do scrim (z70), sem blur */}
+            {renderPassageBookSheet()}
             {!planReading ? (
               <BiblePassageWordSearchPanel
                 id={wordSearchPanelId}
@@ -2691,14 +2708,17 @@ export function BibleReaderView({
                 currentBookId={bookId}
                 currentBookTitle={bookTitle}
                 onPickVerse={(hit) => {
-                  closeWordSearch();
+                  closeWordSearch({ restoreFocus: false });
                   pickVerseSearchHit(hit);
                 }}
               />
             ) : null}
           </div>
         ) : (
-          renderPassageRoll()
+          <>
+            {renderPassageRoll()}
+            {renderPassageBookSheet()}
+          </>
         )}
         <div className="bible-yv-top-tools">
           {ACTIVITY_UI_ENABLED ? (

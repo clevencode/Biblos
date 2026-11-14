@@ -2,6 +2,7 @@ import {
   useCallback,
   useEffect,
   useId,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -200,15 +201,65 @@ export function usePassageBarController({
     clearWordSearchSession();
   }, [clearWordSearchSession]);
 
-  const closeWordSearch = useCallback(() => {
-    requestCloseWordSearch();
-  }, [requestCloseWordSearch]);
+  const restoreWordSearchFocusRef = useRef(true);
+  const wordSearchWasOpenRef = useRef(false);
 
-  const closePicker = useCallback(() => {
-    setPassageStep("book");
-    pendingVerseStep.current = false;
-    requestClosePicker();
-  }, [requestClosePicker]);
+  const closeWordSearch = useCallback(
+    (options?: { restoreFocus?: boolean }) => {
+      restoreWordSearchFocusRef.current = options?.restoreFocus !== false;
+      requestCloseWordSearch();
+    },
+    [requestCloseWordSearch],
+  );
+
+  /** WAI dialog: ao fechar, devolver focus ao trigger (exceto ao ir para um verso). */
+  useLayoutEffect(() => {
+    if (wordSearchOpen) {
+      wordSearchWasOpenRef.current = true;
+      return;
+    }
+    if (!wordSearchWasOpenRef.current) return;
+    wordSearchWasOpenRef.current = false;
+    if (!restoreWordSearchFocusRef.current) {
+      restoreWordSearchFocusRef.current = true;
+      return;
+    }
+    const trigger = wordSearchChromeRef.current?.querySelector(
+      "button.bible-yv-passage-word-search-trigger",
+    ) as HTMLButtonElement | null;
+    trigger?.focus({ preventScroll: true });
+  }, [wordSearchOpen]);
+
+  const restorePickerFocusRef = useRef(true);
+  const pickerWasOpenRef = useRef(false);
+
+  const closePicker = useCallback(
+    (options?: { restoreFocus?: boolean }) => {
+      restorePickerFocusRef.current = options?.restoreFocus !== false;
+      setPassageStep("book");
+      pendingVerseStep.current = false;
+      requestClosePicker();
+    },
+    [requestClosePicker],
+  );
+
+  /** WAI dialog: ao fechar o book pill, focus volta ao chip (exceto navegação). */
+  useLayoutEffect(() => {
+    if (pickerOpen) {
+      pickerWasOpenRef.current = true;
+      return;
+    }
+    if (!pickerWasOpenRef.current) return;
+    pickerWasOpenRef.current = false;
+    if (!restorePickerFocusRef.current) {
+      restorePickerFocusRef.current = true;
+      return;
+    }
+    const chip = passageRollRef.current?.querySelector(
+      "button.bible-yv-passage-chip",
+    ) as HTMLButtonElement | null;
+    chip?.focus({ preventScroll: true });
+  }, [pickerOpen]);
 
   const closeAll = useCallback(() => {
     closePicker();
@@ -267,22 +318,13 @@ export function usePassageBarController({
     pendingVerseStep.current = armed;
   }, []);
 
-  useEffect(() => {
-    if (!pickerOpen) return;
-    const id = window.setTimeout(() => {
-      if (passageStep === "book") {
-        const input = passageRollRef.current?.querySelector(
-          ".bible-yv-pick-search",
-        ) as HTMLInputElement | null;
-        input?.focus();
-        return;
-      }
-      const chip = passageRollRef.current?.querySelector(
-        ".bible-yv-passage-chip.is-chapter, .bible-yv-passage-chip.is-ref",
-      ) as HTMLButtonElement | null;
-      chip?.focus();
-    }, 0);
-    return () => window.clearTimeout(id);
+  /** Passo capítulo/verso: focus no chip (passo livro: focus no input no ScrollPicker). */
+  useLayoutEffect(() => {
+    if (!pickerOpen || passageStep === "book") return;
+    const chip = passageRollRef.current?.querySelector(
+      "button.bible-yv-passage-chip.is-chapter, button.bible-yv-passage-chip.is-ref, button.bible-yv-passage-chip",
+    ) as HTMLButtonElement | null;
+    chip?.focus({ preventScroll: true });
   }, [pickerOpen, passageStep]);
 
   useEffect(() => {
@@ -357,7 +399,7 @@ export function usePassageBarController({
     if (presentationInFlight) return;
     pendingVerseStep.current = false;
     if (passagePickerSkipsVerseStep()) {
-      closePicker();
+      closePicker({ restoreFocus: false });
       return;
     }
     setPassageStep("verse");

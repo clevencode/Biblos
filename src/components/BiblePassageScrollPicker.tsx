@@ -1,4 +1,9 @@
-import { forwardRef, useLayoutEffect, useRef } from "react";
+import {
+  forwardRef,
+  useLayoutEffect,
+  useRef,
+  type KeyboardEvent,
+} from "react";
 import type { PassageDiscoverySession } from "../bible/passageDiscovery/session";
 import { YvIcon } from "./YvIcon";
 import type { BibleSearchHit, YouVersionBook } from "../youversion/client";
@@ -12,6 +17,7 @@ import { PASSAGE_LOADING_COPY } from "../bible/viewState/loadingConstants";
 import type { PassagePickerChrome } from "../bible/viewState/passagePickerChrome";
 import type { DiscoveryJump, PassageDiscoveryResult } from "../bible/passageDiscovery/types";
 import type { BibleTextVersionId } from "../bible/bibleVersions";
+import { useUiLocale } from "../i18n/UiLocaleContext";
 
 export type PassagePickStep = "book" | "chapter" | "verse";
 
@@ -37,6 +43,8 @@ type BiblePassageScrollPickerProps = {
   highlightVerse: number | null;
   verseSelected: (n: number) => boolean;
   onBack: () => void;
+  /** Escape no passo livro — fecha o sheet sem limpar a query. */
+  onClose: () => void;
   onSearchChange: (value: string) => void;
   onSearchClear: () => void;
   onPickBook: (id: string) => void;
@@ -72,6 +80,7 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
       highlightVerse,
       verseSelected,
       onBack,
+      onClose,
       onSearchChange,
       onSearchClear,
       onPickBook,
@@ -83,7 +92,9 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
     },
     ref,
   ) {
+    const { t } = useUiLocale();
     const gridRef = useRef<HTMLDivElement>(null);
+    const searchInputRef = useRef<HTMLInputElement>(null);
     const restoredListScrollRef = useRef(false);
 
     useLayoutEffect(() => {
@@ -98,7 +109,23 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
       restoredListScrollRef.current = true;
     }, [open, step]);
 
+    /** Focus no campo no mesmo frame (padrão search). */
+    useLayoutEffect(() => {
+      if (!open || step !== "book") return;
+      const input = searchInputRef.current;
+      if (!input) return;
+      input.focus({ preventScroll: true });
+      if (input.value.trim()) input.select();
+    }, [open, step]);
+
     if (!open) return null;
+
+    function handleSearchKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      event.stopPropagation();
+      onClose();
+    }
 
     const ariaLabel =
       step === "book"
@@ -138,6 +165,7 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
           <div className="bible-yv-word-search-field bible-yv-pick-roll-search">
             <YvIcon name="search" opsz={20} className="bible-yv-word-search-field-icon" />
             <input
+              ref={searchInputRef}
               type="search"
               className="bible-yv-word-search-input bible-yv-pick-search"
               value={bookSearchQuery}
@@ -154,15 +182,16 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
                   : "Rechercher un livre, un mot ou une référence"
               }
               onChange={(event) => onSearchChange(event.target.value)}
+              onKeyDown={handleSearchKeyDown}
             />
             {hasQuery ? (
               <button
                 type="button"
                 className="bible-yv-word-search-clear bible-yv-pick-search-clear"
                 onClick={onSearchClear}
-                aria-label="Effacer la recherche"
+                aria-label={t("common.clear")}
               >
-                <YvIcon name="close" opsz={20} className="bible-yv-word-search-clear-icon" />
+                {t("common.clear")}
               </button>
             ) : null}
           </div>

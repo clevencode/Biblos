@@ -1,5 +1,5 @@
 import {
-  useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -135,7 +135,7 @@ export function BiblePassageWordSearchPanel({
   query,
   onQueryChange,
   onQueryClear,
-  onClose: _onClose,
+  onClose,
   discoveryBusy,
   verseHits,
   verseTotal,
@@ -334,19 +334,17 @@ export function BiblePassageWordSearchPanel({
     return hasActiveQuery && n > 0 ? `${bookLabel} (${n})` : bookLabel;
   }, [byBook, readerBookId, bookLabel, hasActiveQuery]);
 
-  useEffect(() => {
+  /** Focus no mesmo frame do mount — sem setTimeout (abertura imediata). */
+  useLayoutEffect(() => {
     if (!open) {
       setPickerMode(null);
       setBookFilterQuery("");
       return;
     }
-    const id = window.setTimeout(() => {
-      const input = inputRef.current;
-      if (!input) return;
-      input.focus();
-      if (input.value.trim()) input.select();
-    }, 0);
-    return () => window.clearTimeout(id);
+    const input = inputRef.current;
+    if (!input) return;
+    input.focus({ preventScroll: true });
+    if (input.value.trim()) input.select();
   }, [open]);
 
   if (!open) return null;
@@ -385,7 +383,7 @@ export function BiblePassageWordSearchPanel({
     if (!trimmed) return;
     resetScroll();
     onQueryClear();
-    window.setTimeout(() => inputRef.current?.focus(), 0);
+    inputRef.current?.focus({ preventScroll: true });
   }
 
   function handleQueryChange(value: string) {
@@ -471,10 +469,24 @@ export function BiblePassageWordSearchPanel({
     resetScroll();
     onQueryChange(term);
     pushRecent(term);
-    window.setTimeout(() => inputRef.current?.blur(), 0);
+    inputRef.current?.blur();
+  }
+
+  /** Escape: fecha picker aninhado ou o modal — sem limpar a query. */
+  function handleEscapeKey(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key !== "Escape") return false;
+    event.preventDefault();
+    event.stopPropagation();
+    if (isBookPickerOpen) {
+      closeBookPicker();
+      return true;
+    }
+    onClose();
+    return true;
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (handleEscapeKey(event)) return;
     if (event.key === "Enter") {
       event.preventDefault();
       inputRef.current?.blur();
@@ -650,6 +662,7 @@ export function BiblePassageWordSearchPanel({
               autoComplete="off"
               spellCheck={false}
               onChange={(event) => setBookFilterQuery(event.target.value)}
+              onKeyDown={handleEscapeKey}
             />
             <button
               type="button"

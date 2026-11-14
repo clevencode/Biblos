@@ -9768,25 +9768,34 @@ html[data-theme="dark"] .bible-reader--yv {
 }
 
 /*
- * Sheet aberto: header + ancestrais sem stacking trap —
- * backdrop 60 < sheet 70 < trigger ativo 80.
+ * Sheet aberto: ancestrais SEM stacking trap (z < backdrop 60).
+ * Contrato partilhado search/book/history/menu — se o ancestral tiver
+ * z-index/isolation/filter, o sheet fixed fica sob o blur do scrim.
  */
 .bible-reader--yv.is-top-sheet-open .bible-yv-top,
 .bible-reader--yv.is-tools-menu-open .bible-yv-top,
 .bible-reader--yv.is-history-open .bible-yv-top,
 .bible-reader--yv.is-passage-roll-open .bible-yv-top,
-.bible-yv-top.is-passage-roll-open {
-  z-index: auto;
-  overflow: visible;
-  contain: none;
-  transform: none;
-  isolation: auto;
+.bible-yv-top.is-passage-roll-open,
+.bible-reader--yv.is-top-sheet-open .bible-yv-top:has(.bible-yv-passage-roll.is-open),
+.bible-reader--yv.is-passage-roll-open .bible-yv-top:has(.bible-yv-passage-roll.is-open),
+.bible-reader--yv .bible-yv-top:has(.bible-yv-passage-roll.is-open):has(+ .top-sheet-backdrop),
+.bible-reader--yv.is-top-sheet-open .bible-yv-top:has(.bible-yv-passage-roll.is-open) {
+  z-index: auto !important;
+  overflow: visible !important;
+  contain: none !important;
+  transform: none !important;
+  isolation: auto !important;
+  filter: none !important;
   background: transparent;
   border-bottom-color: transparent;
 }
 
 .bible-reader--yv.is-top-sheet-open .bible-yv-passage-chrome-cluster,
 .bible-reader--yv.is-top-sheet-open .bible-yv-passage-roll,
+.bible-reader--yv.is-top-sheet-open .bible-yv-passage-roll.is-open,
+.bible-reader--yv.is-passage-roll-open .bible-yv-passage-roll,
+.bible-reader--yv.is-passage-roll-open .bible-yv-passage-roll.is-open,
 .bible-reader--yv.is-top-sheet-open .bible-yv-top-tools,
 .bible-reader--yv.is-top-sheet-open .bible-yv-history-menu,
 .bible-reader--yv.is-top-sheet-open .bible-yv-tools-menu,
@@ -9795,11 +9804,22 @@ html[data-theme="dark"] .bible-reader--yv {
 .bible-reader--yv.is-history-open .bible-yv-top-tools,
 .bible-reader--yv.is-history-open .bible-yv-history-menu {
   position: relative;
-  z-index: auto;
-  overflow: visible;
-  transform: none;
-  isolation: auto;
-  contain: none;
+  z-index: auto !important;
+  overflow: visible !important;
+  transform: none !important;
+  isolation: auto !important;
+  contain: none !important;
+  filter: none !important;
+}
+
+/*
+ * Contrato abertura (search/book/history/menu): roll NÃO eleva z acima do scrim.
+ * Sheet é irmão do roll — se o roll ficar z=12, qualquer filho fixed herda o trap.
+ */
+html[data-passage-bar-panel="test"]
+  .bible-reader--yv:is(.is-top-sheet-open, .is-passage-roll-open)
+  .bible-yv-passage-roll.is-open {
+  z-index: auto !important;
 }
 
 .bible-reader--yv.is-tools-menu-open .bible-yv-read-surface,
@@ -9826,9 +9846,9 @@ html[data-theme="dark"] .bible-reader--yv {
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
   transition:
-    background 220ms ease,
-    color 220ms ease,
-    box-shadow 220ms ease;
+    background 120ms ease,
+    color 120ms ease,
+    box-shadow 120ms ease;
 }
 
 .hdr-trigger.is-circle,
@@ -9854,17 +9874,23 @@ button.hdr-trigger.is-circle.bible-yv-passage-word-search-trigger {
 button.hdr-trigger.is-open,
 button.hdr-trigger.is-active,
 .bible-yv-passage-word-search-trigger.hdr-trigger.is-on,
-.bible-yv-passage-word-search-trigger.hdr-trigger.is-open {
-  z-index: var(--bible-z-hdr-active);
+.bible-yv-passage-word-search-trigger.hdr-trigger.is-open,
+.bible-yv-passage-chip.hdr-trigger.is-open,
+.bible-yv-passage-chip.hdr-trigger.is-active,
+button.bible-yv-passage-chip.hdr-trigger.is-open {
+  z-index: var(--bible-z-hdr-active) !important;
   background: var(--hdr-trigger-active-bg) !important;
   color: var(--hdr-trigger-active-fg) !important;
-  box-shadow: 0 6px 18px rgba(17, 19, 24, 0.16);
+  border: 0 !important;
+  outline: none !important;
+  box-shadow: 0 6px 18px rgba(17, 19, 24, 0.16) !important;
 }
 
 html[data-theme="dark"] .hdr-trigger.is-open,
 html[data-theme="dark"] .hdr-trigger.is-active,
-html[data-theme="dark"] .bible-yv-passage-word-search-trigger.hdr-trigger.is-on {
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+html[data-theme="dark"] .bible-yv-passage-word-search-trigger.hdr-trigger.is-on,
+html[data-theme="dark"] .bible-yv-passage-chip.hdr-trigger.is-open {
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35) !important;
 }
 
 /* Circle open: só o ✕ — sem fantasma do ícone idle */
@@ -9944,8 +9970,8 @@ html[data-theme="dark"] .bible-yv-passage-word-search-trigger.hdr-trigger.is-on 
   display: grid;
   place-items: center;
   transition:
-    opacity 200ms ease,
-    transform 320ms var(--top-sheet-ease);
+    opacity 120ms ease,
+    transform 140ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .hdr-icon-idle {
@@ -10006,11 +10032,17 @@ html[data-theme="dark"] .bible-yv-passage-word-search-trigger.hdr-trigger.is-on 
 }
 
 .bible-reader--yv.is-top-sheet-open .hdr-trigger.is-active,
+.bible-reader--yv.is-top-sheet-open .hdr-trigger.is-open,
 .bible-reader--yv.is-top-sheet-open .bible-yv-passage-word-search-trigger.is-on,
 .bible-reader--yv.is-top-sheet-open .bible-yv-history-btn.is-on,
 .bible-reader--yv.is-top-sheet-open .bible-yv-tools-menu-btn.is-on,
-.bible-reader--yv.is-top-sheet-open .bible-yv-passage-chip.is-open {
-  z-index: var(--bible-z-hdr-active);
+.bible-reader--yv.is-top-sheet-open .bible-yv-passage-chip.is-open,
+.bible-reader--yv.is-passage-roll-open .bible-yv-passage-chip.is-open,
+.bible-reader--yv.is-passage-roll-open .bible-yv-passage-chip.hdr-trigger.is-open {
+  z-index: var(--bible-z-hdr-active) !important;
+  background: var(--hdr-trigger-active-bg) !important;
+  color: var(--hdr-trigger-active-fg) !important;
+  box-shadow: 0 6px 18px rgba(17, 19, 24, 0.16) !important;
 }
 
 /* —— Top sheet backdrop (header modals) —— */
@@ -10035,7 +10067,12 @@ html[data-theme="dark"] .bible-yv-passage-word-search-trigger.hdr-trigger.is-on 
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);
   opacity: 1;
-  transition: opacity 220ms ease;
+  transition: none;
+}
+
+/* Busca: scrim no mesmo paint que o sheet (sem fade de entrada) */
+.top-sheet-backdrop.is-word-search {
+  transition: none;
 }
 
 html[data-theme="dark"] .top-sheet-backdrop {
@@ -10048,7 +10085,11 @@ html[data-theme="dark"] .top-sheet-backdrop {
   );
 }
 
-/* —— Cards flutuantes do cabeçalho (fixed → acima do backdrop z60) —— */
+/*
+ * Cards flutuantes do cabeçalho (fixed → acima do backdrop z60).
+ * REGRA: montar o sheet como IRMÃO do trigger/roll — nunca filho de
+ * `.passage-roll.is-open` / contentor com z < 60 (senão o scrim cobre com blur).
+ */
 .top-floating-sheet,
 .bible-yv-history-panel.top-floating-sheet,
 .bible-yv-tools-popover.top-floating-sheet,
@@ -10139,7 +10180,10 @@ html[data-passage-bar-panel="test"]
   z-index: var(--bible-z-top-sheet) !important;
   box-sizing: border-box;
   pointer-events: auto;
-  opacity: 1;
+  /* Abertura imediata: sem entrance delay (animation / starting-style / transition). */
+  animation: none !important;
+  transition: none !important;
+  opacity: 1 !important;
 }
 
 /* Compacto (campo + pills + sugestões): altura = conteúdo, sem corte artificial */
@@ -10175,11 +10219,37 @@ html[data-passage-bar-panel="test"]
   overflow: visible;
 }
 
-/* Livro (picker): mesma faixa horizontal; herda depois se pedido */
-.bible-yv-passage-scroll-panel.top-floating-sheet,
-.bible-yv-passage-scroll-panel.top-floating-sheet.is-open,
+/*
+ * Book pill (Jean 14): herda search — margens, altura útil, abertura instantânea.
+ * Ganha das regras legadas absolute / min-height 38dvh.
+ */
+.bible-reader--yv .bible-yv-passage-scroll-panel.top-floating-sheet,
+.bible-reader--yv .bible-yv-passage-scroll-panel.top-floating-sheet.is-open,
 html[data-passage-bar-panel="test"]
-  .bible-yv-passage-scroll-panel.top-floating-sheet {
+  .bible-reader--yv
+  .bible-yv-passage-scroll-panel.top-floating-sheet,
+html[data-passage-bar-panel="test"]
+  .bible-reader--yv
+  .bible-yv-passage-scroll-panel.top-floating-sheet.is-open,
+html[data-passage-bar-panel="test"]
+  .bible-yv-passage-roll.is-open
+  .bible-yv-passage-scroll-panel.top-floating-sheet.is-header-roll.is-open,
+html[data-passage-bar-panel="test"]
+  .app.is-bible-mode.is-narrow
+  .bible-yv-passage-scroll-panel.top-floating-sheet.is-open {
+  --bible-book-sheet-top: calc(
+    max(
+      var(--bible-top-chrome, 68px),
+      calc(56px + env(safe-area-inset-top, 0px))
+    ) + var(--bible-chrome-panel-offset-y, 10px)
+  );
+  --bible-book-sheet-max-h: calc(
+    100dvh - var(--bible-book-sheet-top) -
+      max(12px, env(safe-area-inset-bottom, 0px)) -
+      var(--shell-tab-clearance, 72px) - 8px
+  );
+  position: fixed !important;
+  top: var(--bible-book-sheet-top) !important;
   left: max(
     var(--mobile-gutter, 12px),
     14px,
@@ -10190,10 +10260,52 @@ html[data-passage-bar-panel="test"]
     14px,
     env(safe-area-inset-right, 0px)
   ) !important;
+  bottom: auto !important;
   width: auto !important;
   min-width: 0 !important;
   max-width: none !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: var(--bible-book-sheet-max-h) !important;
+  margin: 0 !important;
+  margin-inline: 0 !important;
+  padding: 10px 10px 12px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: var(--bible-chrome-panel-gap, 6px);
+  overflow: hidden !important;
+  contain: none !important;
   transform: none !important;
+  transform-origin: top center;
+  z-index: var(--bible-z-top-sheet) !important;
+  box-sizing: border-box;
+  pointer-events: auto;
+  animation: none !important;
+  transition: none !important;
+  opacity: 1 !important;
+  /* Opaco acima do scrim — sem frost (era o blur ao abrir). */
+  background: var(--yv-overlay-surface, var(--surface)) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  border: var(--yv-overlay-border);
+  box-shadow: var(--top-sheet-shadow) !important;
+  border-radius: var(--top-sheet-radius) !important;
+}
+
+/*
+ * Superfície partilhada de qualquer header top-sheet (search já tinha;
+ * book/history/menu herdam — evita repetir o erro do frost sob o scrim).
+ */
+.bible-reader--yv.is-top-sheet-open .top-floating-sheet {
+  background: var(--yv-overlay-surface, var(--surface)) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  z-index: var(--bible-z-top-sheet) !important;
+  animation: none !important;
+  transition: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+  contain: none !important;
 }
 
 /* Histórico / Menu: ancorados à direita, nunca cortados */
@@ -10227,13 +10339,46 @@ html[data-passage-bar-panel="test"] .bible-yv-tools-popover.top-floating-sheet {
   opacity: 0.72;
 }
 
-.bible-yv-passage-chip.hdr-trigger.is-pill {
-  max-width: min(12rem, 46vw);
+/* Largura constante — não cresce com o nome do livro nem ao abrir (✕). */
+.bible-yv-passage-chip.hdr-trigger.is-pill,
+.bible-yv-passage-chip.hdr-trigger.is-pill.is-open {
+  --bible-chip-pill-w: min(11rem, 46vw);
+  box-sizing: border-box;
+  width: var(--bible-chip-pill-w);
+  min-width: var(--bible-chip-pill-w);
+  max-width: var(--bible-chip-pill-w);
+  padding-inline: 12px 10px;
+  flex: none;
 }
 
-.bible-yv-passage-chip.hdr-trigger.is-pill.is-open {
-  max-width: min(14rem, 70vw);
-  padding-inline: 12px 10px;
+.bible-yv-passage-chip.hdr-trigger.is-pill .hdr-trigger-swap {
+  width: 100%;
+  min-width: 0;
+  justify-content: center;
+}
+
+.bible-yv-passage-chip.hdr-trigger.is-pill .hdr-trigger-label,
+.bible-yv-passage-chip.hdr-trigger.is-pill .bible-yv-passage-chip-value,
+.bible-yv-passage-chip.hdr-trigger.is-pill .bible-yv-passage-chip-ref {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.bible-yv-passage-chip.hdr-trigger.is-pill.is-open .hdr-trigger-swap {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  gap: 0.35em;
+}
+
+.bible-yv-passage-chip.hdr-trigger.is-pill.is-open .hdr-icon-idle {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.bible-yv-passage-chip.hdr-trigger.is-pill.is-open .hdr-icon-exit {
+  flex: none;
 }
 
 .top-floating-sheet .bible-yv-tools-version-chip.is-on,
@@ -10485,11 +10630,8 @@ html[data-passage-bar-panel="test"] .bible-yv-passage-word-search-panel.is-open 
   box-shadow:
     0 18px 40px rgba(0, 0, 0, 0.16),
     0 2px 8px rgba(0, 0, 0, 0.06);
-  transition:
-    opacity 0.2s ease,
-    transform 0.22s ease,
-    max-height 0.28s ease,
-    min-height 0.28s ease;
+  /* Instantâneo — overrides de posição/altura ficam no bloco top-floating-sheet. */
+  transition: none;
 }
 
 html[data-passage-bar-panel="test"]
@@ -10833,29 +10975,14 @@ html[data-passage-bar-panel="test"] .bible-yv-word-search-recent-chip-icon {
   opacity: 0.7;
 }
 
-@supports (transition-behavior: allow-discrete) {
+@starting-style {
+  /* Search + book pill: abertura no mesmo paint (sem opacity 0). */
   html[data-passage-bar-panel="test"] .bible-yv-passage-word-search-panel.is-open,
   html[data-passage-bar-panel="test"]
     .bible-yv-passage-roll.is-open
     .bible-yv-passage-scroll-panel.is-header-roll.is-open {
-    transition:
-      opacity 0.2s ease,
-      transform 0.22s ease,
-      display 0.2s allow-discrete;
-  }
-}
-
-@starting-style {
-  html[data-passage-bar-panel="test"] .bible-yv-passage-word-search-panel.is-open {
-    opacity: 0;
-    transform: translateY(-6px);
-  }
-
-  html[data-passage-bar-panel="test"]
-    .bible-yv-passage-roll.is-open
-    .bible-yv-passage-scroll-panel.is-header-roll.is-open {
-    opacity: 0;
-    transform: translateY(-6px);
+    opacity: 1;
+    transform: none;
   }
 }
 
@@ -11407,12 +11534,11 @@ html[data-passage-bar-panel="test"] .bible-yv-passage-chip-ref-chapter {
   line-height: 1;
 }
 
-/* Painel chip: cota + animação já no shell partilhado acima; aqui só âncora */
+/* Painel chip: geometria/instant no bloco book-sheet acima; sem min-height legado */
 html[data-passage-bar-panel="test"] .bible-yv-passage-scroll-panel.is-open {
-  max-height: var(--bible-passage-panel-max-h);
-  min-height: var(--bible-passage-panel-min-h);
   opacity: 1;
-  transform: translateY(0);
+  transform: none;
+  transition: none;
 }
 
 /* Book modal → herda o look do word-search (campo + linhas flat) */
@@ -11564,16 +11690,14 @@ html[data-passage-bar-panel="test"] .bible-yv-top-passage-segments.is-passage-re
 
 html[data-passage-bar-panel="test"] .bible-yv-passage-chip.is-ref,
 html[data-passage-bar-panel="test"] .bible-yv-passage-chip.is-book,
-html[data-passage-bar-panel="test"] .bible-yv-passage-chip.is-chapter {
-  flex: 0 1 auto;
-  width: auto;
-  min-width: 0;
-  max-width: 100%;
-}
-
-html[data-passage-bar-panel="test"] .bible-yv-passage-chip.is-ref {
-  min-width: 0;
-  max-width: 11rem;
+html[data-passage-bar-panel="test"] .bible-yv-passage-chip.is-chapter,
+html[data-passage-bar-panel="test"] .bible-yv-passage-chip.is-ref.is-open,
+html[data-passage-bar-panel="test"] .bible-yv-passage-chip.is-book.is-open,
+html[data-passage-bar-panel="test"] .bible-yv-passage-chip.is-chapter.is-open {
+  flex: none;
+  width: var(--bible-chip-pill-w, min(11rem, 46vw));
+  min-width: var(--bible-chip-pill-w, min(11rem, 46vw));
+  max-width: var(--bible-chip-pill-w, min(11rem, 46vw));
 }
 
 html[data-passage-bar-panel="test"] .bible-yv-passage-roll.is-open .bible-yv-top-passage-bar,
@@ -11627,11 +11751,32 @@ html[data-passage-bar-panel="test"] .bible-yv-passage-chip:hover:not(:disabled):
   background: var(--yv-chrome-hover);
 }
 
-html[data-passage-bar-panel="test"] .bible-yv-passage-chip.is-open {
-  background: var(--yv-chrome-surface);
-  border: var(--yv-chrome-active-border);
-  box-shadow: none;
-  outline: none;
+/* Chip aberto = hub ink + label/✕ (não chrome-surface claro). */
+html[data-passage-bar-panel="test"] .bible-yv-passage-chip.is-open,
+html[data-passage-bar-panel="test"] .bible-yv-passage-chip.hdr-trigger.is-open,
+html[data-passage-bar-panel="test"]
+  .bible-yv-passage-chip.hdr-trigger.is-open.is-active {
+  background: var(--hdr-trigger-active-bg) !important;
+  color: var(--hdr-trigger-active-fg) !important;
+  border: 0 !important;
+  box-shadow: 0 6px 18px rgba(17, 19, 24, 0.16) !important;
+  outline: none !important;
+  z-index: var(--bible-z-hdr-active) !important;
+}
+
+html[data-passage-bar-panel="test"]
+  .bible-yv-passage-chip.hdr-trigger.is-open
+  .bible-yv-passage-chip-value,
+html[data-passage-bar-panel="test"]
+  .bible-yv-passage-chip.hdr-trigger.is-open
+  .bible-yv-passage-chip-ref-book,
+html[data-passage-bar-panel="test"]
+  .bible-yv-passage-chip.hdr-trigger.is-open
+  .bible-yv-passage-chip-ref-chapter,
+html[data-passage-bar-panel="test"]
+  .bible-yv-passage-chip.hdr-trigger.is-open
+  .hdr-trigger-icon {
+  color: var(--hdr-trigger-active-fg) !important;
 }
 
 html[data-passage-bar-panel="test"] .bible-yv-passage-chip-caret {
@@ -11731,7 +11876,8 @@ html[data-passage-bar-panel="test"]
   z-index: var(--bible-z-chrome-elevated);
 }
 
-.bible-reader--yv .bible-yv-top:has(.bible-yv-passage-roll.is-open) {
+/* Sem top-sheet: eleva a topbar com o roll. Com top-sheet: untrap (!important) acima. */
+.bible-reader--yv:not(.is-top-sheet-open) .bible-yv-top:has(.bible-yv-passage-roll.is-open) {
   overflow: visible;
   z-index: var(--bible-z-chrome-elevated);
   contain: none;
@@ -11739,6 +11885,12 @@ html[data-passage-bar-panel="test"]
 
 .bible-yv-passage-roll.is-open .bible-yv-passage-scroll-panel.is-open {
   z-index: var(--bible-z-scroll-panel);
+}
+
+.bible-reader--yv.is-top-sheet-open
+  .bible-yv-passage-roll.is-open
+  .bible-yv-passage-scroll-panel.top-floating-sheet.is-open {
+  z-index: var(--bible-z-top-sheet) !important;
 }
 
 .bible-yv-passage-roll-scrim.is-picker-dismiss {
@@ -12238,10 +12390,8 @@ html[data-passage-bar-panel="test"]
 }
 
 .bible-yv-passage-chip.is-ref {
-  flex: 1 1 auto;
-  min-width: 5.5rem;
-  max-width: 100%;
-  padding-inline: 10px 8px;
+  flex: none;
+  padding-inline: 12px 10px;
   gap: 6px;
 }
 
