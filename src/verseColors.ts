@@ -116,10 +116,10 @@ export type HsvColor = { h: number; s: number; v: number };
 
 /**
  * Valeur HSV (V) cible pour marks lisibles :
- * dark → tons clairs ; light → tons plus foncés.
+ * dark → tons clairs ; light → tons foncés (contraste com o fundo).
  */
 export function themeTargetValue(theme: "light" | "dark"): number {
-  return theme === "dark" ? 0.88 : 0.52;
+  return theme === "dark" ? 0.9 : 0.42;
 }
 
 /** @deprecated Preferir themeTargetValue */

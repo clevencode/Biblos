@@ -1,6 +1,6 @@
 import {
-  BIBLE_READER_PREFS_KEY,
   readReadingPrefs,
+  writeReadingPrefs,
 } from "./bibleCatalogRepository";
 
 export type BibleTextVersionId = "s21" | "ht98";
@@ -40,14 +40,7 @@ export function readBibleTextVersionPref(): BibleTextVersionId {
 /** Grava a versão bíblica nas prefs do leitor (idioma UI segue via notifyUiLocale). */
 export function writeBibleTextVersionPref(versionId: BibleTextVersionId): void {
   const prefs = readReadingPrefs();
-  try {
-    localStorage.setItem(
-      BIBLE_READER_PREFS_KEY,
-      JSON.stringify({ ...prefs, textVersion: versionId }),
-    );
-  } catch {
-    /* private mode */
-  }
+  writeReadingPrefs({ ...prefs, textVersion: versionId });
 }
 
 export function bibleVersionDef(id: BibleTextVersionId): BibleVersionDef {

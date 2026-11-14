@@ -1,7 +1,11 @@
+import {
+  getStorageAdapter,
+  STORAGE_PREF_KEYS,
+} from "./services/storage/StorageAdapter";
 import { wipeLocalUserData } from "./userProfile";
 
 /** Une seule fois par jeton : oublie données/caches utilisateurs pour repartir propre. */
-const CLEAN_SLATE_KEY = "biblos-clean-slate";
+const CLEAN_SLATE_KEY = STORAGE_PREF_KEYS.cleanSlate;
 const CLEAN_SLATE_TOKEN = `official-${__APP_VERSION__}`;
 
 /** Caches Workbox / PWA — limpar no bump de versão sem desregistrar o SW intencional. */
@@ -74,45 +78,52 @@ async function deleteOfflineDatabases(): Promise<void> {
   }
 }
 
+function readCleanSlateTokenSync(): string | null {
+  try {
+    return localStorage.getItem(CLEAN_SLATE_KEY);
+  } catch {
+    return null;
+  }
+}
+
 /**
- * Efface caches + données locales obsolètes, puis reload une fois à froid.
- * @returns true si une navigation de rechargement a été déclenchée.
+ * Wipe in-place no bump de versão — sem `location.replace` / duplo boot.
+ * @returns sempre false (compat signature; nunca dispara reload).
  */
 export async function ensureCleanSlate(): Promise<boolean> {
-  let current: string | null = null;
-  try {
-    current = localStorage.getItem(CLEAN_SLATE_KEY);
-  } catch {
-    current = null;
+  const store = getStorageAdapter();
+  let current = readCleanSlateTokenSync();
+  if (current == null) {
+    current = await store.getString(CLEAN_SLATE_KEY);
   }
 
-  const url = new URL(window.location.href);
-  const isFreshBoot = url.searchParams.get("fresh") === "1";
-
-  if (current === CLEAN_SLATE_TOKEN && !isFreshBoot) {
+  if (current === CLEAN_SLATE_TOKEN) {
     return false;
   }
 
-  if (current !== CLEAN_SLATE_TOKEN) {
-    await wipeLocalUserData();
-    await deleteOfflineDatabases();
-    await clearHttpCaches();
-    await unregisterLegacyServiceWorkers();
-    try {
-      localStorage.setItem(CLEAN_SLATE_KEY, CLEAN_SLATE_TOKEN);
-    } catch {
-      /* private mode */
+  await wipeLocalUserData();
+  await deleteOfflineDatabases();
+  await clearHttpCaches();
+  await unregisterLegacyServiceWorkers();
+
+  try {
+    localStorage.setItem(CLEAN_SLATE_KEY, CLEAN_SLATE_TOKEN);
+  } catch {
+    /* private mode */
+  }
+  await store.setString(CLEAN_SLATE_KEY, CLEAN_SLATE_TOKEN);
+
+  // Limpa query legado ?fresh=1 de boots antigos.
+  try {
+    const url = new URL(window.location.href);
+    if (url.searchParams.has("fresh")) {
+      url.searchParams.delete("fresh");
+      const clean = `${url.pathname}${url.search}${url.hash}`;
+      window.history.replaceState({}, "", clean || "/");
     }
+  } catch {
+    /* ignore */
   }
 
-  if (!isFreshBoot) {
-    url.searchParams.set("fresh", "1");
-    window.location.replace(url.toString());
-    return true;
-  }
-
-  url.searchParams.delete("fresh");
-  const clean = `${url.pathname}${url.search}${url.hash}`;
-  window.history.replaceState({}, "", clean || "/");
   return false;
 }

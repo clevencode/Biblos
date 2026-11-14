@@ -18,6 +18,10 @@ import {
   ensureTskeOfflinePack,
 } from "../bible/tskeOffline";
 import { isTskeOfflineReady } from "../bible/idbTskeCache";
+import {
+  getStorageAdapter,
+  STORAGE_PREF_KEYS,
+} from "../services/storage/StorageAdapter";
 
 export type FirstInstallPhase = "s21" | "ht98" | "tske" | "plans" | "done";
 
@@ -28,7 +32,7 @@ export type FirstInstallProgress = {
   key?: string;
 };
 
-const LS_KEY = "biblos-first-install-pack";
+const LS_KEY = STORAGE_PREF_KEYS.firstInstallPack;
 const LS_DONE = "v1-complete";
 
 export function readFirstInstallPackFlag(): boolean {
@@ -45,6 +49,7 @@ export function writeFirstInstallPackFlag(): void {
   } catch {
     /* ignore */
   }
+  void getStorageAdapter().setString(LS_KEY, LS_DONE);
 }
 
 /** Conteúdo offline crítico pronto (versões + refs). */

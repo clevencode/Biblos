@@ -913,31 +913,51 @@ html[data-theme="dark"] .sw-update-banner-cta {
 }
 
 
-/* Shell nav — Convex + hub: tokens L1 chrome / L2 overlay do design system */
+/* Shell nav — Convex + hub radial: canvas na barra; hub/itens = pill invertida */
 .mode-tabs {
-  /* Geometry */
+  /* Geometry (espelhada por inline style a partir de ConvexBottomBarSurface) */
   --mode-tabs-dome-rise: 28px;
   --mode-tabs-bar-body: 40px;
   --mode-tabs-hub-size: 56px;
   --mode-tabs-item-size: var(--mobile-touch, 44px);
-  /* Ladder (mesmo contrato do .bible-reader--yv / top bar) */
-  --yv-bg: var(--bg);
-  --yv-text: var(--text);
-  --yv-muted: var(--muted);
+  /* Canvas = mesmo fundo da top bar (.bible-yv-top); âncoras paper/ink por tema */
+  --mode-tabs-canvas: var(--bg);
+  --mode-tabs-fg: var(--text);
+  --mode-tabs-fg-muted: var(--muted);
+  --mode-tabs-hover: color-mix(
+    in srgb,
+    var(--mode-tabs-canvas) 92%,
+    var(--mode-tabs-fg) 8%
+  );
+  --mode-tabs-press: color-mix(
+    in srgb,
+    var(--mode-tabs-fg) 11%,
+    var(--mode-tabs-canvas)
+  );
+  /* Hub invertido (default = light: ink + paper) */
+  --mode-tabs-hub-bg: var(--ink);
+  --mode-tabs-hub-fg: var(--paper);
+  --mode-tabs-hub-hover: color-mix(
+    in srgb,
+    var(--mode-tabs-hub-bg) 88%,
+    var(--mode-tabs-hub-fg) 12%
+  );
+  --mode-tabs-hub-press: color-mix(
+    in srgb,
+    var(--mode-tabs-hub-fg) 14%,
+    var(--mode-tabs-hub-bg)
+  );
+  --mode-tabs-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --mode-tabs-ms: 240ms;
+  /* Compat ladder YV (overlays / shadows se reutilizados) */
+  --yv-bg: var(--mode-tabs-canvas);
+  --yv-text: var(--mode-tabs-fg);
+  --yv-muted: var(--mode-tabs-fg-muted);
   --yv-line: var(--line);
-  --yv-chrome-surface: var(--surface);
-  --yv-hairline: var(--stroke-elevated);
-  --yv-chrome-border: var(--yv-hairline);
-  --yv-chrome-hover: color-mix(in srgb, var(--yv-chrome-surface) 92%, var(--yv-text) 8%);
-  --yv-chrome-active-border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--yv-line));
-  --yv-chrome-ease: cubic-bezier(0.4, 0, 0.2, 1);
-  --yv-chrome-ms: 240ms;
-  --yv-separator: 1px solid color-mix(in srgb, var(--yv-line) 70%, transparent);
-  --yv-overlay-frost-bg: color-mix(in srgb, var(--surface) 72%, transparent);
-  --yv-overlay-backdrop-filter: blur(16px) saturate(1.25);
-  --yv-overlay-shadow:
-    0 1px 2px color-mix(in srgb, var(--yv-text) 4%, transparent),
-    0 8px 20px color-mix(in srgb, var(--yv-text) 6%, transparent);
+  --yv-chrome-surface: var(--mode-tabs-canvas);
+  --yv-chrome-hover: var(--mode-tabs-hover);
+  --yv-chrome-ease: var(--mode-tabs-ease);
+  --yv-chrome-ms: var(--mode-tabs-ms);
   position: fixed;
   left: 0;
   right: 0;
@@ -949,11 +969,27 @@ html[data-theme="dark"] .sw-update-banner-cta {
   padding: 0 0 env(safe-area-inset-bottom, 0px);
   border: 0;
   background: transparent;
-  color: var(--yv-text);
+  color: var(--mode-tabs-fg);
   font-family: var(--font-ui);
   pointer-events: none;
   min-width: 0;
   min-height: 0;
+}
+
+html[data-theme="light"] .mode-tabs {
+  --mode-tabs-canvas: var(--paper);
+  --mode-tabs-fg: var(--ink);
+  /* Hub: alto contraste invertido (#0D1117 + ícone claro) */
+  --mode-tabs-hub-bg: var(--ink);
+  --mode-tabs-hub-fg: var(--paper);
+}
+
+html[data-theme="dark"] .mode-tabs {
+  --mode-tabs-canvas: var(--ink);
+  --mode-tabs-fg: var(--paper);
+  /* Hub: inverso do light (claro + ícone escuro) */
+  --mode-tabs-hub-bg: var(--paper);
+  --mode-tabs-hub-fg: var(--ink);
 }
 
 .mode-tabs-chrome {
@@ -975,17 +1011,19 @@ html[data-theme="dark"] .sw-update-banner-cta {
   pointer-events: none;
   filter: none;
   box-shadow: none;
+  /* currentColor → fill SVG (evita preto default / “tema invertido”) */
+  color: var(--mode-tabs-canvas);
 }
 
 .convex-bottom-bar-svg {
   display: block;
   width: 100%;
   height: 100%;
+  color: inherit;
 }
 
-/* Mesmo fundo da top bar (.bible-yv-top → --yv-bg) */
 .convex-bottom-bar-fill {
-  fill: var(--yv-bg);
+  fill: currentColor;
 }
 
 .convex-bottom-bar-stroke {
@@ -1021,7 +1059,7 @@ html[data-theme="dark"] .sw-update-banner-cta {
   pointer-events: none;
 }
 
-/* Hub = botão da top bar (chrome-surface), sem contorno */
+/* Hub = pill invertida (light: #0D1117 + ícone branco; dark: inverso) */
 .mode-tabs-hub {
   position: relative;
   z-index: 2;
@@ -1036,32 +1074,31 @@ html[data-theme="dark"] .sw-update-banner-cta {
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: var(--yv-chrome-surface);
-  color: var(--yv-text);
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--mode-tabs-hub-bg);
+  color: var(--mode-tabs-hub-fg);
   box-shadow: none;
   font: inherit;
   cursor: pointer;
   pointer-events: auto;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  transition: background var(--yv-chrome-ms) var(--yv-chrome-ease);
+  transition: background var(--mode-tabs-ms) var(--mode-tabs-ease);
 }
 
 .mode-tabs-hub:hover {
-  background: var(--yv-chrome-hover);
+  background: var(--mode-tabs-hub-hover);
 }
 
-/* Mesmo contrato dos triggers da top bar: sem scale no clique */
 .mode-tabs-hub:active {
   transform: none;
-  background: color-mix(in srgb, var(--yv-text) 11%, var(--yv-chrome-surface));
+  background: var(--mode-tabs-hub-press);
 }
 
 .mode-tabs.is-open {
   z-index: calc(var(--bible-z-popover, 40) + 20);
 }
-
-/* Hub aberto: herda idle (só o ícone troca para close) */
 
 .mode-tabs-hub .mode-tab-icon,
 .mode-tabs-hub .mode-tabs-hub-close {
@@ -1104,6 +1141,7 @@ html[data-theme="dark"] .sw-update-banner-cta {
     opacity 220ms ease-out;
 }
 
+/* Itens do arco = mesma lógica do hub (pill invertida paper/ink) */
 .mode-tabs-item {
   --roulette-i: 0;
   position: absolute;
@@ -1119,8 +1157,10 @@ html[data-theme="dark"] .sw-update-banner-cta {
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: var(--yv-chrome-surface);
-  color: var(--yv-muted);
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--mode-tabs-hub-bg);
+  color: var(--mode-tabs-hub-fg);
   box-shadow: none;
   transform: translate(-50%, -50%) scale(0.35);
   opacity: 0;
@@ -1128,8 +1168,8 @@ html[data-theme="dark"] .sw-update-banner-cta {
   transition:
     transform 260ms cubic-bezier(0.4, 0, 0.2, 1),
     opacity 160ms ease-out,
-    background var(--yv-chrome-ms) var(--yv-chrome-ease),
-    color var(--yv-chrome-ms) var(--yv-chrome-ease);
+    background var(--mode-tabs-ms) var(--mode-tabs-ease),
+    color var(--mode-tabs-ms) var(--mode-tabs-ease);
   transition-delay: 0ms;
   cursor: pointer;
   touch-action: manipulation;
@@ -1147,8 +1187,8 @@ html[data-theme="dark"] .sw-update-banner-cta {
   transition:
     transform 400ms cubic-bezier(0.22, 1, 0.36, 1),
     opacity 200ms ease-out,
-    background var(--yv-chrome-ms) var(--yv-chrome-ease),
-    color var(--yv-chrome-ms) var(--yv-chrome-ease);
+    background var(--mode-tabs-ms) var(--mode-tabs-ease),
+    color var(--mode-tabs-ms) var(--mode-tabs-ease);
   transition-delay: calc(40ms + var(--roulette-i) * 40ms);
 }
 
@@ -1157,14 +1197,22 @@ html[data-theme="dark"] .sw-update-banner-cta {
 }
 
 .mode-tabs-item.is-on {
-  color: var(--yv-text);
-  background: color-mix(in srgb, var(--accent) 18%, var(--yv-chrome-surface));
+  color: var(--mode-tabs-hub-fg);
+  background: var(--mode-tabs-hub-bg);
   border: 0;
 }
 
 .mode-tabs-item:hover {
-  color: var(--yv-text);
-  background: var(--yv-chrome-hover);
+  color: var(--mode-tabs-hub-fg);
+  background: var(--mode-tabs-hub-hover);
+}
+
+.mode-tabs-item:active {
+  background: var(--mode-tabs-hub-press);
+}
+
+.mode-tabs-item .mode-tab-icon {
+  color: inherit;
 }
 
 .mode-tab-icon {
@@ -13313,21 +13361,25 @@ html[data-passage-bar-panel="test"]
   font-variant-numeric: tabular-nums;
 }
 
-/* —— Éditeur circulaire HSV —— */
+/* —— Éditeur circulaire HSV — cartão suspenso (centro), sem ancorar na barra —— */
 .circular-color-editor-root {
   position: fixed;
   inset: 0;
   z-index: var(--bible-z-color-editor, 70);
   display: grid;
-  place-items: end center;
-  padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+  place-items: center;
+  padding:
+    max(16px, env(safe-area-inset-top, 0px))
+    16px
+    max(16px, env(safe-area-inset-bottom, 0px));
   pointer-events: none;
 }
 
-/* Au-dessus du dock + onglets (évite de couper Appliquer / luminosité). */
 .app.is-bible-mode.is-narrow .circular-color-editor-root {
-  padding: 12px 12px calc(var(--bible-dock-lift, 128px) + 12px);
-  align-items: end;
+  padding:
+    max(12px, env(safe-area-inset-top, 0px))
+    12px
+    max(12px, env(safe-area-inset-bottom, 0px));
 }
 
 .circular-color-editor-backdrop {

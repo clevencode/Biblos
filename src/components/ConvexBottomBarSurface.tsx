@@ -79,8 +79,10 @@ export function ConvexBottomBarSurface({ className }: ConvexBottomBarSurfaceProp
         height={vbH}
         viewBox={`0 0 ${width} ${vbH}`}
         preserveAspectRatio="none"
+        aria-hidden
       >
-        <path className="convex-bottom-bar-fill" d={paths.fill} />
+        {/* fill=currentColor: herança fiável do tema (evita preto default do SVG) */}
+        <path className="convex-bottom-bar-fill" d={paths.fill} fill="currentColor" />
         <path
           className="convex-bottom-bar-stroke"
           d={paths.stroke}

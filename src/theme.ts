@@ -1,9 +1,14 @@
 /** Thème CLEVENCODE — light | dark | system. */
 
+import {
+  getStorageAdapter,
+  STORAGE_PREF_KEYS,
+} from "./services/storage/StorageAdapter";
+
 export type ThemePref = "light" | "dark" | "system";
 export type ResolvedTheme = "light" | "dark";
 
-export const THEME_STORAGE_KEY = "biblos-theme";
+export const THEME_STORAGE_KEY = STORAGE_PREF_KEYS.theme;
 
 /** Âncoras do color system (CSS: --ink / --paper). */
 export const BRAND_INK = "#0D1117";
@@ -18,6 +23,7 @@ export function isThemePref(value: unknown): value is ThemePref {
   return value === "light" || value === "dark" || value === "system";
 }
 
+/** Leitura síncrona (localStorage / espelho Preferences). */
 export function loadThemePref(): ThemePref {
   try {
     const raw = localStorage.getItem(THEME_STORAGE_KEY);
@@ -34,6 +40,7 @@ export function saveThemePref(pref: ThemePref): void {
   } catch {
     /* ignore */
   }
+  void getStorageAdapter().setString(THEME_STORAGE_KEY, pref);
 }
 
 export function systemPrefersDark(): boolean {

@@ -3,8 +3,12 @@
 ## Incluído
 
 - Textos : **Segond 21** (`s21`) et **Haïtienne 1998** (`ht98`)
-- **TSKE** + **Strong** (références croisées)
+- **TSKE** + **Strong** (références croisées) — cânon protestante (66 livros)
 - Audio S21, marques locales, partage verset, historique de lecture local
+
+## Backlog (não incluído)
+
+- **Refs cruzadas deuterocanônicas** (Tobie, Sagesse, …) — ideia mapeada em [bible-study.md](./bible-study.md#backlog-ideia--refs-cruzadas-deuterocanônicas); exige fonte aparte do TSKe e wiring só com texto DC (HT98)
 
 ## Retiré du dépôt
 

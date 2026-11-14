@@ -167,6 +167,11 @@ export type UiCopyKey =
   | "swUpdate.title"
   | "swUpdate.lead"
   | "swUpdate.cta"
+  | "pwaInstall.title"
+  | "pwaInstall.lead"
+  | "pwaInstall.iosLead"
+  | "pwaInstall.cta"
+  | "pwaInstall.busy"
   | "searchBooks.title"
   | "searchBooks.back"
   | "searchBooks.close"
@@ -406,6 +411,13 @@ const FR: Dict = {
   "swUpdate.title": "Nouvelle version",
   "swUpdate.lead": "Une mise à jour est prête à installer.",
   "swUpdate.cta": "Mettre à jour",
+  "pwaInstall.title": "Installer l’app Biblos",
+  "pwaInstall.lead":
+    "Ajoute Biblos à l’écran d’accueil pour l’ouvrir comme une application.",
+  "pwaInstall.iosLead":
+    "Touche Partager, puis « Sur l’écran d’accueil ».",
+  "pwaInstall.cta": "Installer l’app",
+  "pwaInstall.busy": "Installation…",
   "searchBooks.title": "Livres",
   "searchBooks.back": "Retour aux livres",
   "searchBooks.close": "Fermer",
@@ -646,6 +658,13 @@ const HT: Dict = {
   "swUpdate.title": "Nouvo vèsyon",
   "swUpdate.lead": "Gen yon mizajou pare pou enstale.",
   "swUpdate.cta": "Mete ajou",
+  "pwaInstall.title": "Enstale app Biblos",
+  "pwaInstall.lead":
+    "Ajoute Biblos nan ekran dakèy pou ouvri li tankou yon aplikasyon.",
+  "pwaInstall.iosLead":
+    "Pe Partaje, epi « Ajoute nan Ekran Dakèy ».",
+  "pwaInstall.cta": "Enstale app",
+  "pwaInstall.busy": "Ap enstale…",
   "searchBooks.title": "Liv",
   "searchBooks.back": "Tounen nan liv yo",
   "searchBooks.close": "Fèmen",

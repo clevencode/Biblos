@@ -3,6 +3,10 @@
  */
 import { buildS21BookList, S21_BIBLE_META } from "../bibleS21Canon";
 import { getOfflineMeta } from "../bibleOffline";
+import {
+  getStorageAdapter,
+  STORAGE_PREF_KEYS,
+} from "../services/storage/StorageAdapter";
 import { CANON_BOOKS } from "../youversion/canon";
 import {
   fetchBooks,
@@ -11,7 +15,7 @@ import {
   type YouVersionBook,
 } from "../youversion/client";
 
-export const BIBLE_READER_PREFS_KEY = "biblos-bible-reader";
+export const BIBLE_READER_PREFS_KEY = STORAGE_PREF_KEYS.reader;
 export const BIBLE_BOOKS_CACHE_KEY = "biblos-bible-books-s21";
 const BOOKS_CACHE_TTL_MS = 7 * 86_400_000;
 
@@ -19,6 +23,7 @@ export type BibleReadingPrefs = {
   bookId?: string;
   chapterId?: string;
   fontSize?: number;
+  fontFamily?: string;
   textVersion?: "s21" | "ht98";
 };
 
@@ -97,6 +102,7 @@ export function writeBooksCache(bible: YouVersionBible | null, books: YouVersion
   }
 }
 
+/** Leitura síncrona (localStorage / espelho Preferences). */
 export function readReadingPrefs(): BibleReadingPrefs {
   try {
     const raw = localStorage.getItem(BIBLE_READER_PREFS_KEY);
@@ -105,6 +111,16 @@ export function readReadingPrefs(): BibleReadingPrefs {
   } catch {
     return {};
   }
+}
+
+export function writeReadingPrefs(prefs: BibleReadingPrefs): void {
+  const raw = JSON.stringify(prefs);
+  try {
+    localStorage.setItem(BIBLE_READER_PREFS_KEY, raw);
+  } catch {
+    /* private mode */
+  }
+  void getStorageAdapter().setString(BIBLE_READER_PREFS_KEY, raw);
 }
 
 export function readBrowserOffline(): boolean {

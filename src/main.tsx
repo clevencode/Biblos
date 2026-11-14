@@ -21,19 +21,25 @@ import { bootPassagePillLayoutTest } from "./bible/passagePillLayout";
 import { bootUiColortest } from "./ui/colortest";
 import { requestPersistentStorage } from "./offlineStorageGuard";
 import { bootSwUpdateManager } from "./swUpdateManager";
+import {
+  hydratePrefsMirror,
+  markPrefsMirrorReady,
+  STORAGE_PREF_KEY_LIST,
+} from "./services/storage/StorageAdapter";
 import "./skeleton/skeleton.css";
 import "./editorial-admin.css";
 import "./index.css";
 
-void syncNativeChrome(applyTheme());
 bootUiColortest();
 bootPassagePillLayoutTest();
 bootPassageBarPanelLayout();
 
 async function boot() {
-  const reloading = await ensureCleanSlate();
-  if (reloading) return;
+  await ensureCleanSlate();
+  await hydratePrefsMirror(STORAGE_PREF_KEY_LIST);
+  markPrefsMirrorReady();
 
+  void syncNativeChrome(applyTheme());
   void requestPersistentStorage();
   void bootSwUpdateManager();
 

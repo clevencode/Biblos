@@ -19,6 +19,12 @@ const config: CapacitorConfig = {
       backgroundColor: "#0D1117",
       overlaysWebView: false,
     },
+    SplashScreen: {
+      launchShowDuration: 0,
+      launchAutoHide: false,
+      backgroundColor: "#0D1117",
+      showSpinner: false,
+    },
     LocalNotifications: {
       smallIcon: "ic_launcher",
       iconColor: "#FFFFFF",

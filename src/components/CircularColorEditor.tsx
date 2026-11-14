@@ -92,7 +92,7 @@ function drawWheel(
 
 /**
  * Éditeur circulaire HSV (teinte × saturation).
- * V et plafond de S suivent le thème (pastel en dark, plus profond en light).
+ * Sem barra de luminosidade: V automático (claro no dark, escuro no light).
  */
 export function CircularColorEditor({
   open,
@@ -202,8 +202,8 @@ export function CircularColorEditor({
 
   const toneHint =
     theme === "dark"
-      ? "Tons clairs · adaptés au thème sombre"
-      : "Tons foncés · adaptés au thème clair";
+      ? "Tons clairs · thème sombre"
+      : "Tons foncés · thème clair";
 
   /* Portal no body: o sheet de verso tem overflow + transform (animation)
      e cortava a roda / z-index abaixo do chrome. */

@@ -113,6 +113,7 @@ import {
 } from "../bible/bibleVersionStatus";
 import {
   BIBLE_READER_PREFS_KEY,
+  writeReadingPrefs,
   resolveBookDisplay,
 } from "../bible/bibleCatalogRepository";
 import { useBibleCatalog } from "../hooks/useBibleCatalog";
@@ -162,20 +163,9 @@ function clampFontSize(n: number) {
 const BIBLE_HEAD_COMPACT_ENTER_PX = 52;
 const BIBLE_HEAD_COMPACT_EXIT_PX = 14;
 
-/**
- * Hide-on-scroll anti-tremedeira (chrome: topo + dock + tabs).
- * Uma só fonte de verdade; decisão estável via acumulador + histerese + locks.
- * Animação: só transform/opacity (CSS).
- */
-const CHROME_NOISE_PX = 1;
-const CHROME_HIDE_ACCUM_PX = 24;
-const CHROME_SHOW_ACCUM_PX = 10;
+/** Locks curtos ao forçar show/hide do chrome (modal / restore). */
 const CHROME_HIDE_LOCK_MS = 200;
 const CHROME_SHOW_LOCK_MS = 120;
-const CHROME_TOP_SAFE_PX = 12;
-
-const CHROME_NEAR_END_PX = 72;
-const CHROME_MIN_SCROLLABLE_PX = 140;
 const CHROME_PROGRAMMATIC_LOCK_MS = 320;
 /** Scroll do utilizador (px) para desligar o texto opaco do verso focado. */
 const FOCUS_DIM_CLEAR_PX = 6;
@@ -339,7 +329,7 @@ type BibleReaderViewProps = {
   onUpdateVerseCardColor?: (cardId: string, color: string) => void;
   /** Ouvre Cartes sur la flashcard du verset. */
   onViewFlashcard?: (cardId: string) => void;
-  /** Lecture immersive : chrome (tabs) masqué au scroll. */
+  /** Navbar shell: hide só com modal ativo (não ao scroll). */
   onReadingChromeChange?: (hidden: boolean) => void;
   /** Préférence thème (clair / sombre). */
   themePref?: ThemePref;
@@ -408,11 +398,7 @@ function readPrefs(): ReaderPrefs {
 }
 
 function writePrefs(prefs: ReaderPrefs) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
-  } catch {
-    /* private mode */
-  }
+  writeReadingPrefs(prefs);
 }
 
 function isLikelyVerseTitle(text: string, number: number): boolean {
@@ -2418,8 +2404,8 @@ export function BibleReaderView({
     chromeHiddenRef.current = hidden;
     chromeLockUntil.current = now + (hidden ? CHROME_HIDE_LOCK_MS : CHROME_SHOW_LOCK_MS);
 
-    // flushSync: leitor + shell (dock/tabs) no mesmo paint — evita race classList vs className.
-    // Tab Bar: oculta no scroll OU com modal ativo (hasActiveModal).
+    // flushSync: leitor + shell no mesmo paint — evita race classList vs className.
+    // Nav shell: só modal ativo esconde (não o scroll).
     flushSync(() => {
       setChromeHidden(hidden);
       onReadingChromeChange?.(hasActiveModalRef.current || hidden);
@@ -2479,9 +2465,7 @@ export function BibleReaderView({
         scrollRaf.current = 0;
         const maxScroll = Math.max(0, root.scrollHeight - root.clientHeight);
         const rawTop = root.scrollTop;
-        // Overscroll / rubber-band: deltas fora do range não dirigem o chrome.
         if (rawTop < 0 || rawTop > maxScroll) {
-          scrollAcc.current = 0;
           lastScrollTop.current = Math.min(maxScroll, Math.max(0, rawTop));
           return;
         }
@@ -2491,7 +2475,7 @@ export function BibleReaderView({
         lastScrollTop.current = top;
         syncHeadCompact(top);
 
-        // 1.º scroll do utilizador: desliga o texto opaco (não partilha lock do chrome).
+        // 1.º scroll do utilizador: desliga o texto opaco.
         if (
           focusDimActiveRef.current &&
           Math.abs(delta) >= FOCUS_DIM_CLEAR_PX &&
@@ -2500,53 +2484,9 @@ export function BibleReaderView({
           clearFocusDimOnUserScroll();
         }
 
-        if (forceChromeRef.current) {
-          scrollAcc.current = 0;
-          if (chromeHiddenRef.current) setReadingChrome(false, true);
-          return;
-        }
-
-        // Capítulos curtos: sem scroll útil → chrome sempre visível.
-        if (maxScroll < CHROME_MIN_SCROLLABLE_PX) {
-          scrollAcc.current = 0;
-          if (chromeHiddenRef.current) setReadingChrome(false, true);
-          return;
-        }
-
-        const nearTop = top <= CHROME_TOP_SAFE_PX;
-        const nearEnd = maxScroll - top <= CHROME_NEAR_END_PX;
-
-        // Zonas seguras: estado fixo (visível).
-        if (nearTop || nearEnd) {
-          scrollAcc.current = 0;
-          setReadingChrome(false, true);
-          return;
-        }
-
-        // Dead zone / ruído.
-        if (Math.abs(delta) < CHROME_NOISE_PX) return;
-
-        // Lock pós-toggle ou programático: não decidir show/hide.
-        if (performance.now() < chromeLockUntil.current) {
-          scrollAcc.current = 0;
-          return;
-        }
-
-        // Mudança de direção → zerar acumulador.
-        if ((delta > 0 && scrollAcc.current < 0) || (delta < 0 && scrollAcc.current > 0)) {
-          scrollAcc.current = 0;
-        }
-
-        scrollAcc.current += delta;
-
-        // Histerese: limiares diferentes para esconder vs mostrar.
-        if (!chromeHiddenRef.current && scrollAcc.current >= CHROME_HIDE_ACCUM_PX) {
-          scrollAcc.current = 0;
-          setReadingChrome(true);
-        } else if (chromeHiddenRef.current && scrollAcc.current <= -CHROME_SHOW_ACCUM_PX) {
-          scrollAcc.current = 0;
-          setReadingChrome(false);
-        }
+        // Sem hide-at-scroll: top / dock / nav convexa ficam sempre visíveis.
+        scrollAcc.current = 0;
+        if (chromeHiddenRef.current) setReadingChrome(false, true);
       });
     };
 

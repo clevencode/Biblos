@@ -66,6 +66,29 @@
         background: #ffffff;
         color: #0d1117;
       }
+      #splash-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 99999;
+        margin: 0;
+        min-height: 100%;
+        display: grid;
+        place-content: center;
+        gap: 6px;
+        font-family: Outfit, "Avenir Next", "Segoe UI", sans-serif;
+        text-align: center;
+        background: #0d1117;
+        color: #ffffff;
+        transition: opacity 240ms ease-out;
+        pointer-events: none;
+      }
+      html[data-theme="light"] #splash-overlay {
+        background: #ffffff;
+        color: #0d1117;
+      }
+      #splash-overlay[data-hidden="true"] {
+        opacity: 0;
+      }
       .boot-brand { margin: 0; font-size: 1.4rem; font-weight: 700; letter-spacing: -0.03em; }
       /* Alinhado a --muted (tone-400 dark / tone-500 light) */
       .boot-muted { margin: 0; color: color-mix(in srgb, #0d1117 40%, #ffffff); font-size: 0.9rem; }
@@ -73,12 +96,11 @@
     </style>
   </head>
   <body>
-    <div id="root">
-      <div class="boot-shell" aria-busy="true">
-        <p class="boot-brand">Biblos</p>
-        <p class="boot-muted">Ouverture…</p>
-      </div>
+    <div id="splash-overlay" class="boot-shell" aria-busy="true">
+      <p class="boot-brand">Biblos</p>
+      <p class="boot-muted">Ouverture…</p>
     </div>
+    <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

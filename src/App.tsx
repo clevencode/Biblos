@@ -57,6 +57,9 @@ import {
   runFirstInstallPack,
   type FirstInstallProgress,
 } from "./offline/firstInstallPack";
+import { InstallBanner } from "./components/InstallBanner";
+import { usePwaInstall } from "./hooks/usePwaInstall";
+import { useAppReadiness } from "./context/AppReadinessContext";
 
 type MarkPayload = {
   color: string;
@@ -86,12 +89,26 @@ function openHistoryPassage(
 }
 
 export function App() {
+  const { markShellReady, setCatalogHydrating, setCatalogLocalReady } =
+    useAppReadiness();
   const [editorialAdmin, setEditorialAdmin] = useState(() => isEditorialAdminRoute());
   useEffect(() => {
     const onHash = () => setEditorialAdmin(isEditorialAdminRoute());
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
+
+  useEffect(() => {
+    if (!editorialAdmin) return;
+    markShellReady();
+    setCatalogHydrating(false);
+    setCatalogLocalReady(true);
+  }, [
+    editorialAdmin,
+    markShellReady,
+    setCatalogHydrating,
+    setCatalogLocalReady,
+  ]);
 
   if (editorialAdmin) {
     return (
@@ -110,6 +127,8 @@ export function App() {
 function BiblosConsumerApp() {
   const narrow = useNarrow();
   const { t } = useUiLocale();
+  const { markShellReady } = useAppReadiness();
+  const pwaInstall = usePwaInstall();
   const {
     profile,
     refreshProfile,
@@ -162,6 +181,10 @@ function BiblosConsumerApp() {
   const bibleCompactTools = BIBLE_COMPACT_TOOLS_MENU && narrow && bibleMode;
 
   useEffect(() => subscribeSwUpdate(setSwUpdatePending), []);
+
+  useEffect(() => {
+    markShellReady();
+  }, [markShellReady]);
 
   useEffect(() => {
     let cancelled = false;
@@ -483,6 +506,9 @@ function BiblosConsumerApp() {
             {t("swUpdate.cta")}
           </button>
         </div>
+      ) : null}
+      {!firstInstallNeeded && !swUpdatePending && !bibleMode ? (
+        <InstallBanner install={pwaInstall} />
       ) : null}
 
       <main id="workspace" className={`workspace${narrow ? " is-mobile-vista" : ""}`}>
