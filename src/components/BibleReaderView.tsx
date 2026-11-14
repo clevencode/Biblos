@@ -2776,8 +2776,8 @@ export function BibleReaderView({
           className={`top-sheet-backdrop${
             surfaceChrome.scrimIsTools ? " is-tools" : ""
           }${surfaceChrome.scrimIsPickerDismiss ? " is-picker-dismiss" : ""}${
-            wordSearchOpen ? " is-word-search" : ""
-          }${surfaceChrome.passagePickerRollOpen ? " is-book-pill" : ""}`}
+            surfaceChrome.passagePickerRollOpen ? " is-book-pill" : ""
+          }`}
           aria-label={t("common.close")}
           onPointerDown={(event) => {
             event.preventDefault();

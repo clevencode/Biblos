@@ -111,6 +111,19 @@ assert.equal(surfaceTools.scrimIsTools, true);
 assert.equal(surfaceTools.scrimIsPickerDismiss, true);
 assert.equal(surfaceTools.rootClassPassageRollOpen, false);
 
+const surfaceWordSearch = readerSurfaceChrome({
+  pickerOpen: false,
+  pickerPanelOpenAllowed: true,
+  wordSearchOpen: true,
+  toolsMenuOpen: false,
+  historyOpen: false,
+  shareSheetOpen: false,
+  verseActionsOpen: false,
+});
+assert.equal(surfaceWordSearch.passageInputBlocked, true);
+assert.equal(surfaceWordSearch.passageSurfaceScrimOpen, false);
+assert.equal(surfaceWordSearch.rootClassPassageRollOpen, true);
+
 const surfacePickerNoCatalog = readerSurfaceChrome({
   pickerOpen: true,
   pickerPanelOpenAllowed: false,

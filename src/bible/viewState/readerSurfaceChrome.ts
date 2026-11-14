@@ -55,11 +55,11 @@ export function readerSurfaceChrome(
   const wordSearchOpen = Boolean(input.wordSearchOpen);
   const bookSearchOpen = Boolean(input.bookSearchOpen);
   const verseStudyOpen = Boolean(input.verseStudyOpen);
-  /** Chip roll ou painel palavras — mesma elevação de chrome + scrim dismiss. */
+  /** Chip roll ou painel palavras — mesma elevação de chrome. */
   const barOverlayOpen = rollOpen || wordSearchOpen || bookSearchOpen;
   /**
    * Modais com `.top-sheet-backdrop` (padrão hub do cabeçalho).
-   * Exclui verse_actions (sheet de versículo selecionado) — sem scrim.
+   * Exclui verse_actions (sheet de versículo) e word search (painel full-bleed).
    */
   const passageInputBlocked =
     barOverlayOpen ||
@@ -68,7 +68,8 @@ export function readerSurfaceChrome(
     input.shareSheetOpen ||
     verseStudyOpen;
   const passageSurfaceScrimOpen =
-    barOverlayOpen ||
+    rollOpen ||
+    bookSearchOpen ||
     input.toolsMenuOpen ||
     input.historyOpen ||
     input.shareSheetOpen ||
