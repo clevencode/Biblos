@@ -1,169 +1,184 @@
-# Resumo do trabalho — 13 de novembro de 2026
+# Resumo do trabalho — 13–14 de novembro de 2026
 
-Registo do trabalho no **BiblosApp** (web / PWA / Capacitor) nesta data.
+Registo do trabalho no **BiblosApp** (web / PWA / Capacitor Android).
 
-**Intervalo de commits:** `44c4bdb` → `a366b41` (tudo em `origin/master`).
+**Intervalo recente (14/11):** `56008e0` → `e0aa414` em `origin/master`  
+**Versão actual:** **0.2.7** · `versionCode` **6** · APK release assinado
 
 ---
 
-## Visão geral
+## Visão geral (14/11)
 
 | Área | Resultado |
 |------|-----------|
-| Nav convex | Roleta mais suave, UI mínima, hub com ícone de fechar |
-| Auth | Sessão Google persistente até logout manual; soft-gate e erros i18n |
-| Perfil | Tabs activas + scroll; Admin só para admin; menos ruído na conta |
-| CMS planos | Hub Créer/Voir, modal única, wizard UI Identité→Contenu→Publication |
-| Busca | Índice S21 a partir do bundle se offline incompleto |
-| TSKe | Dados no git + stage no build; cache IndexedDB + PWA CacheFirst |
-| 1.ª visita | Mesmo cartão do SW update → **Installer** (S21 + HT98 + TSKE + planos) |
+| Persistência | Fase 1 híbrida Preferences ↔ localStorage; splash `local_ready` |
+| Ícone | BookFill (coolicons) favicon / PWA / launcher / splash |
+| Offline APK | Assets-first S21 + HT98 + TSKE (sem seed IndexedDB) |
+| Estudo | Strong / sg1910 removidos; só TSKE |
+| Banner web | Android → download APK (`VITE_APK_DOWNLOAD_URL`); iOS A2HS |
+| Paleta | Tokens light/dark GitHub-like (hex semânticos) |
+| Escala UI | `textZoom(100)`, viewport travado, rem 16px, touch 44px, sheets dvh/px |
+| Release | Keystore upload + `npm run mobile:apk:release` |
+| Update nativo | HEAD no APK R2 (ETag) → banner «Mettre à jour» |
 
 ---
 
-## 1. Navegação convex (barra inferior / hub)
+## 1. Persistência híbrida + splash + chrome (56008e0)
 
 | Tema | O que mudou |
 |------|-------------|
-| Animação | Saída ~260–280 ms (ease suave); entrada ~480 ms |
-| Visual | Sem frost/blur; stroke oculto; arco sem borda/sombra (activo só com tint) |
-| Hub | Aberto = idle; ícone intermédio (fechar); toque fora fecha |
+| Prefs | `StorageAdapter` + mirror Preferences → localStorage no boot |
+| Splash | Hide após `local_ready` (AppReadiness) |
+| Chrome | Sem hide-at-scroll; pills do hub invertidas (ink/paper) |
 
-**Ficheiros:** `AppShellNav.tsx`, `ConvexBottomBarSurface.tsx`, `index.css`.
-
----
-
-## 2. Auth de consumidor (Google) e sessão
-
-| Tema | O que mudou |
-|------|-------------|
-| Persistência | `browserLocalPersistence`; boot espera o 1.º `onAuthStateChanged` antes de anónimo |
-| Soft-gate | Só após `authReady` (não durante `initializing`) |
-| Erros | `mapAuthErrorToMessage` + i18n |
-| Logout | Confirmação localizada (+ aviso offline) |
-| Onboarding | Portal/i18n; nome não pedido a cada login |
-| Público vs admin | Google only no consumer; e-mail/senha só em `#admin` |
-
-**Ficheiros:** `useConsumerAuth.tsx`, `consumerFirebaseAuth.ts`, `SignInModal.tsx`, `ProfileOnboarding.tsx`, `App.tsx`.
+**Ficheiros:** `StorageAdapter.ts`, `theme.ts`, `AppReadinessContext.tsx`, `BibleReaderView.tsx`, `index.css`.
 
 ---
 
-## 3. Perfil — tabs, conta, preferências
+## 2. Ícone oficial BookFill (9f8f741)
 
-| Tema | O que mudou |
-|------|-------------|
-| Tabs | Compte / Préfs / Stockage / Historique (+ **Admin** se email admin) |
-| Scroll | Tabs horizontais; tab activa entra na vista |
-| Conta | Removidos sync row/badge; export JSON **só guest** |
-| Historique | Marcas + histórico de leitura |
-| Idioma | FR/HT nas Préfs → versão bíblica S21 ↔ HT98 |
-| Share | URL no texto do verso sem duplicar |
-
-**Ficheiros:** `ProfileShellPanel.tsx`, `uiCopy.ts`, `shareVerse.ts`.
+Geração via `scripts/generate-app-icons.mjs` → `public/` + mipmaps/splash Android.
 
 ---
 
-## 4. Admin editorial (CMS de planos)
-
-| Tema | O que mudou |
-|------|-------------|
-| Entrada | Tab Admin só com `isClevencodeAdminEmail` |
-| Hub | **Créer un plan** / **Voir les plans** |
-| Modal | Uma só: grelha ↔ editor (sem empilhar); «← Plans» |
-| Wizard | Progresso UI (não etapas do plano): Identité → Contenu → Publication — criar **e** editar |
-| Slug | Sem campo bloqueado; em edição o ID Firestore fica fixo |
-| Ícone shell | Plan: `CalendarCheck` (ritmo diário) |
-| Polish | Progresso/nav sticky; copy de publicação limpa |
-
-**Ficheiros:** `AdminReadingPlansWorkspace.tsx`, `AdminPlanEditor.tsx`, `editorial-admin.css`, `ModeTabIcon.tsx`.
-
-`#admin` full-page (`EditorialAdminApp`) mantém-se para deep link.
-
----
-
-## 5. Motor de busca
-
-| Tema | O que mudou |
-|------|-------------|
-| Índice S21 | Offline incompleto → indexa `/bible/s21/books/*.json` (bundle) |
-| Erros | Índice vazio → `ok: false` com mensagem (`localVerseSearch`) |
-
-**Ficheiros:** `verseIndexCache.ts`, `localVerseSearch.ts`, `bibleS21Canon.ts`.
-
----
-
-## 6. Referências cruzadas (TSKe) — deploy e offline
-
-| Tema | O que mudou |
-|------|-------------|
-| Deploy | `data/bible/study/tske/**` versionado; `stage-study-assets` no `build` / `build:mobile` |
-| Manifest | `public/bible/study/tske/manifest.json` gerado no stage |
-| Leitura | RAM → IndexedDB (`biblos-tske-offline`) → fetch asset |
-| Pack | `ensureTskeOfflinePack` no download/seed da Bible S21 |
-| PWA | Workbox `CacheFirst` em `/bible/study/tske/` |
-| UX | `study.loadError` (capítulo ausente) vs `study.refsEmpty` |
-
-**Ficheiros:** `tske.ts`, `idbTskeCache.ts`, `tskeOffline.ts`, `stage-study-assets.mjs`, `vite.config.ts`, `docs/bible-study.md`.
-
----
-
-## 7. Cartão Install na 1.ª visita
-
-Reutiliza `.sw-update-banner` (o mesmo do «Mettre à jour»).
+## 3. APK assets-first (f8b20c9)
 
 | Tema | Comportamento |
 |------|----------------|
-| Quando | Pack incompleto na 1.ª entrada (persistente até concluir) |
-| CTA | **Installer** → S21 + HT98 + TSKE + warm planos Firestore |
-| Depois | Banner some; se houver SW update, mostra **Mettre à jour** |
-| Flag | `localStorage` `biblos-first-install-pack=v1-complete` (+ checks IDB) |
-
-**Ficheiros:** `src/offline/firstInstallPack.ts`, `App.tsx`, `uiCopy.ts`.
+| S21 / HT98 / TSKE | Lidos de assets empacotados; sem escrita IDB no caminho crítico |
+| Web | Banner instalar (depois evoluído para APK download) |
+| Workbox | CacheFirst nas rotas de bíblia/estudo (web) |
 
 ---
 
-## 8. Commits do dia (ordem)
+## 4. Remoção Strong / sg1910 + banner APK web (4a4a68c)
 
-| Hash | Mensagem (resumo) |
-|------|-------------------|
-| `44c4bdb` | Hub: ícone intermédio ao abrir o menu |
-| `8e4d3c2` | Convex navbar UI |
-| `bfa98e9` | Timing saída da roleta |
-| `27527b8` | UI mínima da barra |
-| `b45babf` | Remoção frost/blur |
-| `fa38879` | Tabs internas do perfil |
-| `b1e4c54` | Idioma Préfs ↔ versão bíblica |
-| `56bca96` | Tab Admin só para admin |
-| `216288d` | CMS embutido + hub + modais + wizard + scroll tabs |
-| `4e01dfa` | Busca bundle + TSKE no deploy |
-| `a366b41` | Pack 1.ª visita + TSKE offline IDB/PWA + resumo |
+| Tema | O que mudou |
+|------|-------------|
+| Estudo | Removidos `BibleStrongSheet`, `strongLexicon`, export Strong, CSS |
+| Stage | Só TSKE no pipeline de estudo |
+| Banner Android web | `usePwaInstall` modo `apk-download` (não A2HS / BIP CTA) |
+| iOS | Mantém `ios-hint` |
+| Limpeza | `firstInstallPack.ts` removido; chaves `install.banner*` mortas |
+| Env | `VITE_APK_DOWNLOAD_URL` (ex. R2) em `.env.example` |
+
+**Ficheiros:** `usePwaInstall.ts`, `InstallBanner.tsx`, `uiCopy.ts`, scripts stage/export.
 
 ---
 
-## 9. Smoke tests
+## 5. Paleta UI + escala Chrome ↔ APK (50fe83e)
+
+### Paleta (`src/index.css`)
+
+| Token | Dark | Light |
+|-------|------|-------|
+| `--bg` / `--panel` | `#0D1117` | `#FFFFFF` |
+| `--surface` | `#161B22` | `#F6F8FA` |
+| `--elevated` | `#21262D` | `#EAEEF2` |
+| `--line` | `#30363D` | `#D0D7DE` |
+| `--text` | `#F0F6FC` | `#0D1117` |
+| `--muted` | `#8B949E` | `#57606A` |
+
+### Escala / touch / sheets
+
+| Tema | Detalhe |
+|------|---------|
+| Android | `MainActivity` → `setTextZoom(100)` |
+| Viewport | `maximum-scale=1.0, user-scalable=no, viewport-fit=cover` |
+| CSS | `:root { font-size: 16px; text-size-adjust: 100% }` |
+| Touch | Share close + word-search clear → `var(--mobile-touch, 44px)` |
+| Sheets | Verse actions `min(48dvh, 340px)`; share `min(56dvh, 400px)` |
+| Limpeza | Removido `--mobile-tab-min` órfão |
+
+### Release assinado
+
+| Item | Valor |
+|------|--------|
+| Script | `npm run mobile:apk:release` → `assembleRelease` |
+| Keystore | `android/keystore/` + `key.properties` (**gitignored**) |
+| Exemplo | `android/key.properties.example` |
+| Output | `android/app/build/outputs/apk/release/Biblos.apk` |
+| Backup | Cópia segura em Downloads (não no git) |
+
+Hosting APK para utilizadores: **Cloudflare R2** + `VITE_APK_DOWNLOAD_URL` (sem Blaze Firebase Storage).
+
+---
+
+## 6. Update APK nativo via HTTP HEAD (e0aa414 · v0.2.7)
+
+Só em `Capacitor.isNativePlatform()` + online.
+
+```text
+HEAD VITE_APK_DOWNLOAD_URL (cache: no-store)
+  → ETag | Last-Modified | Content-Length
+  → 1.ª abertura: grava biblos-apk-etag (sem banner)
+  → depois: ETag ≠ salvo → banner .sw-update-banner
+  → CTA Mettre à jour → Browser.open(url) + actualiza ETag
+  → Plus tard → dismiss só na sessão
+```
+
+| Peça | Ficheiro |
+|------|----------|
+| Hook | `src/hooks/useApkUpdate.ts` |
+| UI | `App.tsx` (prioridade: SW → APK update → InstallBanner web) |
+| Plugin | `@capacitor/browser` |
+| i18n | Reusa `swUpdate.*` + `auth.later` |
+
+**CORS R2:** permitir `HEAD`/`GET` ao origin Capacitor (`https://localhost`).
+
+**Versões bump:** `package.json` **0.2.7** · `versionCode` **6** · `versionName` **0.2.7**.
+
+---
+
+## 7. Commits recentes (14/11)
+
+| Hash | Mensagem |
+|------|----------|
+| `56008e0` | Persistência híbrida fase 1, splash, chrome |
+| `9f8f741` | Ícone BookFill oficial |
+| `f8b20c9` | APK assets-first (sem IDB crítico) |
+| `4a4a68c` | Banner APK web; remove Strong/sg1910/firstInstallPack |
+| `50fe83e` | Release assinado + escala WebView + paleta |
+| `e0aa414` | v0.2.7 HEAD update R2 + versionCode 6 |
+
+*(O dia 13/11 mantém o histórico anterior: nav convex, auth, perfil, CMS, TSKE — commits `44c4bdb`…`a366b41`.)*
+
+---
+
+## 8. Smoke tests (estado actual)
 
 | Área | Verificar |
 |------|-----------|
-| Sessão | Google → reabrir app → continua; só sai com déconnexion |
-| Perfil | Tabs + scroll; guest = export JSON; admin = tab Admin |
-| Admin | Wizard 3 passos; Voir → editar no mesmo modal |
-| Busca | Sem pack offline, palavra em S21 → hits |
-| TSKe | `GET /bible/study/tske/JHN.3.json` → JSON; estudo offline após Install |
-| Install | 1.ª visita → banner Installer → progresso S21/HT98/refs/plans → some |
+| Web Android | Banner → download APK (URL R2 real, não fallback SPA) |
+| APK 1.ª install | Sem banner update; ETag seed no `localStorage` |
+| APK após novo upload R2 | Banner «Nouvelle version» → Browser → instalar por cima |
+| Offline nativo | HEAD falha em silêncio |
+| Escala | Fonte sistema Android não distorce chrome (textZoom 100) |
+| Touch | Close share / clear search ≥ 44px |
+| Assets | Leitura S21/HT98/TSKE sem rede no APK |
 
 ```bash
-npm run bible:study:stage
-npm run build
+npm run mobile:apk:release
+# Output: android/app/build/outputs/apk/release/Biblos.apk
+# Subir ao R2 com o mesmo object key; actualizar VITE_APK_DOWNLOAD_URL se necessário
 ```
 
 ---
 
-## 10. Follow-ups opcionais
+## 9. Follow-ups
 
-- Strong / Sg1910: removidos do projeto (só TSKE no estudo)
-- Facetas da busca vs escopo filtrado (pills)  
-- Actualizar `docs/components/*` com hub admin embutido  
-- Política `#admin` vs tab Admin  
+- Configurar CORS HEAD no bucket R2  
+- Custom domain R2 + rate limit (abuso de tráfego)  
+- Garantir `VITE_APK_DOWNLOAD_URL` no CI / build nativo  
+- Política Play Store (quando aplicável) vs sideload R2  
 
 ---
 
-*Actualizado após `a366b41` — 13/11/2026.*
+## Anexo — resumo 13/11 (ainda válido em parte)
+
+Nav convex, auth Google persistente, perfil tabs, CMS planos admin, busca bundle S21, TSKE no deploy.  
+**Obsoleto:** cartão «Installer» / `firstInstallPack` (removido em `4a4a68c`); Strong/Sg1910 (removidos).
+
+---
+
+*Actualizado após `e0aa414` (v0.2.7) — 14/11/2026.*
