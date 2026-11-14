@@ -9706,8 +9706,9 @@ ul.plan-yv-day-note-ref {
   --bible-z-top-backdrop: 60;
   --bible-z-top-sheet: 70;
   --bible-z-hdr-active: 80;
-  --hdr-trigger-active-bg: #111318;
-  --hdr-trigger-active-fg: #ffffff;
+  /* Trigger aberto = mesma superfície do modal (não preto hub) */
+  --hdr-trigger-active-bg: var(--yv-overlay-surface, var(--surface));
+  --hdr-trigger-active-fg: var(--yv-text, var(--text));
   --top-sheet-shadow: 0 20px 44px rgba(17, 19, 24, 0.18);
   --top-sheet-radius: 24px;
   --top-sheet-ease: cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -9789,8 +9790,8 @@ ul.plan-yv-day-note-ref {
 }
 
 html[data-theme="dark"] .bible-reader--yv {
-  --hdr-trigger-active-bg: var(--paper);
-  --hdr-trigger-active-fg: var(--ink);
+  --hdr-trigger-active-bg: var(--yv-overlay-surface, var(--surface));
+  --hdr-trigger-active-fg: var(--yv-text, var(--text));
   --top-sheet-shadow: 0 20px 44px rgba(0, 0, 0, 0.45);
 }
 
@@ -9946,9 +9947,9 @@ button.bible-yv-passage-chip.hdr-trigger.is-open {
   z-index: var(--bible-z-hdr-active) !important;
   background: var(--hdr-trigger-active-bg) !important;
   color: var(--hdr-trigger-active-fg) !important;
-  border: 0 !important;
+  border: var(--yv-overlay-border, var(--yv-hairline, 1px solid var(--line))) !important;
   outline: none !important;
-  box-shadow: 0 6px 18px rgba(17, 19, 24, 0.16) !important;
+  box-shadow: var(--top-sheet-shadow, 0 6px 18px rgba(17, 19, 24, 0.16)) !important;
 }
 
 html[data-theme="dark"] .hdr-trigger.is-open,
@@ -10107,7 +10108,8 @@ html[data-theme="dark"] .bible-yv-passage-chip.hdr-trigger.is-open {
   z-index: var(--bible-z-hdr-active) !important;
   background: var(--hdr-trigger-active-bg) !important;
   color: var(--hdr-trigger-active-fg) !important;
-  box-shadow: 0 6px 18px rgba(17, 19, 24, 0.16) !important;
+  border: var(--yv-overlay-border, var(--yv-hairline, 1px solid var(--line))) !important;
+  box-shadow: var(--top-sheet-shadow, 0 6px 18px rgba(17, 19, 24, 0.16)) !important;
 }
 
 /* —— Top sheet backdrop (header modals) ——
@@ -10396,8 +10398,8 @@ html[data-passage-bar-panel="test"]
 }
 
 /*
- * Histórico: herança search/book — fixed, instant, opaco, altura útil, âncora direita.
- * Sheet montado como IRMÃO do trigger (não filho de contentor z elevado).
+ * Histórico + Menu: mesmas margens da search (left/right gutter, full width).
+ * Float FAB do menu: exceção absolute (bloco seguinte).
  */
 .bible-reader--yv .bible-yv-history-panel.top-floating-sheet,
 html[data-passage-bar-panel="test"]
@@ -10405,44 +10407,56 @@ html[data-passage-bar-panel="test"]
   .bible-yv-history-panel.top-floating-sheet,
 html[data-passage-bar-panel="test"]
   .bible-reader--yv.is-history-open
-  .bible-yv-history-panel.top-floating-sheet {
-  --bible-history-sheet-top: calc(
+  .bible-yv-history-panel.top-floating-sheet,
+.bible-reader--yv
+  .bible-yv-tools-popover.top-floating-sheet:not(.is-float-anchor),
+html[data-passage-bar-panel="test"]
+  .bible-reader--yv
+  .bible-yv-tools-popover.top-floating-sheet:not(.is-float-anchor),
+html[data-passage-bar-panel="test"]
+  .bible-reader--yv.is-tools-menu-open
+  .bible-yv-tools-popover.top-floating-sheet:not(.is-float-anchor) {
+  --bible-search-sheet-top: calc(
     max(
       var(--bible-top-chrome, 68px),
       calc(56px + env(safe-area-inset-top, 0px))
     ) + var(--bible-chrome-panel-offset-y, 10px)
   );
-  --bible-history-sheet-max-h: calc(
-    100dvh - var(--bible-history-sheet-top) -
+  --bible-search-sheet-max-h: calc(
+    100dvh - var(--bible-search-sheet-top) -
       max(12px, env(safe-area-inset-bottom, 0px)) -
       var(--shell-tab-clearance, 72px) - 8px
   );
   position: fixed !important;
-  top: var(--bible-history-sheet-top) !important;
-  left: auto !important;
+  top: var(--bible-search-sheet-top) !important;
+  left: max(
+    var(--mobile-gutter, 12px),
+    14px,
+    env(safe-area-inset-left, 0px)
+  ) !important;
   right: max(
     var(--mobile-gutter, 12px),
     14px,
     env(safe-area-inset-right, 0px)
   ) !important;
   bottom: auto !important;
-  width: min(290px, calc(100vw - 2 * max(var(--mobile-gutter, 12px), 14px))) !important;
-  max-width: calc(
-    100vw - 2 * max(var(--mobile-gutter, 12px), 14px, env(safe-area-inset-right, 0px))
-  ) !important;
+  width: auto !important;
   min-width: 0 !important;
+  max-width: none !important;
   height: auto !important;
   min-height: 0 !important;
-  max-height: var(--bible-history-sheet-max-h) !important;
+  max-height: var(--bible-search-sheet-max-h) !important;
   margin: 0 !important;
+  margin-inline: 0 !important;
+  inset-inline: auto;
   padding: 10px 10px 12px !important;
   display: flex !important;
   flex-direction: column !important;
-  gap: 8px;
+  gap: var(--bible-chrome-panel-gap, 6px);
   overflow: hidden !important;
   contain: none !important;
   transform: none !important;
-  transform-origin: top right;
+  transform-origin: top center;
   z-index: var(--bible-z-top-sheet) !important;
   box-sizing: border-box;
   pointer-events: auto;
@@ -10457,67 +10471,9 @@ html[data-passage-bar-panel="test"]
   border-radius: var(--top-sheet-radius) !important;
 }
 
-/*
- * Menu header: herança search/book/history — fixed, instant, opaco, âncora direita.
- * Float FAB: exceção absolute (bloco seguinte).
- */
 .bible-reader--yv
-  .bible-yv-tools-popover.top-floating-sheet:not(.is-float-anchor),
-html[data-passage-bar-panel="test"]
-  .bible-reader--yv
-  .bible-yv-tools-popover.top-floating-sheet:not(.is-float-anchor),
-html[data-passage-bar-panel="test"]
-  .bible-reader--yv.is-tools-menu-open
   .bible-yv-tools-popover.top-floating-sheet:not(.is-float-anchor) {
-  --bible-menu-sheet-top: calc(
-    max(
-      var(--bible-top-chrome, 68px),
-      calc(56px + env(safe-area-inset-top, 0px))
-    ) + var(--bible-chrome-panel-offset-y, 10px)
-  );
-  --bible-menu-sheet-max-h: calc(
-    100dvh - var(--bible-menu-sheet-top) -
-      max(12px, env(safe-area-inset-bottom, 0px)) -
-      var(--shell-tab-clearance, 72px) - 8px
-  );
-  position: fixed !important;
-  top: var(--bible-menu-sheet-top) !important;
-  left: auto !important;
-  right: max(
-    var(--mobile-gutter, 12px),
-    14px,
-    env(safe-area-inset-right, 0px)
-  ) !important;
-  bottom: auto !important;
-  width: min(290px, calc(100vw - 2 * max(var(--mobile-gutter, 12px), 14px))) !important;
-  max-width: calc(
-    100vw - 2 * max(var(--mobile-gutter, 12px), 14px, env(safe-area-inset-right, 0px))
-  ) !important;
-  min-width: 0 !important;
-  height: auto !important;
-  min-height: 0 !important;
-  max-height: var(--bible-menu-sheet-max-h) !important;
-  margin: 0 !important;
-  padding: 10px 10px 12px !important;
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 8px;
   overflow: auto !important;
-  contain: none !important;
-  transform: none !important;
-  transform-origin: top right;
-  z-index: var(--bible-z-top-sheet) !important;
-  box-sizing: border-box;
-  pointer-events: auto;
-  animation: none !important;
-  transition: none !important;
-  opacity: 1 !important;
-  background: var(--yv-overlay-surface, var(--surface)) !important;
-  -webkit-backdrop-filter: none !important;
-  backdrop-filter: none !important;
-  border: var(--yv-overlay-border);
-  box-shadow: var(--top-sheet-shadow) !important;
-  border-radius: var(--top-sheet-radius) !important;
   scrollbar-width: none;
 }
 
@@ -10759,7 +10715,7 @@ html[data-passage-bar-panel="test"] .bible-yv-passage-word-search-trigger.is-on:
   outline: none;
 }
 
-/* Search trigger ativo = hub ink + ✕ branco (acima do backdrop) */
+/* Search trigger ativo = superfície do modal (não preto) */
 html[data-passage-bar-panel="test"]
   .bible-yv-passage-word-search-trigger.hdr-trigger.is-on,
 html[data-passage-bar-panel="test"]
@@ -10768,9 +10724,9 @@ html[data-passage-bar-panel="test"]
   .bible-yv-passage-word-search-trigger.hdr-trigger.is-active {
   background: var(--hdr-trigger-active-bg) !important;
   color: var(--hdr-trigger-active-fg) !important;
-  border: 0 !important;
+  border: var(--yv-overlay-border, var(--yv-hairline, 1px solid var(--line))) !important;
   outline: none;
-  box-shadow: 0 6px 18px rgba(17, 19, 24, 0.16) !important;
+  box-shadow: var(--top-sheet-shadow, 0 6px 18px rgba(17, 19, 24, 0.16)) !important;
   z-index: var(--bible-z-hdr-active);
 }
 
@@ -11945,8 +11901,8 @@ html[data-passage-bar-panel="test"]
   .bible-yv-passage-chip.hdr-trigger.is-open.is-active {
   background: var(--hdr-trigger-active-bg) !important;
   color: var(--hdr-trigger-active-fg) !important;
-  border: 0 !important;
-  box-shadow: 0 6px 18px rgba(17, 19, 24, 0.16) !important;
+  border: var(--yv-overlay-border, var(--yv-hairline, 1px solid var(--line))) !important;
+  box-shadow: var(--top-sheet-shadow, 0 6px 18px rgba(17, 19, 24, 0.16)) !important;
   outline: none !important;
   z-index: var(--bible-z-hdr-active) !important;
 }
