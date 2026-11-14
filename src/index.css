@@ -920,9 +920,10 @@ html[data-theme="dark"] .sw-update-banner-cta {
 /* Shell nav — Convex + hub radial: canvas na barra; hub/itens = pill invertida */
 .mode-tabs {
   /* Geometry (espelhada por inline style a partir de ConvexBottomBarSurface) */
-  --mode-tabs-dome-rise: 28px;
-  --mode-tabs-bar-body: 40px;
-  --mode-tabs-hub-size: 56px;
+  --mode-tabs-dome-rise: 34px;
+  --mode-tabs-bar-body: 62px;
+  --mode-tabs-hub-size: 50px;
+  --mode-tabs-hub-top: 9px;
   --mode-tabs-item-size: var(--mobile-touch, 44px);
   /* Canvas = mesmo fundo da top bar (.bible-yv-top); âncoras paper/ink por tema */
   --mode-tabs-canvas: var(--bg);
@@ -1000,7 +1001,11 @@ html[data-theme="dark"] .mode-tabs {
   position: relative;
   z-index: 1;
   width: 100%;
+  /* Mesma altura do SVG (1px CSS = 1 unit viewBox) */
   height: calc(var(--mode-tabs-dome-rise) + var(--mode-tabs-bar-body));
+  margin: 0;
+  padding: 0;
+  overflow: visible;
   pointer-events: none;
 }
 
@@ -1008,22 +1013,28 @@ html[data-theme="dark"] .mode-tabs {
 .convex-bottom-bar,
 .mode-tabs-convex {
   position: absolute;
-  inset: 0;
+  inset-inline: 0;
+  top: 0;
+  left: 0;
+  right: 0;
   z-index: 1;
   width: 100%;
-  height: 100%;
+  /* height inline = CONVEX_BAR_HEIGHT_PX — não usar 100% (evita stretch Y) */
   pointer-events: none;
-  filter: none;
   box-shadow: none;
-  /* currentColor → fill SVG (evita preto default / “tema invertido”) */
   color: var(--mode-tabs-canvas);
+  filter: drop-shadow(
+    0 -4px 12px color-mix(in srgb, var(--ink) 12%, transparent)
+  );
 }
 
 .convex-bottom-bar-svg {
   display: block;
   width: 100%;
-  height: 100%;
+  height: auto;
+  max-width: 100%;
   color: inherit;
+  vertical-align: top;
 }
 
 .convex-bottom-bar-fill {
@@ -1031,7 +1042,10 @@ html[data-theme="dark"] .mode-tabs {
 }
 
 .convex-bottom-bar-stroke {
-  stroke: none;
+  stroke: color-mix(in srgb, var(--mode-tabs-fg) 14%, transparent);
+  stroke-width: 1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 /* Hit-target só para fechar — sem frost/blur (barra convexa fica intacta) */
@@ -1051,15 +1065,20 @@ html[data-theme="dark"] .mode-tabs {
   cursor: default;
 }
 
-/* Hub: centro na linha plana → semicírculo = 100% do botão */
+/*
+ * Hub: topo do círculo = hub-top (rise - radius) → onda abraça 9px por cima.
+ * Centro do hub = flatY (= dome-rise). Eixo X = cx = width/2.
+ */
 .mode-tabs-stage {
   position: absolute;
   left: 50%;
-  top: var(--mode-tabs-dome-rise);
+  top: var(--mode-tabs-hub-top);
   z-index: 2;
   width: var(--mode-tabs-hub-size);
   height: var(--mode-tabs-hub-size);
-  transform: translate(-50%, -50%);
+  margin: 0;
+  padding: 0;
+  transform: translateX(-50%);
   pointer-events: none;
 }
 
@@ -2730,6 +2749,8 @@ html[data-theme="dark"] .mode-tabs {
   -webkit-overflow-scrolling: touch;
 }
 
+/* Cabeçalho de ecrã shell (Accueil / Plan / Profil): nome da interface + subtítulo */
+.shell-page-head,
 .profile-head {
   flex: none;
   display: flex;
@@ -3190,12 +3211,18 @@ html[data-theme="dark"] .profile-download-btn {
   color: var(--accent);
 }
 
+.shell-page-head-copy,
 .profile-head-copy {
   min-width: 0;
   flex: 1;
   display: grid;
   gap: 2px;
   padding-top: 2px;
+}
+
+.shell-page-head-copy .type-headline,
+.profile-head-copy .type-headline {
+  margin: 0;
 }
 
 .profile-head-title-row {
@@ -6118,9 +6145,10 @@ html[data-theme="dark"] .profile-download-btn {
     --mobile-float-inset-x: var(--mobile-gutter);
     --shell-float-gap: 12px;
     --mobile-tabbar-pad: 0px;
-    --mode-tabs-dome-rise: 28px;
-    --mode-tabs-bar-body: 40px;
-    --mode-tabs-hub-size: 56px;
+    --mode-tabs-dome-rise: 34px;
+    --mode-tabs-bar-body: 62px;
+    --mode-tabs-hub-size: 50px;
+    --mode-tabs-hub-top: 9px;
     /* Altura da superfície SVG (domo + corpo) */
     --mobile-tabbar-h: calc(var(--mode-tabs-dome-rise) + var(--mode-tabs-bar-body));
     /* Metade do hub sobe acima da linha plana (= rise) */
@@ -8168,15 +8196,25 @@ html[data-theme="dark"] .home-pill.is-accent {
   line-height: 1;
 }
 
+.plan-yv-head-copy {
+  flex: 1;
+  min-width: 0;
+  padding-top: 0;
+  gap: 0;
+}
+
 .plan-yv-head-row .page-title {
   margin: 0;
   min-width: 0;
-  flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: clamp(1.25rem, 5vw, 1.7rem);
   line-height: 1.2;
+}
+
+.plan-yv-head-copy .type-caption {
+  margin: 0;
 }
 
 .plan-yv-share-btn {

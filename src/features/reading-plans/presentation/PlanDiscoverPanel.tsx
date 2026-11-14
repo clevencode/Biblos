@@ -114,8 +114,11 @@ export function PlanDiscoverPanel({
       hidden={!active}
       className="pane-body today-view plan-discover"
     >
-      <header className="plan-discover-head">
-        <h1 className="plan-discover-title type-headline">{t("home.plans")}</h1>
+      <header className="shell-page-head plan-discover-head">
+        <div className="shell-page-head-copy">
+          <h1 className="type-headline">{t("shell.plan")}</h1>
+          <p className="muted type-caption">{t("home.plans")}</p>
+        </div>
       </header>
 
       <div

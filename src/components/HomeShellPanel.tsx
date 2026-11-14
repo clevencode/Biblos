@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { YvIcon } from "./YvIcon";
 import { listBibleReadingHistory } from "../activityLog";
-import { loadOrCreateProfile } from "../userProfile";
+import { loadOrCreateProfile, preferredDisplayName } from "../userProfile";
 import {
   dailyVerseOpenRef,
   getDailyVerse,
@@ -146,10 +146,14 @@ export function HomeShellPanel({
       hidden={!active}
       className="pane-body home-view"
     >
-      <header className="home-head">
-        <h1 className="home-greeting">
-          {t(greetingKey(new Date().getHours()))}, Biblos
-        </h1>
+      <header className="shell-page-head home-head">
+        <div className="shell-page-head-copy">
+          <h1 className="type-headline">{t("shell.home")}</h1>
+          <p className="muted type-caption">
+            {t(greetingKey(new Date().getHours()))},{" "}
+            {preferredDisplayName(profile) || "Biblos"}
+          </p>
+        </div>
       </header>
 
       <section className="home-section" aria-labelledby="home-resume-title">

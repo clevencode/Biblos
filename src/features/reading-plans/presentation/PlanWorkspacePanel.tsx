@@ -35,6 +35,7 @@ import {
 } from "../domain/planUiStages";
 import type { ReadingPlan } from "../domain/types";
 import { PlanDescription } from "./PlanDescription";
+import { useUiLocale } from "../../../i18n/UiLocaleContext";
 
 export type PlanFlowReturn = "timeline" | "dayNote" | "intro";
 
@@ -154,6 +155,7 @@ export function PlanWorkspacePanel({
   onStartPlanReading,
   onRestartPlan,
 }: PlanWorkspacePanelProps) {
+  const { t } = useUiLocale();
   const [progressTick, setProgressTick] = useState(0);
   useEffect(() => {
     const onChange = () => setProgressTick((n) => n + 1);
@@ -437,7 +439,7 @@ export function PlanWorkspacePanel({
             <YvIcon name="chevron_left" className="flash-list-back-icon" />
             Retour
           </button>
-          <p className="plan-yv-devo-eyebrow">Description · Au démarrage</p>
+          <p className="plan-yv-devo-eyebrow">{t("shell.plan")}</p>
           <h2 className="plan-yv-devo-title">{planTitle}</h2>
         </header>
 
@@ -509,7 +511,10 @@ export function PlanWorkspacePanel({
           >
             <YvIcon name="chevron_left" className="plan-yv-chrome-back-icon" />
           </button>
-          <h2 className="page-title">{planTitle}</h2>
+          <div className="shell-page-head-copy plan-yv-head-copy">
+            <p className="muted type-caption">{t("shell.plan")}</p>
+            <h2 className="page-title">{planTitle}</h2>
+          </div>
           <button
             type="button"
             className="plan-yv-share-btn"

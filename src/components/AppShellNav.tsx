@@ -11,6 +11,7 @@ import {
   CONVEX_BAR_BODY_PX,
   CONVEX_DOME_RISE_PX,
   CONVEX_HUB_SIZE_PX,
+  CONVEX_HUB_TOP_OFFSET_PX,
 } from "./ConvexBottomBarSurface";
 import { ModeTabIcon } from "./ModeTabIcon";
 import { YvIcon } from "./YvIcon";
@@ -100,6 +101,7 @@ export function AppShellNav({
           ["--mode-tabs-dome-rise" as string]: `${CONVEX_DOME_RISE_PX}px`,
           ["--mode-tabs-bar-body" as string]: `${CONVEX_BAR_BODY_PX}px`,
           ["--mode-tabs-hub-size" as string]: `${CONVEX_HUB_SIZE_PX}px`,
+          ["--mode-tabs-hub-top" as string]: `${CONVEX_HUB_TOP_OFFSET_PX}px`,
         } as CSSProperties
       }
     >
