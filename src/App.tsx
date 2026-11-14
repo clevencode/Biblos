@@ -54,6 +54,7 @@ import {
 } from "./swUpdateManager";
 import { InstallBanner } from "./components/InstallBanner";
 import { usePwaInstall } from "./hooks/usePwaInstall";
+import { useApkUpdate } from "./hooks/useApkUpdate";
 import { useAppReadiness } from "./context/AppReadinessContext";
 
 type MarkPayload = {
@@ -124,6 +125,7 @@ function BiblosConsumerApp() {
   const { t } = useUiLocale();
   const { markShellReady } = useAppReadiness();
   const pwaInstall = usePwaInstall();
+  const apkUpdate = useApkUpdate();
   const {
     profile,
     refreshProfile,
@@ -426,7 +428,29 @@ function BiblosConsumerApp() {
           </button>
         </div>
       ) : null}
-      {!swUpdatePending && !bibleMode ? (
+      {!swUpdatePending && !bibleMode && apkUpdate.available ? (
+        <div className="sw-update-banner" role="status" aria-live="polite">
+          <div className="sw-update-banner-copy">
+            <p className="sw-update-banner-title">{t("swUpdate.title")}</p>
+            <p className="sw-update-banner-meta">{t("swUpdate.lead")}</p>
+          </div>
+          <button
+            type="button"
+            className="sw-update-banner-cta"
+            onClick={() => void apkUpdate.update()}
+          >
+            {t("swUpdate.cta")}
+          </button>
+          <button
+            type="button"
+            className="sw-update-banner-dismiss"
+            onClick={apkUpdate.dismiss}
+          >
+            {t("auth.later")}
+          </button>
+        </div>
+      ) : null}
+      {!swUpdatePending && !bibleMode && !apkUpdate.available ? (
         <InstallBanner install={pwaInstall} />
       ) : null}
 
