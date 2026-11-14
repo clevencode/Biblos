@@ -9860,11 +9860,10 @@ html[data-theme="dark"] .bible-reader--yv {
   opacity: 1 !important;
   visibility: visible !important;
   pointer-events: auto !important;
-  background: var(--bible-nav-surface, var(--yv-bg)) !important;
-  border-bottom: var(--yv-separator, 1px solid var(--yv-outline, var(--line))) !important;
-  box-shadow:
-    0 1px 0 color-mix(in srgb, var(--ink) 8%, transparent),
-    0 6px 16px color-mix(in srgb, var(--ink) 12%, transparent) !important;
+  /* Continua com o painel full-bleed — sem linha/sombra entre chrome e sheet */
+  background: var(--yv-bg, var(--bg)) !important;
+  border-bottom: 0 !important;
+  box-shadow: none !important;
   /* sem fade/slide ao abrir modal — evita “piscar” / sumir */
   transition: none !important;
 }
@@ -10292,7 +10291,10 @@ html[data-theme="dark"] .top-sheet-backdrop {
 .top-sheet-layer
   > .bible-yv-tools-popover.top-floating-sheet.is-open:not(.is-float-anchor) {
   position: fixed !important;
-  top: var(--bible-top-chrome-flush, var(--bible-top-chrome, 68px)) !important;
+  /* -1px evita hairline entre topbar e sheet */
+  top: calc(
+    var(--bible-top-chrome-flush, var(--bible-top-chrome, 68px)) - 1px
+  ) !important;
   left: 0 !important;
   right: 0 !important;
   bottom: 0 !important;
@@ -10304,7 +10306,7 @@ html[data-theme="dark"] .top-sheet-backdrop {
   max-height: none !important;
   margin: 0 !important;
   margin-inline: 0 !important;
-  padding-top: var(--mobile-gutter, 12px) !important;
+  padding-top: 8px !important;
   padding-right: max(
     var(--mobile-gutter, 12px),
     env(safe-area-inset-right, 0px)
@@ -11333,7 +11335,7 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   gap: 8px;
   flex: none;
   align-self: flex-start;
-  margin-left: auto;
+  margin-left: 0;
   margin-top: 0;
 }
 
@@ -11454,7 +11456,8 @@ html[data-passage-bar-panel="test"]
   width: auto;
   min-width: 0;
   max-width: min(100%, 16.5rem);
-  margin-inline-end: auto;
+  margin-inline-start: auto;
+  margin-inline-end: 0;
 }
 
 html[data-passage-bar-panel="test"] .app.is-bible-mode.is-narrow .bible-yv-top {
@@ -11652,7 +11655,14 @@ html[data-passage-bar-panel="test"] .bible-yv-top.is-free .bible-yv-passage-roll
   flex: 0 1 auto;
   width: auto;
   max-width: min(100%, 16.5rem);
-  margin-inline-end: auto;
+  margin-inline-start: auto;
+  margin-inline-end: 0;
+}
+
+html[data-passage-bar-panel="test"]
+  .bible-yv-top.is-free
+  .bible-yv-passage-chrome-cluster {
+  margin-inline-start: auto;
 }
 
 html[data-passage-bar-panel="test"] .bible-yv-passage-roll:not(.is-open),
@@ -13095,6 +13105,12 @@ html[data-colortest*="BiblePassageChip:red"] .bible-yv-passage-chip {
   gap: 8px;
   flex: none;
   flex-shrink: 0;
+  margin-left: 0;
+}
+
+/* Chip/passagem à direita — hamburger fica à esquerda */
+.bible-yv-top.is-free .bible-yv-passage-chrome-cluster,
+.bible-yv-top.is-free > .bible-yv-passage-roll {
   margin-left: auto;
 }
 

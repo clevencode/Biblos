@@ -212,7 +212,7 @@ export function usePassageBarController({
     [requestCloseWordSearch],
   );
 
-  /** WAI dialog: ao fechar, devolver focus ao trigger (exceto ao ir para um verso). */
+  /** WAI dialog: ao fechar, focus no hamburger (pesquisa saiu da topbar). */
   useLayoutEffect(() => {
     if (wordSearchOpen) {
       wordSearchWasOpenRef.current = true;
@@ -224,9 +224,13 @@ export function usePassageBarController({
       restoreWordSearchFocusRef.current = true;
       return;
     }
-    const trigger = wordSearchChromeRef.current?.querySelector(
-      "button.bible-yv-passage-word-search-trigger",
-    ) as HTMLButtonElement | null;
+    const trigger =
+      (wordSearchChromeRef.current?.querySelector(
+        "button.bible-yv-passage-word-search-trigger, button.bible-yv-tools-menu-btn",
+      ) as HTMLButtonElement | null) ??
+      (document.querySelector(
+        ".bible-reader--yv button.bible-yv-tools-menu-btn",
+      ) as HTMLButtonElement | null);
     trigger?.focus({ preventScroll: true });
   }, [wordSearchOpen]);
 
@@ -363,6 +367,8 @@ export function usePassageBarController({
       if (target.closest(".bible-yv-passage-roll-scrim")) return;
       if (target.closest(".bible-yv-dock")) return;
       if (target.closest(".bible-yv-passage-word-search-trigger")) return;
+      /* Hamburger fecha via onClick (X) — não engolir o pointerdown. */
+      if (target.closest(".bible-yv-tools-menu")) return;
       if (
         target.closest(".bible-yv-passage-word-search-panel") ||
         target.closest(".bible-yv-passage-chrome-cluster") ||

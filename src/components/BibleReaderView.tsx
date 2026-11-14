@@ -579,7 +579,6 @@ export function BibleReaderView({
   /** Fin d’étape / fin de plan → retour plans après la note. */
   const [dayNoteReturnsToPlans, setDayNoteReturnsToPlans] = useState(false);
   const toolsMenuRef = useRef<HTMLDivElement | null>(null);
-  const historyToolsRef = useRef<HTMLDivElement | null>(null);
   const restoreHistoryFocusRef = useRef(true);
   const historyWasOpenRef = useRef(false);
   const restoreToolsFocusRef = useRef(true);
@@ -633,7 +632,7 @@ export function BibleReaderView({
   const hasActiveModalRef = useRef(hasActiveModal);
   hasActiveModalRef.current = hasActiveModal;
 
-  /** WAI: ao fechar histórico, focus no trigger (exceto ao escolher um item). */
+  /** WAI: ao fechar histórico, focus no hamburger (histórico saiu da topbar). */
   useLayoutEffect(() => {
     if (historyOpen) {
       historyWasOpenRef.current = true;
@@ -645,8 +644,8 @@ export function BibleReaderView({
       restoreHistoryFocusRef.current = true;
       return;
     }
-    const trigger = historyToolsRef.current?.querySelector(
-      "button.bible-yv-history-btn",
+    const trigger = toolsMenuRef.current?.querySelector(
+      "button.bible-yv-tools-menu-btn",
     ) as HTMLButtonElement | null;
     trigger?.focus({ preventScroll: true });
   }, [historyOpen]);
@@ -779,7 +778,6 @@ export function BibleReaderView({
     wordMatchMode,
     wordMatchedTerms,
     passageRollRef,
-    wordSearchChromeRef,
     wordSearchPanelId,
     passagePickerPanelId,
     armPendingVerseStep,
@@ -793,7 +791,6 @@ export function BibleReaderView({
     closeAll,
     togglePassagePicker,
     togglePassagePickerRef,
-    toggleWordSearch,
   } = usePassageBarController({
     pickerPanelOpenAllowed: pickerChrome.pickerPanelOpenAllowed,
     pickerOpen,
@@ -2175,6 +2172,19 @@ export function BibleReaderView({
   }
   switchTextVersionRef.current = switchTextVersion;
 
+  function openWordSearchFromMenu() {
+    restoreToolsFocusRef.current = false;
+    setShareSheetOpen(false);
+    openOverlay({ type: "word_search" });
+  }
+
+  function openHistoryFromMenu() {
+    restoreToolsFocusRef.current = false;
+    restoreHistoryFocusRef.current = true;
+    setShareSheetOpen(false);
+    openOverlay({ type: "history" });
+  }
+
   function renderToolsPopover(floatAnchor = false) {
     if (!toolsMenuOpen) return null;
     const themeResolved = resolveTheme(themePref);
@@ -2187,6 +2197,28 @@ export function BibleReaderView({
         role="menu"
         aria-label={t("bible.menuBible")}
       >
+        {discoverySplitSearch && !planReading ? (
+          <button
+            type="button"
+            role="menuitem"
+            className="bible-yv-tools-item"
+            onClick={openWordSearchFromMenu}
+          >
+            <YvIcon name="search" className="bible-yv-tools-item-icon" />
+            <span>{t("word.panel")}</span>
+          </button>
+        ) : null}
+        {ACTIVITY_UI_ENABLED ? (
+          <button
+            type="button"
+            role="menuitem"
+            className="bible-yv-tools-item"
+            onClick={openHistoryFromMenu}
+          >
+            <YvIcon name="history" className="bible-yv-tools-item-icon" />
+            <span>{t("history.title")}</span>
+          </button>
+        ) : null}
         <div
           className="bible-yv-tools-version"
           role="group"
@@ -2322,16 +2354,32 @@ export function BibleReaderView({
 
   function renderTopToolsMenu(placement: "header" | "float" = "header") {
     const isFloat = placement === "float";
+    const menuSheetOpen = toolsMenuOpen || wordSearchOpen || historyOpen;
     const trigger = (
       <HeaderTriggerButton
-        open={toolsMenuOpen}
+        open={menuSheetOpen}
         shape="circle"
         idleIcon="menu"
-        ariaLabel={t("bible.menu")}
+        ariaLabel={
+          wordSearchOpen
+            ? t("common.close")
+            : historyOpen
+              ? t("common.close")
+              : t("bible.menu")
+        }
         ariaHaspopup="menu"
-        className={`bible-yv-tools-menu-btn${toolsMenuOpen ? " is-on" : ""}`}
+        className={`bible-yv-tools-menu-btn${menuSheetOpen ? " is-on" : ""}`}
         onClick={() => {
           setShareSheetOpen(false);
+          if (wordSearchOpen) {
+            closeWordSearch();
+            return;
+          }
+          if (historyOpen) {
+            restoreHistoryFocusRef.current = true;
+            closeOverlay();
+            return;
+          }
           restoreToolsFocusRef.current = true;
           toggleOverlay("reader_settings");
         }}
@@ -2707,11 +2755,13 @@ export function BibleReaderView({
         className={`bible-yv-top is-free${topSheetOpen ? " is-top-sheet-open" : ""}${surfaceChrome.rootClassPassageRollOpen ? " is-passage-roll-open" : ""}${catalogOfflineHint ? " is-catalog-offline" : ""}${compactToolsMenu ? " is-compact-tools" : ""}`}
         aria-label={t("bible.nav")}
       >
+        <div className="bible-yv-top-tools">
+          {!compactToolsMenu || isPassageBarPanelCompactTopbar()
+            ? renderTopToolsMenu("header")
+            : null}
+        </div>
         {discoverySplitSearch ? (
-          <div
-            ref={planReading ? undefined : wordSearchChromeRef}
-            className="bible-yv-passage-chrome-cluster"
-          >
+          <div className="bible-yv-passage-chrome-cluster">
             {planReading ? (
               <button
                 type="button"
@@ -2728,46 +2778,12 @@ export function BibleReaderView({
                   className="bible-yv-passage-word-search-icon"
                 />
               </button>
-            ) : (
-              <HeaderTriggerButton
-                open={wordSearchOpen}
-                shape="circle"
-                idleIcon="search"
-                ariaLabel={t("bible.searchWord")}
-                ariaControls={wordSearchPanelId}
-                className={`bible-yv-passage-word-search-trigger${
-                  wordSearchOpen ? " is-on" : ""
-                }`}
-                onClick={toggleWordSearch}
-              />
-            )}
+            ) : null}
             {renderPassageRoll()}
           </div>
         ) : (
           renderPassageRoll()
         )}
-        <div className="bible-yv-top-tools">
-          {ACTIVITY_UI_ENABLED ? (
-            <div className="bible-yv-history-menu" ref={historyToolsRef}>
-              <HeaderTriggerButton
-                open={historyOpen}
-                shape="circle"
-                idleIcon="history"
-                ariaLabel={t("bible.history")}
-                ariaHaspopup="dialog"
-                className={`bible-yv-history-btn${historyOpen ? " is-on" : ""}`}
-                onClick={() => {
-                  setShareSheetOpen(false);
-                  restoreHistoryFocusRef.current = true;
-                  toggleOverlay("history");
-                }}
-              />
-            </div>
-          ) : null}
-          {!compactToolsMenu || isPassageBarPanelCompactTopbar()
-            ? renderTopToolsMenu("header")
-            : null}
-        </div>
       </header>
 
       {surfaceChrome.passageSurfaceScrimOpen ? (
