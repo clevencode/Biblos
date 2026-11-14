@@ -11,6 +11,7 @@ export type UiCopyKey =
   | "shell.bible"
   | "shell.profile"
   | "common.close"
+  | "common.back"
   | "common.clear"
   | "common.confirm"
   | "common.cancel"
@@ -233,6 +234,7 @@ const FR: Dict = {
   "shell.bible": "Bible",
   "shell.profile": "Profil",
   "common.close": "Fermer",
+  "common.back": "Retour",
   "common.clear": "Effacer",
   "common.confirm": "Confirmer ?",
   "common.cancel": "Annuler",
@@ -475,6 +477,7 @@ const HT: Dict = {
   "shell.bible": "Bib",
   "shell.profile": "Pwofil",
   "common.close": "Fèmen",
+  "common.back": "Tounen",
   "common.clear": "Efase",
   "common.confirm": "Konfime ?",
   "common.cancel": "Anile",

@@ -20,12 +20,22 @@ const DEFAULT_APK_URL = "/downloads/biblos.apk";
 export type PwaInstallMode = "hidden" | "apk-download" | "ios-hint";
 
 export type PwaInstallState = {
+  /** Banner: hidden se dismissed / nativo / standalone. */
   mode: PwaInstallMode;
+  /** Menu: ignora dismiss — oferta da plataforma. */
+  menuMode: PwaInstallMode;
   canInstall: boolean;
   busy: boolean;
   install: () => Promise<void>;
   dismiss: () => void;
 };
+
+function resolveOfferMode(standalone: boolean): PwaInstallMode {
+  if (Capacitor.isNativePlatform() || standalone) return "hidden";
+  if (isAndroidBrowser()) return "apk-download";
+  if (isIosSafariFamily()) return "ios-hint";
+  return "hidden";
+}
 
 function apkDownloadUrl(): string {
   const raw = String(import.meta.env.VITE_APK_DOWNLOAD_URL ?? "").trim();
@@ -133,14 +143,12 @@ export function usePwaInstall(): PwaInstallState {
     }
   }, [busy, standalone]);
 
-  let mode: PwaInstallMode = "hidden";
-  if (!Capacitor.isNativePlatform() && !standalone && !dismissed) {
-    if (isAndroidBrowser()) mode = "apk-download";
-    else if (isIosSafariFamily()) mode = "ios-hint";
-  }
+  const menuMode = resolveOfferMode(standalone);
+  const mode: PwaInstallMode = dismissed ? "hidden" : menuMode;
 
   return {
     mode,
+    menuMode,
     canInstall: mode === "apk-download",
     busy,
     install,

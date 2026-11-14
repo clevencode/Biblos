@@ -17,7 +17,7 @@
 | `BibleHistorySheet` | Menu leitor se `ACTIVITY_UI_ENABLED` |
 | `BibleHistoryPanel` | Variante painel (não usada na shell actual) |
 
-Histórico também listado em **Perfil** (`ProfileShellPanel`) e **Accueil** (`HomeShellPanel` resume última leitura).
+**Accueil** (`HomeShellPanel`) resume a última leitura. Surlignages + histórico completo vivem em `BibleHistorySheet`.
 
 ---
 
@@ -44,11 +44,12 @@ Entra em `readerSurfaceChrome`: `shareSheetOpen` → scrim, `passageInputBlocked
 
 **Props:** `open`, `onClose`, `onSelect(BibleHistorySelect)`, `onHistoryChange?`.
 
-- Lista `listBibleReadingHistory(undefined, 40)`.
-- Apagar item / limpar tudo (confirm).
+- Secção **surlignages** (`listAllVerseMarks`) + salto para a passagem.
+- Secção **lectures** (`listBibleReadingHistory(undefined, 40)`).
+- Limpar histórico de leitura (confirm).
 - `onSelect` no leitor: `loadChapter(bookId, chapterId, verse)`.
 
-Tipo exportado `BibleHistorySelect` — reutilizado na shell (`historyToFocusRef` em `App.tsx`).
+Tipo exportado `BibleHistorySelect`.
 
 ---
 
@@ -56,17 +57,15 @@ Tipo exportado `BibleHistorySelect` — reutilizado na shell (`historyToFocusRef
 
 Mesma lógica de parse/label que o sheet, mas embed em `active` tab (refresh quando `active`).
 
-Útil para layouts sem sheet modal; hoje a shell usa lista inline no perfil.
+Variante painel alternativa; a shell actual usa o sheet no leitor.
 
 ---
 
 ## Fluxo de actividade
 
 1. `recordBibleRead` / `onBibleRead` no leitor → `activityLog`.
-2. `activityTick` no `App` refresca Home/Profile.
+2. `activityTick` no `App` refresca Home (resume).
 3. Marca de versículo → `appendActivity("verse.mark", ...)`.
-
-`ProfileShellPanel.onOpenPassage` → `openBible(historyToFocusRef(ref))` muda tab Bible + `focusSeq`.
 
 ---
 

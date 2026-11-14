@@ -12,8 +12,8 @@ flowchart TB
     App[App.tsx]
     Nav[AppShellNav]
     Home[HomeShellPanel]
+    Config[HomeConfigSection]
     Plan[PlanDiscoverPanel]
-    Profile[ProfileShellPanel]
   end
   subgraph reader [BibleReaderView]
     Bar[Passage bar test]
@@ -23,8 +23,8 @@ flowchart TB
     Share[Share / History sheets]
   end
   App --> Home
+  Home --> Config
   App --> Plan
-  App --> Profile
   App --> reader
   Bar --> SearchIcon[Word search panel]
   Bar --> Chips[Passage chips]
@@ -43,7 +43,7 @@ flowchart TB
 
 | ID | Nome | Guia detalhado |
 |----|------|----------------|
-| `app-shell` | Shell, tabs, painéis Accueil/Plan/Bible/Profil | [app-shell.md](./app-shell.md) |
+| `app-shell` | Shell, tabs Accueil/Plan/Bible + config na Home | [app-shell.md](./app-shell.md) |
 | `reader-surface` | Capítulo, versículos, seleção, acções | [reader-surface.md](./reader-surface.md) |
 | `passage-bar` | Estado actual da barra (chip + search + FAB skips) | [passage-bar.md](./passage-bar.md) |
 | `passage-roll` | Barra referência + contentor roll | [passage-roll.md](./passage-roll.md) |
@@ -59,9 +59,9 @@ flowchart TB
 
 ## Shell da aplicação (`app-shell`)
 
-**Ficheiros:** `App.tsx`, `AppShellNav.tsx`, `HomeShellPanel.tsx`, `ProfileShellPanel.tsx`, `shellNav.ts`, `features/reading-plans/PlanDiscoverPanel`.
+**Ficheiros:** `App.tsx`, `AppShellNav.tsx`, `HomeShellPanel.tsx`, `HomeConfigSection.tsx`, `shellNav.ts`, `features/reading-plans/PlanDiscoverPanel`.
 
-Quatro tabs persistidas em `localStorage`; o leitor permanece montado após a primeira visita. Narrow esconde a nav durante leitura imersiva. Rota `#admin` desvia para CMS editorial. Home e Perfil consomem `activityLog` para retomar leitura.
+Três tabs persistidas em `localStorage` (legado `profile` → `home`); o leitor permanece montado após a primeira visita. Narrow esconde a nav durante leitura imersiva. Rota `#admin` desvia para CMS editorial. Config (conta/idioma/tema) na Home; histórico/surlignages no leitor.
 
 → [app-shell.md](./app-shell.md)
 

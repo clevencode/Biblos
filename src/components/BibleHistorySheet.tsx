@@ -11,6 +11,11 @@ import {
   type HistorySelectPayload,
 } from "../bible/readingHistoryRepository";
 import type { ReadingHistoryItem } from "../bible/readingScope";
+import {
+  listAllVerseMarks,
+  subscribeVerseMarksRevision,
+  type SavedVerseMark,
+} from "../verseMarks";
 import { useUiLocale } from "../i18n/UiLocaleContext";
 
 export type BibleHistorySelect = HistorySelectPayload;
@@ -47,6 +52,15 @@ function toSelect(item: ReadingHistoryItem): BibleHistorySelect {
   };
 }
 
+function markToSelect(mark: SavedVerseMark): BibleHistorySelect {
+  return {
+    versionId: "s21",
+    bookId: mark.bookId,
+    chapterId: mark.chapterId,
+    verse: mark.verse,
+  };
+}
+
 export function BibleHistorySheet({
   open,
   onClose,
@@ -56,14 +70,23 @@ export function BibleHistorySheet({
   const { t, dateLocale } = useUiLocale();
   const titleId = useId();
   const [rows, setRows] = useState<HistoryRow[]>([]);
+  const [marks, setMarks] = useState<SavedVerseMark[]>([]);
 
   function refresh() {
     setRows(rowsFromEvents(listBibleReadingHistory(undefined, 40)));
+    setMarks(listAllVerseMarks());
   }
 
   useEffect(() => {
     if (!open) return;
     refresh();
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    return subscribeVerseMarksRevision(() => {
+      setMarks(listAllVerseMarks());
+    });
   }, [open]);
 
   useEffect(() => {
@@ -115,49 +138,98 @@ export function BibleHistorySheet({
         </div>
       </header>
 
-      <div className="bible-yv-history-panel-meta" aria-live="polite">
-        {rows.length === 0 ? (
-          <span>{t("history.recent")}</span>
-        ) : (
-          <span>
-            {rows.length === 1
-              ? t("history.countOne", { n: rows.length })
-              : t("history.count", { n: rows.length })}
-          </span>
-        )}
-      </div>
-
-      <ul className="bible-yv-history-panel-list" aria-label={t("history.title")}>
-        {rows.length === 0 ? (
-          <li className="bible-yv-history-panel-empty">{t("history.empty")}</li>
-        ) : (
-          rows.map(({ eventId, at, item }) => {
-            const label = readingLabelForItem(item);
-            return (
-              <li key={eventId} className="bible-history-row">
-                <button
-                  type="button"
-                  className="bible-yv-history-panel-item"
-                  onClick={() => onSelect(toSelect(item))}
-                >
-                  <span className="bible-yv-history-panel-ref">
-                    <span
-                      className="bible-history-version-badge"
-                      data-version={item.versionId}
-                    >
-                      {item.versionBadge}
+      <div className="bible-yv-history-panel-body">
+        <section
+          className="bible-yv-history-section"
+          aria-labelledby="bible-history-marks-title"
+        >
+          <div className="bible-yv-history-section-head">
+            <p id="bible-history-marks-title" className="bible-yv-history-section-title">
+              {t("profile.marks")}
+            </p>
+            {marks.length > 0 ? (
+              <span className="bible-yv-history-section-count">{marks.length}</span>
+            ) : null}
+          </div>
+          {marks.length === 0 ? (
+            <p className="bible-yv-history-panel-empty">{t("profile.marksEmpty")}</p>
+          ) : (
+            <ul
+              className="bible-yv-history-panel-list"
+              aria-label={t("profile.marks")}
+            >
+              {marks.map((mark) => (
+                <li key={mark.key} className="bible-history-row">
+                  <button
+                    type="button"
+                    className="bible-yv-history-panel-item"
+                    onClick={() => onSelect(markToSelect(mark))}
+                  >
+                    <span className="bible-yv-history-panel-ref">
+                      <span
+                        className="bible-history-mark-swatch"
+                        style={{ background: mark.color }}
+                        aria-hidden
+                      />
+                      {mark.label}
                     </span>
-                    {label}
-                  </span>
-                  <span className="bible-yv-history-panel-when">
-                    {formatActivityWhen(at, dateLocale)}
-                  </span>
-                </button>
-              </li>
-            );
-          })
-        )}
-      </ul>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <section
+          className="bible-yv-history-section"
+          aria-labelledby="bible-history-recent-title"
+        >
+          <div className="bible-yv-history-section-head">
+            <p id="bible-history-recent-title" className="bible-yv-history-section-title">
+              {t("history.recent")}
+            </p>
+            <span className="bible-yv-history-section-count" aria-live="polite">
+              {rows.length === 0
+                ? null
+                : rows.length === 1
+                  ? t("history.countOne", { n: rows.length })
+                  : t("history.count", { n: rows.length })}
+            </span>
+          </div>
+
+          <ul className="bible-yv-history-panel-list" aria-label={t("history.title")}>
+            {rows.length === 0 ? (
+              <li className="bible-yv-history-panel-empty">{t("history.empty")}</li>
+            ) : (
+              rows.map(({ eventId, at, item }) => {
+                const label = readingLabelForItem(item);
+                return (
+                  <li key={eventId} className="bible-history-row">
+                    <button
+                      type="button"
+                      className="bible-yv-history-panel-item"
+                      onClick={() => onSelect(toSelect(item))}
+                    >
+                      <span className="bible-yv-history-panel-ref">
+                        <span
+                          className="bible-history-version-badge"
+                          data-version={item.versionId}
+                        >
+                          {item.versionBadge}
+                        </span>
+                        {label}
+                      </span>
+                      <span className="bible-yv-history-panel-when">
+                        {formatActivityWhen(at, dateLocale)}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })
+            )}
+          </ul>
+        </section>
+      </div>
     </div>
   );
 }

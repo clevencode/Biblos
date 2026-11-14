@@ -7644,13 +7644,45 @@ html[data-theme="dark"] .profile-download-btn {
 
 .home-head,
 .plan-discover-head {
-  display: block;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
   min-width: 0;
   padding: 0 2px;
 }
 
-.home-head-copy {
+.home-head-copy,
+.home-head .shell-page-head-copy {
+  flex: 1;
   min-width: 0;
+}
+
+.home-menu-btn.hdr-trigger.is-circle {
+  width: var(--hdr-size, var(--mobile-touch, 44px));
+  height: var(--hdr-size, var(--mobile-touch, 44px));
+  min-width: var(--hdr-size, var(--mobile-touch, 44px));
+  min-height: var(--hdr-size, var(--mobile-touch, 44px));
+}
+
+.home-menu-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+.home-menu-panel .home-config {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.home-menu-panel .home-section-head {
+  margin-bottom: 0;
 }
 
 .home-greeting {
@@ -9988,6 +10020,15 @@ html[data-theme="dark"] .bible-yv-passage-chip.hdr-trigger.is-open {
   transform: rotate(90deg) scale(1);
 }
 
+/* Voltar (chevron_left): sem rotate do morph ✕ — aponta sempre à esquerda */
+.hdr-trigger.is-exit-back .hdr-icon-exit,
+.hdr-trigger.is-exit-back .hdr-icon-exit.is-shown,
+.hdr-trigger.is-circle.is-open.is-exit-back .hdr-icon-exit.is-shown,
+.hdr-trigger.is-circle.is-active.is-exit-back .hdr-icon-exit.is-shown,
+.hdr-trigger.is-open.is-exit-back .hdr-icon-exit.is-shown {
+  transform: none;
+}
+
 /* Pílula aberta: label + ✕ lado a lado (não esconde o rótulo) */
 .hdr-trigger.is-pill.is-open .hdr-trigger-swap {
   display: inline-flex;
@@ -10088,9 +10129,9 @@ html[data-theme="dark"] .bible-yv-passage-chip.hdr-trigger.is-open {
 }
 
 .hdr-trigger-icon {
-  width: 22px;
-  height: 22px;
-  font-size: 22px;
+  width: var(--bible-chrome-trigger-icon, 20px);
+  height: var(--bible-chrome-trigger-icon, 20px);
+  font-size: var(--bible-chrome-trigger-icon, 20px);
   color: inherit;
 }
 
@@ -10339,7 +10380,7 @@ html[data-theme="dark"] .top-sheet-backdrop {
 .bible-yv-passage-word-search-panel.is-open .bible-yv-word-search-book-picker,
 .bible-yv-passage-word-search-panel.is-open .bible-yv-word-search-recents,
 .bible-yv-passage-scroll-panel.is-open .bible-yv-pick-grid,
-.bible-yv-history-panel.is-open .bible-yv-history-panel-list,
+.bible-yv-history-panel.is-open .bible-yv-history-panel-body,
 .bible-yv-tools-popover.top-floating-sheet.is-open:not(.is-float-anchor) {
   --bible-sheet-scroll-pad-bottom: calc(
     var(--shell-tab-clearance, var(--mobile-bottom-chrome, 72px)) +
@@ -13203,21 +13244,64 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   color: color-mix(in srgb, var(--text) 48%, transparent);
 }
 
-.bible-yv-history-panel-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  overflow: auto;
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
+.bible-yv-history-panel-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
   min-height: 0;
-  flex: 1 1 auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
 
-.bible-yv-history-panel-list::-webkit-scrollbar {
+.bible-yv-history-panel-body::-webkit-scrollbar {
   display: none;
+}
+
+.bible-yv-history-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.bible-yv-history-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 4px;
+}
+
+.bible-yv-history-section-title {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--text) 52%, transparent);
+}
+
+.bible-yv-history-section-count {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: color-mix(in srgb, var(--text) 48%, transparent);
+}
+
+.bible-yv-history-panel-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  min-height: 0;
+}
+
+.bible-history-mark-swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 8px;
+  border-radius: 999px;
+  vertical-align: middle;
+  flex: none;
 }
 
 .bible-yv-history-panel-empty {
@@ -13479,6 +13563,17 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   font-size: 0.76rem;
   line-height: 1.35;
   color: var(--yv-muted);
+}
+
+.bible-yv-tools-install-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.bible-yv-tools-install-hint .bible-yv-tools-item-icon {
+  margin-top: 1px;
+  color: var(--yv-text);
 }
 
 .bible-yv-tools-version-chip {

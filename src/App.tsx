@@ -10,7 +10,6 @@ import {
 import type { ReadingPlan } from "./features/reading-plans";
 import { usePlanReadingSession } from "./features/reading-plans/presentation/hooks/usePlanReadingSession";
 import type { PlanFlowReturn } from "./features/reading-plans/presentation/PlanWorkspacePanel";
-import { ProfileShellPanel } from "./components/ProfileShellPanel";
 import { recordBibleRead, appendActivity } from "./activityLog";
 import { consumeShareRefFromUrl } from "./shareVerse";
 import {
@@ -41,7 +40,6 @@ import {
 } from "./theme";
 import { syncNativeChrome } from "./nativeChrome";
 import { loadShellTab, saveShellTab, type ShellTab } from "./shellNav";
-import type { BibleHistorySelect } from "./components/BibleHistorySheet";
 import type { BibleTextVersionId } from "./bible/bibleVersions";
 import {
   languageForVersion,
@@ -68,20 +66,6 @@ type MarkPayload = {
 function isEditorialAdminRoute(): boolean {
   const hash = window.location.hash.replace(/^#/, "");
   return hash === "admin" || hash.startsWith("admin/");
-}
-
-function historyToFocusRef(ref: BibleHistorySelect): string {
-  if (ref.verse != null) {
-    return `${ref.bookId} ${ref.chapterId}.${ref.verse}`;
-  }
-  return `${ref.bookId} ${ref.chapterId}`;
-}
-
-function openHistoryPassage(
-  ref: BibleHistorySelect,
-  open: (passage: string, versionId?: BibleTextVersionId) => void,
-) {
-  open(historyToFocusRef(ref), ref.versionId);
 }
 
 export function App() {
@@ -462,11 +446,17 @@ function BiblosConsumerApp() {
                 <HomeShellPanel
                   active={tab === "home"}
                   activityTick={activityTick}
+                  themePref={themePref}
+                  onSetTheme={setTheme}
                   onOpenBible={(ref) => openBible(ref)}
                   onOpenPlan={() => selectTab("today")}
                   onResumePlan={(plan) => {
                     openPlanWorkspace(plan);
                     selectTab("today");
+                  }}
+                  onRequestSignIn={() => {
+                    setSignInVariant("upgrade");
+                    setSignInOpen(true);
                   }}
                 />
                 <PlanDiscoverPanel
@@ -530,18 +520,6 @@ function BiblosConsumerApp() {
                     />
                   ) : null}
                 </div>
-                <ProfileShellPanel
-                  active={tab === "profile"}
-                  activityTick={activityTick}
-                  themePref={themePref}
-                  onSetTheme={setTheme}
-                  onOpenPassage={(ref) => openHistoryPassage(ref, openBible)}
-                  onHistoryChange={() => setActivityTick((n) => n + 1)}
-                  onRequestSignIn={() => {
-                    setSignInVariant("upgrade");
-                    setSignInOpen(true);
-                  }}
-                />
               </div>
             </section>
           </div>

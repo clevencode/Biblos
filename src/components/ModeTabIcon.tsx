@@ -1,10 +1,9 @@
 import type { IconComponent } from "@coolicons/react/line/round";
-import { Book, House, Layers, User } from "@coolicons/react/line/round";
+import { Book, House, Layers } from "@coolicons/react/line/round";
 import {
   Book as BookFill,
   House as HouseFill,
   Layers as LayersFill,
-  User as UserFill,
 } from "@coolicons/react/fill/round";
 import { ICON_STROKE_WIDTH, TAB_ICON_PX } from "../icons/config";
 import type { ShellTab } from "../shellNav";
@@ -24,7 +23,6 @@ const TAB_ICONS: Record<ShellTab, TabIconEntry> = {
   /** Plano de leitura — camadas / livros empilhados (estilo colecção). */
   today: { line: Layers, fill: LayersFill },
   bible: { line: Book, fill: BookFill },
-  profile: { line: User, fill: UserFill },
 };
 
 export function ModeTabIcon({ name, active = false }: ModeTabIconProps) {

@@ -9,6 +9,8 @@ type HeaderTriggerButtonProps = {
   shape?: HeaderTriggerShape;
   /** Ícone idle (circle ou pill sem label). */
   idleIcon?: BiblosIconName;
+  /** Ícone open — default close; jornada aninhada usa chevron_left. */
+  exitIcon?: BiblosIconName;
   /** Conteúdo idle da pílula (ex.: ref livro/capítulo). */
   idleLabel?: ReactNode;
   /** Largura mínima estável. */
@@ -30,6 +32,7 @@ export function HeaderTriggerButton({
   onClick,
   shape = "circle",
   idleIcon,
+  exitIcon = "close",
   idleLabel,
   pillMinWidth,
   ariaLabel,
@@ -41,6 +44,7 @@ export function HeaderTriggerButton({
 }: HeaderTriggerButtonProps) {
   const shapeClass = shape === "pill" ? " is-pill" : " is-circle";
   const openClass = open ? " is-open is-active" : "";
+  const backClass = exitIcon === "chevron_left" ? " is-exit-back" : "";
   const keepPillLabel = shape === "pill" && idleLabel != null;
   const style =
     shape === "pill" && pillMinWidth != null
@@ -53,7 +57,7 @@ export function HeaderTriggerButton({
   return (
     <button
       type="button"
-      className={`hdr-trigger${shapeClass}${openClass}${className ? ` ${className}` : ""}`}
+      className={`hdr-trigger${shapeClass}${openClass}${backClass}${className ? ` ${className}` : ""}`}
       style={style}
       aria-label={ariaLabel}
       aria-expanded={open}
@@ -76,7 +80,10 @@ export function HeaderTriggerButton({
           ) : null}
         </span>
         <span className={`hdr-icon-exit${open ? " is-shown" : ""}`}>
-          <YvIcon name="close" className="hdr-trigger-icon hdr-trigger-exit-icon" />
+          <YvIcon
+            name={exitIcon}
+            className="hdr-trigger-icon hdr-trigger-exit-icon"
+          />
         </span>
       </span>
     </button>

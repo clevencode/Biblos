@@ -11,6 +11,7 @@ import {
 import { flushSync } from "react-dom";
 import { HeaderTriggerButton } from "./HeaderTriggerButton";
 import { YvIcon } from "./YvIcon";
+import { usePwaInstall } from "../hooks/usePwaInstall";
 import {
   adjacentChapter,
   chapterUsfm,
@@ -499,6 +500,7 @@ export function BibleReaderView({
   compactViewport = false,
 }: BibleReaderViewProps) {
   const { t } = useUiLocale();
+  const pwaInstall = usePwaInstall();
   const prefs = readPrefs();
   const prefsBookOk = isUsfmBookId(prefs.bookId || "");
   const initialParts = parseUsfmParts(
@@ -2300,6 +2302,35 @@ export function BibleReaderView({
             </span>
           </button>
         )}
+        {pwaInstall.menuMode === "apk-download" ? (
+          <button
+            type="button"
+            role="menuitem"
+            className={`bible-yv-tools-item${pwaInstall.busy ? " is-busy" : ""}`}
+            disabled={pwaInstall.busy}
+            onClick={() => void pwaInstall.install()}
+          >
+            <YvIcon name="download" className="bible-yv-tools-item-icon" />
+            <span>
+              {pwaInstall.busy ? t("pwaInstall.busy") : t("pwaInstall.apkCta")}
+            </span>
+          </button>
+        ) : null}
+        {pwaInstall.menuMode === "ios-hint" ? (
+          <div
+            className="bible-yv-tools-version bible-yv-tools-install"
+            role="note"
+            aria-label={t("pwaInstall.title")}
+          >
+            <span className="bible-yv-tools-version-label">
+              {t("pwaInstall.title")}
+            </span>
+            <p className="bible-yv-tools-version-hint bible-yv-tools-install-hint">
+              <YvIcon name="ios_share" className="bible-yv-tools-item-icon" />
+              <span>{t("pwaInstall.iosLead")}</span>
+            </p>
+          </div>
+        ) : null}
         <div
           className="bible-yv-tools-version bible-yv-tools-font-family"
           role="group"
@@ -2354,16 +2385,18 @@ export function BibleReaderView({
 
   function renderTopToolsMenu(placement: "header" | "float" = "header") {
     const isFloat = placement === "float";
-    const menuSheetOpen = toolsMenuOpen || wordSearchOpen || historyOpen;
+    const nestedFromMenu = wordSearchOpen || historyOpen;
+    const menuSheetOpen = toolsMenuOpen || nestedFromMenu;
     const trigger = (
       <HeaderTriggerButton
         open={menuSheetOpen}
         shape="circle"
         idleIcon="menu"
+        exitIcon={nestedFromMenu ? "chevron_left" : "close"}
         ariaLabel={
-          wordSearchOpen
-            ? t("common.close")
-            : historyOpen
+          nestedFromMenu
+            ? t("common.back")
+            : toolsMenuOpen
               ? t("common.close")
               : t("bible.menu")
         }
@@ -2371,13 +2404,10 @@ export function BibleReaderView({
         className={`bible-yv-tools-menu-btn${menuSheetOpen ? " is-on" : ""}`}
         onClick={() => {
           setShareSheetOpen(false);
-          if (wordSearchOpen) {
-            closeWordSearch();
-            return;
-          }
-          if (historyOpen) {
-            restoreHistoryFocusRef.current = true;
-            closeOverlay();
+          /* Jornada: search/history → voltar ao menu (não fechar tudo). */
+          if (wordSearchOpen || historyOpen) {
+            restoreHistoryFocusRef.current = false;
+            openOverlay({ type: "reader_settings" });
             return;
           }
           restoreToolsFocusRef.current = true;
@@ -2687,11 +2717,15 @@ export function BibleReaderView({
               setShareSheetOpen(false);
               return;
             }
-            if (toolsMenuOpen || historyOpen) {
+            if (historyOpen || wordSearchOpen) {
+              openOverlay({ type: "reader_settings" });
+              return;
+            }
+            if (toolsMenuOpen) {
               closeOverlay();
               return;
             }
-            if (pickerOpen || wordSearchOpen) {
+            if (pickerOpen) {
               closeAll();
               return;
             }
@@ -2727,11 +2761,15 @@ export function BibleReaderView({
             setShareSheetOpen(false);
             return;
           }
-          if (toolsMenuOpen || historyOpen) {
+          if (historyOpen || wordSearchOpen) {
+            openOverlay({ type: "reader_settings" });
+            return;
+          }
+          if (toolsMenuOpen) {
             closeOverlay();
             return;
           }
-          if (pickerOpen || wordSearchOpen) {
+          if (pickerOpen) {
             closeAll();
             return;
           }

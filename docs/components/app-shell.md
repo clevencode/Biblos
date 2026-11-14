@@ -5,19 +5,21 @@
 | **ID** | `app-shell` |
 | **Raiz** | `App.tsx` → `BiblosConsumerApp` |
 | **Navegação** | `AppShellNav` + `shellNav.ts` |
-| **Painéis** | `HomeShellPanel`, `PlanDiscoverPanel`, `BibleReaderView`, `ProfileShellPanel` |
+| **Painéis** | `HomeShellPanel` (+ `HomeConfigSection`), `PlanDiscoverPanel`, `BibleReaderView` |
 | **Rota admin** | `EditorialAdminApp` via `hash` `#admin` |
 
 ---
 
 ## Resumo
 
-Shell em **tablist** com quatro onglets (`SHELL_TABS`): Accueil, Plan, Bible, Profil.
+Shell em **tablist** com três onglets (`SHELL_TABS`): Accueil, Plan, Bible.
 
-- Tab persistida em `localStorage` (`biblos-ui`, chave `tab`).
+- Tab persistida em `localStorage` (`biblos-ui`, chave `tab`). Legado `profile` → `home`.
 - Bible montada lazy: `bibleMounted` fica true após primeira visita (preserva estado).
 - Modo narrow + tab Bible → `immersiveHidden` na nav (`navHidden` do leitor).
-- Tema global: `theme.ts` + `onCycleTheme` no perfil e leitor.
+- **Config de conta/app** na Home (`HomeConfigSection`: conta, idioma, tema, storage health, admin).
+- **Experiência de leitura** no leitor (menu + `BibleHistorySheet`: versão, fonte, offline, surlignages, histórico).
+- Tema global: `theme.ts` — `onSetTheme` na Home; `onCycleTheme` no leitor.
 
 ---
 
@@ -28,12 +30,12 @@ Shell em **tablist** com quatro onglets (`SHELL_TABS`): Accueil, Plan, Bible, Pr
 | Composição | `src/App.tsx` |
 | Tabs | `src/components/AppShellNav.tsx`, `ModeTabIcon.tsx` |
 | Tabs data | `src/shellNav.ts` |
-| Accueil | `src/components/HomeShellPanel.tsx` |
+| Accueil + config | `src/components/HomeShellPanel.tsx`, `HomeConfigSection.tsx` |
 | Planos | `src/features/reading-plans/.../PlanDiscoverPanel.tsx` |
-| Perfil | `src/components/ProfileShellPanel.tsx` |
 | Leitor | `src/components/BibleReaderView.tsx` |
+| Histórico / marques | `src/components/BibleHistorySheet.tsx` |
 | Layout | `src/layout.ts` (`useNarrow`), classes `app is-bible-mode` |
-| Admin | `src/features/editorial-auth/.../EditorialAdminApp.tsx` |
+| Admin editorial | `src/features/editorial-auth/.../EditorialAdminApp.tsx` |
 | `AppSettingsPanel` | Existe mas **não** está ligado ao `App` (legado/alternativo) |
 
 ---
@@ -45,27 +47,19 @@ Shell em **tablist** com quatro onglets (`SHELL_TABS`): Accueil, Plan, Bible, Pr
 - `role="tablist"`, tabs com `aria-controls={`panel-${id}`}`.
 - Setas ←/→ rotacionam tab e movem foco.
 - Classe `is-immersive-hidden` esconde barra na leitura imersiva.
+- Arco radial: as outras 2 tabs (sem a ativa).
 
-IDs de painel: `panel-home`, `panel-bible`, `PlanDiscoverPanel` com `panel-today`, `panel-profile`.
+IDs de painel: `panel-home`, `panel-bible`, `PlanDiscoverPanel` com `panel-today`.
 
 ---
 
 ## `HomeShellPanel`
 
-**Props:** `active`, `activityTick`, `onOpenBible(ref?)`, `onOpenPlan`.
+**Props:** `active`, `activityTick`, `themePref`, `onSetTheme`, `onOpenBible(ref?)`, `onOpenPlan`, `onResumePlan`, `onRequestSignIn?`.
 
 - Saudação horária; cartão **Reprendre** com última leitura (`listBibleReadingHistory`).
 - Teaser planos → `onOpenPlan` muda tab `today`.
-
----
-
-## `ProfileShellPanel`
-
-**Props:** `active`, `activityTick`, `themePref`, `onCycleTheme`, `onOpenPassage`, `onHistoryChange`.
-
-- Link `#admin` para CMS planos.
-- Tema, histórico local (12 itens), limpar histórico.
-- Dados «sur cet appareil» — sem cloud de perfil.
+- `HomeConfigSection`: conta (auth/export), preferências (idioma/tema), saúde do storage, admin embutido.
 
 ---
 
@@ -100,6 +94,7 @@ Classes workspace: `is-mobile-vista`, `is-bible-compact-tools` quando `BIBLE_COM
 
 - Desmontar `BibleReaderView` ao sair da tab — usar `hidden` + `active` prop.
 - Ignorar `focusSeq` ao reabrir mesma referência.
+- Voltar a pôr Profil no radial — config fica na Home; leitura no leitor.
 
 ---
 
