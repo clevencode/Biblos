@@ -924,7 +924,8 @@ html[data-theme="dark"] .sw-update-banner-cta {
   --mode-tabs-bar-body: 62px;
   --mode-tabs-hub-size: 50px;
   --mode-tabs-hub-top: 9px;
-  --mode-tabs-item-size: var(--mobile-touch, 44px);
+  /* Arco ≈ hub: leitura visual uniforme no radial aberto */
+  --mode-tabs-item-size: 48px;
   /* Canvas = mesmo fundo da top bar (.bible-yv-top); âncoras paper/ink por tema */
   --mode-tabs-canvas: var(--bg);
   --mode-tabs-fg: var(--text);
@@ -1048,21 +1049,127 @@ html[data-theme="dark"] .mode-tabs {
   stroke-linejoin: round;
 }
 
-/* Hit-target só para fechar — sem frost/blur (barra convexa fica intacta) */
-.mode-tabs-scrim {
+/*
+ * Radial UI Backdrop — irmão de .mode-tabs dentro de .note-shell.
+ * z-index abaixo de .mode-tabs (40): fog no texto, barra + arco nítidos.
+ * Zona 0 → --radial-backdrop-clear: transparente sob a wave.
+ */
+:root {
+  /* = CONVEX_BAR_BODY_PX — topo plano da barra (não incluir DOME_RISE) */
+  --radial-backdrop-bar: 62px;
+  --radial-backdrop-clear: calc(
+    var(--radial-backdrop-bar) + env(safe-area-inset-bottom, 0px)
+  );
+  /* Fog denso já no encontro com a barra; fade longo para cima */
+  --radial-backdrop-0: rgba(248, 249, 250, 0.62);
+  --radial-backdrop-1: rgba(248, 249, 250, 0.4);
+  --radial-backdrop-2: rgba(248, 249, 250, 0.18);
+  --radial-backdrop-3: rgba(248, 249, 250, 0.06);
+  --radial-backdrop-blur: 14px;
+}
+
+html[data-theme="dark"] {
+  --radial-backdrop-0: rgba(10, 12, 16, 0.72);
+  --radial-backdrop-1: rgba(10, 12, 16, 0.48);
+  --radial-backdrop-2: rgba(10, 12, 16, 0.24);
+  --radial-backdrop-3: rgba(10, 12, 16, 0.08);
+}
+
+.radial-ui-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 0;
+  /* Mesmo SC que .mode-tabs; abaixo da nav (40 / +25) */
+  z-index: 25;
   margin: 0;
   padding: 0;
   border: 0;
-  background: transparent;
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-  transform: none;
+  appearance: none;
+  -webkit-appearance: none;
   filter: none;
+  transform: none;
+  cursor: pointer;
+  pointer-events: none;
+  opacity: 0;
+  will-change: opacity;
+  transition: opacity 220ms ease;
+  /* Fog começa no topo plano; rampa curta evita faixa de texto nítido */
+  background: linear-gradient(
+    to top,
+    transparent 0px,
+    transparent var(--radial-backdrop-clear),
+    var(--radial-backdrop-0) calc(var(--radial-backdrop-clear) + 6px),
+    var(--radial-backdrop-1) calc(var(--radial-backdrop-clear) + 90px),
+    var(--radial-backdrop-2) calc(var(--radial-backdrop-clear) + 200px),
+    var(--radial-backdrop-3) calc(var(--radial-backdrop-clear) + 320px),
+    transparent calc(var(--radial-backdrop-clear) + 440px)
+  );
+}
+
+.radial-ui-backdrop::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  backdrop-filter: blur(var(--radial-backdrop-blur)) saturate(1.08);
+  -webkit-backdrop-filter: blur(var(--radial-backdrop-blur)) saturate(1.08);
+  mask-image: linear-gradient(
+    to top,
+    transparent 0px,
+    transparent var(--radial-backdrop-clear),
+    #000 calc(var(--radial-backdrop-clear) + 4px),
+    #000 calc(var(--radial-backdrop-clear) + 130px),
+    rgba(0, 0, 0, 0.55) calc(var(--radial-backdrop-clear) + 250px),
+    rgba(0, 0, 0, 0.2) calc(var(--radial-backdrop-clear) + 370px),
+    transparent calc(var(--radial-backdrop-clear) + 470px)
+  );
+  -webkit-mask-image: linear-gradient(
+    to top,
+    transparent 0px,
+    transparent var(--radial-backdrop-clear),
+    #000 calc(var(--radial-backdrop-clear) + 4px),
+    #000 calc(var(--radial-backdrop-clear) + 130px),
+    rgba(0, 0, 0, 0.55) calc(var(--radial-backdrop-clear) + 250px),
+    rgba(0, 0, 0, 0.2) calc(var(--radial-backdrop-clear) + 370px),
+    transparent calc(var(--radial-backdrop-clear) + 470px)
+  );
+}
+
+.radial-ui-backdrop.is-open {
+  opacity: 1;
   pointer-events: auto;
-  cursor: default;
+}
+
+/*
+ * Radial aberto: FABs / docks do leitor cedem (estado via data-radial-open).
+ * Conteúdo em .note-shell-main fica inert (shellRadial.ts).
+ */
+html[data-radial-open="true"] .bible-yv-dock.is-play-only,
+html[data-radial-open="true"] .bible-yv-dock.is-floating,
+html[data-radial-open="true"] .bible-yv-top-passage-skips.is-float-br,
+html[data-radial-open="true"] .bible-yv-tools-menu.is-float-br,
+html.is-radial-open .bible-yv-dock.is-play-only,
+html.is-radial-open .bible-yv-dock.is-floating,
+html.is-radial-open .bible-yv-top-passage-skips.is-float-br,
+html.is-radial-open .bible-yv-tools-menu.is-float-br {
+  opacity: 0 !important;
+  transform: scale(0.92);
+  pointer-events: none !important;
+  visibility: hidden;
+  transition:
+    opacity 0.2s ease,
+    transform 0.22s ease,
+    visibility 0.2s ease;
+}
+
+/* Recuo suave só no bloco de texto (FABs ficam fora deste transform) */
+.bible-reader--yv .bible-passage {
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  transform-origin: center top;
+}
+
+html[data-radial-open="true"] .bible-reader--yv .bible-passage,
+html.is-radial-open .bible-reader--yv .bible-passage {
+  transform: scale(0.985);
 }
 
 /*
@@ -1107,7 +1214,10 @@ html[data-theme="dark"] .mode-tabs {
   pointer-events: auto;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  transition: background var(--mode-tabs-ms) var(--mode-tabs-ease);
+  transition:
+    background var(--mode-tabs-ms) var(--mode-tabs-ease),
+    outline-color var(--mode-tabs-ms) var(--mode-tabs-ease),
+    transform 160ms var(--mode-tabs-ease);
 }
 
 .mode-tabs-hub:hover {
@@ -1115,12 +1225,32 @@ html[data-theme="dark"] .mode-tabs {
 }
 
 .mode-tabs-hub:active {
-  transform: none;
+  transform: scale(0.96);
   background: var(--mode-tabs-hub-press);
 }
 
+.mode-tabs-hub:focus-visible,
+.mode-tabs-item:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent, #5b7cfa) 70%, transparent);
+  outline-offset: 3px;
+}
+
+/* Anel canvas: separa pills do fog sem sombra (shell proíbe box-shadow) */
+.mode-tabs.is-open .mode-tabs-hub,
+.mode-tabs.is-open .mode-tabs-item {
+  outline: 1.5px solid color-mix(in srgb, var(--mode-tabs-canvas) 88%, transparent);
+  outline-offset: 0;
+}
+
+.mode-tabs.is-open .mode-tabs-hub:focus-visible,
+.mode-tabs.is-open .mode-tabs-item:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent, #5b7cfa) 70%, transparent);
+  outline-offset: 3px;
+}
+
+/* Acima do radial-ui-backdrop (z:25) — barra + arco nítidos */
 .mode-tabs.is-open {
-  z-index: calc(var(--bible-z-popover, 40) + 20);
+  z-index: calc(var(--bible-z-popover, 40) + 25);
 }
 
 .mode-tabs-hub .mode-tab-icon,
@@ -1146,7 +1276,7 @@ html[data-theme="dark"] .mode-tabs {
 .mode-tabs-hub-caption {
   position: absolute;
   left: 50%;
-  top: calc(100% + 4px);
+  top: calc(100% + 5px);
   z-index: 2;
   max-width: 7.5rem;
   margin: 0;
@@ -1164,12 +1294,13 @@ html[data-theme="dark"] .mode-tabs {
   text-overflow: ellipsis;
   pointer-events: none;
   opacity: 1;
-  transition: opacity var(--mode-tabs-ms) var(--mode-tabs-ease);
+  transition: opacity 160ms var(--mode-tabs-ease);
 }
 
 .mode-tabs.is-open .mode-tabs-hub-caption,
 .mode-tabs.is-immersive-hidden .mode-tabs-hub-caption {
   opacity: 0;
+  transition-duration: 120ms;
 }
 
 /* Roleta: saída suave e curta; entrada um pouco mais longa */
@@ -1241,12 +1372,13 @@ html[data-theme="dark"] .mode-tabs {
     transform 400ms cubic-bezier(0.22, 1, 0.36, 1),
     opacity 200ms ease-out,
     background var(--mode-tabs-ms) var(--mode-tabs-ease),
-    color var(--mode-tabs-ms) var(--mode-tabs-ease);
-  transition-delay: calc(40ms + var(--roulette-i) * 40ms);
+    color var(--mode-tabs-ms) var(--mode-tabs-ease),
+    outline-color var(--mode-tabs-ms) var(--mode-tabs-ease);
+  transition-delay: calc(36ms + var(--roulette-i) * 48ms);
 }
 
 .mode-tabs:not(.is-open) .mode-tabs-item {
-  transition-delay: calc(var(--roulette-i) * 22ms);
+  transition-delay: calc(var(--roulette-i) * 18ms);
 }
 
 .mode-tabs-item.is-on {
@@ -1260,8 +1392,14 @@ html[data-theme="dark"] .mode-tabs {
   background: var(--mode-tabs-hub-hover);
 }
 
-.mode-tabs-item:active {
+.mode-tabs.is-open .mode-tabs-item:active {
   background: var(--mode-tabs-hub-press);
+  transform: translate(
+      calc(-50% + var(--radial-x)),
+      calc(-50% + var(--radial-y))
+    )
+    scale(0.94);
+  transition-duration: 120ms;
 }
 
 .mode-tabs-item .mode-tab-icon {
@@ -1288,6 +1426,49 @@ html[data-theme="dark"] .mode-tabs {
 
 .mode-tab-badge {
   display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .radial-ui-backdrop,
+  .mode-tabs-arc,
+  .mode-tabs-item,
+  .mode-tabs-hub,
+  .mode-tabs-hub .mode-tab-icon,
+  .mode-tabs-hub .mode-tabs-hub-close,
+  .mode-tabs-hub-caption,
+  .bible-reader--yv .bible-passage,
+  html[data-radial-open="true"] .bible-yv-dock.is-play-only,
+  html[data-radial-open="true"] .bible-yv-dock.is-floating,
+  html[data-radial-open="true"] .bible-yv-top-passage-skips.is-float-br,
+  html[data-radial-open="true"] .bible-yv-tools-menu.is-float-br,
+  html.is-radial-open .bible-yv-dock.is-play-only,
+  html.is-radial-open .bible-yv-dock.is-floating,
+  html.is-radial-open .bible-yv-top-passage-skips.is-float-br,
+  html.is-radial-open .bible-yv-tools-menu.is-float-br {
+    transition: none !important;
+  }
+
+  .mode-tabs-arc {
+    transform: rotate(0deg) scale(1);
+  }
+
+  .mode-tabs:not(.is-open) .mode-tabs-arc {
+    opacity: 0;
+  }
+
+  .mode-tabs.is-open .mode-tabs-item {
+    transition-delay: 0ms !important;
+  }
+
+  .mode-tabs-hub:active,
+  .mode-tabs.is-open .mode-tabs-item:active {
+    transform: none;
+  }
+
+  html[data-radial-open="true"] .bible-reader--yv .bible-passage,
+  html.is-radial-open .bible-reader--yv .bible-passage {
+    transform: none;
+  }
 }
 
 .flash {

@@ -544,12 +544,13 @@ function BiblosConsumerApp() {
                 />
               </div>
             </section>
-            <AppShellNav
-              active={tab}
-              onSelect={selectTab}
-              immersiveHidden={bibleMode && navHidden}
-            />
           </div>
+          {/* Fora de .note-shell-main: conteúdo pode ficar inert com radial aberto */}
+          <AppShellNav
+            active={tab}
+            onSelect={selectTab}
+            immersiveHidden={bibleMode && navHidden}
+          />
         </div>
       </main>
     </div>

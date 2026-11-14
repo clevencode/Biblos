@@ -53,6 +53,7 @@ import {
 } from "../bible/readingScope";
 import { useUiLocale } from "../i18n/UiLocaleContext";
 import { notifyUiLocale, subscribeUiLocale } from "../i18n/uiLocale";
+import { subscribeShellRadial } from "../shellRadial";
 import {
   formatPassagePillRef,
   isPassagePillUnified,
@@ -2037,6 +2038,19 @@ export function BibleReaderView({
       window.removeEventListener("keydown", onKey);
     };
   }, [toolsMenuOpen, closeToolsMenu, markOverlayDismissSwallow]);
+
+  /**
+   * Radial da shell tem precedência sobre chrome flutuante do leitor:
+   * fecha overlays / share / discovery sem esconder a nav (já visível).
+   */
+  useEffect(() => {
+    return subscribeShellRadial((radialOpen) => {
+      if (!radialOpen) return;
+      setShareSheetOpen(false);
+      closeAll();
+      closeOverlay();
+    });
+  }, [closeAll, closeOverlay]);
 
   function stopBibleAudio() {
     const audio = audioRef.current;
