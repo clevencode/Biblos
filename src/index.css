@@ -14572,22 +14572,27 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   padding: 0;
 }
 
+/* Herda tipografia / dim / underline do `.bible-verse` pai */
 .bible-verse-select-item {
   width: 100%;
   margin: 0;
-  padding: 10px 12px;
+  padding: 6px 10px;
   box-sizing: border-box;
-  display: grid;
-  grid-template-columns: 1.75rem minmax(0, 1fr);
-  align-items: start;
-  gap: 10px;
+  display: block;
   border: 0;
   border-radius: 0;
   background: transparent;
-  color: var(--yv-text, var(--text));
-  font: inherit;
   text-align: left;
   cursor: pointer;
+  font-family: var(--font-bible);
+  font-size: var(--bible-font-size, var(--type-body-size));
+  font-weight: var(--type-bible-weight);
+  line-height: var(--type-bible-lh);
+  letter-spacing: var(--type-bible-tracking);
+  font-kerning: normal;
+  font-variant-ligatures: common-ligatures;
+  text-rendering: optimizeLegibility;
+  color: var(--yv-text, var(--text));
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
   transition:
@@ -14620,15 +14625,17 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
 }
 
 .bible-verse-select-num {
-  flex: none;
-  font-family: var(--font-ui);
-  font-size: 0.82rem;
-  font-weight: 650;
+  display: inline-block;
+  margin-right: 0.4em;
+  min-width: 1.1em;
+  font-family: inherit;
+  font-size: 0.68em;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
-  line-height: 1.4;
-  color: var(--yv-muted, var(--muted));
-  text-align: end;
-  padding-top: 0.12em;
+  color: var(--accent, #5b7cfa);
+  vertical-align: super;
+  line-height: 1;
+  user-select: none;
 }
 
 .bible-verse-select-item.is-on .bible-verse-select-num {
@@ -14636,15 +14643,8 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
 }
 
 .bible-verse-select-text {
-  min-width: 0;
-  font-family: var(--font-bible, var(--font-reading, Georgia, serif));
-  font-size: 0.9rem;
-  font-weight: 450;
-  line-height: 1.4;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  font: inherit;
+  line-height: inherit;
 }
 
 .bible-verse-select-item.is-on .bible-verse-select-text {

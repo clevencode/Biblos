@@ -1296,13 +1296,8 @@ export function BibleReaderView({
     preferJumpFocusRef.current = false;
     const current = selection;
     const next = new Set(current ?? []);
-    const inVerseActions = activeOverlay.type === "verse_actions";
     if (next.has(number)) {
-      /* Com modal aberto: não sair ao desmarcar — fecho só no pill Options. */
-      if (next.size === 1 && inVerseActions) {
-        setCardMsg(t("verse.keepOne"));
-        return;
-      }
+      /* Mesma lógica do pai: desmarcar o último fecha o Options full-bleed. */
       next.delete(number);
     } else {
       next.add(number);

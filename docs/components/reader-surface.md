@@ -89,7 +89,7 @@ Abre com overlay `verse_actions` + seleção + texto (não share):
 | Lista Verset | Outline (underline + dim) — **sem** check circular |
 | Bottom nav | `.bible-verse-actions-nav` — Cor · Marquer · Partager; superfície = `--bible-nav-surface` |
 | Cor Marquer | `adaptVerseColorForTheme` + `verseActionTone(hex, theme)` → vars no `<nav>` |
-| Negócio | Não fechar ao desmarcar (`keepOne`); marcar/desmarcar → aviso, sheet fica |
+| Negócio | Desmarcar o último verso = fechar Options (mesma lógica da passagem); marcar/desmarcar com seleção → aviso, sheet fica |
 
 `readerSurfaceChrome` / `verseActionsOpen`:
 
