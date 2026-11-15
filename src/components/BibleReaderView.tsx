@@ -2686,7 +2686,9 @@ export function BibleReaderView({
                 >
                   <ul
                     ref={verseSelectListRef}
-                    className="bible-verse-select-list"
+                    className={`bible-verse-select-list${
+                      selectedVerses.length ? " is-dimming" : ""
+                    }`}
                     role="listbox"
                     aria-multiselectable="true"
                     aria-label={t("verse.selectTitle")}
@@ -2712,19 +2714,6 @@ export function BibleReaderView({
                             </span>
                             <span className="bible-verse-select-text">
                               {preview || `v. ${verse.number}`}
-                            </span>
-                            <span
-                              className={`bible-verse-select-check${
-                                on ? " is-on" : ""
-                              }`}
-                              aria-hidden
-                            >
-                              {on ? (
-                                <YvIcon
-                                  name="check"
-                                  className="bible-verse-select-check-icon"
-                                />
-                              ) : null}
                             </span>
                           </button>
                         </li>

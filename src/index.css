@@ -14533,7 +14533,7 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   display: flex;
 }
 
-/* Lista Verset â€” rows no espÃ­rito history + check compacto */
+/* Lista Verset â€” outline (underline + dim), sem check circular */
 .bible-verse-select {
   flex: 1 1 auto;
   min-height: 0;
@@ -14558,7 +14558,7 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   -webkit-overflow-scrolling: touch;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
   scrollbar-width: none;
 }
 
@@ -14575,14 +14575,14 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
 .bible-verse-select-item {
   width: 100%;
   margin: 0;
-  padding: 10px 10px 10px 12px;
+  padding: 10px 12px;
   box-sizing: border-box;
   display: grid;
-  grid-template-columns: 1.75rem minmax(0, 1fr) 28px;
-  align-items: center;
+  grid-template-columns: 1.75rem minmax(0, 1fr);
+  align-items: start;
   gap: 10px;
   border: 0;
-  border-radius: 12px;
+  border-radius: 0;
   background: transparent;
   color: var(--yv-text, var(--text));
   font: inherit;
@@ -14590,15 +14590,28 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  transition: background 120ms ease;
+  transition:
+    opacity 0.22s ease,
+    color 0.22s ease;
+}
+
+.bible-verse-select-list.is-dimming .bible-verse-select-item:not(.is-on) {
+  opacity: 0.36;
+  color: color-mix(
+    in srgb,
+    var(--yv-text, var(--text)) 68%,
+    var(--yv-muted, var(--muted))
+  );
 }
 
 .bible-verse-select-item:hover {
-  background: color-mix(in srgb, var(--yv-text, var(--text)) 7%, transparent);
+  background: transparent;
 }
 
 .bible-verse-select-item.is-on {
-  background: color-mix(in srgb, var(--yv-text, var(--text)) 9%, transparent);
+  opacity: 1;
+  color: var(--yv-text, var(--text));
+  background: transparent;
 }
 
 .bible-verse-select-item:focus-visible {
@@ -14612,13 +14625,14 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   font-size: 0.82rem;
   font-weight: 650;
   font-variant-numeric: tabular-nums;
-  line-height: 1.3;
+  line-height: 1.4;
   color: var(--yv-muted, var(--muted));
   text-align: end;
+  padding-top: 0.12em;
 }
 
 .bible-verse-select-item.is-on .bible-verse-select-num {
-  color: var(--yv-text, var(--text));
+  color: var(--accent, #5b7cfa);
 }
 
 .bible-verse-select-text {
@@ -14633,29 +14647,15 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   overflow: hidden;
 }
 
-.bible-verse-select-check {
-  width: 24px;
-  height: 24px;
-  justify-self: end;
-  display: grid;
-  place-items: center;
-  border-radius: 999px;
-  color: transparent;
-  box-sizing: border-box;
-  border: 1.5px solid color-mix(in srgb, var(--yv-text, var(--text)) 22%, transparent);
-  background: transparent;
-}
-
-.bible-verse-select-check.is-on {
-  color: var(--mode-tabs-hub-fg, var(--paper, #fff));
-  background: var(--mode-tabs-hub-bg, var(--ink, #0d1117));
-  border-color: var(--mode-tabs-hub-bg, var(--ink, #0d1117));
-}
-
-.bible-verse-select-check-icon {
-  width: 14px;
-  height: 14px;
-  font-size: 14px;
+.bible-verse-select-item.is-on .bible-verse-select-text {
+  text-decoration: underline;
+  text-decoration-thickness: from-font;
+  text-underline-offset: 0.2em;
+  text-decoration-color: color-mix(
+    in srgb,
+    var(--accent, #5b7cfa) 55%,
+    var(--yv-text, var(--text))
+  );
 }
 
 /* Linha Ãºnica: + | Marquer | Partager */
@@ -18294,5 +18294,277 @@ button.bible-study-ref-modal-title.is-jump:focus-visible {
   contain: none !important;
   isolation: isolate !important;
   transition: none !important;
+}
+
+
+
+/* -------------------------------------------------------------------------
+ * VerseSelection outline — sandbox TEST (?verse-selection-outline=test)
+ * Prefixo .vso-* ; não partilha selectores com .bible-verse-actions.
+ * ------------------------------------------------------------------------- */
+html[data-verse-selection-outline="test"] {
+  overflow: hidden;
+}
+
+html[data-verse-selection-outline="test"] #root {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.vso-root {
+  --vso-sheet-h: 0px;
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  background: var(--bible-nav-surface, var(--yv-bg, var(--bg, #0d1117)));
+  color: var(--yv-text, var(--text, #f0f2f5));
+  font-family: var(--font-ui, system-ui, sans-serif);
+  box-sizing: border-box;
+}
+
+.vso-banner {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: calc(10px + env(safe-area-inset-top, 0px)) 16px 10px;
+  border-bottom: 1px solid color-mix(in srgb, var(--yv-line, var(--line, #333)) 55%, transparent);
+  background: color-mix(in srgb, var(--yv-text, var(--text)) 4%, transparent);
+}
+
+.vso-banner-label {
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--yv-muted, var(--muted, #9aa3ad));
+}
+
+.vso-banner-close {
+  margin: 0;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--yv-text, var(--text)) 10%, transparent);
+  color: var(--yv-text, var(--text));
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.vso-passage {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 20px 18px
+    calc(var(--vso-sheet-h, 0px) + 20px + env(safe-area-inset-bottom, 0px));
+  scroll-padding-bottom: calc(var(--vso-sheet-h, 0px) + 16px);
+  box-sizing: border-box;
+}
+
+.vso-book {
+  margin: 0 0 18px;
+  font-family: var(--font-ui, system-ui, sans-serif);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--yv-muted, var(--muted, #9aa3ad));
+}
+
+.vso-verses {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.vso-verse {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 8px 4px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.22s ease, color 0.22s ease;
+}
+
+.vso-verses.is-dimming .vso-verse:not(.is-selected) {
+  opacity: 0.36;
+  color: color-mix(in srgb, var(--yv-text, var(--text)) 68%, var(--yv-muted, var(--muted)));
+}
+
+.vso-verse.is-selected {
+  opacity: 1;
+  color: var(--yv-text, var(--text));
+  background: transparent;
+  box-shadow: none;
+}
+
+.vso-verse-num {
+  display: inline-block;
+  margin-right: 0.4em;
+  min-width: 1.1em;
+  font-family: inherit;
+  font-size: 0.68em;
+  font-weight: 700;
+  color: var(--accent, #5b7cfa);
+  vertical-align: super;
+  line-height: 1;
+  user-select: none;
+}
+
+.vso-verse-text {
+  font-family: var(--font-bible, var(--font-reading, Georgia, "Times New Roman", serif));
+  font-size: 1.05rem;
+  font-weight: 450;
+  line-height: 1.55;
+}
+
+.vso-verse.is-selected .vso-verse-text {
+  text-decoration: underline;
+  text-decoration-thickness: from-font;
+  text-underline-offset: 0.2em;
+  text-decoration-color: color-mix(in srgb, var(--accent, #5b7cfa) 55%, var(--yv-text, var(--text)));
+}
+
+.vso-verse:focus-visible {
+  outline: 2px solid var(--accent, #5b7cfa);
+  outline-offset: 2px;
+}
+
+/* Panneau bas — geometria tipo is-sheet, classes próprias */
+.vso-sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 10px 16px calc(14px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background: var(--bible-nav-surface, var(--yv-bg, var(--bg, #0d1117)));
+  border: 0;
+  border-radius: 18px 18px 0 0;
+  box-shadow:
+    0 -12px 32px color-mix(in srgb, #000 28%, transparent),
+    0 -1px 0 color-mix(in srgb, var(--yv-text, var(--text)) 6%, transparent);
+  animation: bible-sheet-up 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  overflow: visible;
+}
+
+.vso-sheet::before {
+  content: "";
+  display: block;
+  width: 2.75rem;
+  height: 4px;
+  margin: 0 auto 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--yv-text, var(--text)) 22%, transparent);
+}
+
+.vso-sheet-head {
+  display: grid;
+  gap: 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid color-mix(in srgb, var(--yv-line, var(--line)) 55%, transparent);
+}
+
+.vso-sheet-ref {
+  margin: 0;
+  font-family: var(--font-ui, system-ui, sans-serif);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--yv-text, var(--text));
+}
+
+.vso-sheet-hint {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.35;
+  color: color-mix(in srgb, var(--yv-muted, var(--muted)) 94%, var(--yv-text, var(--text)));
+}
+
+.vso-sheet-msg {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--accent, #5b7cfa);
+}
+
+.vso-sheet-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+}
+
+.vso-btn {
+  margin: 0;
+  border: 0;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.vso-btn-swatch {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  background: var(--vso-tint, var(--accent, #5b7cfa));
+  color: #0d1117;
+  font-size: 1.4rem;
+  line-height: 1;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, #000 12%, transparent);
+}
+
+.vso-btn-primary {
+  flex: 1 1 0;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent, #5b7cfa) 82%, #fff);
+  color: #0d1117;
+}
+
+.vso-btn-secondary {
+  flex: 1 1 0;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--yv-text, var(--text)) 12%, transparent);
+  color: var(--yv-text, var(--text));
+}
+
+.vso-btn:focus-visible {
+  outline: 2px solid var(--accent, #5b7cfa);
+  outline-offset: 2px;
+}
+
+.vso-btn:active {
+  transform: scale(0.98);
 }
 

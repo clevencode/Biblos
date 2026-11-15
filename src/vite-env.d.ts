@@ -39,6 +39,8 @@ interface ImportMetaEnv {
   readonly VITE_PASSAGE_PILL?: string;
   /** `test` (default) = pill só livros; ícone search = palavras */
   readonly VITE_PASSAGE_DISCOVERY_FLOW?: string;
+  /** `test` = sandbox VerseSelection outline (underline + panneau bas); omitido = off */
+  readonly VITE_VERSE_SELECTION_OUTLINE?: string;
 }
 
 interface ImportMeta {

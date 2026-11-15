@@ -86,6 +86,7 @@ Abre com overlay `verse_actions` + seleção + texto (não share):
 |------|----------|
 | Sheet | `.bible-verse-actions` full-bleed (lista Verset \| Référence) |
 | Topbar | Section pill **Options** — fecho só aqui (+ Escape); sem X no sheet |
+| Lista Verset | Outline (underline + dim) — **sem** check circular |
 | Bottom nav | `.bible-verse-actions-nav` — Cor · Marquer · Partager; superfície = `--bible-nav-surface` |
 | Cor Marquer | `adaptVerseColorForTheme` + `verseActionTone(hex, theme)` → vars no `<nav>` |
 | Negócio | Não fechar ao desmarcar (`keepOne`); marcar/desmarcar → aviso, sheet fica |

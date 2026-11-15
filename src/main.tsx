@@ -15,6 +15,11 @@ import { scheduleIdle } from "./scheduleIdle";
 import { applyTheme } from "./theme";
 import { bootPassageBarPanelLayout } from "./bible/passageBarPanelLayout";
 import { bootPassagePillLayoutTest } from "./bible/passagePillLayout";
+import {
+  bootVerseSelectionOutlineTest,
+  isVerseSelectionOutlineTest,
+} from "./bible/verseSelectionOutlineTest";
+import { VerseSelectionOutlineTest } from "./components/VerseSelectionOutlineTest";
 import { bootUiColortest } from "./ui/colortest";
 import { requestPersistentStorage } from "./offlineStorageGuard";
 import { bootSwUpdateManager } from "./swUpdateManager";
@@ -29,6 +34,7 @@ import "./index.css";
 bootUiColortest();
 bootPassagePillLayoutTest();
 bootPassageBarPanelLayout();
+bootVerseSelectionOutlineTest();
 
 async function boot() {
   await ensureCleanSlate();
@@ -50,6 +56,9 @@ async function boot() {
           <ConsumerAuthProvider>
             <UiLocaleProvider>
               <App />
+              {isVerseSelectionOutlineTest() ? (
+                <VerseSelectionOutlineTest />
+              ) : null}
             </UiLocaleProvider>
           </ConsumerAuthProvider>
         </AppReadinessProvider>
