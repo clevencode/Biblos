@@ -14215,7 +14215,7 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
 }
 
 /*
- * Navbar «Retourner au verset» — mesmo contrato visual que Options nav
+ * Navbar estudo LIFO — Retourner à {label} + ×
  * (clone mode-tabs / --bible-nav-surface).
  */
 .bible-study-return-nav {
@@ -14263,13 +14263,12 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   pointer-events: auto;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
+  gap: 2px;
   width: min(100%, 22rem);
   height: var(--mode-tabs-pill-h, 56px);
   min-height: var(--mode-tabs-pill-h, 56px);
   margin: 0;
-  padding: 0 18px;
+  padding: 4px;
   box-sizing: border-box;
   border: 1px solid
     var(
@@ -14279,26 +14278,88 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   border-radius: 999px;
   background: var(--bible-nav-surface, var(--bg));
   color: inherit;
-  font: inherit;
-  font-size: 0.95rem;
-  font-weight: 650;
-  letter-spacing: 0.01em;
-  cursor: pointer;
   box-shadow:
     0 1px 0 color-mix(in srgb, var(--ink) 8%, transparent),
     0 8px 24px color-mix(in srgb, var(--ink) 14%, transparent);
 }
 
-.bible-study-return-nav-pill:hover {
+.bible-study-return-nav-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  margin: 0;
+  padding: 0 10px 0 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+}
+
+.bible-study-return-nav-main:hover {
   background: var(--mode-tabs-hover, color-mix(in srgb, var(--text) 6%, var(--bg)));
 }
 
-.bible-study-return-nav-pill:focus-visible {
+.bible-study-return-nav-main:focus-visible {
   outline: 2px solid var(--accent, #5b7cfa);
-  outline-offset: 2px;
+  outline-offset: 1px;
 }
 
-.bible-study-return-nav-icon {
+.bible-study-return-nav-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bible-study-return-nav-depth {
+  flex: none;
+  display: grid;
+  place-items: center;
+  min-width: 1.35rem;
+  height: 1.35rem;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 14%, transparent);
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.bible-study-return-nav-dismiss {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.bible-study-return-nav-dismiss:hover {
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+.bible-study-return-nav-dismiss:focus-visible {
+  outline: 2px solid var(--accent, #5b7cfa);
+  outline-offset: 1px;
+}
+
+.bible-study-return-nav-icon,
+.bible-study-return-nav-dismiss-icon {
   width: 1.15rem;
   height: 1.15rem;
   flex: none;

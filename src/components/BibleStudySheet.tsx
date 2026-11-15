@@ -38,7 +38,6 @@ export function BibleStudySheet({
     verse,
     books,
     onOpenRef,
-    initialTab: "refs",
   };
   return <VerseStudyPanel {...props} />;
 }

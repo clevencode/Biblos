@@ -6,7 +6,6 @@
 import {
   useEffect,
   useId,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -28,9 +27,18 @@ import {
 import { ensureVerseIndex } from "../bible/verseIndexCache";
 import { useUiLocale } from "../i18n/UiLocaleContext";
 import type { YouVersionBook } from "../youversion/client";
+import { parseUsfmLocation } from "../youversion/usfm";
 
 /** Scroll da lista Référence por verso de estudo — sobrevive a Aller / Retourner. */
 const refsListScrollByKey = new Map<string, number>();
+
+export function getRefsListScroll(scopedKey: string): number {
+  return refsListScrollByKey.get(scopedKey) ?? 0;
+}
+
+export function setRefsListScroll(scopedKey: string, scrollTop: number): void {
+  refsListScrollByKey.set(scopedKey, Math.max(0, scrollTop));
+}
 
 export type VerseStudyTab = "context" | "refs" | "application";
 
@@ -40,14 +48,15 @@ export type VerseStudyPanelProps = {
   chapterId: string;
   verse: number;
   books: YouVersionBook[];
-  /** Cadeia: Aller au verset → destino focado (+ Retourner au verset). */
+  /** Cadeia: Aller au verset → destino focado (+ Retourner). */
   onOpenRef?: (usfm: string) => void;
-  initialTab?: VerseStudyTab;
   /**
    * Tab Référence activa. O modal de versículo só renderiza neste escopo
    * (não vaza para Verset); o cartão activo persiste ao voltar a Référence.
    */
   active?: boolean;
+  /** Scroll a restaurar após Retourner (prioritário sobre o Map). */
+  restoreScrollTop?: number | null;
 };
 
 /** @deprecated Preferir VerseStudyPanel — mantido para compat. */
@@ -256,8 +265,8 @@ export function VerseStudyPanel({
   verse,
   books,
   onOpenRef,
-  initialTab = "refs",
   active = true,
+  restoreScrollTop = null,
 }: VerseStudyPanelProps) {
   const { t } = useUiLocale();
   const [busy, setBusy] = useState(false);
@@ -269,6 +278,7 @@ export function VerseStudyPanel({
   const [activeRef, setActiveRef] = useState<RefCard | null>(null);
   const reqGen = useRef(0);
   const listRef = useRef<HTMLDivElement | null>(null);
+  const scrollRestoredRef = useRef(false);
 
   const scopedKey = verseStudyKey(versionId, bookId, chapterId, verse);
   const universalKey = universalVerseKey(bookId, chapterId, verse);
@@ -277,14 +287,14 @@ export function VerseStudyPanel({
   const rememberListScroll = () => {
     const el = listRef.current;
     if (!el) return;
-    refsListScrollByKey.set(scopedKey, el.scrollTop);
+    setRefsListScroll(scopedKey, el.scrollTop);
   };
 
   useEffect(() => {
     const key = scopedKey;
     return () => {
       const el = listRef.current;
-      if (el) refsListScrollByKey.set(key, el.scrollTop);
+      if (el) setRefsListScroll(key, el.scrollTop);
     };
   }, [scopedKey]);
 
@@ -294,6 +304,7 @@ export function VerseStudyPanel({
     setError(null);
     setBundle(null);
     setActiveRef(null);
+    scrollRestoredRef.current = false;
     void loadVerseStudy(bookId, chapterId, verse)
       .then((data) => {
         if (gen !== reqGen.current) return;
@@ -358,14 +369,48 @@ export function VerseStudyPanel({
 
   const language = languageForVersion(versionId);
 
-  useLayoutEffect(() => {
-    if (busy || error || !cards.length) return;
+  const targetScrollTop =
+    restoreScrollTop != null && restoreScrollTop > 0
+      ? restoreScrollTop
+      : getRefsListScroll(scopedKey);
+
+  useEffect(() => {
+    scrollRestoredRef.current = false;
+  }, [scopedKey, active, targetScrollTop]);
+
+  useEffect(() => {
+    if (!active || busy || error || !cards.length) return;
     const el = listRef.current;
-    if (!el) return;
-    const saved = refsListScrollByKey.get(scopedKey);
-    if (saved == null || saved <= 0) return;
-    el.scrollTop = saved;
-  }, [busy, error, cards.length, scopedKey, previewByUsfm]);
+    if (!el || targetScrollTop <= 0) return;
+
+    const tryRestore = () => {
+      if (scrollRestoredRef.current) return;
+      if (el.scrollHeight >= targetScrollTop + el.clientHeight * 0.5) {
+        el.scrollTop = targetScrollTop;
+        setRefsListScroll(scopedKey, targetScrollTop);
+        scrollRestoredRef.current = true;
+      }
+    };
+
+    tryRestore();
+    const observer = new ResizeObserver(tryRestore);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [
+    active,
+    busy,
+    error,
+    cards.length,
+    scopedKey,
+    targetScrollTop,
+    previewByUsfm,
+  ]);
+
+  const modalGoLabel = (usfm: string | null) => {
+    if (!usfm) return t("study.goToPassage");
+    const loc = parseUsfmLocation(usfm);
+    return loc?.verse == null ? t("study.goToChapter") : t("study.goToPassage");
+  };
 
   return (
     <div
@@ -410,7 +455,7 @@ export function VerseStudyPanel({
           onClose={() => setActiveRef(null)}
           onGoToChapter={onOpenRef}
           closeLabel={t("common.close")}
-          goToPassageLabel={t("study.goToPassage")}
+          goToPassageLabel={modalGoLabel(activeRef.usfm)}
           loadingLabel={t("common.loading")}
           unavailableLabel={t("study.refUnavailable")}
         />
@@ -428,7 +473,6 @@ export function VerseStudyDrawer({
   verse,
   books = [],
   onOpenRef,
-  initialTab,
 }: VerseStudyDrawerProps) {
   if (!open) return null;
   return (
@@ -439,7 +483,6 @@ export function VerseStudyDrawer({
       verse={verse}
       books={books}
       onOpenRef={onOpenRef}
-      initialTab={initialTab}
     />
   );
 }
