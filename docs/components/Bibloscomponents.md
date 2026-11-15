@@ -43,7 +43,7 @@ flowchart TB
 
 | ID | Nome | Guia detalhado |
 |----|------|----------------|
-| `app-shell` | Shell, tabs Accueil/Plan/Bible + config na Home | [app-shell.md](./app-shell.md) |
+| `app-shell` | Shell, tabs Accueil/Bible/Plan + config na Home | [app-shell.md](./app-shell.md) |
 | `reader-surface` | Capítulo, versículos, seleção, acções | [reader-surface.md](./reader-surface.md) |
 | `passage-bar` | Estado actual da barra (chip + search + FAB skips) | [passage-bar.md](./passage-bar.md) |
 | `passage-roll` | Barra referência + contentor roll | [passage-roll.md](./passage-roll.md) |

@@ -195,6 +195,9 @@ export type UiCopyKey =
   | "verse.actions"
   | "verse.hint"
   | "verse.hintMulti"
+  | "verse.selectTitle"
+  | "verse.tabVerse"
+  | "verse.tabRefs"
   | "verse.mark"
   | "verse.unmark"
   | "verse.share"
@@ -434,8 +437,11 @@ const FR: Dict = {
   "study.loadError": "Erreur de chargement",
   "study.refUnavailable": "Texte de ce passage indisponible pour cette version.",
   "verse.actions": "Actions du verset",
-  "verse.hint": "Tape d’autres versets pour compléter la sélection",
-  "verse.hintMulti": "{n} versets · tape pour ajouter ou retirer",
+  "verse.hint": "Coche d’autres versets pour compléter la sélection",
+  "verse.hintMulti": "{n} versets · coche pour ajouter ou retirer",
+  "verse.selectTitle": "Versets",
+  "verse.tabVerse": "Verset",
+  "verse.tabRefs": "Référence",
   "verse.mark": "Marquer",
   "verse.unmark": "Démarquer",
   "verse.share": "Partager",
@@ -676,8 +682,11 @@ const HT: Dict = {
   "study.loadError": "Erè chajman",
   "study.refUnavailable": "Tèks pasaj sa a pa disponib pou vèsyon sa a.",
   "verse.actions": "Aksyon vèsè",
-  "verse.hint": "Tape lòt vèsè pou konplete seleksyon an",
-  "verse.hintMulti": "{n} vèsè · tape pou ajoute oswa retire",
+  "verse.hint": "Make lòt vèsè pou konplete seleksyon an",
+  "verse.hintMulti": "{n} vèsè · make pou ajoute oswa retire",
+  "verse.selectTitle": "Vèsè",
+  "verse.tabVerse": "Vèsè",
+  "verse.tabRefs": "Referans",
   "verse.mark": "Make",
   "verse.unmark": "Demake",
   "verse.share": "Pataje",

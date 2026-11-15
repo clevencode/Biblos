@@ -12,7 +12,7 @@
 
 ## Resumo
 
-Shell em **tablist** com três onglets (`SHELL_TABS`): Accueil, Plan, Bible.
+Shell em **tablist** com três onglets (`SHELL_TABS`): Accueil, Bible, Plan.
 
 - Tab persistida em `localStorage` (`biblos-ui`, chave `tab`). Legado `profile` → `home`.
 - Bible montada lazy: `bibleMounted` fica true após primeira visita (preserva estado).
@@ -44,7 +44,7 @@ Shell em **tablist** com três onglets (`SHELL_TABS`): Accueil, Plan, Bible.
 
 **Props:** `active: ShellTab`, `onSelect`, `immersiveHidden?`.
 
-- Pill horizontal flutuante (`.mode-tabs-pill`) com as **3 tabs** sempre visíveis (Home · Plan · Bible).
+- Pill horizontal flutuante (`.mode-tabs-pill`) com as **3 tabs** sempre visíveis (Home · Bible · Plan).
 - Sem hub, arco radial, `RadialUiBackdrop` nem `ConvexBottomBarSurface`.
 - `role="tablist"`, tabs com `aria-controls={`panel-${id}`}`; activa = segmento invertido.
 - Setas ←/→ mudam tab e movem foco.

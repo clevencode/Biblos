@@ -1,5 +1,5 @@
-/** Onglets principaux : Accueil · Plan · Bible (labels via i18n). */
-export type ShellTab = "home" | "today" | "bible";
+/** Onglets principaux : Accueil · Bible · Plan (labels via i18n). */
+export type ShellTab = "home" | "bible" | "today";
 
 export type ShellTabDef = {
   id: ShellTab;
@@ -9,8 +9,8 @@ export type ShellTabDef = {
 
 export const SHELL_TABS: readonly ShellTabDef[] = [
   { id: "home", labelKey: "shell.home" },
-  { id: "today", labelKey: "shell.plan" },
   { id: "bible", labelKey: "shell.bible" },
+  { id: "today", labelKey: "shell.plan" },
 ] as const;
 
 export const DEFAULT_SHELL_TAB: ShellTab = "bible";
