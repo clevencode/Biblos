@@ -10342,6 +10342,11 @@ html[data-theme="dark"] .top-sheet-backdrop {
   );
 }
 
+/* Référence: sem nav Marquer/Partager — fade só safe-area */
+.bible-verse-actions.top-floating-sheet.is-open.is-refs-tab::after {
+  height: calc(env(safe-area-inset-bottom, 0px) + 28px);
+}
+
 html:has(.bible-yv-passage-word-search-panel.is-open) .note-shell .mode-tabs,
 .app:has(.bible-yv-passage-word-search-panel.is-open) .note-shell .mode-tabs,
 html:has(.bible-yv-passage-scroll-panel.is-open) .note-shell .mode-tabs,
@@ -10361,9 +10366,11 @@ html:has(
   z-index: calc(var(--bible-z-top-sheet, 70) + 10);
 }
 
-/* Verse actions: navbar some (fecho só no X do modal) */
+/* Verse actions / retorno estudo: shell navbar some */
 html:has(.bible-verse-actions.top-floating-sheet.is-open) .note-shell .mode-tabs,
-.app:has(.bible-verse-actions.top-floating-sheet.is-open) .note-shell .mode-tabs {
+.app:has(.bible-verse-actions.top-floating-sheet.is-open) .note-shell .mode-tabs,
+html:has(.bible-study-return-nav) .note-shell .mode-tabs,
+.app:has(.bible-study-return-nav) .note-shell .mode-tabs {
   transform: translateY(calc(100% + 16px));
   opacity: 0;
   pointer-events: none;
@@ -14168,6 +14175,13 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   overflow: hidden;
 }
 
+.bible-verse-actions.top-floating-sheet.is-open.is-refs-tab
+  .bible-verse-actions-body {
+  --bible-sheet-scroll-pad-bottom: calc(
+    env(safe-area-inset-bottom, 0px) + var(--mobile-gutter, 12px)
+  );
+}
+
 .bible-verse-actions.top-floating-sheet.is-open .bible-verse-actions-head,
 .bible-verse-actions.top-floating-sheet.is-open .bible-verse-actions-msg {
   flex: none;
@@ -14197,6 +14211,96 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
 
 .bible-reader--yv.has-verse-actions .bible-yv-top-tools {
   margin-left: auto;
+  flex: none;
+}
+
+/*
+ * Navbar «Retourner au verset» — mesmo contrato visual que Options nav
+ * (clone mode-tabs / --bible-nav-surface).
+ */
+.bible-study-return-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: calc(var(--bible-z-top-sheet, 70) + 10);
+  width: 100%;
+  margin: 0;
+  padding: 0 var(--mode-tabs-inset-x, 12px)
+    calc(var(--mode-tabs-float-gap, 14px) + env(safe-area-inset-bottom, 0px));
+  border: 0;
+  background: transparent;
+  pointer-events: none;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  box-sizing: border-box;
+  font-family: var(--font-ui);
+  color: var(--yv-text, var(--text));
+}
+
+.bible-study-return-nav::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: calc(-1 * var(--mode-tabs-mat-fade, 32px));
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to top,
+    var(--mode-tabs-mat-bg, var(--bible-nav-surface, var(--bg))) 0%,
+    var(--mode-tabs-mat-bg, var(--bible-nav-surface, var(--bg)))
+      calc(100% - var(--mode-tabs-mat-fade, 32px)),
+    transparent 100%
+  );
+}
+
+.bible-study-return-nav-pill {
+  position: relative;
+  z-index: 1;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: min(100%, 22rem);
+  height: var(--mode-tabs-pill-h, 56px);
+  min-height: var(--mode-tabs-pill-h, 56px);
+  margin: 0;
+  padding: 0 18px;
+  box-sizing: border-box;
+  border: 1px solid
+    var(
+      --mode-tabs-outline,
+      var(--yv-outline, color-mix(in srgb, var(--line) 70%, transparent))
+    );
+  border-radius: 999px;
+  background: var(--bible-nav-surface, var(--bg));
+  color: inherit;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--ink) 8%, transparent),
+    0 8px 24px color-mix(in srgb, var(--ink) 14%, transparent);
+}
+
+.bible-study-return-nav-pill:hover {
+  background: var(--mode-tabs-hover, color-mix(in srgb, var(--text) 6%, var(--bg)));
+}
+
+.bible-study-return-nav-pill:focus-visible {
+  outline: 2px solid var(--accent, #5b7cfa);
+  outline-offset: 2px;
+}
+
+.bible-study-return-nav-icon {
+  width: 1.15rem;
+  height: 1.15rem;
   flex: none;
 }
 
@@ -18085,11 +18189,15 @@ html[data-passage-bar-panel="test"]
   font-weight: 400;
 }
 
-/* Modal de texto ao tocar numa referência cruzada — ancorado em baixo (como o cartão principal) */
+/*
+ * Modal texto de referência cruzada (Options > Référence).
+ * Persistente: acima do sheet Options; fecho só X / Escape (scrim sem dismiss).
+ * Pill Options (z top-chrome 80) fica clicável por cima.
+ */
 .bible-study-ref-modal {
   position: fixed;
   inset: 0;
-  z-index: calc(var(--bible-z-verse-sheet, 40) + 8);
+  z-index: calc(var(--bible-z-top-sheet, 70) + 5);
   margin: 0;
   padding: 0;
   overflow: visible;
@@ -18102,20 +18210,16 @@ html[data-passage-bar-panel="test"]
   margin: 0;
   padding: 0;
   border: 0;
-  background: radial-gradient(
-    ellipse 95% 70% at 50% 78%,
-    color-mix(in srgb, #000 34%, transparent) 0%,
-    color-mix(in srgb, #000 18%, transparent) 42%,
-    color-mix(in srgb, #000 6%, transparent) 72%,
-    transparent 100%
-  );
-  cursor: pointer;
-  pointer-events: auto;
+  background: transparent;
+  pointer-events: none;
 }
 
-/* Altura fixa; bottom alinhado ao cartão de seleção suspenso. */
+/*
+ * Altura ao conteúdo, máx. 50% do ecrã — lista Référence acima
+ * continua visível; texto longo faz scroll no body do cartão.
+ */
 .bible-study-ref-modal-card {
-  --ref-modal-h: min(36vh, 14rem);
+  --ref-modal-max-h: 50dvh;
   position: absolute;
   z-index: 1;
   left: max(var(--mobile-gutter, 12px), env(safe-area-inset-left, 0px));
@@ -18123,26 +18227,25 @@ html[data-passage-bar-panel="test"]
   bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
   width: auto;
   max-width: none;
-  height: var(--ref-modal-h);
-  max-height: var(--ref-modal-h);
+  height: auto;
+  max-height: var(--ref-modal-max-h);
   margin: 0;
   padding: 0;
   border: 0;
   border-radius: 16px;
   background: transparent;
-  box-shadow:
-    0 14px 36px rgba(0, 0, 0, 0.16),
-    0 6px 16px rgba(0, 0, 0, 0.08);
+  box-shadow: none;
   overflow: visible;
   pointer-events: auto;
   animation: bible-popup-in 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-.app.is-bible-mode.is-narrow .bible-study-ref-modal-card {
+/* Fora de Options: reservar a shell nav se estiver visível */
+.app.is-bible-mode.is-narrow:not(:has(.bible-verse-actions.top-floating-sheet.is-open))
+  .bible-study-ref-modal-card {
   bottom: var(--bible-sheet-above-nav, calc(var(--mobile-bottom-chrome, 64px) + 8px));
 }
 
-/* Com navbar imersiva oculta: mesmo lift baixo do cartão principal */
 .app.is-bible-mode.is-narrow:has(.mode-tabs.is-immersive-hidden)
   .bible-study-ref-modal-card {
   bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
@@ -18151,13 +18254,17 @@ html[data-passage-bar-panel="test"]
 .bible-study-ref-modal-surface {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  max-height: 100%;
+  height: auto;
+  max-height: var(--ref-modal-max-h, 50dvh);
   min-height: 0;
   padding: 12px 12px 14px;
   border-radius: 16px;
   border: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
   background: var(--surface, #fff);
+  /* Sombra leve: a lista atrás continua legível em volta do cartão */
+  box-shadow:
+    0 8px 28px color-mix(in srgb, var(--ink, #000) 16%, transparent),
+    0 1px 0 color-mix(in srgb, var(--ink, #000) 6%, transparent);
   overflow: hidden;
 }
 
@@ -18205,7 +18312,7 @@ html[data-passage-bar-panel="test"]
 }
 
 .bible-study-ref-modal-body {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
@@ -18222,6 +18329,41 @@ html[data-passage-bar-panel="test"]
   line-height: 1.55;
   color: var(--text);
   white-space: pre-wrap;
+}
+
+.bible-study-ref-modal-foot {
+  flex: none;
+  margin: 10px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
+}
+
+.bible-study-ref-modal-go {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 44px;
+  margin: 0;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 88%, transparent);
+  color: var(--surface, #fff);
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  font-weight: 650;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.bible-study-ref-modal-go:hover {
+  filter: brightness(1.06);
+}
+
+.bible-study-ref-modal-go:focus-visible {
+  outline: 2px solid var(--accent, #5b7cfa);
+  outline-offset: 2px;
 }
 
 .bible-search-sheet-meta .bible-history-version-badge {

@@ -30,9 +30,14 @@ export type VerseStudyPanelProps = {
   chapterId: string;
   verse: number;
   books: YouVersionBook[];
-  /** Reservado: navegação para a passagem (hoje o card abre modal de texto). */
+  /** Navegar para o versículo da referência (botão «Aller au passage»). */
   onOpenRef?: (usfm: string) => void;
   initialTab?: VerseStudyTab;
+  /**
+   * Tab Référence activa. O modal de versículo só renderiza neste escopo
+   * (não vaza para Verset); o cartão activo persiste ao voltar a Référence.
+   */
+  active?: boolean;
 };
 
 /** @deprecated Preferir VerseStudyPanel — mantido para compat. */
@@ -118,14 +123,18 @@ function RefTextModal({
   card,
   versionId,
   onClose,
+  onGoToChapter,
   closeLabel,
+  goToPassageLabel,
   loadingLabel,
   unavailableLabel,
 }: {
   card: RefCard;
   versionId: BibleTextVersionId;
   onClose: () => void;
+  onGoToChapter?: (usfm: string) => void;
   closeLabel: string;
+  goToPassageLabel: string;
   loadingLabel: string;
   unavailableLabel: string;
 }) {
@@ -134,11 +143,15 @@ function RefTextModal({
   const [busy, setBusy] = useState(!card.preview.trim());
 
   useEffect(() => {
+    /* Capture: fecha só este modal; Options / Escape pai não engolem. */
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      event.stopPropagation();
+      onClose();
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
   }, [onClose]);
 
   useEffect(() => {
@@ -173,12 +186,8 @@ function RefTextModal({
 
   return createPortal(
     <div className="bible-study-ref-modal" role="dialog" aria-modal="true" aria-labelledby={titleId}>
-      <button
-        type="button"
-        className="bible-study-ref-modal-scrim"
-        aria-label={closeLabel}
-        onClick={onClose}
-      />
+      {/* Scrim visual só — fecho persistente: X ou Escape */}
+      <div className="bible-study-ref-modal-scrim" aria-hidden="true" />
       <div className="bible-study-ref-modal-card">
         <div className="bible-study-ref-modal-surface">
           <header className="bible-study-ref-modal-head">
@@ -207,6 +216,22 @@ function RefTextModal({
               </p>
             )}
           </div>
+          {card.usfm && onGoToChapter ? (
+            <footer className="bible-study-ref-modal-foot">
+              <button
+                type="button"
+                className="bible-study-ref-modal-go"
+                onClick={() => {
+                  if (!card.usfm) return;
+                  const target = card.usfm;
+                  onClose();
+                  onGoToChapter(target);
+                }}
+              >
+                {goToPassageLabel}
+              </button>
+            </footer>
+          ) : null}
         </div>
       </div>
     </div>,
@@ -220,7 +245,9 @@ export function VerseStudyPanel({
   chapterId,
   verse,
   books,
+  onOpenRef,
   initialTab = "refs",
+  active = true,
 }: VerseStudyPanelProps) {
   const { t } = useUiLocale();
   const [busy, setBusy] = useState(false);
@@ -237,15 +264,11 @@ export function VerseStudyPanel({
   const titleById = useMemo(() => bookTitleMap(books), [books]);
 
   useEffect(() => {
-    void initialTab;
-    setActiveRef(null);
-  }, [initialTab, scopedKey]);
-
-  useEffect(() => {
     const gen = ++reqGen.current;
     setBusy(true);
     setError(null);
     setBundle(null);
+    setActiveRef(null);
     void loadVerseStudy(bookId, chapterId, verse)
       .then((data) => {
         if (gen !== reqGen.current) return;
@@ -339,12 +362,15 @@ export function VerseStudyPanel({
         </div>
       </div>
 
-      {activeRef ? (
+      {/* Modal só no escopo Référence — estado activeRef sobrevive ao tab Verset */}
+      {active && activeRef ? (
         <RefTextModal
           card={activeRef}
           versionId={versionId}
           onClose={() => setActiveRef(null)}
+          onGoToChapter={onOpenRef}
           closeLabel={t("common.close")}
+          goToPassageLabel={t("study.goToPassage")}
           loadingLabel={t("common.loading")}
           unavailableLabel={t("study.refUnavailable")}
         />

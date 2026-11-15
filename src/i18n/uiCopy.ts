@@ -192,6 +192,8 @@ export type UiCopyKey =
   | "study.notesDraft"
   | "study.loadError"
   | "study.refUnavailable"
+  | "study.goToPassage"
+  | "study.returnToVerse"
   | "verse.actions"
   | "verse.passageOptions"
   | "verse.hint"
@@ -440,6 +442,8 @@ const FR: Dict = {
   "study.notesDraft": "Brouillon local",
   "study.loadError": "Erreur de chargement",
   "study.refUnavailable": "Texte de ce passage indisponible pour cette version.",
+  "study.goToPassage": "Aller au passage",
+  "study.returnToVerse": "Retourner au verset",
   "verse.actions": "Actions du verset",
   "verse.passageOptions": "Options",
   "verse.hint": "Coche d’autres versets pour compléter la sélection",
@@ -449,8 +453,8 @@ const FR: Dict = {
   "verse.tabRefs": "Référence",
   "verse.mark": "Marquer",
   "verse.unmark": "Démarquer",
-  "verse.markDone": "Sélection marquée — fermez avec Options",
-  "verse.unmarkDone": "Marquage retiré — fermez avec Options",
+  "verse.markDone": "Sélection marquée",
+  "verse.unmarkDone": "Marquage retiré",
   "verse.keepOne": "Gardez au moins un verset, ou fermez avec Options",
   "verse.share": "Partager",
   "verse.shareCopied": "Texte copié",
@@ -689,6 +693,8 @@ const HT: Dict = {
   "study.notesDraft": "Brouiyon lokal",
   "study.loadError": "Erè chajman",
   "study.refUnavailable": "Tèks pasaj sa a pa disponib pou vèsyon sa a.",
+  "study.goToPassage": "Ale nan pasaj la",
+  "study.returnToVerse": "Tounen nan vèsè a",
   "verse.actions": "Aksyon vèsè",
   "verse.passageOptions": "Options",
   "verse.hint": "Make lòt vèsè pou konplete seleksyon an",
@@ -698,8 +704,8 @@ const HT: Dict = {
   "verse.tabRefs": "Referans",
   "verse.mark": "Make",
   "verse.unmark": "Demake",
-  "verse.markDone": "Seleksyon make — fèmen ak Options",
-  "verse.unmarkDone": "Mak retire — fèmen ak Options",
+  "verse.markDone": "Seleksyon make",
+  "verse.unmarkDone": "Mak retire",
   "verse.keepOne": "Kenbe omwen yon vèsè, oswa fèmen ak Options",
   "verse.share": "Pataje",
   "verse.shareCopied": "Tèks kopye",
