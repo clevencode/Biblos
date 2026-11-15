@@ -88,6 +88,8 @@ console.log(`publish-apk-r2: ${APK}`);
 console.log(`publish-apk-r2: → r2://${remote}`);
 
 // Account via env CLOUDFLARE_ACCOUNT_ID (wrangler lê automaticamente; sem --account-id).
+// Sem `;` solto no argv: com `shell: true` o bash parte o comando.
+const contentDisposition = "attachment; filename=Biblos.apk";
 const args = [
   "--yes",
   "wrangler",
@@ -98,15 +100,18 @@ const args = [
   `--file=${APK}`,
   "--remote",
   "--content-type=application/vnd.android.package-archive",
-  "--content-disposition=attachment;filename=Biblos.apk",
+  `--content-disposition=${contentDisposition}`,
   "--cache-control=no-cache",
 ];
 
+// Windows: shell para resolver npx.cmd. Unix/CI: sem shell (evita split em `;`).
 const result = spawnSync("npx", args, {
   cwd: ROOT,
   stdio: "inherit",
-  shell: true,
+  shell: process.platform === "win32",
   env: process.env,
+  // Windows + shell: aspas protegem o `;` do content-disposition.
+  windowsVerbatimArguments: false,
 });
 
 if (result.status !== 0) {
