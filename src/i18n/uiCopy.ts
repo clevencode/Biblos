@@ -196,6 +196,8 @@ export type UiCopyKey =
   | "study.goToChapter"
   | "study.returnToVerse"
   | "study.returnToLabel"
+  | "study.returnAction"
+  | "study.returnStackDepth"
   | "study.dismissStudyJump"
   | "verse.actions"
   | "verse.passageOptions"
@@ -449,6 +451,8 @@ const FR: Dict = {
   "study.goToChapter": "Aller au chapitre",
   "study.returnToVerse": "Retourner aux références",
   "study.returnToLabel": "Retourner à {label}",
+  "study.returnAction": "Retour",
+  "study.returnStackDepth": "{n} niveaux dans la chaîne d’étude",
   "study.dismissStudyJump": "Quitter le mode étude",
   "verse.actions": "Actions du verset",
   "verse.passageOptions": "Options",
@@ -703,6 +707,8 @@ const HT: Dict = {
   "study.goToChapter": "Ale nan chapit la",
   "study.returnToVerse": "Tounen nan referans yo",
   "study.returnToLabel": "Tounen nan {label}",
+  "study.returnAction": "Tounen",
+  "study.returnStackDepth": "{n} nivo nan chèn etid la",
   "study.dismissStudyJump": "Kite mòd etid la",
   "verse.actions": "Aksyon vèsè",
   "verse.passageOptions": "Options",

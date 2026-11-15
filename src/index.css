@@ -10336,8 +10336,8 @@ html:has(.bible-study-return-nav) .note-shell .mode-tabs,
 }
 
 /*
- * Navbar estudo LIFO — Retourner à {label} + ×
- * (clone mode-tabs / --bible-nav-surface).
+ * Navbar estudo LIFO — hub «Retour» + ref + ×
+ * (mesmo contrato Options / mode-tabs: primário preenchido, dismiss fantasma).
  */
 .bible-study-return-nav {
   position: fixed;
@@ -10404,29 +10404,32 @@ html:has(.bible-study-return-nav) .note-shell .mode-tabs,
     0 8px 24px color-mix(in srgb, var(--ink) 14%, transparent);
 }
 
+/* Primário = pop LIFO (hub ink/paper, como tab activa / Marquer). */
 .bible-study-return-nav-main {
   flex: 1 1 auto;
   min-width: 0;
   height: 100%;
   margin: 0;
-  padding: 0 10px 0 14px;
+  padding: 0 12px 0 14px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 8px;
   border: 0;
   border-radius: 999px;
-  background: transparent;
-  color: inherit;
+  background: var(--mode-tabs-hub-bg, var(--ink, #0d1117));
+  color: var(--mode-tabs-hub-fg, var(--paper, #fff));
   font: inherit;
   font-size: 0.92rem;
   font-weight: 650;
   letter-spacing: 0.01em;
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .bible-study-return-nav-main:hover {
-  background: var(--mode-tabs-hover, color-mix(in srgb, var(--text) 6%, var(--bg)));
+  filter: brightness(1.06);
 }
 
 .bible-study-return-nav-main:focus-visible {
@@ -10434,11 +10437,18 @@ html:has(.bible-study-return-nav) .note-shell .mode-tabs,
   outline-offset: 1px;
 }
 
-.bible-study-return-nav-label {
+.bible-study-return-nav-verb {
+  flex: none;
+  font-weight: 700;
+}
+
+.bible-study-return-nav-ref {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-weight: 600;
+  opacity: 0.92;
 }
 
 .bible-study-return-nav-depth {
@@ -10447,12 +10457,22 @@ html:has(.bible-study-return-nav) .note-shell .mode-tabs,
   place-items: center;
   min-width: 1.35rem;
   height: 1.35rem;
+  margin-left: auto;
   padding: 0 5px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--text) 14%, transparent);
+  background: color-mix(in srgb, var(--mode-tabs-hub-fg, #fff) 18%, transparent);
+  color: inherit;
   font-size: 0.75rem;
   font-weight: 700;
   line-height: 1;
+}
+
+.bible-study-return-nav-sep {
+  flex: none;
+  width: 1px;
+  height: 1.35rem;
+  margin: 0 2px;
+  background: color-mix(in srgb, var(--yv-text, var(--text)) 16%, transparent);
 }
 
 .bible-study-return-nav-dismiss {
@@ -10468,6 +10488,8 @@ html:has(.bible-study-return-nav) .note-shell .mode-tabs,
   background: transparent;
   color: inherit;
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .bible-study-return-nav-dismiss:hover {

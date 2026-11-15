@@ -6,7 +6,10 @@ export type StudyJumpStep = {
   chapterId: string;
   verse: number;
   label: string;
+  /** Scroll da lista Référence no momento do salto. */
   refsScrollTop: number;
+  /** Scroll do scroller de passagem (leitura) no momento do salto. */
+  passageScrollTop: number;
 };
 
 /** Restauração diferida de Options → Référence após o capítulo origem carregar. */

@@ -236,6 +236,18 @@ function formatSelectionFront(bookTitle: string, chapter: string | number, verse
   return list ? `${book} ${chapter}.${list}` : book;
 }
 
+/** Rótulo de origem do estudo (barra Retour) — título de leitura, sem ALL CAPS. */
+function formatStudyOriginLabel(
+  bookTitle: string,
+  chapter: string | number,
+  verse: number,
+): string {
+  const book = String(bookTitle || "").trim() || "—";
+  const ch = String(chapter ?? "").trim();
+  if (!ch) return book;
+  return `${book} ${ch}.${verse}`;
+}
+
 function selectionUsfm(bookId: string, chapterId: string, verses: number[]): string {
   const base = chapterUsfm(bookId, chapterId);
   const list = formatVerseList(verses).replace(/ · /g, ".");
@@ -887,6 +899,8 @@ export function BibleReaderView({
   const readerRef = useRef<HTMLElement | null>(null);
   const verseActionsSheetRef = useRef<HTMLDivElement | null>(null);
   const pendingScrollVerse = useRef<PendingVerseScroll | null>(null);
+  /** Offset exacto do scroller ao Retourner (depois do sheet Options abrir). */
+  const pendingPassageScrollRestoreRef = useRef<number | null>(null);
   const verseScrollSeq = useRef(0);
   const lastAppliedVerseScroll = useRef("");
   const booted = useRef(false);
@@ -1710,24 +1724,33 @@ export function BibleReaderView({
 
   /**
    * Aller au verset — botão do RefTextModal: push LIFO + DiscoveryJump sticky.
+   * `meta.refsScrollTop` = posição da lista no momento do salto (Retourner).
    */
-  function openRefFromStudyModal(usfm: string) {
+  function openRefFromStudyModal(
+    usfm: string,
+    meta?: { refsScrollTop: number },
+  ) {
     const loc = parseUsfmLocation(usfm);
     if (!loc || !isUsfmBookId(loc.bookId)) return;
 
     const fromVerse = selection?.[0] ?? highlightVerse;
     if (fromVerse != null) {
       const originTitle =
-        books.find((b) => b.id.toUpperCase() === bookId.toUpperCase())?.title ??
+        resolveBookTitleActive(bookId) ||
+        books.find((b) => b.id.toUpperCase() === bookId.toUpperCase())?.title ||
         bookId;
-      const label = formatSelectionFront(originTitle, chapterId, [fromVerse]);
+      const label = formatStudyOriginLabel(originTitle, chapterId, fromVerse);
       const scrollKey = verseStudyKey(textVersion, bookId, chapterId, fromVerse);
+      const refsScrollTop =
+        meta?.refsScrollTop ?? getRefsListScroll(scrollKey);
+      setRefsListScroll(scrollKey, refsScrollTop);
       pushStudyJump({
         bookId,
         chapterId,
         verse: fromVerse,
         label,
-        refsScrollTop: getRefsListScroll(scrollKey),
+        refsScrollTop,
+        passageScrollTop: passageScrollRef.current?.scrollTop ?? 0,
       });
     }
 
@@ -1750,6 +1773,8 @@ export function BibleReaderView({
     preferJumpFocusRef.current = false;
     setFocusDim(false);
     setSelection(null);
+    /* Após o sheet Options abrir, repõe o scroll de passagem memorizado. */
+    pendingPassageScrollRestoreRef.current = step.passageScrollTop;
     void loadChapter(step.bookId, step.chapterId, step.verse, null);
   }
 
@@ -1757,6 +1782,7 @@ export function BibleReaderView({
     clearStudyJump();
     setPendingStudyReturn(null);
     setRefsRestoreScrollTop(null);
+    pendingPassageScrollRestoreRef.current = null;
   }
 
   function pickChapter(nextChapter: string) {
@@ -2412,28 +2438,40 @@ export function BibleReaderView({
 
   function renderStudyReturnNav() {
     if (!studyJumpTop) return null;
-    const returnLabel = t("study.returnToLabel", {
+    const actionLabel = t("study.returnAction");
+    const fullLabel = t("study.returnToLabel", {
       label: studyJumpTop.label,
     });
+    const depthLabel =
+      studyJumpDepth > 1
+        ? t("study.returnStackDepth", { n: studyJumpDepth })
+        : null;
+    const navLabel = depthLabel ? `${fullLabel}. ${depthLabel}` : fullLabel;
     return (
-      <nav className="bible-study-return-nav" aria-label={returnLabel}>
+      <nav className="bible-study-return-nav" aria-label={navLabel}>
         <div className="bible-study-return-nav-pill" role="group">
           <button
             type="button"
             className="bible-study-return-nav-main"
             onClick={returnFromStudyJump}
+            aria-label={fullLabel}
           >
             <YvIcon
               name="chevron_left"
               className="bible-study-return-nav-icon"
             />
-            <span className="bible-study-return-nav-label">{returnLabel}</span>
+            <span className="bible-study-return-nav-verb">{actionLabel}</span>
+            <span className="bible-study-return-nav-ref">{studyJumpTop.label}</span>
             {studyJumpDepth > 1 ? (
-              <span className="bible-study-return-nav-depth" aria-hidden>
+              <span
+                className="bible-study-return-nav-depth"
+                aria-label={depthLabel ?? undefined}
+              >
                 {studyJumpDepth}
               </span>
             ) : null}
           </button>
+          <span className="bible-study-return-nav-sep" aria-hidden="true" />
           <button
             type="button"
             className="bible-study-return-nav-dismiss"
@@ -3000,11 +3038,30 @@ export function BibleReaderView({
 
   useLayoutEffect(() => {
     if (presentation.inFlight || !active) return;
-    const pending = pendingScrollVerse.current;
-    if (!pending) return;
     const root = passageScrollRef.current;
     const reader = readerRef.current;
     if (!root || !reader || root.clientHeight < 40) return;
+
+    /* Retourner: com Options aberto, repõe o offset exacto memorizado no salto. */
+    const restoreTop = pendingPassageScrollRestoreRef.current;
+    if (restoreTop != null && showCreateCard) {
+      const restoreKey = `study-restore:${restoreTop}:${passage?.id}:sheet`;
+      if (lastAppliedVerseScroll.current !== restoreKey) {
+        root.scrollTop = restoreTop;
+        pendingPassageScrollRestoreRef.current = null;
+        lastScrollTop.current = root.scrollTop;
+        scrollAcc.current = 0;
+        const lockUntil = performance.now() + CHROME_PROGRAMMATIC_LOCK_MS;
+        chromeLockUntil.current = lockUntil;
+        suppressFocusDimClearUntil.current = lockUntil;
+        syncHeadCompact(root.scrollTop);
+        lastAppliedVerseScroll.current = restoreKey;
+      }
+      return;
+    }
+
+    const pending = pendingScrollVerse.current;
+    if (!pending) return;
     const key = `${pending.seq}:${pending.mode}:${pending.number}:${passage?.id}:${showCreateCard}`;
     if (lastAppliedVerseScroll.current === key) return;
     const verseEl =

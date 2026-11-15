@@ -54,8 +54,9 @@ export type VerseStudyPanelProps = {
   restoreScrollTop?: number | null;
   /**
    * Botão «Aller au verset» no RefTextModal → push LIFO + DiscoveryJump.
+   * O painel faz flush do scroll da lista antes de chamar.
    */
-  onOpenRef?: (usfm: string) => void;
+  onOpenRef?: (usfm: string, meta?: { refsScrollTop: number }) => void;
 };
 
 /** @deprecated Preferir VerseStudyPanel — mantido para compat. */
@@ -294,6 +295,15 @@ export function VerseStudyPanel({
     setRefsListScroll(scopedKey, el.scrollTop);
   };
 
+  /** Flush scroll actual + Aller au verset (posição lembrada no Retourner). */
+  const goToRefFromModal = (usfm: string) => {
+    if (!onOpenRef) return;
+    const el = listRef.current;
+    const refsScrollTop = el ? el.scrollTop : getRefsListScroll(scopedKey);
+    setRefsListScroll(scopedKey, refsScrollTop);
+    onOpenRef(usfm, { refsScrollTop });
+  };
+
   useEffect(() => {
     const key = scopedKey;
     return () => {
@@ -395,7 +405,8 @@ export function VerseStudyPanel({
 
     const tryRestore = () => {
       if (scrollRestoredRef.current) return;
-      if (el.scrollHeight >= targetScrollTop + el.clientHeight * 0.5) {
+      /* Conteúdo suficiente para o offset (sem exigir meio viewport extra). */
+      if (el.scrollHeight >= targetScrollTop) {
         el.scrollTop = targetScrollTop;
         setRefsListScroll(scopedKey, targetScrollTop);
         scrollRestoredRef.current = true;
@@ -444,7 +455,10 @@ export function VerseStudyPanel({
           ) : (
             <RefList
               cards={cards}
-              onSelect={setActiveRef}
+              onSelect={(card) => {
+                rememberListScroll();
+                setActiveRef(card);
+              }}
               emptyLabel={t("study.refsEmpty")}
             />
           )}
@@ -457,7 +471,7 @@ export function VerseStudyPanel({
           card={activeRef}
           versionId={versionId}
           onClose={() => setActiveRef(null)}
-          onGoToChapter={onOpenRef}
+          onGoToChapter={goToRefFromModal}
           closeLabel={t("common.close")}
           goToPassageLabel={modalGoLabel(activeRef.usfm)}
           loadingLabel={t("common.loading")}
