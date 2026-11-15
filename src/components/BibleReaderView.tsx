@@ -2271,8 +2271,6 @@ export function BibleReaderView({
             ["--verse-tint" as string]: actionTone.tint,
             ["--verse-action-fill" as string]: actionTone.fill,
             ["--verse-action-ink" as string]: actionTone.ink,
-            ["--mode-tabs-mat-bg" as string]:
-              "var(--bible-nav-surface, var(--yv-bg, var(--bg)))",
           } as CSSProperties
         }
       >

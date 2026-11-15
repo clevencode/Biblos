@@ -386,7 +386,7 @@ html[data-theme="dark"] .biblos-shell {
     .bible-yv-top-passage-skips
   ):not(.bible-yv-top-passage-skips *):not(.bible-yv-tools-menu-btn):not(
     .mode-tabs-pill
-  ):not(.mode-tabs-item) {
+  ):not(.mode-tabs-item):not(.bible-verse-actions-nav-pill) {
   box-shadow: none !important;
 }
 
@@ -14207,15 +14207,16 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
 }
 
 /*
- * Navbar inferior da secção Options — mesmo padrão do pill pai
- * (fixed · mat fade · pill flutuante · Cor | Marquer | Partager).
+ * Navbar inferior da secção Options — superfície = navbar pai (.mode-tabs).
+ * Tokens idênticos: --bible-nav-surface / paper·ink (não --surface do leitor).
  */
 .bible-verse-actions-nav {
   --mode-tabs-pill-h: 56px;
   --mode-tabs-float-gap: 14px;
   --mode-tabs-mat-fade: 32px;
   --mode-tabs-inset-x: 12px;
-  --mode-tabs-canvas: var(--bible-nav-surface, var(--yv-bg, var(--bg)));
+  --mode-tabs-canvas: var(--bible-nav-surface, var(--bg));
+  --mode-tabs-mat-bg: var(--bible-nav-surface, var(--bg));
   --mode-tabs-outline: var(
     --yv-outline,
     color-mix(in srgb, var(--line) 70%, transparent)
@@ -14239,6 +14240,16 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   font-family: var(--font-ui);
 }
 
+html[data-theme="light"] .bible-verse-actions-nav {
+  --mode-tabs-canvas: var(--bible-nav-surface, var(--paper));
+  --mode-tabs-mat-bg: var(--bible-nav-surface, var(--paper));
+}
+
+html[data-theme="dark"] .bible-verse-actions-nav {
+  --mode-tabs-canvas: var(--bible-nav-surface, var(--ink));
+  --mode-tabs-mat-bg: var(--bible-nav-surface, var(--ink));
+}
+
 .bible-verse-actions-nav::before {
   content: "";
   position: absolute;
@@ -14250,9 +14261,8 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   pointer-events: none;
   background: linear-gradient(
     to top,
-    var(--mode-tabs-mat-bg, var(--mode-tabs-canvas)) 0%,
-    var(--mode-tabs-mat-bg, var(--mode-tabs-canvas))
-      calc(100% - var(--mode-tabs-mat-fade, 32px)),
+    var(--mode-tabs-mat-bg) 0%,
+    var(--mode-tabs-mat-bg) calc(100% - var(--mode-tabs-mat-fade, 32px)),
     transparent 100%
   );
 }
@@ -14273,7 +14283,9 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   box-sizing: border-box;
   border: 1px solid var(--mode-tabs-outline);
   border-radius: 999px;
-  background: var(--mode-tabs-canvas);
+  /* Mesmo background do .mode-tabs-pill pai */
+  background: var(--bible-nav-surface, var(--mode-tabs-canvas)) !important;
+  color: var(--yv-text, var(--text));
   box-shadow:
     0 1px 0 color-mix(in srgb, var(--ink) 8%, transparent),
     0 8px 24px color-mix(in srgb, var(--ink) 14%, transparent);
@@ -14409,9 +14421,10 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   font-weight: 650;
   white-space: nowrap;
   box-shadow: none !important;
-  background: var(
-    --bible-word-search-pill-off,
-    color-mix(in srgb, var(--text) 7%, var(--surface))
+  background: color-mix(
+    in srgb,
+    var(--yv-text, var(--text)) 7%,
+    var(--mode-tabs-canvas, var(--bible-nav-surface, var(--paper)))
   ) !important;
   color: var(--yv-text, var(--text)) !important;
 }
@@ -14419,7 +14432,11 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
 .bible-reader--yv
   .bible-verse-actions-nav-pill
   .bible-share-verse:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--text) 11%, var(--surface)) !important;
+  background: color-mix(
+    in srgb,
+    var(--yv-text, var(--text)) 11%,
+    var(--mode-tabs-canvas, var(--bible-nav-surface, var(--paper)))
+  ) !important;
 }
 
 .bible-reader--yv
@@ -14435,7 +14452,12 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   color: inherit;
 }
 
-/* Options (topbar): superfície = navbar pai (não overlay elevado) */
+/* Options (topbar): background herda do topbar (= navbar pai) */
+.bible-reader--yv.has-verse-actions .bible-yv-top.is-top-sheet-open,
+.bible-reader--yv.has-verse-actions.is-top-sheet-open .bible-yv-top {
+  background: var(--bible-nav-surface, var(--yv-bg, var(--bg))) !important;
+}
+
 .bible-reader--yv.has-verse-actions
   .bible-yv-tools-menu-btn.hdr-trigger.is-open,
 .bible-reader--yv.has-verse-actions
@@ -14444,10 +14466,9 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   .bible-yv-tools-menu-btn.hdr-trigger.is-open,
 .bible-reader--yv.has-verse-actions.is-top-sheet-open
   .bible-yv-tools-menu-btn.hdr-trigger.is-active {
-  background: var(
-    --bible-nav-surface,
-    var(--mode-tabs-canvas, var(--yv-chrome-surface, var(--yv-bg, var(--bg))))
-  ) !important;
+  /* Mesmo background do .mode-tabs-pill pai */
+  background: var(--bible-nav-surface, var(--mode-tabs-canvas, var(--paper))) !important;
+  background-color: var(--bible-nav-surface, var(--mode-tabs-canvas, var(--paper))) !important;
   color: var(--yv-text, var(--text)) !important;
   border: 1px solid
     var(
@@ -14466,6 +14487,13 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   .bible-yv-tools-menu-btn.hdr-trigger.is-open
   .hdr-trigger-icon {
   color: inherit !important;
+}
+
+/* Sheet Options: mesmo canvas da navbar pai */
+.bible-reader--yv.has-verse-actions .bible-verse-actions.top-floating-sheet.is-open,
+.top-sheet-layer
+  > .bible-verse-actions.top-floating-sheet.is-open {
+  background: var(--bible-nav-surface, var(--yv-bg, var(--bg))) !important;
 }
 
 .bible-verse-actions.top-floating-sheet.is-open .bible-verse-actions-ref {
