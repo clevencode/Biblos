@@ -1245,8 +1245,17 @@ export function BibleReaderView({
     preferJumpFocusRef.current = false;
     const current = selection;
     const next = new Set(current ?? []);
-    if (next.has(number)) next.delete(number);
-    else next.add(number);
+    const inVerseActions = activeOverlay.type === "verse_actions";
+    if (next.has(number)) {
+      /* Com modal aberto: não sair ao desmarcar — fecho só no pill Options. */
+      if (next.size === 1 && inVerseActions) {
+        setCardMsg(t("verse.keepOne"));
+        return;
+      }
+      next.delete(number);
+    } else {
+      next.add(number);
+    }
 
     if (!next.size) {
       pendingScrollVerse.current = null;
@@ -1904,7 +1913,8 @@ export function BibleReaderView({
       chapterId,
       bookTitle: selectedBook?.title ?? bookId,
     });
-    closeCreateCard();
+    /* Não fechar — aviso; saída só pelo pill Options. */
+    setCardMsg(t("verse.markDone"));
   }
 
   function requestMarkSelection(hex: string) {
@@ -1951,7 +1961,7 @@ export function BibleReaderView({
       chapterId,
       bookTitle: authorizedMark.bookTitle || selectedBook?.title || bookId,
     });
-    closeCreateCard();
+    setCardMsg(t("verse.markDone"));
     onAuthorizedMarkConsumed?.();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authorizedMarkSeq]);
@@ -1966,7 +1976,7 @@ export function BibleReaderView({
       chapterId,
       bookTitle: selectedBook?.title ?? bookId,
     });
-    closeCreateCard();
+    setCardMsg(t("verse.unmarkDone"));
   }
 
   const actionTone = useMemo(
@@ -2247,58 +2257,32 @@ export function BibleReaderView({
     openOverlay({ type: "marks" });
   }
 
-  /** Full-bleed na top-sheet-layer — mesmo contrato que search / history / menu. */
-  function renderVerseActionsSheet() {
+  /**
+   * Cor · Marquer · Partager — navbar inferior desta secção Options
+   * (mesmo contrato visual do pill pai Accueil·Bible·Plan).
+   */
+  function renderVerseActionsToolbar() {
     return (
-      <div
-        ref={verseActionsSheetRef}
-        className="bible-verse-actions top-floating-sheet is-open"
-        role="dialog"
-        aria-modal="true"
+      <nav
+        className="bible-verse-actions-nav"
         aria-label={t("verse.actions")}
         style={
           {
             ["--verse-tint" as string]: actionTone.tint,
             ["--verse-action-fill" as string]: actionTone.fill,
             ["--verse-action-ink" as string]: actionTone.ink,
+            ["--mode-tabs-mat-bg" as string]:
+              "var(--bible-nav-surface, var(--yv-bg, var(--bg)))",
           } as CSSProperties
         }
       >
-        <div className="bible-verse-actions-head">
-          <div className="bible-verse-actions-title">
-            <p className="bible-verse-actions-ref">
-              {selectedVerses.length
-                ? formatSelectionFront(bookTitle, chapterId, selectedVerses)
-                : ""}
-              {existingVerseCard ? (
-                <span className="bible-verse-actions-card-icon" aria-hidden="true">
-                  <YvIcon name="style" />
-                </span>
-              ) : null}
-            </p>
-            {selectedVerses.length > 1 ? (
-              <p className="bible-verse-actions-hint">
-                {t("verse.hintMulti", { n: selectedVerses.length })}
-              </p>
-            ) : (
-              <p className="bible-verse-actions-hint">{t("verse.hint")}</p>
-            )}
-          </div>
-          <button
-            type="button"
-            className="bible-verse-actions-close"
-            onClick={closeCreateCard}
-            aria-label={t("common.close")}
-          >
-            <YvIcon name="close" className="bible-verse-actions-close-icon" />
-          </button>
-        </div>
-
-        <div className="bible-verse-actions-body">
+        <div
+          className="bible-verse-actions-nav-pill bible-verse-action-row"
+          role="group"
+          aria-label={t("verse.actions")}
+        >
           <div
-            className="bible-verse-action-row"
-            role="group"
-            aria-label={t("verse.actions")}
+            className={`bible-mark-combo${selectionHasMark ? " is-marked" : ""}`}
           >
             <button
               type="button"
@@ -2331,62 +2315,100 @@ export function BibleReaderView({
                 requestMarkSelection(activeVerseColor);
               }}
             >
-              {selectionHasMark ? (
-                <YvIcon name="bookmark_remove" className="bible-verse-cta-icon" />
-              ) : (
-                <YvIcon name="bookmark" className="bible-verse-cta-icon" />
-              )}
               <span>
                 {selectionHasMark ? t("verse.unmark") : t("verse.mark")}
               </span>
             </button>
-            <button
-              type="button"
-              className="bible-yv-chip bible-share-verse"
-              disabled={!canShareVerse}
-              onClick={() => {
-                void (async () => {
-                  const shareUrl = buildShareUrl(shareUsfm);
-                  const text = buildShareText(
-                    shareRefLabel,
-                    shareVerseText,
-                    shareUrl,
-                  );
-                  const result = await sharePlainText({
-                    title: shareRefLabel || "Biblos",
-                    text,
-                    url: shareUrl,
-                  });
-                  if (result.ok) {
-                    setCardMsg(
-                      result.method === "clipboard"
-                        ? t("verse.shareCopied")
-                        : null,
-                    );
-                    return;
-                  }
-                  if (!result.cancelled) {
-                    setCardMsg(result.error || t("verse.shareFailed"));
-                  }
-                })();
-              }}
-            >
-              <YvIcon name="ios_share" className="bible-verse-cta-icon" />
-              <span>{t("verse.share")}</span>
-            </button>
           </div>
-
-          <CircularColorEditor
-            open={colorEditorOpen}
-            initialHex={pickerColor}
-            theme={uiTheme}
-            onClose={() => setColorEditorOpen(false)}
-            onConfirm={(hex) => {
-              setColorEditorOpen(false);
-              applyPickerColor(hex);
+          <button
+            type="button"
+            className="bible-yv-chip bible-share-verse"
+            disabled={!canShareVerse}
+            onClick={() => {
+              void (async () => {
+                const shareUrl = buildShareUrl(shareUsfm);
+                const text = buildShareText(
+                  shareRefLabel,
+                  shareVerseText,
+                  shareUrl,
+                );
+                const result = await sharePlainText({
+                  title: shareRefLabel || "Biblos",
+                  text,
+                  url: shareUrl,
+                });
+                if (result.ok) {
+                  setCardMsg(
+                    result.method === "clipboard"
+                      ? t("verse.shareCopied")
+                      : null,
+                  );
+                  return;
+                }
+                if (!result.cancelled) {
+                  setCardMsg(result.error || t("verse.shareFailed"));
+                }
+              })();
             }}
-          />
+          >
+            <YvIcon name="ios_share" className="bible-verse-cta-icon" />
+            <span>{t("verse.share")}</span>
+          </button>
+        </div>
+        <CircularColorEditor
+          open={colorEditorOpen}
+          initialHex={pickerColor}
+          theme={uiTheme}
+          onClose={() => setColorEditorOpen(false)}
+          onConfirm={(hex) => {
+            setColorEditorOpen(false);
+            applyPickerColor(hex);
+          }}
+        />
+      </nav>
+    );
+  }
 
+  /** Full-bleed na top-sheet-layer — mesmo contrato que search / history / menu. */
+  function renderVerseActionsSheet() {
+    return (
+      <div
+        ref={verseActionsSheetRef}
+        className="bible-verse-actions top-floating-sheet is-open"
+        role="dialog"
+        aria-modal="true"
+        aria-label={t("verse.actions")}
+        style={
+          {
+            ["--verse-tint" as string]: actionTone.tint,
+            ["--verse-action-fill" as string]: actionTone.fill,
+            ["--verse-action-ink" as string]: actionTone.ink,
+          } as CSSProperties
+        }
+      >
+        <div className="bible-verse-actions-head is-actions-only">
+          <div className="bible-verse-actions-title">
+            <p className="bible-verse-actions-ref">
+              {selectedVerses.length
+                ? formatSelectionFront(bookTitle, chapterId, selectedVerses)
+                : ""}
+              {existingVerseCard ? (
+                <span className="bible-verse-actions-card-icon" aria-hidden="true">
+                  <YvIcon name="style" />
+                </span>
+              ) : null}
+            </p>
+            {selectedVerses.length > 1 ? (
+              <p className="bible-verse-actions-hint">
+                {t("verse.hintMulti", { n: selectedVerses.length })}
+              </p>
+            ) : (
+              <p className="bible-verse-actions-hint">{t("verse.hint")}</p>
+            )}
+          </div>
+        </div>
+
+        <div className="bible-verse-actions-body">
           {cardMsg ? (
             <p className="bible-verse-actions-msg">{cardMsg}</p>
           ) : null}
@@ -2723,14 +2745,17 @@ export function BibleReaderView({
   function renderTopToolsMenu(placement: "header" | "float" = "header") {
     const isFloat = placement === "float";
     const nestedFromMenu = wordSearchOpen || historyOpen || marksOpen;
-    const menuSheetOpen = toolsMenuOpen || nestedFromMenu;
-    const sectionPillLabel = marksOpen
-      ? t("profile.marks")
-      : historyOpen
-        ? t("history.title")
-        : wordSearchOpen
-          ? t("word.short")
-          : t("bible.menu");
+    const verseOptionsOpen = showCreateCard;
+    const menuSheetOpen = toolsMenuOpen || nestedFromMenu || verseOptionsOpen;
+    const sectionPillLabel = verseOptionsOpen
+      ? t("verse.passageOptions")
+      : marksOpen
+        ? t("profile.marks")
+        : historyOpen
+          ? t("history.title")
+          : wordSearchOpen
+            ? t("word.short")
+            : t("bible.menu");
     const trigger = (
       <HeaderTriggerButton
         open={menuSheetOpen}
@@ -2739,11 +2764,13 @@ export function BibleReaderView({
         idleLabel={menuSheetOpen ? sectionPillLabel : undefined}
         exitIcon={nestedFromMenu ? "chevron_left" : "close"}
         ariaLabel={
-          nestedFromMenu
-            ? `${t("common.back")} — ${sectionPillLabel}`
-            : toolsMenuOpen
-              ? t("common.close")
-              : t("bible.menu")
+          verseOptionsOpen
+            ? t("common.close")
+            : nestedFromMenu
+              ? `${t("common.back")} — ${sectionPillLabel}`
+              : toolsMenuOpen
+                ? t("common.close")
+                : t("bible.menu")
         }
         ariaHaspopup="menu"
         className={`bible-yv-tools-menu-btn${menuSheetOpen ? " is-on" : ""}${
@@ -2751,6 +2778,11 @@ export function BibleReaderView({
         }`}
         onClick={() => {
           setShareSheetOpen(false);
+          /* Verse actions: mesma lógica de fecho pelo pill de secção. */
+          if (verseOptionsOpen) {
+            closeCreateCard();
+            return;
+          }
           /* Jornada: search/history/marks → voltar ao menu (não fechar tudo). */
           if (wordSearchOpen || historyOpen || marksOpen) {
             restoreHistoryFocusRef.current = false;
@@ -3286,6 +3318,7 @@ export function BibleReaderView({
           : null}
         {showCreateCard ? renderVerseActionsSheet() : null}
       </div>
+      {showCreateCard ? renderVerseActionsToolbar() : null}
 
       <div id={statusId} className="sr-only" aria-live="polite">
         {passageLiveStatusLabel({ presentation, locationLabel, error })}

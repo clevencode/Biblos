@@ -193,6 +193,7 @@ export type UiCopyKey =
   | "study.loadError"
   | "study.refUnavailable"
   | "verse.actions"
+  | "verse.passageOptions"
   | "verse.hint"
   | "verse.hintMulti"
   | "verse.selectTitle"
@@ -200,6 +201,9 @@ export type UiCopyKey =
   | "verse.tabRefs"
   | "verse.mark"
   | "verse.unmark"
+  | "verse.markDone"
+  | "verse.unmarkDone"
+  | "verse.keepOne"
   | "verse.share"
   | "verse.shareCopied"
   | "verse.shareFailed"
@@ -437,6 +441,7 @@ const FR: Dict = {
   "study.loadError": "Erreur de chargement",
   "study.refUnavailable": "Texte de ce passage indisponible pour cette version.",
   "verse.actions": "Actions du verset",
+  "verse.passageOptions": "Options",
   "verse.hint": "Coche d’autres versets pour compléter la sélection",
   "verse.hintMulti": "{n} versets · coche pour ajouter ou retirer",
   "verse.selectTitle": "Versets",
@@ -444,6 +449,9 @@ const FR: Dict = {
   "verse.tabRefs": "Référence",
   "verse.mark": "Marquer",
   "verse.unmark": "Démarquer",
+  "verse.markDone": "Sélection marquée — fermez avec Options",
+  "verse.unmarkDone": "Marquage retiré — fermez avec Options",
+  "verse.keepOne": "Gardez au moins un verset, ou fermez avec Options",
   "verse.share": "Partager",
   "verse.shareCopied": "Texte copié",
   "verse.shareFailed": "Partage impossible",
@@ -682,6 +690,7 @@ const HT: Dict = {
   "study.loadError": "Erè chajman",
   "study.refUnavailable": "Tèks pasaj sa a pa disponib pou vèsyon sa a.",
   "verse.actions": "Aksyon vèsè",
+  "verse.passageOptions": "Options",
   "verse.hint": "Make lòt vèsè pou konplete seleksyon an",
   "verse.hintMulti": "{n} vèsè · make pou ajoute oswa retire",
   "verse.selectTitle": "Vèsè",
@@ -689,6 +698,9 @@ const HT: Dict = {
   "verse.tabRefs": "Referans",
   "verse.mark": "Make",
   "verse.unmark": "Demake",
+  "verse.markDone": "Seleksyon make — fèmen ak Options",
+  "verse.unmarkDone": "Mak retire — fèmen ak Options",
+  "verse.keepOne": "Kenbe omwen yon vèsè, oswa fèmen ak Options",
   "verse.share": "Pataje",
   "verse.shareCopied": "Tèks kopye",
   "verse.shareFailed": "Pataj pa posib",
