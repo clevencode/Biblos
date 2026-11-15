@@ -1,5 +1,6 @@
 package app.biblos.mobile;
 
+import android.os.Build;
 import android.os.Bundle;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -8,6 +9,7 @@ import com.getcapacitor.BridgeActivity;
 public class MainActivity extends BridgeActivity {
   @Override
   public void onCreate(Bundle savedInstanceState) {
+    registerPlugin(ApkInstallerPlugin.class);
     super.onCreate(savedInstanceState);
     // Ne pas clearCache à chaque démarrage : cela cassait les requêtes réseau
     // (auth/planos Firebase + /api) et pouvait faire croire à un état hors ligne.
@@ -16,7 +18,7 @@ public class MainActivity extends BridgeActivity {
 
   /**
    * Garante que o WebView pode falar com o provedor remoto (Firebase Auth/Firestore,
-   * Google Sign-In, APIs Vercel). Capacitor já liga JS; reforçamos rede + storage.
+   * Google Sign-In) e fazer streaming de áudio (Anchor / CDN HTTPS).
    */
   private void ensureRemoteWebViewAccess() {
     if (this.bridge == null) return;
@@ -29,6 +31,13 @@ public class MainActivity extends BridgeActivity {
     settings.setDatabaseEnabled(true);
     settings.setBlockNetworkLoads(false);
     settings.setBlockNetworkImage(false);
+    settings.setAllowContentAccess(true);
+    settings.setAllowFileAccess(true);
+    /* Streaming: após gesto de play, o media player pode continuar o buffer. */
+    settings.setMediaPlaybackRequiresUserGesture(false);
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+      settings.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
+    }
     // Trava o textZoom do sistema — 1rem=16px; leitura só via --bible-font-size.
     settings.setTextZoom(100);
   }

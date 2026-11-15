@@ -1,5 +1,7 @@
 /** Partage de versets — image PNG (pas d’OG / aperçu de lien). */
 
+import { Capacitor } from "@capacitor/core";
+import { Share } from "@capacitor/share";
 import {
   plainShareText,
   renderPlanShareCard,
@@ -345,8 +347,9 @@ function urlAlreadyInText(text: string, url: string): boolean {
 }
 
 /**
- * Partage texte vers d’autres apps (Web Share API).
- * Fallback : copie presse-papiers.
+ * Partage texte vers d’autres apps.
+ * Nativo (APK): `@capacitor/share` → sheet système (WhatsApp, etc.).
+ * Web: Web Share API. Fallback : presse-papiers.
  * Se o URL já está no `text` (buildShareText), não reenvia `url` à parte.
  */
 export async function sharePlainText(input: {
@@ -360,6 +363,24 @@ export async function sharePlainText(input: {
   const url = urlAlreadyInText(text, rawUrl) ? "" : rawUrl;
   if (!text && !url) {
     return { ok: false, error: "Rien à partager" };
+  }
+
+  if (Capacitor.isNativePlatform()) {
+    try {
+      await Share.share({
+        title,
+        text: text || undefined,
+        url: url || undefined,
+        dialogTitle: title,
+      });
+      return { ok: true, method: "share" };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err || "");
+      if (/cancel|dismiss|abort/i.test(message)) {
+        return { ok: false, cancelled: true, error: "Partage annulé" };
+      }
+      /* fall through → Web Share / clipboard */
+    }
   }
 
   if (typeof navigator !== "undefined" && typeof navigator.share === "function") {

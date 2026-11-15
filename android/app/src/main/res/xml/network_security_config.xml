@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  HTTPS para Firebase Auth/Firestore, Google Sign-In e APIs Vercel.
-  Cleartext desligado em release (live USB usa cleartext só via install-android.ps1).
+  HTTPS para Firebase Auth/Firestore, Google Sign-In, APIs Vercel e streaming
+  áudio (Anchor / CDN). Cleartext desligado em release.
 -->
 <network-security-config>
     <base-config cleartextTrafficPermitted="false">
@@ -9,17 +9,32 @@
             <certificates src="system" />
         </trust-anchors>
     </base-config>
-    <!-- Domínios do provedor remoto (auth + planos + APIs) — confiança sistema -->
+    <!-- Auth + planos + APIs -->
     <domain-config cleartextTrafficPermitted="false">
         <domain includeSubdomains="true">googleapis.com</domain>
         <domain includeSubdomains="true">gstatic.com</domain>
         <domain includeSubdomains="true">google.com</domain>
+        <domain includeSubdomains="true">googleusercontent.com</domain>
         <domain includeSubdomains="true">firebaseio.com</domain>
         <domain includeSubdomains="true">firebaseapp.com</domain>
         <domain includeSubdomains="true">web.app</domain>
         <domain includeSubdomains="true">cloudfunctions.net</domain>
         <domain includeSubdomains="true">vercel.app</domain>
         <domain includeSubdomains="false">biblos-two.vercel.app</domain>
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </domain-config>
+    <!-- Streaming podcast S21 (Anchor RSS → CDN) -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">anchor.fm</domain>
+        <domain includeSubdomains="true">cloudfront.net</domain>
+        <domain includeSubdomains="true">spotifycdn.com</domain>
+        <domain includeSubdomains="true">spotify.com</domain>
+        <domain includeSubdomains="true">megaphone.fm</domain>
+        <domain includeSubdomains="true">podtrac.com</domain>
+        <domain includeSubdomains="true">buzzsprout.com</domain>
+        <domain includeSubdomains="true">libsyn.com</domain>
         <trust-anchors>
             <certificates src="system" />
         </trust-anchors>

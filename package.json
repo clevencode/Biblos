@@ -1,7 +1,7 @@
 {
   "name": "biblos",
   "private": true,
-  "version": "0.2.7",
+  "version": "0.2.8",
   "type": "module",
   "packageManager": "npm@12.2.2",
   "engines": {
@@ -39,6 +39,7 @@
     "@capacitor/cli": "^8.5.1",
     "@capacitor/core": "^8.5.1",
     "@capacitor/preferences": "^8.0.1",
+    "@capacitor/share": "^8.0.3",
     "@capacitor/splash-screen": "^8.0.2",
     "@capacitor/status-bar": "^8.0.3",
     "@coolicons/react": "^5.2.0",

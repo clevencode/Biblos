@@ -10,7 +10,7 @@
  *   CLOUDFLARE_ACCOUNT_ID
  *   CLOUDFLARE_API_TOKEN     (R2 Edit)  — ou `npx wrangler login`
  *   R2_BUCKET                (ex. biblos-apk)
- *   R2_OBJECT_KEY            (default: biblos.apk)
+ *   R2_OBJECT_KEY            (default: Biblos.apk)
  */
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -58,7 +58,7 @@ if (!String(process.env.CLOUDFLARE_API_TOKEN ?? "").trim()) {
 }
 
 const bucket = String(process.env.R2_BUCKET ?? "").trim();
-const key = String(process.env.R2_OBJECT_KEY ?? "biblos.apk").trim() || "biblos.apk";
+const key = String(process.env.R2_OBJECT_KEY ?? "Biblos.apk").trim() || "Biblos.apk";
 const accountId = String(process.env.CLOUDFLARE_ACCOUNT_ID ?? "").trim();
 const apiToken = String(process.env.CLOUDFLARE_API_TOKEN ?? "").trim();
 
@@ -98,6 +98,7 @@ const args = [
   `--file=${APK}`,
   "--remote",
   "--content-type=application/vnd.android.package-archive",
+  "--content-disposition=attachment;filename=Biblos.apk",
   "--cache-control=no-cache",
 ];
 
@@ -120,6 +121,7 @@ if (publicUrl) {
   const placeholder =
     publicUrl === "https://r2.dev" ||
     publicUrl === "/downloads/biblos.apk" ||
+    publicUrl === "/downloads/Biblos.apk" ||
     publicUrl.endsWith("r2.dev");
   if (placeholder) {
     console.warn("Aviso: URL parece placeholder — define o URL público real do objecto no R2.");

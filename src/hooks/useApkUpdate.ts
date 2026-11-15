@@ -2,6 +2,9 @@
  * Verificação de update do APK nativo via HTTP HEAD no ficheiro R2.
  * Sem version.json — compara ETag (ou Last-Modified / Content-Length).
  *
+ * CTA: descarrega para cache/Biblos.apk (sobrescrita) e abre o instalador
+ * via plugin ApkInstaller — sem acumular ficheiros em Downloads.
+ *
  * CORS: o bucket R2 deve permitir HEAD (e GET) a partir do origin Capacitor
  * (tipicamente https://localhost). Falhas de rede/CORS são ignoradas em silêncio.
  */
@@ -9,11 +12,13 @@
 import { Capacitor } from "@capacitor/core";
 import { Browser } from "@capacitor/browser";
 import { useCallback, useEffect, useState } from "react";
+import { ApkInstaller } from "../native/apkInstaller";
 
 const ETAG_KEY = "biblos-apk-etag";
 
 export type ApkUpdateState = {
   available: boolean;
+  busy: boolean;
   update: () => Promise<void>;
   dismiss: () => void;
 };
@@ -63,6 +68,7 @@ async function openApkUrl(url: string): Promise<void> {
 
 export function useApkUpdate(): ApkUpdateState {
   const [available, setAvailable] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [pendingFingerprint, setPendingFingerprint] = useState<string | null>(
     null,
   );
@@ -110,16 +116,28 @@ export function useApkUpdate(): ApkUpdateState {
 
   const update = useCallback(async () => {
     const url = apkDownloadUrl();
-    if (!url) return;
-    if (pendingFingerprint) {
-      writeStoredFingerprint(pendingFingerprint);
+    if (!url || busy) return;
+    setBusy(true);
+    try {
+      if (pendingFingerprint) {
+        writeStoredFingerprint(pendingFingerprint);
+      }
+      try {
+        await ApkInstaller.downloadAndInstall({ url });
+        setAvailable(false);
+      } catch (error) {
+        console.warn("[apk] in-app install failed, fallback browser", error);
+        await openApkUrl(url);
+        setAvailable(false);
+      }
+    } finally {
+      setBusy(false);
     }
-    setAvailable(false);
-    await openApkUrl(url);
-  }, [pendingFingerprint]);
+  }, [busy, pendingFingerprint]);
 
   return {
     available: available && !sessionDismissed,
+    busy,
     update,
     dismiss,
   };

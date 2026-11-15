@@ -10,18 +10,29 @@ const config: CapacitorConfig = {
   appName: "Biblos",
   webDir: "dist",
   server: {
-    // Permite o WebView sair do shell local para OAuth / links do provedor remoto.
+    // OAuth / Firebase Auth + CDNs de streaming áudio (Anchor).
     allowNavigation: [
       "*.firebaseapp.com",
       "*.web.app",
       "*.googleapis.com",
       "*.gstatic.com",
       "*.google.com",
+      "accounts.google.com",
       "*.googleusercontent.com",
       "*.firebaseio.com",
       "*.cloudfunctions.net",
       "biblos-two.vercel.app",
       "*.vercel.app",
+      // Podcast S21 / streaming
+      "*.anchor.fm",
+      "anchor.fm",
+      "*.cloudfront.net",
+      "*.spotifycdn.com",
+      "*.spotify.com",
+      "*.megaphone.fm",
+      "*.podtrac.com",
+      "*.buzzsprout.com",
+      "*.libsyn.com",
     ],
   },
   android: {
