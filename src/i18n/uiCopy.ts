@@ -192,11 +192,6 @@ export type UiCopyKey =
   | "study.notesDraft"
   | "study.loadError"
   | "study.refUnavailable"
-  | "study.goToPassage"
-  | "study.goToChapter"
-  | "study.returnToVerse"
-  | "study.returnToLabel"
-  | "study.dismissStudyJump"
   | "verse.actions"
   | "verse.passageOptions"
   | "verse.hint"
@@ -445,11 +440,6 @@ const FR: Dict = {
   "study.notesDraft": "Brouillon local",
   "study.loadError": "Erreur de chargement",
   "study.refUnavailable": "Texte de ce passage indisponible pour cette version.",
-  "study.goToPassage": "Aller au verset",
-  "study.goToChapter": "Aller au chapitre",
-  "study.returnToVerse": "Retourner aux références",
-  "study.returnToLabel": "Retourner à {label}",
-  "study.dismissStudyJump": "Quitter le mode étude",
   "verse.actions": "Actions du verset",
   "verse.passageOptions": "Options",
   "verse.hint": "Coche d’autres versets pour compléter la sélection",
@@ -699,11 +689,6 @@ const HT: Dict = {
   "study.notesDraft": "Brouiyon lokal",
   "study.loadError": "Erè chajman",
   "study.refUnavailable": "Tèks pasaj sa a pa disponib pou vèsyon sa a.",
-  "study.goToPassage": "Ale nan vèsè a",
-  "study.goToChapter": "Ale nan chapit la",
-  "study.returnToVerse": "Tounen nan referans yo",
-  "study.returnToLabel": "Tounen nan {label}",
-  "study.dismissStudyJump": "Kite mòd etid la",
   "verse.actions": "Aksyon vèsè",
   "verse.passageOptions": "Options",
   "verse.hint": "Make lòt vèsè pou konplete seleksyon an",

@@ -19,10 +19,7 @@ import {
   LSG_BIBLE_ID,
   type BibleSearchHit,
 } from "../youversion/client";
-import {
-  parseUsfmLocation,
-  type ParsedPassage,
-} from "../youversion/usfm";
+import { parseUsfmLocation, type ParsedPassage } from "../youversion/usfm";
 import {
   BIBLE_TEXT_VERSIONS,
   isBibleTextVersionId,
@@ -51,22 +48,13 @@ import { BibleHistorySheet } from "./BibleHistorySheet";
 import { BibleMarksSheet } from "./BibleMarksSheet";
 import { BibleShareSheet } from "./BibleShareSheet";
 import { SearchBooksModal } from "./SearchBooksModal";
-import {
-  getRefsListScroll,
-  setRefsListScroll,
-  VerseStudyPanel,
-} from "./VerseStudyDrawer";
+import { VerseStudyPanel } from "./VerseStudyDrawer";
 import { BiblePassageScrollPicker } from "./BiblePassageScrollPicker";
 import { BiblePassageChip } from "./BiblePassageChip";
 import {
   languageForVersion,
   versionBadgeFor,
-  verseStudyKey,
 } from "../bible/readingScope";
-import {
-  useStudyJumpStack,
-  type PendingStudyReturn,
-} from "../bible/viewState/studyJumpStack";
 import { useUiLocale } from "../i18n/UiLocaleContext";
 import { notifyUiLocale, subscribeUiLocale } from "../i18n/uiLocale";
 import { subscribeShellRadial } from "../shellRadial";
@@ -593,27 +581,6 @@ export function BibleReaderView({
   const [verseActionsTab, setVerseActionsTab] = useState<"verse" | "refs">(
     "verse",
   );
-  /** Pilha LIFO de estudo (Aller au verset) — só pop / × a limpam. */
-  const {
-    top: studyJumpTop,
-    depth: studyJumpDepth,
-    push: pushStudyJump,
-    pop: popStudyJump,
-    clear: clearStudyJump,
-  } = useStudyJumpStack();
-  const [pendingStudyReturn, setPendingStudyReturn] =
-    useState<PendingStudyReturn | null>(null);
-  /** Scroll da lista Référence a forçar após pop (até Options fechar). */
-  const [refsRestoreScrollTop, setRefsRestoreScrollTop] = useState<
-    number | null
-  >(null);
-  /** Sticky: Options na tab Référence após retorno da pilha. */
-  const preferRefsTabOnOpenRef = useRef(false);
-  /**
-   * Fechar Options para navegar a um USFM: o clear da seleção não pode
-   * apagar pendingScroll/highlight que loadChapter vai definir (race do updater).
-   */
-  const preservePassageNavRef = useRef(false);
   const [dayNoteOpen, setDayNoteOpen] = useState(false);
   /** Fin d’étape / fin de plan → retour plans après la note. */
   const [dayNoteReturnsToPlans, setDayNoteReturnsToPlans] = useState(false);
@@ -642,19 +609,23 @@ export function BibleReaderView({
     return true;
   }, []);
 
+  /**
+   * Fechar Options para navegar (Référence chip → DiscoveryJump): o clear da
+   * seleção não pode apagar pendingScroll/highlight que loadChapter define.
+   * NÃO consumir aqui — leaveVerseActions no updater pode reentrar (Strict Mode);
+   * o adaptador do jump desliga o flag só depois do navigate + close.
+   */
+  const preservePassageNavRef = useRef(false);
+
   const clearVerseSelectionUi = useCallback(() => {
-    const preserveNav = preservePassageNavRef.current;
-    preferJumpFocusRef.current = false;
-    preferRefsTabOnOpenRef.current = false;
-    setRefsRestoreScrollTop(null);
-    if (!preserveNav) {
+    if (!preservePassageNavRef.current) {
+      preferJumpFocusRef.current = false;
       pendingScrollVerse.current = null;
       lastAppliedVerseScroll.current = "";
       setHighlightVerse(null);
       setHighlightVerseEnd(null);
       setFocusDim(false);
     }
-    /* Com preserve: o flag fica até loadChapter (Strict Mode pode reentrar no clear). */
     setSelection(null);
     setCardMsg(null);
     setCardColor(loadPreferredVerseColor());
@@ -1246,7 +1217,6 @@ export function BibleReaderView({
     verse: number | null = null,
     verseEnd: number | null = null,
   ) {
-    preservePassageNavRef.current = false;
     pendingScrollVerse.current =
       verse != null
         ? { number: verse, mode: "start", seq: ++verseScrollSeq.current }
@@ -1682,14 +1652,8 @@ export function BibleReaderView({
     void loadChapter(parts.bookId, String(hit.chapter), hit.verse, null);
   }
 
-  /** Núcleo partilhado: Passage Discovery «Aller à …» e Study Jump. */
-  function navigateDiscoveryPassage(passage: ParsedPassage) {
-    armPendingVerseStep(passage.verse != null);
-    patchDiscoverySession({
-      expandedBookId: passage.bookId.toUpperCase(),
-      anchorVerseUsfm: passage.usfm || null,
-    });
-    setPassageStep("book");
+  /** Núcleo polimórfico: DiscoveryJump (picker) e chips Référence partilham este salto. */
+  function navigateToParsedPassage(passage: ParsedPassage) {
     const chapter = String(passage.chapter);
     const verse = passage.verse;
     const verseEnd =
@@ -1698,12 +1662,39 @@ export function BibleReaderView({
       passage.verseEnd !== verse
         ? passage.verseEnd
         : null;
-    void loadChapter(passage.bookId, chapter, verse, verseEnd);
+    loadChapter(passage.bookId, chapter, verse, verseEnd);
+    preferJumpFocusRef.current = true;
+    if (verse != null) setFocusDim(true);
+    suppressFocusDimClearUntil.current =
+      performance.now() + CHROME_PROGRAMMATIC_LOCK_MS * 2;
   }
 
+  /** Adaptador picker — dismiss roll + estado discovery, depois o núcleo. */
   function pickDiscoveryJump(jump: DiscoveryJump) {
     closePicker({ restoreFocus: false });
-    navigateDiscoveryPassage(jump.passage);
+    armPendingVerseStep(jump.passage.verse != null);
+    patchDiscoverySession({
+      expandedBookId: jump.passage.bookId.toUpperCase(),
+      anchorVerseUsfm: jump.passage.usfm || null,
+    });
+    setPassageStep("book");
+    navigateToParsedPassage(jump.passage);
+  }
+
+  /**
+   * Adaptador Référence — navega primeiro, depois fecha Options com preserveNav
+   * sticky (anti-race: clearVerseSelectionUi no updater pode reentrar e, se o
+   * flag for consumido no 1.º clear, o 2.º apaga pendingScroll/highlight).
+   */
+  function openRefFromStudyModal(usfm: string) {
+    const loc = parseUsfmLocation(usfm);
+    if (!loc || !isUsfmBookId(loc.bookId)) return;
+    preservePassageNavRef.current = true;
+    navigateToParsedPassage(loc);
+    closeCreateCard();
+    queueMicrotask(() => {
+      preservePassageNavRef.current = false;
+    });
   }
 
   function pickChapter(nextChapter: string) {
@@ -1729,60 +1720,6 @@ export function BibleReaderView({
       return;
     }
     clearVerseSelectionUi();
-  }
-
-  /**
-   * Options > Référence > Aller au verset/chapitre —
-   * pilha LIFO + mesmo salto que Passage Discovery.
-   */
-  function goToCrossRefPassage(usfm: string) {
-    const loc = parseUsfmLocation(usfm);
-    if (!loc || !isUsfmBookId(loc.bookId)) return;
-
-    const fromVerse = selection?.[0] ?? highlightVerse;
-    if (fromVerse != null) {
-      const originTitle =
-        books.find((b) => b.id.toUpperCase() === bookId.toUpperCase())?.title ??
-        bookId;
-      const label = formatSelectionFront(originTitle, chapterId, [fromVerse]);
-      const scrollKey = verseStudyKey(textVersion, bookId, chapterId, fromVerse);
-      pushStudyJump({
-        bookId,
-        chapterId,
-        verse: fromVerse,
-        label,
-        refsScrollTop: getRefsListScroll(scrollKey),
-      });
-    }
-
-    preservePassageNavRef.current = true;
-    closeCreateCard();
-    navigateDiscoveryPassage(loc);
-    /* Teardown Options: manter focus dim se há verso (par Discovery + share). */
-    preferJumpFocusRef.current = true;
-    if (loc.verse != null) setFocusDim(true);
-    suppressFocusDimClearUntil.current =
-      performance.now() + CHROME_PROGRAMMATIC_LOCK_MS * 2;
-  }
-
-  /** Pop da pilha → navega; Options abre só quando o capítulo origem está pronto. */
-  function returnFromStudyJump() {
-    const step = popStudyJump();
-    if (!step) return;
-    setPendingStudyReturn({ step });
-    setShareSheetOpen(false);
-    setCardMsg(null);
-    setPassageUiError(null);
-    preferJumpFocusRef.current = false;
-    setFocusDim(false);
-    setSelection(null);
-    void loadChapter(step.bookId, step.chapterId, step.verse, null);
-  }
-
-  function dismissStudyJumpStack() {
-    clearStudyJump();
-    setPendingStudyReturn(null);
-    setRefsRestoreScrollTop(null);
   }
 
   async function toggleOfflineBible() {
@@ -2102,64 +2039,10 @@ export function BibleReaderView({
       selectedVerseText &&
       !shareSheetOpen,
   );
-  const showStudyReturnNav = Boolean(
-    studyJumpDepth > 0 && !showCreateCard && !pendingStudyReturn,
-  );
-
   useEffect(() => {
     if (!showCreateCard) return;
-    if (preferRefsTabOnOpenRef.current) {
-      /* Não consumir o flag aqui: o reload do capítulo pode piscar showCreateCard. */
-      setVerseActionsTab("refs");
-      return;
-    }
     setVerseActionsTab("verse");
   }, [showCreateCard]);
-
-  /* Após pop: abrir Options → Référence só com capítulo origem carregado. */
-  useEffect(() => {
-    const pending = pendingStudyReturn;
-    if (!pending) return;
-    if (presentation.inFlight) return;
-    if (
-      bookId.toUpperCase() !== pending.step.bookId.toUpperCase() ||
-      String(chapterId) !== String(pending.step.chapterId)
-    ) {
-      return;
-    }
-    const verseReady = passage?.verses?.some(
-      (v) => v.number === pending.step.verse,
-    );
-    if (!verseReady) return;
-
-    const scrollKey = verseStudyKey(
-      textVersion,
-      pending.step.bookId,
-      pending.step.chapterId,
-      pending.step.verse,
-    );
-    setRefsListScroll(scrollKey, pending.step.refsScrollTop);
-    setRefsRestoreScrollTop(pending.step.refsScrollTop);
-    preferRefsTabOnOpenRef.current = true;
-    setVerseActionsTab("refs");
-    setSelection([pending.step.verse]);
-    setHighlightVerse(pending.step.verse);
-    setHighlightVerseEnd(null);
-    setShareSheetOpen(false);
-    openOverlay({
-      type: "verse_actions",
-      selectedVerseIds: [String(pending.step.verse)],
-    });
-    setPendingStudyReturn(null);
-  }, [
-    pendingStudyReturn,
-    presentation.inFlight,
-    bookId,
-    chapterId,
-    passage?.verses,
-    openOverlay,
-    textVersion,
-  ]);
 
   /** Lista Verset: abrir/ancorar no verso seleccionado (não preso ao v.1). */
   useLayoutEffect(() => {
@@ -2409,47 +2292,6 @@ export function BibleReaderView({
     restoreToolsFocusRef.current = false;
     setShareSheetOpen(false);
     openOverlay({ type: "marks" });
-  }
-
-  /**
-   * Cor · Marquer · Partager — navbar inferior desta secção Options
-   * (mesmo contrato visual do pill pai Accueil·Bible·Plan).
-   */
-  function renderStudyReturnNav() {
-    if (!studyJumpTop) return null;
-    const returnLabel = t("study.returnToLabel", {
-      label: studyJumpTop.label,
-    });
-    return (
-      <nav className="bible-study-return-nav" aria-label={returnLabel}>
-        <div className="bible-study-return-nav-pill" role="group">
-          <button
-            type="button"
-            className="bible-study-return-nav-main"
-            onClick={returnFromStudyJump}
-          >
-            <YvIcon
-              name="chevron_left"
-              className="bible-study-return-nav-icon"
-            />
-            <span className="bible-study-return-nav-label">{returnLabel}</span>
-            {studyJumpDepth > 1 ? (
-              <span className="bible-study-return-nav-depth" aria-hidden>
-                {studyJumpDepth}
-              </span>
-            ) : null}
-          </button>
-          <button
-            type="button"
-            className="bible-study-return-nav-dismiss"
-            onClick={dismissStudyJumpStack}
-            aria-label={t("study.dismissStudyJump")}
-          >
-            <YvIcon name="close" className="bible-study-return-nav-dismiss-icon" />
-          </button>
-        </div>
-      </nav>
-    );
   }
 
   function renderVerseActionsToolbar() {
@@ -2717,10 +2559,7 @@ export function BibleReaderView({
                   verse={selectedVerses[0]}
                   books={books}
                   active={verseActionsTab === "refs"}
-                  restoreScrollTop={refsRestoreScrollTop}
-                  onOpenRef={(usfm) => {
-                    goToCrossRefPassage(usfm);
-                  }}
+                  onOpenRef={openRefFromStudyModal}
                 />
               ) : null}
             </div>
@@ -3275,7 +3114,7 @@ export function BibleReaderView({
   return (
     <section
       ref={readerRef}
-      className={`bible-reader bible-reader--yv${hideChrome ? " is-chrome-hidden" : ""}${hasActiveModal ? " is-overlay-active" : ""}${audioPlaying ? " is-audio-playing" : ""}${showCreateCard ? " has-verse-actions" : ""}${showStudyReturnNav ? " has-study-return" : ""}${shareSheetOpen ? " is-share-open" : ""}${headCompact ? " is-head-compact" : ""}${surfaceChrome.rootClassPassageRollOpen ? " is-passage-roll-open" : ""}${topSheetOpen ? " is-top-sheet-open" : ""}${compactToolsMenu ? " is-compact-tools" : ""}${toolsMenuOpen ? " is-tools-menu-open" : ""}${menuJourneyOpen ? " is-menu-journey-open" : ""}${historyOpen ? " is-history-open" : ""}${fontFamily === "sans" ? " is-font-sans" : " is-font-serif"}`}
+      className={`bible-reader bible-reader--yv${hideChrome ? " is-chrome-hidden" : ""}${hasActiveModal ? " is-overlay-active" : ""}${audioPlaying ? " is-audio-playing" : ""}${showCreateCard ? " has-verse-actions" : ""}${shareSheetOpen ? " is-share-open" : ""}${headCompact ? " is-head-compact" : ""}${surfaceChrome.rootClassPassageRollOpen ? " is-passage-roll-open" : ""}${topSheetOpen ? " is-top-sheet-open" : ""}${compactToolsMenu ? " is-compact-tools" : ""}${toolsMenuOpen ? " is-tools-menu-open" : ""}${menuJourneyOpen ? " is-menu-journey-open" : ""}${historyOpen ? " is-history-open" : ""}${fontFamily === "sans" ? " is-font-sans" : " is-font-serif"}`}
       style={{ ["--bible-font-size" as string]: `${fontSize}px` }}
       onKeyDown={(event) => {
         /* Escape deve fechar overlays mesmo com focus no input (padrão dialog). */
@@ -3368,12 +3207,10 @@ export function BibleReaderView({
     >
       <header
         className={`bible-yv-top is-free${topSheetOpen ? " is-top-sheet-open" : ""}${surfaceChrome.rootClassPassageRollOpen ? " is-passage-roll-open" : ""}${catalogOfflineHint ? " is-catalog-offline" : ""}${compactToolsMenu ? " is-compact-tools" : ""}${
-          presentation.inFlight || forceChapterTopbarLoading() ? " is-loading" : ""
+          presentation.inFlight ? " is-loading" : ""
         }`}
         aria-label={t("bible.nav")}
-        aria-busy={
-          presentation.inFlight || forceChapterTopbarLoading() || undefined
-        }
+        aria-busy={presentation.inFlight || undefined}
       >
         <div className="bible-yv-top-tools">
           {!pickerOpen &&
@@ -3411,7 +3248,7 @@ export function BibleReaderView({
             renderPassageRoll()
           )
         ) : null}
-        {presentation.inFlight || forceChapterTopbarLoading() ? (
+        {presentation.inFlight ? (
           <div
             className="bible-yv-top-loading-bar"
             role="progressbar"
@@ -3530,8 +3367,6 @@ export function BibleReaderView({
       {showCreateCard && verseActionsTab === "verse"
         ? renderVerseActionsToolbar()
         : null}
-      {showStudyReturnNav ? renderStudyReturnNav() : null}
-
       <div id={statusId} className="sr-only" aria-live="polite">
         {passageLiveStatusLabel({ presentation, locationLabel, error })}
       </div>
@@ -3757,7 +3592,7 @@ export function BibleReaderView({
           const stageTitle = planReading.stageName?.trim();
           return (
             <footer
-              className={`bible-yv-dock is-plan-progress${showCreateCard || showStudyReturnNav ? " has-verse-actions" : ""}${compactDock ? " is-floating" : ""} is-play-only`}
+              className={`bible-yv-dock is-plan-progress${showCreateCard ? " has-verse-actions" : ""}${compactDock ? " is-floating" : ""} is-play-only`}
               aria-label={t("bible.planProgress")}
             >
               <div
@@ -3787,7 +3622,7 @@ export function BibleReaderView({
         }
         return (
       <footer
-        className={`bible-yv-dock${showCreateCard || showStudyReturnNav ? " has-verse-actions" : ""}${audioPlaying ? " is-playing" : ""}${compactDock ? " is-floating" : ""} is-play-only`}
+        className={`bible-yv-dock${showCreateCard ? " has-verse-actions" : ""}${audioPlaying ? " is-playing" : ""}${compactDock ? " is-floating" : ""} is-play-only`}
         aria-label="Lecteur audio"
       >
         <BibleAudioFloat

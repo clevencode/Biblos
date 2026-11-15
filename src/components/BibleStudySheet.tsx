@@ -16,7 +16,6 @@ export type BibleStudySheetProps = {
   chapterId: string;
   verse: number;
   refLabel: string;
-  onOpenRef: (usfm: string) => void;
   versionId?: BibleTextVersionId;
   books?: YouVersionBook[];
 };
@@ -26,7 +25,6 @@ export function BibleStudySheet({
   bookId,
   chapterId,
   verse,
-  onOpenRef,
   versionId = "s21",
   books = [],
 }: BibleStudySheetProps) {
@@ -37,7 +35,6 @@ export function BibleStudySheet({
     chapterId,
     verse,
     books,
-    onOpenRef,
   };
   return <VerseStudyPanel {...props} />;
 }

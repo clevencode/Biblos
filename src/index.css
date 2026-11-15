@@ -10325,11 +10325,9 @@ html:has(
   z-index: calc(var(--bible-z-top-sheet, 70) + 10);
 }
 
-/* Verse actions / retorno estudo: shell navbar some */
+/* Verse actions: shell navbar some */
 html:has(.bible-verse-actions.top-floating-sheet.is-open) .note-shell .mode-tabs,
-.app:has(.bible-verse-actions.top-floating-sheet.is-open) .note-shell .mode-tabs,
-html:has(.bible-study-return-nav) .note-shell .mode-tabs,
-.app:has(.bible-study-return-nav) .note-shell .mode-tabs {
+.app:has(.bible-verse-actions.top-floating-sheet.is-open) .note-shell .mode-tabs {
   transform: translateY(calc(100% + 16px));
   opacity: 0;
   pointer-events: none;
@@ -13999,157 +13997,6 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
 
 .bible-reader--yv.has-verse-actions .bible-yv-top-tools {
   margin-left: auto;
-  flex: none;
-}
-
-/*
- * Navbar estudo LIFO — Retourner à {label} + ×
- * (clone mode-tabs / --bible-nav-surface).
- */
-.bible-study-return-nav {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: calc(var(--bible-z-top-sheet, 70) + 10);
-  width: 100%;
-  margin: 0;
-  padding: 0 var(--mode-tabs-inset-x, 12px)
-    calc(var(--mode-tabs-float-gap, 14px) + env(safe-area-inset-bottom, 0px));
-  border: 0;
-  background: transparent;
-  pointer-events: none;
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
-  box-sizing: border-box;
-  font-family: var(--font-ui);
-  color: var(--yv-text, var(--text));
-}
-
-.bible-study-return-nav::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  top: calc(-1 * var(--mode-tabs-mat-fade, 32px));
-  z-index: 0;
-  pointer-events: none;
-  background: linear-gradient(
-    to top,
-    var(--mode-tabs-mat-bg, var(--bible-nav-surface, var(--bg))) 0%,
-    var(--mode-tabs-mat-bg, var(--bible-nav-surface, var(--bg)))
-      calc(100% - var(--mode-tabs-mat-fade, 32px)),
-    transparent 100%
-  );
-}
-
-.bible-study-return-nav-pill {
-  position: relative;
-  z-index: 1;
-  pointer-events: auto;
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  width: min(100%, 22rem);
-  height: var(--mode-tabs-pill-h, 56px);
-  min-height: var(--mode-tabs-pill-h, 56px);
-  margin: 0;
-  padding: 4px;
-  box-sizing: border-box;
-  border: 1px solid
-    var(
-      --mode-tabs-outline,
-      var(--yv-outline, color-mix(in srgb, var(--line) 70%, transparent))
-    );
-  border-radius: 999px;
-  background: var(--bible-nav-surface, var(--bg));
-  color: inherit;
-  box-shadow:
-    0 1px 0 color-mix(in srgb, var(--ink) 8%, transparent),
-    0 8px 24px color-mix(in srgb, var(--ink) 14%, transparent);
-}
-
-.bible-study-return-nav-main {
-  flex: 1 1 auto;
-  min-width: 0;
-  height: 100%;
-  margin: 0;
-  padding: 0 10px 0 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  font-size: 0.92rem;
-  font-weight: 650;
-  letter-spacing: 0.01em;
-  cursor: pointer;
-}
-
-.bible-study-return-nav-main:hover {
-  background: var(--mode-tabs-hover, color-mix(in srgb, var(--text) 6%, var(--bg)));
-}
-
-.bible-study-return-nav-main:focus-visible {
-  outline: 2px solid var(--accent, #5b7cfa);
-  outline-offset: 1px;
-}
-
-.bible-study-return-nav-label {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.bible-study-return-nav-depth {
-  flex: none;
-  display: grid;
-  place-items: center;
-  min-width: 1.35rem;
-  height: 1.35rem;
-  padding: 0 5px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--text) 14%, transparent);
-  font-size: 0.75rem;
-  font-weight: 700;
-  line-height: 1;
-}
-
-.bible-study-return-nav-dismiss {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-}
-
-.bible-study-return-nav-dismiss:hover {
-  background: color-mix(in srgb, var(--text) 8%, transparent);
-}
-
-.bible-study-return-nav-dismiss:focus-visible {
-  outline: 2px solid var(--accent, #5b7cfa);
-  outline-offset: 1px;
-}
-
-.bible-study-return-nav-icon,
-.bible-study-return-nav-dismiss-icon {
-  width: 1.15rem;
-  height: 1.15rem;
   flex: none;
 }
 
@@ -18026,6 +17873,20 @@ html[data-passage-bar-panel="test"]
   font-weight: 400;
 }
 
+/* Référence: chips Discovery com preview multi-linha (não pill total). */
+.bible-study-ref-jumps {
+  margin-bottom: 0;
+}
+
+.bible-study-ref-jump {
+  align-items: flex-start;
+  border-radius: 16px;
+}
+
+.bible-study-ref-jump .bible-yv-pick-jump-icon {
+  margin-top: 2px;
+}
+
 /*
  * Modal texto de referência cruzada (Options > Référence).
  * Persistente: acima do sheet Options; fecho só X / Escape (scrim sem dismiss).
@@ -18034,7 +17895,8 @@ html[data-passage-bar-panel="test"]
 .bible-study-ref-modal {
   position: fixed;
   inset: 0;
-  z-index: calc(var(--bible-z-top-sheet, 70) + 5);
+  /* Acima da navbar Options (verse-actions-nav = sheet+10) para o clique no texto. */
+  z-index: calc(var(--bible-z-top-sheet, 70) + 20);
   margin: 0;
   padding: 0;
   overflow: visible;
@@ -18119,11 +17981,27 @@ html[data-passage-bar-panel="test"]
 
 .bible-study-ref-modal-title {
   margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
   font-family: var(--font-ui);
   font-size: 1.05rem;
   font-weight: 700;
   line-height: 1.25;
   color: var(--text);
+}
+
+button.bible-study-ref-modal-title.is-jump {
+  cursor: pointer;
+  border-radius: 8px;
+  pointer-events: auto;
+}
+
+button.bible-study-ref-modal-title.is-jump:hover,
+button.bible-study-ref-modal-title.is-jump:focus-visible {
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+  outline: none;
 }
 
 .bible-study-ref-modal-close {
@@ -18161,7 +18039,13 @@ html[data-passage-bar-panel="test"]
 }
 
 .bible-study-ref-modal-text {
+  display: block;
+  width: 100%;
   margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
   font-family: var(--font-bible, inherit);
   font-size: 1.05rem;
   line-height: 1.55;
@@ -18169,39 +18053,18 @@ html[data-passage-bar-panel="test"]
   white-space: pre-wrap;
 }
 
-.bible-study-ref-modal-foot {
-  flex: none;
-  margin: 10px 0 0;
-  padding-top: 10px;
-  border-top: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
-}
-
-.bible-study-ref-modal-go {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-height: 44px;
-  margin: 0;
-  padding: 0 14px;
-  border: 0;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--text) 88%, transparent);
-  color: var(--surface, #fff);
-  font-family: var(--font-ui);
-  font-size: 0.95rem;
-  font-weight: 650;
-  line-height: 1.2;
+/* TESTE — clique no título/texto = DiscoveryJump */
+button.bible-study-ref-modal-text.is-jump {
   cursor: pointer;
+  border-radius: 8px;
+  outline: none;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: color-mix(in srgb, var(--text) 12%, transparent);
 }
 
-.bible-study-ref-modal-go:hover {
-  filter: brightness(1.06);
-}
-
-.bible-study-ref-modal-go:focus-visible {
-  outline: 2px solid var(--accent, #5b7cfa);
-  outline-offset: 2px;
+button.bible-study-ref-modal-text.is-jump:hover,
+button.bible-study-ref-modal-text.is-jump:focus-visible {
+  background: color-mix(in srgb, var(--text) 6%, transparent);
 }
 
 .bible-search-sheet-meta .bible-history-version-badge {
