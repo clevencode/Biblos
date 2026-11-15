@@ -1,8 +1,8 @@
 /**
- * Banner de instalação híbrido:
- * - Android web → download APK (não A2HS / beforeinstallprompt CTA)
- * - iOS web → hint « Ajouter à l’écran d’accueil »
- * - Capacitor / standalone / desktop → hidden
+ * Instalação híbrida:
+ * - Banner → só install do navegador (beforeinstallprompt) ou hint iOS
+ * - Menu → download APK (Android) / hint iOS
+ * - Capacitor / standalone → hidden
  */
 
 import { Capacitor } from "@capacitor/core";
@@ -17,25 +17,32 @@ const DISMISS_VALUE = "1";
 
 const DEFAULT_APK_URL = "/downloads/biblos.apk";
 
-export type PwaInstallMode = "hidden" | "apk-download" | "ios-hint";
-
-export type PwaInstallState = {
-  /** Banner: hidden se dismissed / nativo / standalone. */
-  mode: PwaInstallMode;
-  /** Menu: ignora dismiss — oferta da plataforma. */
-  menuMode: PwaInstallMode;
-  canInstall: boolean;
-  busy: boolean;
-  install: () => Promise<void>;
-  dismiss: () => void;
+type BeforeInstallPromptEvent = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 };
 
-function resolveOfferMode(standalone: boolean): PwaInstallMode {
-  if (Capacitor.isNativePlatform() || standalone) return "hidden";
-  if (isAndroidBrowser()) return "apk-download";
-  if (isIosSafariFamily()) return "ios-hint";
-  return "hidden";
-}
+/** Banner: nunca `apk-download`. */
+export type PwaInstallBannerMode = "hidden" | "browser-install" | "ios-hint";
+
+/** Menu: APK ou hint iOS. */
+export type PwaInstallMenuMode = "hidden" | "apk-download" | "ios-hint";
+
+export type PwaInstallMode = PwaInstallBannerMode | "apk-download";
+
+export type PwaInstallState = {
+  /** Banner (ignora APK). */
+  mode: PwaInstallBannerMode;
+  /** Menu: oferta da plataforma (APK / iOS), ignora dismiss do banner. */
+  menuMode: PwaInstallMenuMode;
+  canInstall: boolean;
+  busy: boolean;
+  /**
+   * `banner` → prompt A2HS; `menu` → APK no Android (mesmo com bip disponível).
+   */
+  install: (opts?: { source?: "banner" | "menu" }) => Promise<void>;
+  dismiss: () => void;
+};
 
 function apkDownloadUrl(): string {
   const raw = String(import.meta.env.VITE_APK_DOWNLOAD_URL ?? "").trim();
@@ -68,6 +75,13 @@ function isIosSafariFamily(): boolean {
   );
 }
 
+function resolveMenuMode(standalone: boolean): PwaInstallMenuMode {
+  if (Capacitor.isNativePlatform() || standalone) return "hidden";
+  if (isAndroidBrowser()) return "apk-download";
+  if (isIosSafariFamily()) return "ios-hint";
+  return "hidden";
+}
+
 function readDismissedSync(): boolean {
   try {
     return localStorage.getItem(DISMISS_KEY) === DISMISS_VALUE;
@@ -90,17 +104,24 @@ export function usePwaInstall(): PwaInstallState {
   const [dismissed, setDismissed] = useState(readDismissedSync);
   const [busy, setBusy] = useState(false);
   const [standalone, setStandalone] = useState(isStandaloneDisplay);
+  const [deferredPrompt, setDeferredPrompt] =
+    useState<BeforeInstallPromptEvent | null>(null);
 
   useEffect(() => {
     if (Capacitor.isNativePlatform()) return;
 
-    // Bloqueia o mini-infobar PWA do Chrome; não usamos o evento como CTA.
     const onBip = (event: Event) => {
       event.preventDefault();
+      setDeferredPrompt(event as BeforeInstallPromptEvent);
+    };
+    const onInstalled = () => {
+      setDeferredPrompt(null);
+      setStandalone(true);
     };
     const onDisplayChange = () => setStandalone(isStandaloneDisplay());
 
     window.addEventListener("beforeinstallprompt", onBip);
+    window.addEventListener("appinstalled", onInstalled);
     const mq =
       typeof window.matchMedia === "function"
         ? window.matchMedia("(display-mode: standalone)")
@@ -109,6 +130,7 @@ export function usePwaInstall(): PwaInstallState {
 
     return () => {
       window.removeEventListener("beforeinstallprompt", onBip);
+      window.removeEventListener("appinstalled", onInstalled);
       mq?.removeEventListener("change", onDisplayChange);
     };
   }, []);
@@ -123,33 +145,69 @@ export function usePwaInstall(): PwaInstallState {
     void getStorageAdapter().setString(DISMISS_KEY, DISMISS_VALUE);
   }, []);
 
-  const install = useCallback(async () => {
-    if (busy) return;
-    if (!isAndroidBrowser() || Capacitor.isNativePlatform() || standalone) {
-      return;
-    }
-    setBusy(true);
-    try {
-      triggerApkDownload(apkDownloadUrl());
-    } catch (error) {
-      console.warn("[apk] download failed", error);
-      try {
-        window.location.assign(apkDownloadUrl());
-      } catch {
-        /* ignore */
-      }
-    } finally {
-      setBusy(false);
-    }
-  }, [busy, standalone]);
+  const menuMode = resolveMenuMode(standalone);
 
-  const menuMode = resolveOfferMode(standalone);
-  const mode: PwaInstallMode = dismissed ? "hidden" : menuMode;
+  const mode: PwaInstallBannerMode = (() => {
+    if (dismissed || Capacitor.isNativePlatform() || standalone) {
+      return "hidden";
+    }
+    if (deferredPrompt) return "browser-install";
+    if (isIosSafariFamily()) return "ios-hint";
+    return "hidden";
+  })();
+
+  const install = useCallback(
+    async (opts?: { source?: "banner" | "menu" }) => {
+      if (busy) return;
+      const source = opts?.source ?? "banner";
+
+      const downloadApk = async () => {
+        if (!isAndroidBrowser() || Capacitor.isNativePlatform() || standalone) {
+          return;
+        }
+        setBusy(true);
+        try {
+          triggerApkDownload(apkDownloadUrl());
+        } catch (error) {
+          console.warn("[apk] download failed", error);
+          try {
+            window.location.assign(apkDownloadUrl());
+          } catch {
+            /* ignore */
+          }
+        } finally {
+          setBusy(false);
+        }
+      };
+
+      if (source === "menu") {
+        await downloadApk();
+        return;
+      }
+
+      if (deferredPrompt) {
+        setBusy(true);
+        try {
+          await deferredPrompt.prompt();
+          await deferredPrompt.userChoice;
+          setDeferredPrompt(null);
+        } catch (error) {
+          console.warn("[pwa] install prompt failed", error);
+        } finally {
+          setBusy(false);
+        }
+        return;
+      }
+
+      await downloadApk();
+    },
+    [busy, deferredPrompt, standalone],
+  );
 
   return {
     mode,
     menuMode,
-    canInstall: mode === "apk-download",
+    canInstall: mode === "browser-install" || menuMode === "apk-download",
     busy,
     install,
     dismiss,

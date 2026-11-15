@@ -5,34 +5,33 @@ type InstallBannerProps = {
   install: PwaInstallState;
 };
 
-/** Banner install — APK (Android) ou hint iOS; mesma UI `.sw-update-banner`. */
+/**
+ * Banner só para install do navegador (A2HS / hint iOS).
+ * Download APK fica no menu Bible — não aqui.
+ */
 export function InstallBanner({ install }: InstallBannerProps) {
   const { t } = useUiLocale();
   if (install.mode === "hidden") return null;
 
   const isIos = install.mode === "ios-hint";
-  const isApk = install.mode === "apk-download";
+  const isBrowser = install.mode === "browser-install";
 
   return (
     <div className="sw-update-banner" role="status" aria-live="polite">
       <div className="sw-update-banner-copy">
         <p className="sw-update-banner-title">{t("pwaInstall.title")}</p>
         <p className="sw-update-banner-meta">
-          {isIos
-            ? t("pwaInstall.iosLead")
-            : isApk
-              ? t("pwaInstall.apkLead")
-              : t("pwaInstall.lead")}
+          {isIos ? t("pwaInstall.iosLead") : t("pwaInstall.lead")}
         </p>
       </div>
-      {isApk ? (
+      {isBrowser ? (
         <button
           type="button"
           className="sw-update-banner-cta"
           disabled={install.busy || !install.canInstall}
-          onClick={() => void install.install()}
+          onClick={() => void install.install({ source: "banner" })}
         >
-          {install.busy ? t("pwaInstall.busy") : t("pwaInstall.apkCta")}
+          {install.busy ? t("pwaInstall.busy") : t("pwaInstall.cta")}
         </button>
       ) : null}
       <button

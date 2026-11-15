@@ -10437,9 +10437,19 @@ html:has(.bible-study-return-nav) .note-shell .mode-tabs,
   outline-offset: 1px;
 }
 
+.bible-study-return-nav-copy {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35em;
+  min-width: 0;
+  flex: 1 1 auto;
+  text-align: left;
+}
+
 .bible-study-return-nav-verb {
   flex: none;
-  font-weight: 700;
+  font-weight: 600;
+  opacity: 0.78;
 }
 
 .bible-study-return-nav-ref {
@@ -10447,8 +10457,7 @@ html:has(.bible-study-return-nav) .note-shell .mode-tabs,
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-weight: 600;
-  opacity: 0.92;
+  font-weight: 700;
 }
 
 .bible-study-return-nav-depth {

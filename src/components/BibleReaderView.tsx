@@ -2460,8 +2460,10 @@ export function BibleReaderView({
               name="chevron_left"
               className="bible-study-return-nav-icon"
             />
-            <span className="bible-study-return-nav-verb">{actionLabel}</span>
-            <span className="bible-study-return-nav-ref">{studyJumpTop.label}</span>
+            <span className="bible-study-return-nav-copy">
+              <span className="bible-study-return-nav-verb">{actionLabel}</span>
+              <span className="bible-study-return-nav-ref">{studyJumpTop.label}</span>
+            </span>
             {studyJumpDepth > 1 ? (
               <span
                 className="bible-study-return-nav-depth"
@@ -2891,8 +2893,8 @@ export function BibleReaderView({
             role="menuitem"
             className={`bible-yv-tools-item${pwaInstall.busy ? " is-busy" : ""}`}
             disabled={pwaInstall.busy}
-            onClick={() => void pwaInstall.install()}
-          >
+            onClick={() => void pwaInstall.install({ source: "menu" })}
+            >
             <YvIcon name="download" className="bible-yv-tools-item-icon" />
             <span>
               {pwaInstall.busy ? t("pwaInstall.busy") : t("pwaInstall.apkCta")}
