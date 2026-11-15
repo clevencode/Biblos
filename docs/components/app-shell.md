@@ -44,10 +44,12 @@ Shell em **tablist** com três onglets (`SHELL_TABS`): Accueil, Plan, Bible.
 
 **Props:** `active: ShellTab`, `onSelect`, `immersiveHidden?`.
 
-- `role="tablist"`, tabs com `aria-controls={`panel-${id}`}`.
-- Setas ←/→ rotacionam tab e movem foco.
-- Classe `is-immersive-hidden` esconde barra na leitura imersiva.
-- Arco radial: as outras 2 tabs (sem a ativa).
+- Pill horizontal flutuante (`.mode-tabs-pill`) com as **3 tabs** sempre visíveis (Home · Plan · Bible).
+- Sem hub, arco radial, `RadialUiBackdrop` nem `ConvexBottomBarSurface`.
+- `role="tablist"`, tabs com `aria-controls={`panel-${id}`}`; activa = segmento invertido.
+- Setas ←/→ mudam tab e movem foco.
+- Classe `is-immersive-hidden` esconde a barra na leitura imersiva.
+- Clearance: `--mobile-bottom-chrome` = pillH + floatGap + safe-area.
 
 IDs de painel: `panel-home`, `panel-bible`, `PlanDiscoverPanel` com `panel-today`.
 
@@ -94,7 +96,8 @@ Classes workspace: `is-mobile-vista`, `is-bible-compact-tools` quando `BIBLE_COM
 
 - Desmontar `BibleReaderView` ao sair da tab — usar `hidden` + `active` prop.
 - Ignorar `focusSeq` ao reabrir mesma referência.
-- Voltar a pôr Profil no radial — config fica na Home; leitura no leitor.
+- Voltar a pôr Profil na navbar — config fica na Home; leitura no leitor.
+- Restaurar o radial / wave convex sem actualização de clearance e docs.
 
 ---
 

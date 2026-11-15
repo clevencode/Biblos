@@ -385,7 +385,7 @@ html[data-theme="dark"] .biblos-shell {
   ):not(.bible-yv-top):not(.bible-yv-dock-play):not(.bible-yv-audio-player):not(
     .bible-yv-top-passage-skips
   ):not(.bible-yv-top-passage-skips *):not(.bible-yv-tools-menu-btn):not(
-    .mode-tabs-hub
+    .mode-tabs-pill
   ):not(.mode-tabs-item) {
   box-shadow: none !important;
 }
@@ -941,20 +941,14 @@ html[data-theme="dark"] .sw-update-banner-cta {
 }
 
 
-/* Shell nav — Convex + hub radial: canvas na barra; hub/itens = pill invertida */
+/* Shell nav — pill horizontal flutuante (sem radial / convex) */
 .mode-tabs {
-  /* Geometry (espelhada por inline style a partir de ConvexBottomBarSurface) */
-  --mode-tabs-dome-rise: 34px;
-  --mode-tabs-bar-body: 62px;
-  --mode-tabs-hub-size: 50px;
-  --mode-tabs-hub-top: 9px;
-  /* Arco ≈ hub: leitura visual uniforme no radial aberto */
-  --mode-tabs-item-size: 48px;
-  /* Canvas = superfície shell (--bible-nav-surface); top bar herda o mesmo */
+  --mode-tabs-pill-h: 52px;
+  --mode-tabs-float-gap: 10px;
+  --mode-tabs-inset-x: 12px;
   --mode-tabs-canvas: var(--bible-nav-surface, var(--bg));
   --mode-tabs-fg: var(--text);
   --mode-tabs-fg-muted: var(--muted);
-  /* Outline = top bar (--yv-separator / --yv-outline) */
   --mode-tabs-outline: var(
     --yv-outline,
     color-mix(in srgb, var(--line) 70%, transparent)
@@ -969,7 +963,7 @@ html[data-theme="dark"] .sw-update-banner-cta {
     var(--mode-tabs-fg) 11%,
     var(--mode-tabs-canvas)
   );
-  /* Hub invertido (default = light: ink + paper) */
+  /* Tab activa = segmento invertido (ink/paper) */
   --mode-tabs-hub-bg: var(--ink);
   --mode-tabs-hub-fg: var(--paper);
   --mode-tabs-hub-hover: color-mix(
@@ -984,7 +978,6 @@ html[data-theme="dark"] .sw-update-banner-cta {
   );
   --mode-tabs-ease: cubic-bezier(0.4, 0, 0.2, 1);
   --mode-tabs-ms: 240ms;
-  /* Compat ladder YV (overlays / shadows se reutilizados) */
   --yv-bg: var(--mode-tabs-canvas);
   --yv-text: var(--mode-tabs-fg);
   --yv-muted: var(--mode-tabs-fg-muted);
@@ -1001,7 +994,8 @@ html[data-theme="dark"] .sw-update-banner-cta {
   width: 100%;
   height: auto;
   margin: 0;
-  padding: 0 0 env(safe-area-inset-bottom, 0px);
+  padding: 0 var(--mode-tabs-inset-x)
+    calc(var(--mode-tabs-float-gap) + env(safe-area-inset-bottom, 0px));
   border: 0;
   background: transparent;
   color: var(--mode-tabs-fg);
@@ -1009,12 +1003,18 @@ html[data-theme="dark"] .sw-update-banner-cta {
   pointer-events: none;
   min-width: 0;
   min-height: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  box-sizing: border-box;
+  transition:
+    transform 200ms ease-out,
+    opacity 200ms ease-out;
 }
 
 html[data-theme="light"] .mode-tabs {
   --mode-tabs-canvas: var(--bible-nav-surface, var(--paper));
   --mode-tabs-fg: var(--ink);
-  /* Hub: alto contraste invertido (#0D1117 + ícone claro) */
   --mode-tabs-hub-bg: var(--ink);
   --mode-tabs-hub-fg: var(--paper);
 }
@@ -1022,26 +1022,30 @@ html[data-theme="light"] .mode-tabs {
 html[data-theme="dark"] .mode-tabs {
   --mode-tabs-canvas: var(--bible-nav-surface, var(--ink));
   --mode-tabs-fg: var(--paper);
-  /* Hub: inverso do light (claro + ícone escuro) */
   --mode-tabs-hub-bg: var(--paper);
   --mode-tabs-hub-fg: var(--ink);
 }
 
-.mode-tabs-chrome {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  /* Mesma altura do SVG (1px CSS = 1 unit viewBox) */
-  height: calc(var(--mode-tabs-dome-rise) + var(--mode-tabs-bar-body));
+.mode-tabs-pill {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px;
+  width: min(100%, 22rem);
+  height: var(--mode-tabs-pill-h);
   margin: 0;
-  padding: 0;
-  overflow: visible;
-  pointer-events: none;
+  padding: 4px;
+  box-sizing: border-box;
+  border: 1px solid var(--mode-tabs-outline);
+  border-radius: 999px;
+  background: var(--mode-tabs-canvas);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--ink) 8%, transparent),
+    0 8px 24px color-mix(in srgb, var(--ink) 14%, transparent);
 }
 
-/* Acima do scrim (z=0): barra idle = barra aberta, sem frost em cima.
- * Profundidade = mesma família da top bar (.bible-yv-top), espelhada para cima
- * via drop-shadow (segue o contorno da wave; box-shadow seria retangular). */
+/* Convex SVG (legado / órfão da nav) — mantido se reutilizado noutro sítio */
 .convex-bottom-bar,
 .mode-tabs-convex {
   position: absolute;
@@ -1279,46 +1283,25 @@ html.is-radial-open .bible-reader--yv .bible-passage {
   transform: scale(0.985);
 }
 
-/*
- * Hub: topo do círculo = hub-top (rise - radius) → onda abraça 9px por cima.
- * Centro do hub = flatY (= dome-rise). Eixo X = cx = width/2.
- */
-.mode-tabs-stage {
-  position: absolute;
-  left: 50%;
-  top: var(--mode-tabs-hub-top);
-  z-index: 2;
-  width: var(--mode-tabs-hub-size);
-  height: var(--mode-tabs-hub-size);
+/* Itens do pill: ícone + label; activo = segmento invertido */
+.mode-tabs-item {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 100%;
   margin: 0;
-  padding: 0;
-  transform: translateX(-50%);
-  pointer-events: none;
-}
-
-/* Hub = pill invertida (light: #0D1117 + ícone branco; dark: inverso) */
-.mode-tabs-hub {
-  position: relative;
-  z-index: 2;
-  width: var(--mode-tabs-hub-size);
-  height: var(--mode-tabs-hub-size);
-  min-width: var(--mode-tabs-hub-size);
-  min-height: var(--mode-tabs-hub-size);
-  margin: 0;
-  padding: 0;
+  padding: 0 10px;
   border: 0;
-  outline: none;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
+  border-radius: 999px;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
   appearance: none;
   -webkit-appearance: none;
-  background: var(--mode-tabs-hub-bg);
-  color: var(--mode-tabs-hub-fg);
-  /* Mesma profundidade da top bar / FABs */
-  box-shadow:
-    0 1px 0 color-mix(in srgb, var(--ink) 8%, transparent),
-    0 6px 16px color-mix(in srgb, var(--ink) 12%, transparent) !important;
+  background: transparent;
+  color: var(--mode-tabs-fg-muted);
+  box-shadow: none;
   font: inherit;
   cursor: pointer;
   pointer-events: auto;
@@ -1326,195 +1309,42 @@ html.is-radial-open .bible-reader--yv .bible-passage {
   -webkit-tap-highlight-color: transparent;
   transition:
     background var(--mode-tabs-ms) var(--mode-tabs-ease),
-    outline-color var(--mode-tabs-ms) var(--mode-tabs-ease),
-    box-shadow var(--mode-tabs-ms) var(--mode-tabs-ease),
+    color var(--mode-tabs-ms) var(--mode-tabs-ease),
     transform 160ms var(--mode-tabs-ease);
 }
 
-.mode-tabs-hub:hover {
-  background: var(--mode-tabs-hub-hover);
+.mode-tabs-item:hover:not(:disabled):not(.is-on) {
+  color: var(--mode-tabs-fg);
+  background: var(--mode-tabs-hover);
 }
 
-.mode-tabs-hub:active {
-  transform: scale(0.96);
-  background: var(--mode-tabs-hub-press);
-}
-
-.mode-tabs-hub:focus-visible,
-.mode-tabs-item:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--accent, #5b7cfa) 70%, transparent);
-  outline-offset: 3px;
-}
-
-/* Anel canvas: separa pills do fog (sombra de profundidade já no hub/itens) */
-.mode-tabs.is-open .mode-tabs-hub,
-.mode-tabs.is-open .mode-tabs-item {
-  outline: 1.5px solid color-mix(in srgb, var(--mode-tabs-canvas) 88%, transparent);
-  outline-offset: 0;
-}
-
-.mode-tabs.is-open .mode-tabs-hub:focus-visible,
-.mode-tabs.is-open .mode-tabs-item:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--accent, #5b7cfa) 70%, transparent);
-  outline-offset: 3px;
-}
-
-/* Acima do radial-ui-backdrop (z:25) — barra + arco nítidos */
-.mode-tabs.is-open {
-  z-index: calc(var(--bible-z-popover, 40) + 25);
-}
-
-.mode-tabs-hub .mode-tab-icon,
-.mode-tabs-hub .mode-tabs-hub-close {
-  color: inherit;
-  transition: transform 280ms cubic-bezier(0.4, 0, 0.2, 1);
-  transform: rotate(0deg);
-}
-
-.mode-tabs.is-open .mode-tabs-hub .mode-tabs-hub-close {
-  transform: rotate(90deg);
-  transition-duration: 420ms;
-  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.mode-tabs-hub-close {
-  width: var(--bible-chrome-trigger-icon, 20px);
-  height: var(--bible-chrome-trigger-icon, 20px);
-  font-size: var(--bible-chrome-trigger-icon, 20px);
-}
-
-/* Nome da interface activa — sob o hub (só com radial fechado) */
-.mode-tabs-hub-caption {
-  position: absolute;
-  left: 50%;
-  top: calc(100% + 5px);
-  z-index: 2;
-  max-width: 7.5rem;
-  margin: 0;
-  padding: 0;
-  transform: translateX(-50%);
-  color: var(--mode-tabs-fg-muted, var(--muted));
-  font-family: var(--font-ui);
-  font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  line-height: 1.2;
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  pointer-events: none;
-  opacity: 1;
-  transition: opacity 160ms var(--mode-tabs-ease);
-}
-
-.mode-tabs.is-open .mode-tabs-hub-caption,
-.mode-tabs.is-immersive-hidden .mode-tabs-hub-caption {
-  opacity: 0;
-  transition-duration: 120ms;
-}
-
-/* Roleta: saída suave e curta; entrada um pouco mais longa */
-.mode-tabs-arc {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  transform: rotate(-160deg) scale(0.24);
-  opacity: 0;
-  transition:
-    transform 280ms cubic-bezier(0.4, 0, 0.2, 1),
-    opacity 180ms ease-out;
-  will-change: transform, opacity;
-}
-
-.mode-tabs.is-open .mode-tabs-arc {
-  transform: rotate(0deg) scale(1);
-  opacity: 1;
-  transition:
-    transform 480ms cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 220ms ease-out;
-}
-
-/* Itens do arco = mesma lógica do hub (pill invertida paper/ink) */
-.mode-tabs-item {
-  --roulette-i: 0;
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: var(--mode-tabs-item-size);
-  height: var(--mode-tabs-item-size);
-  min-width: var(--mode-tabs-item-size);
-  min-height: var(--mode-tabs-item-size);
-  margin: 0;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  appearance: none;
-  -webkit-appearance: none;
-  background: var(--mode-tabs-hub-bg);
-  color: var(--mode-tabs-hub-fg);
-  box-shadow: none;
-  transform: translate(-50%, -50%) scale(0.35);
-  opacity: 0;
-  pointer-events: none;
-  transition:
-    transform 260ms cubic-bezier(0.4, 0, 0.2, 1),
-    opacity 160ms ease-out,
-    background var(--mode-tabs-ms) var(--mode-tabs-ease),
-    color var(--mode-tabs-ms) var(--mode-tabs-ease),
-    box-shadow var(--mode-tabs-ms) var(--mode-tabs-ease);
-  transition-delay: 0ms;
-  cursor: pointer;
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.mode-tabs.is-open .mode-tabs-item {
-  box-shadow:
-    0 1px 0 color-mix(in srgb, var(--ink) 8%, transparent),
-    0 6px 16px color-mix(in srgb, var(--ink) 12%, transparent) !important;
-  transform: translate(
-      calc(-50% + var(--radial-x)),
-      calc(-50% + var(--radial-y))
-    )
-    scale(1);
-  opacity: 1;
-  pointer-events: auto;
-  transition:
-    transform 400ms cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 200ms ease-out,
-    background var(--mode-tabs-ms) var(--mode-tabs-ease),
-    color var(--mode-tabs-ms) var(--mode-tabs-ease),
-    outline-color var(--mode-tabs-ms) var(--mode-tabs-ease);
-  transition-delay: calc(36ms + var(--roulette-i) * 48ms);
-}
-
-.mode-tabs:not(.is-open) .mode-tabs-item {
-  transition-delay: calc(var(--roulette-i) * 18ms);
+.mode-tabs-item:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
 .mode-tabs-item.is-on {
   color: var(--mode-tabs-hub-fg);
   background: var(--mode-tabs-hub-bg);
-  border: 0;
 }
 
-.mode-tabs-item:hover {
-  color: var(--mode-tabs-hub-fg);
+.mode-tabs-item.is-on:hover:not(:disabled) {
   background: var(--mode-tabs-hub-hover);
+  color: var(--mode-tabs-hub-fg);
 }
 
-.mode-tabs.is-open .mode-tabs-item:active {
-  background: var(--mode-tabs-hub-press);
-  transform: translate(
-      calc(-50% + var(--radial-x)),
-      calc(-50% + var(--radial-y))
-    )
-    scale(0.94);
-  transition-duration: 120ms;
+.mode-tabs-item:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent, #5b7cfa) 70%, transparent);
+  outline-offset: 2px;
+}
+
+.mode-tabs-item:disabled {
+  cursor: default;
+}
+
+.mode-tabs.is-immersive-hidden {
+  transform: translateY(calc(100% + 16px));
+  opacity: 0;
+  pointer-events: none;
 }
 
 .mode-tabs-item .mode-tab-icon {
@@ -1528,15 +1358,17 @@ html.is-radial-open .bible-reader--yv .bible-passage {
 }
 
 .mode-tab-label {
-  position: absolute;
-  width: 1px;
-  height: 1px;
+  max-width: 100%;
+  margin: 0;
   padding: 0;
-  margin: -1px;
   overflow: hidden;
-  clip: rect(0, 0, 0, 0);
+  text-overflow: ellipsis;
   white-space: nowrap;
-  border: 0;
+  font-family: var(--font-ui);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
 }
 
 .mode-tab-badge {
@@ -1546,12 +1378,8 @@ html.is-radial-open .bible-reader--yv .bible-passage {
 @media (prefers-reduced-motion: reduce) {
   .contextual-ui-backdrop,
   .radial-ui-backdrop,
-  .mode-tabs-arc,
+  .mode-tabs,
   .mode-tabs-item,
-  .mode-tabs-hub,
-  .mode-tabs-hub .mode-tab-icon,
-  .mode-tabs-hub .mode-tabs-hub-close,
-  .mode-tabs-hub-caption,
   .bible-reader--yv .bible-passage,
   html[data-radial-open="true"] .bible-yv-dock.is-play-only,
   html[data-radial-open="true"] .bible-yv-dock.is-floating,
@@ -1592,20 +1420,7 @@ html.is-radial-open .bible-reader--yv .bible-passage {
     transition: none !important;
   }
 
-  .mode-tabs-arc {
-    transform: rotate(0deg) scale(1);
-  }
-
-  .mode-tabs:not(.is-open) .mode-tabs-arc {
-    opacity: 0;
-  }
-
-  .mode-tabs.is-open .mode-tabs-item {
-    transition-delay: 0ms !important;
-  }
-
-  .mode-tabs-hub:active,
-  .mode-tabs.is-open .mode-tabs-item:active {
+  .mode-tabs-item:active:not(:disabled) {
     transform: none;
   }
 
@@ -6496,21 +6311,17 @@ html[data-theme="dark"] .profile-download-btn {
     --mobile-gutter: 12px;
     --mobile-touch: 44px;
     --mobile-chrome-gap: 10px;
-    /* Chrome inferior: Convex bar + overhang do hub + safe-area */
+    /* Chrome inferior: pill suspenso + float gap + safe-area */
     --mobile-float-inset-x: var(--mobile-gutter);
     --shell-float-gap: 12px;
     --mobile-tabbar-pad: 0px;
-    --mode-tabs-dome-rise: 34px;
-    --mode-tabs-bar-body: 62px;
-    --mode-tabs-hub-size: 50px;
-    --mode-tabs-hub-top: 9px;
-    /* Altura da superfície SVG (domo + corpo) */
-    --mobile-tabbar-h: calc(var(--mode-tabs-dome-rise) + var(--mode-tabs-bar-body));
-    /* Metade do hub sobe acima da linha plana (= rise) */
+    --mode-tabs-pill-h: 52px;
+    --mode-tabs-float-gap: 10px;
+    --mode-tabs-inset-x: 12px;
+    --mobile-tabbar-h: var(--mode-tabs-pill-h);
     --mobile-tabbar-outer-h: calc(
-      var(--mode-tabs-bar-body)
-      + var(--mode-tabs-hub-size)
-      + env(safe-area-inset-bottom, 0px)
+      var(--mode-tabs-pill-h) + var(--mode-tabs-float-gap) +
+        env(safe-area-inset-bottom, 0px)
     );
     --mobile-bottom-chrome: var(--mobile-tabbar-outer-h);
     --shell-tab-clearance: var(--mobile-bottom-chrome);
@@ -6569,17 +6380,9 @@ html[data-theme="dark"] .profile-download-btn {
   }
 
   /*
-   * Shell nav mobile — Convex Bottom Bar + hub radial.
+   * Shell nav mobile — pill suspenso (sem radial).
    * --mobile-bottom-chrome : reserva para scroll, docks e popups Bible.
    */
-  .note-shell .mode-tabs.is-immersive-hidden {
-    transform: translateY(calc(100% + 12px));
-    opacity: 0;
-    pointer-events: none;
-    transition:
-      transform 200ms ease-out,
-      opacity 200ms ease-out;
-  }
 
   .workspace.is-mobile-vista .graph-pane-body {
     scroll-padding-bottom: var(--mobile-bottom-chrome);
@@ -6607,7 +6410,10 @@ html[data-theme="dark"] .profile-download-btn {
     height: auto;
     margin: 0;
     min-height: 0;
-    padding: 0 0 env(safe-area-inset-bottom, 0px);
+    padding: 0 var(--mode-tabs-inset-x, 12px)
+      calc(
+        var(--mode-tabs-float-gap, 10px) + env(safe-area-inset-bottom, 0px)
+      );
     border: 0;
     background: transparent;
     box-shadow: none;
@@ -6637,12 +6443,11 @@ html[data-theme="dark"] .profile-download-btn {
       transition: none;
     }
 
-    .mode-tabs-item,
-    .mode-tabs-hub {
+    .mode-tabs-item {
       transition: none;
     }
 
-    .mode-tabs-hub:active {
+    .mode-tabs-item:active:not(:disabled) {
       transform: none;
     }
   }
