@@ -8,7 +8,6 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { YvIcon } from "../../../../components/YvIcon";
-import { AdminPlanListSkeleton } from "./AdminPlanListSkeleton";
 import { AdminPlanEditor } from "./AdminPlanEditor";
 import { useAdminReadingPlans } from "./hooks/useAdminReadingPlans";
 
@@ -130,7 +129,7 @@ export function AdminReadingPlansWorkspace({
   onExit,
   onSignOut,
 }: AdminReadingPlansWorkspaceProps) {
-  const { plans, fromCache, hydrating, error, showSkeleton } = useAdminReadingPlans(true);
+  const { plans, fromCache, hydrating, error, isInitialLoading } = useAdminReadingPlans(true);
   const [view, setView] = useState<ModalView | null>(null);
 
   const selectedId = view?.kind === "editor" ? view.planId : null;
@@ -236,7 +235,7 @@ export function AdminReadingPlansWorkspace({
         >
           <span className="editorial-admin-hub-btn-label">Voir les plans</span>
           <span className="editorial-admin-hub-btn-meta muted">
-            {showSkeleton
+            {isInitialLoading
               ? "Chargement…"
               : activePlans.length === 0
                 ? "Aucun plan publié"
@@ -253,8 +252,7 @@ export function AdminReadingPlansWorkspace({
       >
         {view?.kind === "browse" ? (
           <>
-            {showSkeleton ? <AdminPlanListSkeleton /> : null}
-            {!showSkeleton && activePlans.length ? (
+            {!isInitialLoading && activePlans.length ? (
               <ul className="editorial-admin-plan-grid" role="list">
                 {activePlans.map((plan) => (
                   <li key={plan.id}>
@@ -275,7 +273,7 @@ export function AdminReadingPlansWorkspace({
                 ))}
               </ul>
             ) : null}
-            {!showSkeleton && !activePlans.length ? (
+            {!isInitialLoading && !activePlans.length ? (
               <p className="muted type-caption editorial-admin-empty">
                 Aucun plan publié pour le moment.
               </p>
@@ -284,8 +282,10 @@ export function AdminReadingPlansWorkspace({
         ) : null}
 
         {view?.kind === "editor" ? (
-          view.planId && !selected && (hydrating || showSkeleton) ? (
-            <AdminPlanListSkeleton />
+          view.planId && !selected && (hydrating || isInitialLoading) ? (
+            <p className="muted type-caption editorial-admin-empty" role="status">
+              Chargement…
+            </p>
           ) : view.planId && !selected ? (
             <p className="muted type-caption editorial-admin-empty" role="status">
               Plan introuvable.

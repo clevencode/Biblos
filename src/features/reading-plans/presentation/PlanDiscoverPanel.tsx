@@ -9,7 +9,6 @@ import {
 import type { ReadingPlan } from "../domain/types";
 import { useReadingPlansCatalog } from "./hooks/useReadingPlansCatalog";
 import { PlanCardRow } from "./PlanCardRow";
-import { PlanDiscoverSkeleton } from "./PlanDiscoverSkeleton";
 import type { PlanFlowReturn } from "./PlanWorkspacePanel";
 import { PlanWorkspacePanel } from "./PlanWorkspacePanel";
 import { useUiLocale } from "../../../i18n/UiLocaleContext";
@@ -55,7 +54,7 @@ export function PlanDiscoverPanel({
   onRestartPlan,
 }: PlanDiscoverPanelProps) {
   const { t } = useUiLocale();
-  const { status, plans, error, showSkeleton } = useReadingPlansCatalog(
+  const { status, plans, error, isInitialLoading } = useReadingPlansCatalog(
     active && !workspacePlan,
   );
   const [progressTick, setProgressTick] = useState(0);
@@ -78,8 +77,8 @@ export function PlanDiscoverPanel({
     return { inProgress: activePlans, rest: others };
   }, [plans, progressTick]);
 
-  const showList = !showSkeleton && plans.length > 0;
-  const showEmpty = !showSkeleton && status === "ready" && plans.length === 0;
+  const showList = !isInitialLoading && plans.length > 0;
+  const showEmpty = !isInitialLoading && status === "ready" && plans.length === 0;
   const showError = status === "error" && plans.length === 0;
   const showUnconfigured = status === "unconfigured";
   const splitCatalog = inProgress.length > 0;
@@ -123,12 +122,10 @@ export function PlanDiscoverPanel({
 
       <div
         className="plan-discover-scroller"
-        aria-busy={showSkeleton || undefined}
+        aria-busy={isInitialLoading || undefined}
         aria-live="polite"
       >
         <div className="plan-discover-surface">
-          {showSkeleton ? <PlanDiscoverSkeleton /> : null}
-
           {showList ? (
             <div className="plan-discover-catalog">
               {splitCatalog ? (

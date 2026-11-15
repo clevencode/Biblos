@@ -1,24 +1,24 @@
 import type { PassageLoadErrorKind } from "../passageLoadError";
 import type { YouVersionBible, YouVersionPassage } from "../../youversion/client";
 import { schemasSamePassage } from "./schema";
-import type { PassageSkeletonSchema, PassageViewState } from "./types";
+import type { PassageLayoutSchema, PassageViewState } from "./types";
 
 export type PassageReducerAction =
   | { type: "RESET" }
   | {
       type: "NAVIGATE";
-      schema: PassageSkeletonSchema;
+      schema: PassageLayoutSchema;
     }
   | {
       type: "RESOLVE_OK";
-      schema: PassageSkeletonSchema;
+      schema: PassageLayoutSchema;
       passage: YouVersionPassage;
       bibleId?: number | null;
       bible?: YouVersionBible | null;
     }
   | {
       type: "RESOLVE_ERR";
-      schema: PassageSkeletonSchema;
+      schema: PassageLayoutSchema;
       errorKind: PassageLoadErrorKind;
       message: string;
     };
@@ -81,7 +81,7 @@ export function isPassageLoading(state: PassageViewState): boolean {
   return state.status === "loading";
 }
 
-export function passageViewStateSchema(state: PassageViewState): PassageSkeletonSchema | null {
+export function passageViewStateSchema(state: PassageViewState): PassageLayoutSchema | null {
   if (state.status === "idle") return state.schema;
   return state.schema;
 }

@@ -4,7 +4,6 @@ import { createRoot } from "react-dom/client";
 import { App } from "./App";
 import { AppReadinessProvider } from "./context/AppReadinessContext";
 import { UiLocaleProvider } from "./i18n/UiLocaleContext";
-import { SkeletonTheme } from "./skeleton";
 import {
   bootReadingPlansFirestore,
   isReadingPlansFirebaseConfigured,
@@ -24,7 +23,6 @@ import {
   markPrefsMirrorReady,
   STORAGE_PREF_KEY_LIST,
 } from "./services/storage/StorageAdapter";
-import "./skeleton/skeleton.css";
 import "./editorial-admin.css";
 import "./index.css";
 
@@ -48,15 +46,13 @@ async function boot() {
   createRoot(document.getElementById("root")!).render(
     <StrictMode>
       <BootErrorBoundary>
-        <SkeletonTheme>
-          <AppReadinessProvider>
-            <ConsumerAuthProvider>
-              <UiLocaleProvider>
-                <App />
-              </UiLocaleProvider>
-            </ConsumerAuthProvider>
-          </AppReadinessProvider>
-        </SkeletonTheme>
+        <AppReadinessProvider>
+          <ConsumerAuthProvider>
+            <UiLocaleProvider>
+              <App />
+            </UiLocaleProvider>
+          </ConsumerAuthProvider>
+        </AppReadinessProvider>
       </BootErrorBoundary>
     </StrictMode>,
   );

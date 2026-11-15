@@ -12,7 +12,7 @@ import {
 } from "../bible/viewState/passageReducer";
 import { PASSAGE_LOADING_DEFER_MS } from "../bible/viewState/loadingConstants";
 import { passagePresentation } from "../bible/viewState/selectors";
-import type { PassageSkeletonSchema } from "../bible/viewState/types";
+import type { PassageLayoutSchema } from "../bible/viewState/types";
 
 export type PassageLoadOutcome = {
   bookId: string;
@@ -74,7 +74,7 @@ export function usePassageViewModel(options: UsePassageViewModelOptions) {
   const passageErrorKind: PassageLoadErrorKind =
     viewState.status === "error" ? viewState.errorKind : "generic";
 
-  const activeSchema: PassageSkeletonSchema | null =
+  const activeSchema: PassageLayoutSchema | null =
     viewState.status === "idle" ? viewState.schema : viewState.schema;
 
   const presentation = passagePresentation({

@@ -549,10 +549,3 @@
   min-height: min(58vh, 520px);
 }
 
-.editorial-admin-plan-stack--skeleton {
-  min-height: calc(5 * 52px + 4 * 8px);
-}
-
-.editorial-admin-plan-skel-row {
-  list-style: none;
-}

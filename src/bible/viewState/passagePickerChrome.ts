@@ -1,17 +1,17 @@
 import type { PassagePresentation } from "./selectors";
-import type { PassageSkeletonSchema } from "./types";
+import type { PassageLayoutSchema } from "./types";
 
 /** Estado de carregamento do passo versículo no picker (espelha PassagePresentation). */
 export type PassagePickerChrome = {
   inFlight: boolean;
   showDeferredUi: boolean;
-  schema: PassageSkeletonSchema | null;
+  schema: PassageLayoutSchema | null;
 };
 
 export function passagePickerChrome(input: {
   inFlight: boolean;
   showDeferredUi: boolean;
-  schema: PassageSkeletonSchema | null;
+  schema: PassageLayoutSchema | null;
 }): PassagePickerChrome {
   return {
     inFlight: input.inFlight,
@@ -22,7 +22,7 @@ export function passagePickerChrome(input: {
 
 export function passagePickerChromeFromPresentation(
   presentation: PassagePresentation,
-  schema: PassageSkeletonSchema | null,
+  schema: PassageLayoutSchema | null,
 ): PassagePickerChrome {
   return passagePickerChrome({
     inFlight: presentation.inFlight,

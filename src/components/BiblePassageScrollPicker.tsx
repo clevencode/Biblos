@@ -8,11 +8,6 @@ import type { PassageDiscoverySession } from "../bible/passageDiscovery/session"
 import { YvIcon } from "./YvIcon";
 import type { BibleSearchHit, YouVersionBook } from "../youversion/client";
 import { BiblePassageDiscoveryList } from "./BiblePassageDiscoveryList";
-import { BiblePickGridSkeleton } from "./BiblePickGridSkeleton";
-import {
-  buildChapterPickerSkeleton,
-  buildVersePickerSkeleton,
-} from "../bible/viewState/pickerViewState";
 import { PASSAGE_LOADING_COPY } from "../bible/viewState/loadingConstants";
 import type { PassagePickerChrome } from "../bible/viewState/passagePickerChrome";
 import type { DiscoveryJump, PassageDiscoveryResult } from "../bible/passageDiscovery/types";
@@ -135,15 +130,7 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
           : `Versets du chapitre ${chapterId}`;
 
     const hasQuery = Boolean(bookSearchQuery.trim());
-    const { inFlight, showDeferredUi, schema: passageSchema } = passageChrome;
-    const verseGridSchema =
-      passageSchema && showDeferredUi
-        ? buildVersePickerSkeleton(passageSchema.usfm, passageSchema.gridVerseSlots)
-        : buildVersePickerSkeleton(
-            `${bookId}.${chapterId}`,
-            Math.min(50, Math.max(verseOptions.length, 24)),
-          );
-    const chapterGridSchema = buildChapterPickerSkeleton(bookId);
+    const { inFlight, showDeferredUi } = passageChrome;
 
     function handlePickVerse(hit: BibleSearchHit) {
       if (gridRef.current) {
@@ -270,13 +257,9 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
                     </button>
                   );
                 })
-              : (
-                <BiblePickGridSkeleton schema={chapterGridSchema} role="presentation" />
-              )
+              : null
             : showDeferredUi
-              ? (
-                <BiblePickGridSkeleton schema={verseGridSchema} role="presentation" />
-              )
+              ? null
               : verseOptions.map((n) => {
                 const on = highlightVerse === n || verseSelected(n);
                 return (

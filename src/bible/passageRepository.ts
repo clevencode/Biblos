@@ -2,8 +2,8 @@ import { resolveChapterVerseCount } from "../bibleOffline";
 import { fetchPassageForVersion } from "./passageForVersion";
 import type { BibleTextVersionId } from "./bibleVersions";
 import { classifyPassageLoadError } from "./passageLoadError";
-import { buildPassageSkeletonSchema } from "./viewState/schema";
-import type { PassageSkeletonSchema, PassageViewState } from "./viewState/types";
+import { buildPassageLayoutSchema } from "./viewState/schema";
+import type { PassageLayoutSchema, PassageViewState } from "./viewState/types";
 import { chapterUsfm } from "../youversion/client";
 import { parseUsfmParts } from "../youversion/client";
 
@@ -17,10 +17,10 @@ export async function resolvePassageLayout(input: {
   bookId: string;
   chapterId: string;
   bookTitle: string;
-}): Promise<PassageSkeletonSchema> {
+}): Promise<PassageLayoutSchema> {
   perfMark("passage-layout-start");
   const metrics = await resolveChapterVerseCount(input.bookId, input.chapterId);
-  const schema = buildPassageSkeletonSchema({
+  const schema = buildPassageLayoutSchema({
     bookId: input.bookId,
     chapterId: input.chapterId,
     bookTitle: input.bookTitle,
@@ -34,7 +34,7 @@ export async function resolvePassageLayout(input: {
 export async function resolvePassageLayoutFromUsfm(
   usfm: string,
   bookTitle: string,
-): Promise<PassageSkeletonSchema> {
+): Promise<PassageLayoutSchema> {
   const parts = parseUsfmParts(usfm);
   return resolvePassageLayout({
     bookId: parts.bookId,
@@ -50,7 +50,7 @@ export async function loadPassageViewState(input: {
   bookTitle: string;
   catalogOffline: boolean;
   offlineIndexReady: boolean;
-  schema?: PassageSkeletonSchema;
+  schema?: PassageLayoutSchema;
 }): Promise<PassageViewState> {
   const usfm = chapterUsfm(input.bookId, input.chapterId);
   const schema =

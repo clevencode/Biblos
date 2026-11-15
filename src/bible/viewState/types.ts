@@ -1,67 +1,53 @@
 import type { PassageLoadErrorKind } from "../passageLoadError";
 import type { YouVersionBible, YouVersionPassage } from "../../youversion/client";
 
-export const PASSAGE_SKELETON_VERSE_LINES = 9;
 export const PASSAGE_DEFAULT_VERSE_COUNT = 24;
-export const PASSAGE_GRID_VERSE_SLOTS = 50;
 
 export type PassageEmptyReason = "no_selection" | "missing_offline";
 
-export type PassageSkeletonSchema = {
+/** Metadados de layout da passagem (contagem de versículos, USFM). */
+export type PassageLayoutSchema = {
   usfm: string;
   bookId: string;
   bookTitle: string;
   chapterId: string;
   verseCount: number;
-  skeletonVerseSlots: number;
-  gridVerseSlots: number;
   contentCharLength: number;
 };
 
 export type PassageViewState =
   | {
       status: "idle";
-      schema: PassageSkeletonSchema | null;
+      schema: PassageLayoutSchema | null;
     }
   | {
       status: "loading";
-      schema: PassageSkeletonSchema;
+      schema: PassageLayoutSchema;
       /** same USFM reload — keep verses visible under overlay */
       reload: boolean;
       stalePassage: YouVersionPassage | null;
     }
   | {
       status: "success";
-      schema: PassageSkeletonSchema;
+      schema: PassageLayoutSchema;
       passage: YouVersionPassage;
       bibleId?: number | null;
       bible?: YouVersionBible | null;
     }
   | {
       status: "empty";
-      schema: PassageSkeletonSchema;
+      schema: PassageLayoutSchema;
       reason: PassageEmptyReason;
     }
   | {
       status: "error";
-      schema: PassageSkeletonSchema;
+      schema: PassageLayoutSchema;
       errorKind: PassageLoadErrorKind;
       message: string;
     };
 
-export function skeletonVerseSlotIds(schema: PassageSkeletonSchema): string[] {
-  const n = Math.min(schema.skeletonVerseSlots, schema.verseCount);
-  return Array.from({ length: n }, (_, i) => `skeleton:${schema.usfm}:v${i + 1}`);
-}
-
-export function gridVerseSlotIds(schema: PassageSkeletonSchema): string[] {
-  const n = Math.min(schema.gridVerseSlots, schema.verseCount);
-  return Array.from({ length: n }, (_, i) => `grid:${schema.usfm}:v${i + 1}`);
-}
-
-export function passageSchemaCssVars(schema: PassageSkeletonSchema): Record<string, string> {
+export function passageSchemaCssVars(schema: PassageLayoutSchema): Record<string, string> {
   return {
     "--passage-verse-count": String(schema.verseCount),
-    "--passage-skeleton-min-h": `calc(var(--bible-top-chrome, 59px) + ${schema.skeletonVerseSlots} * 2.1rem + 4rem)`,
   };
 }

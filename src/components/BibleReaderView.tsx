@@ -19,7 +19,10 @@ import {
   LSG_BIBLE_ID,
   type BibleSearchHit,
 } from "../youversion/client";
-import { parseUsfmLocation } from "../youversion/usfm";
+import {
+  parseUsfmLocation,
+  type ParsedPassage,
+} from "../youversion/usfm";
 import {
   BIBLE_TEXT_VERSIONS,
   isBibleTextVersionId,
@@ -76,7 +79,6 @@ import { passageBarSkipIcons } from "../bible/passageBarSkipIcons";
 import { isPassageBarPanelCompactTopbar } from "../bible/passageBarPanelLayout";
 import { BiblePassageWordSearchPanel } from "./BiblePassageWordSearchPanel";
 import { BibleOfflineChapterGate } from "./BibleOfflineChapterGate";
-import { BibleChapterLoadingPlaceholder } from "./BibleChapterLoadingPlaceholder";
 import type { DiscoveryJump } from "../bible/passageDiscovery/types";
 import {
   OVERLAY_DISMISS_SWALLOW_MS,
@@ -1681,23 +1683,28 @@ export function BibleReaderView({
     void loadChapter(parts.bookId, String(hit.chapter), hit.verse, null);
   }
 
-  function pickDiscoveryJump(jump: DiscoveryJump) {
-    armPendingVerseStep(jump.passage.verse != null);
+  /** Núcleo partilhado: Passage Discovery «Aller à …» e Study Jump. */
+  function navigateDiscoveryPassage(passage: ParsedPassage) {
+    armPendingVerseStep(passage.verse != null);
     patchDiscoverySession({
-      expandedBookId: jump.passage.bookId.toUpperCase(),
-      anchorVerseUsfm: jump.passage.usfm || null,
+      expandedBookId: passage.bookId.toUpperCase(),
+      anchorVerseUsfm: passage.usfm || null,
     });
-    closePicker({ restoreFocus: false });
     setPassageStep("book");
-    const chapter = String(jump.passage.chapter);
-    const verse = jump.passage.verse;
-    const verseEnd = jump.passage.verseEnd;
-    void loadChapter(
-      jump.passage.bookId,
-      chapter,
-      verse,
-      verse != null && verseEnd != null && verseEnd !== verse ? verseEnd : null,
-    );
+    const chapter = String(passage.chapter);
+    const verse = passage.verse;
+    const verseEnd =
+      verse != null &&
+      passage.verseEnd != null &&
+      passage.verseEnd !== verse
+        ? passage.verseEnd
+        : null;
+    void loadChapter(passage.bookId, chapter, verse, verseEnd);
+  }
+
+  function pickDiscoveryJump(jump: DiscoveryJump) {
+    closePicker({ restoreFocus: false });
+    navigateDiscoveryPassage(jump.passage);
   }
 
   function pickChapter(nextChapter: string) {
@@ -1726,21 +1733,12 @@ export function BibleReaderView({
   }
 
   /**
-   * Options > Référence > Aller au verset/chapitre — push na pilha LIFO,
-   * destino com focus dim (mesmo contrato /v/…).
+   * Options > Référence > Aller au verset/chapitre —
+   * pilha LIFO + mesmo salto que Passage Discovery.
    */
   function goToCrossRefPassage(usfm: string) {
     const loc = parseUsfmLocation(usfm);
     if (!loc || !isUsfmBookId(loc.bookId)) return;
-
-    const chapter = String(loc.chapter);
-    const verse = loc.verse ?? 1;
-    const verseEnd =
-      loc.verse != null &&
-      loc.verseEnd != null &&
-      loc.verseEnd !== loc.verse
-        ? loc.verseEnd
-        : null;
 
     const fromVerse = selection?.[0] ?? highlightVerse;
     if (fromVerse != null) {
@@ -1760,9 +1758,10 @@ export function BibleReaderView({
 
     preservePassageNavRef.current = true;
     closeCreateCard();
-    void loadChapter(loc.bookId, chapter, verse, verseEnd);
+    navigateDiscoveryPassage(loc);
+    /* Teardown Options: manter focus dim se há verso (par Discovery + share). */
     preferJumpFocusRef.current = true;
-    setFocusDim(true);
+    if (loc.verse != null) setFocusDim(true);
     suppressFocusDimClearUntil.current =
       performance.now() + CHROME_PROGRAMMATIC_LOCK_MS * 2;
   }
@@ -3606,15 +3605,7 @@ export function BibleReaderView({
               !versionOfflineReady
             }
           />
-        ) : presentation.showOpeningSkeleton ? (
-          <BibleChapterLoadingPlaceholder
-            bookTitle={bookTitle}
-            chapterId={chapterId}
-            presentation={presentation}
-            lineCount={activeSchema?.skeletonVerseSlots}
-            schema={activeSchema ?? undefined}
-          />
-        ) : passage?.verses?.length ? (
+        ) : presentation.isOpening ? null : passage?.verses?.length ? (
           <div
             className={[
               "bible-verses",

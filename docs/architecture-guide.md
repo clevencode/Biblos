@@ -51,7 +51,6 @@ src/
   components/     # UI partilhada e shells de leitura
   features/       # módulos por domínio (ex.: reading-plans, editorial-auth)
   bible/          # catálogo, passagens, viewState, offline
-  skeleton/       # loading / shimmer (ver guia skeleton)
   hooks/          # hooks transversais
   icons/          # registry e config de ícones
   typography/     # fontes
@@ -141,7 +140,6 @@ _(adicionar linhas à medida que decidir)_
 | Documento | Conteúdo |
 |-----------|----------|
 | [bible-product-scope.md](./bible-product-scope.md) | Escopo do produto |
-| [skeleton-architecture.md](./skeleton-architecture.md) | Camada skeleton / loading |
 | [bible-offline-first-ui.md](./bible-offline-first-ui.md) | Offline-first na UI |
 | [bible-mobile-audio-sync.md](./bible-mobile-audio-sync.md) | Áudio e sync mobile |
 | [bible-study.md](./bible-study.md) | Estudo (TSKE / refs cruzadas) |

@@ -1,11 +1,11 @@
 import { chapterUsfm } from "../../youversion/client";
-import type { PassageSkeletonSchema } from "./types";
+import type { PassageLayoutSchema } from "./types";
 
 /** Numéros pour l’étape verset du picker — schema de destination, pas le chapitre en stale. */
 export function pickerVerseNumberOptions(input: {
   bookId: string;
   chapterId: string;
-  schema: PassageSkeletonSchema | null;
+  schema: PassageLayoutSchema | null;
   passageVerseNumbers: number[] | undefined;
   /** USFM du texte chargé (évite stale du chapitre précédent à l'ouverture). */
   passageUsfm?: string | null;

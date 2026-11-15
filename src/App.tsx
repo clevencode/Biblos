@@ -351,7 +351,7 @@ function BiblosConsumerApp() {
 
   return (
     <div
-      className={`app biblos-shell skeleton-theme${
+      className={`app biblos-shell${
         narrow ? " is-narrow" : ""
       }${bibleMode ? " is-bible-mode" : ""}${bibleCompactTools ? " is-bible-compact-tools" : ""}`}
     >

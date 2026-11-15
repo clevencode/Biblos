@@ -2,7 +2,6 @@ export * from "./loadingConstants";
 export * from "./types";
 export * from "./schema";
 export * from "./passageReducer";
-export * from "./pickerViewState";
 export * from "./catalogViewState";
 export * from "./audioViewState";
 export * from "./selectors";

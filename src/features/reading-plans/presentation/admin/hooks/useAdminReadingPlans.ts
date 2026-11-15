@@ -64,6 +64,6 @@ export function useAdminReadingPlans(enabled: boolean) {
     fromCache,
     hydrating,
     error,
-    showSkeleton: hydrating && plans.length === 0,
+    isInitialLoading: hydrating && plans.length === 0,
   };
 }

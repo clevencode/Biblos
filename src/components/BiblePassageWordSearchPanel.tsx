@@ -32,8 +32,6 @@ import {
 import type { BibleSearchHit, YouVersionBook } from "../youversion/client";
 import { YvIcon } from "./YvIcon";
 import { BibleSearchHighlight } from "./BibleSearchHighlight";
-import { WordSearchSkeleton } from "./WordSearchSkeleton";
-
 const MIN_WORD_CHARS = 2;
 
 /** Gaveta multi-livros: OT / NT / DC. */
@@ -106,7 +104,7 @@ type BiblePassageWordSearchPanelProps = {
   page?: number;
   pageCount?: number;
   onPageChange?: (page: number) => void;
-  /** Troca de página sem skeleton (stale-while-revalidate). */
+  /** Troca de página sem esvaziar a lista (stale-while-revalidate). */
   paging?: boolean;
   contentError: string | null;
   textVersion: BibleTextVersionId;
@@ -194,8 +192,8 @@ export function BiblePassageWordSearchPanel({
 
   const trimmed = query.trim();
   const hasActiveQuery = trimmed.length >= MIN_WORD_CHARS;
-  /** Skeleton só em nova query/escopo — nunca em paging. */
-  const showSkeleton = discoveryBusy && hasActiveQuery && !paging;
+  /** Loading vazio só em nova query/escopo — nunca em paging. */
+  const showLoadingResults = discoveryBusy && hasActiveQuery && !paging;
   const listBusy = (discoveryBusy || paging) && hasActiveQuery;
   const showEmptyResults =
     hasActiveQuery &&
@@ -210,7 +208,7 @@ export function BiblePassageWordSearchPanel({
     !contentError &&
     verseHits.length > 0 &&
     !isBookPickerOpen;
-  const hasResultsChrome = hasActiveQuery && !showSkeleton;
+  const hasResultsChrome = hasActiveQuery && !showLoadingResults;
   const currentBookActive = scopeFilter === "current_book";
   const ntActive = scopeFilter === "nt";
   const otActive = scopeFilter === "ot";
@@ -267,7 +265,7 @@ export function BiblePassageWordSearchPanel({
     t("common.book");
 
   const outsideBookBanner =
-    !showSkeleton &&
+    !showLoadingResults &&
     !isBookPickerOpen &&
     scopeFilter !== "current_book" &&
     verseHits.length > 0 &&
@@ -277,7 +275,7 @@ export function BiblePassageWordSearchPanel({
       : null;
 
   const matchModeBanner =
-    !showSkeleton &&
+    !showLoadingResults &&
     !isBookPickerOpen &&
     verseHits.length > 0 &&
     (matchMode === "fuzzy"
@@ -728,7 +726,7 @@ export function BiblePassageWordSearchPanel({
         </div>
       ) : (
         <>
-          {!showSkeleton && verseHits.length > 0 ? (
+          {!showLoadingResults && verseHits.length > 0 ? (
             <p className="bible-yv-word-search-meta bible-yv-muted" aria-live="polite">
               {pageCount > 1
                 ? t("word.range", {
@@ -757,9 +755,7 @@ export function BiblePassageWordSearchPanel({
             style={{ overflowAnchor: "none" }}
             onScroll={handleScroll}
           >
-            {showSkeleton ? (
-              <WordSearchSkeleton />
-            ) : displayError ? (
+            {showLoadingResults ? null : displayError ? (
               <p className="bible-yv-pick-discovery-hint bible-yv-muted" role="status">
                 {displayError}
               </p>
@@ -812,7 +808,7 @@ export function BiblePassageWordSearchPanel({
               </ul>
             )}
             {pageCount > 1 &&
-            !showSkeleton &&
+            !showLoadingResults &&
             !displayError &&
             verseHits.length > 0 ? (
               <nav

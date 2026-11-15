@@ -29,26 +29,26 @@ export function BiblePassageChip({
 }: BiblePassageChipProps) {
   const trimmed = String(label || "").trim();
   const chapterTrimmed = String(chapterLabel || "").trim();
-  const showSkeleton =
+  const isHydrating =
     loading ||
     (variant === "book" && !trimmed) ||
     (variant === "chapter" && !trimmed) ||
     (variant === "ref" && (!trimmed || !chapterTrimmed));
   /** Placeholder tabular — largura estável (livre/capítulo) enquanto hidrata. */
   const placeholder = variant === "chapter" ? "88" : variant === "ref" ? "Livre 88" : "Livre";
-  const visibleLabel = showSkeleton ? (trimmed || placeholder) : trimmed;
+  const visibleLabel = isHydrating ? (trimmed || placeholder) : trimmed;
 
   const idleLabel =
     variant === "ref" ? (
       <span className="bible-yv-passage-chip-value bible-yv-passage-chip-ref">
         <span className="bible-yv-passage-chip-ref-book">
-          {showSkeleton ? trimmed || "Livre" : trimmed}
+          {isHydrating ? trimmed || "Livre" : trimmed}
         </span>
         <span
           className="bible-yv-passage-chip-ref-chapter"
-          aria-hidden={showSkeleton}
+          aria-hidden={isHydrating}
         >
-          {showSkeleton ? chapterTrimmed || "88" : chapterTrimmed}
+          {isHydrating ? chapterTrimmed || "88" : chapterTrimmed}
         </span>
       </span>
     ) : (
@@ -69,10 +69,10 @@ export function BiblePassageChip({
       ariaLabel={ariaLabel}
       ariaControls={panelId}
       ariaHaspopup="dialog"
-      title={showSkeleton ? undefined : title}
-      disabled={disabled || showSkeleton}
+      title={isHydrating ? undefined : title}
+      disabled={disabled || isHydrating}
       className={`bible-yv-passage-chip is-${variant}${
-        showSkeleton ? " is-hydrating" : ""
+        isHydrating ? " is-hydrating" : ""
       }`}
     />
   );

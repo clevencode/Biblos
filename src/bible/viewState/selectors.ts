@@ -2,14 +2,12 @@ import type { PassageLoadErrorKind } from "../passageLoadError";
 import { PASSAGE_LOADING_COPY } from "./loadingConstants";
 import type { PassageViewState } from "./types";
 
-/** Apresentação derivada — única fonte para aria-busy, skeleton e labels. */
+/** Apresentação derivada — única fonte para aria-busy e labels de loading. */
 export type PassagePresentation = {
   inFlight: boolean;
   showDeferredUi: boolean;
   isOpening: boolean;
   isReloading: boolean;
-  /** Skeleton dimensional + lead (após PASSAGE_LOADING_DEFER_MS). */
-  showOpeningSkeleton: boolean;
   ariaBusy: boolean;
   statusLine: "opening" | "reload" | "idle";
 };
@@ -30,14 +28,11 @@ export function passagePresentation(input: {
   if (isOpening && input.showDeferredUi) statusLine = "opening";
   else if (isReloading) statusLine = "reload";
 
-  const showOpeningSkeleton = isOpening && input.showDeferredUi;
-
   return {
     inFlight: input.loading,
     showDeferredUi: input.showDeferredUi,
     isOpening,
     isReloading,
-    showOpeningSkeleton,
     ariaBusy: input.loading || input.showDeferredUi,
     statusLine,
   };

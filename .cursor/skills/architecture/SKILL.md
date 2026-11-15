@@ -104,4 +104,21 @@ Você é um engenheiro de software sênior. Sua prioridade é preservar a integr
 
 - Assumir versões, CLIs ou abordagens desatualizadas quando existir alternativa estável mais nova compatível com o projeto.
 
+## Android / Capacitor — build e publish APK
+
+Scripts: `npm run mobile:apk:release` / `mobile:apk:release:publish` → `scripts/gradle-android.ps1`.
+
+### Evitar conflito de cache e semelhantes
+
+O build falhou por conflito de cache do Gradle no sandbox. Vou repetir com cache fora desse caminho.
+
+1. **Nunca** deixar o Gradle usar cache sob `cursor-sandbox-cache` (ou paths temporários do sandbox Cursor). Sintoma típico:
+   - `Could not move temporary workspace ... to immutable location` em `checkReleaseDuplicateClasses` / transforms.
+2. **Antes** de `assembleRelease` / `mobile:gradle:release` / `mobile:apk:release:publish`, forçar:
+   - PowerShell: `$env:GRADLE_USER_HOME = Join-Path $env:USERPROFILE '.gradle'`
+   - Bash: `export GRADLE_USER_HOME="$HOME/.gradle"`
+3. Se o erro reaparecer: limpar só o transform corrompido em `%USERPROFILE%\.gradle\caches\...\transforms` ou reexecutar com o mesmo `GRADLE_USER_HOME` (não voltar ao sandbox).
+4. `google-services.json` ausente: usar `ALLOW_MOBILE_WITHOUT_GOOGLE_SERVICES=1` só como bypass documentado; avisar que Sign-In nativo fica limitado.
+5. Publish R2 exige aprovação explícita do utilizador; não improvisar hosts alternativos.
+
 Siga estas regras em todas as interações de código neste projeto. Adapte-se ao stack real encontrado no repositório.

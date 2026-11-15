@@ -3,7 +3,6 @@ import type { DiscoveryJump, PassageDiscoverySections } from "../bible/passageDi
 import type { BibleTextVersionId } from "../bible/bibleVersions";
 import type { BibleSearchHit } from "../youversion/client";
 import { BiblePassageDiscoveryBookRow } from "./BiblePassageDiscoveryBookRow";
-import { BiblePickerDiscoverySkeleton } from "../skeleton";
 import type { DiscoveryBookHit } from "../bible/passageDiscovery/types";
 
 type BiblePassageDiscoveryListProps = {
@@ -123,8 +122,6 @@ export function BiblePassageDiscoveryList({
           ))}
         </div>
       ) : null}
-
-      {busy && hasQuery ? <BiblePickerDiscoverySkeleton /> : null}
 
       {contentError && hasQuery && !visibleJumps.length ? (
         <p className="bible-yv-pick-discovery-hint bible-yv-muted" role="status">

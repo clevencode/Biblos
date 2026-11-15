@@ -18,8 +18,8 @@ export type ReadingPlansCatalogState = {
   plans: ReadingPlan[];
   fromCache: boolean;
   error: string | null;
-  /** true enquanto não houve primeiro snapshot (skeleton CLS). */
-  showSkeleton: boolean;
+  /** true enquanto não houve primeiro snapshot. */
+  isInitialLoading: boolean;
 };
 
 const INITIAL: ReadingPlansCatalogState = {
@@ -27,7 +27,7 @@ const INITIAL: ReadingPlansCatalogState = {
   plans: [],
   fromCache: false,
   error: null,
-  showSkeleton: true,
+  isInitialLoading: true,
 };
 
 /**
@@ -41,7 +41,7 @@ export function useReadingPlansCatalog(enabled: boolean): ReadingPlansCatalogSta
           plans: [],
           fromCache: false,
           error: null,
-          showSkeleton: false,
+          isInitialLoading: false,
         }
       : INITIAL,
   );
@@ -54,7 +54,7 @@ export function useReadingPlansCatalog(enabled: boolean): ReadingPlansCatalogSta
         plans: [],
         fromCache: false,
         error: null,
-        showSkeleton: false,
+        isInitialLoading: false,
       });
       return undefined;
     }
@@ -66,7 +66,7 @@ export function useReadingPlansCatalog(enabled: boolean): ReadingPlansCatalogSta
       ...prev,
       status: "hydrating",
       error: null,
-      showSkeleton: prev.plans.length === 0,
+      isInitialLoading: prev.plans.length === 0,
     }));
 
     void warmupReadingPlansRepository().then((ok) => {
@@ -77,7 +77,7 @@ export function useReadingPlansCatalog(enabled: boolean): ReadingPlansCatalogSta
           plans: [],
           fromCache: false,
           error: "Firestore indisponible",
-          showSkeleton: false,
+          isInitialLoading: false,
         });
         return;
       }
@@ -90,7 +90,7 @@ export function useReadingPlansCatalog(enabled: boolean): ReadingPlansCatalogSta
             plans,
             fromCache,
             error: null,
-            showSkeleton: false,
+            isInitialLoading: false,
           });
         },
         onError: (err: FirestoreError) => {
@@ -100,7 +100,7 @@ export function useReadingPlansCatalog(enabled: boolean): ReadingPlansCatalogSta
             plans: prev.plans,
             fromCache: prev.fromCache,
             error: err.message || "Erreur Firestore",
-            showSkeleton: false,
+            isInitialLoading: false,
           }));
         },
       });
@@ -112,7 +112,7 @@ export function useReadingPlansCatalog(enabled: boolean): ReadingPlansCatalogSta
           plans: [],
           fromCache: false,
           error: "Firestore indisponible",
-          showSkeleton: false,
+          isInitialLoading: false,
         });
       }
     });
