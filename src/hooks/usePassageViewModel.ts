@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useReducer, useRef, useState } from "react";
+import { useCallback, useEffect, useReducer, useRef } from "react";
 import type { YouVersionBible, YouVersionBook, YouVersionPassage } from "../youversion/client";
 import { chapterUsfm } from "../youversion/client";
 import type { BibleTextVersionId } from "../bible/bibleVersions";
@@ -10,7 +10,6 @@ import {
   isPassageLoading,
   passageReducer,
 } from "../bible/viewState/passageReducer";
-import { PASSAGE_LOADING_DEFER_MS } from "../bible/viewState/loadingConstants";
 import { passagePresentation } from "../bible/viewState/selectors";
 import type { PassageLayoutSchema } from "../bible/viewState/types";
 
@@ -48,19 +47,9 @@ export function usePassageViewModel(options: UsePassageViewModelOptions) {
   textVersionRef.current = textVersion;
 
   const [viewState, dispatch] = useReducer(passageReducer, initialPassageViewState);
-  const [loadingUi, setLoadingUi] = useState(false);
   const loadGen = useRef(0);
 
   const loading = isPassageLoading(viewState);
-
-  useEffect(() => {
-    if (!loading) {
-      setLoadingUi(false);
-      return;
-    }
-    const id = window.setTimeout(() => setLoadingUi(true), PASSAGE_LOADING_DEFER_MS);
-    return () => window.clearTimeout(id);
-  }, [loading]);
 
   useEffect(() => {
     if (active) return;
@@ -80,7 +69,6 @@ export function usePassageViewModel(options: UsePassageViewModelOptions) {
   const presentation = passagePresentation({
     viewState,
     loading,
-    showDeferredUi: loadingUi,
   });
 
   const loadChapter = useCallback(

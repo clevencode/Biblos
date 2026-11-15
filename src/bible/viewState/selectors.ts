@@ -2,10 +2,9 @@ import type { PassageLoadErrorKind } from "../passageLoadError";
 import { PASSAGE_LOADING_COPY } from "./loadingConstants";
 import type { PassageViewState } from "./types";
 
-/** Apresentação derivada — única fonte para aria-busy e labels de loading. */
+/** Apresentação derivada — topbar bar + aria-busy; sem defer de skeleton. */
 export type PassagePresentation = {
   inFlight: boolean;
-  showDeferredUi: boolean;
   isOpening: boolean;
   isReloading: boolean;
   ariaBusy: boolean;
@@ -15,7 +14,6 @@ export type PassagePresentation = {
 export function passagePresentation(input: {
   viewState: PassageViewState;
   loading: boolean;
-  showDeferredUi: boolean;
 }): PassagePresentation {
   const isOpening =
     input.viewState.status === "loading" && !input.viewState.stalePassage;
@@ -23,17 +21,21 @@ export function passagePresentation(input: {
     input.viewState.status === "loading" &&
     input.viewState.reload &&
     Boolean(input.viewState.stalePassage);
+  /** Troca de capítulo com texto stale — ainda in-flight, não é cold open. */
+  const isChapterSwap =
+    input.viewState.status === "loading" &&
+    !input.viewState.reload &&
+    Boolean(input.viewState.stalePassage);
 
   let statusLine: PassagePresentation["statusLine"] = "idle";
-  if (isOpening && input.showDeferredUi) statusLine = "opening";
+  if (isOpening || isChapterSwap) statusLine = "opening";
   else if (isReloading) statusLine = "reload";
 
   return {
     inFlight: input.loading,
-    showDeferredUi: input.showDeferredUi,
     isOpening,
     isReloading,
-    ariaBusy: input.loading || input.showDeferredUi,
+    ariaBusy: input.loading,
     statusLine,
   };
 }

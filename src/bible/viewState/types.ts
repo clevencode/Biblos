@@ -45,9 +45,3 @@ export type PassageViewState =
       errorKind: PassageLoadErrorKind;
       message: string;
     };
-
-export function passageSchemaCssVars(schema: PassageLayoutSchema): Record<string, string> {
-  return {
-    "--passage-verse-count": String(schema.verseCount),
-  };
-}

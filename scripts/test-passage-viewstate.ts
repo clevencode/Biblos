@@ -1,5 +1,5 @@
 /**
- * Transições PassageViewState.
+ * Transições PassageViewState (anti-CLS via stale + barra topbar).
  * Usage: npx tsx scripts/test-passage-viewstate.ts
  */
 import assert from "node:assert/strict";
@@ -58,22 +58,28 @@ assert.equal(displayPassageFromViewState(state)?.id, "JHN.1");
 
 state = passageReducer(state, { type: "NAVIGATE", schema: jhn2 });
 assert.equal(state.reload, false);
-assert.equal(displayPassageFromViewState(state), null);
+/** Troca de capítulo mantém texto anterior (anti-CLS); barra no topbar. */
+assert.equal(displayPassageFromViewState(state)?.id, "JHN.1");
 
-const openingFast = passagePresentation({
+const openingCold = passagePresentation({
   viewState: { status: "loading", schema: jhn2, reload: false, stalePassage: null },
   loading: true,
-  showDeferredUi: false,
 });
-assert.equal(openingFast.isOpening, true);
-assert.equal(openingFast.statusLine, "idle");
+assert.equal(openingCold.isOpening, true);
+assert.equal(openingCold.statusLine, "opening");
+assert.equal(openingCold.ariaBusy, true);
 
-const openingDeferred = passagePresentation({
-  viewState: { status: "loading", schema: jhn2, reload: false, stalePassage: null },
+const openingSwap = passagePresentation({
+  viewState: {
+    status: "loading",
+    schema: jhn2,
+    reload: false,
+    stalePassage: sample,
+  },
   loading: true,
-  showDeferredUi: true,
 });
-assert.equal(openingDeferred.statusLine, "opening");
+assert.equal(openingSwap.isOpening, false);
+assert.equal(openingSwap.statusLine, "opening");
 
 const reloading = passagePresentation({
   viewState: {
@@ -83,7 +89,6 @@ const reloading = passagePresentation({
     stalePassage: sample,
   },
   loading: true,
-  showDeferredUi: false,
 });
 assert.equal(reloading.isReloading, true);
 assert.equal(reloading.statusLine, "reload");

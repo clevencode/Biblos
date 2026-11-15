@@ -130,7 +130,7 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
           : `Versets du chapitre ${chapterId}`;
 
     const hasQuery = Boolean(bookSearchQuery.trim());
-    const { inFlight, showDeferredUi } = passageChrome;
+    const { inFlight } = passageChrome;
 
     function handlePickVerse(hit: BibleSearchHit) {
       if (gridRef.current) {
@@ -258,9 +258,7 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
                   );
                 })
               : null
-            : showDeferredUi
-              ? null
-              : verseOptions.map((n) => {
+            : verseOptions.map((n) => {
                 const on = highlightVerse === n || verseSelected(n);
                 return (
                   <button
@@ -282,13 +280,12 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
             {PASSAGE_LOADING_COPY.pickerPreparingBooks}
           </p>
         ) : null}
-        {step === "verse" && showDeferredUi ? (
-          <p className="bible-yv-pick-roll-status bible-yv-muted" role="status">
-            {PASSAGE_LOADING_COPY.pickerVerseOpening}
+        {step === "verse" && !verseOptions.length ? (
+          <p className="bible-yv-pick-loading bible-yv-muted bible-yv-pick-roll-empty">
+            {inFlight
+              ? PASSAGE_LOADING_COPY.pickerVerseOpening
+              : "Aucun verset"}
           </p>
-        ) : null}
-        {step === "verse" && !showDeferredUi && !verseOptions.length ? (
-          <p className="bible-yv-pick-loading bible-yv-muted bible-yv-pick-roll-empty">Aucun verset</p>
         ) : null}
       </div>
     );

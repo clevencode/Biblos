@@ -25,6 +25,12 @@ export type PassageReducerAction =
 
 export const initialPassageViewState: PassageViewState = { status: "idle", schema: null };
 
+function previousPassage(state: PassageViewState): YouVersionPassage | null {
+  if (state.status === "success") return state.passage;
+  if (state.status === "loading") return state.stalePassage;
+  return null;
+}
+
 export function passageReducer(
   state: PassageViewState,
   action: PassageReducerAction,
@@ -34,21 +40,18 @@ export function passageReducer(
       return { status: "idle", schema: null };
     case "NAVIGATE": {
       const { schema } = action;
-      const stalePassage =
-        state.status === "success" &&
-        schemasSamePassage(state.schema, schema)
-          ? state.passage
-          : state.status === "loading" &&
-              schemasSamePassage(state.schema, schema) &&
-              state.stalePassage
-            ? state.stalePassage
-            : null;
-      const reload = Boolean(stalePassage);
+      const stale = previousPassage(state);
+      /** Mesmo USFM = reload; caso contrário troca de capítulo com texto antigo sob a barra. */
+      const reload =
+        Boolean(stale) &&
+        Boolean(state.schema) &&
+        schemasSamePassage(state.schema!, schema);
       return {
         status: "loading",
         schema,
         reload,
-        stalePassage,
+        /** Mantém versos visíveis → evita CLS; a barra no topbar é o sinal de carga. */
+        stalePassage: stale,
       };
     }
     case "RESOLVE_OK":

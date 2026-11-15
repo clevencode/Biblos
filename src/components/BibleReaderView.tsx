@@ -89,7 +89,6 @@ import {
   overlayDismissTarget,
   passageLiveStatusLabel,
   passagePickerChromeFromPresentation,
-  passageSchemaCssVars,
   pickerVerseNumberOptions,
   planReaderOnStep,
   readerSurfaceChrome,
@@ -3368,8 +3367,13 @@ export function BibleReaderView({
       tabIndex={-1}
     >
       <header
-        className={`bible-yv-top is-free${topSheetOpen ? " is-top-sheet-open" : ""}${surfaceChrome.rootClassPassageRollOpen ? " is-passage-roll-open" : ""}${catalogOfflineHint ? " is-catalog-offline" : ""}${compactToolsMenu ? " is-compact-tools" : ""}`}
+        className={`bible-yv-top is-free${topSheetOpen ? " is-top-sheet-open" : ""}${surfaceChrome.rootClassPassageRollOpen ? " is-passage-roll-open" : ""}${catalogOfflineHint ? " is-catalog-offline" : ""}${compactToolsMenu ? " is-compact-tools" : ""}${
+          presentation.inFlight || forceChapterTopbarLoading() ? " is-loading" : ""
+        }`}
         aria-label={t("bible.nav")}
+        aria-busy={
+          presentation.inFlight || forceChapterTopbarLoading() || undefined
+        }
       >
         <div className="bible-yv-top-tools">
           {!pickerOpen &&
@@ -3406,6 +3410,17 @@ export function BibleReaderView({
           ) : (
             renderPassageRoll()
           )
+        ) : null}
+        {presentation.inFlight || forceChapterTopbarLoading() ? (
+          <div
+            className="bible-yv-top-loading-bar"
+            role="progressbar"
+            aria-label={
+              presentation.isReloading
+                ? PASSAGE_LOADING_COPY.reloadingChapter
+                : PASSAGE_LOADING_COPY.openingChapter
+            }
+          />
         ) : null}
       </header>
 
@@ -3567,20 +3582,13 @@ export function BibleReaderView({
 
         <article
         ref={passageScrollRef}
-        className={[
-          "bible-passage",
-          presentation.isReloading ? " is-chapter-loading is-chapter-reload" : "",
-          presentation.isOpening ? " is-chapter-opening" : "",
-        ]
-          .filter(Boolean)
-          .join(" ")}
-        aria-busy={presentation.ariaBusy}
+        className="bible-passage"
+        aria-busy={presentation.ariaBusy || undefined}
         aria-hidden={surfaceChrome.passageInputBlocked || undefined}
         inert={surfaceChrome.passageInputBlocked || undefined}
         style={
           {
             ["--verse-tint" as string]: actionTone.tint,
-            ...(activeSchema ? passageSchemaCssVars(activeSchema) : {}),
           } as CSSProperties
         }
         onClick={() => {
@@ -3605,7 +3613,7 @@ export function BibleReaderView({
               !versionOfflineReady
             }
           />
-        ) : presentation.isOpening ? null : passage?.verses?.length ? (
+        ) : passage?.verses?.length ? (
           <div
             className={[
               "bible-verses",
@@ -3726,8 +3734,7 @@ export function BibleReaderView({
           </div>
         ) : passage?.content ? (
           <p className="bible-text">{passage.content}</p>
-        ) : presentation.isOpening || presentation.inFlight ? null : !presentation.ariaBusy &&
-            !isUsfmBookId(bookId) ? (
+        ) : presentation.inFlight ? null : !isUsfmBookId(bookId) ? (
           <p className="bible-yv-muted">{PASSAGE_LOADING_COPY.emptyPassage}</p>
         ) : null}
       </article>

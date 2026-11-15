@@ -1,6 +1,3 @@
-/** Atraso antes de mensagens de loading intrusivas (evita flash em IDB rápido). */
-export const PASSAGE_LOADING_DEFER_MS = 120;
-
 export const PASSAGE_LOADING_COPY = {
   openingChapter: "Ouverture du chapitre…",
   reloadingChapter: "Mise à jour du chapitre…",
