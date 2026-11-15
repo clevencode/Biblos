@@ -5,10 +5,12 @@
 
 import {
   useEffect,
+  useId,
   useMemo,
   useRef,
   useState,
 } from "react";
+import { createPortal } from "react-dom";
 import { YvIcon } from "./YvIcon";
 import { loadVerseStudy, type VerseStudyBundle } from "../bible/studyQueries";
 import type { TskeRef } from "../bible/tske";
@@ -18,19 +20,23 @@ import {
   verseStudyKey,
 } from "../bible/readingScope";
 import type { BibleTextVersionId } from "../bible/bibleVersions";
-import { hydrateCrossRefTexts } from "../bible/crossRefPassageText";
+import {
+  hydrateCrossRefTexts,
+  resolveCrossRefPassageText,
+} from "../bible/crossRefPassageText";
 import { ensureVerseIndex } from "../bible/verseIndexCache";
+import { parseUsfmLocation } from "../youversion/usfm";
 import { useUiLocale } from "../i18n/UiLocaleContext";
 import type { YouVersionBook } from "../youversion/client";
 
 /** Scroll da lista Référence por verso — sobrevive à troca de tab Verset/Référence. */
 const refsListScrollByKey = new Map<string, number>();
 
-function getRefsListScroll(scopedKey: string): number {
+export function getRefsListScroll(scopedKey: string): number {
   return refsListScrollByKey.get(scopedKey) ?? 0;
 }
 
-function setRefsListScroll(scopedKey: string, scrollTop: number): void {
+export function setRefsListScroll(scopedKey: string, scrollTop: number): void {
   refsListScrollByKey.set(scopedKey, Math.max(0, scrollTop));
 }
 
@@ -44,9 +50,10 @@ export type VerseStudyPanelProps = {
   books: YouVersionBook[];
   /** Tab Référence visível — usado para restaurar scroll da lista. */
   active?: boolean;
+  /** Scroll a restaurar após Retourner (prioritário sobre o Map). */
+  restoreScrollTop?: number | null;
   /**
-   * Chip «Aller à …» na lista Référence → mesmo contrato DiscoveryJump
-   * (USFM → ParsedPassage → navigateToParsedPassage no BibleReaderView).
+   * Botão «Aller au verset» no RefTextModal → push LIFO + DiscoveryJump.
    */
   onOpenRef?: (usfm: string) => void;
 };
@@ -94,45 +101,164 @@ export function localizeTskeRefLabel(
   return `${title} ${chapterRaw}.${verseRaw}`;
 }
 
-/** Lista Référence como chips Discovery («Aller à …» + preview inline). */
 function RefList({
   cards,
-  onJump,
+  onSelect,
   emptyLabel,
 }: {
   cards: RefCard[];
-  onJump?: (usfm: string) => void;
+  onSelect: (card: RefCard) => void;
   emptyLabel: string;
 }) {
   if (!cards.length) {
     return <p className="bible-study-empty muted">{emptyLabel}</p>;
   }
   return (
-    <div className="bible-yv-pick-jumps bible-study-ref-jumps" role="group" aria-label="Références">
-      {cards.map((item) => {
-        const canJump = Boolean(item.usfm && onJump);
-        return (
+    <ul className="bible-study-ref-list is-compact" role="list">
+      {cards.map((item) => (
+        <li key={item.key}>
           <button
-            key={item.key}
             type="button"
-            className="bible-yv-pick-jump bible-study-ref-jump"
-            disabled={!canJump}
-            onClick={() => {
-              if (!item.usfm || !onJump) return;
-              onJump(item.usfm);
-            }}
+            className="bible-study-ref is-compact"
+            disabled={!item.usfm && !item.preview}
+            onClick={() => onSelect(item)}
           >
-            <YvIcon name="menu_book" opsz={20} className="bible-yv-pick-jump-icon" />
             <span className="bible-study-ref-copy">
-              <span className="bible-yv-pick-jump-label">Aller à {item.label}</span>
+              <span className="bible-study-ref-label">{item.label}</span>
               {item.preview ? (
                 <span className="bible-study-ref-preview muted">{item.preview}</span>
               ) : null}
             </span>
+            <YvIcon name="chevron_right" className="bible-study-ref-chevron" />
           </button>
-        );
-      })}
-    </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function RefTextModal({
+  card,
+  versionId,
+  onClose,
+  onGoToChapter,
+  closeLabel,
+  goToPassageLabel,
+  loadingLabel,
+  unavailableLabel,
+}: {
+  card: RefCard;
+  versionId: BibleTextVersionId;
+  onClose: () => void;
+  onGoToChapter?: (usfm: string) => void;
+  closeLabel: string;
+  goToPassageLabel: string;
+  loadingLabel: string;
+  unavailableLabel: string;
+}) {
+  const titleId = useId();
+  const [text, setText] = useState(card.preview);
+  const [busy, setBusy] = useState(!card.preview.trim());
+
+  useEffect(() => {
+    /* Capture: fecha só este modal; Options / Escape pai não engolem. */
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      event.stopPropagation();
+      onClose();
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [onClose]);
+
+  useEffect(() => {
+    if (card.preview.trim()) {
+      setText(card.preview);
+      setBusy(false);
+      return;
+    }
+    if (!card.usfm) {
+      setText("");
+      setBusy(false);
+      return;
+    }
+    let cancelled = false;
+    setBusy(true);
+    void resolveCrossRefPassageText(versionId, card.usfm)
+      .then((next) => {
+        if (!cancelled) setText(next);
+      })
+      .catch(() => {
+        if (!cancelled) setText("");
+      })
+      .finally(() => {
+        if (!cancelled) setBusy(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [card.preview, card.usfm, versionId]);
+
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
+    <div
+      className="bible-study-ref-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={titleId}
+    >
+      {/* Scrim visual só — fecho persistente: X ou Escape */}
+      <div className="bible-study-ref-modal-scrim" aria-hidden="true" />
+      <div className="bible-study-ref-modal-card">
+        <div className="bible-study-ref-modal-surface">
+          <header className="bible-study-ref-modal-head">
+            <h3 className="bible-study-ref-modal-title" id={titleId}>
+              {card.label}
+            </h3>
+            <button
+              type="button"
+              className="bible-study-ref-modal-close"
+              onClick={onClose}
+              aria-label={closeLabel}
+            >
+              <YvIcon name="close" className="bible-study-ref-modal-close-icon" />
+            </button>
+          </header>
+          <div className="bible-study-ref-modal-body">
+            {busy ? (
+              <p className="bible-study-ref-modal-text muted" aria-busy="true">
+                {loadingLabel}
+              </p>
+            ) : text ? (
+              <p className="bible-study-ref-modal-text">{text}</p>
+            ) : (
+              <p className="bible-study-ref-modal-text muted" role="status">
+                {unavailableLabel}
+              </p>
+            )}
+          </div>
+          {card.usfm && onGoToChapter ? (
+            <footer className="bible-study-ref-modal-foot">
+              <button
+                type="button"
+                className="bible-study-ref-modal-go"
+                onClick={() => {
+                  if (!card.usfm) return;
+                  const target = card.usfm;
+                  onClose();
+                  onGoToChapter(target);
+                }}
+              >
+                {goToPassageLabel}
+              </button>
+            </footer>
+          ) : null}
+        </div>
+      </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -143,6 +269,7 @@ export function VerseStudyPanel({
   verse,
   books,
   active = true,
+  restoreScrollTop = null,
   onOpenRef,
 }: VerseStudyPanelProps) {
   const { t } = useUiLocale();
@@ -152,6 +279,7 @@ export function VerseStudyPanel({
   const [previewByUsfm, setPreviewByUsfm] = useState<Record<string, string>>(
     {},
   );
+  const [activeRef, setActiveRef] = useState<RefCard | null>(null);
   const reqGen = useRef(0);
   const listRef = useRef<HTMLDivElement | null>(null);
   const scrollRestoredRef = useRef(false);
@@ -179,6 +307,7 @@ export function VerseStudyPanel({
     setBusy(true);
     setError(null);
     setBundle(null);
+    setActiveRef(null);
     scrollRestoredRef.current = false;
     void loadVerseStudy(bookId, chapterId, verse)
       .then((data) => {
@@ -244,7 +373,16 @@ export function VerseStudyPanel({
 
   const language = languageForVersion(versionId);
 
-  const targetScrollTop = getRefsListScroll(scopedKey);
+  const modalGoLabel = (usfm: string | null) => {
+    if (!usfm) return t("study.goToPassage");
+    const loc = parseUsfmLocation(usfm);
+    return loc?.verse == null ? t("study.goToChapter") : t("study.goToPassage");
+  };
+
+  const targetScrollTop =
+    restoreScrollTop != null && restoreScrollTop > 0
+      ? restoreScrollTop
+      : getRefsListScroll(scopedKey);
 
   useEffect(() => {
     scrollRestoredRef.current = false;
@@ -306,12 +444,26 @@ export function VerseStudyPanel({
           ) : (
             <RefList
               cards={cards}
-              onJump={onOpenRef}
+              onSelect={setActiveRef}
               emptyLabel={t("study.refsEmpty")}
             />
           )}
         </div>
       </div>
+
+      {/* Modal só no escopo Référence — estado activeRef sobrevive ao tab Verset */}
+      {active && activeRef ? (
+        <RefTextModal
+          card={activeRef}
+          versionId={versionId}
+          onClose={() => setActiveRef(null)}
+          onGoToChapter={onOpenRef}
+          closeLabel={t("common.close")}
+          goToPassageLabel={modalGoLabel(activeRef.usfm)}
+          loadingLabel={t("common.loading")}
+          unavailableLabel={t("study.refUnavailable")}
+        />
+      ) : null}
     </div>
   );
 }
