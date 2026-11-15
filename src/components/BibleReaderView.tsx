@@ -1979,10 +1979,6 @@ export function BibleReaderView({
     setCardMsg(t("verse.unmarkDone"));
   }
 
-  const actionTone = useMemo(
-    () => verseActionTone(adaptVerseColorForTheme(cardColor, uiTheme)),
-    [cardColor, uiTheme],
-  );
   const activeVerseColor = adaptVerseColorForTheme(normalizeVerseColor(cardColor), uiTheme);
   const selectionHasMark = selectedVerses.some((n) => chapterMarks.has(n));
   const selectionMarkColor = useMemo(() => {
@@ -1992,7 +1988,12 @@ export function BibleReaderView({
     }
     return null;
   }, [selectedVerses, chapterMarks, uiTheme]);
+  /* Tom do CTA Marquer = cor seleccionada (swatch / marca existente). */
   const pickerColor = selectionMarkColor ?? activeVerseColor;
+  const actionTone = useMemo(
+    () => verseActionTone(pickerColor),
+    [pickerColor],
+  );
   /** Accent marque (cartão PNG) — or brand, pas la couleur de surlignage. */
   const shareAccentHex = "#C4A574";
 

@@ -14305,13 +14305,17 @@ html[data-theme="dark"] .bible-verse-actions-nav {
   gap: 2px;
   padding: 2px;
   border-radius: 999px;
+  /* Segue a cor seleccionada (--verse-action-fill / ink via verseActionTone) */
   background: var(
-    --mode-tabs-hub-bg,
-    var(--bible-word-search-pill-on, color-mix(in srgb, var(--text) 82%, transparent))
+    --verse-action-fill,
+    var(--swatch, color-mix(in srgb, var(--text) 82%, transparent))
   );
-  color: var(--mode-tabs-hub-fg, var(--surface, #fff));
+  color: var(--verse-action-ink, var(--surface, #fff));
   box-sizing: border-box;
   overflow: hidden;
+  transition:
+    background 140ms ease,
+    color 140ms ease;
 }
 
 .bible-reader--yv
