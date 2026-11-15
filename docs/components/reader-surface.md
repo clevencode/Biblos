@@ -78,16 +78,23 @@ Ordem em `BibleReaderView`:
 
 ---
 
-## Cartão de acções (`showCreateCard`)
+## Secção Options (`showCreateCard` / `verse_actions`)
 
-Aparece com `selection?.length`:
+Abre com overlay `verse_actions` + seleção + texto (não share):
 
-- Marca circular (`CircularColorEditor`, `verseMarks`)
-- Partilha → `setShareSheetOpen(true)`
-- Flashcard (`makeFlashcard`) se marcado
+| Peça | Contrato |
+|------|----------|
+| Sheet | `.bible-verse-actions` full-bleed (lista Verset \| Référence) |
+| Topbar | Section pill **Options** — fecho só aqui (+ Escape); sem X no sheet |
+| Bottom nav | `.bible-verse-actions-nav` — Cor · Marquer · Partager; superfície = `--bible-nav-surface` |
+| Cor Marquer | `adaptVerseColorForTheme` + `verseActionTone(hex, theme)` → vars no `<nav>` |
+| Negócio | Não fechar ao desmarcar (`keepOne`); marcar/desmarcar → aviso, sheet fica |
+
+`readerSurfaceChrome` / `verseActionsOpen`:
+
+- → `forceChromeVisible` (mantém topbar Options)
+- **não** entra em `passageInputBlocked` nem `overlayDismissTarget` — **pass-through** para continuar a seleccionar versos na passagem
 - `ResizeObserver` define `--verse-actions-sheet-h` no `.bible-reader`
-
-Entra em `readerSurfaceChrome` como `verseActionsOpen` → `forceChromeVisible`.
 
 ---
 
@@ -101,13 +108,13 @@ Entra em `readerSurfaceChrome` como `verseActionsOpen` → `forceChromeVisible`.
 
 ## Hierarquia cor / profundidade
 
-Definida em `.bible-reader--yv`. Canvas branco ≠ chrome (`--surface`) ≠ overlay (mix + shadow).
+Definida em `.bible-reader--yv` + shell. **L0 canvas = navbar** (`--bible-nav-surface`); chrome de controlos usa `--surface`.
 
 | Camada | Token | Uso |
 |--------|--------|-----|
-| L0 canvas | `--yv-bg` | Fundo de leitura |
-| L1 chrome | `--yv-chrome-surface` + `--yv-chrome-border` / `-hover` / `-active-border` | Search, menu, chip, FAB idle, skips, play bar (fill **sempre**) |
-| L2 overlay | `--yv-overlay-surface` + `--yv-overlay-border` (= hairline) + `--yv-overlay-shadow` | Painéis picker / word-search / tools |
+| L0 canvas / nav | `--yv-bg` = `--bible-nav-surface` (paper/ink) | Fundo de leitura, topbar, Options sheet/nav |
+| L1 chrome | `--yv-chrome-surface` (= `--surface`) + border/hover | Search, menu, chip, FAB idle, skips |
+| L2 overlay | `--yv-overlay-surface` + border + shadow | Painéis picker / word-search / tools |
 | L3 inverse | `--yv-audio-fab-active-*` | Play a tocar |
 | L4 mark | `--yv-highlight`, `--verse-mark` | Marcas / ênfase no texto |
 | FAB shadow | `--yv-audio-fab-shadow` | Play + skips |

@@ -113,7 +113,7 @@ No `.bible-reader--yv`, partilhar `--yv-overlay-surface`, `--yv-overlay-border` 
 11. **«Jean 3.16»** — pas de grille livres ; bouton Aller à Jean 3.16 ouvre le passage.
 12. **Retour recherche** — après un verset : rouvrir le picker retrouve mot, dépliant, scroll et verset ancré ; seul le **X** réinitialise.
 13. **Picker ouvert** — texte biblique `inert` + scrim : pas de sélection de verset ; tap sur le fond ou Échap ferme le panneau.
-14. **Lecture mobile** — tab bar toujours visible (Accueil, Plan, Bible, Cartes) ; hamburger en **FAB bas-droite** (même ligne que le play audio à gauche) = outils Bible seulement. Texte `inert` + scrim tant que le menu ou le picker est ouvert. Désactiver le hamburger compact : `VITE_BIBLE_UNIFIED_NAV=0`. Profil via Accueil (icône / titre).
+14. **Lecture mobile** — tab bar (Accueil · Bible · Plan) ; immersive hide na leitura. Options (verse_actions): shell nav oculta, pill Options no topbar, acções na nav inferior. Hamburger = outils Bible. Texte `inert` + scrim tant que menu/picker aberto (Options = pass-through). Désactiver hamburger compact : `VITE_BIBLE_UNIFIED_NAV=0`. Profil via Accueil.
 
 ## Sous-système Partager (versets)
 

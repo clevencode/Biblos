@@ -11,6 +11,11 @@ export type ReaderSurfaceChromeInput = {
   historyOpen: boolean;
   marksOpen?: boolean;
   shareSheetOpen: boolean;
+  /**
+   * Secção Options (verse_actions): chrome visível, mas **pass-through** na passagem
+   * (não entra em `passageInputBlocked` nem `overlayDismissTarget`) —
+   * o utilizador continua a seleccionar versos; fecho só via pill Options / Escape.
+   */
   verseActionsOpen: boolean;
   verseStudyOpen?: boolean;
 };
@@ -63,6 +68,7 @@ export function readerSurfaceChrome(
   /**
    * Modais com `.top-sheet-backdrop`.
    * Full-bleed (search / book roll / history / marks / menu header) — sem scrim.
+   * Options (`verseActionsOpen`) omitido de propósito: pass-through para multi-select.
    */
   const passageInputBlocked =
     barOverlayOpen ||
@@ -80,6 +86,7 @@ export function readerSurfaceChrome(
     passageInputBlocked,
     passageSurfaceScrimOpen,
     toolsMenuPassThroughDismiss,
+    /* Options: força chrome (topbar Options) sem bloquear a passagem. */
     forceChromeVisible:
       passageInputBlocked ||
       input.pickerOpen ||
@@ -100,7 +107,10 @@ export function readerSurfaceChrome(
   };
 }
 
-/** Prioridade de fecho com um toque no scrim (picker → wordSearch → tools → …). */
+/**
+ * Prioridade de fecho com um toque no scrim (picker → wordSearch → tools → …).
+ * `verseActionsOpen` nunca é alvo: fecho só pelo pill Options / Escape.
+ */
 export function overlayDismissTarget(
   input: ReaderSurfaceChromeInput,
 ): OverlayDismissTarget | null {

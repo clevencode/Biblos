@@ -238,13 +238,25 @@ export type VerseActionTone = {
 
 /**
  * Algo UX couleur : le swatch reste fidèle ;
- * le CTA utilise une tonalité légèrement plus claire (pastel) pour la hiérarchie.
+ * le CTA suit la teinte sélectionnée (light + dark).
+ * dark : marks déjà pastels (V haut) — garder la matiz visible, pas de gris neutre.
  */
-export function verseActionTone(hex: string): VerseActionTone {
+export function verseActionTone(
+  hex: string,
+  theme: "light" | "dark" = "light",
+): VerseActionTone {
   const tint = normalizeVerseColor(hex);
   const lum = verseColorLuminance(tint);
   let fill: string;
-  if (lum >= 0.62) {
+  if (theme === "dark") {
+    if (lum >= 0.72) {
+      fill = mixHex(tint, "#0d1117", 0.1);
+    } else if (lum >= 0.45) {
+      fill = mixHex(tint, "#ffffff", 0.1);
+    } else {
+      fill = mixHex(tint, "#ffffff", 0.32);
+    }
+  } else if (lum >= 0.62) {
     fill = mixHex(tint, "#ffffff", 0.1);
   } else if (lum >= 0.4) {
     fill = mixHex(tint, "#ffffff", 0.28);

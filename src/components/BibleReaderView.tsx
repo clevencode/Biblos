@@ -1988,11 +1988,11 @@ export function BibleReaderView({
     }
     return null;
   }, [selectedVerses, chapterMarks, uiTheme]);
-  /* Tom do CTA Marquer = cor seleccionada (swatch / marca existente). */
+  /* Tom do CTA Marquer = cor seleccionada (swatch / marca; light + dark). */
   const pickerColor = selectionMarkColor ?? activeVerseColor;
   const actionTone = useMemo(
-    () => verseActionTone(pickerColor),
-    [pickerColor],
+    () => verseActionTone(pickerColor, uiTheme),
+    [pickerColor, uiTheme],
   );
   /** Accent marque (cartão PNG) — or brand, pas la couleur de surlignage. */
   const shareAccentHex = "#C4A574";
@@ -2272,6 +2272,9 @@ export function BibleReaderView({
             ["--verse-tint" as string]: actionTone.tint,
             ["--verse-action-fill" as string]: actionTone.fill,
             ["--verse-action-ink" as string]: actionTone.ink,
+            /* Swatch = cor seleccionada (adaptada ao tema light/dark) */
+            ["--swatch" as string]: pickerColor,
+            ["--swatch-check" as string]: verseSwatchCheckInk(pickerColor),
           } as CSSProperties
         }
       >
@@ -2286,12 +2289,6 @@ export function BibleReaderView({
             <button
               type="button"
               className={`bible-verse-color-picker${selectionHasMark ? " is-marked" : ""}`}
-              style={
-                {
-                  ["--swatch" as string]: pickerColor,
-                  ["--swatch-check" as string]: verseSwatchCheckInk(pickerColor),
-                } as CSSProperties
-              }
               title={t("verse.colorTitle")}
               aria-label={`${t("verse.colorTitle")} ${verseColorHueLabel(pickerColor)} ${formatVerseColorHex(pickerColor)}`}
               aria-haspopup="dialog"
@@ -2311,7 +2308,7 @@ export function BibleReaderView({
                   clearSelectionMarks();
                   return;
                 }
-                requestMarkSelection(activeVerseColor);
+                requestMarkSelection(pickerColor);
               }}
             >
               <span>

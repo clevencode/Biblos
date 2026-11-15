@@ -49,9 +49,19 @@ Shell em **tablist** com três onglets (`SHELL_TABS`): Accueil, Bible, Plan.
 - `role="tablist"`, tabs com `aria-controls={`panel-${id}`}`; activa = segmento invertido.
 - Setas ←/→ mudam tab e movem foco.
 - Classe `is-immersive-hidden` esconde a barra na leitura imersiva.
-- Clearance: `--mobile-bottom-chrome` = pillH + floatGap + safe-area.
+- Clearance: `--mobile-bottom-chrome` = pillH + floatGap + mat-fade + safe-area.
+- Superfície: `--bible-nav-surface` (paper/ink no shell) → `--mode-tabs-canvas`.
 
 IDs de painel: `panel-home`, `panel-bible`, `PlanDiscoverPanel` com `panel-today`.
+
+### Secção Options (verse_actions)
+
+Quando o leitor abre a secção Options (seleção de versículos):
+
+- Shell nav **oculta** (CSS `:has(.bible-verse-actions)`).
+- Topbar: section pill **Options** (mesmo padrão search/history/marks) — único fecho (+ Escape).
+- Bottom: `.bible-verse-actions-nav` — clone layout do `.mode-tabs` (pill + mat fade), superfície `--bible-nav-surface`; acções Cor · Marquer · Partager.
+- Ver [reader-surface.md](./reader-surface.md) (pass-through na passagem).
 
 ---
 
