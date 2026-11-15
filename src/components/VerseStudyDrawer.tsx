@@ -3,7 +3,14 @@
  * Abas: Contexte / Références / Application (sem Notes, sem dialog próprio).
  */
 
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { createPortal } from "react-dom";
 import { YvIcon } from "./YvIcon";
 import { loadVerseStudy, type VerseStudyBundle } from "../bible/studyQueries";
@@ -22,6 +29,9 @@ import { ensureVerseIndex } from "../bible/verseIndexCache";
 import { useUiLocale } from "../i18n/UiLocaleContext";
 import type { YouVersionBook } from "../youversion/client";
 
+/** Scroll da lista Référence por verso de estudo — sobrevive a Aller / Retourner. */
+const refsListScrollByKey = new Map<string, number>();
+
 export type VerseStudyTab = "context" | "refs" | "application";
 
 export type VerseStudyPanelProps = {
@@ -30,7 +40,7 @@ export type VerseStudyPanelProps = {
   chapterId: string;
   verse: number;
   books: YouVersionBook[];
-  /** Navegar para o versículo da referência (botão «Aller au passage»). */
+  /** Cadeia: Aller au verset → destino focado (+ Retourner au verset). */
   onOpenRef?: (usfm: string) => void;
   initialTab?: VerseStudyTab;
   /**
@@ -258,10 +268,25 @@ export function VerseStudyPanel({
   );
   const [activeRef, setActiveRef] = useState<RefCard | null>(null);
   const reqGen = useRef(0);
+  const listRef = useRef<HTMLDivElement | null>(null);
 
   const scopedKey = verseStudyKey(versionId, bookId, chapterId, verse);
   const universalKey = universalVerseKey(bookId, chapterId, verse);
   const titleById = useMemo(() => bookTitleMap(books), [books]);
+
+  const rememberListScroll = () => {
+    const el = listRef.current;
+    if (!el) return;
+    refsListScrollByKey.set(scopedKey, el.scrollTop);
+  };
+
+  useEffect(() => {
+    const key = scopedKey;
+    return () => {
+      const el = listRef.current;
+      if (el) refsListScrollByKey.set(key, el.scrollTop);
+    };
+  }, [scopedKey]);
 
   useEffect(() => {
     const gen = ++reqGen.current;
@@ -333,6 +358,15 @@ export function VerseStudyPanel({
 
   const language = languageForVersion(versionId);
 
+  useLayoutEffect(() => {
+    if (busy || error || !cards.length) return;
+    const el = listRef.current;
+    if (!el) return;
+    const saved = refsListScrollByKey.get(scopedKey);
+    if (saved == null || saved <= 0) return;
+    el.scrollTop = saved;
+  }, [busy, error, cards.length, scopedKey, previewByUsfm]);
+
   return (
     <div
       className="verse-study-panel-host"
@@ -342,7 +376,13 @@ export function VerseStudyPanel({
     >
       <p className="verse-study-section-title">{t("study.crossRefs")}</p>
 
-      <div className="verse-study-panel" role="region" aria-label={t("study.crossRefs")}>
+      <div
+        ref={listRef}
+        className="verse-study-panel"
+        role="region"
+        aria-label={t("study.crossRefs")}
+        onScroll={rememberListScroll}
+      >
         <div className="verse-study-block">
           {busy ? (
             <p className="bible-study-status muted" aria-busy="true">

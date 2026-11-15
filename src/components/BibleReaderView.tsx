@@ -584,14 +584,14 @@ export function BibleReaderView({
     "verse",
   );
   /**
-   * Após «Aller au passage» (loadChapter com verso): navbar de retorno no destino.
+   * Cadeia Aller au verset → destino (verso) → Retourner au verset → origem Options/Référence.
    * Limpa ao sair do capítulo destino ou ao regressar.
    */
   const [studyJumpReturn, setStudyJumpReturn] = useState<{
     from: { bookId: string; chapterId: string; verse: number };
-    to: { bookId: string; chapterId: string };
+    to: { bookId: string; chapterId: string; verse: number };
   } | null>(null);
-  /** Abrir Options na tab Référence (após Retourner au verset). */
+  /** Sticky: Options na tab Référence após «Retourner aux références». */
   const preferRefsTabOnOpenRef = useRef(false);
   /**
    * Fechar Options para navegar a um USFM: o clear da seleção não pode
@@ -628,8 +628,8 @@ export function BibleReaderView({
 
   const clearVerseSelectionUi = useCallback(() => {
     const preserveNav = preservePassageNavRef.current;
-    preservePassageNavRef.current = false;
     preferJumpFocusRef.current = false;
+    preferRefsTabOnOpenRef.current = false;
     if (!preserveNav) {
       pendingScrollVerse.current = null;
       lastAppliedVerseScroll.current = "";
@@ -637,6 +637,7 @@ export function BibleReaderView({
       setHighlightVerseEnd(null);
       setFocusDim(false);
     }
+    /* Com preserve: o flag fica até loadChapter (Strict Mode pode reentrar no clear). */
     setSelection(null);
     setCardMsg(null);
     setCardColor(loadPreferredVerseColor());
@@ -1228,11 +1229,13 @@ export function BibleReaderView({
     verse: number | null = null,
     verseEnd: number | null = null,
   ) {
+    preservePassageNavRef.current = false;
     pendingScrollVerse.current =
       verse != null
         ? { number: verse, mode: "start", seq: ++verseScrollSeq.current }
         : { number: 0, mode: "top", seq: ++verseScrollSeq.current };
     preferJumpFocusRef.current = false;
+    lastAppliedVerseScroll.current = "";
     setBookId(nextBook);
     setChapterId(nextChapter);
     setHighlightVerse(verse);
@@ -1707,37 +1710,41 @@ export function BibleReaderView({
   }
 
   /**
-   * Options > Référence > Aller au passage.
-   * Mesmo contrato que pickDiscoveryJump / pickVerseSearchHit:
-   * parseUsfmLocation → fechar Options → loadChapter(book, chapter, verse, verseEnd).
+   * Options > Référence > Aller au verset — cadeia de fluxo:
+   * origem (Options) → verso destino focado + navbar Retourner → Retourner reabre Options/Référence.
+   * Mesmo contrato de salto que pickDiscoveryJump / pickVerseSearchHit.
    */
   function goToCrossRefPassage(usfm: string) {
     const loc = parseUsfmLocation(usfm);
-    if (!loc || !isUsfmBookId(loc.bookId)) return;
-
-    const fromVerse = selection?.[0] ?? highlightVerse;
-    if (fromVerse != null) {
-      setStudyJumpReturn({
-        from: { bookId, chapterId, verse: fromVerse },
-        to: { bookId: loc.bookId, chapterId: String(loc.chapter) },
-      });
-    } else {
-      setStudyJumpReturn(null);
-    }
+    if (!loc || !isUsfmBookId(loc.bookId) || loc.verse == null) return;
 
     const chapter = String(loc.chapter);
     const verse = loc.verse;
     const verseEnd =
-      verse != null && loc.verseEnd != null && loc.verseEnd !== verse
-        ? loc.verseEnd
-        : null;
+      loc.verseEnd != null && loc.verseEnd !== verse ? loc.verseEnd : null;
+
+    const fromVerse = selection?.[0] ?? highlightVerse;
+    setStudyJumpReturn(
+      fromVerse != null
+        ? {
+            from: { bookId, chapterId, verse: fromVerse },
+            to: { bookId: loc.bookId, chapterId: chapter, verse },
+          }
+        : null,
+    );
 
     preservePassageNavRef.current = true;
     closeCreateCard();
+    /* loadChapter arma scroll/highlight e consome o preserve. */
     void loadChapter(loc.bookId, chapter, verse, verseEnd);
+    /* Mesmo UX do link /v/…: is-passage-focus; teardown Options não limpa o dim. */
+    preferJumpFocusRef.current = true;
+    setFocusDim(true);
+    suppressFocusDimClearUntil.current =
+      performance.now() + CHROME_PROGRAMMATIC_LOCK_MS * 2;
   }
 
-  /** Navbar «Retourner au verset» → origem + reabre Options na tab Référence. */
+  /** Navbar «Retourner aux références» → origem + Options na tab Référence. */
   function returnFromStudyJump() {
     const jump = studyJumpReturn;
     if (!jump) return;
@@ -1758,6 +1765,7 @@ export function BibleReaderView({
     setCardMsg(null);
     setPassageUiError(null);
     setShareSheetOpen(false);
+    /* Sticky até fechar Options — evita flicker do reload do capítulo → tab Verset. */
     preferRefsTabOnOpenRef.current = true;
     setVerseActionsTab("refs");
     openOverlay({
@@ -2094,7 +2102,7 @@ export function BibleReaderView({
   useEffect(() => {
     if (!showCreateCard) return;
     if (preferRefsTabOnOpenRef.current) {
-      preferRefsTabOnOpenRef.current = false;
+      /* Não consumir o flag aqui: o reload do capítulo pode piscar showCreateCard. */
       setVerseActionsTab("refs");
       return;
     }

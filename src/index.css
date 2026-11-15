@@ -18215,11 +18215,11 @@ html[data-passage-bar-panel="test"]
 }
 
 /*
- * Altura ao conteúdo, máx. 50% do ecrã — lista Référence acima
- * continua visível; texto longo faz scroll no body do cartão.
+ * Altura fixa (não cresce/encolhe com o texto) —
+ * lista Référence acima continua visível; scroll só no body.
  */
 .bible-study-ref-modal-card {
-  --ref-modal-max-h: 50dvh;
+  --ref-modal-h: 50dvh;
   position: absolute;
   z-index: 1;
   left: max(var(--mobile-gutter, 12px), env(safe-area-inset-left, 0px));
@@ -18227,8 +18227,8 @@ html[data-passage-bar-panel="test"]
   bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
   width: auto;
   max-width: none;
-  height: auto;
-  max-height: var(--ref-modal-max-h);
+  height: var(--ref-modal-h);
+  max-height: var(--ref-modal-h);
   margin: 0;
   padding: 0;
   border: 0;
@@ -18254,8 +18254,8 @@ html[data-passage-bar-panel="test"]
 .bible-study-ref-modal-surface {
   display: flex;
   flex-direction: column;
-  height: auto;
-  max-height: var(--ref-modal-max-h, 50dvh);
+  height: 100%;
+  max-height: 100%;
   min-height: 0;
   padding: 12px 12px 14px;
   border-radius: 16px;
@@ -18266,6 +18266,7 @@ html[data-passage-bar-panel="test"]
     0 8px 28px color-mix(in srgb, var(--ink, #000) 16%, transparent),
     0 1px 0 color-mix(in srgb, var(--ink, #000) 6%, transparent);
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .bible-study-ref-modal-head {
@@ -18312,7 +18313,7 @@ html[data-passage-bar-panel="test"]
 }
 
 .bible-study-ref-modal-body {
-  flex: 0 1 auto;
+  flex: 1 1 auto;
   min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
