@@ -20,6 +20,8 @@
 
 A passagem bloqueia interacção quando overlays estão abertos (`readerSurfaceChrome.passageInputBlocked`).
 
+Navegação de capítulo: **swipe** horizontal na passagem + botões `.bible-passage-end-skips` no fim (sem FAB ‹ ›). Swipe consumido não abre Options.
+
 ---
 
 ## Mapa de ficheiros
@@ -114,11 +116,11 @@ Definida em `.bible-reader--yv` + shell. **L0 canvas = navbar** (`--bible-nav-su
 | Camada | Token | Uso |
 |--------|--------|-----|
 | L0 canvas / nav | `--yv-bg` = `--bible-nav-surface` (paper/ink) | Fundo de leitura, topbar, Options sheet/nav |
-| L1 chrome | `--yv-chrome-surface` (= `--surface`) + border/hover | Search, menu, chip, FAB idle, skips |
+| L1 chrome | `--yv-chrome-surface` (= `--surface`) + border/hover | Search, menu, chip, FAB idle, end-skips |
 | L2 overlay | `--yv-overlay-surface` + border + shadow | Painéis picker / word-search / tools |
 | L3 inverse | `--yv-audio-fab-active-*` | Play a tocar |
 | L4 mark | `--yv-highlight`, `--verse-mark` | Marcas / ênfase no texto |
-| FAB shadow | `--yv-audio-fab-shadow` | Play + skips |
+| FAB shadow | `--yv-audio-fab-shadow` | Play (skips = end-of-passage + swipe) |
 
 Selecção de versículo = underline (accent); **não** caixa azul de sistema. Cor azul no texto = marca do utilizador (`--verse-mark`).
 

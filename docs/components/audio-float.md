@@ -69,12 +69,14 @@ Classes no `footer`:
 
 ### Família FAB (layout `test`)
 
-No layout `data-passage-bar-panel="test"`, o play (canto inferior esquerdo) e as setas de capítulo (`.bible-yv-top-passage-skips.is-float-br`, canto inferior direito) partilham:
+No layout `data-passage-bar-panel="test"`, o play (canto inferior esquerdo) usa:
 
 - `--bible-chrome-fab-size` (= `--mobile-touch`)
 - superfície idle `--yv-overlay-surface` + `--bible-chrome-fab-border`
-- sombra sutil `--bible-chrome-fab-shadow` / `--yv-audio-fab-shadow` (play + skips)
+- sombra sutil `--bible-chrome-fab-shadow` / `--yv-audio-fab-shadow`
 - hover wash `--bible-chrome-fab-hover`
+
+Os skips de capítulo ficam no **fim da passagem** (`.bible-passage-end-skips`) e via **swipe** horizontal — não no FAB.
 
 O play activo continua invertido (`--yv-audio-fab-active-*`); o strip expandido só no BL.
 

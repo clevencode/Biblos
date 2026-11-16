@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { flushSync } from "react-dom";
@@ -893,6 +894,8 @@ export function BibleReaderView({
     x: number;
     y: number;
   } | null>(null);
+  /** Após swipe consumido: ignora o click sintético no verso. */
+  const suppressVerseClickAfterSwipeRef = useRef(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioBookRef = useRef<string>("");
   const lastScrollTop = useRef(0);
@@ -2146,55 +2149,34 @@ export function BibleReaderView({
     studyJumpDepth > 0 && !showCreateCard && !pendingStudyReturn,
   );
 
-  const chapterSwipeBlocked =
-    presentation.inFlight ||
-    hasActiveModal ||
-    shareSheetOpen ||
-    showCreateCard ||
-    pickerChrome.controlsDisabled ||
-    surfaceChrome.passageInputBlocked ||
-    dayNoteOpen;
-
-  const onPassageChapterSwipeStart = (
-    event: ReactPointerEvent<HTMLElement>,
-  ) => {
-    if (!event.isPrimary) return;
-    if (event.pointerType === "mouse" && event.button !== 0) return;
-    chapterSwipeRef.current = {
-      pointerId: event.pointerId,
-      x: event.clientX,
-      y: event.clientY,
-    };
-  };
-
-  const onPassageChapterSwipeEnd = (
-    event: ReactPointerEvent<HTMLElement>,
-  ) => {
-    const start = chapterSwipeRef.current;
-    if (!start || start.pointerId !== event.pointerId) return;
-    chapterSwipeRef.current = null;
-    if (chapterSwipeBlocked) return;
-    const dx = event.clientX - start.x;
-    const dy = event.clientY - start.y;
-    const absX = Math.abs(dx);
-    const absY = Math.abs(dy);
-    /* Limiar + eixo: evita conflito com scroll vertical. */
-    if (absX < 56 || absX <= absY * 1.4) return;
-    const delta: -1 | 1 = dx < 0 ? 1 : -1;
-    if (planReading) {
-      if (delta < 0 && planReading.isFirst) return;
-    } else if (delta < 0 ? !canPrev : !canNext) {
-      return;
-    }
-    planOrChapterSkip(delta);
-  };
-
-  const onPassageChapterSwipeCancel = (
-    event: ReactPointerEvent<HTMLElement>,
-  ) => {
-    if (chapterSwipeRef.current?.pointerId !== event.pointerId) return;
-    chapterSwipeRef.current = null;
-  };
+  /** Ranges pré-calculados — evita min/max por verso no map. */
+  const planVerseRangeFull = Boolean(
+    planReading &&
+      onPlanStep &&
+      (planReading.verseStart == null || planReading.verseEnd == null),
+  );
+  const planVerseRangeLo =
+    planReading?.verseStart != null
+      ? Math.min(
+          planReading.verseStart,
+          planReading.verseEnd ?? planReading.verseStart,
+        )
+      : null;
+  const planVerseRangeHi =
+    planReading?.verseStart != null
+      ? Math.max(
+          planReading.verseStart,
+          planReading.verseEnd ?? planReading.verseStart,
+        )
+      : null;
+  const focusVerseLo =
+    highlightVerse != null
+      ? Math.min(highlightVerse, highlightVerseEnd ?? highlightVerse)
+      : null;
+  const focusVerseHi =
+    highlightVerse != null
+      ? Math.max(highlightVerse, highlightVerseEnd ?? highlightVerse)
+      : null;
 
   useEffect(() => {
     if (!showCreateCard) return;
@@ -2329,6 +2311,93 @@ export function BibleReaderView({
       showCreateCard,
     ],
   );
+
+  const chapterSwipeBlocked =
+    presentation.inFlight ||
+    hasActiveModal ||
+    shareSheetOpen ||
+    showCreateCard ||
+    pickerChrome.controlsDisabled ||
+    surfaceChrome.passageInputBlocked ||
+    dayNoteOpen;
+
+  const releasePassageSwipeCapture = (
+    event: ReactPointerEvent<HTMLElement>,
+  ) => {
+    try {
+      if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+        event.currentTarget.releasePointerCapture(event.pointerId);
+      }
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const onPassageChapterSwipeStart = (
+    event: ReactPointerEvent<HTMLElement>,
+  ) => {
+    if (!event.isPrimary) return;
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    const target = event.target;
+    /* End-skips / controlos: não iniciar swipe (evita competir com o click). */
+    if (
+      target instanceof Element &&
+      target.closest("button, a, input, textarea, select, label")
+    ) {
+      chapterSwipeRef.current = null;
+      return;
+    }
+    chapterSwipeRef.current = {
+      pointerId: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+    };
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const onPassageChapterSwipeEnd = (
+    event: ReactPointerEvent<HTMLElement>,
+  ) => {
+    const start = chapterSwipeRef.current;
+    if (!start || start.pointerId !== event.pointerId) return;
+    chapterSwipeRef.current = null;
+    releasePassageSwipeCapture(event);
+    if (chapterSwipeBlocked) return;
+    const dx = event.clientX - start.x;
+    const dy = event.clientY - start.y;
+    const absX = Math.abs(dx);
+    const absY = Math.abs(dy);
+    /* Limiar + eixo: evita conflito com scroll vertical. */
+    if (absX < 56 || absX <= absY * 1.4) return;
+    const delta: -1 | 1 = dx < 0 ? 1 : -1;
+    if (planReading) {
+      if (delta < 0 && planReading.isFirst) return;
+    } else if (delta < 0 ? !canPrev : !canNext) {
+      return;
+    }
+    suppressVerseClickAfterSwipeRef.current = true;
+    event.preventDefault();
+    planOrChapterSkip(delta);
+  };
+
+  const onPassageChapterSwipeCancel = (
+    event: ReactPointerEvent<HTMLElement>,
+  ) => {
+    if (chapterSwipeRef.current?.pointerId !== event.pointerId) return;
+    chapterSwipeRef.current = null;
+    releasePassageSwipeCapture(event);
+  };
+
+  const onPassageClickCapture = (event: ReactMouseEvent<HTMLElement>) => {
+    if (!suppressVerseClickAfterSwipeRef.current) return;
+    suppressVerseClickAfterSwipeRef.current = false;
+    event.preventDefault();
+    event.stopPropagation();
+  };
 
   function dismissPassageSurfaceOverlay() {
     markOverlayDismissSwallow();
@@ -3715,6 +3784,7 @@ export function BibleReaderView({
         onPointerDown={onPassageChapterSwipeStart}
         onPointerUp={onPassageChapterSwipeEnd}
         onPointerCancel={onPassageChapterSwipeCancel}
+        onClickCapture={onPassageClickCapture}
         onClick={() => {
           if (takeOverlayDismissSwallow()) return;
           if (surfaceChrome.passageInputBlocked) return;
@@ -3739,7 +3809,7 @@ export function BibleReaderView({
           />
         ) : passage?.verses?.length ? (
           <div
-            className={[
+            className=            {[
               "bible-verses",
               selection?.length ? "is-dimming" : "",
               !selection?.length &&
@@ -3753,41 +3823,30 @@ export function BibleReaderView({
           >
             {passage.verses.map((verse) => {
               const jumpFocus = preferJumpFocusRef.current;
-              const inPlanRange = Boolean(
+              const planRangeActive = Boolean(
                 planReading &&
                   onPlanStep &&
                   !jumpFocus &&
-                  !selection?.length &&
-                  (() => {
-                    const start = planReading.verseStart;
-                    const end = planReading.verseEnd;
-                    if (start == null || end == null) return true;
-                    const a = Math.min(start, end);
-                    const b = Math.max(start, end);
-                    return verse.number >= a && verse.number <= b;
-                  })(),
+                  !selection?.length,
+              );
+              const inPlanRange = Boolean(
+                planRangeActive &&
+                  (planVerseRangeFull ||
+                    (planVerseRangeLo != null &&
+                      planVerseRangeHi != null &&
+                      verse.number >= planVerseRangeLo &&
+                      verse.number <= planVerseRangeHi)),
               );
               const rangeStart =
                 planReading && onPlanStep && !jumpFocus && planReading.verseStart != null
-                  ? Math.min(
-                      planReading.verseStart,
-                      planReading.verseEnd ?? planReading.verseStart,
-                    )
+                  ? planVerseRangeLo
                   : highlightVerse;
-              const focusLo =
-                highlightVerse != null
-                  ? Math.min(highlightVerse, highlightVerseEnd ?? highlightVerse)
-                  : null;
-              const focusHi =
-                highlightVerse != null
-                  ? Math.max(highlightVerse, highlightVerseEnd ?? highlightVerse)
-                  : null;
               const inDeeplink = Boolean(
                 !selection?.length &&
-                  focusLo != null &&
-                  focusHi != null &&
-                  verse.number >= focusLo &&
-                  verse.number <= focusHi &&
+                  focusVerseLo != null &&
+                  focusVerseHi != null &&
+                  verse.number >= focusVerseLo &&
+                  verse.number <= focusVerseHi &&
                   (jumpFocus || !planReading || !onPlanStep),
               );
               const inRange = inPlanRange || inDeeplink;
@@ -3892,7 +3951,7 @@ export function BibleReaderView({
           const stageTitle = planReading.stageName?.trim();
           return (
             <footer
-              className={`bible-yv-dock is-plan-progress${showCreateCard || showStudyReturnNav ? " has-verse-actions" : ""}${compactDock ? " is-floating" : ""} is-play-only`}
+              className={`bible-yv-dock is-plan-progress${compactDock ? " is-floating" : ""} is-play-only`}
               aria-label={t("bible.planProgress")}
             >
               <div
@@ -3922,7 +3981,7 @@ export function BibleReaderView({
         }
         return (
       <footer
-        className={`bible-yv-dock${showCreateCard || showStudyReturnNav ? " has-verse-actions" : ""}${audioPlaying ? " is-playing" : ""}${compactDock ? " is-floating" : ""} is-play-only`}
+        className={`bible-yv-dock${audioPlaying ? " is-playing" : ""}${compactDock ? " is-floating" : ""} is-play-only`}
         aria-label="Lecteur audio"
       >
         <BibleAudioFloat

@@ -32,11 +32,12 @@ Animação dos painéis: `opacity` + `translateY`. Escala completa em [reader-su
 
 ```text
 ┌─────────────────────────────────────────────┐
-│ [🔍]  [ Jean 1 ▾ ]              [ ☰ ]       │  ← topo
+│ [🔍]  [ Jean 1 ▾ ]              [ ☰ ]       │  ← topo (sem skips)
 │                                             │
 │         (texto do capítulo)                 │
 │                                             │
-│ [▶]                              [ ‹  › ]   │  ← FAB (play / skips)
+│         [ ‹ Jean 2 ]  [ Jean 4 › ]          │  ← end-skips (fim da passagem)
+│ [▶]                                         │  ← FAB play
 └─────────────────────────────────────────────┘
 ```
 
@@ -45,7 +46,7 @@ Animação dos painéis: `opacity` + `translateY`. Escala completa em [reader-su
 | Ícone search | `bible-yv-passage-word-search-trigger` (chrome fill) | Abre painel de **palavras** |
 | Chip título | `BiblePassageChip` (`variant="ref"`, chrome fill) | Abre roll de **livros/capítulos** |
 | Menu | `renderTopToolsMenu("header")` (chrome fill) | Ferramentas Bible (activo) |
-| Setas capítulo | `renderPassageChapterSkips` + `is-float-br` | Capítulo anterior/seguinte |
+| Skips capítulo | `.bible-passage-end-skips` + swipe horizontal | Capítulo anterior/seguinte (e fluxo do plano) |
 
 ---
 
@@ -108,7 +109,7 @@ Os dois overlays **excluem-se**: abrir search fecha o picker; abrir o chip fecha
 3. Segundo clique no chip → `closePicker`.
 4. Esc / toque fora / scrim → fecha.
 
-Com layout `test`, a barra **mantém** o mesmo chrome visual aberto/fechado (setas do topo já não fazem parte do pill; skips estão no FAB).
+Com layout `test`, a barra **mantém** o mesmo chrome visual aberto/fechado (sem setas no topo; skips no fim da passagem + swipe).
 
 ---
 
@@ -153,10 +154,10 @@ Quando `discoveryBooksOnly` / scope `"books"`:
 
 | Variável / query | Default | Efeito |
 |------------------|---------|--------|
-| `VITE_PASSAGE_BAR_PANEL_LAYOUT` / `?passage-bar-panel=` | `test` | Barra compacta, chip dropdown, skips FAB |
+| `VITE_PASSAGE_BAR_PANEL_LAYOUT` / `?passage-bar-panel=` | `test` | Barra compacta, chip dropdown |
 | `VITE_PASSAGE_DISCOVERY_FLOW` | `test` | Split livros (pill) / palavras (ícone) |
 | `VITE_PASSAGE_PICKER_FLOW` | `test` | Sem passo VERSET após escolher capítulo |
-| `VITE_PASSAGE_BAR_SKIP_ICONS` | `test` | Chevrons nas setas de capítulo |
+| `VITE_PASSAGE_BAR_SKIP_ICONS` | `test` | Chevrons nos end-skips / swipe |
 | `VITE_PASSAGE_PILL` | `test` | Chip `ref` unificado |
 
 `legacy` / `0` / `off` repõe o comportamento anterior em cada eixo.
@@ -179,7 +180,7 @@ Quando `discoveryBooksOnly` / scope `"books"`:
 | Skips icons | `src/bible/passageBarSkipIcons.ts` |
 | Skip verse step | `src/bible/passagePickerFlow.ts` |
 | Chrome overlays | `src/bible/viewState/readerSurfaceChrome.ts` |
-| Estilos | `src/index.css` — tokens `--bible-chrome-*`, `.bible-yv-passage-word-search-*`, `.bible-yv-top-passage-skips.is-float-br` |
+| Estilos | `src/index.css` — tokens `--bible-chrome-*`, `.bible-yv-passage-word-search-*`, `.bible-passage-end-skips` |
 | Skeleton search | `src/components/WordSearchSkeleton.tsx` |
 
 ---

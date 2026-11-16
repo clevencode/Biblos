@@ -383,8 +383,8 @@ html[data-theme="dark"] .biblos-shell {
   ):not(.hdr-trigger.is-active):not(.hdr-trigger.is-open):not(
     .hdr-trigger.is-on
   ):not(.bible-yv-top):not(.bible-yv-dock-play):not(.bible-yv-audio-player):not(
-    .bible-yv-top-passage-skips
-  ):not(.bible-yv-top-passage-skips *):not(.bible-yv-tools-menu-btn):not(
+    .bible-passage-end-skips
+  ):not(.bible-passage-end-skips *):not(.bible-yv-tools-menu-btn):not(
     .mode-tabs-pill
   ):not(.mode-tabs-item):not(.bible-verse-actions-nav-pill) {
   box-shadow: none !important;
@@ -1242,16 +1242,14 @@ html[data-theme="dark"] {
   top: var(--bible-top-chrome);
 }
 /*
- * Play / skip (e tools float) cedem com radial OU modais com contextual backdrop.
+ * Play (e tools float) cedem com radial OU modais com contextual backdrop.
  * verse_actions (has-verse-actions): fora desta regra — sheet próprio.
  */
 html[data-radial-open="true"] .bible-yv-dock.is-play-only,
 html[data-radial-open="true"] .bible-yv-dock.is-floating,
-html[data-radial-open="true"] .bible-yv-top-passage-skips.is-float-br,
 html[data-radial-open="true"] .bible-yv-tools-menu.is-float-br,
 html.is-radial-open .bible-yv-dock.is-play-only,
 html.is-radial-open .bible-yv-dock.is-floating,
-html.is-radial-open .bible-yv-top-passage-skips.is-float-br,
 html.is-radial-open .bible-yv-tools-menu.is-float-br,
 .bible-reader--yv:is(
     .is-top-sheet-open,
@@ -1268,15 +1266,7 @@ html.is-radial-open .bible-yv-tools-menu.is-float-br,
     .is-history-open,
     .is-share-open
   )
-  .bible-yv-dock.is-floating,
-.bible-reader--yv:is(
-    .is-top-sheet-open,
-    .is-passage-roll-open,
-    .is-tools-menu-open,
-    .is-history-open,
-    .is-share-open
-  )
-  .bible-yv-top-passage-skips.is-float-br {
+  .bible-yv-dock.is-floating {
   opacity: 0 !important;
   transform: scale(0.92);
   pointer-events: none !important;
@@ -1437,11 +1427,9 @@ html[data-keyboard="open"] .panel-nota-body {
   .bible-reader--yv .bible-passage,
   html[data-radial-open="true"] .bible-yv-dock.is-play-only,
   html[data-radial-open="true"] .bible-yv-dock.is-floating,
-  html[data-radial-open="true"] .bible-yv-top-passage-skips.is-float-br,
   html[data-radial-open="true"] .bible-yv-tools-menu.is-float-br,
   html.is-radial-open .bible-yv-dock.is-play-only,
   html.is-radial-open .bible-yv-dock.is-floating,
-  html.is-radial-open .bible-yv-top-passage-skips.is-float-br,
   html.is-radial-open .bible-yv-tools-menu.is-float-br,
   .bible-reader--yv:is(
       .is-top-sheet-open,
@@ -1459,14 +1447,6 @@ html[data-keyboard="open"] .panel-nota-body {
       .is-share-open
     )
     .bible-yv-dock.is-floating,
-  .bible-reader--yv:is(
-      .is-top-sheet-open,
-      .is-passage-roll-open,
-      .is-tools-menu-open,
-      .is-history-open,
-      .is-share-open
-    )
-    .bible-yv-top-passage-skips.is-float-br,
   .bible-reader--yv:is(.is-passage-roll-open, .is-history-open, .is-share-open):not(
       .is-tools-menu-open
     )
@@ -11373,135 +11353,7 @@ html[data-passage-bar-panel="test"] .bible-yv-top-passage-bar.is-chip-trigger {
   align-items: center;
 }
 
-/* Setas + chip: ← · book · → — grelha 1·auto·1, gap e padding simétricos */
-html[data-passage-bar-panel="test"] .bible-yv-top-passage-skips.is-topbar {
-  --bible-skip-cluster-gap: 4px;
-  position: relative;
-  display: grid;
-  grid-template-columns:
-    var(--bible-chrome-trigger-h) minmax(0, auto) var(--bible-chrome-trigger-h);
-  align-items: center;
-  justify-items: center;
-  column-gap: var(--bible-skip-cluster-gap);
-  flex: none;
-  min-width: 0;
-  max-width: 100%;
-  height: var(--bible-chrome-trigger-h);
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  color: var(--yv-text);
-  box-shadow: none;
-  overflow: visible;
-}
-
-/* Picker aberto: setas invisíveis, grelha igual — chip não salta */
-html[data-passage-bar-panel="test"]
-  .bible-yv-top-passage-skips.is-topbar.is-roll-open
-  .bible-yv-top-passage-arrow {
-  visibility: hidden;
-  pointer-events: none;
-}
-
-html[data-passage-bar-panel="test"]
-  .bible-yv-top-passage-skips.is-topbar.is-decoupled
-  .bible-yv-passage-roll {
-  grid-column: 2;
-  justify-self: center;
-  width: max-content;
-  max-width: min(100%, 12rem);
-  min-width: 0;
-  margin: 0;
-}
-
-html[data-passage-bar-panel="test"]
-  .bible-yv-top-passage-skips.is-topbar.is-decoupled
-  .bible-yv-top-passage,
-html[data-passage-bar-panel="test"]
-  .bible-yv-top-passage-skips.is-topbar.is-decoupled
-  .bible-yv-top-passage-bar,
-html[data-passage-bar-panel="test"]
-  .bible-yv-top-passage-skips.is-topbar.is-decoupled
-  .bible-yv-top-passage-segments {
-  width: max-content;
-  max-width: 100%;
-  margin: 0;
-  padding-inline: 0;
-}
-
-html[data-passage-bar-panel="test"]
-  .bible-yv-top-passage-skips.is-topbar.is-decoupled
-  .bible-yv-passage-chip {
-  padding-inline: 12px;
-}
-
-html[data-passage-bar-panel="test"]
-  .bible-yv-top-passage-skips.is-topbar
-  .bible-yv-top-passage-arrow {
-  width: var(--bible-chrome-trigger-h);
-  min-width: var(--bible-chrome-trigger-h);
-  height: var(--bible-chrome-trigger-h);
-  min-height: var(--bible-chrome-trigger-h);
-  margin: 0;
-  padding: 0;
-  display: grid;
-  place-items: center;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-}
-
-html[data-passage-bar-panel="test"]
-  .bible-yv-top-passage-skips.is-topbar
-  .bible-yv-top-passage-arrow:first-child {
-  grid-column: 1;
-}
-
-html[data-passage-bar-panel="test"]
-  .bible-yv-top-passage-skips.is-topbar
-  .bible-yv-top-passage-arrow:last-child {
-  grid-column: 3;
-}
-
-html[data-passage-bar-panel="test"]
-  .bible-yv-top-passage-skips.is-topbar
-  .bible-yv-top-passage-arrow-icon {
-  width: var(--bible-chrome-trigger-icon);
-  height: var(--bible-chrome-trigger-icon);
-  font-size: var(--bible-chrome-trigger-icon);
-  display: block;
-}
-
-/* Chevron Material: centro óptico ≈ geométrico */
-html[data-passage-bar-panel="test"]
-  .bible-yv-top-passage-skips.is-topbar
-  .bible-yv-top-passage-arrow:first-child
-  .bible-yv-top-passage-arrow-icon {
-  transform: translateX(-0.5px);
-}
-
-html[data-passage-bar-panel="test"]
-  .bible-yv-top-passage-skips.is-topbar
-  .bible-yv-top-passage-arrow:last-child
-  .bible-yv-top-passage-arrow-icon {
-  transform: translateX(0.5px);
-}
-
-html[data-passage-bar-panel="test"]
-  .bible-yv-top-passage-skips.is-topbar
-  .bible-yv-top-passage-arrow:hover:not(:disabled) {
-  background: var(--yv-chrome-hover);
-}
-
-html[data-passage-bar-panel="test"]
-  .bible-yv-top-passage-skips.is-topbar
-  .bible-yv-top-passage-arrow:disabled {
-  opacity: 0.42;
-  cursor: default;
-}
+/* Skips de capítulo: `.bible-passage-end-skips` + swipe (sem cluster top-bar). */
 
 html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   position: relative;
@@ -11846,17 +11698,6 @@ html[data-passage-bar-panel="test"] .bible-yv-top.is-free .bible-yv-passage-roll
   margin-inline-end: 0;
 }
 
-html[data-passage-bar-panel="test"]
-  .bible-yv-top.is-free
-  .bible-yv-top-passage-skips.is-topbar
-  .bible-yv-passage-roll {
-  margin-inline-start: 0;
-  margin-inline-end: 0;
-}
-
-html[data-passage-bar-panel="test"]
-  .bible-yv-top.is-free
-  > .bible-yv-top-passage-skips.is-topbar,
 html[data-passage-bar-panel="test"]
   .bible-yv-top.is-free
   .bible-yv-passage-chrome-cluster {
@@ -13177,8 +13018,7 @@ html[data-colortest*="BiblePassageChip:red"] .bible-yv-passage-chip {
 
 /* Chip/passagem à direita — hamburger fica à esquerda */
 .bible-yv-top.is-free .bible-yv-passage-chrome-cluster,
-.bible-yv-top.is-free > .bible-yv-passage-roll,
-.bible-yv-top.is-free > .bible-yv-top-passage-skips.is-topbar {
+.bible-yv-top.is-free > .bible-yv-passage-roll {
   margin-left: auto;
 }
 
@@ -13833,6 +13673,29 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   );
   scroll-padding-bottom: calc(
     var(--verse-actions-sheet-h, var(--bible-verse-actions-sheet-fallback, 340px)) + 12px +
+      env(safe-area-inset-bottom, 0px)
+  );
+}
+
+/* Return-nav (estudo): clearance = pill mode-tabs + gap + safe-area */
+.bible-reader--yv.has-study-return .bible-passage {
+  padding-bottom: calc(
+    var(--mode-tabs-pill-h, 56px) + var(--mode-tabs-float-gap, 14px) + 12px +
+      env(safe-area-inset-bottom, 0px)
+  );
+  scroll-padding-bottom: calc(
+    var(--mode-tabs-pill-h, 56px) + var(--mode-tabs-float-gap, 14px) + 10px +
+      env(safe-area-inset-bottom, 0px)
+  );
+}
+
+.app.is-bible-mode.is-narrow .bible-reader--yv.has-study-return .bible-passage {
+  padding-bottom: calc(
+    var(--mode-tabs-pill-h, 56px) + var(--mode-tabs-float-gap, 14px) + 12px +
+      env(safe-area-inset-bottom, 0px)
+  );
+  scroll-padding-bottom: calc(
+    var(--mode-tabs-pill-h, 56px) + var(--mode-tabs-float-gap, 14px) + 10px +
       env(safe-area-inset-bottom, 0px)
   );
 }
@@ -17135,7 +16998,8 @@ html[data-passage-bar-panel="test"]
   min-height: 0;
 }
 
-.app.is-bible-mode.is-narrow .bible-reader--yv.has-verse-actions .bible-yv-dock.is-floating {
+.app.is-bible-mode.is-narrow .bible-reader--yv.has-verse-actions .bible-yv-dock.is-floating,
+.app.is-bible-mode.is-narrow .bible-reader--yv.has-study-return .bible-yv-dock.is-floating {
   opacity: 0;
   pointer-events: none;
   transform: translate3d(0, 10px, 0);
