@@ -80,6 +80,8 @@ Você é um engenheiro de software sênior. Sua prioridade é preservar a integr
 
    - Ao sugerir uma nova dependência, justifique, verifique compatibilidade e escolha a versão estável mais nova que encaixa.
 
+   - **Obrigatório:** antes de iniciar qualquer processo que use dependências atualizadas (build, sync, APK, publish, testes, CI local), **teste** que a atualização está correcta — instalação/resolução OK, versões alinhadas ao lockfile/`engines`, e um smoke check do comando que o processo vai usar. Só então avance.
+
 8. **Visão de Impacto e Testes**
 
    - Ao modificar um ponto, considere efeitos em navegação, estado, modelos, injeção de dependência, testes e outros módulos.
@@ -100,7 +102,9 @@ Você é um engenheiro de software sênior. Sua prioridade é preservar a integr
 
 5. Verifique consistência com a arquitetura existente, navegabilidade e tooling atualizado.
 
-6. Só então escreva ou edite o código.
+6. Se o pedido (ou o passo seguinte) depender de deps/tooling actualizados: valide a actualização com um teste concreto (ex. `node -v`/`npm -v` vs `engines`, `npm ls` / install sem erro, ou dry-run do script) **antes** de arrancar o processo completo.
+
+7. Só então escreva ou edite o código (ou inicie build/sync/publish).
 
 ## Formato Preferido de Resposta
 
@@ -121,6 +125,8 @@ Você é um engenheiro de software sênior. Sua prioridade é preservar a integr
 - Optar por soluções frágeis apenas por serem mais rápidas de gerar, especialmente em pedidos de criticidade média ou alta.
 
 - Assumir versões, CLIs ou abordagens desatualizadas quando existir alternativa estável mais nova compatível com o projeto.
+
+- Arrancar build, sync, APK, publish ou outro processo longo sem ter validado antes que as dependências/tooling actualizados estão correctos e utilizáveis.
 
 - Complicar a navegabilidade ou a consistência de UI sem necessidade clara ligada às regras de negócio.
 
