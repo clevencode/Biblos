@@ -1,5 +1,6 @@
 package app.biblos.mobile;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -28,6 +29,7 @@ public class ApkInstallerPlugin extends Plugin {
   private static final String APK_NAME = "Biblos.apk";
   private static final int CONNECT_TIMEOUT_MS = 30_000;
   private static final int READ_TIMEOUT_MS = 120_000;
+  private static final int MAX_REDIRECTS = 5;
 
   private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
@@ -50,23 +52,26 @@ public class ApkInstallerPlugin extends Plugin {
       () -> {
         File apkFile = null;
         try {
-          apkFile = downloadToCache(downloadUrl);
+          apkFile = downloadToCache(downloadUrl, 0);
           File finalFile = apkFile;
-          getActivity()
-            .runOnUiThread(
-              () -> {
-                try {
-                  launchInstaller(finalFile);
-                  call.resolve();
-                } catch (Exception e) {
-                  call.reject("falha ao abrir instalador: " + e.getMessage(), e);
-                }
-              }
-            );
-        } catch (Exception e) {
-          if (apkFile != null && apkFile.exists()) {
-            // ignore: próximo update sobrescreve
+          Activity activity = getActivity();
+          if (activity == null) {
+            deleteQuietly(finalFile);
+            call.reject("activity indisponível");
+            return;
           }
+          activity.runOnUiThread(
+            () -> {
+              try {
+                launchInstaller(finalFile);
+                call.resolve();
+              } catch (Exception e) {
+                call.reject("falha ao abrir instalador: " + e.getMessage(), e);
+              }
+            }
+          );
+        } catch (Exception e) {
+          deleteQuietly(apkFile);
           call.reject("falha no download: " + e.getMessage(), e);
         }
       }
@@ -90,7 +95,12 @@ public class ApkInstallerPlugin extends Plugin {
     getContext().startActivity(intent);
   }
 
-  private File downloadToCache(String downloadUrl) throws Exception {
+  private File downloadToCache(String downloadUrl, int redirectDepth)
+    throws Exception {
+    if (redirectDepth > MAX_REDIRECTS) {
+      throw new IllegalStateException("demasiados redirects (" + MAX_REDIRECTS + ")");
+    }
+
     File target = new File(getContext().getCacheDir(), APK_NAME);
     if (target.exists() && !target.delete()) {
       throw new IllegalStateException("não foi possível apagar APK anterior");
@@ -118,10 +128,11 @@ public class ApkInstallerPlugin extends Plugin {
       ) {
         String location = conn.getHeaderField("Location");
         conn.disconnect();
+        conn = null;
         if (location == null || location.isEmpty()) {
           throw new IllegalStateException("redirect sem Location");
         }
-        return downloadToCache(location);
+        return downloadToCache(location, redirectDepth + 1);
       }
 
       if (code < 200 || code >= 300) {
@@ -141,13 +152,29 @@ public class ApkInstallerPlugin extends Plugin {
       }
 
       if (!target.exists() || target.length() == 0) {
+        deleteQuietly(target);
         throw new IllegalStateException("APK vazio após download");
       }
       return target;
+    } catch (Exception e) {
+      deleteQuietly(target);
+      throw e;
     } finally {
       if (conn != null) {
         conn.disconnect();
       }
+    }
+  }
+
+  private static void deleteQuietly(File file) {
+    if (file == null) return;
+    try {
+      if (file.exists()) {
+        //noinspection ResultOfMethodCallIgnored
+        file.delete();
+      }
+    } catch (Exception ignored) {
+      /* próximo update tenta apagar de novo */
     }
   }
 

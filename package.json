@@ -1,7 +1,7 @@
 {
   "name": "biblos",
   "private": true,
-  "version": "0.2.8",
+  "version": "0.2.9",
   "type": "module",
   "packageManager": "npm@12.2.2",
   "engines": {
@@ -19,6 +19,7 @@
     "mobile:apk:release": "npm run mobile:sync && npm run mobile:gradle:release",
     "mobile:apk:publish": "node scripts/publish-apk-r2.mjs",
     "mobile:apk:release:publish": "npm run mobile:apk:release && npm run mobile:apk:publish",
+    "mobile:release:prepare": "node scripts/bump-android-version.mjs",
     "mobile:gradle": "powershell -ExecutionPolicy Bypass -File scripts/gradle-android.ps1 assembleDebug --no-daemon",
     "mobile:gradle:release": "powershell -ExecutionPolicy Bypass -File scripts/gradle-android.ps1 assembleRelease --no-daemon",
     "mobile:install": "powershell -ExecutionPolicy Bypass -File scripts/install-android.ps1",
