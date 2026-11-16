@@ -20,7 +20,7 @@
 
 A passagem bloqueia interacção quando overlays estão abertos (`readerSurfaceChrome.passageInputBlocked`).
 
-Navegação de capítulo: **swipe** horizontal na passagem + botões `.bible-passage-end-skips` no fim (sem FAB ‹ ›). Swipe consumido não abre Options.
+Navegação de capítulo: `.bible-passage-start-skips` (anterior, após o cabeçalho) + `.bible-passage-end-skips` (seguinte, no fim). Sem swipe; sem FAB ‹ ›.
 
 ---
 
@@ -37,6 +37,18 @@ Navegação de capítulo: **swipe** horizontal na passagem + botões `.bible-pas
 | Cor editor | `src/components/CircularColorEditor.tsx` (marcas) |
 | Scroll versículo | refs `pendingScrollVerse`, `verseScrollSeq` em `BibleReaderView` |
 | Chrome overlay | `src/bible/viewState/readerSurfaceChrome.ts` |
+| Study jump (LIFO) | `src/bible/viewState/studyJumpStack.ts` |
+
+---
+
+## Study jump (retorno de estudo)
+
+Pilha LIFO em `studyJumpStack.ts` (`pushStudyJumpStep` / `popStudyJumpStep` / `clearStudyJumpSteps`; hook `useStudyJumpStack`).
+
+- **Push** ao saltar a partir de histórico, marcas, pesquisa ou Référence (origem = passagem actual + `returnTo`).
+- **UI** `.bible-study-return-nav` no dock — “voltar” restaura livro/capítulo/verso + scrolls; reabre a superfície de origem (`refs` → Options/Référence; `history` / `marks` / `word_search` → o sheet respectivo, não Options).
+
+Contrato Options: `verseActionsOpen` força chrome visível mas **não** põe `passageInputBlocked` (pass-through). Lista Verset espelha `chapterMarks` (`is-marked`). Ver `npm run test:study-nav`.
 
 ---
 
@@ -120,7 +132,7 @@ Definida em `.bible-reader--yv` + shell. **L0 canvas = navbar** (`--bible-nav-su
 | L2 overlay | `--yv-overlay-surface` + border + shadow | Painéis picker / word-search / tools |
 | L3 inverse | `--yv-audio-fab-active-*` | Play a tocar |
 | L4 mark | `--yv-highlight`, `--verse-mark` | Marcas / ênfase no texto |
-| FAB shadow | `--yv-audio-fab-shadow` | Play (skips = end-of-passage + swipe) |
+| FAB shadow | `--yv-audio-fab-shadow` | Play (skips = start/end-of-passage) |
 
 Selecção de versículo = underline (accent); **não** caixa azul de sistema. Cor azul no texto = marca do utilizador (`--verse-mark`).
 

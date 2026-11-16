@@ -7,8 +7,6 @@ import {
   useRef,
   useState,
   type CSSProperties,
-  type MouseEvent as ReactMouseEvent,
-  type PointerEvent as ReactPointerEvent,
 } from "react";
 import { flushSync } from "react-dom";
 import { HeaderTriggerButton } from "./HeaderTriggerButton";
@@ -63,8 +61,10 @@ import {
   versionBadgeFor,
 } from "../bible/readingScope";
 import {
+  studyJumpReturnOverlay,
   useStudyJumpStack,
   type PendingStudyReturn,
+  type StudyJumpReturnTo,
 } from "../bible/viewState/studyJumpStack";
 import { useUiLocale } from "../i18n/UiLocaleContext";
 import { notifyUiLocale, subscribeUiLocale } from "../i18n/uiLocale";
@@ -888,14 +888,6 @@ export function BibleReaderView({
   const statusId = useId();
   const highlightRef = useRef<HTMLElement | null>(null);
   const passageScrollRef = useRef<HTMLElement | null>(null);
-  /** Swipe horizontal no scroller → capítulo / passo do plano. */
-  const chapterSwipeRef = useRef<{
-    pointerId: number;
-    x: number;
-    y: number;
-  } | null>(null);
-  /** Após swipe consumido: ignora o click sintético no verso. */
-  const suppressVerseClickAfterSwipeRef = useRef(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioBookRef = useRef<string>("");
   const lastScrollTop = useRef(0);
@@ -1666,6 +1658,7 @@ export function BibleReaderView({
     });
     closePicker({ restoreFocus: false });
     pushStudyOriginFromCurrent({
+      returnTo: "word_search",
       dest: {
         bookId: parts.bookId,
         chapterId: String(hit.chapter),
@@ -1713,6 +1706,7 @@ export function BibleReaderView({
    */
   function pushStudyOriginFromCurrent(opts?: {
     refsScrollTop?: number;
+    returnTo?: StudyJumpReturnTo;
     dest?: { bookId: string; chapterId: string; verse?: number | null };
   }): number | null {
     const fromVerse =
@@ -1748,6 +1742,7 @@ export function BibleReaderView({
       label,
       refsScrollTop,
       passageScrollTop: passageScrollRef.current?.scrollTop ?? 0,
+      returnTo: opts?.returnTo ?? "refs",
     });
     return fromVerse;
   }
@@ -1764,6 +1759,7 @@ export function BibleReaderView({
     if (!loc || !isUsfmBookId(loc.bookId)) return;
 
     pushStudyOriginFromCurrent({
+      returnTo: "refs",
       refsScrollTop: meta?.refsScrollTop,
       dest: {
         bookId: loc.bookId,
@@ -2188,7 +2184,7 @@ export function BibleReaderView({
     setVerseActionsTab("verse");
   }, [showCreateCard]);
 
-  /* Após pop: abrir Options → Référence só com capítulo origem carregado. */
+  /* Após pop: reabrir a superfície de origem só com capítulo carregado. */
   useEffect(() => {
     const pending = pendingStudyReturn;
     if (!pending) return;
@@ -2204,24 +2200,28 @@ export function BibleReaderView({
     );
     if (!verseReady) return;
 
-    const scrollKey = verseStudyKey(
-      textVersion,
-      pending.step.bookId,
-      pending.step.chapterId,
-      pending.step.verse,
-    );
-    setRefsListScroll(scrollKey, pending.step.refsScrollTop);
-    setRefsRestoreScrollTop(pending.step.refsScrollTop);
-    preferRefsTabOnOpenRef.current = true;
-    setVerseActionsTab("refs");
-    setSelection([pending.step.verse]);
+    const returnTo = pending.step.returnTo;
+    setShareSheetOpen(false);
     setHighlightVerse(pending.step.verse);
     setHighlightVerseEnd(null);
-    setShareSheetOpen(false);
-    openOverlay({
-      type: "verse_actions",
-      selectedVerseIds: [String(pending.step.verse)],
-    });
+
+    if (returnTo === "refs") {
+      const scrollKey = verseStudyKey(
+        textVersion,
+        pending.step.bookId,
+        pending.step.chapterId,
+        pending.step.verse,
+      );
+      setRefsListScroll(scrollKey, pending.step.refsScrollTop);
+      setRefsRestoreScrollTop(pending.step.refsScrollTop);
+      preferRefsTabOnOpenRef.current = true;
+      setVerseActionsTab("refs");
+      setSelection([pending.step.verse]);
+    } else {
+      setSelection(null);
+    }
+
+    openOverlay(studyJumpReturnOverlay(pending.step));
     setPendingStudyReturn(null);
   }, [
     pendingStudyReturn,
@@ -2311,93 +2311,6 @@ export function BibleReaderView({
       showCreateCard,
     ],
   );
-
-  const chapterSwipeBlocked =
-    presentation.inFlight ||
-    hasActiveModal ||
-    shareSheetOpen ||
-    showCreateCard ||
-    pickerChrome.controlsDisabled ||
-    surfaceChrome.passageInputBlocked ||
-    dayNoteOpen;
-
-  const releasePassageSwipeCapture = (
-    event: ReactPointerEvent<HTMLElement>,
-  ) => {
-    try {
-      if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-        event.currentTarget.releasePointerCapture(event.pointerId);
-      }
-    } catch {
-      /* ignore */
-    }
-  };
-
-  const onPassageChapterSwipeStart = (
-    event: ReactPointerEvent<HTMLElement>,
-  ) => {
-    if (!event.isPrimary) return;
-    if (event.pointerType === "mouse" && event.button !== 0) return;
-    const target = event.target;
-    /* End-skips / controlos: não iniciar swipe (evita competir com o click). */
-    if (
-      target instanceof Element &&
-      target.closest("button, a, input, textarea, select, label")
-    ) {
-      chapterSwipeRef.current = null;
-      return;
-    }
-    chapterSwipeRef.current = {
-      pointerId: event.pointerId,
-      x: event.clientX,
-      y: event.clientY,
-    };
-    try {
-      event.currentTarget.setPointerCapture(event.pointerId);
-    } catch {
-      /* ignore */
-    }
-  };
-
-  const onPassageChapterSwipeEnd = (
-    event: ReactPointerEvent<HTMLElement>,
-  ) => {
-    const start = chapterSwipeRef.current;
-    if (!start || start.pointerId !== event.pointerId) return;
-    chapterSwipeRef.current = null;
-    releasePassageSwipeCapture(event);
-    if (chapterSwipeBlocked) return;
-    const dx = event.clientX - start.x;
-    const dy = event.clientY - start.y;
-    const absX = Math.abs(dx);
-    const absY = Math.abs(dy);
-    /* Limiar + eixo: evita conflito com scroll vertical. */
-    if (absX < 56 || absX <= absY * 1.4) return;
-    const delta: -1 | 1 = dx < 0 ? 1 : -1;
-    if (planReading) {
-      if (delta < 0 && planReading.isFirst) return;
-    } else if (delta < 0 ? !canPrev : !canNext) {
-      return;
-    }
-    suppressVerseClickAfterSwipeRef.current = true;
-    event.preventDefault();
-    planOrChapterSkip(delta);
-  };
-
-  const onPassageChapterSwipeCancel = (
-    event: ReactPointerEvent<HTMLElement>,
-  ) => {
-    if (chapterSwipeRef.current?.pointerId !== event.pointerId) return;
-    chapterSwipeRef.current = null;
-    releasePassageSwipeCapture(event);
-  };
-
-  const onPassageClickCapture = (event: ReactMouseEvent<HTMLElement>) => {
-    if (!suppressVerseClickAfterSwipeRef.current) return;
-    suppressVerseClickAfterSwipeRef.current = false;
-    event.preventDefault();
-    event.stopPropagation();
-  };
 
   function dismissPassageSurfaceOverlay() {
     markOverlayDismissSwallow();
@@ -2570,11 +2483,26 @@ export function BibleReaderView({
     openOverlay({ type: "marks" });
   }
 
+  function studyReturnSurfaceLabel(returnTo: StudyJumpReturnTo): string {
+    switch (returnTo) {
+      case "history":
+        return t("history.title");
+      case "marks":
+        return t("profile.marks");
+      case "word_search":
+        return t("word.short");
+      case "refs":
+      default:
+        return t("verse.tabRefs");
+    }
+  }
+
   function renderStudyReturnNav() {
     if (!studyJumpTop) return null;
+    const surfaceLabel = studyReturnSurfaceLabel(studyJumpTop.returnTo);
     const actionLabel = t("study.returnAction");
     const fullLabel = t("study.returnToLabel", {
-      label: studyJumpTop.label,
+      label: surfaceLabel,
     });
     const depthLabel =
       studyJumpDepth > 1
@@ -2596,7 +2524,7 @@ export function BibleReaderView({
             />
             <span className="bible-study-return-nav-copy">
               <span className="bible-study-return-nav-verb">{actionLabel}</span>
-              <span className="bible-study-return-nav-ref">{studyJumpTop.label}</span>
+              <span className="bible-study-return-nav-ref">{surfaceLabel}</span>
             </span>
             {studyJumpDepth > 1 ? (
               <span
@@ -2830,6 +2758,10 @@ export function BibleReaderView({
                     {passage.verses.map((verse) => {
                       const on = selectedVerses.includes(verse.number);
                       const preview = String(verse.text || "").trim();
+                      const markColor = chapterMarks.get(verse.number);
+                      const markDisplay = markColor
+                        ? adaptVerseColorForTheme(markColor, uiTheme)
+                        : null;
                       return (
                         <li
                           key={verse.number}
@@ -2840,7 +2772,20 @@ export function BibleReaderView({
                             role="option"
                             data-verse-select={verse.number}
                             aria-selected={on}
-                            className={`bible-verse-select-item${on ? " is-on" : ""}`}
+                            className={[
+                              "bible-verse-select-item",
+                              on ? "is-on" : "",
+                              markDisplay ? "is-marked" : "",
+                            ]
+                              .filter(Boolean)
+                              .join(" ")}
+                            style={
+                              markDisplay
+                                ? ({
+                                    ["--verse-mark" as string]: markDisplay,
+                                  } as CSSProperties)
+                                : undefined
+                            }
                             onClick={() => selectVerse(verse.number)}
                           >
                             <span className="bible-verse-select-num" aria-hidden>
@@ -3669,6 +3614,7 @@ export function BibleReaderView({
               restoreHistoryFocusRef.current = false;
               closeOverlay();
               pushStudyOriginFromCurrent({
+                returnTo: "history",
                 dest: {
                   bookId: destBookId,
                   chapterId: destChapterId,
@@ -3696,6 +3642,7 @@ export function BibleReaderView({
           onSelect={({ versionId, bookId: destBookId, chapterId: destChapterId, verse }) => {
             closeOverlay();
             pushStudyOriginFromCurrent({
+              returnTo: "marks",
               dest: {
                 bookId: destBookId,
                 chapterId: destChapterId,
@@ -3781,10 +3728,6 @@ export function BibleReaderView({
             ["--verse-tint" as string]: actionTone.tint,
           } as CSSProperties
         }
-        onPointerDown={onPassageChapterSwipeStart}
-        onPointerUp={onPassageChapterSwipeEnd}
-        onPointerCancel={onPassageChapterSwipeCancel}
-        onClickCapture={onPassageClickCapture}
         onClick={() => {
           if (takeOverlayDismissSwallow()) return;
           if (surfaceChrome.passageInputBlocked) return;
@@ -3796,6 +3739,17 @@ export function BibleReaderView({
           <p className="bible-book-name">{bookTitle}</p>
           <p className="bible-chapter-num">{chapterId}</p>
         </header>
+
+        {passage?.verses?.length || passage?.content ? (
+          <nav
+            className="bible-passage-start-skips"
+            aria-label={
+              planReading ? t("bible.planProgress") : t("bible.chapters")
+            }
+          >
+            {renderPassageEndSkipButton(-1)}
+          </nav>
+        ) : null}
 
         {showOfflineChapterGateUi ? (
           <BibleOfflineChapterGate
@@ -3927,7 +3881,6 @@ export function BibleReaderView({
               planReading ? t("bible.planProgress") : t("bible.chapters")
             }
           >
-            {renderPassageEndSkipButton(-1)}
             {renderPassageEndSkipButton(1)}
           </nav>
         ) : null}

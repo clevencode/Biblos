@@ -10,3 +10,4 @@ export * from "./passagePickerChrome";
 export * from "./readerSurfaceChrome";
 export * from "./planReaderChrome";
 export * from "./pickerVerseOptions";
+export * from "./studyJumpStack";

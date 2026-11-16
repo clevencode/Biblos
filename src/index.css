@@ -383,8 +383,10 @@ html[data-theme="dark"] .biblos-shell {
   ):not(.hdr-trigger.is-active):not(.hdr-trigger.is-open):not(
     .hdr-trigger.is-on
   ):not(.bible-yv-top):not(.bible-yv-dock-play):not(.bible-yv-audio-player):not(
-    .bible-passage-end-skips
-  ):not(.bible-passage-end-skips *):not(.bible-yv-tools-menu-btn):not(
+    .bible-passage-start-skips
+  ):not(.bible-passage-start-skips *):not(.bible-passage-end-skips):not(
+    .bible-passage-end-skips *
+  ):not(.bible-yv-tools-menu-btn):not(
     .mode-tabs-pill
   ):not(.mode-tabs-item):not(.bible-verse-actions-nav-pill) {
   box-shadow: none !important;
@@ -11353,7 +11355,7 @@ html[data-passage-bar-panel="test"] .bible-yv-top-passage-bar.is-chip-trigger {
   align-items: center;
 }
 
-/* Skips de capítulo: `.bible-passage-end-skips` + swipe (sem cluster top-bar). */
+/* Skips de capítulo: `.bible-passage-start-skips` (prev) + `.bible-passage-end-skips` (next). */
 
 html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   position: relative;
@@ -13782,15 +13784,23 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   color: var(--yv-text);
 }
 
+.bible-passage-start-skips,
 .bible-passage-end-skips {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 10px;
   width: 100%;
-  margin: 1.75rem 0 0;
   padding: 8px 0 4px;
   border: 0;
   background: transparent;
+}
+
+.bible-passage-start-skips {
+  margin: 0 0 1rem;
+}
+
+.bible-passage-end-skips {
+  margin: 1.75rem 0 0;
 }
 
 .bible-passage-end-skip {
@@ -13901,6 +13911,15 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
 .bible-reader--yv.has-verse-actions .bible-verses.is-dimming .bible-verse:not(.is-selected) {
   opacity: 0.36;
   color: color-mix(in srgb, var(--yv-text) 68%, var(--yv-muted));
+}
+
+.bible-reader--yv.has-verse-actions
+  .bible-verses.is-dimming
+  .bible-verse.is-marked:not(.is-selected) {
+  opacity: 1;
+  color: var(--yv-text);
+  background: color-mix(in srgb, var(--verse-mark, var(--accent)) 12%, transparent);
+  box-shadow: inset 3px 0 0 var(--verse-mark, var(--accent));
 }
 
 .bible-reader--yv.has-verse-actions .bible-verses.is-dimming .bible-verse.is-selected {
@@ -14581,14 +14600,36 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   );
 }
 
+.bible-verse-select-item.is-marked {
+  opacity: 1;
+  color: var(--yv-text, var(--text));
+  background: color-mix(in srgb, var(--verse-mark, var(--accent)) 12%, transparent);
+  box-shadow: inset 3px 0 0 var(--verse-mark, var(--accent));
+}
+
+.bible-verse-select-list.is-dimming
+  .bible-verse-select-item.is-marked:not(.is-on) {
+  opacity: 1;
+  color: var(--yv-text, var(--text));
+}
+
 .bible-verse-select-item:hover {
   background: transparent;
+}
+
+.bible-verse-select-item.is-marked:hover {
+  background: color-mix(in srgb, var(--verse-mark, var(--accent)) 12%, transparent);
 }
 
 .bible-verse-select-item.is-on {
   opacity: 1;
   color: var(--yv-text, var(--text));
   background: transparent;
+}
+
+.bible-verse-select-item.is-on.is-marked {
+  background: color-mix(in srgb, var(--verse-mark, var(--accent)) 16%, transparent);
+  box-shadow: inset 3px 0 0 var(--verse-mark, var(--accent));
 }
 
 .bible-verse-select-item:focus-visible {

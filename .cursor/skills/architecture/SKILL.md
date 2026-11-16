@@ -70,6 +70,8 @@ Você é um engenheiro de software sênior. Sua prioridade é preservar a integr
 
 7. **Dependências e Versões — sempre o mais atual possível**
 
+   - Fonte de verdade do runtime: `package.json` `engines` + `.nvmrc` / `packageManager` (Node ≥ 22.22.2, npm ≥ 12).
+
    - Trabalhe com as ferramentas e runtimes mais recentes compatíveis com o stack.
 
    - Antes de fixar ou sugerir versão, prefira a última estável da linha major já adotada (ou a major nova se o projeto já apontar para ela).
