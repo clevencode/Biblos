@@ -87,9 +87,13 @@ const remote = `${bucket}/${key}`;
 console.log(`publish-apk-r2: ${APK}`);
 console.log(`publish-apk-r2: → r2://${remote}`);
 
-// Account via env CLOUDFLARE_ACCOUNT_ID (wrangler lê automaticamente; sem --account-id).
-// Sem `;` solto no argv: com `shell: true` o bash parte o comando.
 const contentDisposition = "attachment; filename=Biblos.apk";
+const isWin = process.platform === "win32";
+/** Em Windows + shell, `;` parte o comando — o valor tem de ir entre aspas. */
+const contentDispositionArg = isWin
+  ? `--content-disposition="${contentDisposition}"`
+  : `--content-disposition=${contentDisposition}`;
+
 const args = [
   "--yes",
   "wrangler",
@@ -100,19 +104,23 @@ const args = [
   `--file=${APK}`,
   "--remote",
   "--content-type=application/vnd.android.package-archive",
-  `--content-disposition=${contentDisposition}`,
+  contentDispositionArg,
   "--cache-control=no-cache",
 ];
 
-// Windows: shell para resolver npx.cmd. Unix/CI: sem shell (evita split em `;`).
+// Windows: shell=true para resolver npx.cmd (shell=false → EINVAL).
+// Unix/CI: shell=false para o `;` do disposition não partir o argv.
 const result = spawnSync("npx", args, {
   cwd: ROOT,
   stdio: "inherit",
-  shell: process.platform === "win32",
+  shell: isWin,
   env: process.env,
-  // Windows + shell: aspas protegem o `;` do content-disposition.
-  windowsVerbatimArguments: false,
 });
+
+if (result.error) {
+  console.error("publish-apk-r2: spawn falhou:", result.error.message);
+  process.exit(1);
+}
 
 if (result.status !== 0) {
   console.error("publish-apk-r2: falhou (wrangler). Confirma token R2 Edit e o nome do bucket.");
