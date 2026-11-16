@@ -113,11 +113,13 @@ Abre com overlay `verse_actions` + seleção + texto (não share):
 
 ---
 
-## Chrome de leitura (scroll)
+## Chrome de leitura (microinterações)
 
-- `chromeHiddenRef` — esconde header/dock ao scroll; `forceChrome` impede quando overlays.
-- Tap na passagem com chrome escondido → `setReadingChrome(false, true)`.
-- `focusDim` limpa no primeiro scroll do utilizador (`USER_SCROLL_PX`).
+- **Sem hide-on-scroll** — top/dock ficam estáveis; nav shell some só com modal / `:has` (menu, Options, study-return).
+- `forceChrome` / `readerSurfaceChrome.forceChromeVisible` — Options e overlays forçam chrome visível.
+- Tokens: `--yv-chrome-ms`, `--bible-scrim-ms`, `--bible-press-ms`, `--bible-dim-ms`, `--top-sheet-ease`.
+- `focusDim` limpa no primeiro scroll do utilizador (`FOCUS_DIM_CLEAR_PX`).
+- Options = pass-through: sem `scale` da passagem; sheets full-bleed = snap (família menu).
 
 ---
 

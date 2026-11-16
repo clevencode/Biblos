@@ -109,16 +109,51 @@
       #splash-overlay[data-hidden="true"] {
         opacity: 0;
       }
+      @media (prefers-reduced-motion: reduce) {
+        #splash-overlay { transition: none; }
+        .boot-progress-bar { animation: none; width: 55%; left: 22.5%; }
+      }
       .boot-brand { margin: 0; font-size: 1.4rem; font-weight: 700; letter-spacing: -0.03em; }
       /* Alinhado a --muted (tone-400 dark / tone-500 light) */
       .boot-muted { margin: 0; color: color-mix(in srgb, #0d1117 40%, #ffffff); font-size: 0.9rem; }
       html[data-theme="light"] .boot-muted { color: color-mix(in srgb, #0d1117 55%, #ffffff); }
+      .boot-progress {
+        position: relative;
+        width: 7.5rem;
+        height: 2px;
+        margin: 10px auto 0;
+        overflow: hidden;
+        border-radius: 999px;
+        background: color-mix(in srgb, currentColor 14%, transparent);
+      }
+      .boot-progress-bar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 0;
+        border-radius: inherit;
+        background: #38bdf8;
+        box-shadow: 0 0 8px color-mix(in srgb, #38bdf8 65%, transparent);
+        animation: boot-slide-bar 0.9s ease-in-out infinite;
+      }
+      html[data-theme="light"] .boot-progress-bar {
+        background: #0284c7;
+        box-shadow: 0 0 8px color-mix(in srgb, #0284c7 45%, transparent);
+      }
+      @keyframes boot-slide-bar {
+        0% { left: 0%; width: 0%; }
+        50% { left: 25%; width: 55%; }
+        100% { left: 100%; width: 0%; }
+      }
     </style>
   </head>
   <body>
-    <div id="splash-overlay" class="boot-shell" aria-busy="true">
+    <div id="splash-overlay" class="boot-shell" aria-busy="true" aria-label="Ouverture">
       <p class="boot-brand">Biblos</p>
-      <p class="boot-muted">Ouverture…</p>
+      <div class="boot-progress" role="progressbar" aria-label="Ouverture">
+        <span class="boot-progress-bar" aria-hidden="true"></span>
+      </div>
     </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>

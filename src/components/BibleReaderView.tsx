@@ -177,8 +177,7 @@ function clampFontSize(n: number) {
 const BIBLE_HEAD_COMPACT_ENTER_PX = 52;
 const BIBLE_HEAD_COMPACT_EXIT_PX = 14;
 
-/** Locks curtos ao forçar show/hide do chrome (modal / restore). */
-const CHROME_HIDE_LOCK_MS = 200;
+/** Lock curto ao forçar show do chrome (modal / restore). Hide-on-scroll desactivado. */
 const CHROME_SHOW_LOCK_MS = 120;
 const CHROME_PROGRAMMATIC_LOCK_MS = 320;
 /** Scroll do utilizador (px) para desligar o texto opaco do verso focado. */
@@ -891,7 +890,6 @@ export function BibleReaderView({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioBookRef = useRef<string>("");
   const lastScrollTop = useRef(0);
-  const scrollAcc = useRef(0);
   const chromeHiddenRef = useRef(false);
   const chromeLockUntil = useRef(0);
   /** Bloqueia limpar focus-dim durante scroll programático (independente do chrome). */
@@ -3153,7 +3151,6 @@ export function BibleReaderView({
         root.scrollTop = restoreTop;
         pendingPassageScrollRestoreRef.current = null;
         lastScrollTop.current = root.scrollTop;
-        scrollAcc.current = 0;
         const lockUntil = performance.now() + CHROME_PROGRAMMATIC_LOCK_MS;
         chromeLockUntil.current = lockUntil;
         suppressFocusDimClearUntil.current = lockUntil;
@@ -3183,7 +3180,6 @@ export function BibleReaderView({
       });
     }
     lastScrollTop.current = root.scrollTop;
-    scrollAcc.current = 0;
     const lockUntil = performance.now() + CHROME_PROGRAMMATIC_LOCK_MS;
     chromeLockUntil.current = lockUntil;
     suppressFocusDimClearUntil.current = lockUntil;
@@ -3294,10 +3290,10 @@ export function BibleReaderView({
     // Lock após toggle: não aceitar o sentido contrário imediatamente.
     if (!force && now < chromeLockUntil.current) return;
     chromeHiddenRef.current = hidden;
-    chromeLockUntil.current = now + (hidden ? CHROME_HIDE_LOCK_MS : CHROME_SHOW_LOCK_MS);
+    /* Hide-on-scroll off: só show forçado / restore; nav some via modal + CSS :has. */
+    chromeLockUntil.current = now + CHROME_SHOW_LOCK_MS;
 
     // flushSync: leitor + shell no mesmo paint — evita race classList vs className.
-    // Nav shell: só modal ativo esconde (não o scroll).
     flushSync(() => {
       setChromeHidden(hidden);
       onReadingChromeChange?.(hasActiveModalRef.current || hidden);
@@ -3325,7 +3321,6 @@ export function BibleReaderView({
   useEffect(() => {
     setReadingChrome(false, true);
     lastScrollTop.current = passageScrollRef.current?.scrollTop ?? 0;
-    scrollAcc.current = 0;
     chromeLockUntil.current = performance.now() + CHROME_PROGRAMMATIC_LOCK_MS;
     syncHeadCompact(passageScrollRef.current?.scrollTop ?? 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- setReadingChrome is a render-local helper
@@ -3338,7 +3333,6 @@ export function BibleReaderView({
 
   useEffect(() => {
     if (!active) {
-      scrollAcc.current = 0;
       setReadingChrome(false, true);
       return;
     }
@@ -3348,7 +3342,6 @@ export function BibleReaderView({
 
     // Sync baseline so a restored/programmatic offset doesn't look like a huge down-scroll.
     lastScrollTop.current = root.scrollTop;
-    scrollAcc.current = 0;
     syncHeadCompact(root.scrollTop);
 
     const onScroll = () => {
@@ -3376,8 +3369,7 @@ export function BibleReaderView({
           clearFocusDimOnUserScroll();
         }
 
-        // Sem hide-at-scroll: top / dock / nav convexa ficam sempre visíveis.
-        scrollAcc.current = 0;
+        /* Chrome/nav: estáveis no scroll; hide só por modal / :has. */
         if (chromeHiddenRef.current) setReadingChrome(false, true);
       });
     };
