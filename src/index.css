@@ -13791,6 +13791,7 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   overflow: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
   width: 100%;
   max-width: 40rem;
   margin: 0 auto;
@@ -13916,6 +13917,85 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   letter-spacing: var(--type-display-tracking);
   font-optical-sizing: auto;
   color: var(--yv-text);
+}
+
+.bible-passage-end-skips {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  width: 100%;
+  margin: 1.75rem 0 0;
+  padding: 8px 0 4px;
+  border: 0;
+  background: transparent;
+}
+
+.bible-passage-end-skip {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--mobile-touch, 44px);
+  margin: 0;
+  padding: 10px 12px;
+  border: var(--stroke-elevated, 1px solid color-mix(in srgb, var(--line) 75%, transparent));
+  border-radius: 14px;
+  background: var(--yv-chrome-surface, var(--surface));
+  color: var(--yv-text, var(--text));
+  font-family: var(--font-ui);
+  text-align: start;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.bible-passage-end-skip.is-next {
+  justify-content: flex-end;
+  text-align: end;
+}
+
+.bible-passage-end-skip:hover:not(:disabled) {
+  background: color-mix(
+    in srgb,
+    var(--yv-chrome-surface, var(--surface)) 88%,
+    var(--yv-text, var(--text)) 12%
+  );
+}
+
+.bible-passage-end-skip:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.bible-passage-end-skip-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.bible-passage-end-skip-action {
+  font-size: var(--type-caption-size, 0.75rem);
+  font-weight: 600;
+  letter-spacing: var(--type-caption-tracking, 0);
+  line-height: 1.2;
+  color: var(--muted);
+}
+
+.bible-passage-end-skip-dest {
+  font-size: var(--type-label-size, 0.875rem);
+  font-weight: 700;
+  letter-spacing: var(--type-label-tracking, 0);
+  line-height: 1.25;
+  color: var(--yv-text, var(--text));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bible-passage-end-skip-icon {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
 }
 
 .bible-reader--yv .bible-verses {

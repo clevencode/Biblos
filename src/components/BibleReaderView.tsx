@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
 } from "react";
 import { flushSync } from "react-dom";
 import { HeaderTriggerButton } from "./HeaderTriggerButton";
@@ -886,6 +887,12 @@ export function BibleReaderView({
   const statusId = useId();
   const highlightRef = useRef<HTMLElement | null>(null);
   const passageScrollRef = useRef<HTMLElement | null>(null);
+  /** Swipe horizontal no scroller → capítulo / passo do plano. */
+  const chapterSwipeRef = useRef<{
+    pointerId: number;
+    x: number;
+    y: number;
+  } | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioBookRef = useRef<string>("");
   const lastScrollTop = useRef(0);
@@ -1395,113 +1402,85 @@ export function BibleReaderView({
     goAdjacent(delta);
   }
 
-  function renderPassageChapterSkipButton(delta: -1 | 1) {
+  function adjacentPassageLabel(delta: -1 | 1): string | null {
+    const next = adjacentChapter(books, bookId, chapterId, delta);
+    if (!next) return null;
+    const title =
+      books.find((b) => b.id.toUpperCase() === next.bookId.toUpperCase())
+        ?.title || next.bookId;
+    return formatPassagePillRef(title, next.chapterId);
+  }
+
+  function renderPassageEndSkipButton(delta: -1 | 1) {
     const chapterSkipIcons = passageBarSkipIcons();
     const planSkips = Boolean(planReading);
     const stageComplete = Boolean(planSkips && planReading?.isStageLast);
     const isPrev = delta === -1;
-    const planDisabled = planSkips
+    const disabled = planSkips
       ? (isPrev ? planReading!.isFirst : false) || presentation.inFlight
       : (isPrev ? !canPrev : !canNext) || pickerChrome.controlsDisabled;
     const nextIsCheck = !isPrev && stageComplete;
     const stageTitle = planReading?.stageName?.trim();
+    const destLabel = planSkips ? null : adjacentPassageLabel(delta);
+    const actionLabel = planSkips
+      ? isPrev
+        ? t("bible.planPrev")
+        : stageComplete
+          ? planReading!.isLast
+            ? stageTitle
+              ? `Terminer · ${stageTitle}`
+              : "Terminer"
+            : stageTitle
+              ? `Terminer · ${stageTitle}`
+              : t("bible.planNext")
+          : t("bible.planNext")
+      : isPrev
+        ? t("bible.prevChapter")
+        : t("bible.nextChapter");
     return (
       <button
         key={isPrev ? "prev" : "next"}
         type="button"
-        className={`bible-yv-top-passage-arrow${nextIsCheck ? " is-stage-complete" : ""}`}
+        className={`bible-passage-end-skip${isPrev ? " is-prev" : " is-next"}${
+          nextIsCheck ? " is-stage-complete" : ""
+        }`}
         onClick={() => planOrChapterSkip(delta)}
-        disabled={planDisabled}
+        disabled={disabled}
         aria-label={
-          planSkips
-            ? isPrev
-              ? t("bible.planPrev")
-              : stageComplete
-                ? planReading!.isLast
-                  ? stageTitle
-                    ? `Terminer l’étape · ${stageTitle}`
-                    : "Terminer la dernière étape"
-                  : stageTitle
-                    ? `Terminer l’étape · ${stageTitle}`
-                    : "Terminer l’étape"
-                : t("bible.planNext")
-            : isPrev
-              ? t("bible.prevChapter")
-              : t("bible.nextChapter")
+          destLabel ? `${actionLabel} · ${destLabel}` : actionLabel
         }
       >
-        <YvIcon
-          name={
-            isPrev
-              ? chapterSkipIcons.previous
-              : nextIsCheck
-                ? "check"
-                : chapterSkipIcons.next
-          }
-          className="bible-yv-top-passage-arrow-icon"
-        />
+        {isPrev ? (
+          <YvIcon
+            name={chapterSkipIcons.previous}
+            className="bible-passage-end-skip-icon"
+          />
+        ) : null}
+        <span className="bible-passage-end-skip-copy">
+          <span className="bible-passage-end-skip-dest">
+            {destLabel ?? actionLabel}
+          </span>
+        </span>
+        {!isPrev ? (
+          <YvIcon
+            name={nextIsCheck ? "check" : chapterSkipIcons.next}
+            className="bible-passage-end-skip-icon"
+          />
+        ) : null}
       </button>
     );
   }
 
-  /** Topbar: ← · book picker · → (skips hidden com picker aberto; layout intacto) */
+  /** Topbar: só o chip/picker (skips ficam no fim da passagem). */
   function renderPassageSkipPickerCluster() {
-    const planSkips = Boolean(planReading);
-    const stageComplete = Boolean(planSkips && planReading?.isStageLast);
-    const rollOpen = passageRollOpen;
-    return (
-      <div
-        className={`bible-yv-top-passage-skips is-topbar is-decoupled${
-          stageComplete ? " is-stage-end" : ""
-        }${rollOpen ? " is-roll-open" : ""}`.trim()}
-        aria-label={planSkips ? t("bible.planProgress") : t("bible.chapters")}
-      >
-        {renderPassageChapterSkipButton(-1)}
-        {renderPassageRoll()}
-        {renderPassageChapterSkipButton(1)}
-      </div>
-    );
+    return renderPassageRoll();
   }
 
   function renderTopPassageNav(extraClass = "", rollOpen = false) {
     const compactBar = extraClass.includes("is-plan-chrome");
-    const showChapterStep = true;
     const splitChrome = isPassageBarPanelCompactTopbar() && !compactBar;
     const unifiedRefPill = isPassagePillUnified();
     const passageRefLabel = formatPassagePillRef(bookTitle, chapterId);
-    const chapterSkipIcons = passageBarSkipIcons();
-
-    const renderChapterSkipButton = (delta: -1 | 1) => {
-      const isPrev = delta === -1;
-      const planBound = Boolean(planReading);
-      return (
-        <button
-          key={isPrev ? "prev" : "next"}
-          type="button"
-          className="bible-yv-top-passage-arrow"
-          onClick={() => planOrChapterSkip(delta)}
-          disabled={
-            planBound
-              ? (isPrev ? planReading!.isFirst : false) || presentation.inFlight
-              : (isPrev ? !canPrev : !canNext) || pickerChrome.controlsDisabled
-          }
-          aria-label={
-            planBound
-              ? isPrev
-                ? t("bible.planPrev")
-                : t("bible.planNext")
-              : isPrev
-                ? t("bible.prevChapter")
-                : t("bible.nextChapter")
-          }
-        >
-          <YvIcon
-            name={isPrev ? chapterSkipIcons.previous : chapterSkipIcons.next}
-            className="bible-yv-top-passage-arrow-icon"
-          />
-        </button>
-      );
-    };
 
     return (
       <nav
@@ -1521,7 +1500,6 @@ export function BibleReaderView({
                 : ""
           }${pickerChrome.chipsHydrating ? " is-hydrating" : ""}`}
         >
-          {showChapterStep && !splitChrome ? renderChapterSkipButton(-1) : null}
           <div
             className={`bible-yv-top-passage-segments${
               unifiedRefPill ? " is-passage-ref-unified" : ""
@@ -1584,7 +1562,6 @@ export function BibleReaderView({
               </>
             )}
           </div>
-          {showChapterStep && !splitChrome ? renderChapterSkipButton(1) : null}
         </div>
       </nav>
     );
@@ -1685,6 +1662,15 @@ export function BibleReaderView({
       anchorVerseUsfm: hit.usfm.toUpperCase(),
     });
     closePicker({ restoreFocus: false });
+    pushStudyOriginFromCurrent({
+      dest: {
+        bookId: parts.bookId,
+        chapterId: String(hit.chapter),
+        verse: hit.verse ?? null,
+      },
+    });
+    preferJumpFocusRef.current = true;
+    if (hit.verse != null) setFocusDim(true);
     void loadChapter(parts.bookId, String(hit.chapter), hit.verse, null);
   }
 
@@ -1718,6 +1704,52 @@ export function BibleReaderView({
   }
 
   /**
+   * Empilha a origem actual (LIFO) antes de um salto de estudo.
+   * Usado por Référence, histórico, marcas e pesquisa.
+   * @returns verse de origem, ou null se não houve push
+   */
+  function pushStudyOriginFromCurrent(opts?: {
+    refsScrollTop?: number;
+    dest?: { bookId: string; chapterId: string; verse?: number | null };
+  }): number | null {
+    const fromVerse =
+      selection?.[0] ??
+      highlightVerse ??
+      passage?.verses?.[0]?.number ??
+      null;
+    if (fromVerse == null) return null;
+
+    const dest = opts?.dest;
+    if (
+      dest &&
+      dest.bookId.toUpperCase() === bookId.toUpperCase() &&
+      String(dest.chapterId) === String(chapterId) &&
+      (dest.verse == null || dest.verse === fromVerse)
+    ) {
+      return null;
+    }
+
+    const originTitle =
+      resolveBookTitleActive(bookId) ||
+      books.find((b) => b.id.toUpperCase() === bookId.toUpperCase())?.title ||
+      bookId;
+    const label = formatStudyOriginLabel(originTitle, chapterId, fromVerse);
+    const scrollKey = verseStudyKey(textVersion, bookId, chapterId, fromVerse);
+    const refsScrollTop =
+      opts?.refsScrollTop ?? getRefsListScroll(scrollKey);
+    setRefsListScroll(scrollKey, refsScrollTop);
+    pushStudyJump({
+      bookId,
+      chapterId,
+      verse: fromVerse,
+      label,
+      refsScrollTop,
+      passageScrollTop: passageScrollRef.current?.scrollTop ?? 0,
+    });
+    return fromVerse;
+  }
+
+  /**
    * Aller au verset — botão do RefTextModal: push LIFO + DiscoveryJump sticky.
    * `meta.refsScrollTop` = posição da lista no momento do salto (Retourner).
    */
@@ -1728,26 +1760,14 @@ export function BibleReaderView({
     const loc = parseUsfmLocation(usfm);
     if (!loc || !isUsfmBookId(loc.bookId)) return;
 
-    const fromVerse = selection?.[0] ?? highlightVerse;
-    if (fromVerse != null) {
-      const originTitle =
-        resolveBookTitleActive(bookId) ||
-        books.find((b) => b.id.toUpperCase() === bookId.toUpperCase())?.title ||
-        bookId;
-      const label = formatStudyOriginLabel(originTitle, chapterId, fromVerse);
-      const scrollKey = verseStudyKey(textVersion, bookId, chapterId, fromVerse);
-      const refsScrollTop =
-        meta?.refsScrollTop ?? getRefsListScroll(scrollKey);
-      setRefsListScroll(scrollKey, refsScrollTop);
-      pushStudyJump({
-        bookId,
-        chapterId,
-        verse: fromVerse,
-        label,
-        refsScrollTop,
-        passageScrollTop: passageScrollRef.current?.scrollTop ?? 0,
-      });
-    }
+    pushStudyOriginFromCurrent({
+      refsScrollTop: meta?.refsScrollTop,
+      dest: {
+        bookId: loc.bookId,
+        chapterId: String(loc.chapter),
+        verse: loc.verse ?? null,
+      },
+    });
 
     preservePassageNavRef.current = true;
     navigateToParsedPassage(loc);
@@ -2125,6 +2145,56 @@ export function BibleReaderView({
   const showStudyReturnNav = Boolean(
     studyJumpDepth > 0 && !showCreateCard && !pendingStudyReturn,
   );
+
+  const chapterSwipeBlocked =
+    presentation.inFlight ||
+    hasActiveModal ||
+    shareSheetOpen ||
+    showCreateCard ||
+    pickerChrome.controlsDisabled ||
+    surfaceChrome.passageInputBlocked ||
+    dayNoteOpen;
+
+  const onPassageChapterSwipeStart = (
+    event: ReactPointerEvent<HTMLElement>,
+  ) => {
+    if (!event.isPrimary) return;
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    chapterSwipeRef.current = {
+      pointerId: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+    };
+  };
+
+  const onPassageChapterSwipeEnd = (
+    event: ReactPointerEvent<HTMLElement>,
+  ) => {
+    const start = chapterSwipeRef.current;
+    if (!start || start.pointerId !== event.pointerId) return;
+    chapterSwipeRef.current = null;
+    if (chapterSwipeBlocked) return;
+    const dx = event.clientX - start.x;
+    const dy = event.clientY - start.y;
+    const absX = Math.abs(dx);
+    const absY = Math.abs(dy);
+    /* Limiar + eixo: evita conflito com scroll vertical. */
+    if (absX < 56 || absX <= absY * 1.4) return;
+    const delta: -1 | 1 = dx < 0 ? 1 : -1;
+    if (planReading) {
+      if (delta < 0 && planReading.isFirst) return;
+    } else if (delta < 0 ? !canPrev : !canNext) {
+      return;
+    }
+    planOrChapterSkip(delta);
+  };
+
+  const onPassageChapterSwipeCancel = (
+    event: ReactPointerEvent<HTMLElement>,
+  ) => {
+    if (chapterSwipeRef.current?.pointerId !== event.pointerId) return;
+    chapterSwipeRef.current = null;
+  };
 
   useEffect(() => {
     if (!showCreateCard) return;
@@ -3526,14 +3596,23 @@ export function BibleReaderView({
               restoreHistoryFocusRef.current = true;
               closeOverlay();
             }}
-            onSelect={({ versionId, bookId, chapterId, verse }) => {
+            onSelect={({ versionId, bookId: destBookId, chapterId: destChapterId, verse }) => {
               restoreHistoryFocusRef.current = false;
               closeOverlay();
+              pushStudyOriginFromCurrent({
+                dest: {
+                  bookId: destBookId,
+                  chapterId: destChapterId,
+                  verse: verse ?? null,
+                },
+              });
               void (async () => {
                 if (versionId !== textVersionRef.current) {
                   await switchTextVersion(versionId);
                 }
-                void loadChapter(bookId, chapterId, verse);
+                preferJumpFocusRef.current = verse != null;
+                if (verse != null) setFocusDim(true);
+                void loadChapter(destBookId, destChapterId, verse);
               })();
             }}
             onHistoryChange={onReadingHistoryChange}
@@ -3545,13 +3624,22 @@ export function BibleReaderView({
           onClose={() => {
             openOverlay({ type: "reader_settings" });
           }}
-          onSelect={({ versionId, bookId, chapterId, verse }) => {
+          onSelect={({ versionId, bookId: destBookId, chapterId: destChapterId, verse }) => {
             closeOverlay();
+            pushStudyOriginFromCurrent({
+              dest: {
+                bookId: destBookId,
+                chapterId: destChapterId,
+                verse: verse ?? null,
+              },
+            });
             void (async () => {
               if (versionId !== textVersionRef.current) {
                 await switchTextVersion(versionId);
               }
-              void loadChapter(bookId, chapterId, verse);
+              preferJumpFocusRef.current = verse != null;
+              if (verse != null) setFocusDim(true);
+              void loadChapter(destBookId, destChapterId, verse);
             })();
           }}
         />
@@ -3624,6 +3712,9 @@ export function BibleReaderView({
             ["--verse-tint" as string]: actionTone.tint,
           } as CSSProperties
         }
+        onPointerDown={onPassageChapterSwipeStart}
+        onPointerUp={onPassageChapterSwipeEnd}
+        onPointerCancel={onPassageChapterSwipeCancel}
         onClick={() => {
           if (takeOverlayDismissSwallow()) return;
           if (surfaceChrome.passageInputBlocked) return;
@@ -3769,6 +3860,17 @@ export function BibleReaderView({
           <p className="bible-text">{passage.content}</p>
         ) : presentation.inFlight ? null : !isUsfmBookId(bookId) ? (
           <p className="bible-yv-muted">{PASSAGE_LOADING_COPY.emptyPassage}</p>
+        ) : null}
+        {passage?.verses?.length || passage?.content ? (
+          <nav
+            className="bible-passage-end-skips"
+            aria-label={
+              planReading ? t("bible.planProgress") : t("bible.chapters")
+            }
+          >
+            {renderPassageEndSkipButton(-1)}
+            {renderPassageEndSkipButton(1)}
+          </nav>
         ) : null}
       </article>
       </div>
