@@ -59,10 +59,10 @@ Selectors puros em `src/bible/viewState/selectors.ts` e `bibleChrome.ts` — a U
 
 | Selector / helper | Consumidor | O que deriva |
 |-------------------|------------|----------------|
-| `passagePresentation` | `usePassageViewModel` → `BibleReaderView` | `ariaBusy`, `statusLine`, `showOpeningSkeleton` (após 120 ms), `isOpening` / `isReloading` |
-| `passageLiveStatusLabel` / `PASSAGE_LOADING_COPY` | live region + placeholders | textos FR únicos |
+| `passagePresentation` | `usePassageViewModel` → `BibleReaderView` | `ariaBusy`, `statusLine`, `inFlight`, `isOpening` / `isReloading` |
+| `passageLiveStatusLabel` / `PASSAGE_LOADING_COPY` | live region + topbar loading bar | textos FR únicos |
 | `biblePickerChrome` | `BibleReaderView` (chips + roll) | `chipsHydrating`, `pickerPanelOpenAllowed`, `controlsDisabled` |
-| `passagePickerChrome` | `BiblePassageScrollPicker` | `inFlight`, `showDeferredUi`, `schema` para skeleton de versos |
+| `passagePickerChrome` | `BiblePassageScrollPicker` | `inFlight`, `schema` |
 | `mergeBibleReaderErrors` | barra de erro | prioridade: falha de passagem → erro de chrome (offline/áudio) |
 | `readerSurfaceChrome` | `BibleReaderView` (superfície) | `inert`/scrim, `is-passage-roll-open`, `forceChromeVisible` |
 | `passagePickerRollOpen` | chips, roll, discovery, header | `pickerOpen && pickerPanelOpenAllowed` — única fonte (não combinar flags locais) |
@@ -89,10 +89,10 @@ Chrome da Bíblia:
 - Picker desactivado até `biblePickerChrome.pickerPanelOpenAllowed` (catálogo S21 `ready` ou HT98 com livros).
 - Cabeçalho **sem** indicador nuvem/sync (toast global `Hors ligne` + ícone offline só se reactivado).
 - Classe `is-catalog-offline` segue **evento offline do navegador**, não só a fonte do catálogo em rede.
-- Capítulo: **0–120 ms** — só reserva dimensional (`PassageSkeletonSchema` + barra `is-chapter-opening`); **após 120 ms** (`showOpeningSkeleton`) — skeleton com números opacos; reload mantém versos (`stalePassage`) + `is-chapter-reload`.
-- **Não** limpar passage na navegação: o ViewModel emite `loading` com schema de destino.
+- Capítulo: sinal de carga = barra `.bible-yv-top-loading-bar` no topbar; troca mantém versos (`stalePassage`).
+- **Boot:** splash HTML até a 1.ª superfície (versos / gate / erro) — evita CLS do corpo vazio → texto.
+- **Não** limpar passage na navegação: o ViewModel emite `loading` com schema de destino + stale.
 - Offline sem IDB: `BibleOfflineChapterGate` + CTA téléchargement (só sem versículos em memória; texto já lido permanece ao falhar recarga).
-- Gate e `BibleChapterLoadingPlaceholder` com **min-height** alinhado para evitar salto entre estados.
 
 ### Painéis flutuantes (CSS)
 
@@ -104,8 +104,8 @@ No `.bible-reader--yv`, partilhar `--yv-overlay-surface`, `--yv-overlay-border` 
 2. **Transição abrupta** — online → offline durante leitura: sem desaparecimento do texto da barra nem do capítulo em cache; hamburger e chips estáveis (sem dot «live»).
 3. **Min-width** — livros curtos (ex. Job): chip livro com largura mínima, caret separado do rótulo.
 4. **Picker pergaminho** — roll aberto; barra `is-roll-head` visível durante todos os passos (livro/capítulo/versículo).
-5. **Skeleton** — cold start no tab Bíblia: shimmer nos chips &lt;100 ms, depois títulos estáveis.
-6. **Capítulo lento** — throttle rede: skeleton de versículos ou barra superior; sem texto de outro livro.
+5. **Cold start** — tab Bíblia: splash até 1.º capítulo/gate; chips shimmer &lt;100 ms sob o splash.
+6. **Capítulo lento** — throttle rede: barra superior + texto anterior (`stalePassage`); sem esvaziar o corpo.
 7. **Capítulo não indexado** — offline + sem IDB: ecrã gate + botão de download.
 8. **Picker sans texte** — deux sections AT / NT, ordre canon.
 9. **«1 Rois»** — filtre titre, un ou deux livres mis en évidence.

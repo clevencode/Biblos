@@ -1169,11 +1169,6 @@ export function BibleReaderView({
   }, [bible.id, setBible, textVersion]);
 
   useEffect(() => {
-    setCatalogHydrating(catalogViewState.status === "loading");
-    setCatalogLocalReady(catalogViewState.status === "ready");
-  }, [catalogViewState.status, setCatalogHydrating, setCatalogLocalReady]);
-
-  useEffect(() => {
     const base = { ...readPrefs(), fontSize, fontFamily, textVersion };
     if (isUsfmBookId(bookId)) {
       writePrefs({ ...base, bookId, chapterId });
@@ -1952,6 +1947,44 @@ export function BibleReaderView({
     localBundledAvailable: localBundledBible,
     versesInMemory: Boolean(passage?.verses?.length),
   });
+
+  /**
+   * Boot anti-CLS: splash só some com a 1.ª superfície de leitura pronta.
+   * Loads seguintes usam a barra do topbar + stalePassage (sem esvaziar o corpo).
+   */
+  useEffect(() => {
+    const catalogLoading = catalogViewState.status === "loading";
+    const catalogReady = catalogViewState.status === "ready";
+
+    if (!active) {
+      setCatalogHydrating(catalogLoading);
+      setCatalogLocalReady(catalogReady);
+      return;
+    }
+
+    const hasPassageSurface = Boolean(
+      passage?.verses?.length || passage?.content,
+    );
+    const passageSurfaceReady =
+      hasPassageSurface ||
+      showOfflineChapterGateUi ||
+      (Boolean(passageLoadError) && !hasPassageSurface);
+
+    setCatalogHydrating(
+      catalogLoading || (catalogReady && !passageSurfaceReady),
+    );
+    setCatalogLocalReady(catalogReady && passageSurfaceReady);
+  }, [
+    active,
+    catalogViewState.status,
+    passage?.verses?.length,
+    passage?.content,
+    passageLoadError,
+    showOfflineChapterGateUi,
+    setCatalogHydrating,
+    setCatalogLocalReady,
+  ]);
+
   const locationLabel = selection?.length
     ? `${bookTitle} ${chapterId}.${formatVerseList(selection)}`
     : `${bookTitle} ${chapterId}`;

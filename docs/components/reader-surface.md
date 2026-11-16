@@ -14,13 +14,14 @@
 | Estado UI | Componente / condição |
 |-----------|-------------------------|
 | Capítulo offline em falta | `BibleOfflineChapterGate` |
-| Abertura / reload | `BibleChapterLoadingPlaceholder` + `presentation.showOpeningSkeleton` |
+| Abertura (boot) | Splash HTML até 1.ª superfície pronta (versos / gate / erro) |
+| Reload / troca | Barra `.bible-yv-top-loading-bar` + `stalePassage` (texto anterior) |
 | Texto pronto | Grelha `.bible-verses` → botões `.bible-verse` |
 | Seleção activa | `showCreateCard` → `.bible-verse-actions` (marcas, partilha, flashcard) |
 
 A passagem bloqueia interacção quando overlays estão abertos (`readerSurfaceChrome.passageInputBlocked`).
 
-Navegação de capítulo: `.bible-passage-start-skips` (anterior, após o cabeçalho) + `.bible-passage-end-skips` (seguinte, no fim). Sem swipe; sem FAB ‹ ›.
+Navegação de capítulo: `.bible-passage-start-skips` (anterior, após o cabeçalho) + `.bible-passage-end-skips` (seguinte, no fim). Sem swipe; sem FAB ‹ ›. Sem skeleton de versículos — sinal de carga = barra do topbar.
 
 ---
 
@@ -55,12 +56,10 @@ Contrato Options: `verseActionsOpen` força chrome visível mas **não** põe `p
 ## `usePassageViewModel`
 
 - `passageReducer` com estados idle/loading/error e schema skeleton.
-- `presentation` = `passagePresentation` — `inFlight`, `showDeferredUi`, `showOpeningSkeleton`, `ariaBusy`, `isOpening`, `isReloading`.
+- `presentation` = `passagePresentation` — `inFlight`, `ariaBusy`, `isOpening`, `isReloading`, `statusLine`.
 - `commitPassageLoad` / `retryChapter` — única via para trocar capítulo no servidor/offline.
 - `onResolved` → histórico (`onBibleRead`), actualiza `bibleId`, etc.
 - `active: false` quando tab Bible oculta — incrementa `loadGen` para cancelar loads.
-
-`PASSAGE_LOADING_DEFER_MS` atrasa skeleton visível (evita flash).
 
 ---
 
@@ -69,9 +68,10 @@ Contrato Options: `verseActionsOpen` força chrome visível mas **não** põe `p
 Ordem em `BibleReaderView`:
 
 1. **Head** — `.bible-book-name`, `.bible-chapter-num`
-2. **Gate** — se `showOfflineChapterGateUi` (erro `offline_not_cached`)
-3. **Skeleton** — `presentation.showOpeningSkeleton`
-4. **Versículos** — map `passage.verses`
+2. **Skip anterior** — `.bible-passage-start-skips` (se há conteúdo)
+3. **Gate** — se `showOfflineChapterGateUi` (erro `offline_not_cached`)
+4. **Versículos** — map `passage.verses` (ou stale durante `inFlight`)
+5. **Skip seguinte** — `.bible-passage-end-skips`
 
 ### Classes por versículo
 
