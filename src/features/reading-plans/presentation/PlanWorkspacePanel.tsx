@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { BibleShareSheet } from "../../../components/BibleShareSheet";
+import { ShellPageTopbar } from "../../../components/ShellPageTopbar";
 import { YvIcon } from "../../../components/YvIcon";
 import { isPassageRef } from "../../../youversion/usfm";
 import {
@@ -500,9 +501,11 @@ export function PlanWorkspacePanel({
 
   return (
     <div className="today-view panel-nota-content plan-yv plan-yv--workspace">
-      <div className="plan-yv-main">
-      <header className="page-session-head plan-yv-head">
-        <div className="plan-yv-head-row">
+      <ShellPageTopbar
+        className="plan-yv-topbar"
+        title={planTitle}
+        subtitle={t("shell.plan")}
+        leading={
           <button
             type="button"
             className="plan-yv-chrome-back"
@@ -511,10 +514,8 @@ export function PlanWorkspacePanel({
           >
             <YvIcon name="chevron_left" className="plan-yv-chrome-back-icon" />
           </button>
-          <div className="shell-page-head-copy plan-yv-head-copy">
-            <p className="muted type-caption">{t("shell.plan")}</p>
-            <h2 className="page-title">{planTitle}</h2>
-          </div>
+        }
+        actions={
           <button
             type="button"
             className="plan-yv-share-btn"
@@ -524,21 +525,21 @@ export function PlanWorkspacePanel({
           >
             <YvIcon name="ios_share" className="plan-yv-share-icon" />
           </button>
-        </div>
-      </header>
-
-      <BibleShareSheet
-        open={shareOpen}
-        onClose={() => setShareOpen(false)}
-        mode="plan"
-        refLabel={planTitle}
-        verseText=""
-        usfm=""
-        planTitle={planTitle}
-        planDescription={plan.description ?? ""}
-        planMeta={planShareMeta}
-        planId={plan.id}
+        }
       />
+      <div className="plan-yv-main">
+        <BibleShareSheet
+          open={shareOpen}
+          onClose={() => setShareOpen(false)}
+          mode="plan"
+          refLabel={planTitle}
+          verseText=""
+          usfm=""
+          planTitle={planTitle}
+          planDescription={plan.description ?? ""}
+          planMeta={planShareMeta}
+          planId={plan.id}
+        />
 
       {days.length ? (
         <section

@@ -124,6 +124,8 @@ function BiblosConsumerApp() {
   const [bibleFocusVersion, setBibleFocusVersion] =
     useState<BibleTextVersionId | null>(null);
   const [bibleFocusSeq, setBibleFocusSeq] = useState(0);
+  /** Origem da navegação para a Bíblia (ex. verso do dia → Accueil). */
+  const [bibleReturnTo, setBibleReturnTo] = useState<"home" | null>(null);
   const [activityTick, setActivityTick] = useState(0);
   const [workspacePlan, setWorkspacePlan] = useState<ReadingPlan | null>(null);
   const [workspaceJour, setWorkspaceJour] = useState<number | undefined>();
@@ -200,6 +202,7 @@ function BiblosConsumerApp() {
   }, [bibleMode]);
 
   const selectTab = useCallback((next: ShellTab) => {
+    if (next !== "bible") setBibleReturnTo(null);
     setTab(next);
   }, []);
 
@@ -214,6 +217,19 @@ function BiblosConsumerApp() {
     },
     [],
   );
+
+  const openBibleFromHome = useCallback(
+    (ref?: string, opts?: { returnTo?: "home" }) => {
+      setBibleReturnTo(opts?.returnTo === "home" ? "home" : null);
+      openBible(ref);
+    },
+    [openBible],
+  );
+
+  const returnFromHomeReading = useCallback(() => {
+    setBibleReturnTo(null);
+    setTab("home");
+  }, []);
 
   const { openPlanAtJour, planReading, clearPlan } = usePlanReadingSession({
     onNavigate: (ref) => openBible(ref),
@@ -241,6 +257,7 @@ function BiblosConsumerApp() {
   const startPlanReadingFromWorkspace = useCallback(
     (jour: number, _passage: string, _opts?: { returnTo?: PlanFlowReturn }) => {
       if (!workspacePlan) return;
+      setBibleReturnTo(null);
       openPlanAtJour(workspacePlan, jour);
       setTab("bible");
     },
@@ -451,7 +468,7 @@ function BiblosConsumerApp() {
                   activityTick={activityTick}
                   themePref={themePref}
                   onSetTheme={setTheme}
-                  onOpenBible={(ref) => openBible(ref)}
+                  onOpenBible={openBibleFromHome}
                   onOpenPlan={() => selectTab("today")}
                   onResumePlan={(plan) => {
                     openPlanWorkspace(plan);
@@ -496,7 +513,13 @@ function BiblosConsumerApp() {
                       themePref={themePref}
                       onCycleTheme={cycleTheme}
                       planReading={bibleMode ? planReading : null}
-                      onBack={planReading ? returnFromPlanReading : undefined}
+                      onBack={
+                        planReading
+                          ? returnFromPlanReading
+                          : bibleReturnTo === "home"
+                            ? returnFromHomeReading
+                            : undefined
+                      }
                       requireAccountToMark={requireAccountToMark}
                       onRequestAccountToMark={requestAccountForMark}
                       authorizedMarkSeq={authorizedMarkSeq}

@@ -3444,6 +3444,14 @@ html[data-theme="dark"] .profile-download-btn {
   padding-top: 2px;
 }
 
+.shell-page-head-actions {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
 .shell-page-head-copy .type-headline,
 .profile-head-copy .type-headline {
   margin: 0;
@@ -6564,7 +6572,12 @@ html[data-theme="dark"] .profile-download-btn {
   }
 
   .home-view,
-  .plan-discover,
+  .plan-discover {
+    padding-left: 0;
+    padding-right: 0;
+    padding-top: 0;
+  }
+
   .notif-view {
     padding-left: max(var(--mobile-gutter), 16px, env(safe-area-inset-left, 0px));
     padding-right: max(var(--mobile-gutter), 16px, env(safe-area-inset-right, 0px));
@@ -6572,6 +6585,10 @@ html[data-theme="dark"] .profile-download-btn {
   }
 
   .home-view {
+    max-width: none;
+  }
+
+  .home-body {
     max-width: none;
     padding-bottom: calc(
       24px + env(safe-area-inset-bottom, 0px) + var(--shell-tab-clearance, 72px)
@@ -7063,8 +7080,15 @@ html[data-theme="dark"] .profile-download-btn {
     padding-bottom: 12px;
   }
 
-  .home-view {
+  .home-view,
+  .plan-discover {
     max-width: none;
+    padding-left: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+  }
+
+  .home-body {
     padding-left: max(var(--mobile-gutter), env(safe-area-inset-left, 0px));
     padding-right: max(var(--mobile-gutter), env(safe-area-inset-right, 0px));
     padding-bottom: calc(
@@ -7072,7 +7096,7 @@ html[data-theme="dark"] .profile-download-btn {
     );
   }
 
-  .plan-discover {
+  .plan-discover-scroller {
     padding-left: max(var(--mobile-gutter), env(safe-area-inset-left, 0px));
     padding-right: max(var(--mobile-gutter), env(safe-area-inset-right, 0px));
   }
@@ -7097,9 +7121,9 @@ html[data-theme="dark"] .profile-download-btn {
   height: 100%;
   background: var(--bg);
   box-sizing: border-box;
-  padding-top: 12px;
-  padding-left: max(16px, env(safe-area-inset-left, 0px));
-  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-top: 0;
+  padding-left: 0;
+  padding-right: 0;
 }
 
 .plan-discover-head {
@@ -7142,10 +7166,20 @@ html[data-theme="dark"] .profile-download-btn {
 }
 
 .plan-discover-scroller {
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
-  overflow: auto;
-  padding: 0 0 24px;
+  min-width: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding-top: 12px;
+  padding-bottom: calc(
+    24px + env(safe-area-inset-bottom, 0px) + var(--shell-tab-clearance, 72px)
+  );
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  box-sizing: border-box;
 }
 
 .plan-discover-surface {
@@ -7440,14 +7474,98 @@ html[data-theme="dark"] .profile-download-btn {
 .home-view {
   display: flex;
   flex-direction: column;
+  gap: 0;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  padding: 0;
+}
+
+/*
+ * Shell topbar — reusa chrome `.bible-yv-top` (classe partilhada no markup).
+ * Home / Plan: faixa sticky, não page header / headline.
+ */
+.shell-topbar.bible-yv-top.is-shell {
+  position: relative;
+  top: auto;
+  left: auto;
+  right: auto;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  box-sizing: border-box;
+  z-index: var(--bible-z-top, 4);
+  gap: 10px;
+  padding-top: max(8px, env(safe-area-inset-top, 0px));
+  padding-bottom: 8px;
+  padding-left: max(14px, env(safe-area-inset-left, 0px));
+  padding-right: max(14px, env(safe-area-inset-right, 0px));
+}
+
+.shell-topbar-leading {
+  flex: none;
+  display: grid;
+  place-items: center;
+}
+
+.shell-topbar-copy {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  justify-content: center;
+}
+
+.shell-topbar-kicker {
+  margin: 0;
+  line-height: 1.2;
+}
+
+.shell-topbar-title {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 1.05rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: var(--yv-text, var(--text));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.shell-topbar-actions,
+.shell-topbar .bible-yv-top-tools {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.home-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
   gap: 20px;
   width: 100%;
   max-width: min(100%, 28rem);
   margin: 0 auto;
   box-sizing: border-box;
-  overflow-x: hidden;
-  min-width: 0;
-  padding-top: 12px;
+  padding-top: 16px;
   padding-bottom: calc(
     28px + env(safe-area-inset-bottom, 0px) + var(--shell-tab-clearance, 72px)
   );
@@ -7465,10 +7583,12 @@ html[data-theme="dark"] .profile-download-btn {
   padding: 0 2px;
 }
 
-.home-head-copy,
-.home-head .shell-page-head-copy {
-  flex: 1;
-  min-width: 0;
+.home-view {
+  position: relative;
+}
+
+.home-view .home-head {
+  flex-shrink: 0;
 }
 
 .home-menu-btn.hdr-trigger.is-circle {
@@ -7793,10 +7913,10 @@ html[data-theme="dark"] .home-pill.is-accent {
 .home-daily-foot {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 10px;
   min-width: 0;
-  padding-top: 4px;
+  padding-top: 8px;
 }
 
 .home-daily-ref {
@@ -7811,8 +7931,17 @@ html[data-theme="dark"] .home-pill.is-accent {
 }
 
 .home-daily-actions {
-  flex: none;
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+}
+
+.home-daily-action {
   display: inline-flex;
+  align-items: center;
   gap: 6px;
 }
 
@@ -7833,6 +7962,25 @@ html[data-theme="dark"] .home-pill.is-accent {
 .home-icon-btn:hover {
   color: var(--text);
   background: var(--hover);
+}
+
+.home-daily-open {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.home-daily-open:disabled {
+  cursor: default;
+}
+
+.home-daily-open:not(:disabled):active .home-daily-text {
+  opacity: 0.85;
 }
 
 .home-progress {
@@ -8349,8 +8497,13 @@ html[data-theme="dark"] .home-pill.is-accent {
   overflow: auto;
   display: grid;
   gap: 16px;
-  padding-bottom: 8px;
+  padding: 12px max(16px, env(safe-area-inset-right, 0px)) 8px
+    max(16px, env(safe-area-inset-left, 0px));
   -webkit-overflow-scrolling: touch;
+}
+
+.plan-yv--workspace > .shell-topbar {
+  flex: none;
 }
 
 .plan-yv--workspace .plan-yv-secondary {

@@ -127,10 +127,6 @@ export function dailyVerseUsfmForDate(date = new Date()): string {
   return list[idx]!;
 }
 
-function usfmToOpenRef(usfm: string): string {
-  return usfm.replace(/\./g, " ");
-}
-
 function humanizeUsfm(usfm: string): string {
   const [book, chapter, verse] = usfm.split(".");
   if (!book || !chapter) return usfm;
@@ -200,6 +196,13 @@ export async function getDailyVerse(
   };
 }
 
+/**
+ * Ref para o leitor — manter USFM pontuado (`JHN.3.16`).
+ * `toUsfm` / `parseUsfmParts` não aceitam `JHN 3 16` (espaço antes do verso).
+ */
 export function dailyVerseOpenRef(usfm: string): string {
-  return usfmToOpenRef(usfm);
+  return String(usfm || "")
+    .trim()
+    .toUpperCase()
+    .replace(/:/g, ".");
 }

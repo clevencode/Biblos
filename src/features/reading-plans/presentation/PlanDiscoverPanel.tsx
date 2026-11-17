@@ -11,6 +11,7 @@ import { useReadingPlansCatalog } from "./hooks/useReadingPlansCatalog";
 import { PlanCardRow } from "./PlanCardRow";
 import type { PlanFlowReturn } from "./PlanWorkspacePanel";
 import { PlanWorkspacePanel } from "./PlanWorkspacePanel";
+import { ShellPageTopbar } from "../../../components/ShellPageTopbar";
 import { useUiLocale } from "../../../i18n/UiLocaleContext";
 
 type PlanDiscoverPanelProps = {
@@ -113,13 +114,12 @@ export function PlanDiscoverPanel({
       hidden={!active}
       className="pane-body today-view plan-discover"
     >
-      <header className="shell-page-head plan-discover-head">
-        <div className="shell-page-head-copy">
-          <h1 className="type-headline">{t("shell.plan")}</h1>
-          <p className="muted type-caption">{t("home.plans")}</p>
-        </div>
-      </header>
-
+      <ShellPageTopbar
+        className="plan-discover-topbar"
+        titleId="plan-page-title"
+        title={t("shell.plan")}
+        subtitle={t("home.plans")}
+      />
       <div
         className="plan-discover-scroller"
         aria-busy={isInitialLoading || undefined}

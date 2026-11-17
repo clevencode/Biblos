@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { YvIcon } from "./YvIcon";
 import { HeaderTriggerButton } from "./HeaderTriggerButton";
 import { listBibleReadingHistory } from "../activityLog";
-import { loadOrCreateProfile, preferredDisplayName } from "../userProfile";
+import { loadOrCreateProfile } from "../userProfile";
 import {
   dailyVerseOpenRef,
   getDailyVerse,
@@ -22,25 +22,28 @@ import {
 import { useReadingPlansCatalog } from "../features/reading-plans/presentation/hooks/useReadingPlansCatalog";
 import type { ReadingPlan } from "../features/reading-plans";
 import { useUiLocale } from "../i18n/UiLocaleContext";
+import type { UiCopyKey } from "../i18n/uiCopy";
 import type { ThemePref } from "../theme";
 import { HomeConfigSection } from "./HomeConfigSection";
+import { ShellPageTopbar } from "./ShellPageTopbar";
+
+function homeGreetingKey(): UiCopyKey {
+  const hour = new Date().getHours();
+  if (hour < 12) return "home.greeting.morning";
+  if (hour < 18) return "home.greeting.afternoon";
+  return "home.greeting.evening";
+}
 
 type HomeShellPanelProps = {
   active: boolean;
   activityTick: number;
   themePref: ThemePref;
   onSetTheme: (pref: "light" | "dark") => void;
-  onOpenBible: (ref?: string) => void;
+  onOpenBible: (ref?: string, opts?: { returnTo?: "home" }) => void;
   onOpenPlan: () => void;
   onResumePlan: (plan: ReadingPlan) => void;
   onRequestSignIn?: () => void;
 };
-
-function greetingKey(hour: number) {
-  if (hour < 12) return "home.greeting.morning" as const;
-  if (hour < 18) return "home.greeting.afternoon" as const;
-  return "home.greeting.evening" as const;
-}
 
 function pickActivePlan(
   plans: ReadingPlan[],
@@ -110,8 +113,8 @@ export function HomeShellPanel({
 
   const resumeRef =
     recent?.meta?.usfm && typeof recent.meta.usfm === "string"
-      ? String(recent.meta.usfm).replace(/\./g, " ")
-      : "JHN 3.16";
+      ? String(recent.meta.usfm).trim().toUpperCase().replace(/:/g, ".")
+      : "JHN.3.16";
 
   const activePlan = useMemo(() => {
     void planTick;
@@ -164,6 +167,11 @@ export function HomeShellPanel({
     }
   }
 
+  const displayName =
+    profile.preferredName?.trim() ||
+    [profile.firstName, profile.lastName].filter(Boolean).join(" ").trim() ||
+    null;
+
   return (
     <div
       id="panel-home"
@@ -172,36 +180,27 @@ export function HomeShellPanel({
       hidden={!active}
       className={`pane-body home-view${menuOpen ? " is-menu-open" : ""}`}
     >
-      <header className="shell-page-head home-head">
-        <div className="shell-page-head-copy">
-          <h1 className="type-headline">
-            {menuOpen ? t("profile.settings") : t("shell.home")}
-          </h1>
-          {!menuOpen ? (
-            <p className="muted type-caption">
-              {t(greetingKey(new Date().getHours()))},{" "}
-              {preferredDisplayName(profile) || "Biblos"}
-            </p>
-          ) : null}
-        </div>
-        <div className="home-head-actions">
+      <ShellPageTopbar
+        className="home-topbar"
+        titleId="home-page-title"
+        title={t(homeGreetingKey())}
+        subtitle={displayName || t("shell.home")}
+        actions={
           <HeaderTriggerButton
             open={menuOpen}
             shape="circle"
             idleIcon="menu"
-            ariaLabel={
-              menuOpen ? t("common.close") : t("profile.settings")
-            }
+            ariaLabel={menuOpen ? t("common.close") : t("profile.settings")}
             ariaHaspopup="dialog"
             className={`home-menu-btn${menuOpen ? " is-on" : ""}`}
             onClick={() => setMenuOpen((open) => !open)}
           />
-        </div>
-      </header>
+        }
+      />
 
       {menuOpen ? (
         <div
-          className="home-menu-panel"
+          className="home-menu-panel home-body"
           role="dialog"
           aria-modal="false"
           aria-label={t("profile.settings")}
@@ -215,7 +214,7 @@ export function HomeShellPanel({
           />
         </div>
       ) : (
-        <>
+        <div className="home-body">
           <section className="home-section" aria-labelledby="home-resume-title">
             <div className="home-card home-card-row">
               <YvIcon name="menu_book" className="home-resume-icon" opsz={24} />
@@ -237,37 +236,57 @@ export function HomeShellPanel({
           </section>
 
           <section className="home-section" aria-labelledby="home-daily-title">
-            <div className="home-card">
+            <div className="home-card home-card-daily">
               <p id="home-daily-title" className="home-card-eyebrow">
                 {t("home.dailyVerse")}
               </p>
-              <p className="home-daily-text">
-                {daily?.text ?? t("common.loading")}
-              </p>
-              <div className="home-daily-foot">
+              <button
+                type="button"
+                className="home-daily-open"
+                disabled={!daily}
+                aria-label={
+                  daily
+                    ? `${t("home.openBible")}: ${daily.refLabel}`
+                    : t("home.openBible")
+                }
+                onClick={() => {
+                  if (!daily) return;
+                  onOpenBible(dailyVerseOpenRef(daily.usfm), {
+                    returnTo: "home",
+                  });
+                }}
+              >
+                <p className="home-daily-text">
+                  {daily?.text ?? t("common.loading")}
+                </p>
                 <p className="home-daily-ref">
                   {daily ? `— ${daily.refLabel}` : "—"}
                 </p>
+              </button>
+              <div className="home-daily-foot">
                 <div className="home-daily-actions">
                   <button
                     type="button"
-                    className="home-icon-btn"
-                    aria-label={t("home.share")}
+                    className="home-pill is-compact home-daily-action"
                     disabled={!daily || shareBusy}
                     onClick={() => void handleShareDaily()}
                   >
-                    <YvIcon name="ios_share" opsz={20} />
+                    <YvIcon name="ios_share" opsz={18} aria-hidden />
+                    {t("home.share")}
                   </button>
                   <button
                     type="button"
-                    className="home-icon-btn"
-                    aria-label={t("home.openBible")}
+                    className="home-pill is-compact is-accent home-daily-action"
                     disabled={!daily}
-                    onClick={() =>
-                      daily && onOpenBible(dailyVerseOpenRef(daily.usfm))
-                    }
+                    onClick={() => {
+                      if (!daily) return;
+                      onOpenBible(dailyVerseOpenRef(daily.usfm), {
+                        returnTo: "home",
+                      });
+                    }}
                   >
-                    <YvIcon name="menu_book" opsz={20} />
+                    <YvIcon name="menu_book" opsz={18} aria-hidden />
+                    {t("home.read")}
                   </button>
                 </div>
               </div>
@@ -331,7 +350,7 @@ export function HomeShellPanel({
               </div>
             )}
           </section>
-        </>
+        </div>
       )}
     </div>
   );

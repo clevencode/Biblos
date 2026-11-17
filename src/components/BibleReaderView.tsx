@@ -3527,15 +3527,17 @@ export function BibleReaderView({
         {!menuJourneyOpen && !showCreateCard ? (
           discoverySplitSearch ? (
             <div className="bible-yv-passage-chrome-cluster">
-              {planReading ? (
+              {onBack ? (
                 <button
                   type="button"
                   className="bible-yv-passage-word-search-trigger"
                   onClick={handlePlanBack}
                   aria-label={
-                    onPlanStep
-                      ? "Quitter la lecture du plan"
-                      : "Retour au passage du plan"
+                    planReading
+                      ? onPlanStep
+                        ? "Quitter la lecture du plan"
+                        : "Retour au passage du plan"
+                      : t("shell.home")
                   }
                 >
                   <YvIcon
