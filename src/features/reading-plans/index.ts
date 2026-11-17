@@ -14,9 +14,14 @@ export { PlanDiscoverPanel } from "./presentation/PlanDiscoverPanel";
 export { useReadingPlansCatalog } from "./presentation/hooks/useReadingPlansCatalog";
 export { isReadingPlansFirebaseConfigured };
 
-/** Boot — pré-initialise Firestore + cache (appel depuis main.tsx). */
+/** Boot — Firestore + pull opcional para aquecer mirror local offline. */
 export async function bootReadingPlansFirestore(): Promise<void> {
   if (!isReadingPlansFirebaseConfigured()) return;
-  const { warmupReadingPlansRepository } = await import("./data/readingPlansRepository");
-  await warmupReadingPlansRepository();
+  const { warmupReadingPlansRepository, pullPublishedReadingPlans } = await import(
+    "./data/readingPlansRepository"
+  );
+  const ok = await warmupReadingPlansRepository();
+  if (!ok) return;
+  if (typeof navigator !== "undefined" && navigator.onLine === false) return;
+  await pullPublishedReadingPlans();
 }

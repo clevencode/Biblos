@@ -28,6 +28,7 @@ import {
 import {
   clearPersonalLocalData,
   deleteUserCloudData,
+  flushUserDataPush,
   mergeLocalSnapshotIntoStores,
   snapshotLocalUserData,
   startUserDataSync,
@@ -181,17 +182,20 @@ export function ConsumerAuthProvider({ children }: { children: ReactNode }) {
   const runUpgrade = useCallback(
     async (action: () => Promise<{ user: ConsumerAuthUser; linked: boolean }>) => {
       setError(null);
+      /* Para listeners: evita onSnapshot a correr com o merge a meio. */
+      stopUserDataSync();
       const snapshot: LocalUserDataSnapshot = snapshotLocalUserData();
       try {
         const result = await action();
         if (!result.linked) {
-          // Compte existant : merger le snapshot local dans les stores puis push
+          /* Conta existente (uid novo): fundir dados locais do anónimo/guest. */
           mergeLocalSnapshotIntoStores(snapshot);
         }
         setUser(result.user);
         setProfile(applyFirebaseAuthUser(result.user));
         setSession(sessionFromUser(result.user, result.user.uid));
         await startUserDataSync(result.user.uid);
+        await flushUserDataPush(result.user.uid);
       } catch (err) {
         setError(mapAuthErrorToMessage(err));
         throw err;

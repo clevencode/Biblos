@@ -4,6 +4,7 @@
 
 import {
   collection,
+  getDocs,
   onSnapshot,
   query,
   where,
@@ -18,6 +19,7 @@ import {
 } from "../domain/normalizeReadingPlan";
 import type { ReadingPlan, ReadingPlanFirestoreDoc } from "../domain/types";
 import { ensureReadingPlansFirestore, getReadingPlansFirestore } from "./firestoreDb";
+import { savePublishedPlansCache } from "./readingPlansLocalCache";
 
 export const READING_PLANS_COLLECTION = "reading_plans";
 
@@ -49,8 +51,16 @@ function mapSnapshot(snap: QuerySnapshot<DocumentData>): ReadingPlansSnapshot {
   };
 }
 
+function publishedPlansQuery(db: NonNullable<ReturnType<typeof getReadingPlansFirestore>>) {
+  return query(
+    collection(db, READING_PLANS_COLLECTION),
+    where("isPublished", "==", true),
+  );
+}
+
 /**
- * Subscrição em tempo real — emite primeiro o cache local, depois rede.
+ * Subscrição em tempo real — emite primeiro o cache Firestore, depois rede.
+ * Cada snapshot publicado actualiza o mirror local (offline APK).
  */
 export function subscribePublishedReadingPlans(
   options: SubscribePublishedPlansOptions,
@@ -58,14 +68,15 @@ export function subscribePublishedReadingPlans(
   const db = getReadingPlansFirestore();
   if (!db) return null;
 
-  const q = query(
-    collection(db, READING_PLANS_COLLECTION),
-    where("isPublished", "==", true),
-  );
-
   return onSnapshot(
-    q,
-    (snap) => options.onData(mapSnapshot(snap)),
+    publishedPlansQuery(db),
+    (snap) => {
+      const mapped = mapSnapshot(snap);
+      if (mapped.plans.length > 0) {
+        savePublishedPlansCache(mapped.plans);
+      }
+      options.onData(mapped);
+    },
     (error) => options.onError?.(error),
   );
 }
@@ -74,6 +85,26 @@ export function subscribePublishedReadingPlans(
 export async function warmupReadingPlansRepository(): Promise<boolean> {
   const db = await ensureReadingPlansFirestore();
   return db != null;
+}
+
+/**
+ * Pull one-shot para aquecer mirror local (boot / primeira rede).
+ * Falha silenciosa se offline — o hook usa o cache em disco.
+ */
+export async function pullPublishedReadingPlans(): Promise<ReadingPlansSnapshot | null> {
+  const db = await ensureReadingPlansFirestore();
+  if (!db) return null;
+  try {
+    const snap = await getDocs(publishedPlansQuery(db));
+    const mapped = mapSnapshot(snap);
+    if (mapped.plans.length > 0) {
+      savePublishedPlansCache(mapped.plans);
+    }
+    return mapped;
+  } catch (err) {
+    console.warn("[reading-plans] pullPublished", err);
+    return null;
+  }
 }
 
 export type EditorReadingPlansSnapshot = {

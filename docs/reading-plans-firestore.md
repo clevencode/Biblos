@@ -18,7 +18,12 @@
 ## Offline-first
 
 `initializeFirestore` + `persistentLocalCache` + `persistentMultipleTabManager`.
-Boot : `warmupReadingPlansRepository()` (main.tsx, idle).
+Boot : `warmupReadingPlansRepository()` + `pullPublishedReadingPlans()` (main.tsx, idle, se online).
+
+**Catálogo:** cada snapshot publicado grava mirror em `localStorage` (`biblos-reading-plans-catalog-v1`).
+Offline / erro rede → `useReadingPlansCatalog` serve o mirror (não fica vazio após 1.ª sync).
+
+**Progresso:** `planProgress` em localStorage + sync `users/{uid}/planProgress` via `user-sync` quando há Auth (anónimo ou Google) + rede. Upgrade para conta existente: merge local → flush. Volta online: flush automático.
 
 ## Sécurité
 

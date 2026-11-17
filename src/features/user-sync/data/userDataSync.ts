@@ -1,6 +1,10 @@
 /**
- * Sync offline-first: highlights / notes / planProgress → users/{uid}/…
- * Textos bíblicos jamais ici.
+ * Sync offline-first Auth: highlights / notes / verseNotes / planProgress
+ * → users/{uid}/… (nunca textos bíblicos).
+ *
+ * Ciclo: startUserDataSync(uid) após anonymous/authenticated;
+ * upgrade conta existente = stop → merge snapshot local → start → flush;
+ * merge remoto que altera local → re-push; `online` → flush pendente.
  */
 
 import {
@@ -93,44 +97,53 @@ async function pushAll(uid: string): Promise<void> {
   const ready = await ensureFirebase();
   if (!ready) return;
   const { db } = ready;
-  setSyncStatus(navigator.onLine ? "pending" : "offline");
+  const online =
+    typeof navigator === "undefined" ? true : navigator.onLine !== false;
+  setSyncStatus(online ? "pending" : "offline");
   const updatedAt = new Date().toISOString();
-  await Promise.all([
-    setDoc(
-      pathDoc(db, userHighlightsDoc(uid)),
-      {
-        store: exportVerseMarkStore(),
-        touched: exportVerseMarkTouched(),
-        removed: exportVerseMarkRemoved(),
-        updatedAt,
-      },
-      { merge: true },
-    ),
-    setDoc(
-      pathDoc(db, userNotesDoc(uid)),
-      {
-        store: exportDayNoteStore(),
-        updatedAt,
-      },
-      { merge: true },
-    ),
-    setDoc(
-      pathDoc(db, userVerseNotesDoc(uid)),
-      {
-        store: exportVerseNoteStore(),
-        updatedAt,
-      },
-      { merge: true },
-    ),
-    setDoc(
-      pathDoc(db, userPlanProgressDoc(uid)),
-      {
-        store: exportPlanProgressStore(),
-        updatedAt,
-      },
-      { merge: true },
-    ),
-  ]);
+  try {
+    await Promise.all([
+      setDoc(
+        pathDoc(db, userHighlightsDoc(uid)),
+        {
+          store: exportVerseMarkStore(),
+          touched: exportVerseMarkTouched(),
+          removed: exportVerseMarkRemoved(),
+          updatedAt,
+        },
+        { merge: true },
+      ),
+      setDoc(
+        pathDoc(db, userNotesDoc(uid)),
+        {
+          store: exportDayNoteStore(),
+          updatedAt,
+        },
+        { merge: true },
+      ),
+      setDoc(
+        pathDoc(db, userVerseNotesDoc(uid)),
+        {
+          store: exportVerseNoteStore(),
+          updatedAt,
+        },
+        { merge: true },
+      ),
+      setDoc(
+        pathDoc(db, userPlanProgressDoc(uid)),
+        {
+          store: exportPlanProgressStore(),
+          updatedAt,
+        },
+        { merge: true },
+      ),
+    ]);
+    setSyncStatus(online ? "synced" : "offline");
+  } catch (err) {
+    console.warn("[user-sync] pushAll", err);
+    setSyncStatus(online ? "pending" : "offline");
+    throw err;
+  }
 }
 
 export function queueUserDataPush(uid?: string | null): void {
@@ -166,50 +179,65 @@ function applyRemoteHighlights(data: Record<string, unknown> | undefined) {
     typeof importVerseMarkStore
   >[2];
   applyingRemote = true;
+  let changed = false;
   try {
-    importVerseMarkStore(store, touched, removed, true);
+    changed = importVerseMarkStore(store, touched, removed, true);
   } finally {
     applyingRemote = false;
   }
+  if (changed) queueUserDataPush(currentUid);
 }
 
 function applyRemoteNotes(data: Record<string, unknown> | undefined) {
   if (!data) return;
   applyingRemote = true;
+  let changed = false;
   try {
-    importDayNoteStore(
+    changed = importDayNoteStore(
       (data.store ?? {}) as Parameters<typeof importDayNoteStore>[0],
       true,
     );
   } finally {
     applyingRemote = false;
   }
+  if (changed) queueUserDataPush(currentUid);
 }
 
 function applyRemoteVerseNotes(data: Record<string, unknown> | undefined) {
   if (!data) return;
   applyingRemote = true;
+  let changed = false;
   try {
-    importVerseNoteStore(
+    changed = importVerseNoteStore(
       (data.store ?? {}) as Parameters<typeof importVerseNoteStore>[0],
       true,
     );
   } finally {
     applyingRemote = false;
   }
+  if (changed) queueUserDataPush(currentUid);
 }
 
 function applyRemotePlanProgress(data: Record<string, unknown> | undefined) {
   if (!data) return;
   applyingRemote = true;
+  let changed = false;
   try {
-    importPlanProgressStore(
+    changed = importPlanProgressStore(
       (data.store ?? {}) as Parameters<typeof importPlanProgressStore>[0],
       true,
     );
   } finally {
     applyingRemote = false;
   }
+  if (changed) queueUserDataPush(currentUid);
+}
+
+function onWindowOnline() {
+  if (!currentUid) return;
+  void flushUserDataPush(currentUid).catch((err) => {
+    console.warn("[user-sync] online flush", err);
+  });
 }
 
 function stopListeners() {
@@ -220,6 +248,47 @@ function stopListeners() {
   if (pushTimer) {
     clearTimeout(pushTimer);
     pushTimer = null;
+  }
+  if (typeof window !== "undefined") {
+    window.removeEventListener("online", onWindowOnline);
+  }
+}
+
+function isEmptyStore(value: unknown): boolean {
+  if (value == null) return true;
+  if (typeof value !== "object") return true;
+  return Object.keys(value as Record<string, unknown>).length === 0;
+}
+
+/** Seed cloud se faltar qualquer dos 4 docs (ou store vazio). */
+async function seedCloudIfNeeded(
+  db: Firestore,
+  uid: string,
+): Promise<void> {
+  const [hi, notes, verseNotes, planProgress] = await Promise.all([
+    getDoc(pathDoc(db, userHighlightsDoc(uid))),
+    getDoc(pathDoc(db, userNotesDoc(uid))),
+    getDoc(pathDoc(db, userVerseNotesDoc(uid))),
+    getDoc(pathDoc(db, userPlanProgressDoc(uid))),
+  ]);
+
+  const needsSeed =
+    !hi.exists() ||
+    !notes.exists() ||
+    !verseNotes.exists() ||
+    !planProgress.exists() ||
+    isEmptyStore(hi.data()?.store) ||
+    isEmptyStore(notes.data()?.store) ||
+    isEmptyStore(verseNotes.data()?.store) ||
+    isEmptyStore(planProgress.data()?.store);
+
+  const online =
+    typeof navigator === "undefined" ? true : navigator.onLine !== false;
+
+  if (needsSeed) {
+    await flushUserDataPush(uid);
+  } else {
+    setSyncStatus(online ? "synced" : "offline");
   }
 }
 
@@ -295,12 +364,13 @@ export async function startUserDataSync(uid: string): Promise<void> {
   localUnsubs.push(subscribeVerseNotes(onLocal));
   localUnsubs.push(subscribePlanProgress(onLocal));
 
-  // Premier push pour seed cloud si docs vides
+  if (typeof window !== "undefined") {
+    window.addEventListener("online", onWindowOnline);
+  }
+
   void (async () => {
     try {
-      const hi = await getDoc(pathDoc(db, userHighlightsDoc(uid)));
-      if (!hi.exists()) await flushUserDataPush(uid);
-      else setSyncStatus(navigator.onLine ? "synced" : "offline");
+      await seedCloudIfNeeded(db, uid);
     } catch {
       setSyncStatus(navigator.onLine ? "pending" : "offline");
     }
