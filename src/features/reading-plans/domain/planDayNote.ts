@@ -1,4 +1,9 @@
-/** Notes quotidiennes — stockage local uniquement. */
+/** Notes quotidiennes — local + Preferences (APK). */
+
+import {
+  persistLocalString,
+  removePersistedString,
+} from "../../../services/storage/StorageAdapter";
 
 export type DayNoteRecord = {
   text: string;
@@ -25,11 +30,7 @@ function readStore(): Store {
 }
 
 function writeStore(store: Store) {
-  try {
-    localStorage.setItem(STORE_KEY, JSON.stringify(store));
-  } catch {
-    /* quota */
-  }
+  persistLocalString(STORE_KEY, JSON.stringify(store));
 }
 
 export function loadDayNote(planId: string, jour: number): DayNoteRecord | null {
@@ -109,10 +110,6 @@ export function subscribeDayNotes(onChange: () => void): () => void {
 
 /** Efface notes locales (logout / delete account) — pas les Bibles. */
 export function clearDayNoteStore(): void {
-  try {
-    localStorage.removeItem(STORE_KEY);
-    notifyDayNotesChanged();
-  } catch {
-    /* ignore */
-  }
+  removePersistedString(STORE_KEY);
+  notifyDayNotesChanged();
 }

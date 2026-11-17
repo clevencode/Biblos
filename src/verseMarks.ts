@@ -6,6 +6,10 @@ function isVerseMarkCard(card: Pick<Flashcard, "id" | "cardCategory">): boolean 
   return String(card.id || "").toUpperCase().startsWith("MARK-");
 }
 import { normalizeVerseColor, parseVerseHex } from "./verseColors";
+import {
+  persistLocalString,
+  removePersistedString,
+} from "./services/storage/StorageAdapter";
 
 const STORAGE_KEY = "biblos.verseMarks";
 const TOUCHED_KEY = "biblos.verseMarks.touched";
@@ -45,11 +49,7 @@ function readTouched(): TouchedStore {
 }
 
 function writeTouched(store: TouchedStore) {
-  try {
-    localStorage.setItem(TOUCHED_KEY, JSON.stringify(store));
-  } catch {
-    /* quota */
-  }
+  persistLocalString(TOUCHED_KEY, JSON.stringify(store));
 }
 
 function readRemoved(): TouchedStore {
@@ -64,11 +64,7 @@ function readRemoved(): TouchedStore {
 }
 
 function writeRemoved(store: TouchedStore) {
-  try {
-    localStorage.setItem(REMOVED_KEY, JSON.stringify(store));
-  } catch {
-    /* quota */
-  }
+  persistLocalString(REMOVED_KEY, JSON.stringify(store));
 }
 
 export function exportVerseMarkRemoved(): TouchedStore {
@@ -105,12 +101,8 @@ function notifyRevision() {
 }
 
 function writeStore(store: VerseMarkStore) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
-    notifyRevision();
-  } catch {
-    /* quota / private mode */
-  }
+  persistLocalString(STORAGE_KEY, JSON.stringify(store));
+  notifyRevision();
 }
 
 export function exportVerseMarkStore(): VerseMarkStore {
@@ -181,10 +173,9 @@ export function importVerseMarkStore(
   }
 
   if (changed) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+    writeStore(store);
     writeTouched(touched);
     writeRemoved(removed);
-    notifyRevision();
   }
   return changed;
 }
@@ -201,14 +192,10 @@ export function subscribeVerseMarksRevision(onChange: () => void): () => void {
 
 /** Efface marques locales (logout / delete) — pas les Bibles IndexedDB. */
 export function clearVerseMarkStore(): void {
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-    localStorage.removeItem(TOUCHED_KEY);
-    localStorage.removeItem(REMOVED_KEY);
-    notifyRevision();
-  } catch {
-    /* ignore */
-  }
+  removePersistedString(STORAGE_KEY);
+  removePersistedString(TOUCHED_KEY);
+  removePersistedString(REMOVED_KEY);
+  notifyRevision();
 }
 
 export function loadChapterMarks(

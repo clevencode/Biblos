@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { FirestoreError } from "firebase/firestore";
 import { isReadingPlansFirebaseConfigured } from "../../data/firebaseConfig";
 import { loadPublishedPlansCache } from "../../data/readingPlansLocalCache";
 import {
+  pullPublishedReadingPlans,
   subscribePublishedReadingPlans,
   warmupReadingPlansRepository,
 } from "../../data/readingPlansRepository";
@@ -21,9 +22,10 @@ export type ReadingPlansCatalogState = {
   error: string | null;
   /** true enquanto não houve primeiro snapshot nem cache local. */
   isInitialLoading: boolean;
+  retry: () => void;
 };
 
-function initialState(): ReadingPlansCatalogState {
+function initialState(): Omit<ReadingPlansCatalogState, "retry"> {
   if (!isReadingPlansFirebaseConfigured()) {
     return {
       status: "unconfigured",
@@ -57,7 +59,12 @@ function initialState(): ReadingPlansCatalogState {
  * Progresso do plano continua em planProgress + user-sync.
  */
 export function useReadingPlansCatalog(enabled: boolean): ReadingPlansCatalogState {
-  const [state, setState] = useState<ReadingPlansCatalogState>(initialState);
+  const [state, setState] = useState(initialState);
+  const [retryToken, setRetryToken] = useState(0);
+
+  const retry = useCallback(() => {
+    setRetryToken((n) => n + 1);
+  }, []);
 
   useEffect(() => {
     if (!enabled) return undefined;
@@ -93,9 +100,21 @@ export function useReadingPlansCatalog(enabled: boolean): ReadingPlansCatalogSta
       }));
     }
 
-    void warmupReadingPlansRepository().then((ok) => {
+    void warmupReadingPlansRepository().then(async (ok) => {
       if (cancelled) return;
       if (!ok) {
+        const pulled = await pullPublishedReadingPlans();
+        if (cancelled) return;
+        if (pulled?.plans.length) {
+          setState({
+            status: "ready",
+            plans: pulled.plans,
+            fromCache: pulled.fromCache,
+            error: null,
+            isInitialLoading: false,
+          });
+          return;
+        }
         const fallback = loadPublishedPlansCache();
         if (fallback?.plans.length) {
           setState({
@@ -130,40 +149,65 @@ export function useReadingPlansCatalog(enabled: boolean): ReadingPlansCatalogSta
         },
         onError: (err: FirestoreError) => {
           if (cancelled) return;
-          const fallback = loadPublishedPlansCache();
-          if (fallback?.plans.length) {
-            setState({
-              status: "ready",
-              plans: fallback.plans,
-              fromCache: true,
-              error: null,
-              isInitialLoading: false,
-            });
-            return;
-          }
-          setState((prev) => {
-            if (prev.plans.length > 0) {
-              return {
-                ...prev,
+          void pullPublishedReadingPlans().then((pulled) => {
+            if (cancelled) return;
+            if (pulled?.plans.length) {
+              setState({
                 status: "ready",
+                plans: pulled.plans,
+                fromCache: pulled.fromCache,
+                error: null,
+                isInitialLoading: false,
+              });
+              return;
+            }
+            const fallback = loadPublishedPlansCache();
+            if (fallback?.plans.length) {
+              setState({
+                status: "ready",
+                plans: fallback.plans,
                 fromCache: true,
                 error: null,
                 isInitialLoading: false,
-              };
+              });
+              return;
             }
-            return {
-              status: "error",
-              plans: [],
-              fromCache: false,
-              error: err.message || "Erreur Firestore",
-              isInitialLoading: false,
-            };
+            setState((prev) => {
+              if (prev.plans.length > 0) {
+                return {
+                  ...prev,
+                  status: "ready",
+                  fromCache: true,
+                  error: null,
+                  isInitialLoading: false,
+                };
+              }
+              return {
+                status: "error",
+                plans: [],
+                fromCache: false,
+                error: err.message || "Erreur Firestore",
+                isInitialLoading: false,
+              };
+            });
           });
         },
       });
 
       unsubscribe = sub ? () => sub() : null;
       if (!sub) {
+        const pulled = await pullPublishedReadingPlans();
+        if (cancelled) return;
+        if (pulled?.plans.length) {
+          setState({
+            status: "ready",
+            plans: pulled.plans,
+            fromCache: pulled.fromCache,
+            error: null,
+            isInitialLoading: false,
+          });
+          return;
+        }
         const fallback = loadPublishedPlansCache();
         if (fallback?.plans.length) {
           setState({
@@ -189,7 +233,7 @@ export function useReadingPlansCatalog(enabled: boolean): ReadingPlansCatalogSta
       cancelled = true;
       unsubscribe?.();
     };
-  }, [enabled]);
+  }, [enabled, retryToken]);
 
-  return state;
+  return { ...state, retry };
 }

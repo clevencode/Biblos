@@ -47,6 +47,8 @@ export type UiCopyKey =
   | "plan.catalogErrorHint"
   | "plan.offline"
   | "plan.offlineHint"
+  | "plan.retry"
+  | "plan.firebaseMissing"
   | "profile.title"
   | "profile.history"
   | "profile.clearHistory"
@@ -289,6 +291,9 @@ const FR: Dict = {
   "plan.offline": "Plans hors ligne",
   "plan.offlineHint":
     "Le catalogue n’est pas configuré sur cet appareil. Vous pouvez toujours ouvrir la Bible.",
+  "plan.retry": "Réessayer",
+  "plan.firebaseMissing":
+    "Firebase n’est pas inclus dans cette build. Recompilez l’APK avec VITE_FIREBASE_* dans .env.",
   "profile.title": "Profil",
   "profile.history": "Historique",
   "profile.clearHistory": "Effacer",
@@ -550,6 +555,9 @@ const HT: Dict = {
   "plan.offline": "Plan offline",
   "plan.offlineHint":
     "Katalòg la pa konfigire sou aparèy sa a. Ou ka toujou louvri Bib la.",
+  "plan.retry": "Eseye ankò",
+  "plan.firebaseMissing":
+    "Firebase pa nan build sa a. Rekompile APK a ak VITE_FIREBASE_* nan .env.",
   "profile.title": "Pwofil",
   "profile.history": "Istorik",
   "profile.clearHistory": "Efase",

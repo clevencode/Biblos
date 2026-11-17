@@ -5,6 +5,7 @@
 
 import { normalizeReadingPlanDocument } from "../domain/normalizeReadingPlan";
 import type { ReadingPlan, ReadingPlanFirestoreDoc } from "../domain/types";
+import { persistLocalString } from "../../../services/storage/StorageAdapter";
 
 const CACHE_KEY = "biblos-reading-plans-catalog-v1";
 
@@ -72,13 +73,9 @@ export function loadPublishedPlansCache(): PublishedPlansCache | null {
 export function savePublishedPlansCache(plans: ReadingPlan[]): void {
   const published = plans.filter((p) => p.isPublished);
   if (!published.length) return;
-  try {
-    const payload: PublishedPlansCache = {
-      updatedAt: new Date().toISOString(),
-      plans: published,
-    };
-    localStorage.setItem(CACHE_KEY, JSON.stringify(payload));
-  } catch {
-    /* quota / private mode */
-  }
+  const payload: PublishedPlansCache = {
+    updatedAt: new Date().toISOString(),
+    plans: published,
+  };
+  persistLocalString(CACHE_KEY, JSON.stringify(payload));
 }

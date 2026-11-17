@@ -23,6 +23,7 @@ type ControlsPayload = {
 let listening = false;
 let created = false;
 let lastKey = "";
+let notifPermissionAsked = false;
 
 function nativeReady(): boolean {
   return Capacitor.isNativePlatform() && Capacitor.getPlatform() === "android";
@@ -31,6 +32,19 @@ function nativeReady(): boolean {
 async function getControls() {
   const mod = await import("capacitor-music-controls-plugin");
   return mod.CapacitorMusicControls;
+}
+
+/** Android 13+: pede POST_NOTIFICATIONS via Notification API do WebView. */
+async function ensureNotificationPermission(): Promise<void> {
+  if (!nativeReady() || notifPermissionAsked) return;
+  notifPermissionAsked = true;
+  try {
+    if (typeof Notification !== "undefined" && Notification.permission === "default") {
+      await Notification.requestPermission();
+    }
+  } catch {
+    /* WebView sem Notification API */
+  }
 }
 
 function handleMessage(message: string, handlers: BibleAudioControlHandlers) {
@@ -42,7 +56,6 @@ function handleMessage(message: string, handlers: BibleAudioControlHandlers) {
       handlers.onPause();
       break;
     case "music-controls-toggle-play-pause": {
-      // iOS / boutons mixtes — bascule selon l’état courant via play (si déjà en lecture, l’UI enverra pause).
       handlers.onPlay();
       break;
     }
@@ -71,6 +84,7 @@ export async function bindBibleAudioControls(
   if (listening) return () => undefined;
   listening = true;
 
+  await ensureNotificationPermission();
   const MusicControls = await getControls();
 
   const iosHandle = await MusicControls.addListener("controlsNotification", (info) => {
@@ -94,6 +108,7 @@ export async function bindBibleAudioControls(
 export async function syncBibleAudioControls(payload: ControlsPayload): Promise<void> {
   if (!nativeReady()) return;
   try {
+    await ensureNotificationPermission();
     const MusicControls = await getControls();
     const key = `${payload.track}|${payload.artist}|${Math.round(payload.duration)}`;
     if (!created || key !== lastKey) {
@@ -124,8 +139,10 @@ export async function syncBibleAudioControls(payload: ControlsPayload): Promise<
       elapsed: Math.max(0, Math.floor(payload.elapsed || 0)),
       isPlaying: payload.isPlaying,
     });
-  } catch {
-    /* plugin absent / non sync */
+  } catch (err) {
+    created = false;
+    lastKey = "";
+    console.warn("[bible-audio] syncBibleAudioControls", err);
   }
 }
 
@@ -136,7 +153,7 @@ export async function clearBibleAudioControls(): Promise<void> {
   try {
     const MusicControls = await getControls();
     await MusicControls.destroy();
-  } catch {
-    /* ignore */
+  } catch (err) {
+    console.warn("[bible-audio] clearBibleAudioControls", err);
   }
 }

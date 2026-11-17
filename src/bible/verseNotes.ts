@@ -9,6 +9,7 @@ import {
   type ReadingPassageRef,
 } from "./readingScope";
 import type { BibleTextVersionId } from "./bibleVersions";
+import { persistLocalString } from "../services/storage/StorageAdapter";
 
 export type VerseNoteRecord = {
   text: string;
@@ -37,11 +38,7 @@ function readStore(): Store {
 }
 
 function writeStore(store: Store) {
-  try {
-    localStorage.setItem(STORE_KEY, JSON.stringify(store));
-  } catch {
-    /* quota */
-  }
+  persistLocalString(STORE_KEY, JSON.stringify(store));
 }
 
 function notify() {

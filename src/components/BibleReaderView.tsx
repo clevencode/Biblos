@@ -590,6 +590,13 @@ export function BibleReaderView({
     () => new Map(),
   );
   const [chromeHidden, setChromeHidden] = useState(false);
+  /** FABs laterais: opacidade reduzida durante scroll. */
+  const [chapterFabsDimmed, setChapterFabsDimmed] = useState(false);
+  /** Fade do texto ao trocar de capítulo. */
+  const [passageFadeIn, setPassageFadeIn] = useState(false);
+  const chapterFabScrollTimer = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
   const [audioByUsfm, setAudioByUsfm] = useState<Record<string, BibleAudioEpisode>>({});
   const [audioPodcast, setAudioPodcast] = useState("Bible | Podcast.s21");
   const [audioPlaying, setAudioPlaying] = useState(false);
@@ -1068,6 +1075,28 @@ export function BibleReaderView({
     return () => window.clearInterval(id);
   }, [audioPlaying, audioActiveUsfm, audioByUsfm, audioPodcast, audioDuration]);
 
+  /* Background / lock screen: re-sync notificação; não pausar só por hide. */
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState !== "hidden") return;
+      const audio = audioRef.current;
+      if (!audio || audio.paused) return;
+      const usfm = (audioActiveUsfm || audioBookRef.current || "").toUpperCase();
+      const episode = usfm ? audioByUsfm[usfm] : null;
+      if (!episode) return;
+      void syncBibleAudioControls({
+        track: episode.title,
+        artist: audioPodcast,
+        album: "Segond 21",
+        isPlaying: true,
+        duration: Number.isFinite(audio.duration) ? audio.duration : audioDuration,
+        elapsed: audio.currentTime || 0,
+      });
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, [audioActiveUsfm, audioByUsfm, audioPodcast, audioDuration]);
+
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -1259,6 +1288,7 @@ export function BibleReaderView({
         : { number: 0, mode: "top", seq: ++verseScrollSeq.current };
     preferJumpFocusRef.current = false;
     lastAppliedVerseScroll.current = "";
+    setPassageFadeIn(true);
     setBookId(nextBook);
     setChapterId(nextChapter);
     setHighlightVerse(verse);
@@ -1270,6 +1300,7 @@ export function BibleReaderView({
     setCardMsg(null);
     setPassageUiError(null);
     void commitPassageLoad(nextBook, nextChapter, verse, verseEnd);
+    window.setTimeout(() => setPassageFadeIn(false), 200);
   }
 
   function goAdjacent(delta: -1 | 1) {
@@ -1399,7 +1430,7 @@ export function BibleReaderView({
     return formatPassagePillRef(title, next.chapterId);
   }
 
-  function renderPassageEndSkipButton(delta: -1 | 1) {
+  function renderChapterSideFab(delta: -1 | 1) {
     const chapterSkipIcons = passageBarSkipIcons();
     const planSkips = Boolean(planReading);
     const stageComplete = Boolean(planSkips && planReading?.isStageLast);
@@ -1425,41 +1456,47 @@ export function BibleReaderView({
       : isPrev
         ? t("bible.prevChapter")
         : t("bible.nextChapter");
+    const iconName = isPrev
+      ? chapterSkipIcons.previous
+      : nextIsCheck
+        ? "check"
+        : chapterSkipIcons.next;
     return (
       <button
         key={isPrev ? "prev" : "next"}
         type="button"
-        className={`bible-passage-end-skip${isPrev ? " is-prev" : " is-next"}${
+        className={`bible-chapter-fab${isPrev ? " is-prev" : " is-next"}${
           nextIsCheck ? " is-stage-complete" : ""
-        }`}
+        }${chapterFabsDimmed ? " is-scroll-dim" : ""}`}
         onClick={() => planOrChapterSkip(delta)}
         disabled={disabled}
         aria-label={
           destLabel ? `${actionLabel} · ${destLabel}` : actionLabel
         }
+        title={destLabel ? `${actionLabel} · ${destLabel}` : actionLabel}
       >
-        {isPrev ? (
-          <YvIcon
-            name={chapterSkipIcons.previous}
-            className="bible-passage-end-skip-icon"
-          />
-        ) : null}
-        <span className="bible-passage-end-skip-copy">
-          <span className="bible-passage-end-skip-dest">
-            {destLabel ?? actionLabel}
-          </span>
-        </span>
-        {!isPrev ? (
-          <YvIcon
-            name={nextIsCheck ? "check" : chapterSkipIcons.next}
-            className="bible-passage-end-skip-icon"
-          />
-        ) : null}
+        <YvIcon name={iconName} className="bible-chapter-fab-icon" />
       </button>
     );
   }
 
-  /** Topbar: só o chip/picker (skips ficam no fim da passagem). */
+  function renderChapterSideFabs() {
+    const hasPassage = Boolean(passage?.verses?.length || passage?.content);
+    if (!hasPassage || surfaceChrome.passageInputBlocked) return null;
+    return (
+      <nav
+        className="bible-chapter-fabs"
+        aria-label={
+          planReading ? t("bible.planProgress") : t("bible.chapters")
+        }
+      >
+        {renderChapterSideFab(-1)}
+        {renderChapterSideFab(1)}
+      </nav>
+    );
+  }
+
+  /** Topbar: só o chip/picker (skips = FABs laterais). */
   function renderPassageSkipPickerCluster() {
     return renderPassageRoll();
   }
@@ -3371,6 +3408,17 @@ export function BibleReaderView({
 
         /* Chrome/nav: estáveis no scroll; hide só por modal / :has. */
         if (chromeHiddenRef.current) setReadingChrome(false, true);
+
+        if (Math.abs(delta) > 0) {
+          setChapterFabsDimmed(true);
+          if (chapterFabScrollTimer.current) {
+            clearTimeout(chapterFabScrollTimer.current);
+          }
+          chapterFabScrollTimer.current = setTimeout(() => {
+            chapterFabScrollTimer.current = null;
+            setChapterFabsDimmed(false);
+          }, 320);
+        }
       });
     };
 
@@ -3380,6 +3428,10 @@ export function BibleReaderView({
       if (scrollRaf.current) {
         window.cancelAnimationFrame(scrollRaf.current);
         scrollRaf.current = 0;
+      }
+      if (chapterFabScrollTimer.current) {
+        clearTimeout(chapterFabScrollTimer.current);
+        chapterFabScrollTimer.current = null;
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- setReadingChrome is a render-local helper
@@ -3537,7 +3589,7 @@ export function BibleReaderView({
                       ? onPlanStep
                         ? "Quitter la lecture du plan"
                         : "Retour au passage du plan"
-                      : t("shell.home")
+                      : t("profile.settings")
                   }
                 >
                   <YvIcon
@@ -3744,9 +3796,11 @@ export function BibleReaderView({
           </div>
         ) : null}
 
+        {renderChapterSideFabs()}
+
         <article
         ref={passageScrollRef}
-        className="bible-passage"
+        className={`bible-passage${passageFadeIn ? " is-chapter-fade" : ""}`}
         aria-busy={presentation.ariaBusy || undefined}
         aria-hidden={surfaceChrome.passageInputBlocked || undefined}
         inert={surfaceChrome.passageInputBlocked || undefined}
@@ -3766,17 +3820,6 @@ export function BibleReaderView({
           <p className="bible-book-name">{bookTitle}</p>
           <p className="bible-chapter-num">{chapterId}</p>
         </header>
-
-        {passage?.verses?.length || passage?.content ? (
-          <nav
-            className="bible-passage-start-skips"
-            aria-label={
-              planReading ? t("bible.planProgress") : t("bible.chapters")
-            }
-          >
-            {renderPassageEndSkipButton(-1)}
-          </nav>
-        ) : null}
 
         {showOfflineChapterGateUi ? (
           <BibleOfflineChapterGate
@@ -3900,16 +3943,6 @@ export function BibleReaderView({
           <p className="bible-text">{passage.content}</p>
         ) : presentation.inFlight ? null : !isUsfmBookId(bookId) ? (
           <p className="bible-yv-muted">{PASSAGE_LOADING_COPY.emptyPassage}</p>
-        ) : null}
-        {passage?.verses?.length || passage?.content ? (
-          <nav
-            className="bible-passage-end-skips"
-            aria-label={
-              planReading ? t("bible.planProgress") : t("bible.chapters")
-            }
-          >
-            {renderPassageEndSkipButton(1)}
-          </nav>
         ) : null}
       </article>
       </div>

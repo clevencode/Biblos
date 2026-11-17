@@ -167,12 +167,19 @@ export async function hydratePrefsMirror(
   );
 }
 
-/** Prefs críticas fase 1. */
+/** Prefs críticas + stores de sync (mirror Preferences no APK). */
 export const STORAGE_PREF_KEYS = {
   theme: "biblos-theme",
   reader: "biblos-bible-reader",
   cleanSlate: "biblos-clean-slate",
   apkBannerDismissed: "biblos-apk-banner-dismissed",
+  verseMarks: "biblos.verseMarks",
+  verseMarksTouched: "biblos.verseMarks.touched",
+  verseMarksRemoved: "biblos.verseMarks.removed",
+  planProgress: "biblos-plan-progress-v1",
+  dayNotes: "biblos-day-notes-v1",
+  verseNotes: "biblos-verse-notes-v1",
+  readingPlansCatalog: "biblos-reading-plans-catalog-v1",
 } as const;
 
 export const STORAGE_PREF_KEY_LIST = Object.values(STORAGE_PREF_KEYS);
@@ -186,4 +193,23 @@ export function markPrefsMirrorReady(): void {
 
 export function isPrefsMirrorReady(): boolean {
   return prefsMirrorReady;
+}
+
+/** localStorage + Preferences (nativo) — sync stores / prefs. */
+export function persistLocalString(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    /* private mode / quota */
+  }
+  void getStorageAdapter().setString(key, value);
+}
+
+export function removePersistedString(key: string): void {
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    /* ignore */
+  }
+  void getStorageAdapter().remove(key);
 }

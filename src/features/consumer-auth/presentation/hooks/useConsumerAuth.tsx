@@ -195,7 +195,7 @@ export function ConsumerAuthProvider({ children }: { children: ReactNode }) {
         setProfile(applyFirebaseAuthUser(result.user));
         setSession(sessionFromUser(result.user, result.user.uid));
         await startUserDataSync(result.user.uid);
-        await flushUserDataPush(result.user.uid);
+        await flushUserDataPush(result.user.uid, { skipEmptyStores: true });
       } catch (err) {
         setError(mapAuthErrorToMessage(err));
         throw err;

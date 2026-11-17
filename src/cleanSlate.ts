@@ -1,41 +1,14 @@
-import { Capacitor } from "@capacitor/core";
-import { FirebaseAuthentication } from "@capacitor-firebase/authentication";
-import { signOut } from "firebase/auth";
-import { ensureFirebase, getFirebaseAuth } from "./lib/firebase";
 import {
   getStorageAdapter,
   STORAGE_PREF_KEYS,
 } from "./services/storage/StorageAdapter";
-import { wipeLocalUserData } from "./userProfile";
-
-/** Une seule fois par jeton : oublie données/caches utilisateurs pour repartir propre. */
-const CLEAN_SLATE_KEY = STORAGE_PREF_KEYS.cleanSlate;
-const CLEAN_SLATE_TOKEN = `official-${__APP_VERSION__}`;
 
 /**
- * Encerra sessão Firebase (JS + cache Google nativo) antes do wipe.
- * browserLocalPersistence / IDB firebase* não entram no filtro "biblos".
+ * Token por versão — já não faz wipe de dados de utilizador / logout.
+ * Só limpa caches HTTP e SWs legados; preserva sessão, marks e planos.
  */
-async function signOutFirebaseForCleanSlate(): Promise<void> {
-  try {
-    await ensureFirebase();
-  } catch {
-    /* config ausente */
-  }
-  if (Capacitor.isNativePlatform()) {
-    try {
-      await FirebaseAuthentication.signOut();
-    } catch {
-      /* plugin opcional */
-    }
-  }
-  try {
-    const auth = getFirebaseAuth();
-    if (auth) await signOut(auth);
-  } catch {
-    /* déjà déconnecté / Auth indisponible */
-  }
-}
+const CLEAN_SLATE_KEY = STORAGE_PREF_KEYS.cleanSlate;
+const CLEAN_SLATE_TOKEN = `official-${__APP_VERSION__}`;
 
 /** Caches Workbox / PWA — limpar no bump de versão sem desregistrar o SW intencional. */
 async function clearHttpCaches(): Promise<void> {
@@ -73,40 +46,6 @@ async function unregisterLegacyServiceWorkers(): Promise<void> {
   );
 }
 
-async function deleteOfflineDatabases(): Promise<void> {
-  if (!("indexedDB" in window) || typeof indexedDB.databases !== "function") {
-    try {
-      indexedDB.deleteDatabase("biblos-s21-offline");
-    } catch {
-      /* ignore */
-    }
-    return;
-  }
-  try {
-    const dbs = await indexedDB.databases();
-    await Promise.all(
-      dbs
-        .map((db) => db.name)
-        .filter((name): name is string => Boolean(name?.toLowerCase().includes("biblos")))
-        .map(
-          (name) =>
-            new Promise<void>((resolve) => {
-              const req = indexedDB.deleteDatabase(name);
-              req.onsuccess = () => resolve();
-              req.onerror = () => resolve();
-              req.onblocked = () => resolve();
-            }),
-        ),
-    );
-  } catch {
-    try {
-      indexedDB.deleteDatabase("biblos-s21-offline");
-    } catch {
-      /* ignore */
-    }
-  }
-}
-
 function readCleanSlateTokenSync(): string | null {
   try {
     return localStorage.getItem(CLEAN_SLATE_KEY);
@@ -116,7 +55,7 @@ function readCleanSlateTokenSync(): string | null {
 }
 
 /**
- * Wipe in-place no bump de versão — sem `location.replace` / duplo boot.
+ * Soft bump de versão — sem signOut, sem wipe de marks/planos/perfil.
  * @returns sempre false (compat signature; nunca dispara reload).
  */
 export async function ensureCleanSlate(): Promise<boolean> {
@@ -130,9 +69,6 @@ export async function ensureCleanSlate(): Promise<boolean> {
     return false;
   }
 
-  await signOutFirebaseForCleanSlate();
-  await wipeLocalUserData();
-  await deleteOfflineDatabases();
   await clearHttpCaches();
   await unregisterLegacyServiceWorkers();
 
@@ -143,7 +79,6 @@ export async function ensureCleanSlate(): Promise<boolean> {
   }
   await store.setString(CLEAN_SLATE_KEY, CLEAN_SLATE_TOKEN);
 
-  // Limpa query legado ?fresh=1 de boots antigos.
   try {
     const url = new URL(window.location.href);
     if (url.searchParams.has("fresh")) {

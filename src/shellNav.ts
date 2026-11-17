@@ -1,14 +1,13 @@
-/** Onglets principaux : Accueil · Bible · Plan (labels via i18n). */
-export type ShellTab = "home" | "bible" | "today";
+/** Onglets principaux : Bible · Plan (labels via i18n). */
+export type ShellTab = "bible" | "today";
 
 export type ShellTabDef = {
   id: ShellTab;
   /** Chave i18n em uiCopy (shell.*). */
-  labelKey: "shell.home" | "shell.plan" | "shell.bible";
+  labelKey: "shell.plan" | "shell.bible";
 };
 
 export const SHELL_TABS: readonly ShellTabDef[] = [
-  { id: "home", labelKey: "shell.home" },
   { id: "bible", labelKey: "shell.bible" },
   { id: "today", labelKey: "shell.plan" },
 ] as const;
@@ -21,8 +20,8 @@ const TAB_SET = new Set<ShellTab>(SHELL_TABS.map((t) => t.id));
 
 function coerceTab(value: unknown): ShellTab {
   if (typeof value === "string") {
-    /* Legado: Profil saiu do radial → Accueil (config). */
-    if (value === "profile") return "home";
+    /* Legado: Accueil / Profil → Bible. */
+    if (value === "home" || value === "profile") return DEFAULT_SHELL_TAB;
     if (TAB_SET.has(value as ShellTab)) return value as ShellTab;
   }
   return DEFAULT_SHELL_TAB;

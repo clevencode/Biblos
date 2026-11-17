@@ -93,7 +93,10 @@ function pathDoc(db: Firestore, path: string) {
   return doc(db, parts[0]!, parts[1]!, parts[2]!, parts[3]!);
 }
 
-async function pushAll(uid: string): Promise<void> {
+async function pushAll(
+  uid: string,
+  opts?: { skipEmptyStores?: boolean },
+): Promise<void> {
   const ready = await ensureFirebase();
   if (!ready) return;
   const { db } = ready;
@@ -101,43 +104,63 @@ async function pushAll(uid: string): Promise<void> {
     typeof navigator === "undefined" ? true : navigator.onLine !== false;
   setSyncStatus(online ? "pending" : "offline");
   const updatedAt = new Date().toISOString();
-  try {
-    await Promise.all([
+  const skipEmpty = opts?.skipEmptyStores === true;
+  const writes: Array<Promise<unknown>> = [];
+
+  const highlights = exportVerseMarkStore();
+  const notes = exportDayNoteStore();
+  const verseNotes = exportVerseNoteStore();
+  const planProgress = exportPlanProgressStore();
+
+  if (!skipEmpty || !isEmptyStore(highlights)) {
+    writes.push(
       setDoc(
         pathDoc(db, userHighlightsDoc(uid)),
         {
-          store: exportVerseMarkStore(),
+          store: highlights,
           touched: exportVerseMarkTouched(),
           removed: exportVerseMarkRemoved(),
           updatedAt,
         },
         { merge: true },
       ),
+    );
+  }
+  if (!skipEmpty || !isEmptyStore(notes)) {
+    writes.push(
       setDoc(
         pathDoc(db, userNotesDoc(uid)),
-        {
-          store: exportDayNoteStore(),
-          updatedAt,
-        },
+        { store: notes, updatedAt },
         { merge: true },
       ),
+    );
+  }
+  if (!skipEmpty || !isEmptyStore(verseNotes)) {
+    writes.push(
       setDoc(
         pathDoc(db, userVerseNotesDoc(uid)),
-        {
-          store: exportVerseNoteStore(),
-          updatedAt,
-        },
+        { store: verseNotes, updatedAt },
         { merge: true },
       ),
+    );
+  }
+  if (!skipEmpty || !isEmptyStore(planProgress)) {
+    writes.push(
       setDoc(
         pathDoc(db, userPlanProgressDoc(uid)),
-        {
-          store: exportPlanProgressStore(),
-          updatedAt,
-        },
+        { store: planProgress, updatedAt },
         { merge: true },
       ),
-    ]);
+    );
+  }
+
+  if (!writes.length) {
+    setSyncStatus(online ? "synced" : "offline");
+    return;
+  }
+
+  try {
+    await Promise.all(writes);
     setSyncStatus(online ? "synced" : "offline");
   } catch (err) {
     console.warn("[user-sync] pushAll", err);
@@ -159,14 +182,17 @@ export function queueUserDataPush(uid?: string | null): void {
   }, 1200);
 }
 
-export async function flushUserDataPush(uid?: string | null): Promise<void> {
+export async function flushUserDataPush(
+  uid?: string | null,
+  opts?: { skipEmptyStores?: boolean },
+): Promise<void> {
   const target = uid ?? currentUid;
   if (!target) return;
   if (pushTimer) {
     clearTimeout(pushTimer);
     pushTimer = null;
   }
-  await pushAll(target);
+  await pushAll(target, opts);
 }
 
 function applyRemoteHighlights(data: Record<string, unknown> | undefined) {
@@ -260,7 +286,10 @@ function isEmptyStore(value: unknown): boolean {
   return Object.keys(value as Record<string, unknown>).length === 0;
 }
 
-/** Seed cloud se faltar qualquer dos 4 docs (ou store vazio). */
+/**
+ * Seed cloud por documento: só escreve se remoto falta/vazio E local tem dados.
+ * Nunca faz flush global de stores vazios (evita wipe cross-device).
+ */
 async function seedCloudIfNeeded(
   db: Firestore,
   uid: string,
@@ -272,24 +301,71 @@ async function seedCloudIfNeeded(
     getDoc(pathDoc(db, userPlanProgressDoc(uid))),
   ]);
 
-  const needsSeed =
-    !hi.exists() ||
-    !notes.exists() ||
-    !verseNotes.exists() ||
-    !planProgress.exists() ||
-    isEmptyStore(hi.data()?.store) ||
-    isEmptyStore(notes.data()?.store) ||
-    isEmptyStore(verseNotes.data()?.store) ||
-    isEmptyStore(planProgress.data()?.store);
-
   const online =
     typeof navigator === "undefined" ? true : navigator.onLine !== false;
+  const updatedAt = new Date().toISOString();
+  const writes: Array<Promise<unknown>> = [];
 
-  if (needsSeed) {
-    await flushUserDataPush(uid);
-  } else {
-    setSyncStatus(online ? "synced" : "offline");
+  const localHi = exportVerseMarkStore();
+  const localNotes = exportDayNoteStore();
+  const localVerseNotes = exportVerseNoteStore();
+  const localPlan = exportPlanProgressStore();
+
+  const remoteHiEmpty = !hi.exists() || isEmptyStore(hi.data()?.store);
+  const remoteNotesEmpty =
+    !notes.exists() || isEmptyStore(notes.data()?.store);
+  const remoteVerseEmpty =
+    !verseNotes.exists() || isEmptyStore(verseNotes.data()?.store);
+  const remotePlanEmpty =
+    !planProgress.exists() || isEmptyStore(planProgress.data()?.store);
+
+  if (remoteHiEmpty && !isEmptyStore(localHi)) {
+    writes.push(
+      setDoc(
+        pathDoc(db, userHighlightsDoc(uid)),
+        {
+          store: localHi,
+          touched: exportVerseMarkTouched(),
+          removed: exportVerseMarkRemoved(),
+          updatedAt,
+        },
+        { merge: true },
+      ),
+    );
   }
+  if (remoteNotesEmpty && !isEmptyStore(localNotes)) {
+    writes.push(
+      setDoc(
+        pathDoc(db, userNotesDoc(uid)),
+        { store: localNotes, updatedAt },
+        { merge: true },
+      ),
+    );
+  }
+  if (remoteVerseEmpty && !isEmptyStore(localVerseNotes)) {
+    writes.push(
+      setDoc(
+        pathDoc(db, userVerseNotesDoc(uid)),
+        { store: localVerseNotes, updatedAt },
+        { merge: true },
+      ),
+    );
+  }
+  if (remotePlanEmpty && !isEmptyStore(localPlan)) {
+    writes.push(
+      setDoc(
+        pathDoc(db, userPlanProgressDoc(uid)),
+        { store: localPlan, updatedAt },
+        { merge: true },
+      ),
+    );
+  }
+
+  if (writes.length) {
+    setSyncStatus(online ? "pending" : "offline");
+    await Promise.all(writes);
+  }
+  setSyncStatus(online ? "synced" : "offline");
 }
 
 /**

@@ -41,4 +41,32 @@ public class MainActivity extends BridgeActivity {
     // Trava o textZoom do sistema — 1rem=16px; leitura só via --bible-font-size.
     settings.setTextZoom(100);
   }
+
+  /**
+   * Mantém timers do WebView activos em background para HTMLAudio + MusicControls FGS.
+   * Capacitor pausa o WebView em onPause; re-resume evita cortar o podcast S21.
+   */
+  @Override
+  public void onPause() {
+    super.onPause();
+    resumeWebViewForMedia();
+  }
+
+  @Override
+  public void onResume() {
+    super.onResume();
+    resumeWebViewForMedia();
+  }
+
+  private void resumeWebViewForMedia() {
+    if (this.bridge == null) return;
+    WebView webView = this.bridge.getWebView();
+    if (webView == null) return;
+    try {
+      webView.onResume();
+      webView.resumeTimers();
+    } catch (Exception ignored) {
+      /* ignore */
+    }
+  }
 }

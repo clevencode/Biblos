@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BibleReaderView } from "./components/BibleReaderView";
 import { AppShellNav } from "./components/AppShellNav";
-import { HomeShellPanel } from "./components/HomeShellPanel";
+import { HomeConfigSection } from "./components/HomeConfigSection";
 import {
   PlanDiscoverPanel,
   flattenPlanSteps,
@@ -124,9 +124,9 @@ function BiblosConsumerApp() {
   const [bibleFocusVersion, setBibleFocusVersion] =
     useState<BibleTextVersionId | null>(null);
   const [bibleFocusSeq, setBibleFocusSeq] = useState(0);
-  /** Origem da navegação para a Bíblia (ex. verso do dia → Accueil). */
-  const [bibleReturnTo, setBibleReturnTo] = useState<"home" | null>(null);
   const [activityTick, setActivityTick] = useState(0);
+  /** Conta / préférences — painel aberto a partir da navbar. */
+  const [accountOpen, setAccountOpen] = useState(false);
   const [workspacePlan, setWorkspacePlan] = useState<ReadingPlan | null>(null);
   const [workspaceJour, setWorkspaceJour] = useState<number | undefined>();
   const [workspaceResumeSeq, setWorkspaceResumeSeq] = useState(0);
@@ -202,12 +202,13 @@ function BiblosConsumerApp() {
   }, [bibleMode]);
 
   const selectTab = useCallback((next: ShellTab) => {
-    if (next !== "bible") setBibleReturnTo(null);
+    setAccountOpen(false);
     setTab(next);
   }, []);
 
   const openBible = useCallback(
     (ref?: string, versionId?: BibleTextVersionId) => {
+      setAccountOpen(false);
       if (ref) {
         setBibleFocusRef(ref);
         setBibleFocusVersion(versionId ?? null);
@@ -217,19 +218,6 @@ function BiblosConsumerApp() {
     },
     [],
   );
-
-  const openBibleFromHome = useCallback(
-    (ref?: string, opts?: { returnTo?: "home" }) => {
-      setBibleReturnTo(opts?.returnTo === "home" ? "home" : null);
-      openBible(ref);
-    },
-    [openBible],
-  );
-
-  const returnFromHomeReading = useCallback(() => {
-    setBibleReturnTo(null);
-    setTab("home");
-  }, []);
 
   const { openPlanAtJour, planReading, clearPlan } = usePlanReadingSession({
     onNavigate: (ref) => openBible(ref),
@@ -257,7 +245,7 @@ function BiblosConsumerApp() {
   const startPlanReadingFromWorkspace = useCallback(
     (jour: number, _passage: string, _opts?: { returnTo?: PlanFlowReturn }) => {
       if (!workspacePlan) return;
-      setBibleReturnTo(null);
+      setAccountOpen(false);
       openPlanAtJour(workspacePlan, jour);
       setTab("bible");
     },
@@ -463,24 +451,28 @@ function BiblosConsumerApp() {
           <div className="note-shell-main">
             <section className="graph-pane" aria-label="Contenu">
               <div className="graph-pane-body">
-                <HomeShellPanel
-                  active={tab === "home"}
-                  activityTick={activityTick}
-                  themePref={themePref}
-                  onSetTheme={setTheme}
-                  onOpenBible={openBibleFromHome}
-                  onOpenPlan={() => selectTab("today")}
-                  onResumePlan={(plan) => {
-                    openPlanWorkspace(plan);
-                    selectTab("today");
-                  }}
-                  onRequestSignIn={() => {
-                    setSignInVariant("upgrade");
-                    setSignInOpen(true);
-                  }}
-                />
+                {accountOpen ? (
+                  <div
+                    id="panel-account"
+                    role="dialog"
+                    aria-modal="false"
+                    aria-label={t("profile.settings")}
+                    className="pane-body account-shell-panel"
+                  >
+                    <HomeConfigSection
+                      active={accountOpen}
+                      activityTick={activityTick}
+                      themePref={themePref}
+                      onSetTheme={setTheme}
+                      onRequestSignIn={() => {
+                        setSignInVariant("upgrade");
+                        setSignInOpen(true);
+                      }}
+                    />
+                  </div>
+                ) : null}
                 <PlanDiscoverPanel
-                  active={tab === "today"}
+                  active={tab === "today" && !accountOpen}
                   workspacePlan={workspacePlan}
                   workspaceJour={workspaceJour}
                   workspaceResumeSeq={workspaceResumeSeq}
@@ -499,7 +491,7 @@ function BiblosConsumerApp() {
                   id="panel-bible"
                   role="tabpanel"
                   aria-labelledby="tab-bible"
-                  hidden={!bibleMode}
+                  hidden={!bibleMode || accountOpen}
                   className="pane-body"
                 >
                   {bibleMounted ? (
@@ -508,17 +500,15 @@ function BiblosConsumerApp() {
                       focusRef={bibleFocusRef}
                       focusVersionId={bibleFocusVersion}
                       focusSeq={bibleFocusSeq}
-                      active={bibleMode}
+                      active={bibleMode && !accountOpen}
                       compactViewport={narrow}
                       themePref={themePref}
                       onCycleTheme={cycleTheme}
-                      planReading={bibleMode ? planReading : null}
+                      planReading={
+                        bibleMode && !accountOpen ? planReading : null
+                      }
                       onBack={
-                        planReading
-                          ? returnFromPlanReading
-                          : bibleReturnTo === "home"
-                            ? returnFromHomeReading
-                            : undefined
+                        planReading ? returnFromPlanReading : undefined
                       }
                       requireAccountToMark={requireAccountToMark}
                       onRequestAccountToMark={requestAccountForMark}
@@ -553,7 +543,9 @@ function BiblosConsumerApp() {
           <AppShellNav
             active={tab}
             onSelect={selectTab}
-            immersiveHidden={bibleMode && navHidden}
+            immersiveHidden={bibleMode && !accountOpen && navHidden}
+            accountOpen={accountOpen}
+            onToggleAccount={() => setAccountOpen((open) => !open)}
           />
         </div>
       </main>

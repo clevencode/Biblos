@@ -55,9 +55,8 @@ export function PlanDiscoverPanel({
   onRestartPlan,
 }: PlanDiscoverPanelProps) {
   const { t } = useUiLocale();
-  const { status, plans, error, isInitialLoading } = useReadingPlansCatalog(
-    active && !workspacePlan,
-  );
+  const { status, plans, error, isInitialLoading, retry } =
+    useReadingPlansCatalog(active && !workspacePlan);
   const [progressTick, setProgressTick] = useState(0);
 
   useEffect(() => subscribePlanProgress(() => setProgressTick((n) => n + 1)), []);
@@ -210,19 +209,29 @@ export function PlanDiscoverPanel({
             <div className="plan-discover-empty" role="alert">
               <p className="plan-discover-empty-title">{t("plan.catalogError")}</p>
               <p className="muted">{error ?? t("plan.catalogErrorHint")}</p>
-              <button
-                type="button"
-                className="home-empty-cta type-label"
-                onClick={onOpenBible}
-              >
-                {t("home.openBible")}
-              </button>
+              <div className="plan-discover-empty-actions">
+                <button
+                  type="button"
+                  className="home-empty-cta type-label"
+                  onClick={retry}
+                >
+                  {t("plan.retry")}
+                </button>
+                <button
+                  type="button"
+                  className="home-empty-cta type-label"
+                  onClick={onOpenBible}
+                >
+                  {t("home.openBible")}
+                </button>
+              </div>
             </div>
           ) : null}
 
           {showUnconfigured ? (
             <div className="plan-discover-empty" role="status">
               <p className="plan-discover-empty-title">{t("plan.offline")}</p>
+              <p className="muted">{t("plan.firebaseMissing")}</p>
               <p className="muted">{t("plan.offlineHint")}</p>
               <button
                 type="button"

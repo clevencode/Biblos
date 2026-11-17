@@ -10,6 +10,7 @@ import {
   initializeFirestore,
   persistentLocalCache,
   persistentMultipleTabManager,
+  persistentSingleTabManager,
   type Firestore,
 } from "firebase/firestore";
 
@@ -80,8 +81,23 @@ function getOrInitDb(firebaseApp: FirebaseApp): Firestore {
     const message = err instanceof Error ? err.message : String(err);
     if (message.includes("already been called")) {
       db = getFirestore(firebaseApp);
-    } else {
-      throw err;
+      return db;
+    }
+    /* WebView Capacitor: multi-tab manager pode falhar → single-tab. */
+    try {
+      db = initializeFirestore(firebaseApp, {
+        localCache: persistentLocalCache({
+          tabManager: persistentSingleTabManager({}),
+        }),
+      });
+    } catch (inner) {
+      const innerMsg = inner instanceof Error ? inner.message : String(inner);
+      if (innerMsg.includes("already been called")) {
+        db = getFirestore(firebaseApp);
+      } else {
+        console.warn("[firebase] persistent cache fallback", err, inner);
+        db = getFirestore(firebaseApp);
+      }
     }
   }
   return db;

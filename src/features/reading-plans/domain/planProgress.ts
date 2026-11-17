@@ -1,6 +1,11 @@
 import type { ReadingPlan } from "./types";
 import { flattenPlanSteps, resolveResumeStepIndex } from "./planSteps";
 
+import {
+  persistLocalString,
+  removePersistedString,
+} from "../../../services/storage/StorageAdapter";
+
 const STORAGE_KEY = "biblos-plan-progress-v1";
 
 export type PlanProgress = {
@@ -25,7 +30,7 @@ function readStore(): ProgressStore {
 
 function writeStore(store: ProgressStore) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+    persistLocalString(STORAGE_KEY, JSON.stringify(store));
     window.dispatchEvent(new CustomEvent("biblos-plan-progress"));
   } catch {
     /* quota */
@@ -174,8 +179,8 @@ export function importPlanProgressStore(
 }
 
 export function clearPlanProgressStore(): void {
+  removePersistedString(STORAGE_KEY);
   try {
-    localStorage.removeItem(STORAGE_KEY);
     window.dispatchEvent(new CustomEvent("biblos-plan-progress"));
   } catch {
     /* ignore */
