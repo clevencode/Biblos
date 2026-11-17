@@ -89,6 +89,8 @@ export type UiCopyKey =
   | "auth.error.tooManyRequests"
   | "auth.error.network"
   | "auth.error.popupClosed"
+  | "auth.error.missingToken"
+  | "auth.error.nativeConfig"
   | "auth.signOutConfirm"
   | "auth.signOutConfirmOffline"
   | "auth.signOutConfirmAction"
@@ -335,6 +337,10 @@ const FR: Dict = {
     "Trop de tentatives. Réessaie plus tard.",
   "auth.error.network": "Réseau indisponible. Vérifie ta connexion.",
   "auth.error.popupClosed": "Connexion annulée.",
+  "auth.error.missingToken":
+    "Connexion Google incomplète (jeton manquant). Vérifie google-services.json sur l’APK.",
+  "auth.error.nativeConfig":
+    "Google Sign-In mal configuré (SHA-1/256 ou google-services.json). Vérifie Firebase Console.",
   "auth.signOutConfirm":
     "Tes données synchronisées restent en sécurité dans le cloud et reviendront à la prochaine connexion. Elles seront retirées de cet appareil.",
   "auth.signOutConfirmOffline":
@@ -591,6 +597,10 @@ const HT: Dict = {
     "Twòp esè. Eseye ankò pita.",
   "auth.error.network": "Rezo pa disponib. Verifye koneksyon ou.",
   "auth.error.popupClosed": "Koneksyon anile.",
+  "auth.error.missingToken":
+    "Koneksyon Google pa konplè (jeton manke). Verifye google-services.json nan APK la.",
+  "auth.error.nativeConfig":
+    "Google Sign-In mal konfigire (SHA-1/256 oswa google-services.json). Verifye Firebase Console.",
   "auth.signOutConfirm":
     "Done senkwonize yo rete an sekirite nan nwaj la epi y ap tounen nan pwochen koneksyon. Y ap retire nan aparèy sa a.",
   "auth.signOutConfirmOffline":

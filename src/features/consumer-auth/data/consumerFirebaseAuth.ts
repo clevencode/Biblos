@@ -53,6 +53,50 @@ export class ConsumerAuthUnavailableError extends Error {
   }
 }
 
+/** Erro Auth com `code` estável para mapAuthErrorToMessage. */
+export class ConsumerAuthError extends Error {
+  readonly code: string;
+
+  constructor(code: string, message: string) {
+    super(message);
+    this.name = "ConsumerAuthError";
+    this.code = code;
+  }
+}
+
+/** Normaliza falhas do plugin Google nativo → códigos auth/*. */
+export function normalizeNativeGoogleAuthError(err: unknown): never {
+  const codeRaw =
+    err && typeof err === "object" && "code" in err
+      ? String((err as { code: unknown }).code)
+      : "";
+  const message = err instanceof Error ? err.message : String(err ?? "");
+  const blob = `${codeRaw} ${message}`.toLowerCase();
+
+  if (
+    /cancel|cancelled|canceled|12501|sign_in_cancelled|user.?cancel/.test(blob)
+  ) {
+    throw new ConsumerAuthError(
+      "auth/popup-closed-by-user",
+      message || "Connexion Google annulée",
+    );
+  }
+  if (
+    /developer_error|10\b|sha|google-services|default_web_client|client.?id|configuration/.test(
+      blob,
+    )
+  ) {
+    throw new ConsumerAuthError(
+      "auth/native-developer-error",
+      message || "Configuration Google Sign-In native incorrecte",
+    );
+  }
+  if (err instanceof ConsumerAuthError) throw err;
+  throw err instanceof Error
+    ? err
+    : new ConsumerAuthError("auth/unknown", message || "Connexion Google échouée");
+}
+
 export function isConsumerAuthConfigured(): boolean {
   return isFirebaseConfigured();
 }
@@ -150,12 +194,20 @@ export async function ensureAnonymousSession(): Promise<ConsumerAuthUser | null>
 }
 
 async function googleCredentialNative(): Promise<AuthCredential> {
-  const result = await FirebaseAuthentication.signInWithGoogle();
-  const idToken = result.credential?.idToken;
-  if (!idToken) {
-    throw new Error("Connexion Google incomplète (jeton manquant)");
+  try {
+    const result = await FirebaseAuthentication.signInWithGoogle();
+    const idToken = result.credential?.idToken;
+    if (!idToken) {
+      throw new ConsumerAuthError(
+        "auth/missing-id-token",
+        "Connexion Google incomplète (jeton manquant)",
+      );
+    }
+    return GoogleAuthProvider.credential(idToken);
+  } catch (err) {
+    if (err instanceof ConsumerAuthError) throw err;
+    normalizeNativeGoogleAuthError(err);
   }
-  return GoogleAuthProvider.credential(idToken);
 }
 
 /**

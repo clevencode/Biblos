@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "629773942132",
+    "project_id": "audiobible-9b689",
+    "storage_bucket": "audiobible-9b689.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:629773942132:android:58f171a8d257dbf61f0021",
+        "android_client_info": {
+          "package_name": "app.biblos.mobile"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "629773942132-3u6m9e0hjoaoj3uore1ftpib94sjmd0v.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "app.biblos.mobile",
+            "certificate_hash": "8e9c6600365e46dbb12ebabcd18d5e14717129e8"
+          }
+        },
+        {
+          "client_id": "629773942132-al775l0764huqj9dlmkppqamu5g1llek.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "app.biblos.mobile",
+            "certificate_hash": "2aaee340833eb83e88c4adaa89aa602750c1a0c2"
+          }
+        },
+        {
+          "client_id": "629773942132-idd3ci7k0jvhnqa0b3rtf6trsr3r89du.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA-8m8RJ-RyYRwH-M5NL9ReN5dsXW5hr4M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "629773942132-idd3ci7k0jvhnqa0b3rtf6trsr3r89du.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

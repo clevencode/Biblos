@@ -1,3 +1,7 @@
+import { Capacitor } from "@capacitor/core";
+import { FirebaseAuthentication } from "@capacitor-firebase/authentication";
+import { signOut } from "firebase/auth";
+import { ensureFirebase, getFirebaseAuth } from "./lib/firebase";
 import {
   getStorageAdapter,
   STORAGE_PREF_KEYS,
@@ -7,6 +11,31 @@ import { wipeLocalUserData } from "./userProfile";
 /** Une seule fois par jeton : oublie données/caches utilisateurs pour repartir propre. */
 const CLEAN_SLATE_KEY = STORAGE_PREF_KEYS.cleanSlate;
 const CLEAN_SLATE_TOKEN = `official-${__APP_VERSION__}`;
+
+/**
+ * Encerra sessão Firebase (JS + cache Google nativo) antes do wipe.
+ * browserLocalPersistence / IDB firebase* não entram no filtro "biblos".
+ */
+async function signOutFirebaseForCleanSlate(): Promise<void> {
+  try {
+    await ensureFirebase();
+  } catch {
+    /* config ausente */
+  }
+  if (Capacitor.isNativePlatform()) {
+    try {
+      await FirebaseAuthentication.signOut();
+    } catch {
+      /* plugin opcional */
+    }
+  }
+  try {
+    const auth = getFirebaseAuth();
+    if (auth) await signOut(auth);
+  } catch {
+    /* déjà déconnecté / Auth indisponible */
+  }
+}
 
 /** Caches Workbox / PWA — limpar no bump de versão sem desregistrar o SW intencional. */
 async function clearHttpCaches(): Promise<void> {
@@ -101,6 +130,7 @@ export async function ensureCleanSlate(): Promise<boolean> {
     return false;
   }
 
+  await signOutFirebaseForCleanSlate();
   await wipeLocalUserData();
   await deleteOfflineDatabases();
   await clearHttpCaches();

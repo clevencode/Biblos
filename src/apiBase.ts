@@ -1,7 +1,7 @@
 import { Capacitor } from "@capacitor/core";
 
 /** Origine de production (APIs Notion/sync Vercel) pour l’APK Capacitor bundlé. */
-export const PROD_ORIGIN = "https://biblos-two.vercel.app";
+export const PROD_ORIGIN = "https://biblos-2sj1.vercel.app";
 
 /**
  * Résout une URL `/api/…` pour le WebView natif.

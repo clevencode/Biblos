@@ -17,18 +17,25 @@ const AUTH_ERROR_KEYS: Record<string, UiCopyKey> = {
   "auth/popup-closed-by-user": "auth.error.popupClosed",
   "auth/cancelled-popup-request": "auth.error.popupClosed",
   "auth/invalid-email": "auth.error.invalidCredential",
+  "auth/missing-id-token": "auth.error.missingToken",
+  "auth/native-developer-error": "auth.error.nativeConfig",
 };
 
 function extractAuthCode(err: unknown): string | null {
   if (!err || typeof err !== "object") return null;
   if ("code" in err && typeof (err as { code: unknown }).code === "string") {
-    return (err as { code: string }).code;
+    const code = (err as { code: string }).code.trim().toLowerCase();
+    if (code) return code;
   }
-  if (err instanceof Error) {
-    const match = /auth\/[a-z0-9-]+/i.exec(err.message);
-    return match ? match[0]!.toLowerCase() : null;
+  const message = err instanceof Error ? err.message : String(err ?? "");
+  if (/jeton manquant|missing.?id.?token/i.test(message)) {
+    return "auth/missing-id-token";
   }
-  return null;
+  if (/developer_error|google-services|sha-1/i.test(message)) {
+    return "auth/native-developer-error";
+  }
+  const match = /auth\/[a-z0-9-]+/i.exec(message);
+  return match ? match[0]!.toLowerCase() : null;
 }
 
 export function mapAuthErrorToMessage(err: unknown): string {

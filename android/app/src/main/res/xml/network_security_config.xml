@@ -20,7 +20,7 @@
         <domain includeSubdomains="true">web.app</domain>
         <domain includeSubdomains="true">cloudfunctions.net</domain>
         <domain includeSubdomains="true">vercel.app</domain>
-        <domain includeSubdomains="false">biblos-two.vercel.app</domain>
+        <domain includeSubdomains="false">biblos-2sj1.vercel.app</domain>
         <trust-anchors>
             <certificates src="system" />
         </trust-anchors>

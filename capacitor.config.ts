@@ -2,8 +2,9 @@ import type { CapacitorConfig } from "@capacitor/cli";
 
 /**
  * WebView APK: assets locais (sem server.url).
- * Auth + planos → Firebase (JS SDK + Google nativo).
- * APIs auxiliares → https://biblos-two.vercel.app via apiUrl() + CapacitorHttp.
+ * Auth + planos → Firebase JS SDK; Google no APK via plugin (idToken) + signInWithCredential.
+ * skipNativeAuth: true — sessão só no JS SDK (evita dessincronia nativo/WebView).
+ * APIs auxiliares → https://biblos-2sj1.vercel.app via apiUrl() + CapacitorHttp.
  */
 const config: CapacitorConfig = {
   appId: "app.biblos.mobile",
@@ -21,7 +22,7 @@ const config: CapacitorConfig = {
       "*.googleusercontent.com",
       "*.firebaseio.com",
       "*.cloudfunctions.net",
-      "biblos-two.vercel.app",
+      "biblos-2sj1.vercel.app",
       "*.vercel.app",
       // Podcast S21 / streaming
       "*.anchor.fm",
@@ -59,8 +60,8 @@ const config: CapacitorConfig = {
       iconColor: "#FFFFFF",
     },
     FirebaseAuthentication: {
-      // false = plugin nativo + credential → Firebase JS (auth remoto no APK).
-      skipNativeAuth: false,
+      // true = plugin só obtém idToken Google; sessão Firebase fica no JS SDK.
+      skipNativeAuth: true,
       providers: ["google.com"],
     },
   },
