@@ -271,7 +271,7 @@ export function HomeShellPanel({
                     disabled={!daily || shareBusy}
                     onClick={() => void handleShareDaily()}
                   >
-                    <YvIcon name="ios_share" opsz={18} aria-hidden />
+                    <YvIcon name="ios_share" opsz={20} aria-hidden />
                     {t("home.share")}
                   </button>
                   <button
@@ -285,7 +285,7 @@ export function HomeShellPanel({
                       });
                     }}
                   >
-                    <YvIcon name="menu_book" opsz={18} aria-hidden />
+                    <YvIcon name="menu_book" opsz={20} aria-hidden />
                     {t("home.read")}
                   </button>
                 </div>
