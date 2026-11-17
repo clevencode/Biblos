@@ -58,6 +58,16 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths"></meta-data>
         </provider>
+
+        <!-- Serviço em primeiro plano para manter o áudio ativo em background (Android 14+) -->
+        <service
+            android:name="io.capawesome.capacitorjs.plugins.androidforegroundservice.AndroidForegroundService"
+            android:foregroundServiceType="mediaPlayback"
+            android:exported="false" />
+
+        <!-- Receiver para eventos da notificação do Foreground Service -->
+        <receiver android:name="io.capawesome.capacitorjs.plugins.foregroundservice.NotificationActionBroadcastReceiver" />
+
     </application>
 
     <!-- Permissions -->
