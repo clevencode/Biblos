@@ -389,17 +389,17 @@
   line-height: 1.35;
 }
 
-.profile-tab-panel--admin {
+.profile-admin-workspace {
   min-height: 0;
 }
 
-.profile-tab-panel--admin .editorial-admin-app.is-embedded .plan-discover-head {
+.profile-admin-workspace .editorial-admin-app.is-embedded .plan-discover-head {
   padding-inline: 0;
   margin-bottom: 8px;
 }
 
-.profile-tab-panel--admin .editorial-admin-list,
-.profile-tab-panel--admin .editorial-admin-detail {
+.profile-admin-workspace .editorial-admin-list,
+.profile-admin-workspace .editorial-admin-detail {
   padding-inline: 0;
   min-height: min(48vh, 420px);
 }

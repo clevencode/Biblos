@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BibleReaderView } from "./components/BibleReaderView";
 import { AppShellNav } from "./components/AppShellNav";
-import { HomeConfigSection } from "./components/HomeConfigSection";
+import { ProfileSettingsPanel } from "./components/profile/ProfileSettingsPanel";
 import {
   PlanDiscoverPanel,
   flattenPlanSteps,
@@ -29,6 +29,7 @@ import {
 } from "./verseMarks";
 import {
   completeOnboarding,
+  isClevencodeAdminEmail,
   isProfileOnboarded,
   loadOrCreateProfile,
 } from "./userProfile";
@@ -37,6 +38,7 @@ import {
   SignInModal,
   useConsumerAuth,
 } from "./features/consumer-auth";
+import { AdminReadingPlansWorkspace } from "./features/reading-plans/presentation/admin/AdminReadingPlansWorkspace";
 import { useUiLocale } from "./i18n/UiLocaleContext";
 import { useNarrow } from "./layout";
 import { BIBLE_COMPACT_TOOLS_MENU } from "./bible/bibleChromeLayout";
@@ -128,7 +130,10 @@ function BiblosConsumerApp() {
     refreshProfile,
     isAuthenticated,
     session,
+    user,
   } = useConsumerAuth();
+  const showAdminNav =
+    isAuthenticated && isClevencodeAdminEmail(user?.email);
   const [tab, setTab] = useState<ShellTab>(() => loadShellTab());
   const [bibleMounted, setBibleMounted] = useState(() => loadShellTab() === "bible");
   const [navHidden, setNavHidden] = useState(false);
@@ -140,6 +145,8 @@ function BiblosConsumerApp() {
   const [activityTick, setActivityTick] = useState(0);
   /** Conta / préférences — painel aberto a partir da navbar. */
   const [accountOpen, setAccountOpen] = useState(false);
+  /** Admin editorial — destino do pill (gated). */
+  const [adminOpen, setAdminOpen] = useState(false);
   const [openOverlayRequest, setOpenOverlayRequest] =
     useState<ProfileOverlayRequest | null>(null);
   const [profileReadingChrome, setProfileReadingChrome] =
@@ -226,6 +233,7 @@ function BiblosConsumerApp() {
   const openBible = useCallback(
     (ref?: string, versionId?: BibleTextVersionId) => {
       setAccountOpen(false);
+      setAdminOpen(false);
       if (ref) {
         setBibleFocusRef(ref);
         setBibleFocusVersion(versionId ?? null);
@@ -262,6 +270,7 @@ function BiblosConsumerApp() {
   const selectTab = useCallback(
     (next: ShellTab) => {
       setAccountOpen(false);
+      setAdminOpen(false);
       if (next === "plan" && planReading) {
         const jour = clearPlan();
         if (typeof jour === "number") setWorkspaceJour(jour);
@@ -272,6 +281,20 @@ function BiblosConsumerApp() {
     [planReading, clearPlan],
   );
 
+  const toggleAccount = useCallback(() => {
+    setAdminOpen(false);
+    setAccountOpen((open) => !open);
+  }, []);
+
+  const toggleAdmin = useCallback(() => {
+    setAccountOpen(false);
+    setAdminOpen((open) => !open);
+  }, []);
+
+  useEffect(() => {
+    if (!showAdminNav) setAdminOpen(false);
+  }, [showAdminNav]);
+
   useEffect(() => {
     const id = pendingPlanShareId.current;
     if (!id) return;
@@ -281,6 +304,7 @@ function BiblosConsumerApp() {
       pendingPlanShareId.current = null;
       openPlanWorkspace(plan);
       setAccountOpen(false);
+      setAdminOpen(false);
       setTab("plan");
       return true;
     }
@@ -305,6 +329,8 @@ function BiblosConsumerApp() {
   useShellBackHandler({
     accountOpen,
     onCloseAccount: () => setAccountOpen(false),
+    adminOpen,
+    onCloseAdmin: () => setAdminOpen(false),
     hasPlanReading: Boolean(planReading),
     onReturnFromPlanReading: returnFromPlanReading,
     hasWorkspacePlan: Boolean(workspacePlan),
@@ -315,6 +341,7 @@ function BiblosConsumerApp() {
     (jour: number, _passage: string, _opts?: { returnTo?: PlanFlowReturn }) => {
       if (!workspacePlan) return;
       setAccountOpen(false);
+      setAdminOpen(false);
       openPlanAtJour(workspacePlan, jour);
       setTab("bible");
     },
@@ -324,6 +351,7 @@ function BiblosConsumerApp() {
   const requestProfileOverlay = useCallback(
     (request: ProfileOverlayRequest) => {
       setAccountOpen(false);
+      setAdminOpen(false);
       setTab("bible");
       setOpenOverlayRequest(request);
     },
@@ -331,7 +359,7 @@ function BiblosConsumerApp() {
   );
 
   const setTheme = useCallback(
-    (pref: "light" | "dark") => {
+    (pref: ThemePref) => {
       setThemePref(pref);
       saveThemePref(pref);
       appendActivity("theme.change", { pref }, profile.id);
@@ -528,7 +556,7 @@ function BiblosConsumerApp() {
                     aria-labelledby="shell-label-account"
                     className="pane-body account-shell-panel"
                   >
-                    <HomeConfigSection
+                    <ProfileSettingsPanel
                       active={accountOpen}
                       activityTick={activityTick}
                       themePref={themePref}
@@ -547,8 +575,21 @@ function BiblosConsumerApp() {
                     />
                   </div>
                 ) : null}
+                {adminOpen ? (
+                  <div
+                    id="panel-admin"
+                    role="region"
+                    aria-labelledby="shell-label-admin"
+                    className="pane-body account-shell-panel admin-shell-panel"
+                  >
+                    <AdminReadingPlansWorkspace
+                      embedded
+                      userEmail={user?.email ?? null}
+                    />
+                  </div>
+                ) : null}
                 <PlanDiscoverPanel
-                  active={tab === "plan" && !accountOpen}
+                  active={tab === "plan" && !accountOpen && !adminOpen}
                   workspacePlan={workspacePlan}
                   workspaceJour={workspaceJour}
                   workspaceResumeSeq={workspaceResumeSeq}
@@ -567,7 +608,7 @@ function BiblosConsumerApp() {
                   id="panel-bible"
                   role="region"
                   aria-labelledby="shell-label-bible"
-                  hidden={!bibleMode || accountOpen}
+                  hidden={!bibleMode || accountOpen || adminOpen}
                   className="pane-body"
                 >
                   {bibleMounted ? (
@@ -576,10 +617,12 @@ function BiblosConsumerApp() {
                       focusRef={bibleFocusRef}
                       focusVersionId={bibleFocusVersion}
                       focusSeq={bibleFocusSeq}
-                      active={bibleMode && !accountOpen}
+                      active={bibleMode && !accountOpen && !adminOpen}
                       compactViewport={narrow}
                       planReading={
-                        bibleMode && !accountOpen ? planReading : null
+                        bibleMode && !accountOpen && !adminOpen
+                          ? planReading
+                          : null
                       }
                       onBack={
                         planReading ? returnFromPlanReading : undefined
@@ -611,6 +654,10 @@ function BiblosConsumerApp() {
                       onOpenOverlayRequestConsumed={() =>
                         setOpenOverlayRequest(null)
                       }
+                      onReturnToProfile={() => {
+                        setAdminOpen(false);
+                        setAccountOpen(true);
+                      }}
                       onProfileReadingChromeChange={setProfileReadingChrome}
                     />
                   ) : null}
@@ -622,9 +669,14 @@ function BiblosConsumerApp() {
           <AppShellNav
             active={tab}
             onSelect={selectTab}
-            immersiveHidden={bibleMode && !accountOpen && navHidden}
+            immersiveHidden={
+              bibleMode && !accountOpen && !adminOpen && navHidden
+            }
             accountOpen={accountOpen}
-            onToggleAccount={() => setAccountOpen((open) => !open)}
+            onToggleAccount={toggleAccount}
+            adminOpen={adminOpen}
+            showAdmin={showAdminNav}
+            onToggleAdmin={toggleAdmin}
           />
         </div>
       </main>

@@ -5,7 +5,7 @@
 | **ID** | `app-shell` |
 | **Raiz** | `App.tsx` → `BiblosConsumerApp` |
 | **Navegação** | `AppShellNav` + `shellNav.ts` |
-| **Painéis** | `HomeShellPanel` (+ `HomeConfigSection`), `PlanDiscoverPanel`, `BibleReaderView` |
+| **Painéis** | `ProfileSettingsPanel` (`#panel-account`), `PlanDiscoverPanel`, `BibleReaderView` |
 | **Rota admin** | `EditorialAdminApp` via `hash` `#admin` |
 
 ---
@@ -17,8 +17,9 @@ Shell com **navbar radial** (`SHELL_TABS`: Bible · Plan).
 - Tab persistida em `localStorage` (`biblos-ui`, chave `tab`). Legado `profile` / `home` → Bible.
 - Bible montada lazy: `bibleMounted` fica true após primeira visita (preserva estado).
 - Modo narrow + tab Bible → `immersiveHidden` na nav (`navHidden` do leitor).
-- **Config de conta/app** via botão conta na nav (`HomeConfigSection` em painel account).
-- Tema global: `theme.ts` — `onSetTheme` no perfil.
+- **Profil + Settings** via hub Conta → `#panel-account` (`ProfileSettingsPanel`: header + grupos).
+- **Admin** (email Clevencode) via hub pill → `#panel-admin` (`AdminReadingPlansWorkspace`); fora do Profile.
+- Tema global: `theme.ts` — `onSetTheme` no perfil (clair / sombre / système).
 
 ---
 
@@ -29,7 +30,7 @@ Shell com **navbar radial** (`SHELL_TABS`: Bible · Plan).
 | Composição | `src/App.tsx` |
 | Tabs | `src/components/AppShellNav.tsx`, `ModeTabIcon.tsx` |
 | Tabs data | `src/shellNav.ts` |
-| Accueil + config | `src/components/HomeShellPanel.tsx`, `HomeConfigSection.tsx` |
+| Profil + Settings | `src/components/profile/ProfileSettingsPanel.tsx` (+ Header / Group / Row) |
 | Planos | `src/features/reading-plans/.../PlanDiscoverPanel.tsx` |
 | Leitor | `src/components/BibleReaderView.tsx` |
 | Histórico / marques | `src/components/BibleHistorySheet.tsx` |
@@ -64,13 +65,13 @@ Quando o leitor abre a secção Options (seleção de versículos):
 
 ---
 
-## `HomeShellPanel`
+## `ProfileSettingsPanel`
 
-**Props:** `active`, `activityTick`, `themePref`, `onSetTheme`, `onOpenBible(ref?)`, `onOpenPlan`, `onResumePlan`, `onRequestSignIn?`.
+**Props:** `active`, `activityTick`, `themePref`, `onSetTheme`, `onRequestSignIn?`, `readingChrome?`, `onOpenHistory?`, `onOpenMarks?`.
 
-- Saudação horária; cartão **Reprendre** com última leitura (`listBibleReadingHistory`).
-- Teaser planos → `onOpenPlan` muda tab `today`.
-- `HomeConfigSection`: conta (auth/export), preferências (idioma/tema), saúde do storage, admin embutido.
+- **Profile header**: avatar / iniciais, nome (editável) ou CTA guest + backup.
+- **Settings groups**: Apparence, Langue, Bible, Lecture (font), Bibliothèque, Stockage, Compte, Admin (gated).
+- Tipografia / versão / offline via `ProfileReadingChrome` (bridge do `BibleReaderView`).
 
 ---
 

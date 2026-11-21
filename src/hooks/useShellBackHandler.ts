@@ -6,6 +6,8 @@ import { requestReaderShellBack } from "../shellBackStack";
 export type ShellBackHandlerOptions = {
   accountOpen: boolean;
   onCloseAccount: () => void;
+  adminOpen?: boolean;
+  onCloseAdmin?: () => void;
   hasPlanReading: boolean;
   onReturnFromPlanReading: () => void;
   hasWorkspacePlan: boolean;
@@ -28,6 +30,8 @@ export function useShellBackHandler(options: ShellBackHandlerOptions): void {
   const {
     accountOpen,
     onCloseAccount,
+    adminOpen = false,
+    onCloseAdmin,
     hasPlanReading,
     onReturnFromPlanReading,
     hasWorkspacePlan,
@@ -41,6 +45,10 @@ export function useShellBackHandler(options: ShellBackHandlerOptions): void {
         return true;
       }
       if (requestReaderShellBack()) return true;
+      if (adminOpen) {
+        onCloseAdmin?.();
+        return true;
+      }
       if (accountOpen) {
         onCloseAccount();
         return true;
@@ -98,6 +106,8 @@ export function useShellBackHandler(options: ShellBackHandlerOptions): void {
   }, [
     accountOpen,
     onCloseAccount,
+    adminOpen,
+    onCloseAdmin,
     hasPlanReading,
     onReturnFromPlanReading,
     hasWorkspacePlan,

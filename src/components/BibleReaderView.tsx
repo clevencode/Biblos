@@ -384,6 +384,8 @@ type BibleReaderViewProps = {
   /** Pedido externo (perfil) para abrir history/marks quando o leitor fica activo. */
   openOverlayRequest?: ProfileOverlayRequest | null;
   onOpenOverlayRequestConsumed?: () => void;
+  /** Fechar history/marks abertos a partir do perfil → reabrir Profile (não o menu). */
+  onReturnToProfile?: () => void;
   /** Snapshot versão/offline para o painel de conta. */
   onProfileReadingChromeChange?: (chrome: ProfileReadingChrome) => void;
   /** Demande login antes de marcar; retoma via authorizedMark*. */
@@ -544,6 +546,7 @@ export function BibleReaderView({
   compactViewport = false,
   openOverlayRequest = null,
   onOpenOverlayRequestConsumed,
+  onReturnToProfile,
   onProfileReadingChromeChange,
 }: BibleReaderViewProps) {
   const { t } = useUiLocale();
@@ -655,6 +658,10 @@ export function BibleReaderView({
   const restoreHistoryFocusRef = useRef(true);
   const historyWasOpenRef = useRef(false);
   const restoreToolsFocusRef = useRef(true);
+  /** History/marks abertos via Profile — back devolve ao Profile, não ao menu. */
+  const overlayReturnToProfileRef = useRef(false);
+  const onReturnToProfileRef = useRef(onReturnToProfile);
+  onReturnToProfileRef.current = onReturnToProfile;
   const toolsWasOpenRef = useRef(false);
   const overlayDismissSwallowRef = useRef(false);
   const overlayDismissSwallowTimerRef = useRef<number | undefined>(undefined);
@@ -778,6 +785,28 @@ export function BibleReaderView({
       closeOverlay();
     },
     [closeOverlay],
+  );
+
+  /** Fecha history/marks: se vieram do Profile, reabre Profile; senão volta ao menu. */
+  const leaveHistoryOrMarks = useCallback(
+    (mode: "back" | "dismiss" = "back") => {
+      if (overlayReturnToProfileRef.current) {
+        overlayReturnToProfileRef.current = false;
+        restoreHistoryFocusRef.current = false;
+        restoreToolsFocusRef.current = false;
+        closeOverlay();
+        onReturnToProfileRef.current?.();
+        return;
+      }
+      if (mode === "back") {
+        restoreHistoryFocusRef.current = false;
+        openOverlay({ type: "reader_settings" });
+        return;
+      }
+      restoreHistoryFocusRef.current = true;
+      closeOverlay();
+    },
+    [closeOverlay, openOverlay],
   );
 
   const [offlineReady, setOfflineReady] = useState(false);
@@ -2555,8 +2584,12 @@ export function BibleReaderView({
       closeWordSearch();
       return;
     }
-    if (target === "bookSearch" || target === "history" || target === "marks") {
-      restoreHistoryFocusRef.current = target === "history";
+    if (target === "history" || target === "marks") {
+      leaveHistoryOrMarks("dismiss");
+      return;
+    }
+    if (target === "bookSearch") {
+      restoreHistoryFocusRef.current = false;
       closeOverlay();
       return;
     }
@@ -2749,10 +2782,9 @@ export function BibleReaderView({
   useEffect(() => {
     if (!active || !openOverlayRequest) return;
     const request = openOverlayRequest;
+    overlayReturnToProfileRef.current = true;
     restoreToolsFocusRef.current = false;
-    if (request === "history") {
-      restoreHistoryFocusRef.current = true;
-    }
+    restoreHistoryFocusRef.current = false;
     setShareSheetOpen(false);
     openOverlay({ type: request });
     onOpenOverlayRequestConsumed?.();
@@ -2770,11 +2802,24 @@ export function BibleReaderView({
         ? { done: offlineProgress.done, total: offlineProgress.total }
         : null,
       offlineHidden: textVersion === "s21" && localBundledBible,
+      fontSize,
+      fontFamily,
+      fontMin: FONT_MIN,
+      fontMax: FONT_MAX,
       switchTextVersion: (id) => {
         void switchTextVersionRef.current?.(id);
       },
       toggleOfflineBible: () => {
         void toggleOfflineBible();
+      },
+      setFontSize: (size) => {
+        setFontSize(clampFontSize(size));
+      },
+      setFontFamily: (family) => {
+        if (isBibleFontFamily(family)) setFontFamily(family);
+      },
+      bumpFontSize: (delta) => {
+        setFontSize((n) => clampFontSize(n + delta));
       },
     });
   }, [
@@ -2786,6 +2831,8 @@ export function BibleReaderView({
     offlineBusy,
     offlineProgress,
     localBundledBible,
+    fontSize,
+    fontFamily,
   ]);
 
   function openWordSearchFromMenu() {
@@ -3285,8 +3332,12 @@ export function BibleReaderView({
             closeCreateCard();
             return;
           }
-          /* Jornada: search/history/marks → voltar ao menu (não fechar tudo). */
-          if (wordSearchOpen || historyOpen || marksOpen) {
+          /* Jornada: search → menu; history/marks do Profile → Profile. */
+          if (historyOpen || marksOpen) {
+            leaveHistoryOrMarks("back");
+            return;
+          }
+          if (wordSearchOpen) {
             restoreHistoryFocusRef.current = false;
             openOverlay({ type: "reader_settings" });
             return;
@@ -3777,7 +3828,11 @@ export function BibleReaderView({
               setShareSheetOpen(false);
               return;
             }
-            if (historyOpen || wordSearchOpen || marksOpen) {
+            if (historyOpen || marksOpen) {
+              leaveHistoryOrMarks("back");
+              return;
+            }
+            if (wordSearchOpen) {
               openOverlay({ type: "reader_settings" });
               return;
             }
@@ -3822,7 +3877,11 @@ export function BibleReaderView({
             setShareSheetOpen(false);
             return;
           }
-          if (historyOpen || wordSearchOpen || marksOpen) {
+          if (historyOpen || marksOpen) {
+            leaveHistoryOrMarks("back");
+            return;
+          }
+          if (wordSearchOpen) {
             openOverlay({ type: "reader_settings" });
             return;
           }
@@ -3973,10 +4032,10 @@ export function BibleReaderView({
           <BibleHistorySheet
             open={historyOpen}
             onClose={() => {
-              restoreHistoryFocusRef.current = true;
-              closeOverlay();
+              leaveHistoryOrMarks("dismiss");
             }}
             onSelect={({ versionId, bookId: destBookId, chapterId: destChapterId, verse }) => {
+              overlayReturnToProfileRef.current = false;
               restoreHistoryFocusRef.current = false;
               closeOverlay();
               pushStudyOriginFromCurrent({
@@ -4003,9 +4062,10 @@ export function BibleReaderView({
           open={marksOpen}
           resolveBookTitle={resolveBookTitleActive}
           onClose={() => {
-            openOverlay({ type: "reader_settings" });
+            leaveHistoryOrMarks("back");
           }}
           onSelect={({ versionId, bookId: destBookId, chapterId: destChapterId, verse }) => {
+            overlayReturnToProfileRef.current = false;
             closeOverlay();
             pushStudyOriginFromCurrent({
               returnTo: "marks",

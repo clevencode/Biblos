@@ -1032,11 +1032,26 @@ html[data-theme="dark"] .sw-update-banner-cta {
   align-items: flex-end;
 }
 
-/* Tapete/barra sob o pill — UI escondida (pill + play flutuam no conteúdo) */
+/* Tapete/barra sob o pill — escondida (pill flutua) */
 .mode-tabs::before,
 .mode-tabs.is-open::before {
   content: none;
   display: none;
+}
+
+/* Profil: reforço — sem barra branca sob o pill */
+.mode-tabs.is-account-open {
+  --mode-tabs-mat-bg: transparent;
+  --mode-tabs-fade-h: 0px;
+}
+
+.mode-tabs.is-account-open::before,
+.mode-tabs.is-account-open.is-open::before {
+  content: none !important;
+  display: none !important;
+  opacity: 0;
+  height: 0;
+  background: none;
 }
 
 html[data-theme="light"] .mode-tabs {
@@ -1113,22 +1128,34 @@ html[data-theme="dark"] .mode-tabs {
     max(var(--panel-gutter, 14px), env(safe-area-inset-left, 0px));
 }
 
-.account-shell-panel .home-config {
+.account-shell-panel .profile-settings {
   flex: 1 1 auto;
   min-height: 0;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 20px;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
-.account-shell-panel .home-config .bible-yv-tools-version-options {
+.account-shell-panel .profile-settings .bible-yv-tools-version-options {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.account-shell-panel .home-config .bible-yv-tools-version {
+.account-shell-panel .profile-settings .bible-yv-tools-version {
   margin: 0;
   padding: 8px 4px 4px;
+}
+
+.admin-shell-panel {
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.admin-shell-panel .editorial-admin-app.is-embedded {
+  min-height: 0;
 }
 
 /* Convex SVG (legado / órfão da nav) — mantido se reutilizado noutro sítio */
@@ -1642,7 +1669,8 @@ html.is-radial-open .bible-yv-tools-menu.is-float-br,
   top: auto;
   z-index: 1;
   display: flex;
-  flex-direction: column;
+  /* Fluxo X → Bible → Plan → Profile (Bible mais perto do hub) */
+  flex-direction: column-reverse;
   align-items: stretch;
   gap: 6px;
   width: 100%;
@@ -3925,123 +3953,216 @@ html[data-theme="dark"] .profile-download-btn {
   background: var(--elevated);
 }
 
-.profile-tabs {
-  flex: none;
+.profile-settings {
   display: flex;
-  flex-wrap: nowrap;
-  align-items: stretch;
-  width: 100%;
-  max-width: 100%;
-  margin: 0;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.profile-header {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 4px 0 8px;
+}
+
+.profile-header-identity {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  min-width: 0;
+}
+
+.profile-header-settings {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  margin: 0 0 0 auto;
   padding: 0;
   border: 0;
-  border-bottom: 1px solid color-mix(in srgb, var(--text) 14%, transparent);
-  background: transparent;
-  gap: 0;
-  overflow-x: auto;
-  overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-x: contain;
-  scrollbar-width: none;
-  scroll-snap-type: x proximity;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+  color: var(--ink);
+  cursor: pointer;
 }
 
-.profile-tabs::-webkit-scrollbar {
-  display: none;
+.profile-header-settings:hover {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
 }
 
-.profile-tab {
-  position: relative;
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: center;
-  width: auto;
-  min-width: max(4.5rem, 18%);
-  min-height: 40px;
+.profile-header-settings.is-on {
+  background: color-mix(in srgb, var(--ink) 12%, transparent);
+}
+
+.profile-header-avatar {
+  flex: none;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--ink) 8%, var(--paper));
+  color: var(--ink);
+  border: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+}
+
+.profile-header-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-header-avatar-initials {
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.profile-header-meta {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.profile-header-name {
   margin: 0;
-  padding: 10px 12px 12px;
+  font-family: var(--font-ui);
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--ink);
+}
+
+.profile-header-lead,
+.profile-header-email {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.35;
+  color: color-mix(in srgb, var(--ink) 62%, transparent);
+}
+
+.settings-account-edit {
+  padding: 12px 14px;
+}
+
+.profile-settings-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+}
+
+.settings-group {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.settings-group-title {
+  margin: 0;
+  padding: 0 4px;
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--ink) 55%, transparent);
+}
+
+.settings-group-body {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding: 4px 0;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--elevated) 92%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--line) 78%, transparent);
+  overflow: hidden;
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 48px;
+  margin: 0;
+  padding: 10px 14px;
   border: 0;
   border-radius: 0;
   background: transparent;
-  color: color-mix(in srgb, var(--text) 55%, transparent);
+  color: inherit;
   font: inherit;
-  font-size: clamp(0.62rem, 2.6vw, 0.74rem);
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  line-height: 1.15;
+  text-align: left;
   cursor: pointer;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  text-align: center;
-  transition: color 0.14s ease;
-  scroll-snap-align: center;
 }
 
-.profile-tab:hover {
-  color: color-mix(in srgb, var(--text) 82%, transparent);
+.settings-row.is-static {
+  cursor: default;
 }
 
-.profile-tab:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+.settings-row:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
-.profile-tab.is-on {
-  color: var(--text);
-  font-weight: 700;
+.settings-row.is-danger .settings-row-label {
+  color: color-mix(in srgb, #b42318 82%, var(--ink));
 }
 
-/* Tabline activo — largura fixa centrada (sem expandir/encolher com o rótulo). */
-.profile-tab.is-on::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: 0;
-  width: 28px;
-  height: 2px;
-  border-radius: 1px 1px 0 0;
-  background: var(--accent);
-  transform: translateX(-50%);
-  pointer-events: none;
+.settings-row-icon,
+.settings-row-chevron {
+  flex: none;
+  opacity: 0.72;
 }
 
-.profile-tab-label {
-  min-width: 0;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  text-align: center;
-}
-
-@media (max-width: 360px) {
-  .profile-tab {
-    padding: 10px 2px 12px;
-    letter-spacing: 0.01em;
-  }
-}
-
-.profile-tab-panels {
+.settings-row-body {
   flex: 1 1 auto;
   min-width: 0;
-  min-height: 0;
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
-  scrollbar-gutter: stable;
-  padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
-}
-
-.profile-tab-panel {
   display: grid;
-  gap: 10px;
+  gap: 2px;
 }
 
-.profile-tab-panel[hidden] {
-  display: none;
+.settings-row-label {
+  font-size: 0.95rem;
+  font-weight: 560;
+  line-height: 1.25;
+  color: var(--ink);
+}
+
+.settings-row-value {
+  font-size: 0.8rem;
+  line-height: 1.3;
+}
+
+.settings-hint {
+  margin: 0;
+  padding: 4px 14px 10px;
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+.profile-font-seg {
+  align-items: center;
+}
+
+.profile-font-size-value {
+  min-width: 2.4em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.profile-admin-workspace {
+  padding: 8px 10px 12px;
+  border-top: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
 }
 
 .profile-panel {
@@ -7435,22 +7556,7 @@ html[data-theme="dark"] .profile-download-btn {
     gap: 20px;
   }
 
-  .profile-tabs {
-    gap: 2px;
-  }
-
-  .profile-tab {
-    min-height: 44px;
-    min-width: max(4.25rem, 20%);
-    padding: 10px 10px 12px;
-    font-size: clamp(0.62rem, 2.8vw, 0.76rem);
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .profile-tab-panels,
   .profile-account-session {
-    /* Tabs já incluem safe-area — não somar outra vez */
     padding-bottom: 20px;
   }
 

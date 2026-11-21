@@ -11,8 +11,7 @@ flowchart TB
   subgraph shell [App shell]
     App[App.tsx]
     Nav[AppShellNav]
-    Home[HomeShellPanel]
-    Config[HomeConfigSection]
+    Profile[ProfileSettingsPanel]
     Plan[PlanDiscoverPanel]
   end
   subgraph reader [BibleReaderView]
@@ -22,8 +21,7 @@ flowchart TB
     Dock[Audio float + plan dock]
     Share[Share / History sheets]
   end
-  App --> Home
-  Home --> Config
+  App --> Profile
   App --> Plan
   App --> reader
   Bar --> SearchIcon[Word search panel]
@@ -43,7 +41,7 @@ flowchart TB
 
 | ID | Nome | Guia detalhado |
 |----|------|----------------|
-| `app-shell` | Shell, tabs Accueil/Bible/Plan + config na Home | [app-shell.md](./app-shell.md) |
+| `app-shell` | Shell, tabs Bible/Plan + Profil Settings | [app-shell.md](./app-shell.md) |
 | `reader-surface` | Capítulo, versículos, seleção, acções | [reader-surface.md](./reader-surface.md) |
 | `passage-bar` | Estado actual da barra (chip + search + FAB skips) | [passage-bar.md](./passage-bar.md) |
 | `passage-roll` | Barra referência + contentor roll | [passage-roll.md](./passage-roll.md) |
@@ -59,9 +57,9 @@ flowchart TB
 
 ## Shell da aplicação (`app-shell`)
 
-**Ficheiros:** `App.tsx`, `AppShellNav.tsx`, `HomeShellPanel.tsx`, `HomeConfigSection.tsx`, `shellNav.ts`, `features/reading-plans/PlanDiscoverPanel`.
+**Ficheiros:** `App.tsx`, `AppShellNav.tsx`, `profile/ProfileSettingsPanel.tsx`, `shellNav.ts`, `features/reading-plans/PlanDiscoverPanel`.
 
-Três tabs persistidas em `localStorage` (legado `profile` → `home`); o leitor permanece montado após a primeira visita. Narrow esconde a nav durante leitura imersiva. Rota `#admin` desvia para CMS editorial. Config (conta/idioma/tema) na Home; histórico/surlignages no leitor.
+Tabs Bible/Plan + hub Profil (`#panel-account`); o leitor permanece montado após a primeira visita. Narrow esconde a nav durante leitura imersiva. Rota `#admin` desvia para CMS editorial. Profil = header + settings agrupados; histórico/surlignages via bridge do leitor.
 
 → [app-shell.md](./app-shell.md)
 

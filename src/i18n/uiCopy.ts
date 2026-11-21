@@ -10,6 +10,7 @@ export type UiCopyKey =
   | "shell.plan"
   | "shell.bible"
   | "shell.profile"
+  | "shell.admin"
   | "common.close"
   | "common.back"
   | "common.clear"
@@ -113,13 +114,29 @@ export type UiCopyKey =
   | "profile.langHt"
   | "profile.themeLight"
   | "profile.themeDark"
+  | "profile.themeSystem"
   | "profile.storage"
+  | "profile.storageCache"
   | "profile.download"
   | "profile.ready"
   | "profile.historyEmpty"
   | "profile.marks"
   | "profile.marksEmpty"
   | "profile.calculating"
+  | "profile.guestSaveTitle"
+  | "profile.guestSaveLead"
+  | "profile.quotaHint"
+  | "profile.exportBackup"
+  | "profile.saveName"
+  | "profile.connectedAccount"
+  | "profile.group.bible"
+  | "profile.group.reading"
+  | "profile.group.library"
+  | "profile.readingChromeHint"
+  | "profile.deleteAccount"
+  | "profile.deleteAccountConfirm"
+  | "profile.deleteAccountAction"
+  | "profile.accountNameWithBadge"
   | "history.title"
   | "history.empty"
   | "history.recent"
@@ -253,6 +270,7 @@ const FR: Dict = {
   "shell.plan": "Plan",
   "shell.bible": "Bible",
   "shell.profile": "Profil",
+  "shell.admin": "Admin",
   "common.close": "Fermer",
   "common.back": "Retour",
   "common.clear": "Effacer",
@@ -371,13 +389,33 @@ const FR: Dict = {
   "profile.langHt": "Kreyòl",
   "profile.themeLight": "Clair",
   "profile.themeDark": "Sombre",
+  "profile.themeSystem": "Système",
   "profile.storage": "Stockage",
+  "profile.storageCache": "Cache",
   "profile.download": "Télécharger",
   "profile.ready": "Prêt",
   "profile.historyEmpty": "Aucune lecture enregistrée pour le moment.",
   "profile.marks": "Surlignages",
   "profile.marksEmpty": "Aucun verset surligné pour le moment.",
   "profile.calculating": "Calcul…",
+  "profile.guestSaveTitle": "Sauvegarder mes études",
+  "profile.guestSaveLead":
+    "Connecte Google pour synchroniser tes marques, notes et plans.",
+  "profile.quotaHint":
+    "{used}/{total} surlignages — relie un compte pour continuer sereinement",
+  "profile.exportBackup": "Exporter backup (JSON)",
+  "profile.saveName": "Enregistrer",
+  "profile.connectedAccount": "Compte connecté",
+  "profile.group.bible": "Bible",
+  "profile.group.reading": "Lecture",
+  "profile.group.library": "Bibliothèque",
+  "profile.readingChromeHint":
+    "Ouvre la Bible une fois pour régler version et typographie ici.",
+  "profile.deleteAccount": "Supprimer mon compte",
+  "profile.deleteAccountConfirm":
+    "Les bibles S21/HT98 resteront sur l’appareil. Tes données cloud et locales personnelles seront effacées.",
+  "profile.deleteAccountAction": "Confirmer la suppression",
+  "profile.accountNameWithBadge": "{name} (Assinante)",
   "history.title": "Historique",
   "history.empty": "Aucune lecture enregistrée pour l’instant.",
   "history.recent": "Chapitres ouverts récemment",
@@ -520,6 +558,7 @@ const HT: Dict = {
   "shell.plan": "Plan",
   "shell.bible": "Bib",
   "shell.profile": "Pwofil",
+  "shell.admin": "Admin",
   "common.close": "Fèmen",
   "common.back": "Tounen",
   "common.clear": "Efase",
@@ -636,13 +675,33 @@ const HT: Dict = {
   "profile.langHt": "Kreyòl",
   "profile.themeLight": "Klè",
   "profile.themeDark": "Fènwa",
+  "profile.themeSystem": "Sistèm",
   "profile.storage": "Depo",
+  "profile.storageCache": "Cache",
   "profile.download": "Telechaje",
   "profile.ready": "Pare",
   "profile.historyEmpty": "Pa gen lekti anrejistre pou kounye a.",
   "profile.marks": "Souliyman",
   "profile.marksEmpty": "Pa gen vèsè souliye pou kounye a.",
   "profile.calculating": "Ap kalkile…",
+  "profile.guestSaveTitle": "Sove etid mwen yo",
+  "profile.guestSaveLead":
+    "Konekte Google pou senkwonize mak, nòt ak plan ou yo.",
+  "profile.quotaHint":
+    "{used}/{total} souliyman — konekte yon kont pou kontinye san pwoblèm",
+  "profile.exportBackup": "Ekspòte backup (JSON)",
+  "profile.saveName": "Anrejistre",
+  "profile.connectedAccount": "Kont konekte",
+  "profile.group.bible": "Bib",
+  "profile.group.reading": "Lekti",
+  "profile.group.library": "Bibliyotèk",
+  "profile.readingChromeHint":
+    "Louvri Bib la yon fwa pou règle vèsyon ak tipografi isit la.",
+  "profile.deleteAccount": "Efase kont mwen",
+  "profile.deleteAccountConfirm":
+    "Bib S21/HT98 yo ap rete sou aparèy la. Done nwaj ak lokal pèsonèl yo ap efase.",
+  "profile.deleteAccountAction": "Konfime efasman an",
+  "profile.accountNameWithBadge": "{name} (Abòne)",
   "history.title": "Istorik",
   "history.empty": "Pa gen lekti anrejistre pou kounye a.",
   "history.recent": "Chapit ki louvri dènyèman",

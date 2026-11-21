@@ -26,13 +26,17 @@ type AppShellNavProps = {
   /** Conta / préférences — item da pilha (+ hub quando aberto). */
   accountOpen?: boolean;
   onToggleAccount?: () => void;
+  /** Admin editorial (gated) — item da pilha. */
+  adminOpen?: boolean;
+  showAdmin?: boolean;
+  onToggleAdmin?: () => void;
 };
 
-type RadialDest = ShellTab | "account";
+type RadialDest = ShellTab | "account" | "admin";
 
 type RadialItem = {
   id: RadialDest;
-  labelKey: "shell.plan" | "shell.bible" | "shell.profile";
+  labelKey: "shell.plan" | "shell.bible" | "shell.profile" | "shell.admin";
   panelId: string;
 };
 
@@ -40,6 +44,12 @@ const ACCOUNT_ITEM: RadialItem = {
   id: "account",
   labelKey: "shell.profile",
   panelId: "panel-account",
+};
+
+const ADMIN_ITEM: RadialItem = {
+  id: "admin",
+  labelKey: "shell.admin",
+  panelId: "panel-admin",
 };
 
 function shellTabItem(
@@ -58,6 +68,9 @@ export function AppShellNav({
   immersiveHidden = false,
   accountOpen = false,
   onToggleAccount,
+  adminOpen = false,
+  showAdmin = false,
+  onToggleAdmin,
 }: AppShellNavProps) {
   const { t } = useUiLocale();
   const rootId = useId();
@@ -65,20 +78,32 @@ export function AppShellNav({
   const hubRef = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
 
-  const hubDest: RadialDest = accountOpen ? "account" : active;
+  const hubDest: RadialDest = adminOpen
+    ? "admin"
+    : accountOpen
+      ? "account"
+      : active;
   const hubLabel =
-    hubDest === "account"
-      ? t("shell.profile")
-      : t(
-          SHELL_TABS.find((item) => item.id === active)?.labelKey ??
-            "shell.bible",
-        );
+    hubDest === "admin"
+      ? t("shell.admin")
+      : hubDest === "account"
+        ? t("shell.profile")
+        : t(
+            SHELL_TABS.find((item) => item.id === active)?.labelKey ??
+              "shell.bible",
+          );
 
-  /** Ordem fixa: Bible · Plan · Profile. */
+  /**
+   * Fluxo a partir do X (hub): Bible → Plan → Profile → Admin.
+   * DOM = Bible…Admin; CSS column-reverse põe Bible junto ao X.
+   */
   const stackItems = useMemo(() => {
     const tabs = SHELL_TABS.map(shellTabItem);
-    return onToggleAccount ? [...tabs, ACCOUNT_ITEM] : tabs;
-  }, [onToggleAccount]);
+    const withAccount = onToggleAccount ? [...tabs, ACCOUNT_ITEM] : tabs;
+    return showAdmin && onToggleAdmin
+      ? [...withAccount, ADMIN_ITEM]
+      : withAccount;
+  }, [onToggleAccount, showAdmin, onToggleAdmin]);
 
   useEffect(() => {
     setShellRadialOpen(open);
@@ -126,7 +151,8 @@ export function AppShellNav({
       | RadialDest
       | undefined;
     const index = Math.max(0, focused ? ids.indexOf(focused) : 0);
-    const delta = event.key === "ArrowUp" ? -1 : 1;
+    /* column-reverse: índice 0 (Bible) junto ao X; ArrowUp sobe para Plan/Profile. */
+    const delta = event.key === "ArrowUp" ? 1 : -1;
     const next = ids[(index + delta + ids.length) % ids.length]!;
     document.getElementById(`shell-dest-${next}`)?.focus();
   }
@@ -142,6 +168,10 @@ export function AppShellNav({
       onToggleAccount?.();
       return;
     }
+    if (id === "admin") {
+      onToggleAdmin?.();
+      return;
+    }
     onSelect(id);
   }
 
@@ -154,8 +184,18 @@ export function AppShellNav({
         />
       );
     }
+    if (id === "admin") {
+      return (
+        <YvIcon
+          name="settings"
+          className={`mode-tab-icon${activeIcon ? " is-active" : ""}`}
+        />
+      );
+    }
     return <ModeTabIcon name={id} active={activeIcon} />;
   }
+
+  const overlayOpen = accountOpen || adminOpen;
 
   return (
     <>
@@ -168,7 +208,9 @@ export function AppShellNav({
       <nav
         className={`mode-tabs is-hub-pill${open ? " is-open" : ""}${
           immersiveHidden ? " is-immersive-hidden" : ""
-        }${accountOpen ? " is-account-open" : ""}`}
+        }${overlayOpen ? " is-account-open" : ""}${
+          adminOpen ? " is-admin-open" : ""
+        }`}
         id={rootId}
         aria-label={t("shell.nav")}
         data-immersive-hidden={immersiveHidden ? "true" : undefined}
@@ -186,6 +228,9 @@ export function AppShellNav({
         </span>
         <span id="shell-label-account" className="sr-only">
           {t("shell.profile")}
+        </span>
+        <span id="shell-label-admin" className="sr-only">
+          {t("shell.admin")}
         </span>
         <div className="mode-tabs-chrome is-hub-only">
           <div className="mode-tabs-stage">
