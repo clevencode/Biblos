@@ -1109,10 +1109,20 @@ html[data-theme="dark"] .mode-tabs {
   display: none !important;
 }
 
+/* Imersivo: esconde chrome/caption mas mantém o hub clicável (navegação sempre alcançável). */
 .mode-tabs.is-immersive-hidden {
-  transform: translateY(calc(100% + 16px));
-  opacity: 0;
   pointer-events: none;
+}
+
+.mode-tabs.is-immersive-hidden .mode-tabs-arc,
+.mode-tabs.is-immersive-hidden .mode-tabs-hub-caption {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.mode-tabs.is-immersive-hidden .mode-tabs-hub {
+  pointer-events: auto;
+  opacity: 0.55;
 }
 
 .account-shell-panel {

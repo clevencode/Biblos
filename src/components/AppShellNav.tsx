@@ -15,6 +15,7 @@ import { SHELL_TABS, type ShellTab } from "../shellNav";
 import {
   clearShellRadialOpen,
   setShellRadialOpen,
+  subscribeShellRadial,
 } from "../shellRadial";
 import { useUiLocale } from "../i18n/UiLocaleContext";
 
@@ -77,6 +78,7 @@ export function AppShellNav({
 }: AppShellNavProps) {
   const { t } = useUiLocale();
   const rootId = useId();
+  const menuId = `${rootId}-menu`;
   const hubRef = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
 
@@ -88,7 +90,6 @@ export function AppShellNav({
           SHELL_TABS.find((item) => item.id === active)?.labelKey ??
             "shell.bible",
         );
-
   /** Destinos no arco = tabs shell + conta, sem duplicar o hub. */
   const arcItems = useMemo(() => {
     const tabs = SHELL_TABS.map(shellTabItem);
@@ -104,12 +105,15 @@ export function AppShellNav({
   );
 
   useEffect(() => {
-    if (immersiveHidden) setOpen(false);
-  }, [immersiveHidden]);
-
-  useEffect(() => {
     setShellRadialOpen(open);
   }, [open]);
+
+  /** Back stack / Esc pode fechar o radial via setShellRadialOpen(false). */
+  useEffect(() => {
+    return subscribeShellRadial((radialOpen) => {
+      if (!radialOpen) setOpen(false);
+    });
+  }, []);
 
   useEffect(() => {
     return () => clearShellRadialOpen();
@@ -142,7 +146,7 @@ export function AppShellNav({
     event.preventDefault();
     const ids = arcItems.map((item) => item.id);
     if (!ids.length) return;
-    const focused = document.activeElement?.id?.replace(/^tab-/, "") as
+    const focused = document.activeElement?.id?.replace(/^shell-dest-/, "") as
       | RadialDest
       | undefined;
     const index = Math.max(0, focused ? ids.indexOf(focused) : 0);
@@ -151,7 +155,7 @@ export function AppShellNav({
         (index + (event.key === "ArrowRight" ? 1 : -1) + ids.length) %
           ids.length
       ]!;
-    document.getElementById(`tab-${next}`)?.focus();
+    document.getElementById(`shell-dest-${next}`)?.focus();
   }
 
   function closeRadial() {
@@ -189,11 +193,12 @@ export function AppShellNav({
         closeLabel={t("common.close")}
       />
 
-      <div
+      <nav
         className={`mode-tabs${open ? " is-open" : ""}${
           immersiveHidden ? " is-immersive-hidden" : ""
         }${accountOpen ? " is-account-open" : ""}`}
         id={rootId}
+        aria-label={t("shell.nav")}
         data-immersive-hidden={immersiveHidden ? "true" : undefined}
         style={
           {
@@ -201,11 +206,21 @@ export function AppShellNav({
           } as CSSProperties
         }
       >
+        <span id="shell-label-plan" className="sr-only">
+          {t("shell.plan")}
+        </span>
+        <span id="shell-label-bible" className="sr-only">
+          {t("shell.bible")}
+        </span>
+        <span id="shell-label-account" className="sr-only">
+          {t("shell.profile")}
+        </span>
         <div className="mode-tabs-chrome is-hub-only">
           <div className="mode-tabs-stage">
             <div
+              id={menuId}
               className="mode-tabs-arc"
-              role="tablist"
+              role="menu"
               aria-label={t("shell.nav")}
               aria-hidden={!open}
               onKeyDown={onArcKey}
@@ -220,8 +235,8 @@ export function AppShellNav({
                   <button
                     key={item.id}
                     type="button"
-                    role="tab"
-                    id={`tab-${item.id}`}
+                    role="menuitem"
+                    id={`shell-dest-${item.id}`}
                     className="mode-tabs-item"
                     style={
                       {
@@ -230,8 +245,6 @@ export function AppShellNav({
                         ["--roulette-i" as string]: String(i),
                       } as CSSProperties
                     }
-                    aria-selected={false}
-                    aria-controls={item.panelId}
                     aria-label={label}
                     title={label}
                     tabIndex={open ? 0 : -1}
@@ -250,15 +263,14 @@ export function AppShellNav({
               type="button"
               className="mode-tabs-hub"
               aria-expanded={open}
-              aria-controls={rootId}
+              aria-controls={menuId}
               aria-haspopup="menu"
+              aria-current={!open ? "page" : undefined}
               aria-label={
                 open ? t("common.close") : `${t("shell.nav")} · ${hubLabel}`
               }
               title={open ? t("common.close") : hubLabel}
-              disabled={immersiveHidden}
               onClick={() => {
-                if (immersiveHidden) return;
                 setOpen((v) => !v);
               }}
             >
@@ -277,7 +289,7 @@ export function AppShellNav({
             </span>
           </div>
         </div>
-      </div>
+      </nav>
     </>
   );
 }

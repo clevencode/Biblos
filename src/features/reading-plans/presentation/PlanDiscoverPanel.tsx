@@ -87,9 +87,9 @@ export function PlanDiscoverPanel({
   if (workspacePlan) {
     return (
       <div
-        id="panel-today"
-        role="tabpanel"
-        aria-labelledby="tab-today"
+        id="panel-plan"
+        role="region"
+        aria-labelledby="shell-label-plan"
         hidden={!active}
         className="pane-body today-view plan-workspace-host"
       >
@@ -108,9 +108,9 @@ export function PlanDiscoverPanel({
 
   return (
     <div
-      id="panel-today"
-      role="tabpanel"
-      aria-labelledby="tab-today"
+      id="panel-plan"
+      role="region"
+      aria-labelledby="shell-label-plan"
       hidden={!active}
       className="pane-body today-view plan-discover"
     >

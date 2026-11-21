@@ -72,6 +72,7 @@ import {
 import { useUiLocale } from "../i18n/UiLocaleContext";
 import { notifyUiLocale, subscribeUiLocale } from "../i18n/uiLocale";
 import { subscribeShellRadial } from "../shellRadial";
+import { subscribeReaderShellBack } from "../shellBackStack";
 import {
   formatPassagePillRef,
   isPassagePillUnified,
@@ -2519,16 +2520,60 @@ export function BibleReaderView({
 
   /**
    * Radial da shell tem precedência sobre chrome flutuante do leitor:
-   * fecha overlays / share / discovery sem esconder a nav (já visível).
+   * fecha overlays / share / discovery e mostra a nav (hub sempre alcançável).
    */
   useEffect(() => {
     return subscribeShellRadial((radialOpen) => {
       if (!radialOpen) return;
+      setReadingChrome(false, true);
       setShareSheetOpen(false);
       closeAll();
       closeOverlay();
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- setReadingChrome is a render-local helper
   }, [closeAll, closeOverlay]);
+
+  /** Back / Esc da shell: um nível de overlay do leitor por pedido. */
+  useEffect(() => {
+    if (!active) return undefined;
+    return subscribeReaderShellBack(() => {
+      if (shareSheetOpen) {
+        setShareSheetOpen(false);
+        return true;
+      }
+      if (
+        pickerOpen ||
+        wordSearchOpen ||
+        bookSearchOpen ||
+        toolsMenuOpen ||
+        historyOpen ||
+        marksOpen
+      ) {
+        dismissPassageSurfaceOverlay();
+        return true;
+      }
+      if (showCreateCard) {
+        closeCreateCard();
+        return true;
+      }
+      if (chromeHiddenRef.current) {
+        setReadingChrome(false, true);
+        return true;
+      }
+      return false;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- helpers locais do render
+  }, [
+    active,
+    shareSheetOpen,
+    pickerOpen,
+    wordSearchOpen,
+    bookSearchOpen,
+    toolsMenuOpen,
+    historyOpen,
+    marksOpen,
+    showCreateCard,
+  ]);
 
   function stopBibleAudio() {
     if (isNativeBibleAudio()) {

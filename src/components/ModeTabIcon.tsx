@@ -19,7 +19,7 @@ type TabIconEntry = {
 
 const TAB_ICONS: Record<ShellTab, TabIconEntry> = {
   /** Plano de leitura — camadas / livros empilhados (estilo colecção). */
-  today: { line: Layers, fill: LayersFill },
+  plan: { line: Layers, fill: LayersFill },
   bible: { line: Book, fill: BookFill },
 };
 

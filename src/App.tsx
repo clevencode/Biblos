@@ -6,16 +6,22 @@ import {
   PlanDiscoverPanel,
   flattenPlanSteps,
   resumeStepIndex,
+  bootReadingPlansFirestore,
 } from "./features/reading-plans";
 import type { ReadingPlan } from "./features/reading-plans";
+import { loadPublishedPlansCache } from "./features/reading-plans/data/readingPlansLocalCache";
 import { usePlanReadingSession } from "./features/reading-plans/presentation/hooks/usePlanReadingSession";
+import { useShellBackHandler } from "./hooks/useShellBackHandler";
 import type { PlanFlowReturn } from "./features/reading-plans/presentation/PlanWorkspacePanel";
 import {
   ACTIVITY_UI_ENABLED,
   recordBibleRead,
   appendActivity,
 } from "./activityLog";
-import { consumeShareRefFromUrl } from "./shareVerse";
+import {
+  consumePlanShareFromUrl,
+  consumeShareRefFromUrl,
+} from "./shareVerse";
 import {
   isOverFreeMarkQuota,
   setVerseMarks,
@@ -155,6 +161,7 @@ function BiblosConsumerApp() {
   const pendingMarkRef = useRef<MarkPayload | null>(null);
   const offlineToastSeen = useRef(false);
   const shareBooted = useRef(false);
+  const pendingPlanShareId = useRef<string | null>(null);
   const welcomeShownRef = useRef(false);
 
   /** Soft gate: após cota, guest precisa de conta — nunca durante boot auth. */
@@ -189,6 +196,10 @@ function BiblosConsumerApp() {
   useEffect(() => {
     if (shareBooted.current) return;
     shareBooted.current = true;
+    const planId = consumePlanShareFromUrl();
+    if (planId) {
+      pendingPlanShareId.current = planId;
+    }
     const ref = consumeShareRefFromUrl();
     if (ref) {
       setTab("bible");
@@ -211,11 +222,6 @@ function BiblosConsumerApp() {
   useEffect(() => {
     if (!bibleMode) setNavHidden(false);
   }, [bibleMode]);
-
-  const selectTab = useCallback((next: ShellTab) => {
-    setAccountOpen(false);
-    setTab(next);
-  }, []);
 
   const openBible = useCallback(
     (ref?: string, versionId?: BibleTextVersionId) => {
@@ -249,9 +255,61 @@ function BiblosConsumerApp() {
   const returnFromPlanReading = useCallback(() => {
     const jour = clearPlan();
     if (typeof jour === "number") setWorkspaceJour(jour);
-    setTab("today");
+    setTab("plan");
     setWorkspaceResumeSeq((n) => n + 1);
   }, [clearPlan]);
+
+  const selectTab = useCallback(
+    (next: ShellTab) => {
+      setAccountOpen(false);
+      if (next === "plan" && planReading) {
+        const jour = clearPlan();
+        if (typeof jour === "number") setWorkspaceJour(jour);
+        setWorkspaceResumeSeq((n) => n + 1);
+      }
+      setTab(next);
+    },
+    [planReading, clearPlan],
+  );
+
+  useEffect(() => {
+    const id = pendingPlanShareId.current;
+    if (!id) return;
+
+    function applyPlan(plan: ReadingPlan | undefined) {
+      if (!plan) return false;
+      pendingPlanShareId.current = null;
+      openPlanWorkspace(plan);
+      setAccountOpen(false);
+      setTab("plan");
+      return true;
+    }
+
+    const cached = loadPublishedPlansCache()?.plans.find((p) => p.id === id);
+    if (applyPlan(cached)) return;
+
+    let cancelled = false;
+    void (async () => {
+      await bootReadingPlansFirestore();
+      if (cancelled) return;
+      const again = loadPublishedPlansCache()?.plans.find((p) => p.id === id);
+      if (!applyPlan(again)) {
+        pendingPlanShareId.current = null;
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [openPlanWorkspace]);
+
+  useShellBackHandler({
+    accountOpen,
+    onCloseAccount: () => setAccountOpen(false),
+    hasPlanReading: Boolean(planReading),
+    onReturnFromPlanReading: returnFromPlanReading,
+    hasWorkspacePlan: Boolean(workspacePlan),
+    onLeaveWorkspace: leavePlanWorkspace,
+  });
 
   const startPlanReadingFromWorkspace = useCallback(
     (jour: number, _passage: string, _opts?: { returnTo?: PlanFlowReturn }) => {
@@ -461,14 +519,13 @@ function BiblosConsumerApp() {
       <main id="workspace" className={`workspace${narrow ? " is-mobile-vista" : ""}`}>
         <div className="note-shell">
           <div className="note-shell-main">
-            <section className="graph-pane" aria-label="Contenu">
+            <section className="graph-pane" aria-label={t("shell.nav")}>
               <div className="graph-pane-body">
                 {accountOpen ? (
                   <div
                     id="panel-account"
-                    role="dialog"
-                    aria-modal="false"
-                    aria-label={t("profile.settings")}
+                    role="region"
+                    aria-labelledby="shell-label-account"
                     className="pane-body account-shell-panel"
                   >
                     <HomeConfigSection
@@ -491,7 +548,7 @@ function BiblosConsumerApp() {
                   </div>
                 ) : null}
                 <PlanDiscoverPanel
-                  active={tab === "today" && !accountOpen}
+                  active={tab === "plan" && !accountOpen}
                   workspacePlan={workspacePlan}
                   workspaceJour={workspaceJour}
                   workspaceResumeSeq={workspaceResumeSeq}
@@ -508,8 +565,8 @@ function BiblosConsumerApp() {
                 />
                 <div
                   id="panel-bible"
-                  role="tabpanel"
-                  aria-labelledby="tab-bible"
+                  role="region"
+                  aria-labelledby="shell-label-bible"
                   hidden={!bibleMode || accountOpen}
                   className="pane-body"
                 >
