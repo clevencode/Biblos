@@ -9,7 +9,6 @@ import {
 import type { ReadingPlan } from "../domain/types";
 import { useReadingPlansCatalog } from "./hooks/useReadingPlansCatalog";
 import { PlanCardRow } from "./PlanCardRow";
-import type { PlanFlowReturn } from "./PlanWorkspacePanel";
 import { PlanWorkspacePanel } from "./PlanWorkspacePanel";
 import { ShellPageTopbar } from "../../../components/ShellPageTopbar";
 import { useUiLocale } from "../../../i18n/UiLocaleContext";
@@ -22,11 +21,7 @@ type PlanDiscoverPanelProps = {
   onOpenBible: () => void;
   onSelectPlan?: (plan: ReadingPlan) => void;
   onLeaveWorkspace?: () => void;
-  onStartPlanReading?: (
-    jour: number,
-    passage: string,
-    opts?: { returnTo?: PlanFlowReturn },
-  ) => void;
+  onStartPlanReading?: (jour: number, passage?: string) => void;
   onMarkRead?: (jour: number) => void;
   onRestartPlan?: () => void;
 };

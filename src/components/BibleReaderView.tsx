@@ -2654,10 +2654,14 @@ export function BibleReaderView({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- setReadingChrome is a render-local helper
   }, [closeAll, closeOverlay]);
 
-  /** Back / Esc da shell: um nível de overlay do leitor por pedido. */
+  /** Back / Esc da shell: day-note → overlays → plan back (resync/workspace). */
   useEffect(() => {
     if (!active) return undefined;
     return subscribeReaderShellBack(() => {
+      if (dayNoteOpen) {
+        finishPlanDayNote();
+        return true;
+      }
       if (shareSheetOpen) {
         setShareSheetOpen(false);
         return true;
@@ -2677,6 +2681,10 @@ export function BibleReaderView({
         closeCreateCard();
         return true;
       }
+      if (planReading) {
+        handlePlanBack();
+        return true;
+      }
       if (chromeHiddenRef.current) {
         setReadingChrome(false, true);
         return true;
@@ -2686,6 +2694,7 @@ export function BibleReaderView({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- helpers locais do render
   }, [
     active,
+    dayNoteOpen,
     shareSheetOpen,
     pickerOpen,
     wordSearchOpen,
@@ -2694,6 +2703,7 @@ export function BibleReaderView({
     historyOpen,
     marksOpen,
     showCreateCard,
+    planReading,
   ]);
 
   function stopBibleAudio() {
@@ -3787,10 +3797,10 @@ export function BibleReaderView({
         jour={planReading.jour}
         lead={
           planReading.isStageLast
-            ? "Étape terminée — ajoute une note personnelle (optionnel)."
-            : "Note du jour — ajoute une réflexion (optionnel)."
+            ? t("plan.readerNoteLeadStage")
+            : t("plan.readerNoteLead")
         }
-        saveLabel="Enregistrer"
+        saveLabel={t("plan.personalNoteSave")}
         inputId="plan-reader-day-note"
         onDismiss={finishPlanDayNote}
       />
@@ -4316,58 +4326,56 @@ export function BibleReaderView({
 
       {(() => {
         const compactDock = compactViewport || narrowChrome;
-        if (planReading) {
-          const stageIdx = planReading.stageIndex ?? 1;
-          const stageTotal = planReading.stageCount ?? 1;
-          const dayIdx = planReading.stageDayIndex ?? planReading.stepIndex + 1;
-          const dayTotal =
-            planReading.stageDayCount ?? planReading.stepCount;
-          const stageTitle = planReading.stageName?.trim();
-          return (
-            <footer
-              className={`bible-yv-dock is-plan-progress${compactDock ? " is-floating" : ""} is-play-only`}
-              aria-label={t("bible.planProgress")}
-            >
+        const stageIdx = planReading?.stageIndex ?? 1;
+        const stageTotal = planReading?.stageCount ?? 1;
+        const dayIdx =
+          planReading?.stageDayIndex ?? (planReading ? planReading.stepIndex + 1 : 0);
+        const dayTotal =
+          planReading?.stageDayCount ?? planReading?.stepCount ?? 0;
+        const stageTitle = planReading?.stageName?.trim();
+        return (
+          <footer
+            className={`bible-yv-dock${planReading ? " is-plan-progress" : ""}${
+              audioPlaying ? " is-playing" : ""
+            }${compactDock ? " is-floating" : ""} is-play-only`}
+            aria-label={
+              planReading ? t("bible.planProgress") : t("bible.audioPlayer")
+            }
+          >
+            {planReading ? (
               <div
                 className="bible-yv-plan-progress-chip"
                 role="status"
                 aria-live="polite"
                 title={
                   stageTitle
-                    ? `Étape ${stageIdx} · ${stageTitle}`
-                    : `Étape ${stageIdx}`
+                    ? `${t("bible.planStage", { n: stageIdx })} · ${stageTitle}`
+                    : t("bible.planStage", { n: stageIdx })
                 }
               >
                 <span className="bible-yv-plan-progress-stage">
-                  Étape {stageIdx}
+                  {t("bible.planStage", { n: stageIdx })}
                   {stageTotal > 1 ? `/${stageTotal}` : ""}
                 </span>
                 <span className="bible-yv-plan-progress-sep" aria-hidden>
                   ·
                 </span>
                 <span className="bible-yv-plan-progress-day">
-                  Jour {dayIdx}
+                  {t("bible.planDay", { n: dayIdx })}
                   {dayTotal > 1 ? `/${dayTotal}` : ""}
                 </span>
               </div>
-            </footer>
-          );
-        }
-        return (
-      <footer
-        className={`bible-yv-dock${audioPlaying ? " is-playing" : ""}${compactDock ? " is-floating" : ""} is-play-only`}
-        aria-label="Lecteur audio"
-      >
-        <BibleAudioFloat
-          hasAudio={canPlayBookAudio}
-          playing={audioPlaying}
-          busy={audioBusy}
-          currentTime={audioTime}
-          duration={audioDuration}
-          onTogglePlay={() => handleAudioTransport()}
-          onSeek={(seconds) => seekAudio(seconds)}
-        />
-      </footer>
+            ) : null}
+            <BibleAudioFloat
+              hasAudio={canPlayBookAudio}
+              playing={audioPlaying}
+              busy={audioBusy}
+              currentTime={audioTime}
+              duration={audioDuration}
+              onTogglePlay={() => handleAudioTransport()}
+              onSeek={(seconds) => seekAudio(seconds)}
+            />
+          </footer>
         );
       })()}
 

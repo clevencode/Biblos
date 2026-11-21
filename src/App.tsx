@@ -12,7 +12,6 @@ import type { ReadingPlan } from "./features/reading-plans";
 import { loadPublishedPlansCache } from "./features/reading-plans/data/readingPlansLocalCache";
 import { usePlanReadingSession } from "./features/reading-plans/presentation/hooks/usePlanReadingSession";
 import { useShellBackHandler } from "./hooks/useShellBackHandler";
-import type { PlanFlowReturn } from "./features/reading-plans/presentation/PlanWorkspacePanel";
 import {
   ACTIVITY_UI_ENABLED,
   recordBibleRead,
@@ -338,11 +337,11 @@ function BiblosConsumerApp() {
   });
 
   const startPlanReadingFromWorkspace = useCallback(
-    (jour: number, _passage: string, _opts?: { returnTo?: PlanFlowReturn }) => {
+    (jour: number, passage?: string) => {
       if (!workspacePlan) return;
       setAccountOpen(false);
       setAdminOpen(false);
-      openPlanAtJour(workspacePlan, jour);
+      openPlanAtJour(workspacePlan, jour, passage);
       setTab("bible");
     },
     [openPlanAtJour, workspacePlan],

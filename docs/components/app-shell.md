@@ -19,6 +19,7 @@ Shell com **navbar radial** (`SHELL_TABS`: Bible · Plan).
 - Modo narrow + tab Bible → `immersiveHidden` na nav (`navHidden` do leitor).
 - **Profil + Settings** via hub Conta → `#panel-account` (`ProfileSettingsPanel`: header + grupos).
 - **Admin** (email Clevencode) via hub pill → `#panel-admin` (`AdminReadingPlansWorkspace`); fora do Profile.
+- **Plan reading:** workspace → `openPlanAtJour` → leitor (`planReading`); back unificado: day-note → resync off-step → workspace (chevron = Esc = Android). Note de complete só no leitor; note pessoal opcional no workspace. Dock: chip progresso + áudio S21.
 - Tema global: `theme.ts` — `onSetTheme` no perfil (clair / sombre / système).
 
 ---
@@ -52,7 +53,7 @@ Shell com **navbar radial** (`SHELL_TABS`: Bible · Plan).
 - Clearance: `--mobile-tabbar-h` ≈ `--mode-tabs-bar-body` + `--mode-tabs-dome-rise` + safe-area.
 - Superfície: `--bible-nav-surface` → `--mode-tabs-canvas`.
 
-IDs de painel: `panel-bible`, `PlanDiscoverPanel` com `panel-today`.
+IDs de painel: `panel-bible`, `panel-plan` (PlanDiscover / workspace), `panel-account`, `panel-admin`.
 
 ### Secção Options (verse_actions)
 
@@ -81,7 +82,8 @@ Quando o leitor abre a secção Options (seleção de versículos):
 |--------|--------|
 | `selectTab` | `setTab` + `saveShellTab` |
 | `openBible(ref?)` | tab bible, `setBibleFocusRef`, incrementa `focusSeq` |
-| `openPlanReading` | inject leitor com `planReading` |
+| `startPlanReadingFromWorkspace` / `openPlanAtJour` | inject leitor com `planReading` (+ passage opcional) |
+| `returnFromPlanReading` | sai do leitor plano → workspace (resumeSeq) |
 | `handleVerseMarked` | `setVerseMarks` + activity |
 | Share boot | `consumeShareRefFromUrl` uma vez |
 

@@ -171,6 +171,18 @@ export type UiCopyKey =
   | "bible.planProgress"
   | "bible.planPrev"
   | "bible.planNext"
+  | "bible.planStage"
+  | "bible.planDay"
+  | "bible.audioPlayer"
+  | "plan.personalNote"
+  | "plan.personalNoteLead"
+  | "plan.personalNoteHint"
+  | "plan.personalNoteDone"
+  | "plan.personalNoteSave"
+  | "plan.readerNoteLead"
+  | "plan.readerNoteLeadStage"
+  | "plan.completeTitle"
+  | "plan.completeLead"
   | "offline.title"
   | "offline.lead"
   | "offline.reconnectTitle"
@@ -451,6 +463,22 @@ const FR: Dict = {
   "bible.planProgress": "Progression du plan",
   "bible.planPrev": "Passage précédent du plan",
   "bible.planNext": "Passage suivant du plan",
+  "bible.planStage": "Étape {n}",
+  "bible.planDay": "Jour {n}",
+  "bible.audioPlayer": "Lecteur audio",
+  "plan.personalNote": "Note personnelle",
+  "plan.personalNoteLead":
+    "Note personnelle — ajoute une réflexion (optionnel).",
+  "plan.personalNoteHint": "Optionnelle · hors du parcours de lecture",
+  "plan.personalNoteDone": "Écrite",
+  "plan.personalNoteSave": "Enregistrer",
+  "plan.readerNoteLead":
+    "Jour terminé — ajoute une réflexion (optionnel).",
+  "plan.readerNoteLeadStage":
+    "Étape terminée — ajoute une note personnelle (optionnel).",
+  "plan.completeTitle": "Plan terminé",
+  "plan.completeLead":
+    "Tu as parcouru tout le parcours. Tu peux le relire quand tu veux.",
   "offline.title": "Chapitre hors ligne indisponible",
   "offline.lead":
     "Ce chapitre doit être téléchargé pour une lecture sans connexion. Vos marques et l’avancement restent enregistrés sur l’appareil.",
@@ -737,6 +765,22 @@ const HT: Dict = {
   "bible.planProgress": "Pwogrè plan an",
   "bible.planPrev": "Pasaj anvan nan plan an",
   "bible.planNext": "Pasaj apre nan plan an",
+  "bible.planStage": "Etap {n}",
+  "bible.planDay": "Jou {n}",
+  "bible.audioPlayer": "Lektè odyo",
+  "plan.personalNote": "Nòt pèsonèl",
+  "plan.personalNoteLead":
+    "Nòt pèsonèl — ajoute yon refleksyon (opsyonèl).",
+  "plan.personalNoteHint": "Opsyonèl · andeyò parcours lekti a",
+  "plan.personalNoteDone": "Ekri",
+  "plan.personalNoteSave": "Anrejistre",
+  "plan.readerNoteLead":
+    "Jou a fini — ajoute yon refleksyon (opsyonèl).",
+  "plan.readerNoteLeadStage":
+    "Etap la fini — ajoute yon nòt pèsonèl (opsyonèl).",
+  "plan.completeTitle": "Plan fini",
+  "plan.completeLead":
+    "Ou fini tout parcours la. Ou ka li l ankò lè ou vle.",
   "offline.title": "Chapit offline pa disponib",
   "offline.lead":
     "Chapit sa a dwe telechaje pou lekti san koneksyon. Mak ou yo ak pwogrè a rete sou aparèy la.",

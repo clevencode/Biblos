@@ -38,24 +38,14 @@ import type { ReadingPlan } from "../domain/types";
 import { PlanDescription } from "./PlanDescription";
 import { useUiLocale } from "../../../i18n/UiLocaleContext";
 
-export type PlanFlowReturn = "timeline" | "dayNote" | "intro";
-
 type PlanWorkspacePanelProps = {
   plan: ReadingPlan;
   progress?: PlanProgress | null;
   focusJour?: number;
   resumeSeq?: number;
-  dayNoteFocus?: { jour: number; seq: number } | null;
-  introFocus?: { seq: number } | null;
-  onClearDayNoteFocus?: () => void;
-  onClearIntroFocus?: () => void;
   onLeave?: () => void;
   onMarkRead?: (jour: number) => void;
-  onStartPlanReading?: (
-    jour: number,
-    passage: string,
-    opts?: { returnTo?: PlanFlowReturn },
-  ) => void;
+  onStartPlanReading?: (jour: number, passage?: string) => void;
   onRestartPlan?: () => void;
 };
 
@@ -110,7 +100,12 @@ function PassageRefsList({
               className={`plan-yv-ref-mark${done ? " is-done" : ""}`}
               onClick={onToggleDone}
               aria-pressed={done}
-              aria-label={done ? "Démarquer le jour comme lu" : "Marquer le jour comme lu"}
+              aria-label={
+                done
+                  ? "Jour marqué comme lu"
+                  : "Marquer le jour comme lu"
+              }
+              disabled={done}
             >
               {done ? <span aria-hidden="true">✓</span> : null}
             </button>
@@ -147,10 +142,6 @@ export function PlanWorkspacePanel({
   progress: progressProp = null,
   focusJour,
   resumeSeq = 0,
-  dayNoteFocus = null,
-  introFocus = null,
-  onClearDayNoteFocus,
-  onClearIntroFocus,
   onLeave,
   onMarkRead,
   onStartPlanReading,
@@ -218,29 +209,12 @@ export function PlanWorkspacePanel({
 
   useEffect(() => {
     if (!resumeSeq) return;
-    if (dayNoteFocus?.seq || introFocus?.seq) return;
     setScreen("timeline");
     if (!days.length) return;
     const preferred =
       days.find((day) => day.jour === jumpJour)?.jour ?? days[0]!.jour;
     setSelectedJour(preferred);
-  }, [resumeSeq, dayNoteFocus?.seq, introFocus?.seq, jumpJour, days]);
-
-  useEffect(() => {
-    if (!dayNoteFocus?.seq) return;
-    const day = days.find((d) => d.jour === dayNoteFocus.jour);
-    if (!passageHasDefinedChapter(day?.passage)) {
-      onClearDayNoteFocus?.();
-      return;
-    }
-    setSelectedJour(dayNoteFocus.jour);
-    setScreen("dayNote");
-  }, [dayNoteFocus?.seq, dayNoteFocus?.jour, days, onClearDayNoteFocus]);
-
-  useEffect(() => {
-    if (!introFocus?.seq) return;
-    setScreen("intro");
-  }, [introFocus?.seq]);
+  }, [resumeSeq, jumpJour, days]);
 
   useEffect(() => {
     if (screen !== "dayNote") return;
@@ -341,18 +315,12 @@ export function PlanWorkspacePanel({
     });
   }
 
-  function flowReturn(): PlanFlowReturn {
-    if (screen === "dayNote") return "dayNote";
-    if (screen === "intro") return "intro";
-    return "timeline";
-  }
-
   function openPassageAt(ref?: string) {
     const target = (ref ?? firstPassage ?? "").trim();
     if (!selectedDay || !target || !isPassageRef(target) || !onStartPlanReading) {
       return;
     }
-    onStartPlanReading(selectedDay.jour, target, { returnTo: flowReturn() });
+    onStartPlanReading(selectedDay.jour, target);
   }
 
   function openPassage() {
@@ -360,7 +328,6 @@ export function PlanWorkspacePanel({
   }
 
   function leaveDayNote() {
-    onClearDayNoteFocus?.();
     setScreen("timeline");
   }
 
@@ -380,7 +347,7 @@ export function PlanWorkspacePanel({
     const refs = extractPassageRefs(nextUnreadDay.passage);
     const target = refs[0] ?? extractPassageRef(nextUnreadDay.passage);
     if (!target || !isPassageRef(target)) return;
-    onStartPlanReading(nextUnreadDay.jour, target, { returnTo: "timeline" });
+    onStartPlanReading(nextUnreadDay.jour, target);
   }
 
   function startReading() {
@@ -408,8 +375,8 @@ export function PlanWorkspacePanel({
     openPassage();
   }
 
-  function toggleJourDone() {
-    if (!selectedDay) return;
+  function markJourDone() {
+    if (!selectedDay || passageRead) return;
     markJourComplete(plan.id, selectedDay.jour);
     onMarkRead?.(selectedDay.jour);
   }
@@ -432,7 +399,6 @@ export function PlanWorkspacePanel({
             type="button"
             className="flash-list-back"
             onClick={() => {
-              onClearIntroFocus?.();
               setScreen("timeline");
             }}
             aria-label="Retour au plan"
@@ -469,7 +435,6 @@ export function PlanWorkspacePanel({
                 openPassage();
                 return;
               }
-              onClearIntroFocus?.();
               setScreen("timeline");
             }}
           >
@@ -486,8 +451,8 @@ export function PlanWorkspacePanel({
         planId={plan.id}
         planTitle={planTitle}
         jour={selectedJour}
-        lead="Note du jour — ajoute une réflexion (optionnel)."
-        saveLabel="Enregistrer"
+        lead={t("plan.personalNoteLead")}
+        saveLabel={t("plan.personalNoteSave")}
         inputId="plan-day-note"
         onDismiss={() => {
           setNoteSaved(
@@ -673,6 +638,13 @@ export function PlanWorkspacePanel({
         </section>
       ) : null}
 
+      {planComplete ? (
+        <section className="plan-yv-complete" aria-live="polite">
+          <h3 className="plan-yv-complete-title">{t("plan.completeTitle")}</h3>
+          <p className="plan-yv-complete-lead">{t("plan.completeLead")}</p>
+        </section>
+      ) : null}
+
       {selectedDay ? (
         <section
           className={`plan-yv-hero${passageRead ? " is-done" : ""}`}
@@ -691,7 +663,7 @@ export function PlanWorkspacePanel({
               refs={passageRefs.length ? passageRefs : [passageLabel || "Passage du jour"]}
               className="plan-yv-hero-title"
               done={passageRead}
-              onToggleDone={selectedDay ? toggleJourDone : undefined}
+              onToggleDone={selectedDay ? markJourDone : undefined}
               onOpenRef={canOpenPassage ? openPassageAt : undefined}
             />
           ) : (
@@ -738,9 +710,13 @@ export function PlanWorkspacePanel({
             onClick={openDayNote}
           >
             <span className="plan-yv-secondary-stack">
-              <span className="plan-yv-secondary-label">Note du jour</span>
+              <span className="plan-yv-secondary-label">
+                {t("plan.personalNote")}
+              </span>
               <span className="plan-yv-secondary-meta">
-                {dayNoteDone || noteSaved ? "Écrite" : "Optionnelle · après la lecture"}
+                {dayNoteDone || noteSaved
+                  ? t("plan.personalNoteDone")
+                  : t("plan.personalNoteHint")}
               </span>
             </span>
             <span className="plan-yv-secondary-chevron" aria-hidden="true">

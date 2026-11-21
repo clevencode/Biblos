@@ -16107,9 +16107,37 @@ html[data-theme="dark"] .bible-chapter-fab {
     pointer-events: auto;
   }
 
+  .app.is-bible-mode .bible-yv-dock.is-play-only.is-plan-progress {
+    max-width: var(--bible-audio-lane-end, 42vw);
+    gap: 8px;
+  }
+
   .app.is-bible-mode .bible-yv-dock.is-plan-progress .bible-yv-plan-progress-chip {
     pointer-events: auto;
+    flex: none;
   }
+}
+
+.plan-yv-complete {
+  margin: 0 0 12px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--elevated, var(--paper)) 94%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--line) 78%, transparent);
+}
+
+.plan-yv-complete-title {
+  margin: 0 0 4px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--ink, var(--text));
+}
+
+.plan-yv-complete-lead {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.4;
+  color: color-mix(in srgb, var(--ink, var(--text)) 62%, transparent);
 }
 
 .bible-yv-plan-progress-chip {

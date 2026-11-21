@@ -52,6 +52,8 @@ type UsePlanReadingSessionOptions = {
 export function usePlanReadingSession({ onNavigate }: UsePlanReadingSessionOptions) {
   const [activePlan, setActivePlan] = useState<ReadingPlan | null>(null);
   const [stepIndex, setStepIndex] = useState(0);
+  /** Ref cliquée no hero (multi-passagem) — limpa ao mudar de dia via chrome. */
+  const [focusOverride, setFocusOverride] = useState<string | null>(null);
 
   const steps = useMemo(
     () => (activePlan ? flattenPlanSteps(activePlan) : []),
@@ -59,38 +61,33 @@ export function usePlanReadingSession({ onNavigate }: UsePlanReadingSessionOptio
   );
 
   const goToStep = useCallback(
-    (plan: ReadingPlan, idx: number, stepsList: PlanDayStep[]) => {
+    (
+      plan: ReadingPlan,
+      idx: number,
+      stepsList: PlanDayStep[],
+      passageOverride?: string | null,
+    ) => {
       const clamped = Math.max(0, Math.min(idx, stepsList.length - 1));
       const step = stepsList[clamped];
       if (!step) return;
       setStepIndex(clamped);
+      const override = passageOverride?.trim() || null;
+      setFocusOverride(override);
       touchPlanJour(plan.id, step.jour);
-      onNavigate(passageFocusRef(step.passage));
+      onNavigate(passageFocusRef(override ?? step.passage));
     },
     [onNavigate],
   );
 
   const openPlanAtJour = useCallback(
-    (plan: ReadingPlan, jour: number) => {
+    (plan: ReadingPlan, jour: number, passage?: string) => {
       const flat = flattenPlanSteps(plan);
       if (!flat.length) return;
       const idx = flat.findIndex((s) => s.jour === jour);
       const target = idx >= 0 ? idx : resumeStepIndex(plan);
       ensurePlanStart(plan.id);
       setActivePlan(plan);
-      goToStep(plan, target, flat);
-    },
-    [goToStep],
-  );
-
-  const openPlan = useCallback(
-    (plan: ReadingPlan) => {
-      const flat = flattenPlanSteps(plan);
-      if (!flat.length) return;
-      ensurePlanStart(plan.id);
-      const idx = resumeStepIndex(plan);
-      setActivePlan(plan);
-      goToStep(plan, idx, flat);
+      goToStep(plan, target, flat, passage ?? null);
     },
     [goToStep],
   );
@@ -99,6 +96,7 @@ export function usePlanReadingSession({ onNavigate }: UsePlanReadingSessionOptio
     const jour = activePlan ? steps[stepIndex]?.jour : undefined;
     setActivePlan(null);
     setStepIndex(0);
+    setFocusOverride(null);
     return jour;
   }, [activePlan, stepIndex, steps]);
 
@@ -106,8 +104,9 @@ export function usePlanReadingSession({ onNavigate }: UsePlanReadingSessionOptio
     if (!activePlan || !steps.length) return null;
     const step = steps[stepIndex];
     if (!step) return null;
-    const parts = parseUsfmParts(step.passage);
-    const range = parsePassageVerseRange(step.passage);
+    const focusPassage = focusOverride?.trim() || step.passage;
+    const parts = parseUsfmParts(focusPassage);
+    const range = parsePassageVerseRange(focusPassage);
     const stageOrders = [
       ...new Set(steps.map((s) => s.etapeOrder)),
     ].sort((a, b) => a - b);
@@ -139,9 +138,9 @@ export function usePlanReadingSession({ onNavigate }: UsePlanReadingSessionOptio
       planDescription: activePlan.description,
       planShareId: activePlan.id,
       planMeta: meta,
-      label: `Jour ${step.jour} · ${step.passage}`,
+      label: `Jour ${step.jour} · ${focusPassage}`,
       jour: step.jour,
-      focusRef: passageFocusRef(step.passage),
+      focusRef: passageFocusRef(focusPassage),
       isFirst: stepIndex <= 0,
       isLast: stepIndex >= steps.length - 1,
       isStageLast,
@@ -156,7 +155,7 @@ export function usePlanReadingSession({ onNavigate }: UsePlanReadingSessionOptio
       verseEnd: range.verseEnd ?? range.verseStart ?? parts.verse ?? null,
       onPrev: () => {
         if (stepIndex <= 0) return;
-        goToStep(activePlan, stepIndex - 1, steps);
+        goToStep(activePlan, stepIndex - 1, steps, null);
       },
       onAdvance: () => {
         markJourComplete(activePlan.id, step.jour);
@@ -164,11 +163,11 @@ export function usePlanReadingSession({ onNavigate }: UsePlanReadingSessionOptio
       },
       onAdvanceAfterNote: () => {
         if (stepIndex < steps.length - 1) {
-          goToStep(activePlan, stepIndex + 1, steps);
+          goToStep(activePlan, stepIndex + 1, steps, null);
         }
       },
     };
-  }, [activePlan, goToStep, stepIndex, steps]);
+  }, [activePlan, focusOverride, goToStep, stepIndex, steps]);
 
-  return { openPlan, openPlanAtJour, planReading, clearPlan, activePlan };
+  return { openPlanAtJour, planReading, clearPlan, activePlan };
 }
