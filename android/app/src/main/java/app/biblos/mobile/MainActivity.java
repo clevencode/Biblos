@@ -42,29 +42,18 @@ public class MainActivity extends BridgeActivity {
     settings.setTextZoom(100);
   }
 
-  /**
-   * Mantém timers do WebView activos em background para HTMLAudio + Capgo MediaSession FGS.
-   * Capacitor pausa o WebView em onPause; re-resume evita cortar o podcast S21.
+  /*
+   * Playback S21 no Android usa ExoPlayer nativo (@mediagrid) — já não depende
+   * de timers do WebView em background. Mantém só onResume para UI.
    */
-  @Override
-  public void onPause() {
-    super.onPause();
-    resumeWebViewForMedia();
-  }
-
   @Override
   public void onResume() {
     super.onResume();
-    resumeWebViewForMedia();
-  }
-
-  private void resumeWebViewForMedia() {
     if (this.bridge == null) return;
     WebView webView = this.bridge.getWebView();
     if (webView == null) return;
     try {
       webView.onResume();
-      webView.resumeTimers();
     } catch (Exception ignored) {
       /* ignore */
     }

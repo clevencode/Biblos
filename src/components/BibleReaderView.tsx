@@ -108,6 +108,18 @@ import {
   clearBibleAudioControls,
   syncBibleAudioControls,
 } from "../bibleAudioControls";
+import {
+  destroyNativeBibleAudio,
+  getNativeActiveAudioId,
+  getNativeBibleAudioTime,
+  getNativePreparedUrl,
+  isNativeBibleAudio,
+  isNativeBibleAudioPlaying,
+  pauseNativeBibleAudio,
+  playNativeBibleAudio,
+  prepareNativeBibleAudio,
+  seekNativeBibleAudio,
+} from "../bibleNativeAudio";
 import { verseCardId } from "../verseCard";
 import {
   buildShareText,
@@ -954,6 +966,26 @@ export function BibleReaderView({
   }, []);
 
   useEffect(() => {
+    /* Android: ExoPlayer nativo — sem HTMLAudio / Capgo. */
+    if (isNativeBibleAudio()) {
+      void bindBibleAudioControls({
+        onPlay: () => undefined,
+        onPause: () => undefined,
+        onSkipBackward: () => undefined,
+        onSkipForward: () => undefined,
+      });
+      return () => {
+        void (async () => {
+          const usfm = audioBookRef.current;
+          if (usfm) {
+            const t = await getNativeBibleAudioTime();
+            if (Number.isFinite(t)) saveAudioPosition(usfm, t);
+          }
+          await destroyNativeBibleAudio();
+        })();
+      };
+    }
+
     const audio = audioRef.current ?? new Audio();
     audioRef.current = audio;
     audio.preload = "none";
@@ -1045,7 +1077,9 @@ export function BibleReaderView({
     };
   }, []);
 
+  /* Web only: sync MediaSession shim (no-op no Android nativo). */
   useEffect(() => {
+    if (isNativeBibleAudio()) return;
     const usfm = (audioActiveUsfm || audioBookRef.current || "").toUpperCase();
     const episode = usfm ? audioByUsfm[usfm] : null;
     if (!episode) {
@@ -1060,10 +1094,10 @@ export function BibleReaderView({
       duration: audioDuration,
       elapsed: audioTime,
     });
-  }, [audioPlaying, audioActiveUsfm, audioDuration, audioPodcast, audioByUsfm]);
+  }, [audioPlaying, audioActiveUsfm, audioDuration, audioPodcast, audioByUsfm, audioTime]);
 
   useEffect(() => {
-    if (!audioPlaying) return;
+    if (isNativeBibleAudio() || !audioPlaying) return;
     const id = window.setInterval(() => {
       const audio = audioRef.current;
       const usfm = (audioActiveUsfm || audioBookRef.current || "").toUpperCase();
@@ -1081,8 +1115,8 @@ export function BibleReaderView({
     return () => window.clearInterval(id);
   }, [audioPlaying, audioActiveUsfm, audioByUsfm, audioPodcast, audioDuration]);
 
-  /* Background / lock screen: re-sync notificação; não pausar só por hide. */
   useEffect(() => {
+    if (isNativeBibleAudio()) return;
     const onVisibility = () => {
       if (document.visibilityState !== "hidden") return;
       const audio = audioRef.current;
@@ -1104,10 +1138,28 @@ export function BibleReaderView({
   }, [audioActiveUsfm, audioByUsfm, audioPodcast, audioDuration]);
 
   useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
     const usfm = bookId.toUpperCase();
     if (audioBookRef.current === usfm) return;
+
+    if (isNativeBibleAudio()) {
+      void (async () => {
+        if (audioBookRef.current) {
+          const t = await getNativeBibleAudioTime();
+          if (Number.isFinite(t)) saveAudioPosition(audioBookRef.current, t);
+        }
+        await destroyNativeBibleAudio();
+        audioBookRef.current = "";
+        setAudioActiveUsfm(null);
+        setAudioPlaying(false);
+        setAudioBusy(false);
+        setAudioTime(0);
+        setAudioDuration(0);
+      })();
+      return;
+    }
+
+    const audio = audioRef.current;
+    if (!audio) return;
     if (!audio.paused) {
       audio.pause();
     }
@@ -2474,6 +2526,23 @@ export function BibleReaderView({
   }, [closeAll, closeOverlay]);
 
   function stopBibleAudio() {
+    if (isNativeBibleAudio()) {
+      void (async () => {
+        if (audioBookRef.current) {
+          const t = await getNativeBibleAudioTime();
+          if (Number.isFinite(t)) saveAudioPosition(audioBookRef.current, t);
+        }
+        await destroyNativeBibleAudio();
+      })();
+      audioBookRef.current = "";
+      setAudioActiveUsfm(null);
+      setAudioPlaying(false);
+      setAudioBusy(false);
+      setAudioTime(0);
+      setAudioDuration(0);
+      return;
+    }
+
     const audio = audioRef.current;
     if (audio) {
       if (
@@ -3171,9 +3240,6 @@ export function BibleReaderView({
 
   async function playUsfmAudio(targetUsfm: string) {
     const usfm = targetUsfm.toUpperCase();
-    const audio = audioRef.current;
-    if (!audio) return;
-
     const episode = audioByUsfm[usfm];
     if (!episode?.audioUrl) return;
 
@@ -3181,6 +3247,70 @@ export function BibleReaderView({
     if (usfm !== bookId.toUpperCase() && isUsfmBookId(usfm)) {
       void loadChapter(usfm, "1", null);
     }
+
+    if (isNativeBibleAudio()) {
+      try {
+        setAudioBusy(true);
+        setAudioActiveUsfm(usfm);
+        const resume = loadAudioPositions()[usfm];
+        const needPrepare =
+          getNativeActiveAudioId() !== usfm ||
+          getNativePreparedUrl() !== episode.audioUrl;
+
+        if (needPrepare && audioBookRef.current && audioBookRef.current !== usfm) {
+          const t = await getNativeBibleAudioTime();
+          if (Number.isFinite(t)) saveAudioPosition(audioBookRef.current, t);
+        }
+
+        await prepareNativeBibleAudio(
+          {
+            audioId: usfm,
+            url: episode.audioUrl,
+            title: episode.title,
+            artist: audioPodcast,
+            albumTitle: "Segond 21",
+            resumeAt: resume && resume > 2 ? resume : undefined,
+          },
+          {
+            onReady: (duration) => {
+              if (Number.isFinite(duration) && duration > 0) {
+                setAudioDuration(duration);
+              }
+            },
+            onStatus: (status) => {
+              setAudioPlaying(status === "playing");
+              if (status === "paused" || status === "stopped") {
+                void getNativeBibleAudioTime().then((t) => {
+                  if (audioBookRef.current && Number.isFinite(t)) {
+                    saveAudioPosition(audioBookRef.current, t);
+                  }
+                });
+              }
+            },
+            onTime: (currentTime) => {
+              setAudioTime(currentTime);
+            },
+            onEnd: () => {
+              setAudioPlaying(false);
+              if (audioBookRef.current) saveAudioPosition(audioBookRef.current, 0);
+              setAudioTime(0);
+            },
+          },
+        );
+        audioBookRef.current = usfm;
+        await playNativeBibleAudio();
+        setAudioPlaying(true);
+      } catch {
+        setAudioPlaying(false);
+        setPassageUiError("Audio indisponible pour le moment.");
+      } finally {
+        setAudioBusy(false);
+      }
+      return;
+    }
+
+    const audio = audioRef.current;
+    if (!audio) return;
 
     try {
       setAudioBusy(true);
@@ -3211,7 +3341,6 @@ export function BibleReaderView({
         });
       }
       await audio.play();
-      /* Capgo FGS: sync nativo no gesto de play (não esperar só o useEffect). */
       void syncBibleAudioControls({
         track: episode.title,
         artist: audioPodcast,
@@ -3230,6 +3359,19 @@ export function BibleReaderView({
 
   async function toggleBookAudio() {
     const usfm = (audioActiveUsfm || bookId).toUpperCase();
+
+    if (isNativeBibleAudio()) {
+      if (audioBookRef.current === usfm && (await isNativeBibleAudioPlaying())) {
+        await pauseNativeBibleAudio();
+        setAudioPlaying(false);
+        const t = await getNativeBibleAudioTime();
+        if (Number.isFinite(t)) saveAudioPosition(usfm, t);
+        return;
+      }
+      await playUsfmAudio(usfm);
+      return;
+    }
+
     const audio = audioRef.current;
     if (audio && audioBookRef.current === usfm && !audio.paused) {
       audio.pause();
@@ -3242,6 +3384,16 @@ export function BibleReaderView({
     const usfm = bookId.toUpperCase();
     setAudioActiveUsfm(audioBookRef.current || usfm);
     if (!canPlayBookAudio && !audioByUsfm[usfm]) return;
+
+    if (isNativeBibleAudio()) {
+      if (audioBookRef.current === usfm && getNativePreparedUrl()) {
+        void toggleBookAudio();
+        return;
+      }
+      void playUsfmAudio(usfm);
+      return;
+    }
+
     const audio = audioRef.current;
     if (
       audio &&
@@ -3255,8 +3407,21 @@ export function BibleReaderView({
   }
 
   function seekAudio(seconds: number) {
+    if (!Number.isFinite(seconds)) return;
+
+    if (isNativeBibleAudio()) {
+      const max =
+        Number.isFinite(audioDuration) && audioDuration > 0 ? audioDuration : seconds;
+      const next = Math.min(Math.max(0, seconds), Math.max(0, max));
+      void seekNativeBibleAudio(next).then(() => {
+        setAudioTime(next);
+        if (audioBookRef.current) saveAudioPosition(audioBookRef.current, next);
+      });
+      return;
+    }
+
     const audio = audioRef.current;
-    if (!audio || !Number.isFinite(seconds)) return;
+    if (!audio) return;
     const max = Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : seconds;
     audio.currentTime = Math.min(Math.max(0, seconds), Math.max(0, max));
     setAudioTime(audio.currentTime);

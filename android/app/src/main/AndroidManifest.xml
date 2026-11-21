@@ -60,34 +60,24 @@
                 android:resource="@xml/file_paths"></meta-data>
         </provider>
 
-        <!-- Capgo Media Session — FGS mediaPlayback (notificação / ecrã bloqueado).
-             Declarado explicitamente: o merge do plugin falhou em builds locais e o
-             startForegroundService silencia sem serviço no manifesto. -->
+        <!-- mediagrid Native Audio — ExoPlayer + FGS mediaPlayback / MediaSession -->
         <service
-            android:name="com.capgo.mediasession.MediaSessionService"
-            android:enabled="true"
-            android:exported="true"
+            android:name="us.mediagrid.capacitorjs.plugins.nativeaudio.AudioPlayerService"
+            android:description="@string/audio_player_service_description"
             android:foregroundServiceType="mediaPlayback"
-            tools:node="merge">
+            android:exported="true">
             <intent-filter>
-                <action android:name="android.intent.action.MEDIA_BUTTON" />
+                <action android:name="androidx.media3.session.MediaSessionService" />
             </intent-filter>
         </service>
-        <receiver
-            android:name="androidx.media.session.MediaButtonReceiver"
-            android:exported="true"
-            tools:node="merge">
-            <intent-filter>
-                <action android:name="android.intent.action.MEDIA_BUTTON" />
-            </intent-filter>
-        </receiver>
 
-        <!-- Capawesome FGS — permissões POST_NOTIFICATIONS + fallback -->
+        <!-- Capawesome FGS — só POST_NOTIFICATIONS (não inicia playback) -->
         <service
             android:name="io.capawesome.capacitorjs.plugins.foregroundservice.AndroidForegroundService"
             android:foregroundServiceType="mediaPlayback"
             android:exported="false" />
         <receiver android:name="io.capawesome.capacitorjs.plugins.foregroundservice.NotificationActionBroadcastReceiver" />
+
 
     </application>
 

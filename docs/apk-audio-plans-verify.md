@@ -1,6 +1,6 @@
 # Checklist APK — áudio background + planos
 
-Verificação manual após rebuild do APK (`npm run build` + sync Capacitor + assemble).
+Verificação manual após rebuild do APK (`npm run mobile:apk` ou sync + assemble).
 
 ## Pré-requisitos
 
@@ -8,18 +8,19 @@ Verificação manual após rebuild do APK (`npm run build` + sync Capacitor + as
 - Em Firestore: ≥1 documento `reading_plans` com `isPublished: true`.
 - Android 13+: aceitar permissão de notificações quando pedido (Capawesome `POST_NOTIFICATIONS`).
 
-## 1. Áudio em background (Capgo Media Session)
+## 1. Áudio em background (mediagrid Native Audio)
+
+Motor Android = **ExoPlayer / Media3** via `@mediagrid/capacitor-native-audio` + `AudioPlayerService` (`foregroundServiceType=mediaPlayback`). Web continua com `HTMLAudioElement`.
 
 | Passo | Esperado |
 |-------|----------|
 | Abrir Bible → livro com áudio S21 → Play | Reprodução começa; notificação média aparece |
-| Home / outra app / ecrã bloqueado | Áudio continua |
-| Pause / play na notificação | HTMLAudio pausa / retoma |
-| Skip −15s / +30s (ou seek) na notificação | Posição actualiza no leitor |
-| Swipe / stop da notificação | Playback pára; FGS mediaPlayback termina |
+| Home / outra app / ecrã bloqueado | Áudio continua (decode nativo, não WebView) |
+| Pause / play na notificação | Estado reflecte no float do leitor |
+| Skip −15s / +30s na notificação | Posição actualiza |
+| Stop / limpar notificação | Playback pára; FGS termina |
 | Voltar à app com áudio activo | Controlo flutuante reflecte estado |
-
-Notas técnicas: engine = `HTMLAudioElement` no WebView; FGS = Capgo `MediaSessionService` (`foregroundServiceType=mediaPlayback`). `MainActivity.resumeWebViewForMedia` mantém timers em `onPause`.
+| Mudar de livro | Player reinicia na nova fonte HTTPS |
 
 ## 2. Catálogo Plan (« Aucun plan disponible »)
 
@@ -36,7 +37,9 @@ Se a lista ficar vazia com Firebase configurado: ver log one-shot `[reading-plan
 ## Rebuild rápido
 
 ```bash
-npm run build
-npx cap sync android
-# depois assemble no Android Studio / Gradle
+npm run mobile:apk
+npm run mobile:install
+# ou:
+adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+adb logcat -s Capacitor AudioPlayerService chromium
 ```

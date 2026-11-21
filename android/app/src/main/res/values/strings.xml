@@ -4,4 +4,6 @@
     <string name="title_activity_main">Biblos</string>
     <string name="package_name">app.biblos.mobile</string>
     <string name="custom_url_scheme">app.biblos.mobile</string>
+    <string name="audio_player_service_description">Permet la lecture audio en arrière-plan (Segond 21).</string>
 </resources>
+
