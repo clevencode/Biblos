@@ -950,13 +950,14 @@ html[data-theme="dark"] .sw-update-banner-cta {
   --mode-tabs-bar-body: calc(var(--mode-tabs-hub-size, 50px) + 22px);
   --mode-tabs-hub-size: 50px;
   --mode-tabs-hub-top: 0px;
-  --mode-tabs-float-gap: 14px;
+  /* Folga do fundo: pill + play mais acima */
+  --mode-tabs-float-gap: 22px;
   /* Hub pill: fade sobe só até ao topo do botão */
   --mode-tabs-caption-slot: 0px;
   --mode-tabs-mat-bg: var(--bible-nav-surface, var(--bg));
+  /* Tapete sólido sob o pill — sem fade/blur alto */
   --mode-tabs-fade-h: calc(
-    var(--mode-tabs-hub-size, 50px) +
-      var(--mode-tabs-float-gap, 14px) + env(safe-area-inset-bottom, 0px)
+    var(--mode-tabs-float-gap, 14px) + env(safe-area-inset-bottom, 0px) + 8px
   );
   /* Largura partilhada: pill + modal */
   --mode-tabs-pill-width: 11.5rem;
@@ -1031,43 +1032,11 @@ html[data-theme="dark"] .sw-update-banner-cta {
   align-items: flex-end;
 }
 
-/*
- * Fade full-bleed — altura exactamente até ao topo do botão central (hub).
- * Opaco na base → transparente no topo do hub.
- */
-.mode-tabs::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  top: auto;
-  height: var(--mode-tabs-fade-h);
-  z-index: 0;
-  pointer-events: none;
-  background: linear-gradient(
-    to top,
-    var(--mode-tabs-mat-bg, var(--bg)) 0%,
-    var(--mode-tabs-mat-bg, var(--bg))
-      calc(
-        var(--mode-tabs-float-gap, 14px) + env(safe-area-inset-bottom, 0px) +
-          10px
-      ),
-    color-mix(in srgb, var(--mode-tabs-mat-bg, var(--bg)) 42%, transparent) 72%,
-    transparent 100%
-  );
-}
-
+/* Tapete/barra sob o pill — UI escondida (pill + play flutuam no conteúdo) */
+.mode-tabs::before,
 .mode-tabs.is-open::before {
-  /* Mesma altura (topo do hub); só suaviza um pouco mais o meio */
-  height: var(--mode-tabs-fade-h);
-  background: linear-gradient(
-    to top,
-    var(--mode-tabs-mat-bg, var(--bg)) 0%,
-    color-mix(in srgb, var(--mode-tabs-mat-bg, var(--bg)) 78%, transparent)
-      55%,
-    transparent 100%
-  );
+  content: none;
+  display: none;
 }
 
 html[data-theme="light"] .mode-tabs {
@@ -1280,6 +1249,15 @@ html[data-theme="dark"] {
   );
 }
 
+/*
+ * Pill nav: blur vinha de .radial-ui-backdrop::before (14px).
+ * Fog fica só com o gradient — sem backdrop-filter ao abrir o hub.
+ */
+.radial-ui-backdrop::before {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
 .radial-ui-backdrop {
   position: fixed;
   inset: 0;
@@ -1343,6 +1321,44 @@ html[data-theme="dark"] {
     var(--mode-tabs-hub-size, 50px) + var(--mode-tabs-float-gap, 14px) +
       env(safe-area-inset-bottom, 0px) + 16px
   );
+  /*
+   * Contrato de faixas no chrome inferior:
+   * [ play lane ][ gap ][ hub centrado ][ gap ][ tools ]
+   * A strip NUNCA entra na caixa do hub — evita overlap + fade a “cortar” o play.
+   */
+  --bible-chrome-hub-half: calc(var(--mode-tabs-pill-width, 11.5rem) / 2);
+  --bible-chrome-lane-gap: 10px;
+  --bible-audio-lane-end: calc(
+    50vw - var(--bible-chrome-hub-half) - var(--bible-chrome-lane-gap)
+  );
+  --bible-audio-expanded-max: max(
+    var(--bible-audio-play-size, 50px),
+    calc(var(--bible-audio-lane-end) - var(--bible-audio-float-inset-x, 12px))
+  );
+}
+
+/*
+ * Play aberto (strip / playing): pill nav cede — single chrome.
+ * Lane do play pode usar quase toda a largura (hub oculto).
+ */
+.app.is-bible-mode.is-narrow:has(.bible-reader--yv.is-audio-playing),
+.app.is-bible-mode.is-narrow:has(.bible-yv-audio-player.is-expanded) {
+  --bible-audio-expanded-max: calc(
+    100vw - var(--bible-audio-float-inset-x, 12px) -
+      var(--bible-tools-float-inset-x, 12px) - 8px
+  );
+}
+
+.app.is-bible-mode.is-narrow:has(.bible-reader--yv.is-audio-playing) .mode-tabs,
+.app.is-bible-mode.is-narrow:has(.bible-yv-audio-player.is-expanded) .mode-tabs {
+  opacity: 0 !important;
+  visibility: hidden;
+  pointer-events: none !important;
+  transform: translateY(8px) scale(0.96);
+  transition:
+    opacity var(--mode-tabs-close-ms, 70ms) var(--mode-tabs-close-ease, ease),
+    transform var(--mode-tabs-close-ms, 70ms) var(--mode-tabs-close-ease, ease),
+    visibility 0ms linear var(--mode-tabs-close-ms, 70ms);
 }
 
 .app.is-bible-mode.is-narrow .radial-ui-backdrop.is-open {
@@ -6738,16 +6754,16 @@ html[data-theme="dark"] .profile-download-btn {
     --mode-tabs-bar-body: var(--mode-tabs-hub-size, 50px);
     --mode-tabs-dome-rise: 0px;
     --mode-tabs-caption-slot: 0px;
-    --mode-tabs-float-gap: 14px;
-    --mode-tabs-mat-fade: 28px;
+    --mode-tabs-float-gap: 22px;
+    --mode-tabs-mat-fade: 0px;
     --mode-tabs-inset-x: 12px;
     --mobile-tabbar-h: calc(
-      var(--mode-tabs-bar-body, 50px) + var(--mode-tabs-float-gap, 14px)
+      var(--mode-tabs-bar-body, 50px) + var(--mode-tabs-float-gap, 22px)
     );
-    /* Clearance = pill + folga + safe-area + zona do fade (sem corte no scroll) */
+    /* Clearance = pill + folga + safe-area (sem barra/mat) */
     --mobile-tabbar-outer-h: calc(
-      var(--mode-tabs-bar-body, 50px) + var(--mode-tabs-float-gap, 14px) +
-        var(--mode-tabs-mat-fade) + env(safe-area-inset-bottom, 0px)
+      var(--mode-tabs-bar-body, 50px) + var(--mode-tabs-float-gap, 22px) +
+        env(safe-area-inset-bottom, 0px)
     );
     --mobile-bottom-chrome: var(--mobile-tabbar-outer-h);
     --shell-tab-clearance: var(--mobile-bottom-chrome);
@@ -6758,24 +6774,24 @@ html[data-theme="dark"] .profile-download-btn {
       var(--mode-tabs-bar-body, 50px) + var(--mode-tabs-float-gap, 14px) +
         env(safe-area-inset-bottom, 0px) + 16px
     );
-    /* FAB lecture : 16px au-dessus du bord supérieur de la tab bar (Material / iOS HIG). */
-    --bible-play-float-gap: 16px;
-    --bible-audio-play-size: var(--mobile-touch);
+    /* Play = mesmo piso do hub pill (canto inf. esquerdo) */
+    --bible-play-float-gap: 0px;
+    --bible-audio-play-size: var(--mode-tabs-hub-size, 50px);
     --bible-audio-float-inset-x: max(
       var(--mobile-float-inset-x, var(--mobile-gutter, 12px)),
       env(safe-area-inset-left, 0px)
     );
     --bible-audio-float-bottom: calc(
-      var(--mobile-bottom-chrome) + var(--bible-play-float-gap, 16px)
+      var(--mode-tabs-float-gap, 14px) + env(safe-area-inset-bottom, 0px)
     );
     --bible-tools-float-inset-x: max(
       var(--mobile-float-inset-x, var(--mobile-gutter, 12px)),
       env(safe-area-inset-right, 0px)
     );
     --bible-tools-float-bottom: var(--bible-audio-float-bottom);
-    /* Réserve scroll : play + folga da strip expandida. */
-    --bible-fab-lift: calc(var(--bible-audio-play-size) + 12px);
-    --bible-dock-lift: calc(var(--mobile-bottom-chrome) + var(--bible-fab-lift));
+    /* Play vive na faixa do hub — sem lift extra em idle */
+    --bible-fab-lift: 0px;
+    --bible-dock-lift: var(--mobile-bottom-chrome);
     --bible-passage-clearance: calc(var(--bible-dock-lift) + 10px);
     --bible-actions-lift: calc(var(--bible-dock-lift) + var(--shell-float-gap));
     --bible-pick-lift: var(--mobile-bottom-chrome);
@@ -10165,23 +10181,20 @@ ul.plan-yv-day-note-ref {
     var(--yv-text) 11%,
     var(--bible-nav-surface, var(--bg))
   );
-  /* L3 FAB — idle = navbar; playing = hub invertido */
-  --yv-audio-fab-idle: var(--bible-nav-surface);
-  --yv-audio-fab-idle-hover: var(--bible-nav-surface-hover);
-  --yv-audio-fab-idle-active: var(--bible-nav-surface-press);
-  --yv-audio-fab-idle-ring: color-mix(in srgb, var(--yv-line) 70%, var(--yv-text));
-  --yv-audio-fab-active-bg: var(--text);
-  --yv-audio-fab-active-fg: var(--bg);
-  /* Profundidade FABs = mesma família da top bar / navbar */
-  --yv-audio-fab-shadow:
-    0 1px 0 color-mix(in srgb, var(--ink) 8%, transparent),
-    0 6px 16px color-mix(in srgb, var(--ink) 12%, transparent);
-  --yv-audio-fab-focus: color-mix(in srgb, var(--yv-text) 40%, var(--yv-line));
-  --yv-audio-bar-bg: var(--bible-nav-surface);
-  --yv-audio-bar-track: color-mix(in srgb, var(--yv-text) 12%, transparent);
-  --yv-audio-bar-fill: color-mix(in srgb, var(--yv-text) 62%, var(--yv-line));
-  --yv-audio-bar-thumb: var(--yv-text);
-  --yv-audio-bar-thumb-ring: var(--yv-audio-bar-bg);
+  /* Play = sempre tema dark (#0D1117 + branco), em qualquer theme da app */
+  --yv-audio-fab-idle: #0d1117;
+  --yv-audio-fab-idle-hover: color-mix(in srgb, #ffffff 12%, #0d1117);
+  --yv-audio-fab-idle-active: color-mix(in srgb, #ffffff 18%, #0d1117);
+  --yv-audio-fab-idle-ring: color-mix(in srgb, #ffffff 28%, transparent);
+  --yv-audio-fab-active-bg: #0d1117;
+  --yv-audio-fab-active-fg: #ffffff;
+  --yv-audio-fab-shadow: none;
+  --yv-audio-fab-focus: color-mix(in srgb, #ffffff 40%, transparent);
+  --yv-audio-bar-bg: #0d1117;
+  --yv-audio-bar-track: color-mix(in srgb, #ffffff 22%, transparent);
+  --yv-audio-bar-fill: #ffffff;
+  --yv-audio-bar-thumb: #ffffff;
+  --yv-audio-bar-thumb-ring: #0d1117;
   /* Résolu ici pour que A± (--bible-font-size inline) agisse vraiment. */
   --type-body-size: var(--bible-font-size, 19px);
   position: relative;
@@ -12428,7 +12441,7 @@ html[data-passage-bar-panel="test"] .bible-yv-top-passage-arrow:hover:not(:disab
   }
 }
 
-/* Play FAB: superfície navbar + sombra (família skips) */
+/* Play FAB (test panel): mesmo tema dark */
 html[data-passage-bar-panel="test"]
   .app.is-bible-mode.is-narrow
   .bible-yv-dock.is-play-only
@@ -12440,10 +12453,10 @@ html[data-passage-bar-panel="test"]
   max-width: var(--bible-chrome-fab-size);
   min-height: var(--bible-chrome-fab-size);
   max-height: var(--bible-chrome-fab-size);
-  border: var(--bible-chrome-fab-border);
-  background: var(--bible-nav-surface, var(--yv-audio-fab-idle));
-  color: var(--yv-text);
-  box-shadow: var(--bible-chrome-fab-shadow, var(--yv-audio-fab-shadow)) !important;
+  border: 0;
+  background: var(--yv-audio-fab-idle, #0d1117);
+  color: var(--yv-audio-fab-active-fg, #ffffff);
+  box-shadow: var(--yv-audio-fab-shadow) !important;
 }
 
 html[data-passage-bar-panel="test"]
@@ -12622,8 +12635,19 @@ html[data-passage-bar-panel="test"]
   contain: none;
 }
 
-.app.is-bible-mode.is-narrow .bible-yv-audio-player.is-expanded {
-  contain: layout style;
+/* Strip cabe na lane esquerda — nunca sob o hub centrado */
+.app.is-bible-mode.is-narrow .bible-yv-dock.is-play-only .bible-yv-audio-player.is-expanded {
+  max-width: var(--bible-audio-expanded-max);
+  --audio-player-strip-w: max(
+    4.25rem,
+    min(
+      11rem,
+      calc(
+        var(--bible-audio-expanded-max) - var(--bible-audio-play-size, 50px) -
+          2px
+      )
+    )
+  );
 }
 
 .bible-yv-passage-scroll-edge {
@@ -14243,6 +14267,8 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
 }
 
 .app.is-bible-mode.is-narrow .bible-reader--yv.is-audio-playing .bible-passage {
+  /* Strip expandida sobe a partir do hub — reserva extra só em playing */
+  --bible-fab-lift: calc(var(--bible-audio-play-size, 50px) + 8px);
   --bible-dock-lift: calc(var(--mobile-bottom-chrome) + var(--bible-fab-lift));
   --bible-passage-clearance: calc(var(--bible-dock-lift) + 14px);
 }
@@ -14846,16 +14872,12 @@ html[data-theme="dark"] .bible-chapter-fab {
   left: 0;
   right: 0;
   bottom: 0;
-  top: calc(-1 * var(--mode-tabs-mat-fade, 32px));
+  height: calc(
+    var(--mode-tabs-float-gap, 14px) + env(safe-area-inset-bottom, 0px) + 8px
+  );
   z-index: 0;
   pointer-events: none;
-  background: linear-gradient(
-    to top,
-    var(--mode-tabs-mat-bg, var(--bible-nav-surface, var(--bg))) 0%,
-    var(--mode-tabs-mat-bg, var(--bible-nav-surface, var(--bg)))
-      calc(100% - var(--mode-tabs-mat-fade, 32px)),
-    transparent 100%
-  );
+  background: var(--mode-tabs-mat-bg, var(--bible-nav-surface, var(--bg)));
 }
 
 .bible-verse-actions-nav-pill {
@@ -15927,7 +15949,7 @@ html[data-theme="dark"] .bible-chapter-fab {
   left: var(--bible-audio-float-inset-x);
   right: auto;
   bottom: var(--bible-audio-float-bottom);
-  z-index: 6;
+  z-index: var(--bible-z-popover, 40);
   width: auto;
   max-width: none;
   margin: 0;
@@ -15953,18 +15975,20 @@ html[data-theme="dark"] .bible-chapter-fab {
 }
 
 @media (max-width: 860px) {
+  /*
+   * Play: lane esquerda no mesmo piso do hub.
+   * Overlap resolvido por geometria (max-width) + máscara do fade — não por z-index.
+   * mode-tabs.is-open (+25) / radial continuam a mandar no menu.
+   */
   .app.is-bible-mode .bible-yv-dock.is-play-only {
     position: fixed;
     left: var(--bible-audio-float-inset-x);
     right: auto;
     bottom: var(--bible-audio-float-bottom);
-    z-index: 9;
+    z-index: var(--bible-z-popover, 40);
     align-items: center;
     width: auto;
-    max-width: calc(
-      100vw - var(--bible-audio-float-inset-x) -
-        max(var(--mobile-gutter, 12px), env(safe-area-inset-right, 0px))
-    );
+    max-width: var(--bible-audio-expanded-max, 42vw);
     margin: 0;
     pointer-events: none;
   }
@@ -16124,119 +16148,138 @@ html[data-theme="dark"] .bible-chapter-fab {
   }
 }
 
-.app.is-bible-mode.is-narrow .bible-yv-dock.is-floating.is-play-only .bible-yv-dock-play {
-  width: var(--bible-audio-play-size);
-  height: var(--bible-audio-play-size);
-  min-width: var(--bible-audio-play-size);
-  max-width: var(--bible-audio-play-size);
-  min-height: var(--bible-audio-play-size);
-  max-height: var(--bible-audio-play-size);
+/*
+ * Play FAB + barra: sempre tema dark (ink/#0D1117 + paper),
+ * independente de html[data-theme] / hub invertido.
+ */
+.app.is-bible-mode.is-narrow .bible-yv-dock.is-play-only .bible-yv-audio-player {
+  --audio-play-bg: #0d1117;
+  --audio-play-fg: #ffffff;
+  --audio-play-hover: color-mix(in srgb, #ffffff 12%, #0d1117);
+  --audio-play-press: color-mix(in srgb, #ffffff 18%, #0d1117);
+  --audio-play-shadow: none;
+  --yv-audio-fab-idle: var(--audio-play-bg);
+  --yv-audio-fab-idle-hover: var(--audio-play-hover);
+  --yv-audio-fab-idle-active: var(--audio-play-press);
+  --yv-audio-fab-active-bg: var(--audio-play-bg);
+  --yv-audio-fab-active-fg: var(--audio-play-fg);
+  --yv-audio-fab-shadow: none;
+  --yv-audio-bar-bg: var(--audio-play-bg);
+  --yv-audio-bar-fill: #ffffff;
+  --yv-audio-bar-track: color-mix(in srgb, #ffffff 22%, transparent);
+  --yv-audio-bar-thumb: #ffffff;
+  --yv-audio-bar-thumb-ring: var(--audio-play-bg);
+  color: #ffffff;
 }
 
-.app.is-bible-mode.is-narrow
-  .bible-yv-dock.is-floating.is-play-only
-  .bible-yv-dock-play.is-playing {
-  box-shadow: var(--yv-audio-fab-shadow);
-}
-
-.app.is-bible-mode.is-narrow .bible-yv-dock.is-floating .bible-yv-dock-play {
+.app.is-bible-mode.is-narrow .bible-yv-dock.is-floating.is-play-only .bible-yv-dock-play,
+.app.is-bible-mode.is-narrow .bible-yv-dock.is-floating .bible-yv-dock-play,
+.app.is-bible-mode.is-narrow .bible-yv-dock.is-play-only .bible-yv-audio-player .bible-yv-dock-play {
   flex: none;
   flex-shrink: 0;
   display: grid;
   place-items: center;
   box-sizing: border-box;
-  width: var(--bible-audio-play-size, 46px);
-  height: var(--bible-audio-play-size, 46px);
-  min-width: var(--bible-audio-play-size, 46px);
-  max-width: var(--bible-audio-play-size, 46px);
-  min-height: var(--bible-audio-play-size, 46px);
-  max-height: var(--bible-audio-play-size, 46px);
+  width: var(--bible-audio-play-size, var(--mode-tabs-hub-size, 50px));
+  height: var(--bible-audio-play-size, var(--mode-tabs-hub-size, 50px));
+  min-width: var(--bible-audio-play-size, var(--mode-tabs-hub-size, 50px));
+  max-width: var(--bible-audio-play-size, var(--mode-tabs-hub-size, 50px));
+  min-height: var(--bible-audio-play-size, var(--mode-tabs-hub-size, 50px));
+  max-height: var(--bible-audio-play-size, var(--mode-tabs-hub-size, 50px));
   padding: 0;
   aspect-ratio: 1 / 1;
   border-radius: 999px;
-  border: var(--bible-chrome-fab-border, var(--yv-chrome-border));
-  background: var(--bible-nav-surface, var(--yv-audio-fab-idle));
-  box-shadow: var(--yv-audio-fab-shadow) !important;
-  color: var(--yv-text);
+  border: 0;
+  outline: none;
+  background: var(--audio-play-bg, #0d1117);
+  color: var(--audio-play-fg, #ffffff);
+  box-shadow: none !important;
   overflow: hidden;
   -webkit-tap-highlight-color: transparent;
 }
 
-.app.is-bible-mode.is-narrow .bible-yv-dock.is-floating .bible-yv-dock-play:hover:not(:disabled) {
-  background: var(--yv-audio-fab-idle-hover);
+.app.is-bible-mode.is-narrow .bible-yv-dock.is-floating .bible-yv-dock-play:hover:not(:disabled),
+.app.is-bible-mode.is-narrow
+  .bible-yv-dock.is-play-only
+  .bible-yv-audio-player
+  .bible-yv-dock-play:hover:not(:disabled) {
+  background: var(--audio-play-hover);
+  color: var(--audio-play-fg, #ffffff);
+  box-shadow: none !important;
 }
 
-.app.is-bible-mode.is-narrow .bible-yv-dock.is-floating .bible-yv-dock-play:active:not(:disabled) {
-  background: var(--yv-audio-fab-idle-active);
+.app.is-bible-mode.is-narrow .bible-yv-dock.is-floating .bible-yv-dock-play:active:not(:disabled),
+.app.is-bible-mode.is-narrow
+  .bible-yv-dock.is-play-only
+  .bible-yv-audio-player
+  .bible-yv-dock-play:active:not(:disabled) {
+  background: var(--audio-play-press);
+  transform: scale(0.96);
 }
 
-.app.is-bible-mode.is-narrow .bible-yv-dock.is-floating .bible-yv-dock-play.is-playing {
-  background: var(--yv-audio-fab-active-bg);
-  color: var(--yv-audio-fab-active-fg);
-  box-shadow: var(--yv-audio-fab-shadow) !important;
-}
-
-.app.is-bible-mode.is-narrow .bible-yv-dock.is-floating .bible-yv-dock-play.is-open:not(.is-playing) {
-  background: var(--yv-audio-fab-idle-hover);
-  box-shadow:
-    var(--yv-audio-fab-shadow),
-    inset 0 0 0 1px var(--yv-audio-fab-idle-ring);
-}
-
-.app.is-bible-mode.is-narrow .bible-yv-dock.is-play-only .bible-yv-audio-player .bible-yv-dock-play {
-  background: var(--bible-nav-surface, var(--yv-audio-fab-idle));
-  color: var(--yv-text);
-  box-shadow: var(--yv-audio-fab-shadow) !important;
-}
-
+.app.is-bible-mode.is-narrow .bible-yv-dock.is-floating .bible-yv-dock-play.is-playing,
 .app.is-bible-mode.is-narrow
   .bible-yv-dock.is-play-only
   .bible-yv-audio-player
   .bible-yv-dock-play.is-playing {
-  background: var(--yv-audio-fab-active-bg);
-  color: var(--yv-audio-fab-active-fg);
+  background: var(--audio-play-bg, #0d1117);
+  color: var(--audio-play-fg, #ffffff);
+  box-shadow: none !important;
+}
+
+.app.is-bible-mode.is-narrow .bible-yv-dock.is-floating .bible-yv-dock-play.is-open:not(.is-playing) {
+  background: var(--audio-play-hover);
 }
 
 .app.is-bible-mode.is-narrow .bible-yv-dock.is-play-only .bible-yv-audio-player:not(.is-expanded) {
   box-shadow: none;
 }
 
-.app.is-bible-mode.is-narrow .bible-yv-dock.is-play-only .bible-yv-audio-player:not(.is-expanded) .bible-yv-dock-play {
-  box-shadow: var(--yv-audio-fab-shadow) !important;
+.app.is-bible-mode.is-narrow
+  .bible-yv-dock.is-play-only
+  .bible-yv-audio-player:not(.is-expanded)
+  .bible-yv-dock-play {
+  box-shadow: none !important;
 }
 
 .app.is-bible-mode.is-narrow .bible-yv-dock.is-play-only .bible-yv-audio-player.is-expanded {
-  background: var(--yv-audio-bar-bg);
-  box-shadow: var(--yv-audio-fab-shadow);
+  background: var(--audio-play-bg, #0d1117);
+  color: var(--audio-play-fg, #ffffff);
+  box-shadow: none;
 }
 
 .app.is-bible-mode.is-narrow .bible-yv-dock.is-play-only .bible-yv-audio-player.is-expanded .bible-yv-dock-play {
-  box-shadow: none;
-  background: color-mix(in srgb, var(--yv-text) 7%, transparent);
+  box-shadow: none !important;
+  background: var(--audio-play-hover);
+  color: var(--audio-play-fg, #ffffff);
 }
 
 .app.is-bible-mode.is-narrow
   .bible-yv-dock.is-play-only
   .bible-yv-audio-player.is-expanded
   .bible-yv-dock-play.is-playing {
-  background: var(--yv-audio-fab-active-bg);
-  color: var(--yv-audio-fab-active-fg);
+  background: var(--audio-play-press);
+  color: var(--audio-play-fg, #ffffff);
+}
+
+.app.is-bible-mode.is-narrow
+  .bible-yv-dock.is-play-only
+  .bible-yv-audio-player.is-expanded
+  .bible-yv-audio-player-times {
+  color: color-mix(in srgb, #ffffff 55%, transparent);
 }
 
 .app.is-bible-mode.is-narrow
   .bible-yv-dock.is-floating.is-play-only
   .bible-yv-dock-play:hover:not(:disabled) {
   filter: none;
-  background: var(--yv-audio-fab-idle-hover);
+  background: var(--audio-play-hover);
 }
 
 .app.is-bible-mode.is-narrow
   .bible-yv-dock.is-floating.is-play-only
   .bible-yv-dock-play.is-open:not(.is-playing) {
-  background: var(--yv-audio-fab-idle-hover);
-  box-shadow:
-    var(--yv-audio-fab-shadow),
-    inset 0 0 0 1px var(--yv-audio-fab-idle-ring);
+  background: var(--audio-play-hover);
 }
 
 .app.is-bible-mode.is-narrow .bible-yv-dock.is-floating .bible-yv-dock-nav {
@@ -16316,16 +16359,14 @@ html[data-theme="dark"] .bible-chapter-fab {
   padding: 0;
   border: 0;
   border-radius: 999px;
-  background: var(--yv-audio-fab-idle);
-  color: var(--yv-text);
+  background: var(--yv-audio-fab-idle, #0d1117);
+  color: var(--yv-audio-fab-active-fg, #ffffff);
   font-size: 0.78rem;
   line-height: 1;
   letter-spacing: 0;
   cursor: pointer;
   overflow: hidden;
-  box-shadow:
-    var(--yv-audio-fab-shadow),
-    inset 0 0 0 1px var(--yv-audio-fab-idle-ring);
+  box-shadow: none;
   transition:
     background 0.15s ease,
     color 0.15s ease,
@@ -16335,12 +16376,18 @@ html[data-theme="dark"] .bible-chapter-fab {
 
 .bible-yv-dock-play:hover:not(:disabled) {
   background: var(--yv-audio-fab-idle-hover);
+  color: var(--yv-audio-fab-active-fg, #ffffff);
+}
+
+.bible-yv-dock-play:active:not(:disabled) {
+  background: var(--yv-audio-fab-idle-active);
+  color: var(--yv-audio-fab-active-fg, #ffffff);
 }
 
 .bible-yv-dock-play.is-playing {
-  background: var(--yv-audio-fab-active-bg);
-  color: var(--yv-audio-fab-active-fg);
-  box-shadow: var(--yv-audio-fab-shadow);
+  background: var(--yv-audio-fab-active-bg, #0d1117);
+  color: var(--yv-audio-fab-active-fg, #ffffff);
+  box-shadow: none;
 }
 
 .bible-yv-dock-play.is-busy {
@@ -16353,8 +16400,8 @@ html[data-theme="dark"] .bible-chapter-fab {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  border: 2px solid color-mix(in srgb, currentColor 20%, transparent);
-  border-top-color: currentColor;
+  border: 2px solid color-mix(in srgb, #ffffff 22%, transparent);
+  border-top-color: #ffffff;
   animation: bible-yv-spin 0.72s linear infinite;
 }
 
@@ -16367,6 +16414,7 @@ html[data-theme="dark"] .bible-chapter-fab {
 .bible-yv-dock-play:disabled {
   opacity: 0.38;
   cursor: default;
+  color: var(--yv-audio-fab-active-fg, #ffffff);
 }
 
 .bible-yv-dock-play:focus-visible {
@@ -16375,15 +16423,28 @@ html[data-theme="dark"] .bible-chapter-fab {
 }
 
 .bible-yv-dock-play.is-open:not(.is-playing) {
-  box-shadow:
-    var(--yv-audio-fab-shadow),
-    inset 0 0 0 1px var(--yv-audio-fab-idle-ring),
-    0 0 0 2px color-mix(in srgb, var(--yv-text) 10%, transparent);
+  background: var(--yv-audio-fab-idle-hover);
+  color: var(--yv-audio-fab-active-fg, #ffffff);
+  box-shadow: none;
 }
 
 /* —— Lecture audio (pilule play + barre unique) —— */
 .bible-yv-audio-player {
   --audio-player-strip-w: min(15.5rem, 52vw);
+  /* Tema dark local — hover/press/fg nunca herdam --yv-text light */
+  --yv-audio-fab-idle: #0d1117;
+  --yv-audio-fab-idle-hover: color-mix(in srgb, #ffffff 12%, #0d1117);
+  --yv-audio-fab-idle-active: color-mix(in srgb, #ffffff 18%, #0d1117);
+  --yv-audio-fab-idle-ring: color-mix(in srgb, #ffffff 28%, transparent);
+  --yv-audio-fab-active-bg: #0d1117;
+  --yv-audio-fab-active-fg: #ffffff;
+  --yv-audio-fab-shadow: none;
+  --yv-audio-fab-focus: color-mix(in srgb, #ffffff 40%, transparent);
+  --yv-audio-bar-bg: #0d1117;
+  --yv-audio-bar-track: color-mix(in srgb, #ffffff 22%, transparent);
+  --yv-audio-bar-fill: #ffffff;
+  --yv-audio-bar-thumb: #ffffff;
+  --yv-audio-bar-thumb-ring: #0d1117;
   flex: none;
   display: inline-flex;
   flex-wrap: nowrap;
@@ -16397,6 +16458,7 @@ html[data-theme="dark"] .bible-chapter-fab {
   border-radius: 999px;
   -webkit-tap-highlight-color: transparent;
   background: transparent;
+  color: #ffffff;
   box-shadow: none;
   overflow: hidden;
   transition:
@@ -16405,18 +16467,25 @@ html[data-theme="dark"] .bible-chapter-fab {
 }
 
 .bible-yv-audio-player.is-expanded {
-  background: var(--yv-audio-bar-bg);
-  box-shadow: var(--yv-audio-fab-shadow);
+  background: var(--yv-audio-bar-bg, #0d1117);
+  color: #ffffff;
+  box-shadow: none;
 }
 
 .bible-yv-audio-player.is-expanded .bible-yv-dock-play {
-  box-shadow: none;
-  background: color-mix(in srgb, var(--yv-text) 7%, transparent);
+  box-shadow: none !important;
+  background: var(--yv-audio-fab-idle-hover);
+  color: var(--yv-audio-fab-active-fg, #ffffff);
+}
+
+.bible-yv-audio-player.is-expanded .bible-yv-dock-play:hover:not(:disabled) {
+  background: var(--yv-audio-fab-idle-active);
+  color: var(--yv-audio-fab-active-fg, #ffffff);
 }
 
 .bible-yv-audio-player.is-expanded .bible-yv-dock-play.is-playing {
-  background: var(--yv-audio-fab-active-bg);
-  color: var(--yv-audio-fab-active-fg);
+  background: var(--yv-audio-fab-idle-active);
+  color: var(--yv-audio-fab-active-fg, #ffffff);
 }
 
 .bible-yv-audio-player:not(.is-expanded) {
@@ -16477,7 +16546,7 @@ html[data-theme="dark"] .bible-chapter-fab {
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   line-height: 1.1;
-  color: color-mix(in srgb, var(--yv-muted, var(--muted)) 28%, var(--text));
+  color: color-mix(in srgb, #ffffff 58%, transparent);
   user-select: none;
   white-space: nowrap;
 }
