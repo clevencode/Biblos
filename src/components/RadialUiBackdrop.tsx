@@ -6,13 +6,9 @@
  */
 
 import { useEffect, type CSSProperties } from "react";
-import { CONVEX_BAR_BODY_PX } from "./ConvexBottomBarSurface";
+import { CONVEX_HUB_SIZE_PX } from "./ConvexBottomBarSurface";
 
-/**
- * Clear = corpo plano da barra (não a altura total com cúpula).
- * Usar CONVEX_BAR_HEIGHT deixava ~DOME_RISE de texto nítido acima das laterais.
- * Fog sobe a partir do topo plano; a wave opaca cobre o que ficar atrás da cúpula.
- */
+/** Clear = hub flutuante (+ folga caption); sem barra convexa. */
 type RadialUiBackdropProps = {
   isOpen: boolean;
   onClose: () => void;
@@ -47,7 +43,7 @@ export function RadialUiBackdrop({
   }, [isOpen, lockScroll]);
 
   const style = {
-    ["--radial-backdrop-bar" as string]: `${CONVEX_BAR_BODY_PX}px`,
+    ["--radial-backdrop-bar" as string]: `${CONVEX_HUB_SIZE_PX + 22}px`,
   } as CSSProperties;
 
   return (

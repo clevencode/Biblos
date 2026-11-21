@@ -386,9 +386,9 @@ html[data-theme="dark"] .biblos-shell {
     .bible-passage-start-skips
   ):not(.bible-passage-start-skips *):not(.bible-passage-end-skips):not(
     .bible-passage-end-skips *
-  ):not(.bible-yv-tools-menu-btn):not(
-    .mode-tabs-pill
-  ):not(.mode-tabs-item):not(.bible-verse-actions-nav-pill) {
+  ):not(.bible-yv-tools-menu-btn):not(.mode-tabs-hub):not(
+    .mode-tabs-item
+  ):not(.mode-tabs-account):not(.bible-verse-actions-nav-pill) {
   box-shadow: none !important;
 }
 
@@ -943,15 +943,28 @@ html[data-theme="dark"] .sw-update-banner-cta {
 }
 
 
-/* Shell nav — pill horizontal flutuante (sem radial / convex) */
+/* Shell nav — hub radial + fade de leitura (sem barra convexa) */
 .mode-tabs {
-  --mode-tabs-pill-h: 56px;
+  /* Hub-only + tapete fade sob o scroll */
+  --mode-tabs-dome-rise: 0px;
+  --mode-tabs-bar-body: calc(var(--mode-tabs-hub-size, 50px) + 22px);
+  --mode-tabs-hub-size: 50px;
+  --mode-tabs-hub-top: 0px;
   --mode-tabs-float-gap: 14px;
-  --mode-tabs-mat-fade: 32px;
-  --mode-tabs-inset-x: 12px;
+  /* Chrome sob o hub (caption) — fade sobe só até ao topo do botão */
+  --mode-tabs-caption-slot: 22px;
+  --mode-tabs-mat-bg: var(--bible-nav-surface, var(--bg));
+  --mode-tabs-fade-h: calc(
+    var(--mode-tabs-hub-size, 50px) + var(--mode-tabs-caption-slot, 22px) +
+      var(--mode-tabs-float-gap, 14px) + env(safe-area-inset-bottom, 0px)
+  );
+  /* Arco ≈ hub: leitura visual uniforme no radial aberto */
+  --mode-tabs-item-size: 48px;
+  /* Canvas = superfície shell (--bible-nav-surface); top bar herda o mesmo */
   --mode-tabs-canvas: var(--bible-nav-surface, var(--bg));
   --mode-tabs-fg: var(--text);
   --mode-tabs-fg-muted: var(--muted);
+  /* Outline = top bar (--yv-separator / --yv-outline) */
   --mode-tabs-outline: var(
     --yv-outline,
     color-mix(in srgb, var(--line) 70%, transparent)
@@ -966,7 +979,7 @@ html[data-theme="dark"] .sw-update-banner-cta {
     var(--mode-tabs-fg) 11%,
     var(--mode-tabs-canvas)
   );
-  /* Tab activa = segmento invertido (ink/paper) */
+  /* Hub invertido (default = light: ink + paper) */
   --mode-tabs-hub-bg: var(--ink);
   --mode-tabs-hub-fg: var(--paper);
   --mode-tabs-hub-hover: color-mix(
@@ -981,6 +994,7 @@ html[data-theme="dark"] .sw-update-banner-cta {
   );
   --mode-tabs-ease: cubic-bezier(0.4, 0, 0.2, 1);
   --mode-tabs-ms: 240ms;
+  /* Compat ladder YV (overlays / shadows se reutilizados) */
   --yv-bg: var(--mode-tabs-canvas);
   --yv-text: var(--mode-tabs-fg);
   --yv-muted: var(--mode-tabs-fg-muted);
@@ -997,8 +1011,8 @@ html[data-theme="dark"] .sw-update-banner-cta {
   width: 100%;
   height: auto;
   margin: 0;
-  padding: 0 var(--mode-tabs-inset-x)
-    calc(var(--mode-tabs-float-gap) + env(safe-area-inset-bottom, 0px));
+  padding: 0 0
+    calc(var(--mode-tabs-float-gap, 14px) + env(safe-area-inset-bottom, 0px));
   border: 0;
   background: transparent;
   color: var(--mode-tabs-fg);
@@ -1009,15 +1023,11 @@ html[data-theme="dark"] .sw-update-banner-cta {
   display: flex;
   justify-content: center;
   align-items: flex-end;
-  box-sizing: border-box;
-  transition:
-    transform 200ms ease-out,
-    opacity 200ms ease-out;
 }
 
 /*
- * Tapete full-bleed sob o pill + fade no topo (evita “corte” duro no scroll).
- * --mode-tabs-mat-bg herda do .app (não usar --yv-bg daqui: .mode-tabs redefine-o).
+ * Fade full-bleed — altura exactamente até ao topo do botão central (hub).
+ * Opaco na base → transparente no topo do hub.
  */
 .mode-tabs::before {
   content: "";
@@ -1025,14 +1035,31 @@ html[data-theme="dark"] .sw-update-banner-cta {
   left: 0;
   right: 0;
   bottom: 0;
-  top: calc(-1 * var(--mode-tabs-mat-fade, 32px));
+  top: auto;
+  height: var(--mode-tabs-fade-h);
   z-index: 0;
   pointer-events: none;
   background: linear-gradient(
     to top,
     var(--mode-tabs-mat-bg, var(--bg)) 0%,
     var(--mode-tabs-mat-bg, var(--bg))
-      calc(100% - var(--mode-tabs-mat-fade, 32px)),
+      calc(
+        var(--mode-tabs-float-gap, 14px) + env(safe-area-inset-bottom, 0px) +
+          10px
+      ),
+    color-mix(in srgb, var(--mode-tabs-mat-bg, var(--bg)) 42%, transparent) 72%,
+    transparent 100%
+  );
+}
+
+.mode-tabs.is-open::before {
+  /* Mesma altura (topo do hub); só suaviza um pouco mais o meio */
+  height: var(--mode-tabs-fade-h);
+  background: linear-gradient(
+    to top,
+    var(--mode-tabs-mat-bg, var(--bg)) 0%,
+    color-mix(in srgb, var(--mode-tabs-mat-bg, var(--bg)) 78%, transparent)
+      55%,
     transparent 100%
   );
 }
@@ -1040,6 +1067,8 @@ html[data-theme="dark"] .sw-update-banner-cta {
 html[data-theme="light"] .mode-tabs {
   --mode-tabs-canvas: var(--bible-nav-surface, var(--paper));
   --mode-tabs-fg: var(--ink);
+  --mode-tabs-mat-bg: var(--bible-nav-surface, var(--paper));
+  /* Hub: alto contraste invertido (#0D1117 + ícone claro) */
   --mode-tabs-hub-bg: var(--ink);
   --mode-tabs-hub-fg: var(--paper);
 }
@@ -1047,66 +1076,43 @@ html[data-theme="light"] .mode-tabs {
 html[data-theme="dark"] .mode-tabs {
   --mode-tabs-canvas: var(--bible-nav-surface, var(--ink));
   --mode-tabs-fg: var(--paper);
+  --mode-tabs-mat-bg: var(--bible-nav-surface, var(--ink));
+  /* Hub: inverso do light (claro + ícone escuro) */
   --mode-tabs-hub-bg: var(--paper);
   --mode-tabs-hub-fg: var(--ink);
 }
 
-.mode-tabs-row {
+.mode-tabs-chrome {
   position: relative;
   z-index: 1;
+  width: 100%;
+  height: calc(
+    var(--mode-tabs-hub-size) + var(--mode-tabs-caption-slot, 22px)
+  );
+  margin: 0;
+  padding: 0;
+  overflow: visible;
   pointer-events: none;
   display: flex;
-  align-items: center;
   justify-content: center;
-  gap: 10px;
-  width: min(100%, 26rem);
-  max-width: 100%;
+  align-items: flex-start;
 }
 
-.mode-tabs-pill {
-  position: relative;
-  z-index: 1;
-  pointer-events: auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 2px;
-  flex: 1 1 auto;
-  min-width: 0;
+.mode-tabs-chrome.is-hub-only {
   width: auto;
-  max-width: 22rem;
-  height: var(--mode-tabs-pill-h);
-  margin: 0;
-  padding: 6px;
-  box-sizing: border-box;
-  border: 1px solid var(--mode-tabs-outline);
-  border-radius: 999px;
-  background: var(--mode-tabs-canvas);
-  box-shadow:
-    0 1px 0 color-mix(in srgb, var(--ink) 8%, transparent),
-    0 8px 24px color-mix(in srgb, var(--ink) 14%, transparent);
+  margin-inline: auto;
 }
 
-.mode-tabs-account.hdr-trigger {
-  pointer-events: auto;
-  flex: none;
-  width: var(--mode-tabs-pill-h);
-  height: var(--mode-tabs-pill-h);
-  min-width: var(--mode-tabs-pill-h);
-  min-height: var(--mode-tabs-pill-h);
-  border: 1px solid var(--mode-tabs-outline);
-  background: var(--mode-tabs-canvas);
-  color: var(--mode-tabs-fg);
-  box-shadow:
-    0 1px 0 color-mix(in srgb, var(--ink) 8%, transparent),
-    0 8px 24px color-mix(in srgb, var(--ink) 14%, transparent);
+/* Convex SVG oculto — fade (::before) + hub */
+.mode-tabs-convex,
+.mode-tabs-chrome .convex-bottom-bar {
+  display: none !important;
 }
 
-.mode-tabs-account.hdr-trigger.is-on,
-.mode-tabs-account.hdr-trigger.is-open {
-  background: var(--mode-tabs-hub-bg);
-  color: var(--mode-tabs-hub-fg);
-  border-color: transparent;
+.mode-tabs.is-immersive-hidden {
+  transform: translateY(calc(100% + 16px));
+  opacity: 0;
+  pointer-events: none;
 }
 
 .account-shell-panel {
@@ -1185,8 +1191,8 @@ html[data-theme="dark"] .mode-tabs {
  * Clear: shell = topo plano da barra; surface = 0 (já abaixo da topbar).
  */
 :root {
-  /* = CONVEX_BAR_BODY_PX — topo plano da barra (não incluir DOME_RISE) */
-  --radial-backdrop-bar: 62px;
+  /* Clear sob o hub flutuante (+ caption) */
+  --radial-backdrop-bar: 72px;
   --radial-backdrop-clear: calc(
     var(--radial-backdrop-bar) + env(safe-area-inset-bottom, 0px)
   );
@@ -1301,7 +1307,7 @@ html[data-theme="dark"] {
   --mode-tabs-mat-bg: var(--bible-nav-surface, var(--bg));
   /* Sheets acima do pill (token disponível fora do bloco :root mobile) */
   --bible-sheet-above-nav: calc(
-    var(--mode-tabs-pill-h, 56px) + var(--mode-tabs-float-gap, 14px) +
+    var(--mode-tabs-bar-body, 62px) + var(--mode-tabs-dome-rise, 34px) +
       env(safe-area-inset-bottom, 0px) + 16px
   );
 }
@@ -1373,25 +1379,42 @@ html.is-radial-open .bible-reader--yv .bible-passage {
   transform: scale(0.985);
 }
 
-/* Itens do pill: ícone + label; activo = segmento invertido */
-.mode-tabs-item {
-  flex: 1 1 0;
-  min-width: 0;
-  height: 100%;
+.mode-tabs-stage {
+  position: relative;
+  left: auto;
+  top: auto;
+  z-index: 2;
+  width: var(--mode-tabs-hub-size);
+  height: var(--mode-tabs-hub-size);
   margin: 0;
-  padding: 0 10px;
+  padding: 0;
+  transform: none;
+  pointer-events: none;
+}
+
+/* Hub = pill invertida (light: #0D1117 + ícone branco; dark: inverso) */
+.mode-tabs-hub {
+  position: relative;
+  z-index: 2;
+  width: var(--mode-tabs-hub-size);
+  height: var(--mode-tabs-hub-size);
+  min-width: var(--mode-tabs-hub-size);
+  min-height: var(--mode-tabs-hub-size);
+  margin: 0;
+  padding: 0;
   border: 0;
-  border-radius: 999px;
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
+  outline: none;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
   appearance: none;
   -webkit-appearance: none;
-  background: transparent;
-  color: var(--mode-tabs-fg-muted);
-  box-shadow: none;
+  background: var(--mode-tabs-hub-bg);
+  color: var(--mode-tabs-hub-fg);
+  /* Mesma profundidade da top bar / FABs */
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--ink) 8%, transparent),
+    0 6px 16px color-mix(in srgb, var(--ink) 12%, transparent) !important;
   font: inherit;
   cursor: pointer;
   pointer-events: auto;
@@ -1399,42 +1422,221 @@ html.is-radial-open .bible-reader--yv .bible-passage {
   -webkit-tap-highlight-color: transparent;
   transition:
     background var(--mode-tabs-ms) var(--mode-tabs-ease),
-    color var(--mode-tabs-ms) var(--mode-tabs-ease),
+    outline-color var(--mode-tabs-ms) var(--mode-tabs-ease),
+    box-shadow var(--mode-tabs-ms) var(--mode-tabs-ease),
     transform 160ms var(--mode-tabs-ease);
 }
 
-.mode-tabs-item:hover:not(:disabled):not(.is-on) {
-  color: var(--mode-tabs-fg);
-  background: var(--mode-tabs-hover);
+.mode-tabs-hub:hover {
+  background: var(--mode-tabs-hub-hover);
 }
 
-.mode-tabs-item:active:not(:disabled) {
-  transform: scale(0.97);
+.mode-tabs-hub:active {
+  transform: scale(0.96);
+  background: var(--mode-tabs-hub-press);
+}
+
+.mode-tabs-hub:focus-visible,
+.mode-tabs-item:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent, #5b7cfa) 70%, transparent);
+  outline-offset: 3px;
+}
+
+/* Anel canvas: separa pills do fog (sombra de profundidade já no hub/itens) */
+.mode-tabs.is-open .mode-tabs-hub,
+.mode-tabs.is-open .mode-tabs-item {
+  outline: 1.5px solid color-mix(in srgb, var(--mode-tabs-canvas) 88%, transparent);
+  outline-offset: 0;
+}
+
+.mode-tabs.is-open .mode-tabs-hub:focus-visible,
+.mode-tabs.is-open .mode-tabs-item:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent, #5b7cfa) 70%, transparent);
+  outline-offset: 3px;
+}
+
+/* Acima do radial-ui-backdrop (z:25) — barra + arco nítidos */
+.mode-tabs.is-open {
+  z-index: calc(var(--bible-z-popover, 40) + 25);
+}
+
+.mode-tabs-hub .mode-tab-icon,
+.mode-tabs-hub .mode-tabs-hub-close {
+  color: inherit;
+  transition: transform 280ms cubic-bezier(0.4, 0, 0.2, 1);
+  transform: rotate(0deg);
+}
+
+.mode-tabs.is-open .mode-tabs-hub .mode-tabs-hub-close {
+  transform: rotate(90deg);
+  transition-duration: 420ms;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.mode-tabs-hub-close {
+  width: var(--bible-chrome-trigger-icon, 20px);
+  height: var(--bible-chrome-trigger-icon, 20px);
+  font-size: var(--bible-chrome-trigger-icon, 20px);
+}
+
+/* Nome da interface activa — sob o hub (só com radial fechado) */
+.mode-tabs-hub-caption {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 5px);
+  z-index: 2;
+  max-width: 7.5rem;
+  margin: 0;
+  padding: 0;
+  transform: translateX(-50%);
+  color: var(--mode-tabs-fg-muted, var(--muted));
+  font-family: var(--font-ui);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 160ms var(--mode-tabs-ease);
+}
+
+.mode-tabs.is-open .mode-tabs-hub-caption,
+.mode-tabs.is-immersive-hidden .mode-tabs-hub-caption {
+  opacity: 0;
+  transition-duration: 120ms;
+}
+
+/* Roleta: saída suave e curta; entrada um pouco mais longa */
+.mode-tabs-arc {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  transform: rotate(-160deg) scale(0.24);
+  opacity: 0;
+  transition:
+    transform 280ms cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 180ms ease-out;
+  will-change: transform, opacity;
+}
+
+.mode-tabs.is-open .mode-tabs-arc {
+  transform: rotate(0deg) scale(1);
+  opacity: 1;
+  transition:
+    transform 480ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 220ms ease-out;
+}
+
+/* Itens do arco = mesma lógica do hub (pill invertida paper/ink) */
+.mode-tabs-item {
+  --roulette-i: 0;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--mode-tabs-item-size);
+  height: var(--mode-tabs-item-size);
+  min-width: var(--mode-tabs-item-size);
+  min-height: var(--mode-tabs-item-size);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--mode-tabs-hub-bg);
+  color: var(--mode-tabs-hub-fg);
+  box-shadow: none;
+  transform: translate(-50%, -50%) scale(0.35);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform 260ms cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 160ms ease-out,
+    background var(--mode-tabs-ms) var(--mode-tabs-ease),
+    color var(--mode-tabs-ms) var(--mode-tabs-ease),
+    box-shadow var(--mode-tabs-ms) var(--mode-tabs-ease);
+  transition-delay: 0ms;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mode-tabs.is-open .mode-tabs-item {
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--ink) 8%, transparent),
+    0 6px 16px color-mix(in srgb, var(--ink) 12%, transparent) !important;
+  transform: translate(
+      calc(-50% + var(--radial-x)),
+      calc(-50% + var(--radial-y))
+    )
+    scale(1);
+  opacity: 1;
+  pointer-events: auto;
+  transition:
+    transform 400ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 200ms ease-out,
+    background var(--mode-tabs-ms) var(--mode-tabs-ease),
+    color var(--mode-tabs-ms) var(--mode-tabs-ease),
+    outline-color var(--mode-tabs-ms) var(--mode-tabs-ease);
+  transition-delay: calc(36ms + var(--roulette-i) * 48ms);
+}
+
+.mode-tabs:not(.is-open) .mode-tabs-item {
+  transition-delay: calc(var(--roulette-i) * 18ms);
 }
 
 .mode-tabs-item.is-on {
   color: var(--mode-tabs-hub-fg);
   background: var(--mode-tabs-hub-bg);
+  border: 0;
 }
 
-.mode-tabs-item.is-on:hover:not(:disabled) {
-  background: var(--mode-tabs-hub-hover);
+.mode-tabs-item:hover {
   color: var(--mode-tabs-hub-fg);
+  background: var(--mode-tabs-hub-hover);
 }
 
-.mode-tabs-item:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--accent, #5b7cfa) 70%, transparent);
-  outline-offset: 2px;
+.mode-tabs.is-open .mode-tabs-item:active {
+  background: var(--mode-tabs-hub-press);
+  transform: translate(
+      calc(-50% + var(--radial-x)),
+      calc(-50% + var(--radial-y))
+    )
+    scale(0.94);
+  transition-duration: 120ms;
 }
 
-.mode-tabs-item:disabled {
-  cursor: default;
+.mode-tabs-item .mode-tab-icon {
+  color: inherit;
 }
 
-.mode-tabs.is-immersive-hidden {
-  transform: translateY(calc(100% + 16px));
-  opacity: 0;
-  pointer-events: none;
+.mode-tab-icon {
+  flex-shrink: 0;
+  color: inherit;
+  font-size: var(--bible-chrome-trigger-icon, 22px);
+}
+
+.mode-tab-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.mode-tab-badge {
+  display: none;
 }
 
 /*
@@ -6443,14 +6645,15 @@ html[data-theme="dark"] .profile-download-btn {
     --mobile-float-inset-x: var(--mobile-gutter);
     --shell-float-gap: 12px;
     --mobile-tabbar-pad: 0px;
-    --mode-tabs-pill-h: 56px;
+    --mode-tabs-bar-body: 62px;
+    --mode-tabs-dome-rise: 34px;
     --mode-tabs-float-gap: 14px;
     --mode-tabs-mat-fade: 32px;
     --mode-tabs-inset-x: 12px;
-    --mobile-tabbar-h: var(--mode-tabs-pill-h);
+    --mobile-tabbar-h: calc(var(--mode-tabs-bar-body, 62px) + var(--mode-tabs-dome-rise, 34px));
     /* Clearance = pill + folga + safe-area + zona do fade (sem corte no scroll) */
     --mobile-tabbar-outer-h: calc(
-      var(--mode-tabs-pill-h) + var(--mode-tabs-float-gap) +
+      var(--mode-tabs-bar-body, 62px) + var(--mode-tabs-dome-rise, 34px) +
         var(--mode-tabs-mat-fade) + env(safe-area-inset-bottom, 0px)
     );
     --mobile-bottom-chrome: var(--mobile-tabbar-outer-h);
@@ -6459,7 +6662,7 @@ html[data-theme="dark"] .profile-download-btn {
      * Lift de sheets/modais acima do pill visível (sem mat-fade — só chrome físico + folga).
      */
     --bible-sheet-above-nav: calc(
-      var(--mode-tabs-pill-h) + var(--mode-tabs-float-gap) +
+      var(--mode-tabs-bar-body, 62px) + var(--mode-tabs-dome-rise, 34px) +
         env(safe-area-inset-bottom, 0px) + 16px
     );
     /* FAB lecture : 16px au-dessus du bord supérieur de la tab bar (Material / iOS HIG). */
@@ -13933,22 +14136,22 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
 /* Return-nav (estudo): clearance = pill mode-tabs + gap + safe-area */
 .bible-reader--yv.has-study-return .bible-passage {
   padding-bottom: calc(
-    var(--mode-tabs-pill-h, 56px) + var(--mode-tabs-float-gap, 14px) + 12px +
+    var(--mode-tabs-bar-body, 62px) + var(--mode-tabs-dome-rise, 34px) + 12px +
       env(safe-area-inset-bottom, 0px)
   );
   scroll-padding-bottom: calc(
-    var(--mode-tabs-pill-h, 56px) + var(--mode-tabs-float-gap, 14px) + 10px +
+    var(--mode-tabs-bar-body, 62px) + var(--mode-tabs-dome-rise, 34px) + 10px +
       env(safe-area-inset-bottom, 0px)
   );
 }
 
 .app.is-bible-mode.is-narrow .bible-reader--yv.has-study-return .bible-passage {
   padding-bottom: calc(
-    var(--mode-tabs-pill-h, 56px) + var(--mode-tabs-float-gap, 14px) + 12px +
+    var(--mode-tabs-bar-body, 62px) + var(--mode-tabs-dome-rise, 34px) + 12px +
       env(safe-area-inset-bottom, 0px)
   );
   scroll-padding-bottom: calc(
-    var(--mode-tabs-pill-h, 56px) + var(--mode-tabs-float-gap, 14px) + 10px +
+    var(--mode-tabs-bar-body, 62px) + var(--mode-tabs-dome-rise, 34px) + 10px +
       env(safe-area-inset-bottom, 0px)
   );
 }

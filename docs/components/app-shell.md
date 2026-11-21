@@ -12,14 +12,13 @@
 
 ## Resumo
 
-Shell em **tablist** com três onglets (`SHELL_TABS`): Accueil, Bible, Plan.
+Shell com **navbar radial** (`SHELL_TABS`: Bible · Plan).
 
-- Tab persistida em `localStorage` (`biblos-ui`, chave `tab`). Legado `profile` → `home`.
+- Tab persistida em `localStorage` (`biblos-ui`, chave `tab`). Legado `profile` / `home` → Bible.
 - Bible montada lazy: `bibleMounted` fica true após primeira visita (preserva estado).
 - Modo narrow + tab Bible → `immersiveHidden` na nav (`navHidden` do leitor).
-- **Config de conta/app** na Home (`HomeConfigSection`: conta, idioma, tema, storage health, admin).
-- **Experiência de leitura** no leitor (menu + `BibleHistorySheet`: versão, fonte, offline, surlignages, histórico).
-- Tema global: `theme.ts` — `onSetTheme` na Home; `onCycleTheme` no leitor.
+- **Config de conta/app** via botão conta na nav (`HomeConfigSection` em painel account).
+- Tema global: `theme.ts` — `onSetTheme` no perfil.
 
 ---
 
@@ -42,17 +41,17 @@ Shell em **tablist** com três onglets (`SHELL_TABS`): Accueil, Bible, Plan.
 
 ## `AppShellNav`
 
-**Props:** `active: ShellTab`, `onSelect`, `immersiveHidden?`.
+**Props:** `active: ShellTab`, `onSelect`, `immersiveHidden?`, `accountOpen?`, `onToggleAccount?`.
 
-- Pill horizontal flutuante (`.mode-tabs-pill`) com as **3 tabs** sempre visíveis (Home · Bible · Plan).
-- Sem hub, arco radial, `RadialUiBackdrop` nem `ConvexBottomBarSurface`.
-- `role="tablist"`, tabs com `aria-controls={`panel-${id}`}`; activa = segmento invertido.
-- Setas ←/→ mudam tab e movem foco.
+- **Hub flutuante** (destino activo / ✕) + **arco radial** (`RadialUiBackdrop`); barra convexa substituída por **fade** full-bleed (`.mode-tabs::before`) para leitura.
+- Estado canónico: `shellRadial.ts` → `data-radial-open` / `is-radial-open` no `<html>`.
+- Hub = tab activa **ou** Conta (quando o painel de perfil está aberto); arco = restantes (`SHELL_TABS` + Conta/`shell.profile`).
+- Escolher Conta no arco abre o painel de perfil; escolher uma tab fecha a conta e muda de vista.
 - Classe `is-immersive-hidden` esconde a barra na leitura imersiva.
-- Clearance: `--mobile-bottom-chrome` = pillH + floatGap + mat-fade + safe-area.
-- Superfície: `--bible-nav-surface` (paper/ink no shell) → `--mode-tabs-canvas`.
+- Clearance: `--mobile-tabbar-h` ≈ `--mode-tabs-bar-body` + `--mode-tabs-dome-rise` + safe-area.
+- Superfície: `--bible-nav-surface` → `--mode-tabs-canvas`.
 
-IDs de painel: `panel-home`, `panel-bible`, `PlanDiscoverPanel` com `panel-today`.
+IDs de painel: `panel-bible`, `PlanDiscoverPanel` com `panel-today`.
 
 ### Secção Options (verse_actions)
 
