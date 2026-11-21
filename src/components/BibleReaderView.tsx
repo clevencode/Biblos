@@ -1,4 +1,5 @@
 import {
+  memo,
   useCallback,
   useEffect,
   useId,
@@ -313,6 +314,125 @@ function selectionEdgeClass(sel: VerseSelection | null, number: number): string 
   if (prev && !next) return "is-sel-end";
   return "is-sel-mid";
 }
+
+type BibleVerseButtonProps = {
+  verse: { number: number; text: string };
+  selection: VerseSelection | null;
+  highlightVerse: number | null;
+  focusVerseLo: number | null;
+  focusVerseHi: number | null;
+  deeplinkEnabled: boolean;
+  rangeStart: number | null;
+  planRangeActive: boolean;
+  planVerseRangeFull: boolean;
+  planVerseRangeLo: number | null;
+  planVerseRangeHi: number | null;
+  chapterMarks: ReadonlyMap<number, string>;
+  chapterCardVerses: ReadonlySet<number>;
+  uiTheme: ResolvedTheme;
+  highlightRef: { current: HTMLElement | null };
+  onSelect: (number: number) => void;
+};
+
+const BibleVerseButton = memo(function BibleVerseButton({
+  verse,
+  selection,
+  highlightVerse,
+  focusVerseLo,
+  focusVerseHi,
+  deeplinkEnabled,
+  rangeStart,
+  planRangeActive,
+  planVerseRangeFull,
+  planVerseRangeLo,
+  planVerseRangeHi,
+  chapterMarks,
+  chapterCardVerses,
+  uiTheme,
+  highlightRef,
+  onSelect,
+}: BibleVerseButtonProps) {
+  const inPlanRange = Boolean(
+    planRangeActive &&
+      (planVerseRangeFull ||
+        (planVerseRangeLo != null &&
+          planVerseRangeHi != null &&
+          verse.number >= planVerseRangeLo &&
+          verse.number <= planVerseRangeHi)),
+  );
+  const inDeeplink = Boolean(
+    !selection?.length &&
+      focusVerseLo != null &&
+      focusVerseHi != null &&
+      verse.number >= focusVerseLo &&
+      verse.number <= focusVerseHi &&
+      deeplinkEnabled,
+  );
+  const inRange = inPlanRange || inDeeplink;
+  const isRangeAnchor = selection?.length
+    ? highlightVerse === verse.number
+    : rangeStart != null
+      ? verse.number === rangeStart
+      : highlightVerse === verse.number;
+  const active = selection?.length
+    ? highlightVerse === verse.number
+    : isRangeAnchor;
+  const selected = verseInSelection(selection, verse.number);
+  const markColor = chapterMarks.get(verse.number);
+  const markDisplay = markColor
+    ? adaptVerseColorForTheme(markColor, uiTheme)
+    : null;
+  const selectionEdge = selectionEdgeClass(selection, verse.number);
+  const hasFlashcard = chapterCardVerses.has(verse.number);
+  const titleLike = isLikelyVerseTitle(verse.text, verse.number);
+
+  return (
+    <button
+      type="button"
+      className={[
+        "bible-verse",
+        active ? "is-focus" : "",
+        inRange ? "is-in-range" : "",
+        selected ? "is-selected" : "",
+        markDisplay ? "is-marked" : "",
+        hasFlashcard ? "has-card" : "",
+        selectionEdge,
+        titleLike ? "is-title" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      data-verse={verse.number}
+      style={
+        markDisplay
+          ? ({ ["--verse-mark" as string]: markDisplay } as CSSProperties)
+          : undefined
+      }
+      aria-label={
+        hasFlashcard
+          ? `Verset ${verse.number}, flashcard`
+          : `Verset ${verse.number}`
+      }
+      aria-pressed={selected}
+      aria-current={inRange && !selected ? "true" : undefined}
+      ref={
+        isRangeAnchor
+          ? (element) => {
+              highlightRef.current = element;
+            }
+          : undefined
+      }
+      onClick={() => onSelect(verse.number)}
+    >
+      <sup className="bible-verse-num">{verse.number}</sup>
+      {hasFlashcard ? (
+        <span className="bible-verse-card-icon" aria-hidden="true">
+          <YvIcon name="style" />
+        </span>
+      ) : null}
+      <span className="bible-verse-text">{verse.text}</span>
+    </button>
+  );
+});
 
 type ReaderPrefs = {
   bookId?: string;
@@ -1477,7 +1597,7 @@ export function BibleReaderView({
     void loadChapter(next.bookId, next.chapterId, null);
   }
 
-  function selectVerse(number: number) {
+  const selectVerse = useCallback((number: number) => {
     if (takeOverlayDismissSwallow()) return;
     if (
       hasActiveModal &&
@@ -1521,7 +1641,16 @@ export function BibleReaderView({
       });
     }
     setCardMsg(null);
-  }
+  }, [
+    activeOverlay.type,
+    closeOverlay,
+    hasActiveModal,
+    historyOpen,
+    openOverlay,
+    selection,
+    shareSheetOpen,
+    takeOverlayDismissSwallow,
+  ]);
 
   function jumpToVerse(number: number) {
     preferJumpFocusRef.current = true;
@@ -2423,6 +2552,15 @@ export function BibleReaderView({
     highlightVerse != null
       ? Math.max(highlightVerse, highlightVerseEnd ?? highlightVerse)
       : null;
+  const jumpFocus = preferJumpFocusRef.current;
+  const planRangeActive = Boolean(
+    planReading && onPlanStep && !jumpFocus && !selection?.length,
+  );
+  const rangeStart =
+    planReading && onPlanStep && !jumpFocus && planReading.verseStart != null
+      ? planVerseRangeLo
+      : highlightVerse;
+  const deeplinkEnabled = jumpFocus || !planReading || !onPlanStep;
 
   useEffect(() => {
     if (!showCreateCard) return;
@@ -4200,99 +4338,27 @@ export function BibleReaderView({
               .filter(Boolean)
               .join(" ")}
           >
-            {passage.verses.map((verse) => {
-              const jumpFocus = preferJumpFocusRef.current;
-              const planRangeActive = Boolean(
-                planReading &&
-                  onPlanStep &&
-                  !jumpFocus &&
-                  !selection?.length,
-              );
-              const inPlanRange = Boolean(
-                planRangeActive &&
-                  (planVerseRangeFull ||
-                    (planVerseRangeLo != null &&
-                      planVerseRangeHi != null &&
-                      verse.number >= planVerseRangeLo &&
-                      verse.number <= planVerseRangeHi)),
-              );
-              const rangeStart =
-                planReading && onPlanStep && !jumpFocus && planReading.verseStart != null
-                  ? planVerseRangeLo
-                  : highlightVerse;
-              const inDeeplink = Boolean(
-                !selection?.length &&
-                  focusVerseLo != null &&
-                  focusVerseHi != null &&
-                  verse.number >= focusVerseLo &&
-                  verse.number <= focusVerseHi &&
-                  (jumpFocus || !planReading || !onPlanStep),
-              );
-              const inRange = inPlanRange || inDeeplink;
-              const isRangeAnchor = selection?.length
-                ? highlightVerse === verse.number
-                : rangeStart != null
-                  ? verse.number === rangeStart
-                  : highlightVerse === verse.number;
-              const active = selection?.length
-                ? highlightVerse === verse.number
-                : isRangeAnchor;
-              const selected = verseInSelection(selection, verse.number);
-              const markColor = chapterMarks.get(verse.number);
-              const markDisplay = markColor
-                ? adaptVerseColorForTheme(markColor, uiTheme)
-                : null;
-              const selEdge = selectionEdgeClass(selection, verse.number);
-              const hasFlashcard = chapterCardVerses.has(verse.number);
-              const titleLike = isLikelyVerseTitle(verse.text, verse.number);
-              return (
-                <button
-                  key={verse.number}
-                  type="button"
-                  className={[
-                    "bible-verse",
-                    active ? "is-focus" : "",
-                    inRange ? "is-in-range" : "",
-                    selected ? "is-selected" : "",
-                    markDisplay ? "is-marked" : "",
-                    hasFlashcard ? "has-card" : "",
-                    selEdge,
-                    titleLike ? "is-title" : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                  data-verse={verse.number}
-                  style={
-                    markDisplay
-                      ? ({ ["--verse-mark" as string]: markDisplay } as CSSProperties)
-                      : undefined
-                  }
-                  aria-label={
-                    hasFlashcard
-                      ? `Verset ${verse.number}, flashcard`
-                      : `Verset ${verse.number}`
-                  }
-                  aria-pressed={selected}
-                  aria-current={inRange && !selected ? "true" : undefined}
-                  ref={
-                    isRangeAnchor
-                      ? (el) => {
-                          highlightRef.current = el;
-                        }
-                      : undefined
-                  }
-                  onClick={() => selectVerse(verse.number)}
-                >
-                  <sup className="bible-verse-num">{verse.number}</sup>
-                  {hasFlashcard ? (
-                    <span className="bible-verse-card-icon" aria-hidden="true">
-                      <YvIcon name="style" />
-                    </span>
-                  ) : null}
-                  <span className="bible-verse-text">{verse.text}</span>
-                </button>
-              );
-            })}
+            {passage.verses.map((verse) => (
+              <BibleVerseButton
+                key={verse.number}
+                verse={verse}
+                selection={selection}
+                highlightVerse={highlightVerse}
+                focusVerseLo={focusVerseLo}
+                focusVerseHi={focusVerseHi}
+                deeplinkEnabled={deeplinkEnabled}
+                rangeStart={rangeStart}
+                planRangeActive={planRangeActive}
+                planVerseRangeFull={planVerseRangeFull}
+                planVerseRangeLo={planVerseRangeLo}
+                planVerseRangeHi={planVerseRangeHi}
+                chapterMarks={chapterMarks}
+                chapterCardVerses={chapterCardVerses}
+                uiTheme={uiTheme}
+                highlightRef={highlightRef}
+                onSelect={selectVerse}
+              />
+            ))}
           </div>
         ) : passage?.content ? (
           <p className="bible-text">{passage.content}</p>
