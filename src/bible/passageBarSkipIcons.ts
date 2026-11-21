@@ -1,7 +1,7 @@
 import type { BiblosIconName } from "../icons/registry";
 
 /**
- * Ícones dos FABs laterais de capítulo (SkipBack / SkipForward).
+ * Ícones dos skips de capítulo na topbar (← · pill · →).
  * `chevron` → setas; default / `legacy` / `skip` → skip_previous / skip_next.
  */
 export function passageBarSkipIcons(): {

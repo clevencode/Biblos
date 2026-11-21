@@ -11574,13 +11574,14 @@ html[data-passage-bar-panel="test"] .bible-yv-top-passage.is-split-chrome {
 }
 
 html[data-passage-bar-panel="test"] .bible-yv-top-passage-bar.is-chip-trigger {
-  display: inline-flex;
+  display: grid;
   width: fit-content;
-  max-width: min(100%, 16.5rem);
+  max-width: min(100%, 22rem);
   height: var(--bible-passage-bar-title-h);
   min-height: var(--bible-passage-bar-title-h);
   max-height: var(--bible-passage-bar-title-h);
-  grid-template-columns: none;
+  grid-template-columns: var(--bible-passage-bar-title-h) minmax(0, max-content)
+    var(--bible-passage-bar-title-h);
   align-items: center;
 }
 
@@ -11924,7 +11925,7 @@ html[data-passage-bar-panel="test"] .bible-yv-top.is-free .bible-yv-passage-roll
   align-self: flex-start;
   flex: 0 1 auto;
   width: auto;
-  max-width: min(100%, 16.5rem);
+  max-width: min(100%, 22rem);
   margin-inline-start: auto;
   margin-inline-end: 0;
 }
@@ -11957,7 +11958,7 @@ html[data-passage-bar-panel="test"] .bible-yv-passage-roll .bible-yv-top-passage
 
 html[data-passage-bar-panel="test"] .bible-yv-top-passage-bar {
   width: fit-content;
-  max-width: min(100%, 16.5rem);
+  max-width: min(100%, 22rem);
   grid-template-columns: var(--bible-passage-bar-title-h) minmax(0, max-content)
     var(--bible-passage-bar-title-h);
 }
@@ -11987,7 +11988,7 @@ html[data-passage-bar-panel="test"]
   .bible-yv-passage-roll.is-open
   .bible-yv-top-passage-bar.is-roll-head {
   width: fit-content;
-  max-width: min(100%, 16.5rem);
+  max-width: min(100%, 22rem);
   grid-template-columns: var(--bible-passage-bar-title-h) minmax(0, 1fr)
     var(--bible-passage-bar-title-h);
 }
@@ -11996,9 +11997,10 @@ html[data-passage-bar-panel="test"] .bible-yv-top-passage-bar.is-chip-trigger,
 html[data-passage-bar-panel="test"]
   .bible-yv-passage-roll.is-open
   .bible-yv-top-passage-bar.is-chip-trigger.is-roll-head {
-  display: inline-flex;
-  grid-template-columns: none;
-  max-width: min(100%, 16.5rem);
+  display: grid;
+  grid-template-columns: var(--bible-passage-bar-title-h) minmax(0, max-content)
+    var(--bible-passage-bar-title-h);
+  max-width: min(100%, 22rem);
 }
 
 html[data-passage-bar-panel="test"]
@@ -12782,6 +12784,14 @@ html[data-colortest*="BiblePassageChip:red"] .bible-yv-passage-chip.is-ref {
 .bible-yv-top-passage-arrow:disabled {
   opacity: 0.32;
   cursor: default;
+}
+
+/* Picker aberto: esconde skips sem deslocar o pill (mantém a célula da grelha). */
+.bible-yv-top-passage-arrow.is-hidden-slot,
+.bible-yv-top-passage-bar.is-skips-hidden .bible-yv-top-passage-arrow {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .bible-yv-top-passage-arrow-icon {

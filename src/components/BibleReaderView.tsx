@@ -595,13 +595,8 @@ export function BibleReaderView({
     () => new Map(),
   );
   const [chromeHidden, setChromeHidden] = useState(false);
-  /** FABs laterais: opacidade reduzida durante scroll. */
-  const [chapterFabsDimmed, setChapterFabsDimmed] = useState(false);
   /** Fade do texto ao trocar de capítulo. */
   const [passageFadeIn, setPassageFadeIn] = useState(false);
-  const chapterFabScrollTimer = useRef<ReturnType<typeof setTimeout> | null>(
-    null,
-  );
   const [audioByUsfm, setAudioByUsfm] = useState<Record<string, BibleAudioEpisode>>({});
   const [audioPodcast, setAudioPodcast] = useState("Bible | Podcast.s21");
   const [audioPlaying, setAudioPlaying] = useState(false);
@@ -1435,7 +1430,7 @@ export function BibleReaderView({
     return formatPassagePillRef(title, next.chapterId);
   }
 
-  function renderChapterSideFab(delta: -1 | 1) {
+  function renderTopPassageArrow(delta: -1 | 1, hideVisual: boolean) {
     const chapterSkipIcons = passageBarSkipIcons();
     const planSkips = Boolean(planReading);
     const stageComplete = Boolean(planSkips && planReading?.isStageLast);
@@ -1470,38 +1465,34 @@ export function BibleReaderView({
       <button
         key={isPrev ? "prev" : "next"}
         type="button"
-        className={`bible-chapter-fab${isPrev ? " is-prev" : " is-next"}${
+        className={`bible-yv-top-passage-arrow${isPrev ? " is-prev" : " is-next"}${
           nextIsCheck ? " is-stage-complete" : ""
-        }${chapterFabsDimmed ? " is-scroll-dim" : ""}`}
+        }${hideVisual ? " is-hidden-slot" : ""}`}
         onClick={() => planOrChapterSkip(delta)}
-        disabled={disabled}
+        disabled={disabled || hideVisual}
+        tabIndex={hideVisual ? -1 : undefined}
+        aria-hidden={hideVisual || undefined}
         aria-label={
-          destLabel ? `${actionLabel} · ${destLabel}` : actionLabel
+          hideVisual
+            ? undefined
+            : destLabel
+              ? `${actionLabel} · ${destLabel}`
+              : actionLabel
         }
-        title={destLabel ? `${actionLabel} · ${destLabel}` : actionLabel}
+        title={
+          hideVisual
+            ? undefined
+            : destLabel
+              ? `${actionLabel} · ${destLabel}`
+              : actionLabel
+        }
       >
-        <YvIcon name={iconName} className="bible-chapter-fab-icon" />
+        <YvIcon name={iconName} className="bible-yv-top-passage-arrow-icon" />
       </button>
     );
   }
 
-  function renderChapterSideFabs() {
-    const hasPassage = Boolean(passage?.verses?.length || passage?.content);
-    if (!hasPassage || surfaceChrome.passageInputBlocked) return null;
-    return (
-      <nav
-        className="bible-chapter-fabs"
-        aria-label={
-          planReading ? t("bible.planProgress") : t("bible.chapters")
-        }
-      >
-        {renderChapterSideFab(-1)}
-        {renderChapterSideFab(1)}
-      </nav>
-    );
-  }
-
-  /** Topbar: só o chip/picker (skips = FABs laterais). */
+  /** Topbar: ← · pill book picker · → */
   function renderPassageSkipPickerCluster() {
     return renderPassageRoll();
   }
@@ -1511,6 +1502,7 @@ export function BibleReaderView({
     const splitChrome = isPassageBarPanelCompactTopbar() && !compactBar;
     const unifiedRefPill = isPassagePillUnified();
     const passageRefLabel = formatPassagePillRef(bookTitle, chapterId);
+    const hideSkipArrows = Boolean(pickerOpen || rollOpen);
 
     return (
       <nav
@@ -1521,15 +1513,18 @@ export function BibleReaderView({
       >
         <div
           className={`bible-yv-top-passage-bar${compactBar ? " is-compact" : ""}${
-            splitChrome ? " is-chip-trigger" : ""
-          }${unifiedRefPill ? " is-passage-ref-unified" : ""}${
+            unifiedRefPill ? " is-passage-ref-unified" : ""
+          }${
             rollOpen
               ? " is-roll-head is-roll-chrome-active"
               : pickerOpen
                 ? " is-roll-chrome-active"
                 : ""
-          }${pickerChrome.chipsHydrating ? " is-hydrating" : ""}`}
+          }${hideSkipArrows ? " is-skips-hidden" : ""}${
+            pickerChrome.chipsHydrating ? " is-hydrating" : ""
+          }`}
         >
+          {renderTopPassageArrow(-1, hideSkipArrows)}
           <div
             className={`bible-yv-top-passage-segments${
               unifiedRefPill ? " is-passage-ref-unified" : ""
@@ -1592,6 +1587,7 @@ export function BibleReaderView({
               </>
             )}
           </div>
+          {renderTopPassageArrow(1, hideSkipArrows)}
         </div>
       </nav>
     );
@@ -3339,17 +3335,6 @@ export function BibleReaderView({
 
         /* Chrome/nav: estáveis no scroll; hide só por modal / :has. */
         if (chromeHiddenRef.current) setReadingChrome(false, true);
-
-        if (Math.abs(delta) > 0) {
-          setChapterFabsDimmed(true);
-          if (chapterFabScrollTimer.current) {
-            clearTimeout(chapterFabScrollTimer.current);
-          }
-          chapterFabScrollTimer.current = setTimeout(() => {
-            chapterFabScrollTimer.current = null;
-            setChapterFabsDimmed(false);
-          }, 320);
-        }
       });
     };
 
@@ -3359,10 +3344,6 @@ export function BibleReaderView({
       if (scrollRaf.current) {
         window.cancelAnimationFrame(scrollRaf.current);
         scrollRaf.current = 0;
-      }
-      if (chapterFabScrollTimer.current) {
-        clearTimeout(chapterFabScrollTimer.current);
-        chapterFabScrollTimer.current = null;
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- setReadingChrome is a render-local helper
@@ -3726,8 +3707,6 @@ export function BibleReaderView({
             </button>
           </div>
         ) : null}
-
-        {renderChapterSideFabs()}
 
         <article
         ref={passageScrollRef}
