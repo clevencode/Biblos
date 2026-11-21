@@ -64,6 +64,7 @@ const config: CapacitorConfig = {
       skipNativeAuth: true,
       providers: ["google.com"],
     },
+    // Capgo Media Session — default: FGS só com playbackState playing/paused.
   },
 };
 

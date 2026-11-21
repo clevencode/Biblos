@@ -30,9 +30,17 @@ let lastKey = "";
 let notifPermissionAsked = false;
 let backend: MediaBackend | null = null;
 let musicListening = false;
+let bindPromise: Promise<() => void> | null = null;
+let pendingHandlers: BibleAudioControlHandlers | null = null;
 
 function nativeReady(): boolean {
   return Capacitor.isNativePlatform() && Capacitor.getPlatform() === "android";
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
 }
 
 async function resolveBackend(): Promise<MediaBackend> {
@@ -120,6 +128,17 @@ function handleMusicMessage(message: string, handlers: BibleAudioControlHandlers
 
 async function bindCapgo(handlers: BibleAudioControlHandlers): Promise<() => void> {
   const MediaSession = await getCapgo();
+  const actions = [
+    "play",
+    "pause",
+    "seekbackward",
+    "seekforward",
+    "previoustrack",
+    "nexttrack",
+    "stop",
+    "seekto",
+  ] as const;
+
   await MediaSession.setActionHandler({ action: "play" }, () => {
     handlers.onPlay();
   });
@@ -148,14 +167,9 @@ async function bindCapgo(handlers: BibleAudioControlHandlers): Promise<() => voi
 
   return () => {
     listening = false;
-    void MediaSession.setActionHandler({ action: "play" }, null);
-    void MediaSession.setActionHandler({ action: "pause" }, null);
-    void MediaSession.setActionHandler({ action: "seekbackward" }, null);
-    void MediaSession.setActionHandler({ action: "seekforward" }, null);
-    void MediaSession.setActionHandler({ action: "previoustrack" }, null);
-    void MediaSession.setActionHandler({ action: "nexttrack" }, null);
-    void MediaSession.setActionHandler({ action: "stop" }, null);
-    void MediaSession.setActionHandler({ action: "seekto" }, null);
+    for (const action of actions) {
+      void MediaSession.setActionHandler({ action }, null);
+    }
   };
 }
 
@@ -189,51 +203,88 @@ export async function bindBibleAudioControls(
   handlers: BibleAudioControlHandlers,
 ): Promise<() => void> {
   if (!nativeReady()) return () => undefined;
+  pendingHandlers = handlers;
+  if (listening && bindPromise) {
+    await bindPromise;
+    return () => {
+      listening = false;
+    };
+  }
   if (listening) return () => undefined;
   listening = true;
 
-  await ensureNotificationPermission();
-  const mode = await resolveBackend();
+  bindPromise = (async () => {
+    await ensureNotificationPermission();
+    const mode = await resolveBackend();
 
-  if (mode === "capgo") {
-    try {
-      return await bindCapgo(handlers);
-    } catch (err) {
-      console.warn("[bible-audio] Capgo bind failed, MusicControls fallback", err);
-      backend = "music-controls";
+    if (mode === "capgo") {
+      try {
+        return await bindCapgo(handlers);
+      } catch (err) {
+        console.warn("[bible-audio] Capgo bind failed, MusicControls fallback", err);
+        backend = "music-controls";
+        return bindMusicControls(handlers);
+      }
+    }
+    if (mode === "music-controls") {
       return bindMusicControls(handlers);
     }
+    listening = false;
+    return () => undefined;
+  })();
+
+  try {
+    return await bindPromise;
+  } finally {
+    bindPromise = null;
   }
-  if (mode === "music-controls") {
-    return bindMusicControls(handlers);
-  }
-  listening = false;
-  return () => undefined;
 }
 
 async function syncCapgo(payload: ControlsPayload): Promise<void> {
   const MediaSession = await getCapgo();
   const key = `${payload.track}|${payload.artist}|${Math.round(payload.duration)}`;
-  if (!created || key !== lastKey) {
-    await MediaSession.setMetadata({
-      title: payload.track,
-      artist: payload.artist,
-      album: payload.album || "Segond 21",
-    });
-    created = true;
-    lastKey = key;
-  }
-  await MediaSession.setPlaybackState({
-    playbackState: payload.isPlaying ? "playing" : "paused",
-  });
+  const meta = {
+    title: payload.track || "Biblos",
+    artist: payload.artist || "Segond 21",
+    album: payload.album || "Segond 21",
+  };
+
+  /* Sempre metadata antes do state — o OS pode ocultar o card sem title. */
+  await MediaSession.setMetadata(meta);
+  created = true;
+  lastKey = key;
+
+  const playbackState = payload.isPlaying ? "playing" : "paused";
+  await MediaSession.setPlaybackState({ playbackState });
+
   const duration = Math.max(0, payload.duration || 0);
-  const position = Math.max(0, Math.min(duration || payload.elapsed || 0, payload.elapsed || 0));
+  const position = Math.max(
+    0,
+    Math.min(duration > 0 ? duration : payload.elapsed || 0, payload.elapsed || 0),
+  );
   if (Number.isFinite(duration) && duration > 0) {
     await MediaSession.setPositionState({
       duration,
       position,
       playbackRate: 1,
     });
+  }
+
+  /*
+   * Capgo arranca o FGS de forma assíncrona no 1.º 'playing'.
+   * Um 2.º sync curto actualiza o serviço já ligado (metadata + botões).
+   */
+  if (payload.isPlaying) {
+    await delay(350);
+    await MediaSession.setMetadata(meta);
+    await MediaSession.setPlaybackState({ playbackState: "playing" });
+    if (Number.isFinite(duration) && duration > 0) {
+      await MediaSession.setPositionState({
+        duration,
+        position,
+        playbackRate: 1,
+      });
+    }
   }
 }
 
@@ -275,6 +326,9 @@ export async function syncBibleAudioControls(payload: ControlsPayload): Promise<
   if (!nativeReady()) return;
   try {
     await ensureNotificationPermission();
+    if (pendingHandlers && !listening) {
+      await bindBibleAudioControls(pendingHandlers);
+    }
     const mode = await resolveBackend();
     if (mode === "capgo") {
       await syncCapgo(payload);

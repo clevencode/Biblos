@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!--
       Android 11+ package visibility: Custom Tabs / browser para OAuth (Google)
@@ -59,14 +60,33 @@
                 android:resource="@xml/file_paths"></meta-data>
         </provider>
 
-        <!-- Capawesome FGS (fallback / permissões POST_NOTIFICATIONS). Capgo MediaSession
-             regista o próprio MediaSessionService com foregroundServiceType=mediaPlayback. -->
+        <!-- Capgo Media Session — FGS mediaPlayback (notificação / ecrã bloqueado).
+             Declarado explicitamente: o merge do plugin falhou em builds locais e o
+             startForegroundService silencia sem serviço no manifesto. -->
+        <service
+            android:name="com.capgo.mediasession.MediaSessionService"
+            android:enabled="true"
+            android:exported="true"
+            android:foregroundServiceType="mediaPlayback"
+            tools:node="merge">
+            <intent-filter>
+                <action android:name="android.intent.action.MEDIA_BUTTON" />
+            </intent-filter>
+        </service>
+        <receiver
+            android:name="androidx.media.session.MediaButtonReceiver"
+            android:exported="true"
+            tools:node="merge">
+            <intent-filter>
+                <action android:name="android.intent.action.MEDIA_BUTTON" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Capawesome FGS — permissões POST_NOTIFICATIONS + fallback -->
         <service
             android:name="io.capawesome.capacitorjs.plugins.foregroundservice.AndroidForegroundService"
             android:foregroundServiceType="mediaPlayback"
             android:exported="false" />
-
-        <!-- Receiver para eventos da notificação do Foreground Service -->
         <receiver android:name="io.capawesome.capacitorjs.plugins.foregroundservice.NotificationActionBroadcastReceiver" />
 
     </application>

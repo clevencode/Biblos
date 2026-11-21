@@ -3211,6 +3211,15 @@ export function BibleReaderView({
         });
       }
       await audio.play();
+      /* Capgo FGS: sync nativo no gesto de play (não esperar só o useEffect). */
+      void syncBibleAudioControls({
+        track: episode.title,
+        artist: audioPodcast,
+        album: "Segond 21",
+        isPlaying: true,
+        duration: Number.isFinite(audio.duration) ? audio.duration : audioDuration,
+        elapsed: audio.currentTime || 0,
+      });
     } catch {
       setAudioPlaying(false);
       setPassageUiError("Audio indisponible pour le moment.");
