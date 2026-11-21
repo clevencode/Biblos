@@ -28,8 +28,10 @@ type AppReadinessContextValue = {
 
 const AppReadinessContext = createContext<AppReadinessContextValue | null>(null);
 
-/** Se o reader não marcar catálogo, não segurar splash para sempre. */
+/** Shell montado sem hidratação activa (Plan / Bible não montada). */
 const SHELL_FALLBACK_MS = 900;
+/** Último recurso se a Bible ficar presa em hydrating. */
+const HYDRATING_FALLBACK_MS = 8000;
 
 export function AppReadinessProvider({ children }: { children: ReactNode }) {
   const [catalogHydrating, setCatalogHydrating] = useState(true);
@@ -73,21 +75,60 @@ export function AppReadinessProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // Fallback: shell montado mas bible nunca hidrata o catálogo.
+  /**
+   * Fallback curto só sem hidratação activa (herança BibleReaderView manda).
+   * Com `catalogHydrating`, esperar o gate passage+boot — evita CLS pós-splash.
+   */
   useEffect(() => {
     if (!shellReady || catalogLocalReady) return;
+    const ms = catalogHydrating ? HYDRATING_FALLBACK_MS : SHELL_FALLBACK_MS;
     const id = window.setTimeout(() => {
       setCatalogHydrating(false);
       setCatalogLocalReady(true);
-    }, SHELL_FALLBACK_MS);
+    }, ms);
     return () => window.clearTimeout(id);
-  }, [shellReady, catalogLocalReady]);
+  }, [shellReady, catalogLocalReady, catalogHydrating]);
 
   useEffect(() => {
     if (phase === "hydrating" || splashHiddenRef.current) return;
-    splashHiddenRef.current = true;
-    void syncNativeChrome(applyTheme());
-    void hideAppSplash();
+    let cancelled = false;
+
+    const reveal = async () => {
+      try {
+        if (typeof document !== "undefined" && document.fonts?.ready) {
+          await Promise.race([
+            document.fonts.ready,
+            new Promise<void>((resolve) => {
+              window.setTimeout(resolve, 450);
+            }),
+          ]);
+        }
+      } catch {
+        /* ignore */
+      }
+      if (cancelled || splashHiddenRef.current) return;
+      /* Chrome nativo antes do fade — evita salto de safe-area/status bar. */
+      try {
+        await syncNativeChrome(applyTheme());
+      } catch {
+        /* ignore */
+      }
+      if (cancelled || splashHiddenRef.current) return;
+      /* 2 rAF: espera layout + paint (scroll boot) antes do fade do splash. */
+      await new Promise<void>((resolve) => {
+        window.requestAnimationFrame(() => {
+          window.requestAnimationFrame(() => resolve());
+        });
+      });
+      if (cancelled || splashHiddenRef.current) return;
+      splashHiddenRef.current = true;
+      void hideAppSplash();
+    };
+
+    void reveal();
+    return () => {
+      cancelled = true;
+    };
   }, [phase]);
 
   return (

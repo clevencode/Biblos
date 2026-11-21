@@ -951,11 +951,11 @@ html[data-theme="dark"] .sw-update-banner-cta {
   --mode-tabs-hub-size: 50px;
   --mode-tabs-hub-top: 0px;
   --mode-tabs-float-gap: 14px;
-  /* Chrome sob o hub (caption) — fade sobe só até ao topo do botão */
-  --mode-tabs-caption-slot: 22px;
+  /* Hub pill: fade sobe só até ao topo do botão */
+  --mode-tabs-caption-slot: 0px;
   --mode-tabs-mat-bg: var(--bible-nav-surface, var(--bg));
   --mode-tabs-fade-h: calc(
-    var(--mode-tabs-hub-size, 50px) + var(--mode-tabs-caption-slot, 22px) +
+    var(--mode-tabs-hub-size, 50px) +
       var(--mode-tabs-float-gap, 14px) + env(safe-area-inset-bottom, 0px)
   );
   /* Largura partilhada: pill + modal */
@@ -1324,9 +1324,23 @@ html[data-theme="dark"] {
   --bible-top-chrome: calc(var(--bible-top-chrome-flush) + 8px);
   /* Tapete da navbar = canvas do leitor (esconde scroll sob o pill) */
   --mode-tabs-mat-bg: var(--bible-nav-surface, var(--bg));
-  /* Sheets acima do pill (token disponível fora do bloco :root mobile) */
+  /*
+   * Inset Options / passage — herdado desde o shell (1.ª pintura = loading = ready).
+   * Evita CLS quando `.bible-reader--yv` monta ou o sheet abre.
+   */
+  --top-sheet-inset-x: max(
+    var(--mobile-gutter, 12px),
+    14px,
+    env(safe-area-inset-left, 0px)
+  );
+  --top-sheet-inset-x-end: max(
+    var(--mobile-gutter, 12px),
+    14px,
+    env(safe-area-inset-right, 0px)
+  );
+  /* Sheets acima do hub pill (sem dome legado) */
   --bible-sheet-above-nav: calc(
-    var(--mode-tabs-bar-body, 62px) + var(--mode-tabs-dome-rise, 34px) +
+    var(--mode-tabs-hub-size, 50px) + var(--mode-tabs-float-gap, 14px) +
       env(safe-area-inset-bottom, 0px) + 16px
   );
 }
@@ -6719,15 +6733,20 @@ html[data-theme="dark"] .profile-download-btn {
     --mobile-float-inset-x: var(--mobile-gutter);
     --shell-float-gap: 12px;
     --mobile-tabbar-pad: 0px;
-    --mode-tabs-bar-body: 62px;
-    --mode-tabs-dome-rise: 34px;
+    /* Hub pill (sem dome radial) — clearance = altura real do chrome */
+    --mode-tabs-hub-size: 50px;
+    --mode-tabs-bar-body: var(--mode-tabs-hub-size, 50px);
+    --mode-tabs-dome-rise: 0px;
+    --mode-tabs-caption-slot: 0px;
     --mode-tabs-float-gap: 14px;
-    --mode-tabs-mat-fade: 32px;
+    --mode-tabs-mat-fade: 28px;
     --mode-tabs-inset-x: 12px;
-    --mobile-tabbar-h: calc(var(--mode-tabs-bar-body, 62px) + var(--mode-tabs-dome-rise, 34px));
+    --mobile-tabbar-h: calc(
+      var(--mode-tabs-bar-body, 50px) + var(--mode-tabs-float-gap, 14px)
+    );
     /* Clearance = pill + folga + safe-area + zona do fade (sem corte no scroll) */
     --mobile-tabbar-outer-h: calc(
-      var(--mode-tabs-bar-body, 62px) + var(--mode-tabs-dome-rise, 34px) +
+      var(--mode-tabs-bar-body, 50px) + var(--mode-tabs-float-gap, 14px) +
         var(--mode-tabs-mat-fade) + env(safe-area-inset-bottom, 0px)
     );
     --mobile-bottom-chrome: var(--mobile-tabbar-outer-h);
@@ -6736,7 +6755,7 @@ html[data-theme="dark"] .profile-download-btn {
      * Lift de sheets/modais acima do pill visível (sem mat-fade — só chrome físico + folga).
      */
     --bible-sheet-above-nav: calc(
-      var(--mode-tabs-bar-body, 62px) + var(--mode-tabs-dome-rise, 34px) +
+      var(--mode-tabs-bar-body, 50px) + var(--mode-tabs-float-gap, 14px) +
         env(safe-area-inset-bottom, 0px) + 16px
     );
     /* FAB lecture : 16px au-dessus du bord supérieur de la tab bar (Material / iOS HIG). */

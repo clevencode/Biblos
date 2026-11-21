@@ -931,6 +931,11 @@ export function BibleReaderView({
   const verseScrollSeq = useRef(0);
   const lastAppliedVerseScroll = useRef("");
   const booted = useRef(false);
+  /** 1.ª alinhamento de scroll (ou gate offline) antes de libertar o splash. */
+  const bootAlignReadyRef = useRef(false);
+  const [bootAlignReady, setBootAlignReady] = useState(false);
+  const [bootAlignNudge, setBootAlignNudge] = useState(0);
+  const skipNextChapterFadeRef = useRef(true);
 
   useLayoutEffect(() => {
     if (!active) {
@@ -1418,7 +1423,9 @@ export function BibleReaderView({
         : { number: 0, mode: "top", seq: ++verseScrollSeq.current };
     preferJumpFocusRef.current = false;
     lastAppliedVerseScroll.current = "";
-    setPassageFadeIn(true);
+    const skipFade = skipNextChapterFadeRef.current;
+    if (skipFade) skipNextChapterFadeRef.current = false;
+    else setPassageFadeIn(true);
     setBookId(nextBook);
     setChapterId(nextChapter);
     setHighlightVerse(verse);
@@ -1430,7 +1437,9 @@ export function BibleReaderView({
     setCardMsg(null);
     setPassageUiError(null);
     void commitPassageLoad(nextBook, nextChapter, verse, verseEnd);
-    window.setTimeout(() => setPassageFadeIn(false), 200);
+    if (!skipFade) {
+      window.setTimeout(() => setPassageFadeIn(false), 200);
+    }
   }
 
   function goAdjacent(delta: -1 | 1) {
@@ -2115,7 +2124,7 @@ export function BibleReaderView({
   });
 
   /**
-   * Boot anti-CLS: splash só some com a 1.ª superfície de leitura pronta.
+   * Boot anti-CLS: splash só some com superfície + scroll inicial aplicados.
    * Loads seguintes usam a barra do topbar + stalePassage (sem esvaziar o corpo).
    * Com aba inactiva: não promover catalogLocalReady só pelo catálogo (shell fallback + Plan skeleton).
    */
@@ -2136,10 +2145,22 @@ export function BibleReaderView({
       showOfflineChapterGateUi ||
       (Boolean(passageLoadError) && !hasPassageSurface);
 
+    if (
+      !bootAlignReadyRef.current &&
+      (showOfflineChapterGateUi ||
+        (Boolean(passageLoadError) && !hasPassageSurface))
+    ) {
+      bootAlignReadyRef.current = true;
+      setBootAlignReady(true);
+    }
+
     setCatalogHydrating(
-      catalogLoading || (catalogReady && !passageSurfaceReady),
+      catalogLoading ||
+        (catalogReady && !(passageSurfaceReady && bootAlignReady)),
     );
-    setCatalogLocalReady(catalogReady && passageSurfaceReady);
+    setCatalogLocalReady(
+      catalogReady && passageSurfaceReady && bootAlignReady,
+    );
   }, [
     active,
     catalogViewState.status,
@@ -2147,6 +2168,7 @@ export function BibleReaderView({
     passage?.content,
     passageLoadError,
     showOfflineChapterGateUi,
+    bootAlignReady,
     setCatalogHydrating,
     setCatalogLocalReady,
   ]);
@@ -3292,11 +3314,48 @@ export function BibleReaderView({
     );
   }
 
+  /** Re-tenta alinhamento até o scroller ter altura / verso no DOM. */
+  useEffect(() => {
+    if (!active || bootAlignReadyRef.current || presentation.inFlight) return;
+    const hasSurface = Boolean(passage?.verses?.length || passage?.content);
+    if (!hasSurface) return;
+    let frames = 0;
+    let raf = 0;
+    const tick = () => {
+      if (bootAlignReadyRef.current) return;
+      frames += 1;
+      const root = passageScrollRef.current;
+      if (root && root.clientHeight >= 40) {
+        setBootAlignNudge((n) => n + 1);
+      }
+      if (bootAlignReadyRef.current) return;
+      if (frames < 45) raf = window.requestAnimationFrame(tick);
+      else {
+        bootAlignReadyRef.current = true;
+        setBootAlignReady(true);
+      }
+    };
+    raf = window.requestAnimationFrame(tick);
+    return () => window.cancelAnimationFrame(raf);
+  }, [
+    active,
+    presentation.inFlight,
+    passage?.id,
+    passage?.verses?.length,
+    passage?.content,
+  ]);
+
   useLayoutEffect(() => {
     if (presentation.inFlight || !active) return;
     const root = passageScrollRef.current;
     const reader = readerRef.current;
     if (!root || !reader || root.clientHeight < 40) return;
+
+    const markBootAligned = () => {
+      if (bootAlignReadyRef.current) return;
+      bootAlignReadyRef.current = true;
+      setBootAlignReady(true);
+    };
 
     /* Retourner: com Options aberto, repõe o offset exacto memorizado no salto. */
     const restoreTop = pendingPassageScrollRestoreRef.current;
@@ -3312,18 +3371,31 @@ export function BibleReaderView({
         syncHeadCompact(root.scrollTop);
         lastAppliedVerseScroll.current = restoreKey;
       }
+      markBootAligned();
       return;
     }
 
     const pending = pendingScrollVerse.current;
-    if (!pending) return;
+    if (!pending) {
+      markBootAligned();
+      return;
+    }
     const key = `${pending.seq}:${pending.mode}:${pending.number}:${passage?.id}:${showCreateCard}`;
-    if (lastAppliedVerseScroll.current === key) return;
+    if (lastAppliedVerseScroll.current === key) {
+      markBootAligned();
+      return;
+    }
     const verseEl =
       pending.mode === "top"
         ? null
         : (root.querySelector(`[data-verse="${pending.number}"]`) as HTMLElement | null);
-    if (pending.mode !== "top" && !verseEl) return;
+    if (pending.mode !== "top" && !verseEl) {
+      if (bootAlignNudge < 10) return;
+      alignVerseInScroller(root, reader, null, "top");
+      lastAppliedVerseScroll.current = key;
+      markBootAligned();
+      return;
+    }
     alignVerseInScroller(root, reader, verseEl, pending.mode);
     // 2ᵉ passe : hauteur réelle du panneau Marquer après layout.
     if (showCreateCard && verseEl) {
@@ -3340,6 +3412,7 @@ export function BibleReaderView({
     suppressFocusDimClearUntil.current = lockUntil;
     syncHeadCompact(root.scrollTop);
     lastAppliedVerseScroll.current = key;
+    markBootAligned();
   }, [
     active,
     presentation.inFlight,
@@ -3349,6 +3422,7 @@ export function BibleReaderView({
     showCreateCard,
     pickerOpen,
     planReading?.label,
+    bootAlignNudge,
   ]);
 
   const bookAudio = audioByUsfm[bookId.toUpperCase()] ?? null;
