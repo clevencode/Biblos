@@ -34,6 +34,8 @@ export type SubscribePublishedPlansOptions = {
   onError?: (error: FirestoreError) => void;
 };
 
+let normalizeDiagLogged = false;
+
 function mapSnapshot(snap: QuerySnapshot<DocumentData>): ReadingPlansSnapshot {
   const plans: ReadingPlan[] = [];
   for (const doc of snap.docs) {
@@ -42,6 +44,18 @@ function mapSnapshot(snap: QuerySnapshot<DocumentData>): ReadingPlansSnapshot {
       doc.data() as ReadingPlanFirestoreDoc,
     );
     if (parsed) plans.push(parsed);
+  }
+  if (!normalizeDiagLogged && snap.docs.length > 0) {
+    normalizeDiagLogged = true;
+    if (plans.length !== snap.docs.length) {
+      console.warn(
+        `[reading-plans] normalize: docs=${snap.docs.length} mapped=${plans.length} (fromCache=${snap.metadata.fromCache})`,
+      );
+    } else {
+      console.info(
+        `[reading-plans] snapshot: docs=${snap.docs.length} mapped=${plans.length} fromCache=${snap.metadata.fromCache}`,
+      );
+    }
   }
   plans.sort((a, b) => a.title.localeCompare(b.title, "fr"));
   return {

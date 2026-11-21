@@ -43,7 +43,7 @@ public class MainActivity extends BridgeActivity {
   }
 
   /**
-   * Mantém timers do WebView activos em background para HTMLAudio + MusicControls FGS.
+   * Mantém timers do WebView activos em background para HTMLAudio + Capgo MediaSession FGS.
    * Capacitor pausa o WebView em onPause; re-resume evita cortar o podcast S21.
    */
   @Override

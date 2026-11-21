@@ -59,9 +59,10 @@
                 android:resource="@xml/file_paths"></meta-data>
         </provider>
 
-        <!-- Serviço em primeiro plano para manter o áudio ativo em background (Android 14+) -->
+        <!-- Capawesome FGS (fallback / permissões POST_NOTIFICATIONS). Capgo MediaSession
+             regista o próprio MediaSessionService com foregroundServiceType=mediaPlayback. -->
         <service
-            android:name="io.capawesome.capacitorjs.plugins.androidforegroundservice.AndroidForegroundService"
+            android:name="io.capawesome.capacitorjs.plugins.foregroundservice.AndroidForegroundService"
             android:foregroundServiceType="mediaPlayback"
             android:exported="false" />
 

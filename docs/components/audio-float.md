@@ -28,7 +28,9 @@ Montado no `footer.bible-yv-dock` junto com navegação de plano (se `planReadin
 | UI | `src/components/BibleAudioFloat.tsx` |
 | ViewState | `src/bible/viewState/audioViewState.ts` |
 | Sync capítulo | `src/bibleChapterAudioSync.ts` (e refs em `BibleReaderView`) |
+| Controlo nativo APK | `src/bibleAudioControls.ts` (Capgo Media Session + FGS `mediaPlayback`) |
 | Doc produto | [bible-mobile-audio-sync.md](../bible-mobile-audio-sync.md) |
+| Checklist APK | [apk-audio-plans-verify.md](../apk-audio-plans-verify.md) |
 
 ---
 

@@ -43,6 +43,7 @@ export type UiCopyKey =
   | "plan.inProgress"
   | "plan.all"
   | "plan.emptyHint"
+  | "plan.emptyPublishedHint"
   | "plan.catalogError"
   | "plan.catalogErrorHint"
   | "plan.offline"
@@ -286,6 +287,8 @@ const FR: Dict = {
   "plan.all": "Tous les plans",
   "plan.emptyHint":
     "Les parcours guidés apparaîtront ici dès qu’ils seront publiés.",
+  "plan.emptyPublishedHint":
+    "Aucun parcours publié pour le moment. Vérifiez la connexion ou réessayez.",
   "plan.catalogError": "Catalogue indisponible",
   "plan.catalogErrorHint": "Impossible de charger les plans pour le moment.",
   "plan.offline": "Plans hors ligne",
@@ -550,6 +553,8 @@ const HT: Dict = {
   "plan.inProgress": "An kou",
   "plan.all": "Tout plan yo",
   "plan.emptyHint": "Parcours gide yo ap parèt isit lè yo pibliye.",
+  "plan.emptyPublishedHint":
+    "Pa gen parcours pibliye pou kounye a. Verifye koneksyon an oswa eseye ankò.",
   "plan.catalogError": "Katalòg pa disponib",
   "plan.catalogErrorHint": "Pa kapab chaje plan yo pou kounye a.",
   "plan.offline": "Plan offline",

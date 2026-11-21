@@ -55,7 +55,7 @@ export function PlanDiscoverPanel({
   onRestartPlan,
 }: PlanDiscoverPanelProps) {
   const { t } = useUiLocale();
-  const { status, plans, error, isInitialLoading, retry } =
+  const { status, plans, error, isInitialLoading, emptyAfterSync, retry } =
     useReadingPlansCatalog(active && !workspacePlan);
   const [progressTick, setProgressTick] = useState(0);
 
@@ -193,15 +193,26 @@ export function PlanDiscoverPanel({
           {showEmpty ? (
             <div className="plan-discover-empty" role="status">
               <p className="plan-discover-empty-title">{t("plan.empty")}</p>
-              <p className="muted">{t("plan.emptyHint")}</p>
-              <button
-                type="button"
-                className="home-empty-cta type-label"
-                onClick={onOpenBible}
-              >
-                <YvIcon name="menu_book" opsz={20} className="yv-icon" aria-hidden />
-                {t("home.openBible")}
-              </button>
+              <p className="muted">
+                {emptyAfterSync ? t("plan.emptyPublishedHint") : t("plan.emptyHint")}
+              </p>
+              <div className="plan-discover-empty-actions">
+                <button
+                  type="button"
+                  className="home-empty-cta type-label"
+                  onClick={retry}
+                >
+                  {t("plan.retry")}
+                </button>
+                <button
+                  type="button"
+                  className="home-empty-cta type-label"
+                  onClick={onOpenBible}
+                >
+                  <YvIcon name="menu_book" opsz={20} className="yv-icon" aria-hidden />
+                  {t("home.openBible")}
+                </button>
+              </div>
             </div>
           ) : null}
 

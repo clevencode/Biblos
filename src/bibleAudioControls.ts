@@ -1,5 +1,6 @@
 /**
  * Contrôles média natifs (notification / écran verrouillé) — audio persistant Android.
+ * APK: Capgo Media Session (FGS mediaPlayback) ; MusicControls en fallback.
  */
 import { Capacitor } from "@capacitor/core";
 
@@ -8,6 +9,7 @@ export type BibleAudioControlHandlers = {
   onPause: () => void;
   onSkipBackward: () => void;
   onSkipForward: () => void;
+  onSeekTo?: (seconds: number) => void;
   onDestroy?: () => void;
 };
 
@@ -20,24 +22,65 @@ type ControlsPayload = {
   elapsed: number;
 };
 
+type MediaBackend = "capgo" | "music-controls" | "none";
+
 let listening = false;
 let created = false;
 let lastKey = "";
 let notifPermissionAsked = false;
+let backend: MediaBackend | null = null;
+let musicListening = false;
 
 function nativeReady(): boolean {
   return Capacitor.isNativePlatform() && Capacitor.getPlatform() === "android";
 }
 
-async function getControls() {
+async function resolveBackend(): Promise<MediaBackend> {
+  if (backend) return backend;
+  if (!nativeReady()) {
+    backend = "none";
+    return backend;
+  }
+  try {
+    await import("@capgo/capacitor-media-session");
+    backend = "capgo";
+  } catch {
+    try {
+      await import("capacitor-music-controls-plugin");
+      backend = "music-controls";
+    } catch {
+      backend = "none";
+    }
+  }
+  return backend;
+}
+
+async function getCapgo() {
+  const mod = await import("@capgo/capacitor-media-session");
+  return mod.MediaSession;
+}
+
+async function getMusicControls() {
   const mod = await import("capacitor-music-controls-plugin");
   return mod.CapacitorMusicControls;
 }
 
-/** Android 13+: pede POST_NOTIFICATIONS via Notification API do WebView. */
+/** Android 13+: POST_NOTIFICATIONS via Capawesome FGS (nativo), fallback Notification web. */
 async function ensureNotificationPermission(): Promise<void> {
   if (!nativeReady() || notifPermissionAsked) return;
   notifPermissionAsked = true;
+  try {
+    const { ForegroundService } = await import(
+      "@capawesome-team/capacitor-android-foreground-service"
+    );
+    const status = await ForegroundService.checkPermissions();
+    if (status.display !== "granted") {
+      await ForegroundService.requestPermissions();
+    }
+    return;
+  } catch {
+    /* Capawesome indisponível */
+  }
   try {
     if (typeof Notification !== "undefined" && Notification.permission === "default") {
       await Notification.requestPermission();
@@ -47,7 +90,7 @@ async function ensureNotificationPermission(): Promise<void> {
   }
 }
 
-function handleMessage(message: string, handlers: BibleAudioControlHandlers) {
+function handleMusicMessage(message: string, handlers: BibleAudioControlHandlers) {
   switch (message) {
     case "music-controls-play":
       handlers.onPlay();
@@ -55,10 +98,9 @@ function handleMessage(message: string, handlers: BibleAudioControlHandlers) {
     case "music-controls-pause":
       handlers.onPause();
       break;
-    case "music-controls-toggle-play-pause": {
+    case "music-controls-toggle-play-pause":
       handlers.onPlay();
       break;
-    }
     case "music-controls-skip-forward":
     case "music-controls-next":
       handlers.onSkipForward();
@@ -76,6 +118,72 @@ function handleMessage(message: string, handlers: BibleAudioControlHandlers) {
   }
 }
 
+async function bindCapgo(handlers: BibleAudioControlHandlers): Promise<() => void> {
+  const MediaSession = await getCapgo();
+  await MediaSession.setActionHandler({ action: "play" }, () => {
+    handlers.onPlay();
+  });
+  await MediaSession.setActionHandler({ action: "pause" }, () => {
+    handlers.onPause();
+  });
+  await MediaSession.setActionHandler({ action: "seekbackward" }, () => {
+    handlers.onSkipBackward();
+  });
+  await MediaSession.setActionHandler({ action: "seekforward" }, () => {
+    handlers.onSkipForward();
+  });
+  await MediaSession.setActionHandler({ action: "previoustrack" }, () => {
+    handlers.onSkipBackward();
+  });
+  await MediaSession.setActionHandler({ action: "nexttrack" }, () => {
+    handlers.onSkipForward();
+  });
+  await MediaSession.setActionHandler({ action: "stop" }, () => {
+    handlers.onDestroy?.();
+  });
+  await MediaSession.setActionHandler({ action: "seekto" }, (details) => {
+    if (details.seekTime == null || !Number.isFinite(details.seekTime)) return;
+    handlers.onSeekTo?.(details.seekTime);
+  });
+
+  return () => {
+    listening = false;
+    void MediaSession.setActionHandler({ action: "play" }, null);
+    void MediaSession.setActionHandler({ action: "pause" }, null);
+    void MediaSession.setActionHandler({ action: "seekbackward" }, null);
+    void MediaSession.setActionHandler({ action: "seekforward" }, null);
+    void MediaSession.setActionHandler({ action: "previoustrack" }, null);
+    void MediaSession.setActionHandler({ action: "nexttrack" }, null);
+    void MediaSession.setActionHandler({ action: "stop" }, null);
+    void MediaSession.setActionHandler({ action: "seekto" }, null);
+  };
+}
+
+async function bindMusicControls(
+  handlers: BibleAudioControlHandlers,
+): Promise<() => void> {
+  if (musicListening) return () => undefined;
+  musicListening = true;
+  const MusicControls = await getMusicControls();
+
+  const iosHandle = await MusicControls.addListener("controlsNotification", (info) => {
+    handleMusicMessage(String(info?.message || ""), handlers);
+  });
+
+  const onAndroidEvent = (event: Event) => {
+    const detail = event as Event & { message?: string };
+    handleMusicMessage(String(detail.message || ""), handlers);
+  };
+  document.addEventListener("controlsNotification", onAndroidEvent);
+
+  return () => {
+    listening = false;
+    musicListening = false;
+    void iosHandle.remove();
+    document.removeEventListener("controlsNotification", onAndroidEvent);
+  };
+}
+
 /** Branche les écouteurs notification (une fois). */
 export async function bindBibleAudioControls(
   handlers: BibleAudioControlHandlers,
@@ -85,23 +193,81 @@ export async function bindBibleAudioControls(
   listening = true;
 
   await ensureNotificationPermission();
-  const MusicControls = await getControls();
+  const mode = await resolveBackend();
 
-  const iosHandle = await MusicControls.addListener("controlsNotification", (info) => {
-    handleMessage(String(info?.message || ""), handlers);
+  if (mode === "capgo") {
+    try {
+      return await bindCapgo(handlers);
+    } catch (err) {
+      console.warn("[bible-audio] Capgo bind failed, MusicControls fallback", err);
+      backend = "music-controls";
+      return bindMusicControls(handlers);
+    }
+  }
+  if (mode === "music-controls") {
+    return bindMusicControls(handlers);
+  }
+  listening = false;
+  return () => undefined;
+}
+
+async function syncCapgo(payload: ControlsPayload): Promise<void> {
+  const MediaSession = await getCapgo();
+  const key = `${payload.track}|${payload.artist}|${Math.round(payload.duration)}`;
+  if (!created || key !== lastKey) {
+    await MediaSession.setMetadata({
+      title: payload.track,
+      artist: payload.artist,
+      album: payload.album || "Segond 21",
+    });
+    created = true;
+    lastKey = key;
+  }
+  await MediaSession.setPlaybackState({
+    playbackState: payload.isPlaying ? "playing" : "paused",
   });
+  const duration = Math.max(0, payload.duration || 0);
+  const position = Math.max(0, Math.min(duration || payload.elapsed || 0, payload.elapsed || 0));
+  if (Number.isFinite(duration) && duration > 0) {
+    await MediaSession.setPositionState({
+      duration,
+      position,
+      playbackRate: 1,
+    });
+  }
+}
 
-  const onAndroidEvent = (event: Event) => {
-    const detail = event as Event & { message?: string; position?: number };
-    handleMessage(String(detail.message || ""), handlers);
-  };
-  document.addEventListener("controlsNotification", onAndroidEvent);
-
-  return () => {
-    listening = false;
-    void iosHandle.remove();
-    document.removeEventListener("controlsNotification", onAndroidEvent);
-  };
+async function syncMusicControls(payload: ControlsPayload): Promise<void> {
+  const MusicControls = await getMusicControls();
+  const key = `${payload.track}|${payload.artist}|${Math.round(payload.duration)}`;
+  if (!created || key !== lastKey) {
+    await MusicControls.create({
+      track: payload.track,
+      artist: payload.artist,
+      album: payload.album || "Segond 21",
+      isPlaying: payload.isPlaying,
+      dismissable: true,
+      hasPrev: false,
+      hasNext: false,
+      hasClose: true,
+      hasSkipForward: true,
+      hasSkipBackward: true,
+      skipForwardInterval: 30,
+      skipBackwardInterval: 15,
+      hasScrubbing: false,
+      duration: Math.max(0, Math.floor(payload.duration || 0)),
+      elapsed: Math.max(0, Math.floor(payload.elapsed || 0)),
+      ticker: `Biblos · ${payload.track}`,
+      notificationIcon: "ic_launcher",
+    });
+    created = true;
+    lastKey = key;
+    return;
+  }
+  MusicControls.updateElapsed({
+    elapsed: Math.max(0, Math.floor(payload.elapsed || 0)),
+    isPlaying: payload.isPlaying,
+  });
 }
 
 /** Affiche / met à jour la notification média (foreground service). */
@@ -109,40 +275,26 @@ export async function syncBibleAudioControls(payload: ControlsPayload): Promise<
   if (!nativeReady()) return;
   try {
     await ensureNotificationPermission();
-    const MusicControls = await getControls();
-    const key = `${payload.track}|${payload.artist}|${Math.round(payload.duration)}`;
-    if (!created || key !== lastKey) {
-      await MusicControls.create({
-        track: payload.track,
-        artist: payload.artist,
-        album: payload.album || "Segond 21",
-        isPlaying: payload.isPlaying,
-        dismissable: true,
-        hasPrev: false,
-        hasNext: false,
-        hasClose: true,
-        hasSkipForward: true,
-        hasSkipBackward: true,
-        skipForwardInterval: 30,
-        skipBackwardInterval: 15,
-        hasScrubbing: false,
-        duration: Math.max(0, Math.floor(payload.duration || 0)),
-        elapsed: Math.max(0, Math.floor(payload.elapsed || 0)),
-        ticker: `Biblos · ${payload.track}`,
-        notificationIcon: "ic_launcher",
-      });
-      created = true;
-      lastKey = key;
+    const mode = await resolveBackend();
+    if (mode === "capgo") {
+      await syncCapgo(payload);
       return;
     }
-    MusicControls.updateElapsed({
-      elapsed: Math.max(0, Math.floor(payload.elapsed || 0)),
-      isPlaying: payload.isPlaying,
-    });
+    if (mode === "music-controls") {
+      await syncMusicControls(payload);
+    }
   } catch (err) {
     created = false;
     lastKey = "";
     console.warn("[bible-audio] syncBibleAudioControls", err);
+    if (backend === "capgo") {
+      backend = "music-controls";
+      try {
+        await syncMusicControls(payload);
+      } catch (fallbackErr) {
+        console.warn("[bible-audio] MusicControls fallback failed", fallbackErr);
+      }
+    }
   }
 }
 
@@ -151,8 +303,16 @@ export async function clearBibleAudioControls(): Promise<void> {
   created = false;
   lastKey = "";
   try {
-    const MusicControls = await getControls();
-    await MusicControls.destroy();
+    const mode = await resolveBackend();
+    if (mode === "capgo") {
+      const MediaSession = await getCapgo();
+      await MediaSession.setPlaybackState({ playbackState: "none" });
+      return;
+    }
+    if (mode === "music-controls") {
+      const MusicControls = await getMusicControls();
+      await MusicControls.destroy();
+    }
   } catch (err) {
     console.warn("[bible-audio] clearBibleAudioControls", err);
   }

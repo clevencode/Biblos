@@ -1013,6 +1013,12 @@ export function BibleReaderView({
         audio.currentTime = next;
         setAudioTime(next);
       },
+      onSeekTo: (seconds) => {
+        const max = Number.isFinite(audio.duration) ? audio.duration : seconds;
+        const next = Math.max(0, Math.min(max, seconds));
+        audio.currentTime = next;
+        setAudioTime(next);
+      },
       onDestroy: () => {
         audio.pause();
         void clearBibleAudioControls();
