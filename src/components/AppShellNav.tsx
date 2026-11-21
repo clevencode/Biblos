@@ -7,7 +7,7 @@ import {
   type CSSProperties,
   type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
-import { CONVEX_HUB_SIZE_PX } from "./ConvexBottomBarSurface";
+import { CONVEX_HUB_SIZE_PX } from "../ui/convexNavMetrics";
 import { ModeTabIcon } from "./ModeTabIcon";
 import { RadialUiBackdrop } from "./RadialUiBackdrop";
 import { YvIcon } from "./YvIcon";

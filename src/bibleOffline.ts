@@ -162,11 +162,6 @@ export async function resolveS21Book(usfm: string): Promise<S21BookJson | null> 
   }
 }
 
-/** @deprecated Alias assets — sem IDB. */
-export async function getOfflineBook(usfm: string): Promise<S21BookJson | null> {
-  return resolveS21Book(usfm);
-}
-
 export async function clearOfflineBible(): Promise<void> {
   const { invalidateVerseIndex } = await import("./bible/verseIndexCache");
   invalidateVerseIndex("s21");

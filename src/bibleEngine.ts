@@ -27,12 +27,3 @@ export function localS21BooksResponse() {
     error: undefined as string | undefined,
   };
 }
-
-/**
- * No-op assets-first: o APK já embute os JSON; não copia para IndexedDB.
- */
-export function ensureBibleIndexedFromBundle(
-  _onProgress?: (done: number, total: number, usfm: string) => void,
-): Promise<void> {
-  return Promise.resolve();
-}

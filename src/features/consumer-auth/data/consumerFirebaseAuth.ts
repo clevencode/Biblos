@@ -266,11 +266,6 @@ export async function upgradeOrSignInWithGoogle(): Promise<{
   return { user: mapUser(signed.user)!, linked: false };
 }
 
-/** @deprecated Prefer upgradeOrSignInWithGoogle */
-export async function signInWithGoogle(): Promise<void> {
-  await upgradeOrSignInWithGoogle();
-}
-
 export async function upgradeOrSignInWithEmail(
   email: string,
   password: string,

@@ -59,13 +59,6 @@ export type VerseStudyPanelProps = {
   onOpenRef?: (usfm: string, meta?: { refsScrollTop: number }) => void;
 };
 
-/** @deprecated Preferir VerseStudyPanel — mantido para compat. */
-export type VerseStudyDrawerProps = VerseStudyPanelProps & {
-  open: boolean;
-  onClose: () => void;
-  refLabel?: string;
-};
-
 const EMPTY_REFS: TskeRef[] = [];
 
 type RefCard = {
@@ -479,28 +472,5 @@ export function VerseStudyPanel({
         />
       ) : null}
     </div>
-  );
-}
-
-/** Compat: se ainda aberto como dialog, renderiza só o painel. */
-export function VerseStudyDrawer({
-  open,
-  versionId,
-  bookId,
-  chapterId,
-  verse,
-  books = [],
-  onOpenRef,
-}: VerseStudyDrawerProps) {
-  if (!open) return null;
-  return (
-    <VerseStudyPanel
-      versionId={versionId}
-      bookId={bookId}
-      chapterId={chapterId}
-      verse={verse}
-      books={books}
-      onOpenRef={onOpenRef}
-    />
   );
 }

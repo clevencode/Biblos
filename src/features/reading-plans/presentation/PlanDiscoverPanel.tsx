@@ -78,6 +78,7 @@ export function PlanDiscoverPanel({
   }, [plans, progressTick]);
 
   const showList = !isInitialLoading && plans.length > 0;
+  const showSkeleton = isInitialLoading && plans.length === 0;
   const showEmpty = !isInitialLoading && status === "ready" && plans.length === 0;
   const showError = status === "error" && plans.length === 0;
   const showUnconfigured = status === "unconfigured";
@@ -125,6 +126,33 @@ export function PlanDiscoverPanel({
         aria-live="polite"
       >
         <div className="plan-discover-surface">
+          {showSkeleton ? (
+            <div className="plan-discover-catalog" aria-hidden="true">
+              <ul className="plan-discover-grid is-stack" role="presentation">
+                {Array.from({ length: 4 }, (_, index) => (
+                  <li key={`plan-skel-${index}`}>
+                    <div className="plan-card is-skeleton" aria-hidden="true">
+                      <span className="plan-card-swatch" aria-hidden />
+                      <span className="plan-card-body">
+                        <span
+                          className="plan-card-skel-bar plan-card-skel-bar--title"
+                          style={{ width: `${72 - index * 6}%` }}
+                        />
+                        <span
+                          className={`plan-card-meta plan-card-meta--placeholder plan-card-skel-bar plan-card-skel-bar--meta`}
+                          style={{ width: `${42 + index * 4}%` }}
+                        />
+                      </span>
+                      <span className="plan-card-cta type-label" aria-hidden>
+                        <span className="plan-card-skel-bar plan-card-skel-bar--cta" />
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
           {showList ? (
             <div className="plan-discover-catalog">
               {splitCatalog ? (

@@ -55,10 +55,6 @@ const config: CapacitorConfig = {
       backgroundColor: "#0D1117",
       showSpinner: false,
     },
-    LocalNotifications: {
-      smallIcon: "ic_launcher",
-      iconColor: "#FFFFFF",
-    },
     FirebaseAuthentication: {
       // true = plugin só obtém idToken Google; sessão Firebase fica no JS SDK.
       skipNativeAuth: true,

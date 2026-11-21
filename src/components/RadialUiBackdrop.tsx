@@ -6,7 +6,7 @@
  */
 
 import { useEffect, type CSSProperties } from "react";
-import { CONVEX_HUB_SIZE_PX } from "./ConvexBottomBarSurface";
+import { CONVEX_HUB_SIZE_PX } from "../ui/convexNavMetrics";
 
 /** Clear = hub flutuante (+ folga caption); sem barra convexa. */
 type RadialUiBackdropProps = {

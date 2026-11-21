@@ -200,6 +200,11 @@ const FOCUS_DIM_CLEAR_PX = 6;
 
 const EMPTY_VERSES: number[] = [];
 
+/** Larguras % das linhas skeleton no cold open (anti-CLS). */
+const PASSAGE_OPENING_SKELETON_WIDTHS = [
+  92, 78, 88, 64, 84, 71, 90, 58, 86, 74, 81, 67,
+] as const;
+
 /** UI atom: hero ↔ compacto no topo (histerese). Devolve o próximo estado — React controla a classe. */
 function nextHeadCompact(compact: boolean, scrollTop: number): boolean {
   if (!compact && scrollTop >= BIBLE_HEAD_COMPACT_ENTER_PX) return true;
@@ -2045,6 +2050,7 @@ export function BibleReaderView({
   /**
    * Boot anti-CLS: splash só some com a 1.ª superfície de leitura pronta.
    * Loads seguintes usam a barra do topbar + stalePassage (sem esvaziar o corpo).
+   * Com aba inactiva: não promover catalogLocalReady só pelo catálogo (shell fallback + Plan skeleton).
    */
   useEffect(() => {
     const catalogLoading = catalogViewState.status === "loading";
@@ -2052,7 +2058,6 @@ export function BibleReaderView({
 
     if (!active) {
       setCatalogHydrating(catalogLoading);
-      setCatalogLocalReady(catalogReady);
       return;
     }
 
@@ -4031,7 +4036,23 @@ export function BibleReaderView({
           </div>
         ) : passage?.content ? (
           <p className="bible-text">{passage.content}</p>
-        ) : presentation.inFlight ? null : !isUsfmBookId(bookId) ? (
+        ) : presentation.isOpening ||
+          (presentation.inFlight && !passage?.verses?.length) ? (
+          <div className="bible-verses is-skeleton" aria-hidden="true">
+            {PASSAGE_OPENING_SKELETON_WIDTHS.map((widthPct, index) => (
+              <div
+                key={`opening-skel-${index}`}
+                className="bible-verse is-skeleton"
+              >
+                <sup className="bible-verse-num">{index + 1}</sup>
+                <span
+                  className="bible-verse-text"
+                  style={{ width: `${widthPct}%` }}
+                />
+              </div>
+            ))}
+          </div>
+        ) : !isUsfmBookId(bookId) ? (
           <p className="bible-yv-muted">{PASSAGE_LOADING_COPY.emptyPassage}</p>
         ) : null}
       </article>

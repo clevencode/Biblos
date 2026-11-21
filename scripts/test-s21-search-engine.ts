@@ -14,9 +14,21 @@ import {
   searchVersesCascadeOnIndex,
   stemFrenchToken,
   type IndexedVerse,
+  type SearchS21Options,
+  type S21SearchResult,
 } from "../src/bible/verseSearchEngine.ts";
 import { HT98_PROFILE, S21_FR_PROFILE } from "../src/bible/verseSearchProfiles.ts";
-import { searchS21Verses } from "../src/bible/s21SearchEngine.ts";
+
+function searchS21Verses(
+  verses: IndexedVerse[],
+  rawQuery: string,
+  options?: SearchS21Options,
+): S21SearchResult {
+  return searchVersesCascade(verses, rawQuery, {
+    limit: options?.limit,
+    profile: options?.profile ?? S21_FR_PROFILE,
+  });
+}
 
 function verse(
   usfm: string,
