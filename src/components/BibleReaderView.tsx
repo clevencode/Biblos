@@ -21,11 +21,14 @@ import {
 } from "../youversion/client";
 import { parseUsfmLocation, type ParsedPassage } from "../youversion/usfm";
 import {
-  BIBLE_TEXT_VERSIONS,
   isBibleTextVersionId,
   readBibleTextVersionPref,
   type BibleTextVersionId,
 } from "../bible/bibleVersions";
+import type {
+  ProfileOverlayRequest,
+  ProfileReadingChrome,
+} from "../bible/profileReadingChrome";
 import { versionedBibleId } from "../bible/passageForVersion";
 import {
   HT1998_BIBLE_META,
@@ -142,7 +145,7 @@ import {
   verseColorHueLabel,
   verseSwatchCheckInk,
 } from "../verseColors";
-import { resolveTheme, themePrefLabel, type ResolvedTheme, type ThemePref } from "../theme";
+import { resolveTheme, type ResolvedTheme } from "../theme";
 import { loadChapterMarks, setVerseMarks } from "../verseMarks";
 import type { Flashcard } from "../types";
 const STORAGE_KEY = BIBLE_READER_PREFS_KEY;
@@ -356,12 +359,13 @@ type BibleReaderViewProps = {
   onViewFlashcard?: (cardId: string) => void;
   /** Navbar shell: hide só com modal ativo (não ao scroll). */
   onReadingChromeChange?: (hidden: boolean) => void;
-  /** Préférence thème (clair / sombre). */
-  themePref?: ThemePref;
-  /** Toggle le thème (clair ↔ sombre). */
-  onCycleTheme?: () => void;
   /** Soft gate: exige compte après cota de marques guest. */
   requireAccountToMark?: boolean;
+  /** Pedido externo (perfil) para abrir history/marks quando o leitor fica activo. */
+  openOverlayRequest?: ProfileOverlayRequest | null;
+  onOpenOverlayRequestConsumed?: () => void;
+  /** Snapshot versão/offline para o painel de conta. */
+  onProfileReadingChromeChange?: (chrome: ProfileReadingChrome) => void;
   /** Demande login antes de marcar; retoma via authorizedMark*. */
   onRequestAccountToMark?: (payload: {
     color: string;
@@ -508,8 +512,6 @@ export function BibleReaderView({
   existingVerseCardColors,
   onUpdateVerseCardColor,
   onReadingChromeChange,
-  themePref = "system",
-  onCycleTheme,
   requireAccountToMark = false,
   onRequestAccountToMark,
   authorizedMarkSeq = 0,
@@ -520,6 +522,9 @@ export function BibleReaderView({
   onReadingHistoryChange,
   compactToolsMenu = false,
   compactViewport = false,
+  openOverlayRequest = null,
+  onOpenOverlayRequestConsumed,
+  onProfileReadingChromeChange,
 }: BibleReaderViewProps) {
   const { t } = useUiLocale();
   const pwaInstall = usePwaInstall();
@@ -2532,23 +2537,52 @@ export function BibleReaderView({
   }
   switchTextVersionRef.current = switchTextVersion;
 
+  useEffect(() => {
+    if (!active || !openOverlayRequest) return;
+    const request = openOverlayRequest;
+    restoreToolsFocusRef.current = false;
+    if (request === "history") {
+      restoreHistoryFocusRef.current = true;
+    }
+    setShareSheetOpen(false);
+    openOverlay({ type: request });
+    onOpenOverlayRequestConsumed?.();
+  }, [active, openOverlayRequest, openOverlay, onOpenOverlayRequestConsumed]);
+
+  useEffect(() => {
+    if (!onProfileReadingChromeChange) return;
+    onProfileReadingChromeChange({
+      textVersion,
+      htCatalogLoading,
+      htCatalogError,
+      versionOfflineReady,
+      offlineBusy,
+      offlineProgress: offlineProgress
+        ? { done: offlineProgress.done, total: offlineProgress.total }
+        : null,
+      offlineHidden: textVersion === "s21" && localBundledBible,
+      switchTextVersion: (id) => {
+        void switchTextVersionRef.current?.(id);
+      },
+      toggleOfflineBible: () => {
+        void toggleOfflineBible();
+      },
+    });
+  }, [
+    onProfileReadingChromeChange,
+    textVersion,
+    htCatalogLoading,
+    htCatalogError,
+    versionOfflineReady,
+    offlineBusy,
+    offlineProgress,
+    localBundledBible,
+  ]);
+
   function openWordSearchFromMenu() {
     restoreToolsFocusRef.current = false;
     setShareSheetOpen(false);
     openOverlay({ type: "word_search" });
-  }
-
-  function openHistoryFromMenu() {
-    restoreToolsFocusRef.current = false;
-    restoreHistoryFocusRef.current = true;
-    setShareSheetOpen(false);
-    openOverlay({ type: "history" });
-  }
-
-  function openMarksFromMenu() {
-    restoreToolsFocusRef.current = false;
-    setShareSheetOpen(false);
-    openOverlay({ type: "marks" });
   }
 
   function studyReturnSurfaceLabel(returnTo: StudyJumpReturnTo): string {
@@ -2901,8 +2935,6 @@ export function BibleReaderView({
 
   function renderToolsPopover(floatAnchor = false) {
     if (!toolsMenuOpen) return null;
-    const themeResolved = resolveTheme(themePref);
-    const themeLabel = themePrefLabel(themePref);
     return (
       <div
         className={`bible-yv-tools-popover top-floating-sheet is-open${
@@ -2922,107 +2954,6 @@ export function BibleReaderView({
             <span>{t("word.panel")}</span>
           </button>
         ) : null}
-        {ACTIVITY_UI_ENABLED ? (
-          <button
-            type="button"
-            role="menuitem"
-            className="bible-yv-tools-item"
-            onClick={openHistoryFromMenu}
-          >
-            <YvIcon name="history" className="bible-yv-tools-item-icon" />
-            <span>{t("history.title")}</span>
-          </button>
-        ) : null}
-        <button
-          type="button"
-          role="menuitem"
-          className="bible-yv-tools-item"
-          onClick={openMarksFromMenu}
-        >
-          <YvIcon name="style" className="bible-yv-tools-item-icon" />
-          <span>{t("profile.marks")}</span>
-        </button>
-        <div
-          className="bible-yv-tools-version"
-          role="group"
-          aria-label={t("bible.versionGroup")}
-        >
-          <span className="bible-yv-tools-version-label">{t("bible.version")}</span>
-          <div className="bible-yv-tools-version-options">
-            {BIBLE_TEXT_VERSIONS.map((version) => (
-              <button
-                key={version.id}
-                type="button"
-                className={`bible-yv-tools-version-chip${textVersion === version.id ? " is-on" : ""}${
-                  htCatalogLoading && version.id === "ht98" ? " is-busy" : ""
-                }`}
-                disabled={htCatalogLoading && version.id === "ht98"}
-                aria-pressed={textVersion === version.id}
-                title={version.title}
-                onClick={() => void switchTextVersion(version.id)}
-              >
-                {version.abbreviation}
-              </button>
-            ))}
-          </div>
-        </div>
-        {htCatalogError ? (
-          <p className="bible-yv-tools-version-msg" role="alert">
-            {htCatalogError}
-          </p>
-        ) : null}
-        {onCycleTheme ? (
-          <button
-            type="button"
-            role="menuitem"
-            className="bible-yv-tools-item"
-            onClick={() => onCycleTheme()}
-          >
-            {themeResolved === "light" ? (
-              <YvIcon name="light_mode" className="bible-yv-tools-item-icon" />
-            ) : (
-              <YvIcon name="dark_mode" className="bible-yv-tools-item-icon" />
-            )}
-            <span>{themeLabel}</span>
-          </button>
-        ) : null}
-        {textVersion === "s21" && useLocalBundledBible() ? null : (
-          <button
-            type="button"
-            role="menuitem"
-            className={`bible-yv-tools-item${versionOfflineReady ? " is-ready" : ""}${offlineBusy ? " is-busy" : ""}`}
-            onClick={() => {
-              if (!offlineBusy) closeToolsMenu();
-              void toggleOfflineBible();
-            }}
-            aria-label={
-              offlineBusy
-                ? t("bible.offlineBusy", {
-                    done: offlineProgress?.done ?? 0,
-                    total: offlineProgress?.total ?? (textVersion === "ht98" ? 2 : 66),
-                  })
-                : versionOfflineReady
-                  ? t("bible.offlineReady")
-                  : t("bible.offlineDownload")
-            }
-          >
-            {versionOfflineReady ? (
-              <YvIcon name="check_circle" filled className="bible-yv-tools-item-icon" />
-            ) : (
-              <YvIcon name="download" className="bible-yv-tools-item-icon" />
-            )}
-            <span>
-              {offlineBusy
-                ? t("bible.offlineDownloading", {
-                    done: offlineProgress?.done ?? 0,
-                    total: offlineProgress?.total ?? (textVersion === "ht98" ? 2 : 66),
-                  })
-                : versionOfflineReady
-                  ? t("bible.offlineReady")
-                  : t("bible.offlineDownload")}
-            </span>
-          </button>
-        )}
         {pwaInstall.menuMode === "apk-download" ? (
           <button
             type="button"

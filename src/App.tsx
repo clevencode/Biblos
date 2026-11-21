@@ -10,7 +10,11 @@ import {
 import type { ReadingPlan } from "./features/reading-plans";
 import { usePlanReadingSession } from "./features/reading-plans/presentation/hooks/usePlanReadingSession";
 import type { PlanFlowReturn } from "./features/reading-plans/presentation/PlanWorkspacePanel";
-import { recordBibleRead, appendActivity } from "./activityLog";
+import {
+  ACTIVITY_UI_ENABLED,
+  recordBibleRead,
+  appendActivity,
+} from "./activityLog";
 import { consumeShareRefFromUrl } from "./shareVerse";
 import {
   isOverFreeMarkQuota,
@@ -33,7 +37,6 @@ import { BIBLE_COMPACT_TOOLS_MENU } from "./bible/bibleChromeLayout";
 import {
   applyTheme,
   loadThemePref,
-  nextThemePref,
   saveThemePref,
   watchSystemTheme,
   type ThemePref,
@@ -41,6 +44,10 @@ import {
 import { syncNativeChrome } from "./nativeChrome";
 import { loadShellTab, saveShellTab, type ShellTab } from "./shellNav";
 import type { BibleTextVersionId } from "./bible/bibleVersions";
+import type {
+  ProfileOverlayRequest,
+  ProfileReadingChrome,
+} from "./bible/profileReadingChrome";
 import {
   languageForVersion,
   versionBadgeFor,
@@ -127,6 +134,10 @@ function BiblosConsumerApp() {
   const [activityTick, setActivityTick] = useState(0);
   /** Conta / préférences — painel aberto a partir da navbar. */
   const [accountOpen, setAccountOpen] = useState(false);
+  const [openOverlayRequest, setOpenOverlayRequest] =
+    useState<ProfileOverlayRequest | null>(null);
+  const [profileReadingChrome, setProfileReadingChrome] =
+    useState<ProfileReadingChrome | null>(null);
   const [workspacePlan, setWorkspacePlan] = useState<ReadingPlan | null>(null);
   const [workspaceJour, setWorkspaceJour] = useState<number | undefined>();
   const [workspaceResumeSeq, setWorkspaceResumeSeq] = useState(0);
@@ -252,13 +263,14 @@ function BiblosConsumerApp() {
     [openPlanAtJour, workspacePlan],
   );
 
-  const cycleTheme = useCallback(() => {
-    const next = nextThemePref(themePref);
-    setThemePref(next);
-    saveThemePref(next);
-    appendActivity("theme.change", { pref: next }, profile.id);
-    setActivityTick((n) => n + 1);
-  }, [profile.id, themePref]);
+  const requestProfileOverlay = useCallback(
+    (request: ProfileOverlayRequest) => {
+      setAccountOpen(false);
+      setTab("bible");
+      setOpenOverlayRequest(request);
+    },
+    [],
+  );
 
   const setTheme = useCallback(
     (pref: "light" | "dark") => {
@@ -464,6 +476,13 @@ function BiblosConsumerApp() {
                       activityTick={activityTick}
                       themePref={themePref}
                       onSetTheme={setTheme}
+                      readingChrome={profileReadingChrome}
+                      onOpenHistory={
+                        ACTIVITY_UI_ENABLED
+                          ? () => requestProfileOverlay("history")
+                          : undefined
+                      }
+                      onOpenMarks={() => requestProfileOverlay("marks")}
                       onRequestSignIn={() => {
                         setSignInVariant("upgrade");
                         setSignInOpen(true);
@@ -502,8 +521,6 @@ function BiblosConsumerApp() {
                       focusSeq={bibleFocusSeq}
                       active={bibleMode && !accountOpen}
                       compactViewport={narrow}
-                      themePref={themePref}
-                      onCycleTheme={cycleTheme}
                       planReading={
                         bibleMode && !accountOpen ? planReading : null
                       }
@@ -533,6 +550,11 @@ function BiblosConsumerApp() {
                       onReadingHistoryChange={() => setActivityTick((n) => n + 1)}
                       onReadingChromeChange={narrow ? setNavHidden : undefined}
                       compactToolsMenu={bibleCompactTools}
+                      openOverlayRequest={openOverlayRequest}
+                      onOpenOverlayRequestConsumed={() =>
+                        setOpenOverlayRequest(null)
+                      }
+                      onProfileReadingChromeChange={setProfileReadingChrome}
                     />
                   ) : null}
                 </div>

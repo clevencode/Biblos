@@ -1113,11 +1113,29 @@ html[data-theme="dark"] .mode-tabs {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  overflow: auto;
+  overflow: hidden;
   padding: 16px
-    max(16px, env(safe-area-inset-right, 0px))
+    max(var(--panel-gutter, 14px), env(safe-area-inset-right, 0px))
     calc(var(--mobile-bottom-chrome, 88px) + 16px)
-    max(16px, env(safe-area-inset-left, 0px));
+    max(var(--panel-gutter, 14px), env(safe-area-inset-left, 0px));
+}
+
+.account-shell-panel .home-config {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.account-shell-panel .home-config .bible-yv-tools-version-options {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.account-shell-panel .home-config .bible-yv-tools-version {
+  margin: 0;
+  padding: 8px 4px 4px;
 }
 
 /* Convex SVG (legado / órfão da nav) — mantido se reutilizado noutro sítio */
@@ -7225,8 +7243,8 @@ html[data-theme="dark"] .profile-download-btn {
   padding-bottom: calc(
     24px + env(safe-area-inset-bottom, 0px) + var(--shell-tab-clearance, 72px)
   );
-  padding-left: max(16px, env(safe-area-inset-left, 0px));
-  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-left: max(var(--panel-gutter, 14px), env(safe-area-inset-left, 0px));
+  padding-right: max(var(--panel-gutter, 14px), env(safe-area-inset-right, 0px));
   box-sizing: border-box;
 }
 
@@ -7618,15 +7636,13 @@ html[data-theme="dark"] .profile-download-btn {
   flex-direction: column;
   gap: 20px;
   width: 100%;
-  max-width: min(100%, 28rem);
-  margin: 0 auto;
   box-sizing: border-box;
   padding-top: 16px;
   padding-bottom: calc(
     28px + env(safe-area-inset-bottom, 0px) + var(--shell-tab-clearance, 72px)
   );
-  padding-left: max(16px, env(safe-area-inset-left, 0px));
-  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-left: max(var(--panel-gutter, 14px), env(safe-area-inset-left, 0px));
+  padding-right: max(var(--panel-gutter, 14px), env(safe-area-inset-right, 0px));
 }
 
 .home-head,
@@ -10441,15 +10457,9 @@ html[data-theme="dark"] .top-sheet-backdrop {
   margin: 0 !important;
   margin-inline: 0 !important;
   padding-top: 8px !important;
-  padding-right: max(
-    var(--mobile-gutter, 12px),
-    env(safe-area-inset-right, 0px)
-  ) !important;
+  padding-right: var(--top-sheet-inset-x-end) !important;
   padding-bottom: 0 !important;
-  padding-left: max(
-    var(--mobile-gutter, 12px),
-    env(safe-area-inset-left, 0px)
-  ) !important;
+  padding-left: var(--top-sheet-inset-x) !important;
   display: flex !important;
   flex-direction: column !important;
   gap: var(--bible-chrome-panel-gap, 6px);
