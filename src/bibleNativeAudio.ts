@@ -30,9 +30,15 @@ let ready = false;
 let handlers: NativeAudioHandlers = {};
 let timePoll: number | null = null;
 let notifPermissionAsked = false;
+/** Invalida prepares em voo quando há destroy / novo prepare. */
+let prepareEpoch = 0;
 
 export function isNativeBibleAudio(): boolean {
   return Capacitor.isNativePlatform() && Capacitor.getPlatform() === "android";
+}
+
+export function isNativeBibleAudioReady(): boolean {
+  return Boolean(activeId && ready);
 }
 
 /** Android 13+: POST_NOTIFICATIONS via Capawesome (sem arrancar FGS de playback). */
@@ -75,10 +81,11 @@ function startTimePoll() {
         if (Number.isFinite(currentTime)) handlers.onTime?.(currentTime);
       })
       .catch(() => undefined);
-  }, 500);
+  }, 250);
 }
 
 async function destroyCurrent(): Promise<void> {
+  prepareEpoch += 1;
   stopTimePoll();
   const id = activeId;
   ready = false;
@@ -100,6 +107,7 @@ async function destroyCurrent(): Promise<void> {
 /**
  * Prepara (ou troca) a fonte HTTPS e fica pronto para play.
  * Deve ser chamado com a Activity em foreground (Android 12+ FGS).
+ * Resume seek completa **antes** de marcar ready (evita play na posição 0).
  */
 export async function prepareNativeBibleAudio(
   params: NativePrepareParams,
@@ -109,7 +117,6 @@ export async function prepareNativeBibleAudio(
     throw new Error("Native bible audio only on Android");
   }
   handlers = nextHandlers;
-  await ensureNativeAudioNotificationPermission();
 
   const sameSource =
     activeId === params.audioId && preparedUrl === params.url && ready;
@@ -120,11 +127,13 @@ export async function prepareNativeBibleAudio(
         audioId: params.audioId,
         timeInSeconds: params.resumeAt,
       });
+      handlers.onTime?.(params.resumeAt);
     }
     return;
   }
 
   await destroyCurrent();
+  const epoch = prepareEpoch;
 
   const audioId = params.audioId;
   activeId = audioId;
@@ -143,45 +152,79 @@ export async function prepareNativeBibleAudio(
     seekBackwardTime: 15,
     seekForwardTime: 30,
   });
+  if (epoch !== prepareEpoch || activeId !== audioId) return;
+
+  let resolveReady!: () => void;
+  let rejectReady!: (err: Error) => void;
+  const readyGate = new Promise<void>((resolve, reject) => {
+    resolveReady = resolve;
+    rejectReady = reject;
+  });
 
   await AudioPlayer.onAudioReady({ audioId }, async () => {
-    ready = true;
+    if (epoch !== prepareEpoch || activeId !== audioId) return;
     try {
       const { duration } = await AudioPlayer.getDuration({ audioId });
-      handlers.onReady?.(duration);
+      if (epoch !== prepareEpoch || activeId !== audioId) return;
+
+      let seekTo: number | null = null;
       if (params.resumeAt != null && params.resumeAt > 2) {
-        const seekTo =
+        seekTo =
           Number.isFinite(duration) && duration > 0
             ? Math.min(params.resumeAt, Math.max(0, duration - 1))
             : params.resumeAt;
         await AudioPlayer.seek({ audioId, timeInSeconds: seekTo });
+        if (epoch !== prepareEpoch || activeId !== audioId) return;
         handlers.onTime?.(seekTo);
       }
-    } catch {
+
+      handlers.onReady?.(
+        Number.isFinite(duration) && duration > 0 ? duration : 0,
+      );
+      ready = true;
+      resolveReady();
+    } catch (err) {
       handlers.onReady?.(0);
+      ready = true;
+      resolveReady();
+      void err;
     }
   });
 
   await AudioPlayer.onAudioEnd({ audioId }, () => {
+    if (activeId !== audioId) return;
     stopTimePoll();
     handlers.onStatus?.("stopped");
     handlers.onEnd?.();
   });
 
   await AudioPlayer.onPlaybackStatusChange({ audioId }, ({ status }) => {
+    if (activeId !== audioId) return;
     handlers.onStatus?.(status);
     if (status === "playing") startTimePoll();
     else stopTimePoll();
   });
 
   await AudioPlayer.initialize({ audioId });
-
-  /* Aguarda onAudioReady (timeout defensivo para streams lentos). */
-  const deadline = Date.now() + 45000;
-  while (!ready && activeId === audioId && Date.now() < deadline) {
-    await new Promise((r) => window.setTimeout(r, 50));
+  if (epoch !== prepareEpoch || activeId !== audioId) {
+    rejectReady(new Error("Native audio prepare superseded"));
+    return;
   }
-  if (!ready || activeId !== audioId) {
+
+  const timeout = window.setTimeout(() => {
+    rejectReady(new Error("Native audio failed to become ready"));
+  }, 45000);
+
+  try {
+    await readyGate;
+  } catch (err) {
+    if (epoch !== prepareEpoch) return;
+    throw err;
+  } finally {
+    window.clearTimeout(timeout);
+  }
+
+  if (epoch !== prepareEpoch || activeId !== audioId || !ready) {
     throw new Error("Native audio failed to become ready");
   }
 }

@@ -59,6 +59,16 @@ Scripts úteis: `bible:s21`, `bible:study:export`, `bible:study:stage`, `icons:g
 5. Não misturar pasta `Downloads\Archiv1\Bible` (arquivo pessoal) com o repo — só importar via scripts/`data/`.
 6. Commits só quando o utilizador pedir; push a `master` só com pedido explícito.
 7. Preferir português na comunicação com o utilizador.
+8. **Mensagem final para commit manual:** após qualquer alteração de código/config no repo, terminar a resposta com um bloco pronto a copiar (assunto + corpo curto, foco no *porquê*), **sem** correr `git commit` até pedido explícito. Se não houver mudanças no working tree, omitir o bloco.
+
+### Formato do bloco de commit (fim da resposta)
+
+```text
+Commit (manual):
+<tipo>: <assunto em 1 linha>
+
+<1–2 frases do porquê / impacto>
+```
 
 ## Ao criar funcionalidade nova
 

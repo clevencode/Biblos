@@ -23,7 +23,7 @@ type AppShellNavProps = {
   active: ShellTab;
   onSelect: (tab: ShellTab) => void;
   immersiveHidden?: boolean;
-  /** Conta / préférences — item do arco radial (+ hub quando aberto). */
+  /** Conta / préférences — item da pilha (+ hub quando aberto). */
   accountOpen?: boolean;
   onToggleAccount?: () => void;
 };
@@ -35,23 +35,6 @@ type RadialItem = {
   labelKey: "shell.plan" | "shell.bible" | "shell.profile";
   panelId: string;
 };
-
-/**
- * Leque superior simétrico: centro em -90° (topo CSS), span 128°,
- * passo constante → espelho L/R com folga entre pills.
- */
-function arcAnglesDeg(
-  count: number,
-  spanDeg = 128,
-  centerDeg = -90,
-): number[] {
-  if (count <= 1) return [centerDeg];
-  const start = centerDeg - spanDeg / 2;
-  const step = spanDeg / (count - 1);
-  return Array.from({ length: count }, (_, i) => start + i * step);
-}
-
-const RADIUS_PX = 94;
 
 const ACCOUNT_ITEM: RadialItem = {
   id: "account",
@@ -90,25 +73,18 @@ export function AppShellNav({
           SHELL_TABS.find((item) => item.id === active)?.labelKey ??
             "shell.bible",
         );
-  /** Destinos no arco = tabs shell + conta, sem duplicar o hub. */
-  const arcItems = useMemo(() => {
-    const tabs = SHELL_TABS.map(shellTabItem);
-    const all: RadialItem[] = onToggleAccount
-      ? [...tabs, ACCOUNT_ITEM]
-      : tabs;
-    return all.filter((item) => item.id !== hubDest);
-  }, [hubDest, onToggleAccount]);
 
-  const arcAngles = useMemo(
-    () => arcAnglesDeg(arcItems.length),
-    [arcItems.length],
-  );
+  /** Ordem fixa: Bible · Plan · Profile. */
+  const stackItems = useMemo(() => {
+    const tabs = SHELL_TABS.map(shellTabItem);
+    return onToggleAccount ? [...tabs, ACCOUNT_ITEM] : tabs;
+  }, [onToggleAccount]);
 
   useEffect(() => {
     setShellRadialOpen(open);
   }, [open]);
 
-  /** Back stack / Esc pode fechar o radial via setShellRadialOpen(false). */
+  /** Back stack / Esc pode fechar via setShellRadialOpen(false). */
   useEffect(() => {
     return subscribeShellRadial((radialOpen) => {
       if (!radialOpen) setOpen(false);
@@ -125,7 +101,7 @@ export function AppShellNav({
   }, [open]);
 
   /**
-   * Single modal: toque na topbar do leitor cede o radial
+   * Single modal: toque na topbar do leitor cede a pilha
    * (não preventDefault — a ação da topbar segue).
    */
   useEffect(() => {
@@ -140,32 +116,30 @@ export function AppShellNav({
       document.removeEventListener("pointerdown", onPointerDown, true);
   }, [open]);
 
-  function onArcKey(event: ReactKeyboardEvent<HTMLDivElement>) {
+  function onStackKey(event: ReactKeyboardEvent<HTMLDivElement>) {
     if (!open) return;
-    if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
+    if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
     event.preventDefault();
-    const ids = arcItems.map((item) => item.id);
+    const ids = stackItems.map((item) => item.id);
     if (!ids.length) return;
     const focused = document.activeElement?.id?.replace(/^shell-dest-/, "") as
       | RadialDest
       | undefined;
     const index = Math.max(0, focused ? ids.indexOf(focused) : 0);
-    const next =
-      ids[
-        (index + (event.key === "ArrowRight" ? 1 : -1) + ids.length) %
-          ids.length
-      ]!;
+    const delta = event.key === "ArrowUp" ? -1 : 1;
+    const next = ids[(index + delta + ids.length) % ids.length]!;
     document.getElementById(`shell-dest-${next}`)?.focus();
   }
 
-  function closeRadial() {
+  function closeStack() {
     setOpen(false);
   }
 
   function selectDest(id: RadialDest) {
     setOpen(false);
+    if (id === hubDest) return;
     if (id === "account") {
-      if (!accountOpen) onToggleAccount?.();
+      onToggleAccount?.();
       return;
     }
     onSelect(id);
@@ -185,16 +159,14 @@ export function AppShellNav({
 
   return (
     <>
-      {/* Irmão de .mode-tabs (não filho): fixed cobre o viewport;
-          z-index abaixo da barra/arco. */}
       <RadialUiBackdrop
         isOpen={open}
-        onClose={closeRadial}
+        onClose={closeStack}
         closeLabel={t("common.close")}
       />
 
       <nav
-        className={`mode-tabs${open ? " is-open" : ""}${
+        className={`mode-tabs is-hub-pill${open ? " is-open" : ""}${
           immersiveHidden ? " is-immersive-hidden" : ""
         }${accountOpen ? " is-account-open" : ""}`}
         id={rootId}
@@ -219,39 +191,37 @@ export function AppShellNav({
           <div className="mode-tabs-stage">
             <div
               id={menuId}
-              className="mode-tabs-arc"
+              className="mode-tabs-arc mode-tabs-stack"
               role="menu"
               aria-label={t("shell.nav")}
               aria-hidden={!open}
-              onKeyDown={onArcKey}
+              onKeyDown={onStackKey}
             >
-              {arcItems.map((item, i) => {
+              {stackItems.map((item, i) => {
                 const label = t(item.labelKey);
-                const angleDeg = arcAngles[i] ?? -90;
-                const rad = (angleDeg * Math.PI) / 180;
-                const x = Math.cos(rad) * RADIUS_PX;
-                const y = Math.sin(rad) * RADIUS_PX;
+                const isCurrent = item.id === hubDest;
                 return (
                   <button
                     key={item.id}
                     type="button"
                     role="menuitem"
                     id={`shell-dest-${item.id}`}
-                    className="mode-tabs-item"
+                    className={`mode-tabs-item mode-tabs-stack-item${
+                      isCurrent ? " is-on" : ""
+                    }`}
                     style={
                       {
-                        ["--radial-x" as string]: `${x}px`,
-                        ["--radial-y" as string]: `${y}px`,
-                        ["--roulette-i" as string]: String(i),
+                        ["--stack-i" as string]: String(i),
                       } as CSSProperties
                     }
                     aria-label={label}
+                    aria-current={isCurrent ? "page" : undefined}
                     title={label}
                     tabIndex={open ? 0 : -1}
                     aria-hidden={!open}
                     onClick={() => selectDest(item.id)}
                   >
-                    {renderDestIcon(item.id, false)}
+                    {renderDestIcon(item.id, isCurrent)}
                     <span className="mode-tab-label">{label}</span>
                   </button>
                 );
@@ -261,7 +231,7 @@ export function AppShellNav({
             <button
               ref={hubRef}
               type="button"
-              className="mode-tabs-hub"
+              className="mode-tabs-hub mode-tabs-hub-pill"
               aria-expanded={open}
               aria-controls={menuId}
               aria-haspopup="menu"
@@ -277,16 +247,12 @@ export function AppShellNav({
               {open ? (
                 <YvIcon name="close" className="mode-tabs-hub-close" />
               ) : (
-                renderDestIcon(hubDest, true)
+                <>
+                  {renderDestIcon(hubDest, true)}
+                  <span className="mode-tabs-hub-pill-label">{hubLabel}</span>
+                </>
               )}
             </button>
-
-            <span
-              className="mode-tabs-hub-caption"
-              aria-hidden={open || immersiveHidden}
-            >
-              {hubLabel}
-            </span>
           </div>
         </div>
       </nav>

@@ -99,6 +99,14 @@ Você é um engenheiro de software sênior. Sua prioridade é preservar a integr
 - Funcionalidades complexas/nativas: indique se recomenda isolamento primeiro; após validação, mostre como integrar o padrão.
 - Sempre sinalize quando uma abordagem mencionada não for a mais adequada.
 - Após sucesso em isolamento + integração, sugira como salvar/reutilizar o módulo.
+- **Sempre** (quando houver ficheiros alterados no repo): fechar com mensagem de commit **manual** pronta a copiar — não executar `git commit` sem pedido explícito. Formato:
+
+```text
+Commit (manual):
+<tipo>: <assunto em 1 linha>
+
+<1–2 frases do porquê / impacto>
+```
 
 ## Proibições
 

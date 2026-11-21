@@ -958,8 +958,14 @@ html[data-theme="dark"] .sw-update-banner-cta {
     var(--mode-tabs-hub-size, 50px) + var(--mode-tabs-caption-slot, 22px) +
       var(--mode-tabs-float-gap, 14px) + env(safe-area-inset-bottom, 0px)
   );
-  /* Arco ≈ hub: leitura visual uniforme no radial aberto */
+  /* Largura partilhada: pill + modal */
+  --mode-tabs-pill-width: 11.5rem;
   --mode-tabs-item-size: 48px;
+  /* Abertura bruta: curta, sem spring */
+  --mode-tabs-open-ms: 90ms;
+  --mode-tabs-open-ease: cubic-bezier(0.4, 0, 1, 1);
+  --mode-tabs-close-ms: 70ms;
+  --mode-tabs-close-ease: cubic-bezier(0.4, 0, 1, 1);
   /* Canvas = superfície shell (--bible-nav-surface); top bar herda o mesmo */
   --mode-tabs-canvas: var(--bible-nav-surface, var(--bg));
   --mode-tabs-fg: var(--text);
@@ -1095,11 +1101,12 @@ html[data-theme="dark"] .mode-tabs {
   pointer-events: none;
   display: flex;
   justify-content: center;
-  align-items: flex-start;
+  align-items: flex-end;
 }
 
 .mode-tabs-chrome.is-hub-only {
   width: auto;
+  height: var(--mode-tabs-hub-size);
   margin-inline: auto;
 }
 
@@ -1115,7 +1122,8 @@ html[data-theme="dark"] .mode-tabs {
 }
 
 .mode-tabs.is-immersive-hidden .mode-tabs-arc,
-.mode-tabs.is-immersive-hidden .mode-tabs-hub-caption {
+.mode-tabs.is-immersive-hidden .mode-tabs-hub-caption,
+.mode-tabs.is-immersive-hidden .mode-tabs-hub-pill-label {
   opacity: 0;
   visibility: hidden;
 }
@@ -1279,12 +1287,13 @@ html[data-theme="dark"] {
   pointer-events: none;
   opacity: 0;
   will-change: opacity;
-  transition: opacity var(--bible-scrim-ms, 180ms) var(--top-sheet-ease, ease);
+  transition: opacity 70ms cubic-bezier(0.4, 0, 1, 1);
 }
 
 .radial-ui-backdrop.is-open {
   opacity: 1;
   pointer-events: auto;
+  transition: opacity 90ms linear;
 }
 
 /* Leitor: mesmo fog; clear 0 — superfície já está abaixo da topbar */
@@ -1378,31 +1387,66 @@ html.is-radial-open .bible-yv-tools-menu.is-float-br,
     visibility var(--yv-chrome-ms, 240ms) var(--yv-chrome-ease, ease);
 }
 
-/* Recuo suave só no bloco de texto (FABs ficam fora deste transform) */
+/* Overlays do leitor (passage roll / tools / …) podem escalar o texto;
+ * abertura do hub/shell NÃO recua o passage — margens ficam estáveis. */
 .bible-reader--yv .bible-passage {
   transition: transform var(--top-sheet-in-ms, 200ms) var(--top-sheet-ease, ease);
   transform-origin: center top;
 }
 
-html[data-radial-open="true"] .bible-reader--yv .bible-passage,
-html.is-radial-open .bible-reader--yv .bible-passage {
-  transform: scale(0.985);
-}
-
 .mode-tabs-stage {
+  --mode-tabs-unified-radius: calc(var(--mode-tabs-hub-size) / 2);
   position: relative;
   left: auto;
   top: auto;
   z-index: 2;
-  width: var(--mode-tabs-hub-size);
+  width: var(--mode-tabs-pill-width);
+  min-width: var(--mode-tabs-pill-width);
+  max-width: min(var(--mode-tabs-pill-width), calc(100vw - 2rem));
   height: var(--mode-tabs-hub-size);
   margin: 0;
   padding: 0;
+  overflow: hidden;
   transform: none;
   pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-end;
+  gap: 0;
+  box-sizing: border-box;
+  border-radius: var(--mode-tabs-unified-radius);
+  background: transparent;
+  transition:
+    padding var(--mode-tabs-close-ms) var(--mode-tabs-close-ease),
+    background var(--mode-tabs-close-ms) var(--mode-tabs-close-ease),
+    box-shadow var(--mode-tabs-close-ms) var(--mode-tabs-close-ease),
+    border-radius var(--mode-tabs-close-ms) var(--mode-tabs-close-ease),
+    gap var(--mode-tabs-close-ms) var(--mode-tabs-close-ease);
 }
 
-/* Hub = pill invertida (light: #0D1117 + ícone branco; dark: inverso) */
+/* Aberto: um único bloco pill (lista + ×) */
+.mode-tabs.is-open .mode-tabs-stage {
+  height: auto;
+  padding: 6px;
+  gap: 6px;
+  overflow: visible;
+  border-radius: calc(var(--mode-tabs-unified-radius) + 6px);
+  background: var(--mode-tabs-hub-bg);
+  color: var(--mode-tabs-hub-fg);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--ink) 8%, transparent),
+    0 10px 24px color-mix(in srgb, var(--ink) 16%, transparent);
+  pointer-events: auto;
+  transition:
+    padding var(--mode-tabs-open-ms) var(--mode-tabs-open-ease),
+    background var(--mode-tabs-open-ms) var(--mode-tabs-open-ease),
+    box-shadow var(--mode-tabs-open-ms) var(--mode-tabs-open-ease),
+    border-radius var(--mode-tabs-open-ms) var(--mode-tabs-open-ease),
+    gap var(--mode-tabs-open-ms) var(--mode-tabs-open-ease);
+}
+
+/* Hub = pill (ícone + label); abre pilha de destinos */
 .mode-tabs-hub {
   position: relative;
   z-index: 2;
@@ -1421,7 +1465,6 @@ html.is-radial-open .bible-reader--yv .bible-passage {
   -webkit-appearance: none;
   background: var(--mode-tabs-hub-bg);
   color: var(--mode-tabs-hub-fg);
-  /* Mesma profundidade da top bar / FABs */
   box-shadow:
     0 1px 0 color-mix(in srgb, var(--ink) 8%, transparent),
     0 6px 16px color-mix(in srgb, var(--ink) 12%, transparent) !important;
@@ -1431,19 +1474,100 @@ html.is-radial-open .bible-reader--yv .bible-passage {
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
   transition:
-    background var(--mode-tabs-ms) var(--mode-tabs-ease),
-    outline-color var(--mode-tabs-ms) var(--mode-tabs-ease),
-    box-shadow var(--mode-tabs-ms) var(--mode-tabs-ease),
-    transform 160ms var(--mode-tabs-ease);
+    background var(--mode-tabs-close-ms) var(--mode-tabs-close-ease),
+    outline-color var(--mode-tabs-close-ms) var(--mode-tabs-close-ease),
+    box-shadow var(--mode-tabs-close-ms) var(--mode-tabs-close-ease),
+    transform 100ms var(--mode-tabs-close-ease),
+    height var(--mode-tabs-close-ms) var(--mode-tabs-close-ease),
+    border-radius var(--mode-tabs-close-ms) var(--mode-tabs-close-ease);
+}
+
+.mode-tabs.is-open .mode-tabs-hub {
+  transition:
+    background var(--mode-tabs-open-ms) var(--mode-tabs-open-ease),
+    outline-color var(--mode-tabs-open-ms) var(--mode-tabs-open-ease),
+    box-shadow var(--mode-tabs-open-ms) var(--mode-tabs-open-ease),
+    transform 100ms var(--mode-tabs-open-ease),
+    height var(--mode-tabs-open-ms) var(--mode-tabs-open-ease),
+    border-radius var(--mode-tabs-open-ms) var(--mode-tabs-open-ease);
+}
+
+.mode-tabs-hub.mode-tabs-hub-pill {
+  width: 100%;
+  min-width: 0;
+  height: var(--mode-tabs-hub-size);
+  padding: 0 1rem 0 0.7rem;
+  border-radius: 999px;
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  box-sizing: border-box;
+}
+
+.mode-tabs-hub-pill-label {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-ui);
+  font-size: 0.8125rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  line-height: 1;
+}
+
+.mode-tabs.is-open .mode-tabs-hub.mode-tabs-hub-pill {
+  height: 44px;
+  min-height: 44px;
+  justify-content: center;
+  background: color-mix(
+    in srgb,
+    var(--mode-tabs-hub-fg) 14%,
+    var(--mode-tabs-hub-bg)
+  );
+  box-shadow: none !important;
+  border-radius: calc(var(--mode-tabs-unified-radius) - 2px);
+}
+
+.mode-tabs.is-open .mode-tabs-hub .mode-tabs-hub-close {
+  color: inherit;
+}
+
+.mode-tabs-item.mode-tabs-stack-item.is-on {
+  background: color-mix(
+    in srgb,
+    var(--mode-tabs-hub-fg) 14%,
+    var(--mode-tabs-hub-bg)
+  );
 }
 
 .mode-tabs-hub:hover {
   background: var(--mode-tabs-hub-hover);
 }
 
+.mode-tabs.is-open .mode-tabs-hub.mode-tabs-hub-pill:hover {
+  background: color-mix(
+    in srgb,
+    var(--mode-tabs-hub-fg) 20%,
+    var(--mode-tabs-hub-bg)
+  );
+}
+
 .mode-tabs-hub:active {
   transform: scale(0.96);
   background: var(--mode-tabs-hub-press);
+}
+
+.mode-tabs.is-open .mode-tabs-hub.mode-tabs-hub-pill:active {
+  transform: scale(0.98);
+  background: color-mix(
+    in srgb,
+    var(--mode-tabs-hub-fg) 26%,
+    var(--mode-tabs-hub-bg)
+  );
 }
 
 .mode-tabs-hub:focus-visible,
@@ -1452,20 +1576,13 @@ html.is-radial-open .bible-reader--yv .bible-passage {
   outline-offset: 3px;
 }
 
-/* Anel canvas: separa pills do fog (sombra de profundidade já no hub/itens) */
-.mode-tabs.is-open .mode-tabs-hub,
-.mode-tabs.is-open .mode-tabs-item {
-  outline: 1.5px solid color-mix(in srgb, var(--mode-tabs-canvas) 88%, transparent);
-  outline-offset: 0;
-}
-
 .mode-tabs.is-open .mode-tabs-hub:focus-visible,
-.mode-tabs.is-open .mode-tabs-item:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--accent, #5b7cfa) 70%, transparent);
-  outline-offset: 3px;
+.mode-tabs.is-open .mode-tabs-item.mode-tabs-stack-item:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--mode-tabs-hub-fg) 55%, transparent);
+  outline-offset: 2px;
 }
 
-/* Acima do radial-ui-backdrop (z:25) — barra + arco nítidos */
+/* Acima do radial-ui-backdrop (z:25) */
 .mode-tabs.is-open {
   z-index: calc(var(--bible-z-popover, 40) + 25);
 }
@@ -1473,14 +1590,6 @@ html.is-radial-open .bible-reader--yv .bible-passage {
 .mode-tabs-hub .mode-tab-icon,
 .mode-tabs-hub .mode-tabs-hub-close {
   color: inherit;
-  transition: transform 280ms cubic-bezier(0.4, 0, 0.2, 1);
-  transform: rotate(0deg);
-}
-
-.mode-tabs.is-open .mode-tabs-hub .mode-tabs-hub-close {
-  transform: rotate(90deg);
-  transition-duration: 420ms;
-  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .mode-tabs-hub-close {
@@ -1489,160 +1598,143 @@ html.is-radial-open .bible-reader--yv .bible-passage {
   font-size: var(--bible-chrome-trigger-icon, 20px);
 }
 
-/* Nome da interface activa — sob o hub (só com radial fechado) */
+/* Caption legado — o hub pill já mostra o label */
 .mode-tabs-hub-caption {
-  position: absolute;
-  left: 50%;
-  top: calc(100% + 5px);
-  z-index: 2;
-  max-width: 7.5rem;
-  margin: 0;
-  padding: 0;
-  transform: translateX(-50%);
-  color: var(--mode-tabs-fg-muted, var(--muted));
-  font-family: var(--font-ui);
-  font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  line-height: 1.2;
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  pointer-events: none;
-  opacity: 1;
-  transition: opacity 160ms var(--mode-tabs-ease);
+  display: none;
 }
 
-.mode-tabs.is-open .mode-tabs-hub-caption,
-.mode-tabs.is-immersive-hidden .mode-tabs-hub-caption {
-  opacity: 0;
-  transition-duration: 120ms;
-}
-
-/* Roleta: saída suave e curta; entrada um pouco mais longa */
-.mode-tabs-arc {
+/* Destinos dentro do mesmo pill — pop bruto (sem spring) */
+.mode-tabs-arc.mode-tabs-stack {
   position: absolute;
-  inset: 0;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  top: auto;
   z-index: 1;
-  pointer-events: none;
-  transform: rotate(-160deg) scale(0.24);
-  opacity: 0;
-  transition:
-    transform 280ms cubic-bezier(0.4, 0, 0.2, 1),
-    opacity 180ms ease-out;
-  will-change: transform, opacity;
-}
-
-.mode-tabs.is-open .mode-tabs-arc {
-  transform: rotate(0deg) scale(1);
-  opacity: 1;
-  transition:
-    transform 480ms cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 220ms ease-out;
-}
-
-/* Itens do arco = mesma lógica do hub (pill invertida paper/ink) */
-.mode-tabs-item {
-  --roulette-i: 0;
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: var(--mode-tabs-item-size);
-  height: var(--mode-tabs-item-size);
-  min-width: var(--mode-tabs-item-size);
-  min-height: var(--mode-tabs-item-size);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
   border: 0;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  appearance: none;
-  -webkit-appearance: none;
-  background: var(--mode-tabs-hub-bg);
-  color: var(--mode-tabs-hub-fg);
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
   box-shadow: none;
-  transform: translate(-50%, -50%) scale(0.35);
+  transform: translateY(4px);
+  transform-origin: center bottom;
   opacity: 0;
   pointer-events: none;
+  visibility: hidden;
   transition:
-    transform 260ms cubic-bezier(0.4, 0, 0.2, 1),
-    opacity 160ms ease-out,
-    background var(--mode-tabs-ms) var(--mode-tabs-ease),
-    color var(--mode-tabs-ms) var(--mode-tabs-ease),
-    box-shadow var(--mode-tabs-ms) var(--mode-tabs-ease);
-  transition-delay: 0ms;
+    transform var(--mode-tabs-close-ms) var(--mode-tabs-close-ease),
+    opacity var(--mode-tabs-close-ms) var(--mode-tabs-close-ease),
+    visibility 0ms linear var(--mode-tabs-close-ms);
+  will-change: transform, opacity;
+}
+
+.mode-tabs.is-open .mode-tabs-arc.mode-tabs-stack {
+  position: relative;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+  visibility: visible;
+  transition:
+    transform var(--mode-tabs-open-ms) var(--mode-tabs-open-ease),
+    opacity calc(var(--mode-tabs-open-ms) * 0.7) linear,
+    visibility 0ms;
+}
+
+/* Linhas dentro do pill unificado */
+.mode-tabs-item.mode-tabs-stack-item {
+  --stack-i: 0;
+  position: relative;
+  left: auto;
+  top: auto;
+  width: auto;
+  height: auto;
+  min-width: 100%;
+  min-height: 44px;
+  margin: 0;
+  padding: 0 0.9rem 0 0.7rem;
+  border: 0;
+  border-radius: calc(var(--mode-tabs-unified-radius) - 2px);
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.55rem;
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  color: var(--mode-tabs-hub-fg);
+  box-shadow: none !important;
+  outline: none;
+  transform: none;
+  opacity: 1;
+  pointer-events: none;
+  transition: background 140ms var(--mode-tabs-ease);
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
 
-.mode-tabs.is-open .mode-tabs-item {
-  box-shadow:
-    0 1px 0 color-mix(in srgb, var(--ink) 8%, transparent),
-    0 6px 16px color-mix(in srgb, var(--ink) 12%, transparent) !important;
-  transform: translate(
-      calc(-50% + var(--radial-x)),
-      calc(-50% + var(--radial-y))
-    )
-    scale(1);
-  opacity: 1;
+.mode-tabs.is-open .mode-tabs-item.mode-tabs-stack-item {
   pointer-events: auto;
-  transition:
-    transform 400ms cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 200ms ease-out,
-    background var(--mode-tabs-ms) var(--mode-tabs-ease),
-    color var(--mode-tabs-ms) var(--mode-tabs-ease),
-    outline-color var(--mode-tabs-ms) var(--mode-tabs-ease);
-  transition-delay: calc(36ms + var(--roulette-i) * 48ms);
 }
 
-.mode-tabs:not(.is-open) .mode-tabs-item {
-  transition-delay: calc(var(--roulette-i) * 18ms);
-}
-
-.mode-tabs-item.is-on {
+.mode-tabs-item.mode-tabs-stack-item:hover {
   color: var(--mode-tabs-hub-fg);
-  background: var(--mode-tabs-hub-bg);
-  border: 0;
+  background: color-mix(
+    in srgb,
+    var(--mode-tabs-hub-fg) 12%,
+    var(--mode-tabs-hub-bg)
+  );
 }
 
-.mode-tabs-item:hover {
-  color: var(--mode-tabs-hub-fg);
-  background: var(--mode-tabs-hub-hover);
+.mode-tabs.is-open .mode-tabs-item.mode-tabs-stack-item:active {
+  background: color-mix(
+    in srgb,
+    var(--mode-tabs-hub-fg) 20%,
+    var(--mode-tabs-hub-bg)
+  );
+  transform: none;
 }
 
-.mode-tabs.is-open .mode-tabs-item:active {
-  background: var(--mode-tabs-hub-press);
-  transform: translate(
-      calc(-50% + var(--radial-x)),
-      calc(-50% + var(--radial-y))
-    )
-    scale(0.94);
-  transition-duration: 120ms;
-}
-
-.mode-tabs-item .mode-tab-icon {
+.mode-tabs-item.mode-tabs-stack-item .mode-tab-icon {
   color: inherit;
+  opacity: 0.9;
+}
+
+.mode-tabs-item.mode-tabs-stack-item .mode-tab-label {
+  position: static;
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: nowrap;
+  border: 0;
+  font-family: var(--font-ui);
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
 }
 
 .mode-tab-icon {
   flex-shrink: 0;
   color: inherit;
   font-size: var(--bible-chrome-trigger-icon, 22px);
-}
-
-.mode-tab-label {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
 }
 
 .mode-tab-badge {
@@ -1671,39 +1763,13 @@ html[data-keyboard="open"] .panel-nota-body {
   );
 }
 
-.mode-tabs-item .mode-tab-icon {
-  color: inherit;
-}
-
-.mode-tab-icon {
-  flex-shrink: 0;
-  color: inherit;
-  font-size: var(--bible-chrome-trigger-icon, 22px);
-}
-
-.mode-tab-label {
-  max-width: 100%;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-family: var(--font-ui);
-  font-size: 0.625rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  line-height: 1.1;
-}
-
-.mode-tab-badge {
-  display: none;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .contextual-ui-backdrop,
   .radial-ui-backdrop,
   .mode-tabs,
+  .mode-tabs-arc.mode-tabs-stack,
   .mode-tabs-item,
+  .mode-tabs-item.mode-tabs-stack-item,
   .bible-reader--yv .bible-passage,
   .bible-reader--yv .bible-verse,
   .bible-passage-end-skip,
@@ -1747,8 +1813,6 @@ html[data-keyboard="open"] .panel-nota-body {
     transform: none;
   }
 
-  html[data-radial-open="true"] .bible-reader--yv .bible-passage,
-  html.is-radial-open .bible-reader--yv .bible-passage,
   .bible-reader--yv.is-passage-roll-open .bible-yv-read-surface.is-overlay-occluding .bible-passage,
   .bible-reader--yv.is-tools-menu-open .bible-yv-read-surface.is-overlay-occluding .bible-passage,
   .bible-reader--yv.is-history-open .bible-yv-read-surface.is-overlay-occluding .bible-passage,
@@ -14140,7 +14204,10 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   width: 100%;
   max-width: 40rem;
   margin: 0 auto;
-  padding: 52px 22px calc(96px + env(safe-area-inset-bottom, 0px));
+  /* Mesmo inset horizontal do modal Options / top-floating-sheet */
+  padding: 52px var(--top-sheet-inset-x-end, 14px)
+    calc(96px + env(safe-area-inset-bottom, 0px))
+    var(--top-sheet-inset-x, 14px);
   scroll-padding-top: 56px;
   scroll-padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
   border: 0;
@@ -14149,15 +14216,7 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
 }
 
 .app.is-bible-mode.is-narrow .bible-reader--yv .bible-passage {
-  /* Gutter extra para FABs laterais (48px + 12px margem) não cobrirem o texto */
-  padding-inline: max(
-      calc(var(--mobile-gutter, 12px) + 36px),
-      env(safe-area-inset-left, 0px)
-    )
-    max(
-      calc(var(--mobile-gutter, 12px) + 36px),
-      env(safe-area-inset-right, 0px)
-    );
+  padding-inline: var(--top-sheet-inset-x) var(--top-sheet-inset-x-end);
   padding-top: calc(var(--bible-top-chrome, 59px) + 12px);
   scroll-padding-top: calc(var(--bible-top-chrome, 59px) + 10px);
   padding-bottom: var(--bible-passage-clearance, calc(148px + env(safe-area-inset-bottom, 0px)));

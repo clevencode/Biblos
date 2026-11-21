@@ -111,11 +111,13 @@ import {
 } from "../bibleAudioControls";
 import {
   destroyNativeBibleAudio,
+  ensureNativeAudioNotificationPermission,
   getNativeActiveAudioId,
   getNativeBibleAudioTime,
   getNativePreparedUrl,
   isNativeBibleAudio,
   isNativeBibleAudioPlaying,
+  isNativeBibleAudioReady,
   pauseNativeBibleAudio,
   playNativeBibleAudio,
   prepareNativeBibleAudio,
@@ -974,6 +976,8 @@ export function BibleReaderView({
   useEffect(() => {
     /* Android: ExoPlayer nativo — sem HTMLAudio / Capgo. */
     if (isNativeBibleAudio()) {
+      /* Permissão de notificação fora do tap Play (anti-delay). */
+      void ensureNativeAudioNotificationPermission();
       void bindBibleAudioControls({
         onPlay: () => undefined,
         onPause: () => undefined,
@@ -1145,25 +1149,87 @@ export function BibleReaderView({
 
   useEffect(() => {
     const usfm = bookId.toUpperCase();
-    if (audioBookRef.current === usfm) return;
-
-    if (isNativeBibleAudio()) {
-      void (async () => {
-        if (audioBookRef.current) {
-          const t = await getNativeBibleAudioTime();
-          if (Number.isFinite(t)) saveAudioPosition(audioBookRef.current, t);
-        }
-        await destroyNativeBibleAudio();
-        audioBookRef.current = "";
-        setAudioActiveUsfm(null);
-        setAudioPlaying(false);
-        setAudioBusy(false);
-        setAudioTime(0);
-        setAudioDuration(0);
-      })();
+    if (audioBookRef.current === usfm && getNativeActiveAudioId() === usfm) {
       return;
     }
 
+    if (isNativeBibleAudio()) {
+      let cancelled = false;
+      void (async () => {
+        if (audioBookRef.current && audioBookRef.current !== usfm) {
+          const t = await getNativeBibleAudioTime();
+          if (Number.isFinite(t)) saveAudioPosition(audioBookRef.current, t);
+          await destroyNativeBibleAudio();
+          if (cancelled) return;
+          audioBookRef.current = "";
+          setAudioActiveUsfm(null);
+          setAudioPlaying(false);
+          setAudioBusy(false);
+          setAudioTime(0);
+          setAudioDuration(0);
+        }
+
+        if (!active || textVersion !== "s21") return;
+        const episode = audioByUsfm[usfm];
+        if (!episode?.audioUrl) return;
+        if (
+          getNativeActiveAudioId() === usfm &&
+          getNativePreparedUrl() === episode.audioUrl &&
+          isNativeBibleAudioReady()
+        ) {
+          return;
+        }
+
+        try {
+          const resume = loadAudioPositions()[usfm];
+          await prepareNativeBibleAudio(
+            {
+              audioId: usfm,
+              url: episode.audioUrl,
+              title: episode.title,
+              artist: audioPodcast,
+              albumTitle: "Segond 21",
+              resumeAt: resume && resume > 2 ? resume : undefined,
+            },
+            {
+              onReady: (duration) => {
+                if (Number.isFinite(duration) && duration > 0) {
+                  setAudioDuration(duration);
+                }
+              },
+              onStatus: (status) => {
+                setAudioPlaying(status === "playing");
+                if (status === "paused" || status === "stopped") {
+                  void getNativeBibleAudioTime().then((t) => {
+                    if (audioBookRef.current && Number.isFinite(t)) {
+                      saveAudioPosition(audioBookRef.current, t);
+                    }
+                  });
+                }
+              },
+              onTime: (currentTime) => {
+                setAudioTime(currentTime);
+              },
+              onEnd: () => {
+                setAudioPlaying(false);
+                if (audioBookRef.current) saveAudioPosition(audioBookRef.current, 0);
+                setAudioTime(0);
+              },
+            },
+          );
+          if (cancelled) return;
+          audioBookRef.current = usfm;
+          setAudioActiveUsfm(usfm);
+        } catch {
+          /* prepare-ahead: falha silenciosa — Play tenta de novo */
+        }
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    if (audioBookRef.current === usfm) return;
     const audio = audioRef.current;
     if (!audio) return;
     if (!audio.paused) {
@@ -1178,7 +1244,7 @@ export function BibleReaderView({
     setAudioTime(0);
     setAudioDuration(0);
     void clearBibleAudioControls();
-  }, [bookId]);
+  }, [bookId, audioByUsfm, audioPodcast, active, textVersion]);
 
   useEffect(() => {
     let cancelled = false;
@@ -3302,51 +3368,56 @@ export function BibleReaderView({
       try {
         setAudioBusy(true);
         setAudioActiveUsfm(usfm);
-        const resume = loadAudioPositions()[usfm];
-        const needPrepare =
-          getNativeActiveAudioId() !== usfm ||
-          getNativePreparedUrl() !== episode.audioUrl;
+        const alreadyReady =
+          getNativeActiveAudioId() === usfm &&
+          getNativePreparedUrl() === episode.audioUrl &&
+          isNativeBibleAudioReady();
 
-        if (needPrepare && audioBookRef.current && audioBookRef.current !== usfm) {
-          const t = await getNativeBibleAudioTime();
-          if (Number.isFinite(t)) saveAudioPosition(audioBookRef.current, t);
+        if (!alreadyReady) {
+          const resume = loadAudioPositions()[usfm];
+          if (audioBookRef.current && audioBookRef.current !== usfm) {
+            const t = await getNativeBibleAudioTime();
+            if (Number.isFinite(t)) saveAudioPosition(audioBookRef.current, t);
+          }
+
+          await prepareNativeBibleAudio(
+            {
+              audioId: usfm,
+              url: episode.audioUrl,
+              title: episode.title,
+              artist: audioPodcast,
+              albumTitle: "Segond 21",
+              resumeAt: resume && resume > 2 ? resume : undefined,
+            },
+            {
+              onReady: (duration) => {
+                if (Number.isFinite(duration) && duration > 0) {
+                  setAudioDuration(duration);
+                }
+              },
+              onStatus: (status) => {
+                setAudioPlaying(status === "playing");
+                if (status === "paused" || status === "stopped") {
+                  void getNativeBibleAudioTime().then((t) => {
+                    if (audioBookRef.current && Number.isFinite(t)) {
+                      saveAudioPosition(audioBookRef.current, t);
+                    }
+                  });
+                }
+              },
+              onTime: (currentTime) => {
+                setAudioTime(currentTime);
+              },
+              onEnd: () => {
+                setAudioPlaying(false);
+                if (audioBookRef.current) {
+                  saveAudioPosition(audioBookRef.current, 0);
+                }
+                setAudioTime(0);
+              },
+            },
+          );
         }
-
-        await prepareNativeBibleAudio(
-          {
-            audioId: usfm,
-            url: episode.audioUrl,
-            title: episode.title,
-            artist: audioPodcast,
-            albumTitle: "Segond 21",
-            resumeAt: resume && resume > 2 ? resume : undefined,
-          },
-          {
-            onReady: (duration) => {
-              if (Number.isFinite(duration) && duration > 0) {
-                setAudioDuration(duration);
-              }
-            },
-            onStatus: (status) => {
-              setAudioPlaying(status === "playing");
-              if (status === "paused" || status === "stopped") {
-                void getNativeBibleAudioTime().then((t) => {
-                  if (audioBookRef.current && Number.isFinite(t)) {
-                    saveAudioPosition(audioBookRef.current, t);
-                  }
-                });
-              }
-            },
-            onTime: (currentTime) => {
-              setAudioTime(currentTime);
-            },
-            onEnd: () => {
-              setAudioPlaying(false);
-              if (audioBookRef.current) saveAudioPosition(audioBookRef.current, 0);
-              setAudioTime(0);
-            },
-          },
-        );
         audioBookRef.current = usfm;
         await playNativeBibleAudio();
         setAudioPlaying(true);
