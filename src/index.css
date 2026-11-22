@@ -12454,7 +12454,8 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
 
 /* Hamburger + historique: fill sempre visível (par com search) */
 html[data-passage-bar-panel="test"] .bible-yv-tools-menu-btn,
-html[data-passage-bar-panel="test"] .bible-yv-history-btn {
+html[data-passage-bar-panel="test"] .bible-yv-history-btn,
+html[data-passage-bar-panel="test"] .bible-yv-pick-search-trigger {
   width: var(--bible-chrome-trigger-h);
   height: var(--bible-chrome-trigger-h);
   min-width: var(--bible-chrome-trigger-h);
@@ -12473,6 +12474,17 @@ html[data-passage-bar-panel="test"] .bible-yv-history-btn {
     background 0.18s ease,
     border-color 0.18s ease,
     outline-color 0.18s ease;
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-pick-search-trigger-icon {
+  width: var(--bible-chrome-trigger-icon, 22px);
+  height: var(--bible-chrome-trigger-icon, 22px);
+  font-size: var(--bible-chrome-trigger-icon, 22px);
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-pick-search-trigger:hover:not(:disabled),
+html[data-passage-bar-panel="test"] .bible-yv-pick-search-trigger.is-on {
+  background: var(--yv-chrome-hover);
 }
 
 html[data-passage-bar-panel="test"]
@@ -12637,46 +12649,7 @@ html[data-passage-bar-panel="test"]
   max-width: min(100%, 22rem);
 }
 
-/* Pick search: 🔍 na margem esquerda, pill ao centro, ✕ à direita. */
-html[data-passage-bar-panel="test"]
-  .bible-yv-passage-roll.is-open
-  .bible-yv-top-passage-bar.is-pick-flow.is-pick-search,
-html[data-passage-bar-panel="test"]
-  .app.is-bible-mode.is-narrow
-  .bible-yv-passage-roll.is-open
-  .bible-yv-top-passage-bar.is-pick-flow.is-pick-search {
-  width: 100%;
-  max-width: none;
-  grid-template-columns: var(--bible-passage-bar-title-h) minmax(0, 1fr)
-    var(--bible-passage-bar-title-h);
-  justify-items: stretch;
-}
-
-html[data-passage-bar-panel="test"]
-  .bible-yv-passage-roll.is-open
-  .bible-yv-top-passage-bar.is-pick-flow.is-pick-search
-  .bible-yv-top-passage-segments,
-html[data-passage-bar-panel="test"]
-  .bible-yv-passage-roll.is-open
-  .bible-yv-top-passage-bar.is-pick-flow.is-pick-search
-  .bible-yv-top-passage-segments.is-roll-open {
-  justify-self: center;
-  width: max-content;
-  max-width: 100%;
-}
-
-html[data-passage-bar-panel="test"]
-  .bible-yv-top.is-passage-roll-open
-  .bible-yv-passage-roll.is-open:has(.is-pick-search),
-html[data-passage-bar-panel="test"]
-  .bible-yv-top.is-free
-  .bible-yv-passage-roll.is-open:has(.is-pick-search) {
-  width: 100%;
-  max-width: none;
-  margin-inline: 0;
-  align-self: stretch;
-  flex: 1 1 auto;
-}
+/* Search no slot hamburger (.bible-yv-top-tools): roll mantém cluster [pill|✕]. */
 
 html[data-passage-bar-panel="test"] .app.is-bible-mode.is-narrow .bible-yv-top-passage-arrow,
 html[data-passage-bar-panel="test"] .bible-yv-top-passage-arrow {
@@ -12753,21 +12726,43 @@ html[data-passage-bar-panel="test"]
 }
 
 /*
- * Book picker search no topo (wire): [O] [Pesquisa……] [X]
- * Fechado: [🔍|pill|✕] · Aberto: [🔍|barra 999|✕]
+ * Barra pesquisa no cluster do roll (🔍 fica no slot hamburger).
+ * Aberto: [slot|barra 999|✕]
  */
 .bible-yv-top-passage-bar.is-pick-flow.is-pick-search-open {
   grid-template-columns: var(--bible-passage-bar-title-h, var(--hdr-size, 44px))
     minmax(0, 1fr)
     var(--bible-passage-bar-title-h, var(--hdr-size, 44px));
-  width: 100%;
-  max-width: none;
+  width: min(100%, 22rem);
+  max-width: min(100%, 22rem);
 }
 
-.bible-yv-top-passage-bar.is-pick-flow.is-pick-search
-  .bible-yv-top-passage-arrow.is-prev.is-on {
+.bible-yv-pick-search-trigger {
+  width: var(--hdr-size, var(--mobile-touch, 44px));
+  height: var(--hdr-size, var(--mobile-touch, 44px));
+  min-width: var(--hdr-size, var(--mobile-touch, 44px));
+  min-height: var(--hdr-size, var(--mobile-touch, 44px));
+  margin: 0;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: var(--yv-chrome-surface, var(--surface));
   color: var(--yv-text, var(--text));
-  background: color-mix(in srgb, var(--yv-text, var(--text)) 8%, transparent);
+  box-shadow: none;
+  cursor: pointer;
+}
+
+.bible-yv-pick-search-trigger-icon {
+  width: 22px;
+  height: 22px;
+  font-size: 22px;
+}
+
+.bible-yv-pick-search-trigger:hover:not(:disabled),
+.bible-yv-pick-search-trigger.is-on {
+  background: var(--yv-chrome-hover, color-mix(in srgb, var(--text) 8%, transparent));
 }
 
 .bible-yv-pick-top-search {
@@ -12779,7 +12774,6 @@ html[data-passage-bar-panel="test"]
   height: var(--hdr-size, var(--mobile-touch, 44px));
   min-height: var(--hdr-size, var(--mobile-touch, 44px));
   max-height: var(--hdr-size, var(--mobile-touch, 44px));
-  margin-inline: 4px;
   padding: 0 14px;
   box-sizing: border-box;
   border-radius: 999px;
@@ -13048,17 +13042,6 @@ html[data-passage-bar-panel="test"]
     var(--bible-passage-bar-title-h);
 }
 
-html[data-passage-bar-panel="test"]
-  .bible-yv-passage-roll.is-open
-  .bible-yv-top-passage-bar.is-pick-flow.is-pick-search,
-html[data-passage-bar-panel="test"]
-  .bible-yv-passage-roll.is-open
-  .bible-yv-top-passage-bar.is-roll-head.is-pick-search {
-  width: 100%;
-  max-width: none;
-  grid-template-columns: var(--bible-passage-bar-title-h) minmax(0, 1fr)
-    var(--bible-passage-bar-title-h);
-}
 
 html[data-passage-bar-panel="test"] .bible-yv-top-passage-bar.is-chip-trigger,
 html[data-passage-bar-panel="test"]
@@ -13477,20 +13460,6 @@ html[data-passage-bar-panel="test"]
   max-height: var(--hdr-size, var(--mobile-touch, 44px));
 }
 
-.bible-yv-top-passage-bar.is-pick-flow.is-pick-search {
-  width: 100%;
-  max-width: none;
-  grid-template-columns: var(--bible-passage-bar-title-h, var(--hdr-size, 44px))
-    minmax(0, 1fr)
-    var(--bible-passage-bar-title-h, var(--hdr-size, 44px));
-}
-
-.bible-yv-top-passage-bar.is-pick-flow.is-pick-search
-  .bible-yv-top-passage-segments {
-  justify-self: center;
-  width: max-content;
-  max-width: 100%;
-}
 
 .bible-yv-top-passage-segments.is-roll-open {
   display: inline-flex;

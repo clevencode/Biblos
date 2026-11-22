@@ -1835,50 +1835,28 @@ export function BibleReaderView({
           }${pickerChrome.chipsHydrating ? " is-hydrating" : ""}`}
         >
           {rollOpen ? (
-            showPickSearch ? (
-              <button
-                type="button"
-                className={`bible-yv-top-passage-arrow is-prev is-pick-side is-shown${
-                  pickSearchExpanded ? " is-on" : ""
-                }`}
-                onClick={togglePickSearch}
-                aria-pressed={pickSearchExpanded}
-                aria-label={
-                  pickSearchExpanded
-                    ? `${t("common.close")} — ${t("searchBooks.search")}`
-                    : t("searchBooks.search")
-                }
-                title={t("searchBooks.search")}
-              >
-                <YvIcon
-                  name="search"
-                  className="bible-yv-top-passage-arrow-icon"
-                />
-              </button>
-            ) : (
-              <button
-                type="button"
-                className={`bible-yv-top-passage-arrow is-prev is-pick-side${
-                  showPickBack ? " is-shown" : " is-hidden-slot"
-                }`}
-                onClick={handlePickBack}
-                disabled={!showPickBack}
-                tabIndex={showPickBack ? undefined : -1}
-                aria-hidden={!showPickBack}
-                aria-label={
-                  showPickBack
-                    ? passageStep === "verse"
-                      ? `Retour aux chapitres de ${bookTitle}`
-                      : "Retour à la liste des livres"
-                    : undefined
-                }
-              >
-                <YvIcon
-                  name="chevron_left"
-                  className="bible-yv-top-passage-arrow-icon"
-                />
-              </button>
-            )
+            <button
+              type="button"
+              className={`bible-yv-top-passage-arrow is-prev is-pick-side${
+                showPickBack ? " is-shown" : " is-hidden-slot"
+              }`}
+              onClick={handlePickBack}
+              disabled={!showPickBack}
+              tabIndex={showPickBack ? undefined : -1}
+              aria-hidden={!showPickBack}
+              aria-label={
+                showPickBack
+                  ? passageStep === "verse"
+                    ? `Retour aux chapitres de ${bookTitle}`
+                    : "Retour à la liste des livres"
+                  : undefined
+              }
+            >
+              <YvIcon
+                name="chevron_left"
+                className="bible-yv-top-passage-arrow-icon"
+              />
+            </button>
           ) : (
             renderTopPassageArrow(-1, hideSkipArrows)
           )}
@@ -4283,10 +4261,30 @@ export function BibleReaderView({
         aria-busy={presentation.inFlight || undefined}
       >
         <div className="bible-yv-top-tools">
-          {!pickerOpen &&
-          (!compactToolsMenu || isPassageBarPanelCompactTopbar())
-            ? renderTopToolsMenu("header")
-            : null}
+          {passageRollOpen && passageStep === "book" ? (
+            <button
+              type="button"
+              className={`bible-yv-pick-search-trigger${
+                pickSearchOpen ? " is-on" : ""
+              }`}
+              onClick={togglePickSearch}
+              aria-pressed={pickSearchOpen}
+              aria-label={
+                pickSearchOpen
+                  ? `${t("common.close")} — ${t("searchBooks.search")}`
+                  : t("searchBooks.search")
+              }
+              title={t("searchBooks.search")}
+            >
+              <YvIcon
+                name="search"
+                className="bible-yv-pick-search-trigger-icon"
+              />
+            </button>
+          ) : !pickerOpen &&
+            (!compactToolsMenu || isPassageBarPanelCompactTopbar()) ? (
+            renderTopToolsMenu("header")
+          ) : null}
         </div>
         {!menuJourneyOpen && !showCreateCard ? (
           discoverySplitSearch ? (
