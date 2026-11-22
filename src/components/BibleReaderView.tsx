@@ -213,6 +213,19 @@ function verseInSelection(sel: VerseSelection | null, number: number): boolean {
   return Boolean(sel?.includes(number));
 }
 
+function selectionEdgeClassFromSet(
+  sel: ReadonlySet<number>,
+  number: number,
+): string {
+  if (!sel.has(number)) return "";
+  const prev = sel.has(number - 1);
+  const next = sel.has(number + 1);
+  if (!prev && !next) return "is-sel-single";
+  if (!prev && next) return "is-sel-start";
+  if (prev && !next) return "is-sel-end";
+  return "is-sel-mid";
+}
+
 /** Regroupe 7,8,9,12 → [{7,9},{12,12}]. */
 function verseRuns(verses: number[]): Array<{ start: number; end: number }> {
   const sorted = sortVerses(verses);
@@ -291,50 +304,42 @@ function verseNumbersWithCards(
   return found;
 }
 
-function selectionEdgeClass(sel: VerseSelection | null, number: number): string {
-  if (!verseInSelection(sel, number)) return "";
-  const prev = verseInSelection(sel, number - 1);
-  const next = verseInSelection(sel, number + 1);
-  if (!prev && !next) return "is-sel-single";
-  if (!prev && next) return "is-sel-start";
-  if (prev && !next) return "is-sel-end";
-  return "is-sel-mid";
-}
-
 type BibleVerseButtonProps = {
   verse: { number: number; text: string };
-  selection: VerseSelection | null;
-  highlightVerse: number | null;
+  selected: boolean;
+  selectionEdge: string;
+  hasSelection: boolean;
+  isFocus: boolean;
+  isRangeAnchor: boolean;
   focusVerseLo: number | null;
   focusVerseHi: number | null;
   deeplinkEnabled: boolean;
-  rangeStart: number | null;
   planRangeActive: boolean;
   planVerseRangeFull: boolean;
   planVerseRangeLo: number | null;
   planVerseRangeHi: number | null;
-  chapterMarks: ReadonlyMap<number, string>;
-  chapterCardVerses: ReadonlySet<number>;
-  uiTheme: ResolvedTheme;
+  markDisplay: string | null;
+  hasFlashcard: boolean;
   highlightRef: { current: HTMLElement | null };
   onSelect: (number: number) => void;
 };
 
 const BibleVerseButton = memo(function BibleVerseButton({
   verse,
-  selection,
-  highlightVerse,
+  selected,
+  selectionEdge,
+  hasSelection,
+  isFocus,
+  isRangeAnchor,
   focusVerseLo,
   focusVerseHi,
   deeplinkEnabled,
-  rangeStart,
   planRangeActive,
   planVerseRangeFull,
   planVerseRangeLo,
   planVerseRangeHi,
-  chapterMarks,
-  chapterCardVerses,
-  uiTheme,
+  markDisplay,
+  hasFlashcard,
   highlightRef,
   onSelect,
 }: BibleVerseButtonProps) {
@@ -347,7 +352,7 @@ const BibleVerseButton = memo(function BibleVerseButton({
           verse.number <= planVerseRangeHi)),
   );
   const inDeeplink = Boolean(
-    !selection?.length &&
+    !hasSelection &&
       focusVerseLo != null &&
       focusVerseHi != null &&
       verse.number >= focusVerseLo &&
@@ -355,21 +360,6 @@ const BibleVerseButton = memo(function BibleVerseButton({
       deeplinkEnabled,
   );
   const inRange = inPlanRange || inDeeplink;
-  const isRangeAnchor = selection?.length
-    ? highlightVerse === verse.number
-    : rangeStart != null
-      ? verse.number === rangeStart
-      : highlightVerse === verse.number;
-  const active = selection?.length
-    ? highlightVerse === verse.number
-    : isRangeAnchor;
-  const selected = verseInSelection(selection, verse.number);
-  const markColor = chapterMarks.get(verse.number);
-  const markDisplay = markColor
-    ? adaptVerseColorForTheme(markColor, uiTheme)
-    : null;
-  const selectionEdge = selectionEdgeClass(selection, verse.number);
-  const hasFlashcard = chapterCardVerses.has(verse.number);
   const titleLike = isLikelyVerseTitle(verse.text, verse.number);
 
   return (
@@ -377,7 +367,7 @@ const BibleVerseButton = memo(function BibleVerseButton({
       type="button"
       className={[
         "bible-verse",
-        active ? "is-focus" : "",
+        isFocus ? "is-focus" : "",
         inRange ? "is-in-range" : "",
         selected ? "is-selected" : "",
         markDisplay ? "is-marked" : "",
@@ -708,6 +698,8 @@ export function BibleReaderView({
   /** Salto no picker: prioriza o verso saltado sobre a janela do plano. */
   const preferJumpFocusRef = useRef(false);
   const [selection, setSelection] = useState<VerseSelection | null>(null);
+  const selectionRef = useRef<VerseSelection | null>(null);
+  selectionRef.current = selection;
   const [passageUiError, setPassageUiError] = useState<string | null>(null);
   const [fontSize, setFontSize] = useState(() => {
     const n = Number(prefs.fontSize);
@@ -735,6 +727,8 @@ export function BibleReaderView({
   const [verseActionsTab, setVerseActionsTab] = useState<"verse" | "refs">(
     "verse",
   );
+  /** Mount lazy do painel Référence (evita trabalho até a 1.ª visita). */
+  const [refsPanelMounted, setRefsPanelMounted] = useState(false);
   /** Pilha LIFO de estudo (Aller au verset) — só pop / × a limpam. */
   const {
     top: studyJumpTop,
@@ -1603,7 +1597,7 @@ export function BibleReaderView({
     if (shareSheetOpen || historyOpen) return;
     // Side-effects fora do updater (React pode correr updaters na fase de render).
     preferJumpFocusRef.current = false;
-    const current = selection;
+    const current = selectionRef.current;
     const next = new Set(current ?? []);
     if (next.has(number)) {
       /* Mesma lógica do pai: desmarcar o último fecha o Options full-bleed. */
@@ -1623,8 +1617,14 @@ export function BibleReaderView({
     } else {
       const sorted = sortVerses(next);
       const mode: VerseScrollMode = current?.length ? "nearest" : "start";
-      pendingScrollVerse.current = { number, mode, seq: ++verseScrollSeq.current };
-      setHighlightVerse(number);
+      const stillOn = next.has(number);
+      const anchor = stillOn ? number : sorted[sorted.length - 1]!;
+      pendingScrollVerse.current = {
+        number: anchor,
+        mode,
+        seq: ++verseScrollSeq.current,
+      };
+      setHighlightVerse(anchor);
       setHighlightVerseEnd(null);
       setFocusDim(false);
       if (!current?.length) setCardColor(loadPreferredVerseColor());
@@ -1642,7 +1642,6 @@ export function BibleReaderView({
     hasActiveModal,
     historyOpen,
     openOverlay,
-    selection,
     shareSheetOpen,
     takeOverlayDismissSwallow,
   ]);
@@ -2398,6 +2397,10 @@ export function BibleReaderView({
     passageVerseNumbers: passage?.verses?.map((verse) => verse.number),
   });
   const selectedVerses = selection ?? EMPTY_VERSES;
+  const selectedVerseSet = useMemo(
+    () => new Set(selectedVerses),
+    [selectedVerses],
+  );
   const selectedVerseText =
     selectedVerses.length && passage?.verses
       ? formatSelectedVersesForShare(
@@ -2599,14 +2602,22 @@ export function BibleReaderView({
   const deeplinkEnabled = jumpFocus || !planReading || !onPlanStep;
 
   useEffect(() => {
-    if (!showCreateCard) return;
+    if (!showCreateCard) {
+      setRefsPanelMounted(false);
+      return;
+    }
     if (preferRefsTabOnOpenRef.current) {
       /* Não consumir o flag aqui: o reload do capítulo pode piscar showCreateCard. */
+      setRefsPanelMounted(true);
       setVerseActionsTab("refs");
       return;
     }
     setVerseActionsTab("verse");
   }, [showCreateCard]);
+
+  useEffect(() => {
+    if (verseActionsTab === "refs") setRefsPanelMounted(true);
+  }, [verseActionsTab]);
 
   /* Após pop: reabrir a superfície de origem só com capítulo carregado. */
   useEffect(() => {
@@ -2657,32 +2668,40 @@ export function BibleReaderView({
     textVersion,
   ]);
 
-  /** Lista Verset: abrir/ancorar no verso seleccionado (não preso ao v.1). */
+  /** Lista Verset: sempre exibir o verso clicado (highlight) no scroller do modal. */
   useLayoutEffect(() => {
     const panelOpen = showCreateCard && verseActionsTab === "verse";
     if (!panelOpen) {
       verseSelectAnchoredRef.current = false;
       return;
     }
-    const anchor =
-      highlightVerse ??
-      selectedVerses[selectedVerses.length - 1] ??
-      selectedVerses[0];
+    const anchor = highlightVerse;
     if (anchor == null) return;
     const list = verseSelectListRef.current;
     if (!list) return;
-    const row = list.querySelector(
-      `[data-verse-select="${anchor}"]`,
-    ) as HTMLElement | null;
-    if (!row) return;
-    const firstPaint = !verseSelectAnchoredRef.current;
-    verseSelectAnchoredRef.current = true;
-    row.scrollIntoView({
-      block: firstPaint ? "center" : "nearest",
-      inline: "nearest",
-    });
-  }, [showCreateCard, verseActionsTab, highlightVerse, selectedVerses]);
 
+    const scrollToAnchor = () => {
+      const row = list.querySelector(
+        `[data-verse-select="${anchor}"]`,
+      ) as HTMLElement | null;
+      if (!row) return false;
+      const firstPaint = !verseSelectAnchoredRef.current;
+      verseSelectAnchoredRef.current = true;
+      row.scrollIntoView({
+        block: firstPaint ? "center" : "nearest",
+        inline: "nearest",
+      });
+      return true;
+    };
+
+    if (scrollToAnchor()) return;
+    const raf = requestAnimationFrame(() => {
+      scrollToAnchor();
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [showCreateCard, verseActionsTab, highlightVerse]);
+
+  /** Altura do sheet → clearance da passagem; rAF + observe estável (sem recriar a cada select). */
   useLayoutEffect(() => {
     const reader = readerRef.current;
     const sheet = verseActionsSheetRef.current;
@@ -2691,24 +2710,27 @@ export function BibleReaderView({
       reader.style.removeProperty("--verse-actions-sheet-h");
       return;
     }
+    let raf = 0;
+    let lastH = -1;
     const apply = () => {
-      reader.style.setProperty("--verse-actions-sheet-h", `${sheet.offsetHeight}px`);
+      if (raf) cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        const h = sheet.offsetHeight;
+        if (h === lastH) return;
+        lastH = h;
+        reader.style.setProperty("--verse-actions-sheet-h", `${h}px`);
+      });
     };
     apply();
     const ro = new ResizeObserver(apply);
     ro.observe(sheet);
     return () => {
+      if (raf) cancelAnimationFrame(raf);
       ro.disconnect();
       reader.style.removeProperty("--verse-actions-sheet-h");
     };
-  }, [
-    showCreateCard,
-    selectedVerses.length,
-    cardMsg,
-    selectionHasMark,
-    existingVerseCard,
-    narrowChrome,
-  ]);
+  }, [showCreateCard]);
   const surfaceChrome = useMemo(
     () =>
       readerSurfaceChrome({
@@ -3293,7 +3315,7 @@ export function BibleReaderView({
                     aria-label={t("verse.selectTitle")}
                   >
                     {passage.verses.map((verse) => {
-                      const on = selectedVerses.includes(verse.number);
+                      const on = selectedVerseSet.has(verse.number);
                       const preview = String(verse.text || "").trim();
                       const markColor = chapterMarks.get(verse.number);
                       const markDisplay = markColor
@@ -3349,7 +3371,7 @@ export function BibleReaderView({
                 verseActionsTab === "refs" ? " is-active" : ""
               }`}
             >
-              {selectedVerses[0] != null ? (
+              {refsPanelMounted && selectedVerses[0] != null ? (
                 <VerseStudyPanel
                   versionId={textVersion}
                   bookId={bookId}
@@ -3453,18 +3475,17 @@ export function BibleReaderView({
     const nestedFromMenu = wordSearchOpen || historyOpen || marksOpen;
     const verseOptionsOpen = showCreateCard;
     const menuSheetOpen = toolsMenuOpen || nestedFromMenu || verseOptionsOpen;
-    /** Menu / Options: ✕ à esquerda (sem seta); jornadas: ←. */
+    /** Menu: ✕ à esquerda (sem seta). Options: ✕ à direita. Jornadas: ←. */
     const isMenuRoot = Boolean(toolsMenuOpen && !nestedFromMenu && !verseOptionsOpen);
     const isOptionsRoot = Boolean(verseOptionsOpen);
-    const showSectionBack = menuSheetOpen;
-    /** History / marques / search / menu / options: sem ✕ à direita. */
+    const showSectionBack = menuSheetOpen && !isOptionsRoot;
+    /** History / marques / search / menu: sem ✕ à direita. Options: ✕ à direita. */
     const showSectionClose =
       menuSheetOpen &&
       !historyOpen &&
       !marksOpen &&
       !wordSearchOpen &&
-      !isMenuRoot &&
-      !isOptionsRoot;
+      !isMenuRoot;
     const sectionPillLabel = verseOptionsOpen
       ? t("verse.passageOptions")
       : marksOpen
@@ -3556,24 +3577,20 @@ export function BibleReaderView({
           className={`bible-yv-top-passage-arrow is-prev is-pick-side${
             showSectionBack ? " is-shown" : " is-hidden-slot"
           }`}
-          onClick={
-            isMenuRoot || isOptionsRoot
-              ? handleSectionClose
-              : handleSectionBack
-          }
+          onClick={isMenuRoot ? handleSectionClose : handleSectionBack}
           disabled={!showSectionBack}
           tabIndex={showSectionBack ? undefined : -1}
           aria-hidden={!showSectionBack}
           aria-label={
             showSectionBack
-              ? isMenuRoot || isOptionsRoot
+              ? isMenuRoot
                 ? `${t("common.close")} — ${sectionPillLabel}`
                 : `${t("common.back")} — ${sectionPillLabel}`
               : undefined
           }
         >
           <YvIcon
-            name={isMenuRoot || isOptionsRoot ? "close" : "chevron_left"}
+            name={isMenuRoot ? "close" : "chevron_left"}
             className="bible-yv-top-passage-arrow-icon"
           />
         </button>
@@ -4407,7 +4424,7 @@ export function BibleReaderView({
 
         <article
         ref={passageScrollRef}
-        className={`bible-passage${passageFadeIn ? " is-chapter-fade" : ""}`}
+        className="bible-passage"
         aria-busy={presentation.ariaBusy || undefined}
         aria-hidden={surfaceChrome.passageInputBlocked || undefined}
         inert={surfaceChrome.passageInputBlocked || undefined}
@@ -4440,8 +4457,9 @@ export function BibleReaderView({
           />
         ) : passage?.verses?.length ? (
           <div
-            className=            {[
+            className={[
               "bible-verses",
+              passageFadeIn ? "is-chapter-fade" : "",
               selection?.length ? "is-dimming" : "",
               !selection?.length &&
               focusDimActive &&
@@ -4452,27 +4470,44 @@ export function BibleReaderView({
               .filter(Boolean)
               .join(" ")}
           >
-            {passage.verses.map((verse) => (
-              <BibleVerseButton
-                key={verse.number}
-                verse={verse}
-                selection={selection}
-                highlightVerse={highlightVerse}
-                focusVerseLo={focusVerseLo}
-                focusVerseHi={focusVerseHi}
-                deeplinkEnabled={deeplinkEnabled}
-                rangeStart={rangeStart}
-                planRangeActive={planRangeActive}
-                planVerseRangeFull={planVerseRangeFull}
-                planVerseRangeLo={planVerseRangeLo}
-                planVerseRangeHi={planVerseRangeHi}
-                chapterMarks={chapterMarks}
-                chapterCardVerses={chapterCardVerses}
-                uiTheme={uiTheme}
-                highlightRef={highlightRef}
-                onSelect={selectVerse}
-              />
-            ))}
+            {passage.verses.map((verse) => {
+              const selected = selectedVerseSet.has(verse.number);
+              const hasSelection = selectedVerseSet.size > 0;
+              const isFocus = hasSelection
+                ? highlightVerse === verse.number
+                : rangeStart != null
+                  ? verse.number === rangeStart
+                  : highlightVerse === verse.number;
+              const markColor = chapterMarks.get(verse.number);
+              const markDisplay = markColor
+                ? adaptVerseColorForTheme(markColor, uiTheme)
+                : null;
+              return (
+                <BibleVerseButton
+                  key={verse.number}
+                  verse={verse}
+                  selected={selected}
+                  selectionEdge={selectionEdgeClassFromSet(
+                    selectedVerseSet,
+                    verse.number,
+                  )}
+                  hasSelection={hasSelection}
+                  isFocus={isFocus}
+                  isRangeAnchor={isFocus}
+                  focusVerseLo={focusVerseLo}
+                  focusVerseHi={focusVerseHi}
+                  deeplinkEnabled={deeplinkEnabled}
+                  planRangeActive={planRangeActive}
+                  planVerseRangeFull={planVerseRangeFull}
+                  planVerseRangeLo={planVerseRangeLo}
+                  planVerseRangeHi={planVerseRangeHi}
+                  markDisplay={markDisplay}
+                  hasFlashcard={chapterCardVerses.has(verse.number)}
+                  highlightRef={highlightRef}
+                  onSelect={selectVerse}
+                />
+              );
+            })}
           </div>
         ) : passage?.content ? (
           <p className="bible-text">{passage.content}</p>
