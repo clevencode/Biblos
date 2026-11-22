@@ -3452,6 +3452,10 @@ export function BibleReaderView({
     const nestedFromMenu = wordSearchOpen || historyOpen || marksOpen;
     const verseOptionsOpen = showCreateCard;
     const menuSheetOpen = toolsMenuOpen || nestedFromMenu || verseOptionsOpen;
+    /** Menu / search / options: ← sempre visível na margem esquerda. */
+    const showSectionBack = menuSheetOpen;
+    /** History / marques: só ← (sem ✕ à direita). */
+    const showSectionClose = menuSheetOpen && !historyOpen && !marksOpen;
     const sectionPillLabel = verseOptionsOpen
       ? t("verse.passageOptions")
       : marksOpen
@@ -3461,62 +3465,150 @@ export function BibleReaderView({
           : wordSearchOpen
             ? t("word.short")
             : t("bible.menu");
-    const trigger = (
+
+    function handleSectionBack() {
+      setShareSheetOpen(false);
+      if (historyOpen || marksOpen) {
+        leaveHistoryOrMarks("back");
+        return;
+      }
+      if (wordSearchOpen) {
+        restoreHistoryFocusRef.current = false;
+        openOverlay({ type: "reader_settings" });
+        return;
+      }
+      if (verseOptionsOpen) {
+        closeCreateCard();
+        return;
+      }
+      restoreToolsFocusRef.current = true;
+      toggleOverlay("reader_settings");
+    }
+
+    function handleSectionClose() {
+      setShareSheetOpen(false);
+      if (verseOptionsOpen) {
+        closeCreateCard();
+        return;
+      }
+      if (historyOpen || marksOpen) {
+        leaveHistoryOrMarks("dismiss");
+        return;
+      }
+      if (wordSearchOpen) {
+        closeWordSearch();
+        return;
+      }
+      restoreToolsFocusRef.current = true;
+      toggleOverlay("reader_settings");
+    }
+
+    function handleSectionPillClick() {
+      setShareSheetOpen(false);
+      if (verseOptionsOpen) {
+        closeCreateCard();
+        return;
+      }
+      if (historyOpen || marksOpen) {
+        leaveHistoryOrMarks("back");
+        return;
+      }
+      if (wordSearchOpen) {
+        restoreHistoryFocusRef.current = false;
+        openOverlay({ type: "reader_settings" });
+        return;
+      }
+      restoreToolsFocusRef.current = true;
+      toggleOverlay("reader_settings");
+    }
+
+    const pill = (
       <HeaderTriggerButton
         open={menuSheetOpen}
         shape={menuSheetOpen ? "pill" : "circle"}
         idleIcon="menu"
         idleLabel={menuSheetOpen ? sectionPillLabel : undefined}
-        exitIcon={nestedFromMenu ? "chevron_left" : "close"}
+        exitIcon="close"
         ariaLabel={
-          verseOptionsOpen
-            ? t("common.close")
-            : nestedFromMenu
-              ? `${t("common.back")} — ${sectionPillLabel}`
-              : toolsMenuOpen
-                ? t("common.close")
-                : t("bible.menu")
+          menuSheetOpen
+            ? `${t("common.close")} — ${sectionPillLabel}`
+            : t("bible.menu")
         }
         ariaHaspopup="menu"
-        className={`bible-yv-tools-menu-btn${menuSheetOpen ? " is-on" : ""}${
-          menuSheetOpen ? " is-section-pill" : ""
-        }`}
-        onClick={() => {
-          setShareSheetOpen(false);
-          /* Verse actions: mesma lógica de fecho pelo pill de secção. */
-          if (verseOptionsOpen) {
-            closeCreateCard();
-            return;
-          }
-          /* Jornada: search / history / marks → pill Menu. */
-          if (historyOpen || marksOpen) {
-            leaveHistoryOrMarks("back");
-            return;
-          }
-          if (wordSearchOpen) {
-            restoreHistoryFocusRef.current = false;
-            openOverlay({ type: "reader_settings" });
-            return;
-          }
-          restoreToolsFocusRef.current = true;
-          toggleOverlay("reader_settings");
-        }}
+        className={`bible-yv-tools-menu-btn${menuSheetOpen ? " is-on is-section-pill" : ""}`}
+        onClick={menuSheetOpen ? handleSectionPillClick : handleSectionClose}
       />
+    );
+
+    const cluster = menuSheetOpen ? (
+      <>
+        <button
+          type="button"
+          className={`bible-yv-top-passage-arrow is-prev is-pick-side${
+            showSectionBack ? " is-shown" : " is-hidden-slot"
+          }`}
+          onClick={handleSectionBack}
+          disabled={!showSectionBack}
+          tabIndex={showSectionBack ? undefined : -1}
+          aria-hidden={!showSectionBack}
+          aria-label={
+            showSectionBack
+              ? nestedFromMenu
+                ? `${t("common.back")} — ${sectionPillLabel}`
+                : `${t("common.close")} — ${sectionPillLabel}`
+              : undefined
+          }
+        >
+          <YvIcon
+            name="chevron_left"
+            className="bible-yv-top-passage-arrow-icon"
+          />
+        </button>
+        {pill}
+        <button
+          type="button"
+          className={`bible-yv-top-passage-arrow is-next is-pick-side${
+            showSectionClose ? " is-shown" : " is-hidden-slot"
+          }`}
+          onClick={handleSectionClose}
+          disabled={!showSectionClose}
+          tabIndex={showSectionClose ? undefined : -1}
+          aria-hidden={!showSectionClose}
+          aria-label={
+            showSectionClose
+              ? `${t("common.close")} — ${sectionPillLabel}`
+              : undefined
+          }
+          title={showSectionClose ? t("common.close") : undefined}
+        >
+          <YvIcon name="close" className="bible-yv-top-passage-arrow-icon" />
+        </button>
+      </>
+    ) : (
+      pill
     );
 
     /* Float: sheet no FAB. Header: só trigger — sheet na top-sheet-layer. */
     if (isFloat) {
       return (
-        <div className="bible-yv-tools-menu is-float-br" ref={toolsMenuRef}>
-          {trigger}
+        <div
+          className={`bible-yv-tools-menu is-float-br${
+            menuSheetOpen ? " is-section-flow" : ""
+          }`}
+          ref={toolsMenuRef}
+        >
+          {cluster}
           {renderToolsPopover(true)}
         </div>
       );
     }
 
     return (
-      <div className="bible-yv-tools-menu" ref={toolsMenuRef}>
-        {trigger}
+      <div
+        className={`bible-yv-tools-menu${menuSheetOpen ? " is-section-flow" : ""}`}
+        ref={toolsMenuRef}
+      >
+        {cluster}
       </div>
     );
   }
