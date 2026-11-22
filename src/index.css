@@ -11593,6 +11593,15 @@ button.bible-yv-passage-chip.hdr-trigger.is-pill.is-open {
   box-shadow: none !important;
   color: var(--yv-text, var(--text)) !important;
   overflow: hidden;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    color 0.15s ease;
+}
+
+.bible-yv-passage-chip.hdr-trigger.is-pill.is-open:hover:not(:disabled),
+button.bible-yv-passage-chip.hdr-trigger.is-pill.is-open:hover:not(:disabled) {
+  background: var(--yv-chrome-hover, color-mix(in srgb, var(--yv-chrome-surface, var(--surface)) 92%, var(--yv-text) 8%)) !important;
 }
 
 .bible-yv-passage-chip.hdr-trigger.is-pill.is-open .hdr-trigger-swap {
@@ -12897,6 +12906,13 @@ html[data-passage-bar-panel="test"]
 }
 
 html[data-passage-bar-panel="test"]
+  .bible-yv-passage-chip.is-open:hover:not(:disabled):not(.is-hydrating),
+html[data-passage-bar-panel="test"]
+  .bible-yv-passage-chip.hdr-trigger.is-open:hover:not(:disabled):not(.is-hydrating) {
+  background: var(--yv-chrome-hover) !important;
+}
+
+html[data-passage-bar-panel="test"]
   .bible-yv-passage-chip.hdr-trigger.is-open
   .bible-yv-passage-chip-value,
 html[data-passage-bar-panel="test"]
@@ -12908,20 +12924,14 @@ html[data-passage-bar-panel="test"]
   color: var(--yv-text) !important;
 }
 
-/* Setas de fluxo aberto: sem hover fill (ícone nu como idle). */
-html[data-passage-bar-panel="test"]
-  .bible-yv-top-passage-arrow.is-pick-side:hover:not(:disabled) {
-  background: transparent;
-  color: var(--yv-text);
-}
-
 html[data-passage-bar-panel="test"] .bible-yv-passage-chip-caret {
   transition: transform 0.22s ease, color 0.15s ease, opacity 0.15s ease;
 }
 
 html[data-passage-bar-panel="test"]
-  .bible-yv-top-passage-arrow:hover:not(:disabled):not(.is-pick-side) {
+  .bible-yv-top-passage-arrow:hover:not(:disabled) {
   background: color-mix(in srgb, var(--yv-text) 7%, transparent);
+  color: var(--yv-text);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -13266,23 +13276,26 @@ html[data-passage-bar-panel="test"]
 }
 
 /*
- * ← / ✕ nos slots das setas: mesma posição, sem fundo
- * (padrão visual das chevrons idle).
+ * ← / ✕ nos slots das setas: mesma posição, sem fundo idle;
+ * hover = mesmo fill suave das chevrons de capítulo.
  */
 .bible-yv-top-passage-arrow.is-pick-side,
 .bible-reader--yv.is-top-sheet-open .bible-yv-top-passage-arrow.is-pick-side {
-  background: transparent !important;
-  border: 0 !important;
-  box-shadow: none !important;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
   color: color-mix(in srgb, var(--yv-text) 82%, transparent);
+  transition: background 0.15s ease, color 0.15s ease, transform 0.14s ease;
 }
 
-.bible-yv-top-passage-arrow.is-pick-side.is-shown:hover {
-  background: transparent !important;
+.bible-yv-top-passage-arrow.is-pick-side.is-shown:hover:not(:disabled),
+.bible-reader--yv.is-top-sheet-open
+  .bible-yv-top-passage-arrow.is-pick-side.is-shown:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--yv-text) 7%, transparent);
   color: var(--yv-text);
 }
 
-.bible-yv-top-passage-arrow.is-pick-side.is-shown:active {
+.bible-yv-top-passage-arrow.is-pick-side.is-shown:active:not(:disabled) {
   transform: scale(0.94);
 }
 
