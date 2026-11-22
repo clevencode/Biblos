@@ -71,6 +71,8 @@ export function usePassageBarController({
 }: UsePassageBarControllerArgs) {
   const [passageStep, setPassageStep] = useState<PassageBarStep>("book");
   const [bookSearchQuery, setBookSearchQuery] = useState("");
+  /** Barra de pesquisa do book picker — fechada ao abrir o picker. */
+  const [pickSearchOpen, setPickSearchOpen] = useState(false);
   const {
     query: wordSearchQuery,
     scopeFilter: wordSearchScopeFilter,
@@ -126,6 +128,12 @@ export function usePassageBarController({
   const reopenPassageStepRef = useRef<"book" | "chapter">("book");
   const passageStepRef = useRef<PassageBarStep>(passageStep);
   passageStepRef.current = passageStep;
+
+  useEffect(() => {
+    if (passageStep === "book") return;
+    setPickSearchOpen(false);
+    setBookSearchQuery("");
+  }, [passageStep]);
   const passageRollRef = useRef<HTMLDivElement | null>(null);
   const wordSearchChromeRef = useRef<HTMLDivElement | null>(null);
   const wordSearchPanelId = useId();
@@ -252,6 +260,21 @@ export function usePassageBarController({
     setDiscoverySession({ ...EMPTY_PASSAGE_DISCOVERY_SESSION });
   }, []);
 
+  const closePickSearch = useCallback(() => {
+    setPickSearchOpen(false);
+    clearBookSearch();
+  }, [clearBookSearch]);
+
+  const togglePickSearch = useCallback(() => {
+    setPickSearchOpen((open) => {
+      if (open) {
+        clearBookSearch();
+        return false;
+      }
+      return true;
+    });
+  }, [clearBookSearch]);
+
   const clearWordSearch = useCallback(() => {
     clearWordSearchSession();
   }, [clearWordSearchSession]);
@@ -299,6 +322,8 @@ export function usePassageBarController({
       reopenPassageStepRef.current =
         step === "chapter" || step === "verse" ? "chapter" : "book";
       flushVerseListScrollToSession();
+      setPickSearchOpen(false);
+      setBookSearchQuery("");
       setPassageStep("book");
       pendingVerseStep.current = false;
       requestClosePicker();
@@ -332,6 +357,8 @@ export function usePassageBarController({
   const openPassagePicker = useCallback(
     (step: "book" | "chapter") => {
       if (!pickerPanelOpenAllowed) return;
+      setPickSearchOpen(false);
+      setBookSearchQuery("");
       setPassageStep(step);
       pendingVerseStep.current = false;
       requestOpenPassagePicker();
@@ -493,6 +520,10 @@ export function usePassageBarController({
     passageRollOpen,
     bookSearchQuery,
     setBookSearchQuery,
+    pickSearchOpen,
+    setPickSearchOpen,
+    togglePickSearch,
+    closePickSearch,
     wordSearchOpen,
     wordSearchQuery,
     setWordSearchQuery,
