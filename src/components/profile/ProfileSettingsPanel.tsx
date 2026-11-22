@@ -295,42 +295,6 @@ export function ProfileSettingsPanel({
                   </button>
                 </div>
               </div>
-              <div className="settings-row is-static">
-                <YvIcon name="menu_book" className="settings-row-icon" opsz={20} />
-                <span className="settings-row-body">
-                  <span className="settings-row-label">{t("bible.font")}</span>
-                </span>
-                <div
-                  className="profile-theme-seg"
-                  role="group"
-                  aria-label={t("bible.font")}
-                >
-                  <button
-                    type="button"
-                    className={
-                      readingChrome?.fontFamily === "serif"
-                        ? "is-active"
-                        : undefined
-                    }
-                    disabled={!chromeReady}
-                    onClick={() => readingChrome?.setFontFamily("serif")}
-                  >
-                    Serif
-                  </button>
-                  <button
-                    type="button"
-                    className={
-                      readingChrome?.fontFamily === "sans"
-                        ? "is-active"
-                        : undefined
-                    }
-                    disabled={!chromeReady}
-                    onClick={() => readingChrome?.setFontFamily("sans")}
-                  >
-                    Sans
-                  </button>
-                </div>
-              </div>
               {!chromeReady ? (
                 <p className="settings-hint muted">
                   {t("profile.readingChromeHint")}

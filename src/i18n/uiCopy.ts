@@ -163,7 +163,6 @@ export type UiCopyKey =
   | "bible.offlineDownload"
   | "bible.offlineDownloading"
   | "bible.offlineBusy"
-  | "bible.font"
   | "bible.fontSize"
   | "bible.fontSmaller"
   | "bible.fontLarger"
@@ -455,7 +454,6 @@ const FR: Dict = {
   "bible.offlineDownloading": "Téléchargement… {done}/{total}",
   "bible.offlineBusy":
     "Téléchargement… {done}/{total} (toucher pour annuler)",
-  "bible.font": "Police",
   "bible.fontSize": "Taille du texte",
   "bible.fontSmaller": "Réduire la taille du texte",
   "bible.fontLarger": "Augmenter la taille du texte",
@@ -757,7 +755,6 @@ const HT: Dict = {
   "bible.offlineDownloading": "Ap telechaje… {done}/{total}",
   "bible.offlineBusy":
     "Ap telechaje… {done}/{total} (touché pou anile)",
-  "bible.font": "Font",
   "bible.fontSize": "Gwosè tèks",
   "bible.fontSmaller": "Redwi gwosè tèks la",
   "bible.fontLarger": "Ogmante gwosè tèks la",

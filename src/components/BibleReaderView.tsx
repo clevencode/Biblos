@@ -171,20 +171,6 @@ const FONT_MAX = 28;
 const FONT_DEFAULT = 19;
 const FONT_STEP = 0.5;
 
-type BibleFontFamily = "serif" | "sans";
-
-const BIBLE_FONT_FAMILIES: readonly {
-  id: BibleFontFamily;
-  label: string;
-}[] = [
-  { id: "serif", label: "Serif" },
-  { id: "sans", label: "Sans" },
-];
-
-function isBibleFontFamily(value: unknown): value is BibleFontFamily {
-  return value === "serif" || value === "sans";
-}
-
 function clampFontSize(n: number) {
   const stepped = Math.round(n / FONT_STEP) * FONT_STEP;
   return Math.min(FONT_MAX, Math.max(FONT_MIN, stepped));
@@ -438,7 +424,6 @@ type ReaderPrefs = {
   bookId?: string;
   chapterId?: string;
   fontSize?: number;
-  fontFamily?: BibleFontFamily;
   textVersion?: BibleTextVersionId;
 };
 
@@ -728,9 +713,6 @@ export function BibleReaderView({
     const n = Number(prefs.fontSize);
     return Number.isFinite(n) ? clampFontSize(n) : FONT_DEFAULT;
   });
-  const [fontFamily, setFontFamily] = useState<BibleFontFamily>(() =>
-    isBibleFontFamily(prefs.fontFamily) ? prefs.fontFamily : "serif",
-  );
   const [narrowChrome, setNarrowChrome] = useState(false);
   const [cardMsg, setCardMsg] = useState<string | null>(null);
   const [cardColor, setCardColor] = useState(() => loadPreferredVerseColor());
@@ -1480,13 +1462,13 @@ export function BibleReaderView({
   }, [bible.id, setBible, textVersion]);
 
   useEffect(() => {
-    const base = { ...readPrefs(), fontSize, fontFamily, textVersion };
+    const base = { ...readPrefs(), fontSize, textVersion };
     if (isUsfmBookId(bookId)) {
       writePrefs({ ...base, bookId, chapterId });
       return;
     }
     writePrefs(base);
-  }, [bookId, chapterId, fontSize, fontFamily, textVersion]);
+  }, [bookId, chapterId, fontSize, textVersion]);
 
   useEffect(() => {
     setChapterMarks(loadChapterMarks(bookId, chapterId));
@@ -2894,7 +2876,6 @@ export function BibleReaderView({
       bookId,
       chapterId,
       fontSize,
-      fontFamily,
     });
     notifyUiLocale(next);
     if (next === "ht98") {
@@ -2951,7 +2932,6 @@ export function BibleReaderView({
         : null,
       offlineHidden: textVersion === "s21" && localBundledBible,
       fontSize,
-      fontFamily,
       fontMin: FONT_MIN,
       fontMax: FONT_MAX,
       switchTextVersion: (id) => {
@@ -2962,9 +2942,6 @@ export function BibleReaderView({
       },
       setFontSize: (size) => {
         setFontSize(clampFontSize(size));
-      },
-      setFontFamily: (family) => {
-        if (isBibleFontFamily(family)) setFontFamily(family);
       },
       bumpFontSize: (delta) => {
         setFontSize((n) => clampFontSize(n + delta));
@@ -2980,7 +2957,6 @@ export function BibleReaderView({
     offlineProgress,
     localBundledBible,
     fontSize,
-    fontFamily,
   ]);
 
   function openWordSearchFromMenu() {
@@ -3387,28 +3363,6 @@ export function BibleReaderView({
             </p>
           </div>
         ) : null}
-        <div
-          className="bible-yv-tools-version bible-yv-tools-font-family"
-          role="group"
-          aria-label={t("bible.font")}
-        >
-          <span className="bible-yv-tools-version-label">{t("bible.font")}</span>
-          <div className="bible-yv-tools-version-options">
-            {BIBLE_FONT_FAMILIES.map((family) => (
-              <button
-                key={family.id}
-                type="button"
-                className={`bible-yv-tools-version-chip${
-                  fontFamily === family.id ? " is-on" : ""
-                }`}
-                aria-pressed={fontFamily === family.id}
-                onClick={() => setFontFamily(family.id)}
-              >
-                {family.label}
-              </button>
-            ))}
-          </div>
-        </div>
         <div className="bible-yv-tools-font" role="group" aria-label={t("bible.fontSize")}>
           <span className="bible-yv-tools-font-label">{t("bible.text")}</span>
           <div className="bible-yv-font">
@@ -3958,7 +3912,7 @@ export function BibleReaderView({
   return (
     <section
       ref={readerRef}
-      className={`bible-reader bible-reader--yv${hideChrome ? " is-chrome-hidden" : ""}${hasActiveModal ? " is-overlay-active" : ""}${audioPlaying ? " is-audio-playing" : ""}${showCreateCard ? " has-verse-actions" : ""}${showStudyReturnNav ? " has-study-return" : ""}${shareSheetOpen ? " is-share-open" : ""}${headCompact ? " is-head-compact" : ""}${surfaceChrome.rootClassPassageRollOpen ? " is-passage-roll-open" : ""}${topSheetOpen ? " is-top-sheet-open" : ""}${compactToolsMenu ? " is-compact-tools" : ""}${toolsMenuOpen ? " is-tools-menu-open" : ""}${menuJourneyOpen ? " is-menu-journey-open" : ""}${historyOpen ? " is-history-open" : ""}${fontFamily === "sans" ? " is-font-sans" : " is-font-serif"}`}
+      className={`bible-reader bible-reader--yv${hideChrome ? " is-chrome-hidden" : ""}${hasActiveModal ? " is-overlay-active" : ""}${audioPlaying ? " is-audio-playing" : ""}${showCreateCard ? " has-verse-actions" : ""}${showStudyReturnNav ? " has-study-return" : ""}${shareSheetOpen ? " is-share-open" : ""}${headCompact ? " is-head-compact" : ""}${surfaceChrome.rootClassPassageRollOpen ? " is-passage-roll-open" : ""}${topSheetOpen ? " is-top-sheet-open" : ""}${compactToolsMenu ? " is-compact-tools" : ""}${toolsMenuOpen ? " is-tools-menu-open" : ""}${menuJourneyOpen ? " is-menu-journey-open" : ""}${historyOpen ? " is-history-open" : ""}`}
       style={{ ["--bible-font-size" as string]: `${fontSize}px` }}
       onKeyDown={(event) => {
         /* Escape deve fechar overlays mesmo com focus no input (padrão dialog). */

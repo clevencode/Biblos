@@ -23,7 +23,6 @@ export type BibleReadingPrefs = {
   bookId?: string;
   chapterId?: string;
   fontSize?: number;
-  fontFamily?: string;
   textVersion?: "s21" | "ht98";
 };
 

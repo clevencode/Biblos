@@ -70,12 +70,12 @@
   /*
    * Tipografia (OFL, Google Fonts via Fontsource)
    * UI → Outfit Variable — traços arredondados, par com coolicons line/round
-   * Leitura / Bible → Source Serif 4 Variable — conforto em textos longos
+   * Leitura / Bible → Inter Variable — única família de leitura
    * Código → JetBrains Mono Variable
    */
   --font-ui: "Outfit Variable", "Outfit", system-ui, sans-serif;
-  --font-read: "Source Serif 4 Variable", "Source Serif 4", Georgia, serif;
-  --font-bible: "Source Serif 4 Variable", "Source Serif 4", Georgia, serif;
+  --font-read: "Inter Variable", "Inter", system-ui, sans-serif;
+  --font-bible: "Inter Variable", "Inter", system-ui, sans-serif;
   --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
 
   /* Leitura longa: regular, entrelinha generosa */
@@ -86,7 +86,7 @@
   /*
    * Escala (Display → Caption)
    * Pesos: 400 body · 500 label/caption · 600 títulos
-   * Tracking calibrado para Outfit (UI) + Source Serif (leitura)
+   * Tracking calibrado para Outfit (UI) + Inter (leitura)
    */
   --type-display-size: clamp(2.5rem, 7vw, 3.6rem);
   --type-display-weight: 700;
@@ -12164,11 +12164,6 @@ html[data-passage-bar-panel="test"] .bible-yv-tools-version {
   padding: 4px 2px 8px;
 }
 
-html[data-passage-bar-panel="test"] .bible-yv-tools-font-family {
-  margin-top: 2px;
-  padding: 8px 2px 8px;
-}
-
 html[data-passage-bar-panel="test"] .bible-yv-tools-font {
   margin-top: 0;
   padding: 8px 2px 4px 4px;
@@ -14227,16 +14222,6 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   color: var(--danger, #b42318);
 }
 
-.bible-yv-tools-font-family {
-  margin-top: 2px;
-  padding-top: 10px;
-  border-top: 1px solid color-mix(in srgb, var(--yv-text) 10%, transparent);
-}
-
-.bible-yv-tools-font-family .bible-yv-tools-version-options {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
 .bible-yv-tools-font {
   display: flex;
   align-items: center;
@@ -14245,11 +14230,6 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   margin-top: 2px;
   padding: 6px 4px 4px 8px;
   border-top: 1px solid color-mix(in srgb, var(--yv-text) 10%, transparent);
-}
-
-.bible-reader--yv.is-font-sans {
-  --font-bible: var(--font-ui);
-  --font-read: var(--font-ui);
 }
 
 .bible-yv-tools-font-label {
