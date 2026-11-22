@@ -1835,13 +1835,19 @@ export function BibleReaderView({
           }${pickerChrome.chipsHydrating ? " is-hydrating" : ""}`}
         >
           {rollOpen ? (
-            showPickSearch && !pickSearchExpanded ? (
+            showPickSearch ? (
               <button
                 type="button"
-                className="bible-yv-top-passage-arrow is-prev is-pick-side is-shown"
+                className={`bible-yv-top-passage-arrow is-prev is-pick-side is-shown${
+                  pickSearchExpanded ? " is-on" : ""
+                }`}
                 onClick={togglePickSearch}
-                aria-pressed={false}
-                aria-label={t("searchBooks.search")}
+                aria-pressed={pickSearchExpanded}
+                aria-label={
+                  pickSearchExpanded
+                    ? `${t("common.close")} — ${t("searchBooks.search")}`
+                    : t("searchBooks.search")
+                }
                 title={t("searchBooks.search")}
               >
                 <YvIcon
@@ -1849,7 +1855,7 @@ export function BibleReaderView({
                   className="bible-yv-top-passage-arrow-icon"
                 />
               </button>
-            ) : showPickSearch && pickSearchExpanded ? null : (
+            ) : (
               <button
                 type="button"
                 className={`bible-yv-top-passage-arrow is-prev is-pick-side${
@@ -1878,11 +1884,6 @@ export function BibleReaderView({
           )}
           {pickSearchExpanded ? (
             <div className="bible-yv-pick-top-search is-open">
-              <YvIcon
-                name="search"
-                opsz={20}
-                className="bible-yv-pick-top-search-icon"
-              />
               <input
                 ref={pickSearchInputRef}
                 type="search"
@@ -1910,25 +1911,16 @@ export function BibleReaderView({
                   closePickSearch();
                 }}
               />
-              <button
-                type="button"
-                className="bible-yv-pick-top-search-clear"
-                onClick={
-                  hasPickQuery ? clearBookSearch : closePickSearch
-                }
-                aria-label={
-                  hasPickQuery ? t("common.clear") : t("common.close")
-                }
-              >
-                {hasPickQuery ? (
-                  t("common.clear")
-                ) : (
-                  <YvIcon
-                    name="close"
-                    className="bible-yv-pick-top-search-clear-icon"
-                  />
-                )}
-              </button>
+              {hasPickQuery ? (
+                <button
+                  type="button"
+                  className="bible-yv-pick-top-search-clear"
+                  onClick={clearBookSearch}
+                  aria-label={t("common.clear")}
+                >
+                  {t("common.clear")}
+                </button>
+              ) : null}
             </div>
           ) : (
             <div

@@ -12637,6 +12637,47 @@ html[data-passage-bar-panel="test"]
   max-width: min(100%, 22rem);
 }
 
+/* Pick search: 🔍 na margem esquerda, pill ao centro, ✕ à direita. */
+html[data-passage-bar-panel="test"]
+  .bible-yv-passage-roll.is-open
+  .bible-yv-top-passage-bar.is-pick-flow.is-pick-search,
+html[data-passage-bar-panel="test"]
+  .app.is-bible-mode.is-narrow
+  .bible-yv-passage-roll.is-open
+  .bible-yv-top-passage-bar.is-pick-flow.is-pick-search {
+  width: 100%;
+  max-width: none;
+  grid-template-columns: var(--bible-passage-bar-title-h) minmax(0, 1fr)
+    var(--bible-passage-bar-title-h);
+  justify-items: stretch;
+}
+
+html[data-passage-bar-panel="test"]
+  .bible-yv-passage-roll.is-open
+  .bible-yv-top-passage-bar.is-pick-flow.is-pick-search
+  .bible-yv-top-passage-segments,
+html[data-passage-bar-panel="test"]
+  .bible-yv-passage-roll.is-open
+  .bible-yv-top-passage-bar.is-pick-flow.is-pick-search
+  .bible-yv-top-passage-segments.is-roll-open {
+  justify-self: center;
+  width: max-content;
+  max-width: 100%;
+}
+
+html[data-passage-bar-panel="test"]
+  .bible-yv-top.is-passage-roll-open
+  .bible-yv-passage-roll.is-open:has(.is-pick-search),
+html[data-passage-bar-panel="test"]
+  .bible-yv-top.is-free
+  .bible-yv-passage-roll.is-open:has(.is-pick-search) {
+  width: 100%;
+  max-width: none;
+  margin-inline: 0;
+  align-self: stretch;
+  flex: 1 1 auto;
+}
+
 html[data-passage-bar-panel="test"] .app.is-bible-mode.is-narrow .bible-yv-top-passage-arrow,
 html[data-passage-bar-panel="test"] .bible-yv-top-passage-arrow {
   width: var(--bible-passage-bar-title-h);
@@ -12712,46 +12753,48 @@ html[data-passage-bar-panel="test"]
 }
 
 /*
- * Book picker search no topo: expande no lugar da pill (mesma grelha).
- * Fechado: [🔍|pill|✕] · Aberto: [barra pill 999…|✕]
+ * Book picker search no topo (wire): [O] [Pesquisa……] [X]
+ * Fechado: [🔍|pill|✕] · Aberto: [🔍|barra 999|✕]
  */
 .bible-yv-top-passage-bar.is-pick-flow.is-pick-search-open {
-  grid-template-columns: minmax(0, 1fr)
+  grid-template-columns: var(--bible-passage-bar-title-h, var(--hdr-size, 44px))
+    minmax(0, 1fr)
     var(--bible-passage-bar-title-h, var(--hdr-size, 44px));
-  width: min(100%, 22rem);
-  max-width: min(100%, 22rem);
-  transition:
-    width 0.28s cubic-bezier(0.22, 1, 0.36, 1),
-    max-width 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  width: 100%;
+  max-width: none;
+}
+
+.bible-yv-top-passage-bar.is-pick-flow.is-pick-search
+  .bible-yv-top-passage-arrow.is-prev.is-on {
+  color: var(--yv-text, var(--text));
+  background: color-mix(in srgb, var(--yv-text, var(--text)) 8%, transparent);
 }
 
 .bible-yv-pick-top-search {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   min-width: 0;
   width: 100%;
   height: var(--hdr-size, var(--mobile-touch, 44px));
   min-height: var(--hdr-size, var(--mobile-touch, 44px));
   max-height: var(--hdr-size, var(--mobile-touch, 44px));
-  padding: 0 6px 0 12px;
+  margin-inline: 4px;
+  padding: 0 14px;
   box-sizing: border-box;
   border-radius: 999px;
   border: 0;
   background: var(--yv-chrome-surface, var(--surface));
   color: var(--yv-text, var(--text));
-  transform-origin: left center;
-  animation: bible-pick-search-expand 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: bible-pick-search-expand 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @keyframes bible-pick-search-expand {
   from {
-    opacity: 0.72;
-    transform: scaleX(0.42);
+    opacity: 0;
   }
   to {
     opacity: 1;
-    transform: scaleX(1);
   }
 }
 
@@ -12759,17 +12802,6 @@ html[data-passage-bar-panel="test"]
   .bible-yv-pick-top-search {
     animation: none;
   }
-  .bible-yv-top-passage-bar.is-pick-flow.is-pick-search-open {
-    transition: none;
-  }
-}
-
-.bible-yv-pick-top-search-icon {
-  flex: none;
-  width: 1.15rem;
-  height: 1.15rem;
-  font-size: 1.15rem;
-  color: color-mix(in srgb, var(--yv-text, var(--text)) 62%, transparent);
 }
 
 .bible-yv-pick-top-search-input {
@@ -13013,6 +13045,18 @@ html[data-passage-bar-panel="test"]
   width: fit-content;
   max-width: min(100%, 22rem);
   grid-template-columns: var(--bible-passage-bar-title-h) minmax(0, max-content)
+    var(--bible-passage-bar-title-h);
+}
+
+html[data-passage-bar-panel="test"]
+  .bible-yv-passage-roll.is-open
+  .bible-yv-top-passage-bar.is-pick-flow.is-pick-search,
+html[data-passage-bar-panel="test"]
+  .bible-yv-passage-roll.is-open
+  .bible-yv-top-passage-bar.is-roll-head.is-pick-search {
+  width: 100%;
+  max-width: none;
+  grid-template-columns: var(--bible-passage-bar-title-h) minmax(0, 1fr)
     var(--bible-passage-bar-title-h);
 }
 
@@ -13431,6 +13475,21 @@ html[data-passage-bar-panel="test"]
   height: var(--hdr-size, var(--mobile-touch, 44px));
   min-height: var(--hdr-size, var(--mobile-touch, 44px));
   max-height: var(--hdr-size, var(--mobile-touch, 44px));
+}
+
+.bible-yv-top-passage-bar.is-pick-flow.is-pick-search {
+  width: 100%;
+  max-width: none;
+  grid-template-columns: var(--bible-passage-bar-title-h, var(--hdr-size, 44px))
+    minmax(0, 1fr)
+    var(--bible-passage-bar-title-h, var(--hdr-size, 44px));
+}
+
+.bible-yv-top-passage-bar.is-pick-flow.is-pick-search
+  .bible-yv-top-passage-segments {
+  justify-self: center;
+  width: max-content;
+  max-width: 100%;
 }
 
 .bible-yv-top-passage-segments.is-roll-open {
