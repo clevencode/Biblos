@@ -5,6 +5,7 @@ import {
   type KeyboardEvent,
 } from "react";
 import type { PassageDiscoverySession } from "../bible/passageDiscovery/session";
+import type { PickGridScrollKind } from "../bible/passageDiscovery/pickGridScroll";
 import { YvIcon } from "./YvIcon";
 import type { BibleSearchHit, YouVersionBook } from "../youversion/client";
 import { BiblePassageDiscoveryList } from "./BiblePassageDiscoveryList";
@@ -29,15 +30,19 @@ type BiblePassageScrollPickerProps = {
   discoveryBusy: boolean;
   textVersion: BibleTextVersionId;
   discoverySession: PassageDiscoverySession;
-  onDiscoveryListScroll: (scrollTop: number) => void;
-  onDiscoveryExpandedBookChange: (bookId: string | null) => void;
-  onDiscoveryVerseListScroll: (bookId: string, scrollTop: number) => void;
-  onDiscoveryChapterGridScroll: (bookId: string, scrollTop: number) => void;
-  onDiscoveryVerseGridScroll: (
+  getPickGridScroll: (
+    kind: PickGridScrollKind,
     bookId: string,
-    chapterId: string,
+    chapterId?: string,
+  ) => number | undefined;
+  setPickGridScroll: (
+    kind: PickGridScrollKind,
+    bookId: string,
+    chapterId: string | undefined,
     scrollTop: number,
   ) => void;
+  onDiscoveryExpandedBookChange: (bookId: string | null) => void;
+  onDiscoveryVerseListScroll: (bookId: string, scrollTop: number) => void;
   chapters: string[];
   verseOptions: number[];
   passageChrome: PassagePickerChrome;
@@ -83,11 +88,10 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
       discoveryBusy,
       textVersion,
       discoverySession,
-      onDiscoveryListScroll,
+      getPickGridScroll,
+      setPickGridScroll,
       onDiscoveryExpandedBookChange,
       onDiscoveryVerseListScroll,
-      onDiscoveryChapterGridScroll,
-      onDiscoveryVerseGridScroll,
       chapters,
       verseOptions,
       passageChrome,
@@ -109,17 +113,18 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
     const gridRef = useRef<HTMLDivElement>(null);
     const searchInputRef = useRef<HTMLInputElement>(null);
     const restoredScrollKeyRef = useRef<string | null>(null);
+    const getPickGridScrollRef = useRef(getPickGridScroll);
+    getPickGridScrollRef.current = getPickGridScroll;
 
     const bookKey = String(bookId || "").toUpperCase();
-    const verseGridKey = `${bookKey}:${String(chapterId || "").trim()}`;
-    const scrollRestoreKey =
-      !open
-        ? null
-        : step === "book"
-          ? "book"
-          : step === "chapter"
-            ? `chapter:${bookKey}`
-            : `verse:${verseGridKey}`;
+    const chapterKey = String(chapterId || "").trim();
+    const scrollRestoreKey = !open
+      ? null
+      : step === "book"
+        ? "book"
+        : step === "chapter"
+          ? `chapter:${bookKey}`
+          : `verse:${bookKey}:${chapterKey}`;
 
     useLayoutEffect(() => {
       if (!open || !scrollRestoreKey) {
@@ -130,28 +135,19 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
       const el = gridRef.current;
       if (!el) return;
 
-      if (step === "book") {
-        el.scrollTop = discoverySession.listScrollTop;
-      } else if (step === "chapter") {
-        const saved = discoverySession.chapterScrollByBook[bookKey];
-        el.scrollTop = typeof saved === "number" ? saved : 0;
-        scrollSelectedCellIntoView(el);
-      } else {
-        const saved = discoverySession.verseGridScrollByChapter[verseGridKey];
-        el.scrollTop = typeof saved === "number" ? saved : 0;
+      const kind: PickGridScrollKind =
+        step === "book" ? "book" : step === "chapter" ? "chapter" : "verse";
+      const saved = getPickGridScrollRef.current(
+        kind,
+        bookId,
+        step === "verse" ? chapterId : undefined,
+      );
+      el.scrollTop = typeof saved === "number" ? saved : 0;
+      if (step === "chapter" || step === "verse") {
         scrollSelectedCellIntoView(el);
       }
       restoredScrollKeyRef.current = scrollRestoreKey;
-    }, [
-      open,
-      step,
-      scrollRestoreKey,
-      bookKey,
-      verseGridKey,
-      discoverySession.listScrollTop,
-      discoverySession.chapterScrollByBook,
-      discoverySession.verseGridScrollByChapter,
-    ]);
+    }, [open, step, bookId, chapterId, scrollRestoreKey, bookKey, chapterKey]);
 
     /** Focus no campo no mesmo frame (padrão search). */
     useLayoutEffect(() => {
@@ -181,12 +177,19 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
     const hasQuery = Boolean(bookSearchQuery.trim());
     const { inFlight } = passageChrome;
 
+    function gridKind(): PickGridScrollKind {
+      return step === "book" ? "book" : step === "chapter" ? "chapter" : "verse";
+    }
+
     function captureGridScroll() {
       const top = gridRef.current?.scrollTop;
       if (typeof top !== "number") return;
-      if (step === "book") onDiscoveryListScroll(top);
-      else if (step === "chapter") onDiscoveryChapterGridScroll(bookId, top);
-      else onDiscoveryVerseGridScroll(bookId, chapterId, top);
+      setPickGridScroll(
+        gridKind(),
+        bookId,
+        step === "verse" ? chapterId : undefined,
+        top,
+      );
     }
 
     function handlePickVerse(hit: BibleSearchHit) {
@@ -254,10 +257,12 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
           className={`bible-yv-pick-grid${step === "book" ? " is-books" : ""}`}
           role="listbox"
           onScroll={(event) => {
-            const top = event.currentTarget.scrollTop;
-            if (step === "book") onDiscoveryListScroll(top);
-            else if (step === "chapter") onDiscoveryChapterGridScroll(bookId, top);
-            else onDiscoveryVerseGridScroll(bookId, chapterId, top);
+            setPickGridScroll(
+              gridKind(),
+              bookId,
+              step === "verse" ? chapterId : undefined,
+              event.currentTarget.scrollTop,
+            );
           }}
         >
           {step === "book" ? (

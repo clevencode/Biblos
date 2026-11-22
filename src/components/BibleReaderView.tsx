@@ -1010,10 +1010,10 @@ export function BibleReaderView({
     passagePickerPanelId,
     armPendingVerseStep,
     patchDiscoverySession,
-    setDiscoveryListScroll,
+    setPickGridScroll,
+    getPickGridScroll,
+    setDiscoveryExpandedBook,
     setDiscoveryVerseListScroll,
-    setDiscoveryChapterGridScroll,
-    setDiscoveryVerseGridScroll,
     clearBookSearch,
     clearWordSearch,
     closeWordSearch,
@@ -1972,13 +1972,10 @@ export function BibleReaderView({
         discoveryBusy={passageDiscoveryBusy}
         textVersion={textVersion}
         discoverySession={discoverySession}
-        onDiscoveryListScroll={setDiscoveryListScroll}
-        onDiscoveryExpandedBookChange={(bookId) =>
-          patchDiscoverySession({ expandedBookId: bookId })
-        }
+        getPickGridScroll={getPickGridScroll}
+        setPickGridScroll={setPickGridScroll}
+        onDiscoveryExpandedBookChange={setDiscoveryExpandedBook}
         onDiscoveryVerseListScroll={setDiscoveryVerseListScroll}
-        onDiscoveryChapterGridScroll={setDiscoveryChapterGridScroll}
-        onDiscoveryVerseGridScroll={setDiscoveryVerseGridScroll}
         chapters={chapters}
         verseOptions={verseOptions}
         passageChrome={pickerPassageChrome}
