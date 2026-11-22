@@ -13,6 +13,8 @@ import { ProfileHeader } from "./ProfileHeader";
 import { SettingsGroup } from "./SettingsGroup";
 import { SettingsRow } from "./SettingsRow";
 
+export type ProfilePrefsTab = "appearance" | "bible" | "reading" | "library";
+
 export type ProfileSettingsPanelProps = {
   active: boolean;
   activityTick: number;
@@ -22,10 +24,29 @@ export type ProfileSettingsPanelProps = {
   readingChrome?: ProfileReadingChrome | null;
   onOpenHistory?: () => void;
   onOpenMarks?: () => void;
+  /** Aba inicial ao montar (ex. retorno do histórico → library). */
+  initialPrefsTab?: ProfilePrefsTab;
 };
+
+type PrefsTab = ProfilePrefsTab;
+
+const PREFS_TABS: readonly {
+  id: PrefsTab;
+  labelKey:
+    | "profile.appearance"
+    | "profile.group.bible"
+    | "profile.group.reading"
+    | "profile.group.library";
+}[] = [
+  { id: "appearance", labelKey: "profile.appearance" },
+  { id: "bible", labelKey: "profile.group.bible" },
+  { id: "reading", labelKey: "profile.group.reading" },
+  { id: "library", labelKey: "profile.group.library" },
+];
 
 /**
  * Ecrã Profil: header + prefs; ícone settings abre a secção Compte.
+ * O resto das prefs usa abas com estado ativo.
  * Entry canónico: `#panel-account`.
  */
 export function ProfileSettingsPanel({
@@ -37,6 +58,7 @@ export function ProfileSettingsPanel({
   readingChrome = null,
   onOpenHistory,
   onOpenMarks,
+  initialPrefsTab = "appearance",
 }: ProfileSettingsPanelProps) {
   const { t } = useUiLocale();
   const {
@@ -52,6 +74,7 @@ export function ProfileSettingsPanel({
   const [signOutBusy, setSignOutBusy] = useState(false);
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
+  const [prefsTab, setPrefsTab] = useState<PrefsTab>(initialPrefsTab);
 
   const markedCount = useMemo(() => {
     void activityTick;
@@ -105,6 +128,9 @@ export function ProfileSettingsPanel({
     }
   }
 
+  const activeTabMeta =
+    PREFS_TABS.find((tab) => tab.id === prefsTab) ?? PREFS_TABS[0]!;
+
   return (
     <div
       className={`profile-settings${accountOpen ? " is-account-open" : ""}`}
@@ -134,208 +160,273 @@ export function ProfileSettingsPanel({
           />
         ) : (
           <>
-            <SettingsGroup title={t("profile.appearance")}>
-              <div className="settings-row is-static">
-                <YvIcon name="routine" className="settings-row-icon" opsz={20} />
-                <span className="settings-row-body">
-                  <span className="settings-row-label">{t("profile.theme")}</span>
-                </span>
-                <div
-                  className="profile-theme-seg"
-                  role="group"
-                  aria-label={t("profile.theme")}
-                >
+            <div
+              className="profile-settings-tabs"
+              role="tablist"
+              aria-label={t("profile.settings")}
+            >
+              {PREFS_TABS.map((tab) => {
+                const selected = prefsTab === tab.id;
+                return (
                   <button
+                    key={tab.id}
                     type="button"
-                    className={themePref === "light" ? "is-active" : undefined}
-                    onClick={() => onSetTheme("light")}
+                    role="tab"
+                    id={`profile-tab-${tab.id}`}
+                    className={`profile-settings-tab${selected ? " is-active" : ""}`}
+                    aria-selected={selected}
+                    tabIndex={selected ? 0 : -1}
+                    onClick={() => setPrefsTab(tab.id)}
                   >
-                    {t("profile.themeLight")}
+                    {t(tab.labelKey)}
                   </button>
-                  <button
-                    type="button"
-                    className={themePref === "dark" ? "is-active" : undefined}
-                    onClick={() => onSetTheme("dark")}
-                  >
-                    {t("profile.themeDark")}
-                  </button>
-                  <button
-                    type="button"
-                    className={themePref === "system" ? "is-active" : undefined}
-                    onClick={() => onSetTheme("system")}
-                  >
-                    {t("profile.themeSystem")}
-                  </button>
-                </div>
-              </div>
-            </SettingsGroup>
+                );
+              })}
+            </div>
 
-            <SettingsGroup title={t("profile.group.bible")}>
-              <div
-                className="bible-yv-tools-version"
-                role="group"
-                aria-label={t("bible.versionGroup")}
-              >
-                <span className="bible-yv-tools-version-label">
-                  {t("bible.version")}
-                </span>
-                <div className="bible-yv-tools-version-options">
-                  {BIBLE_TEXT_VERSIONS.map((version) => (
-                    <button
-                      key={version.id}
-                      type="button"
-                      className={`bible-yv-tools-version-chip${
-                        readingChrome?.textVersion === version.id ? " is-on" : ""
-                      }${
-                        readingChrome?.htCatalogLoading && version.id === "ht98"
-                          ? " is-busy"
-                          : ""
-                      }`}
-                      disabled={
-                        !chromeReady ||
-                        (Boolean(readingChrome?.htCatalogLoading) &&
-                          version.id === "ht98")
-                      }
-                      aria-pressed={readingChrome?.textVersion === version.id}
-                      title={version.title}
-                      onClick={() => readingChrome?.switchTextVersion(version.id)}
+            <div
+              key={prefsTab}
+              className="profile-settings-tabpanel"
+              role="tabpanel"
+              id={`profile-panel-${prefsTab}`}
+              aria-labelledby={`profile-tab-${prefsTab}`}
+            >
+              {prefsTab === "appearance" ? (
+                <SettingsGroup title={t(activeTabMeta.labelKey)}>
+                  <div className="settings-row is-static">
+                    <YvIcon
+                      name="routine"
+                      className="settings-row-icon"
+                      opsz={20}
+                    />
+                    <span className="settings-row-body">
+                      <span className="settings-row-label">
+                        {t("profile.theme")}
+                      </span>
+                    </span>
+                    <div
+                      className="profile-theme-seg"
+                      role="group"
+                      aria-label={t("profile.theme")}
                     >
-                      {version.abbreviation}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              {!chromeReady ? (
-                <p className="settings-hint muted">
-                  {t("profile.readingChromeHint")}
-                </p>
+                      <button
+                        type="button"
+                        className={themePref === "light" ? "is-active" : undefined}
+                        onClick={() => onSetTheme("light")}
+                      >
+                        {t("profile.themeLight")}
+                      </button>
+                      <button
+                        type="button"
+                        className={themePref === "dark" ? "is-active" : undefined}
+                        onClick={() => onSetTheme("dark")}
+                      >
+                        {t("profile.themeDark")}
+                      </button>
+                      <button
+                        type="button"
+                        className={
+                          themePref === "system" ? "is-active" : undefined
+                        }
+                        onClick={() => onSetTheme("system")}
+                      >
+                        {t("profile.themeSystem")}
+                      </button>
+                    </div>
+                  </div>
+                </SettingsGroup>
               ) : null}
-              {readingChrome?.htCatalogError ? (
-                <p className="bible-yv-tools-version-msg" role="alert">
-                  {readingChrome.htCatalogError}
-                </p>
-              ) : null}
-              {!readingChrome?.offlineHidden ? (
-                <SettingsRow
-                  icon={
-                    readingChrome?.versionOfflineReady
-                      ? "check_circle"
-                      : "download"
-                  }
-                  iconFilled={Boolean(readingChrome?.versionOfflineReady)}
-                  label={
-                    readingChrome?.offlineBusy
-                      ? t("bible.offlineDownloading", {
-                          done: readingChrome.offlineProgress?.done ?? 0,
-                          total:
-                            readingChrome.offlineProgress?.total ??
-                            (readingChrome.textVersion === "ht98" ? 2 : 66),
-                        })
-                      : readingChrome?.versionOfflineReady
-                        ? t("bible.offlineReady")
-                        : t("bible.offlineDownload")
-                  }
-                  disabled={!chromeReady}
-                  ready={readingChrome?.versionOfflineReady}
-                  busy={readingChrome?.offlineBusy}
-                  aria-label={
-                    readingChrome?.offlineBusy
-                      ? t("bible.offlineBusy", {
-                          done: readingChrome.offlineProgress?.done ?? 0,
-                          total:
-                            readingChrome.offlineProgress?.total ??
-                            (readingChrome.textVersion === "ht98" ? 2 : 66),
-                        })
-                      : readingChrome?.versionOfflineReady
-                        ? t("bible.offlineReady")
-                        : t("bible.offlineDownload")
-                  }
-                  onClick={() => readingChrome?.toggleOfflineBible()}
-                />
-              ) : null}
-            </SettingsGroup>
 
-            <SettingsGroup title={t("profile.group.reading")}>
-              <div className="settings-row is-static">
-                <YvIcon name="settings" className="settings-row-icon" opsz={20} />
-                <span className="settings-row-body">
-                  <span className="settings-row-label">{t("bible.fontSize")}</span>
-                </span>
-                <div
-                  className="profile-theme-seg profile-font-seg"
-                  role="group"
-                  aria-label={t("bible.fontSize")}
-                >
-                  <button
-                    type="button"
-                    disabled={
-                      !chromeReady ||
-                      (readingChrome != null &&
-                        readingChrome.fontSize <= readingChrome.fontMin)
-                    }
-                    aria-label={t("bible.fontSmaller")}
-                    onClick={() => readingChrome?.bumpFontSize(-0.5)}
+              {prefsTab === "bible" ? (
+                <SettingsGroup title={t(activeTabMeta.labelKey)}>
+                  <div
+                    className="bible-yv-tools-version"
+                    role="group"
+                    aria-label={t("bible.versionGroup")}
                   >
-                    A−
-                  </button>
-                  <span className="profile-font-size-value" aria-live="polite">
-                    {fontSizeLabel}
-                  </span>
-                  <button
-                    type="button"
-                    disabled={
-                      !chromeReady ||
-                      (readingChrome != null &&
-                        readingChrome.fontSize >= readingChrome.fontMax)
-                    }
-                    aria-label={t("bible.fontLarger")}
-                    onClick={() => readingChrome?.bumpFontSize(0.5)}
-                  >
-                    A+
-                  </button>
-                </div>
-              </div>
-              {!chromeReady ? (
-                <p className="settings-hint muted">
-                  {t("profile.readingChromeHint")}
-                </p>
+                    <span className="bible-yv-tools-version-label">
+                      {t("bible.version")}
+                    </span>
+                    <div className="bible-yv-tools-version-options">
+                      {BIBLE_TEXT_VERSIONS.map((version) => (
+                        <button
+                          key={version.id}
+                          type="button"
+                          className={`bible-yv-tools-version-chip${
+                            readingChrome?.textVersion === version.id
+                              ? " is-on"
+                              : ""
+                          }${
+                            readingChrome?.htCatalogLoading &&
+                            version.id === "ht98"
+                              ? " is-busy"
+                              : ""
+                          }`}
+                          disabled={
+                            !chromeReady ||
+                            (Boolean(readingChrome?.htCatalogLoading) &&
+                              version.id === "ht98")
+                          }
+                          aria-pressed={
+                            readingChrome?.textVersion === version.id
+                          }
+                          title={version.title}
+                          onClick={() =>
+                            readingChrome?.switchTextVersion(version.id)
+                          }
+                        >
+                          {version.abbreviation}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  {!chromeReady ? (
+                    <p className="settings-hint muted">
+                      {t("profile.readingChromeHint")}
+                    </p>
+                  ) : null}
+                  {readingChrome?.htCatalogError ? (
+                    <p className="bible-yv-tools-version-msg" role="alert">
+                      {readingChrome.htCatalogError}
+                    </p>
+                  ) : null}
+                  {!readingChrome?.offlineHidden ? (
+                    <SettingsRow
+                      icon={
+                        readingChrome?.versionOfflineReady
+                          ? "check_circle"
+                          : "download"
+                      }
+                      iconFilled={Boolean(readingChrome?.versionOfflineReady)}
+                      label={
+                        readingChrome?.offlineBusy
+                          ? t("bible.offlineDownloading", {
+                              done: readingChrome.offlineProgress?.done ?? 0,
+                              total:
+                                readingChrome.offlineProgress?.total ??
+                                (readingChrome.textVersion === "ht98" ? 2 : 66),
+                            })
+                          : readingChrome?.versionOfflineReady
+                            ? t("bible.offlineReady")
+                            : t("bible.offlineDownload")
+                      }
+                      disabled={!chromeReady}
+                      ready={readingChrome?.versionOfflineReady}
+                      busy={readingChrome?.offlineBusy}
+                      aria-label={
+                        readingChrome?.offlineBusy
+                          ? t("bible.offlineBusy", {
+                              done: readingChrome.offlineProgress?.done ?? 0,
+                              total:
+                                readingChrome.offlineProgress?.total ??
+                                (readingChrome.textVersion === "ht98" ? 2 : 66),
+                            })
+                          : readingChrome?.versionOfflineReady
+                            ? t("bible.offlineReady")
+                            : t("bible.offlineDownload")
+                      }
+                      onClick={() => readingChrome?.toggleOfflineBible()}
+                    />
+                  ) : null}
+                </SettingsGroup>
               ) : null}
-            </SettingsGroup>
 
-            <SettingsGroup title={t("profile.group.library")}>
-              {ACTIVITY_UI_ENABLED ? (
-                <SettingsRow
-                  icon="history"
-                  label={t("history.title")}
-                  chevron
-                  onClick={() => onOpenHistory?.()}
-                />
+              {prefsTab === "reading" ? (
+                <SettingsGroup title={t(activeTabMeta.labelKey)}>
+                  <div className="settings-row is-static">
+                    <YvIcon
+                      name="settings"
+                      className="settings-row-icon"
+                      opsz={20}
+                    />
+                    <span className="settings-row-body">
+                      <span className="settings-row-label">
+                        {t("bible.fontSize")}
+                      </span>
+                    </span>
+                    <div
+                      className="profile-theme-seg profile-font-seg"
+                      role="group"
+                      aria-label={t("bible.fontSize")}
+                    >
+                      <button
+                        type="button"
+                        disabled={
+                          !chromeReady ||
+                          (readingChrome != null &&
+                            readingChrome.fontSize <= readingChrome.fontMin)
+                        }
+                        aria-label={t("bible.fontSmaller")}
+                        onClick={() => readingChrome?.bumpFontSize(-0.5)}
+                      >
+                        A−
+                      </button>
+                      <span
+                        className="profile-font-size-value"
+                        aria-live="polite"
+                      >
+                        {fontSizeLabel}
+                      </span>
+                      <button
+                        type="button"
+                        disabled={
+                          !chromeReady ||
+                          (readingChrome != null &&
+                            readingChrome.fontSize >= readingChrome.fontMax)
+                        }
+                        aria-label={t("bible.fontLarger")}
+                        onClick={() => readingChrome?.bumpFontSize(0.5)}
+                      >
+                        A+
+                      </button>
+                    </div>
+                  </div>
+                  {!chromeReady ? (
+                    <p className="settings-hint muted">
+                      {t("profile.readingChromeHint")}
+                    </p>
+                  ) : null}
+                </SettingsGroup>
               ) : null}
-              <SettingsRow
-                icon="style"
-                label={t("profile.marks")}
-                chevron
-                onClick={() => onOpenMarks?.()}
-              />
-            </SettingsGroup>
 
-            <SettingsGroup title={t("profile.storage")}>
-              <SettingsRow
-                icon="desktop_windows"
-                label={
-                  storageHealth
-                    ? `${storageHealth.usedMB} Mo`
-                    : t("profile.calculating")
-                }
-                value={
-                  storageHealth
-                    ? storageHealth.isPersisted
-                      ? t("profile.storage")
-                      : t("profile.storageCache")
-                    : "…"
-                }
-              />
-            </SettingsGroup>
+              {prefsTab === "library" ? (
+                <>
+                  <SettingsGroup title={t(activeTabMeta.labelKey)}>
+                    {ACTIVITY_UI_ENABLED ? (
+                      <SettingsRow
+                        icon="history"
+                        label={t("history.title")}
+                        chevron
+                        onClick={() => onOpenHistory?.()}
+                      />
+                    ) : null}
+                    <SettingsRow
+                      icon="style"
+                      label={t("profile.marks")}
+                      chevron
+                      onClick={() => onOpenMarks?.()}
+                    />
+                  </SettingsGroup>
+                  <SettingsGroup title={t("profile.storage")}>
+                    <SettingsRow
+                      icon="desktop_windows"
+                      label={
+                        storageHealth
+                          ? `${storageHealth.usedMB} Mo`
+                          : t("profile.calculating")
+                      }
+                      value={
+                        storageHealth
+                          ? storageHealth.isPersisted
+                            ? t("profile.storage")
+                            : t("profile.storageCache")
+                          : "…"
+                      }
+                    />
+                  </SettingsGroup>
+                </>
+              ) : null}
+            </div>
           </>
         )}
       </div>

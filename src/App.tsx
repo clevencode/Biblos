@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BibleReaderView } from "./components/BibleReaderView";
 import { AppShellNav } from "./components/AppShellNav";
-import { ProfileSettingsPanel } from "./components/profile/ProfileSettingsPanel";
+import {
+  ProfileSettingsPanel,
+  type ProfilePrefsTab,
+} from "./components/profile/ProfileSettingsPanel";
 import {
   PlanDiscoverPanel,
   flattenPlanSteps,
@@ -148,6 +151,9 @@ function BiblosConsumerApp() {
   const [adminOpen, setAdminOpen] = useState(false);
   const [openOverlayRequest, setOpenOverlayRequest] =
     useState<ProfileOverlayRequest | null>(null);
+  /** Aba Profile a restaurar ao voltar de history/marks. */
+  const [profileFocusTab, setProfileFocusTab] =
+    useState<ProfilePrefsTab>("appearance");
   const [profileReadingChrome, setProfileReadingChrome] =
     useState<ProfileReadingChrome | null>(null);
   const [workspacePlan, setWorkspacePlan] = useState<ReadingPlan | null>(null);
@@ -282,7 +288,10 @@ function BiblosConsumerApp() {
 
   const toggleAccount = useCallback(() => {
     setAdminOpen(false);
-    setAccountOpen((open) => !open);
+    setAccountOpen((open) => {
+      if (!open) setProfileFocusTab("appearance");
+      return !open;
+    });
   }, []);
 
   const toggleAdmin = useCallback(() => {
@@ -363,6 +372,7 @@ function BiblosConsumerApp() {
 
   const requestProfileOverlay = useCallback(
     (request: ProfileOverlayRequest) => {
+      setProfileFocusTab("library");
       setAccountOpen(false);
       setAdminOpen(false);
       setTab("bible");
@@ -575,6 +585,7 @@ function BiblosConsumerApp() {
                       themePref={themePref}
                       onSetTheme={setTheme}
                       readingChrome={profileReadingChrome}
+                      initialPrefsTab={profileFocusTab}
                       onOpenHistory={
                         ACTIVITY_UI_ENABLED
                           ? () => requestProfileOverlay("history")
@@ -669,6 +680,7 @@ function BiblosConsumerApp() {
                       }
                       onReturnToProfile={() => {
                         setAdminOpen(false);
+                        setProfileFocusTab("library");
                         setAccountOpen(true);
                       }}
                       onProfileReadingChromeChange={setProfileReadingChrome}

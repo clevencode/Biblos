@@ -896,7 +896,11 @@ export function BibleReaderView({
     [closeOverlay],
   );
 
-  /** Fecha history/marks: se vieram do Profile, reabre Profile; senão volta ao menu. */
+  /**
+   * Fecha history/marks.
+   * Se veio do Profile → reabre Profile (pill Bibliothèque).
+   * Senão: back → menu leitor; dismiss → fecha.
+   */
   const leaveHistoryOrMarks = useCallback(
     (mode: "back" | "dismiss" = "back") => {
       if (overlayReturnToProfileRef.current) {
@@ -3442,7 +3446,7 @@ export function BibleReaderView({
             closeCreateCard();
             return;
           }
-          /* Jornada: search → menu; history/marks do Profile → Profile. */
+          /* Jornada: search / history / marks → pill Menu. */
           if (historyOpen || marksOpen) {
             leaveHistoryOrMarks("back");
             return;
