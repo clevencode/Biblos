@@ -30,6 +30,8 @@ type AppShellNavProps = {
   adminOpen?: boolean;
   showAdmin?: boolean;
   onToggleAdmin?: () => void;
+  /** Microinteração ao abrir uma tela a partir do menu. */
+  onOpenScreen?: () => void;
 };
 
 type RadialDest = ShellTab | "account" | "admin";
@@ -71,6 +73,7 @@ export function AppShellNav({
   adminOpen = false,
   showAdmin = false,
   onToggleAdmin,
+  onOpenScreen,
 }: AppShellNavProps) {
   const { t } = useUiLocale();
   const rootId = useId();
@@ -164,6 +167,7 @@ export function AppShellNav({
   function selectDest(id: RadialDest) {
     setOpen(false);
     if (id === hubDest) return;
+    onOpenScreen?.();
     if (id === "account") {
       onToggleAccount?.();
       return;

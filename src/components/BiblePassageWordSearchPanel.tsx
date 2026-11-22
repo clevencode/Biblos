@@ -121,6 +121,8 @@ type BiblePassageWordSearchPanelProps = {
   currentBookId: string;
   currentBookTitle: string;
   onPickVerse: (hit: BibleSearchHit) => void;
+  /** Microinteração ao abrir a partir do menu hamburger. */
+  enterFromMenu?: boolean;
 };
 
 /**
@@ -155,6 +157,7 @@ export function BiblePassageWordSearchPanel({
   currentBookId,
   currentBookTitle,
   onPickVerse,
+  enterFromMenu = false,
 }: BiblePassageWordSearchPanelProps) {
   const { t } = useUiLocale();
   const showDcPill = textVersion === "ht98";
@@ -514,7 +517,9 @@ export function BiblePassageWordSearchPanel({
       id={panelId}
       className={`bible-yv-passage-word-search-panel top-floating-sheet is-open${
         hasResultsChrome || isBookPickerOpen ? " has-results" : " is-compact"
-      }${isBookPickerOpen ? " is-book-picker" : ""}`}
+      }${isBookPickerOpen ? " is-book-picker" : ""}${
+        enterFromMenu ? " is-menu-enter" : ""
+      }`}
       role="dialog"
       aria-modal="false"
       aria-label={t("word.panel")}

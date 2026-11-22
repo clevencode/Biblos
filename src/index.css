@@ -763,6 +763,23 @@ html[data-theme="dark"] .sw-update-banner-cta {
   position: relative;
 }
 
+/* Micro: tela aberta a partir do menu radial */
+@keyframes shell-pane-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.graph-pane-body.is-shell-enter > .pane-body:not([hidden]) {
+  animation: shell-pane-enter var(--shell-pane-enter-ms, 260ms)
+    var(--shell-pane-enter-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+
 
 .plan-discover-head-actions {
   flex: none;
@@ -963,10 +980,13 @@ html[data-theme="dark"] .sw-update-banner-cta {
   --mode-tabs-pill-width: 11.5rem;
   --mode-tabs-item-size: 48px;
   /* Abertura bruta: curta, sem spring */
-  --mode-tabs-open-ms: 90ms;
-  --mode-tabs-open-ease: cubic-bezier(0.4, 0, 1, 1);
-  --mode-tabs-close-ms: 70ms;
+  --mode-tabs-open-ms: 180ms;
+  --mode-tabs-open-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --mode-tabs-close-ms: 110ms;
   --mode-tabs-close-ease: cubic-bezier(0.4, 0, 1, 1);
+  --mode-tabs-stagger-ms: 32ms;
+  --shell-pane-enter-ms: 260ms;
+  --shell-pane-enter-ease: cubic-bezier(0.22, 1, 0.36, 1);
   /* Canvas = superfície shell (--bible-nav-surface); top bar herda o mesmo */
   --mode-tabs-canvas: var(--bible-nav-surface, var(--bg));
   --mode-tabs-fg: var(--text);
@@ -1292,13 +1312,13 @@ html[data-theme="dark"] {
   pointer-events: none;
   opacity: 0;
   will-change: opacity;
-  transition: opacity 70ms cubic-bezier(0.4, 0, 1, 1);
+  transition: opacity var(--mode-tabs-close-ms, 110ms) var(--mode-tabs-close-ease);
 }
 
 .radial-ui-backdrop.is-open {
   opacity: 1;
   pointer-events: auto;
-  transition: opacity 90ms linear;
+  transition: opacity var(--mode-tabs-open-ms, 180ms) var(--mode-tabs-open-ease);
 }
 
 /* Leitor: mesmo fog; clear 0 — superfície já está abaixo da topbar */
@@ -1464,7 +1484,8 @@ html.is-radial-open .bible-yv-tools-menu.is-float-br,
   margin: 0;
   padding: 0;
   overflow: hidden;
-  transform: none;
+  transform: scale(1);
+  transform-origin: center bottom;
   pointer-events: none;
   display: flex;
   flex-direction: column;
@@ -1479,7 +1500,8 @@ html.is-radial-open .bible-yv-tools-menu.is-float-br,
     background var(--mode-tabs-close-ms) var(--mode-tabs-close-ease),
     box-shadow var(--mode-tabs-close-ms) var(--mode-tabs-close-ease),
     border-radius var(--mode-tabs-close-ms) var(--mode-tabs-close-ease),
-    gap var(--mode-tabs-close-ms) var(--mode-tabs-close-ease);
+    gap var(--mode-tabs-close-ms) var(--mode-tabs-close-ease),
+    transform var(--mode-tabs-close-ms) var(--mode-tabs-close-ease);
 }
 
 /* Aberto: um único bloco pill (lista + ×) */
@@ -1495,12 +1517,24 @@ html.is-radial-open .bible-yv-tools-menu.is-float-br,
     0 1px 0 color-mix(in srgb, var(--ink) 8%, transparent),
     0 10px 24px color-mix(in srgb, var(--ink) 16%, transparent);
   pointer-events: auto;
+  transform: scale(1);
+  animation: mode-tabs-stage-pop var(--mode-tabs-open-ms) var(--mode-tabs-open-ease) both;
   transition:
     padding var(--mode-tabs-open-ms) var(--mode-tabs-open-ease),
     background var(--mode-tabs-open-ms) var(--mode-tabs-open-ease),
     box-shadow var(--mode-tabs-open-ms) var(--mode-tabs-open-ease),
     border-radius var(--mode-tabs-open-ms) var(--mode-tabs-open-ease),
-    gap var(--mode-tabs-open-ms) var(--mode-tabs-open-ease);
+    gap var(--mode-tabs-open-ms) var(--mode-tabs-open-ease),
+    transform var(--mode-tabs-open-ms) var(--mode-tabs-open-ease);
+}
+
+@keyframes mode-tabs-stage-pop {
+  from {
+    transform: scale(0.94);
+  }
+  to {
+    transform: scale(1);
+  }
 }
 
 /* Hub = pill (ícone + label); abre pilha de destinos */
@@ -1660,7 +1694,7 @@ html.is-radial-open .bible-yv-tools-menu.is-float-br,
   display: none;
 }
 
-/* Destinos dentro do mesmo pill — pop bruto (sem spring) */
+/* Destinos dentro do mesmo pill — entrada escalonada */
 .mode-tabs-arc.mode-tabs-stack {
   position: absolute;
   left: 0;
@@ -1684,7 +1718,7 @@ html.is-radial-open .bible-yv-tools-menu.is-float-br,
   background: transparent;
   color: inherit;
   box-shadow: none;
-  transform: translateY(4px);
+  transform: translateY(8px);
   transform-origin: center bottom;
   opacity: 0;
   pointer-events: none;
@@ -1707,7 +1741,7 @@ html.is-radial-open .bible-yv-tools-menu.is-float-br,
   visibility: visible;
   transition:
     transform var(--mode-tabs-open-ms) var(--mode-tabs-open-ease),
-    opacity calc(var(--mode-tabs-open-ms) * 0.7) linear,
+    opacity calc(var(--mode-tabs-open-ms) * 0.75) linear,
     visibility 0ms;
 }
 
@@ -1736,17 +1770,29 @@ html.is-radial-open .bible-yv-tools-menu.is-float-br,
   color: var(--mode-tabs-hub-fg);
   box-shadow: none !important;
   outline: none;
-  transform: none;
-  opacity: 1;
+  transform: translateY(6px) scale(0.98);
+  opacity: 0;
   pointer-events: none;
-  transition: background 140ms var(--mode-tabs-ease);
+  transition:
+    background 140ms var(--mode-tabs-ease),
+    transform var(--mode-tabs-close-ms) var(--mode-tabs-close-ease),
+    opacity var(--mode-tabs-close-ms) var(--mode-tabs-close-ease);
+  transition-delay: 0ms;
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
+  will-change: transform, opacity;
 }
 
 .mode-tabs.is-open .mode-tabs-item.mode-tabs-stack-item {
   pointer-events: auto;
+  transform: translateY(0) scale(1);
+  opacity: 1;
+  transition:
+    background 140ms var(--mode-tabs-ease),
+    transform var(--mode-tabs-open-ms) var(--mode-tabs-open-ease),
+    opacity calc(var(--mode-tabs-open-ms) * 0.85) linear;
+  transition-delay: calc(var(--stack-i) * var(--mode-tabs-stagger-ms));
 }
 
 .mode-tabs-item.mode-tabs-stack-item:hover {
@@ -1764,7 +1810,8 @@ html.is-radial-open .bible-yv-tools-menu.is-float-br,
     var(--mode-tabs-hub-fg) 20%,
     var(--mode-tabs-hub-bg)
   );
-  transform: none;
+  transform: scale(0.97);
+  transition-delay: 0ms;
 }
 
 .mode-tabs-item.mode-tabs-stack-item .mode-tab-icon {
@@ -1825,6 +1872,7 @@ html[data-keyboard="open"] .panel-nota-body {
   .contextual-ui-backdrop,
   .radial-ui-backdrop,
   .mode-tabs,
+  .mode-tabs-stage,
   .mode-tabs-arc.mode-tabs-stack,
   .mode-tabs-item,
   .mode-tabs-item.mode-tabs-stack-item,
@@ -1862,13 +1910,31 @@ html[data-keyboard="open"] .panel-nota-body {
     )
     .bible-yv-tools-menu.is-float-br {
     transition: none !important;
+    animation: none !important;
+  }
+
+  .mode-tabs-item.mode-tabs-stack-item,
+  .mode-tabs.is-open .mode-tabs-item.mode-tabs-stack-item {
+    opacity: 1;
+    transform: none;
+    transition-delay: 0ms !important;
+  }
+
+  .graph-pane-body.is-shell-enter > .pane-body:not([hidden]) {
+    animation: none !important;
   }
 
   .mode-tabs-item:active:not(:disabled),
   .bible-passage-end-skip:active:not(:disabled),
+  .bible-reader--yv .bible-verse:active:not(:disabled),
   .bible-reader--yv .bible-verse-color-picker:active,
   .bible-reader--yv .bible-verse-action-row .bible-verse-color-picker:active {
     transform: none;
+  }
+
+  .bible-reader--yv .bible-verse.is-selected:not(.is-marked),
+  .bible-reader--yv .bible-verse.is-marked.is-selected {
+    animation: none !important;
   }
 
   .bible-reader--yv.is-passage-roll-open .bible-yv-read-surface.is-overlay-occluding .bible-passage,
@@ -10464,6 +10530,8 @@ html[data-theme="dark"] .bible-reader--yv {
 /* —— HeaderTriggerButton (padrão hub radial) —— */
 .hdr-trigger {
   --hdr-size: var(--mobile-touch, 44px);
+  --hdr-morph-ms: 260ms;
+  --hdr-morph-ease: cubic-bezier(0.22, 1, 0.36, 1);
   position: relative;
   z-index: var(--bible-z-hdr-idle);
   box-sizing: border-box;
@@ -10480,9 +10548,15 @@ html[data-theme="dark"] .bible-reader--yv {
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
   transition:
-    background 120ms ease,
-    color 120ms ease,
-    box-shadow 120ms ease;
+    background var(--hdr-morph-ms) var(--hdr-morph-ease),
+    color var(--hdr-morph-ms) var(--hdr-morph-ease),
+    box-shadow var(--hdr-morph-ms) var(--hdr-morph-ease),
+    border-color var(--hdr-morph-ms) var(--hdr-morph-ease),
+    border-radius var(--hdr-morph-ms) var(--hdr-morph-ease),
+    width var(--hdr-morph-ms) var(--hdr-morph-ease),
+    min-width var(--hdr-morph-ms) var(--hdr-morph-ease),
+    max-width var(--hdr-morph-ms) var(--hdr-morph-ease),
+    padding var(--hdr-morph-ms) var(--hdr-morph-ease);
 }
 
 .hdr-trigger.is-circle,
@@ -10527,21 +10601,19 @@ html[data-theme="dark"] .bible-yv-passage-chip.hdr-trigger.is-open {
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35) !important;
 }
 
-/* Circle open: só o ✕ — sem fantasma do ícone idle */
+/* Circle open: crossfade suave menu ↔ ✕ (sem visibility cut) */
 .hdr-trigger.is-circle.is-open .hdr-icon-idle,
 .hdr-trigger.is-circle.is-active .hdr-icon-idle {
   opacity: 0 !important;
-  transform: rotate(-90deg) scale(0.55);
+  transform: rotate(-48deg) scale(0.62);
   pointer-events: none !important;
-  visibility: hidden;
 }
 
 .hdr-trigger.is-circle.is-open .hdr-icon-exit.is-shown,
 .hdr-trigger.is-circle.is-active .hdr-icon-exit.is-shown {
   opacity: 1 !important;
-  visibility: visible;
   color: inherit;
-  transform: rotate(90deg) scale(1);
+  transform: rotate(0deg) scale(1);
 }
 
 /* Voltar (chevron_left): sem rotate do morph ✕ — aponta sempre à esquerda */
@@ -10562,6 +10634,8 @@ html[data-theme="dark"] .bible-yv-passage-chip.hdr-trigger.is-open {
   gap: 0.4em;
   width: auto;
   height: auto;
+  transition:
+    gap var(--hdr-morph-ms) var(--hdr-morph-ease);
 }
 
 /* Menu / secção: ícone à esquerda; só o texto centrado na pílula */
@@ -10576,7 +10650,8 @@ html[data-theme="dark"] .bible-yv-passage-chip.hdr-trigger.is-open {
   position: absolute;
   left: 0;
   top: 50%;
-  transform: translateY(-50%);
+  transform: translateY(-50%) scale(0.82);
+  opacity: 0;
   flex: none;
   z-index: 1;
 }
@@ -10584,7 +10659,8 @@ html[data-theme="dark"] .bible-yv-passage-chip.hdr-trigger.is-open {
 .hdr-trigger.is-pill.is-open.is-section-pill .hdr-icon-exit.is-shown,
 .hdr-trigger.is-pill.is-open.is-section-pill.is-exit-back .hdr-icon-exit,
 .hdr-trigger.is-pill.is-open.is-section-pill.is-exit-back .hdr-icon-exit.is-shown {
-  transform: translateY(-50%);
+  transform: translateY(-50%) scale(1);
+  opacity: 1;
 }
 
 .hdr-trigger.is-pill.is-open.is-section-pill .hdr-icon-idle {
@@ -10622,8 +10698,15 @@ html[data-theme="dark"] .bible-yv-passage-chip.hdr-trigger.is-open {
   pointer-events: auto;
 }
 
+/* Book / pills: ✕ entra em fade+scale, sem spin brusco */
+.hdr-trigger.is-pill.is-open .hdr-icon-exit {
+  opacity: 0;
+  transform: scale(0.78);
+}
+
 .hdr-trigger.is-pill.is-open .hdr-icon-exit.is-shown {
-  transform: rotate(90deg) scale(1);
+  opacity: 1;
+  transform: scale(1);
 }
 
 .hdr-trigger.is-pill.is-open .hdr-trigger-label,
@@ -10657,16 +10740,17 @@ html[data-theme="dark"] .bible-yv-passage-chip.hdr-trigger.is-open {
   display: grid;
   place-items: center;
   transition:
-    opacity 120ms var(--top-sheet-ease, ease),
-    transform 120ms var(--top-sheet-ease, ease);
+    opacity var(--hdr-morph-ms, 260ms) var(--hdr-morph-ease, cubic-bezier(0.22, 1, 0.36, 1)),
+    transform var(--hdr-morph-ms, 260ms) var(--hdr-morph-ease, cubic-bezier(0.22, 1, 0.36, 1));
+  will-change: opacity, transform;
 }
 
-/* Modal aberto: mesmo contrato do trigger (120ms) */
+/* Modal aberto: mesmo contrato do trigger */
 .bible-reader--yv.is-top-sheet-open .hdr-icon-idle,
 .bible-reader--yv.is-top-sheet-open .hdr-icon-exit {
   transition:
-    opacity 120ms var(--top-sheet-ease, ease),
-    transform 120ms var(--top-sheet-ease, ease);
+    opacity var(--hdr-morph-ms, 260ms) var(--hdr-morph-ease, cubic-bezier(0.22, 1, 0.36, 1)),
+    transform var(--hdr-morph-ms, 260ms) var(--hdr-morph-ease, cubic-bezier(0.22, 1, 0.36, 1));
 }
 
 .hdr-icon-idle {
@@ -10676,13 +10760,13 @@ html[data-theme="dark"] .bible-yv-passage-chip.hdr-trigger.is-open {
 
 .hdr-icon-idle.is-hidden {
   opacity: 0;
-  transform: rotate(-90deg) scale(0.6);
+  transform: rotate(-48deg) scale(0.62);
   pointer-events: none;
 }
 
 .hdr-icon-exit {
   opacity: 0;
-  transform: rotate(-90deg) scale(0.6);
+  transform: rotate(48deg) scale(0.62);
   pointer-events: none;
 }
 
@@ -10690,10 +10774,6 @@ html[data-theme="dark"] .bible-yv-passage-chip.hdr-trigger.is-open {
   opacity: 1;
   transform: rotate(0deg) scale(1);
   pointer-events: auto;
-}
-
-.hdr-trigger.is-open .hdr-icon-exit.is-shown {
-  transform: rotate(90deg) scale(1);
 }
 
 .hdr-trigger-icon {
@@ -10938,6 +11018,71 @@ html[data-theme="dark"] .top-sheet-backdrop {
   backdrop-filter: none !important;
   animation: none !important;
   transform: none !important;
+}
+
+/* Menu hamburger — mesma microinteração do hub radial */
+@keyframes tools-menu-sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes tools-menu-item-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.bible-yv-tools-popover.top-floating-sheet.is-open:not(.is-float-anchor),
+.top-sheet-layer
+  > .bible-yv-tools-popover.top-floating-sheet.is-open:not(.is-float-anchor) {
+  transform-origin: top center;
+  animation: tools-menu-sheet-in var(--mode-tabs-open-ms, 180ms)
+    var(--mode-tabs-open-ease, cubic-bezier(0.22, 1, 0.36, 1)) both !important;
+}
+
+.bible-yv-passage-word-search-panel.top-floating-sheet.is-open.is-menu-enter,
+.top-sheet-layer
+  > .bible-yv-passage-word-search-panel.top-floating-sheet.is-open.is-menu-enter,
+.bible-yv-history-panel.top-floating-sheet.is-open.is-menu-enter,
+.top-sheet-layer
+  > .bible-yv-history-panel.top-floating-sheet.is-open.is-menu-enter {
+  transform-origin: top center;
+  animation: tools-menu-sheet-in var(--shell-pane-enter-ms, 260ms)
+    var(--shell-pane-enter-ease, cubic-bezier(0.22, 1, 0.36, 1)) both !important;
+}
+
+.bible-yv-tools-popover.is-open > .bible-yv-tools-item,
+.bible-yv-tools-popover.is-open > .bible-yv-tools-font,
+.bible-yv-tools-popover.is-open > .bible-yv-tools-version {
+  animation: tools-menu-item-in var(--mode-tabs-open-ms, 180ms)
+    var(--mode-tabs-open-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+
+.bible-yv-tools-popover.is-open > *:nth-child(1) {
+  animation-delay: 0ms;
+}
+.bible-yv-tools-popover.is-open > *:nth-child(2) {
+  animation-delay: var(--mode-tabs-stagger-ms, 32ms);
+}
+.bible-yv-tools-popover.is-open > *:nth-child(3) {
+  animation-delay: calc(var(--mode-tabs-stagger-ms, 32ms) * 2);
+}
+.bible-yv-tools-popover.is-open > *:nth-child(4) {
+  animation-delay: calc(var(--mode-tabs-stagger-ms, 32ms) * 3);
+}
+.bible-yv-tools-popover.is-open > *:nth-child(5) {
+  animation-delay: calc(var(--mode-tabs-stagger-ms, 32ms) * 4);
 }
 
 .bible-yv-passage-word-search-panel.is-open .bible-yv-pick-grid.is-word-search,
@@ -11239,7 +11384,8 @@ html:has(.bible-study-return-nav) .note-shell .mode-tabs,
   border: var(--yv-overlay-border);
   box-shadow: var(--top-sheet-shadow) !important;
   background: var(--yv-overlay-surface, var(--surface)) !important;
-  animation: top-sheet-float-in 180ms var(--top-sheet-ease) both;
+  animation: top-sheet-float-in var(--mode-tabs-open-ms, 180ms)
+    var(--mode-tabs-open-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
 }
 
 .hdr-trigger-caret {
@@ -11279,6 +11425,8 @@ html:has(.bible-study-return-nav) .note-shell .mode-tabs,
   min-width: 0;
   max-width: 100%;
   gap: 0.35em;
+  transition:
+    gap var(--hdr-morph-ms, 260ms) var(--hdr-morph-ease, cubic-bezier(0.22, 1, 0.36, 1));
 }
 
 .bible-yv-passage-chip.hdr-trigger.is-pill.is-open .hdr-icon-idle {
@@ -11290,6 +11438,10 @@ html:has(.bible-study-return-nav) .note-shell .mode-tabs,
   flex: none;
 }
 
+.bible-yv-passage-chip.hdr-trigger.is-pill.is-open .hdr-icon-exit.is-shown {
+  transform: scale(1);
+}
+
 .top-floating-sheet .bible-yv-tools-version-chip.is-on,
 .top-floating-sheet .bible-yv-word-search-pill.is-on {
   background: var(--hdr-trigger-active-bg);
@@ -11298,12 +11450,19 @@ html:has(.bible-study-return-nav) .note-shell .mode-tabs,
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .hdr-trigger,
+  .hdr-trigger-swap,
   .hdr-icon-idle,
   .hdr-icon-exit,
   .top-floating-sheet,
-  .top-sheet-backdrop {
+  .top-sheet-backdrop,
+  .bible-yv-tools-popover.is-open > .bible-yv-tools-item,
+  .bible-yv-tools-popover.is-open > .bible-yv-tools-font,
+  .bible-yv-tools-popover.is-open > .bible-yv-tools-version,
+  .bible-yv-tools-item:active {
     transition: none !important;
     animation: none !important;
+    transform: none !important;
   }
 
   .top-floating-sheet:not(.is-float-anchor):not(.bible-yv-passage-word-search-panel):not(
@@ -11324,8 +11483,7 @@ html:has(.bible-study-return-nav) .note-shell .mode-tabs,
 
   .hdr-icon-idle.is-hidden,
   .hdr-icon-exit,
-  .hdr-icon-exit.is-shown,
-  .hdr-trigger.is-open .hdr-icon-exit.is-shown {
+  .hdr-icon-exit.is-shown {
     transform: none;
   }
 }
@@ -14119,11 +14277,21 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   font-size: 0.92rem;
   text-align: left;
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background 140ms var(--mode-tabs-ease, ease),
+    transform 120ms var(--mode-tabs-ease, ease);
 }
 
 .bible-yv-tools-item:hover,
 .bible-yv-tools-item:focus-visible {
   background: color-mix(in srgb, var(--yv-text) 7%, transparent);
+}
+
+.bible-yv-tools-item:active {
+  background: color-mix(in srgb, var(--yv-text) 12%, transparent);
+  transform: scale(0.97);
 }
 
 .bible-yv-tools-item:focus-visible {
@@ -14628,13 +14796,39 @@ html[data-theme="dark"] .bible-chapter-fab {
   }
 }
 
+@keyframes bible-verse-select-in {
+  from {
+    background-color: color-mix(in srgb, var(--accent) 16%, transparent);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+
+@keyframes bible-verse-select-marked-in {
+  from {
+    background-color: color-mix(
+      in srgb,
+      var(--verse-mark, var(--accent)) 28%,
+      transparent
+    );
+  }
+  to {
+    background-color: color-mix(
+      in srgb,
+      var(--verse-mark, var(--accent)) 16%,
+      transparent
+    );
+  }
+}
+
 .bible-reader--yv .bible-verse {
   display: block;
   width: 100%;
   margin: 0;
   padding: 6px 10px;
   border: 0;
-  border-radius: 0;
+  border-radius: 6px;
   background: transparent;
   text-align: left;
   cursor: pointer;
@@ -14647,11 +14841,27 @@ html[data-theme="dark"] .bible-chapter-fab {
   font-variant-ligatures: common-ligatures;
   text-rendering: optimizeLegibility;
   color: var(--yv-text);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transform: translateZ(0);
   transition:
     opacity var(--bible-dim-ms, 220ms) var(--yv-chrome-ease, ease),
-    background-color var(--bible-dim-ms, 220ms) var(--yv-chrome-ease, ease),
+    background-color var(--bible-press-ms, 160ms)
+      var(--mode-tabs-open-ease, cubic-bezier(0.22, 1, 0.36, 1)),
     box-shadow var(--bible-dim-ms, 220ms) var(--yv-chrome-ease, ease),
-    color var(--bible-dim-ms, 220ms) var(--yv-chrome-ease, ease);
+    color var(--bible-dim-ms, 220ms) var(--yv-chrome-ease, ease),
+    transform var(--bible-press-ms, 160ms)
+      var(--mode-tabs-open-ease, cubic-bezier(0.22, 1, 0.36, 1));
+}
+
+/* Micro: press tátil ao tocar o verso */
+.bible-reader--yv .bible-verse:active:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  transform: scale(0.992);
+}
+
+.bible-reader--yv .bible-verse.is-marked:active:not(:disabled) {
+  background: color-mix(in srgb, var(--verse-mark, var(--accent)) 22%, transparent);
 }
 
 .bible-reader--yv .bible-verses.is-dimming .bible-verse:not(.is-selected):not(.is-focus) {
@@ -14711,7 +14921,9 @@ html[data-theme="dark"] .bible-chapter-fab {
   color: var(--yv-text);
   background: transparent;
   box-shadow: none;
-  border-radius: 0;
+  border-radius: 6px;
+  animation: bible-verse-select-in var(--bible-press-ms, 160ms)
+    var(--mode-tabs-open-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
 }
 
 .bible-reader--yv .bible-verses.is-dimming .bible-verse.is-selected:not(.is-marked) {
@@ -14724,6 +14936,9 @@ html[data-theme="dark"] .bible-chapter-fab {
   text-decoration-thickness: from-font;
   text-underline-offset: 0.2em;
   text-decoration-color: color-mix(in srgb, var(--accent) 55%, var(--yv-text));
+  text-decoration-skip-ink: auto;
+  transition: text-decoration-color var(--bible-press-ms, 160ms)
+    var(--mode-tabs-open-ease, cubic-bezier(0.22, 1, 0.36, 1));
 }
 
 .bible-reader--yv .bible-verse.is-selected.is-marked .bible-verse-text {
@@ -14781,6 +14996,8 @@ html[data-theme="dark"] .bible-chapter-fab {
 .bible-reader--yv .bible-verse.is-marked.is-selected {
   background: color-mix(in srgb, var(--verse-mark, var(--accent)) 16%, transparent);
   box-shadow: inset 3px 0 0 var(--verse-mark, var(--accent));
+  animation: bible-verse-select-marked-in var(--bible-press-ms, 160ms)
+    var(--mode-tabs-open-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
 }
 
 .bible-reader--yv .bible-verse.is-marked.is-sel-start:not(.is-sel-end) {

@@ -760,6 +760,8 @@ export function BibleReaderView({
   const restoreHistoryFocusRef = useRef(true);
   const historyWasOpenRef = useRef(false);
   const restoreToolsFocusRef = useRef(true);
+  /** Micro: próxima tela aberta a partir do menu hamburger. */
+  const sheetEnterFromMenuRef = useRef(false);
   /** History/marks abertos via Profile — back devolve ao Profile, não ao menu. */
   const overlayReturnToProfileRef = useRef(false);
   const onReturnToProfileRef = useRef(onReturnToProfile);
@@ -827,6 +829,10 @@ export function BibleReaderView({
   const hasActiveModalRef = useRef(hasActiveModal);
   hasActiveModalRef.current = hasActiveModal;
 
+  useEffect(() => {
+    if (!wordSearchOpen) sheetEnterFromMenuRef.current = false;
+  }, [wordSearchOpen]);
+
   /** WAI: ao fechar histórico, focus no hamburger (histórico saiu da topbar). */
   useLayoutEffect(() => {
     if (historyOpen) {
@@ -878,6 +884,7 @@ export function BibleReaderView({
 
   const requestToggleWordSearch = useCallback(() => {
     setShareSheetOpen(false);
+    sheetEnterFromMenuRef.current = false;
     toggleOverlay("word_search");
   }, [toggleOverlay]);
 
@@ -2962,6 +2969,7 @@ export function BibleReaderView({
   function openWordSearchFromMenu() {
     restoreToolsFocusRef.current = false;
     setShareSheetOpen(false);
+    sheetEnterFromMenuRef.current = true;
     openOverlay({ type: "word_search" });
   }
 
@@ -3450,7 +3458,7 @@ export function BibleReaderView({
       />
     );
 
-    /* Float: sheet no FAB. Header: só trigger — sheet na top-sheet-layer (instantâneo). */
+    /* Float: sheet no FAB. Header: só trigger — sheet na top-sheet-layer. */
     if (isFloat) {
       return (
         <div className="bible-yv-tools-menu is-float-br" ref={toolsMenuRef}>
@@ -4128,6 +4136,7 @@ export function BibleReaderView({
               closeWordSearch({ restoreFocus: false });
               pickVerseSearchHit(hit);
             }}
+            enterFromMenu={sheetEnterFromMenuRef.current}
           />
         ) : null}
         {ACTIVITY_UI_ENABLED ? (
@@ -4187,7 +4196,7 @@ export function BibleReaderView({
             })();
           }}
         />
-        {/* Menu header: na layer (como search/history) — abertura sem delay/animação */}
+        {/* Menu header: na layer (como search/history) — microinteração de abertura */}
         {!compactToolsMenu || isPassageBarPanelCompactTopbar()
           ? renderToolsPopover(false)
           : null}

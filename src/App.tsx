@@ -290,6 +290,20 @@ function BiblosConsumerApp() {
     setAdminOpen((open) => !open);
   }, []);
 
+  const graphPaneBodyRef = useRef<HTMLDivElement>(null);
+
+  /** Micro: fade/slide da tela ao escolher um destino no menu radial. */
+  const bumpShellEnter = useCallback(() => {
+    const el = graphPaneBodyRef.current;
+    if (!el) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    el.classList.remove("is-shell-enter");
+    void el.offsetWidth;
+    el.classList.add("is-shell-enter");
+    const clear = () => el.classList.remove("is-shell-enter");
+    el.addEventListener("animationend", clear, { once: true });
+  }, []);
+
   useEffect(() => {
     if (!showAdminNav) setAdminOpen(false);
   }, [showAdminNav]);
@@ -547,7 +561,7 @@ function BiblosConsumerApp() {
         <div className="note-shell">
           <div className="note-shell-main">
             <section className="graph-pane" aria-label={t("shell.nav")}>
-              <div className="graph-pane-body">
+              <div ref={graphPaneBodyRef} className="graph-pane-body">
                 {accountOpen ? (
                   <div
                     id="panel-account"
@@ -676,6 +690,7 @@ function BiblosConsumerApp() {
             adminOpen={adminOpen}
             showAdmin={showAdminNav}
             onToggleAdmin={toggleAdmin}
+            onOpenScreen={bumpShellEnter}
           />
         </div>
       </main>
