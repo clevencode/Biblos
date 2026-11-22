@@ -1138,10 +1138,14 @@ html[data-theme="dark"] .mode-tabs {
 }
 
 .account-shell-panel {
+  --yv-bg: var(--bg);
+  --yv-text: var(--text);
+  --yv-muted: var(--muted);
   display: flex;
   flex-direction: column;
   min-height: 0;
   overflow: hidden;
+  color: var(--text);
   padding: 16px
     max(var(--panel-gutter, 14px), env(safe-area-inset-right, 0px))
     calc(var(--mobile-bottom-chrome, 88px) + 16px)
@@ -1167,6 +1171,60 @@ html[data-theme="dark"] .mode-tabs {
 .account-shell-panel .profile-settings .bible-yv-tools-version {
   margin: 0;
   padding: 8px 4px 4px;
+}
+
+.account-shell-panel .bible-yv-tools-version-label {
+  color: var(--muted);
+}
+
+.account-shell-panel .bible-yv-tools-version-chip {
+  border-color: color-mix(in srgb, var(--line) 95%, transparent);
+  background: color-mix(in srgb, var(--text) 5%, transparent);
+  color: var(--text);
+}
+
+.account-shell-panel .bible-yv-tools-version-chip:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--text) 9%, transparent);
+}
+
+.account-shell-panel .bible-yv-tools-version-chip.is-on {
+  border-color: transparent;
+  background: var(--text);
+  color: var(--bg);
+}
+
+html[data-theme="dark"] .account-shell-panel .settings-group-body {
+  background: var(--surface);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--line) 100%, transparent);
+}
+
+html[data-theme="dark"] .account-shell-panel .profile-theme-seg {
+  background: color-mix(in srgb, var(--bg) 45%, var(--elevated));
+}
+
+html[data-theme="dark"] .account-shell-panel .profile-theme-seg button.is-active {
+  background: var(--elevated);
+  color: var(--text);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--line) 100%, transparent);
+}
+
+html[data-theme="dark"] .account-shell-panel .profile-settings-tab {
+  background: color-mix(in srgb, var(--paper) 8%, transparent);
+  color: color-mix(in srgb, var(--text) 78%, transparent);
+}
+
+html[data-theme="dark"] .account-shell-panel .profile-settings-tab:hover {
+  background: color-mix(in srgb, var(--paper) 12%, transparent);
+  color: var(--text);
+}
+
+html[data-theme="dark"] .account-shell-panel .profile-settings-tab.is-active {
+  background: var(--text);
+  color: var(--bg);
+}
+
+html[data-theme="dark"] .account-shell-panel .settings-row:hover:not(.is-static):not(:disabled) {
+  background: color-mix(in srgb, var(--paper) 5%, transparent);
 }
 
 .admin-shell-panel {
@@ -3619,7 +3677,7 @@ html[data-keyboard="open"] .panel-nota-body {
   display: inline-flex;
   padding: 3px;
   border-radius: 999px;
-  background: var(--surface);
+  background: color-mix(in srgb, var(--bg) 70%, var(--elevated));
   gap: 2px;
 }
 
@@ -3637,9 +3695,9 @@ html[data-keyboard="open"] .panel-nota-body {
 }
 
 .profile-theme-seg button.is-active {
-  background: var(--elevated);
+  background: var(--bg);
   color: var(--text);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--line) 80%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--line) 90%, transparent);
 }
 
 .profile-theme-seg button:hover {
@@ -3648,7 +3706,7 @@ html[data-keyboard="open"] .panel-nota-body {
 }
 
 .profile-theme-seg button.is-active:hover {
-  background: var(--elevated);
+  background: var(--bg);
 }
 
 .profile-ready-badge {
@@ -3676,7 +3734,7 @@ html[data-keyboard="open"] .panel-nota-body {
 }
 
 html[data-theme="dark"] .profile-download-btn {
-  color: var(--ink);
+  color: var(--bg);
 }
 
 .profile-download-btn:disabled {
@@ -4050,17 +4108,17 @@ html[data-theme="dark"] .profile-download-btn {
   padding: 0;
   border: 0;
   border-radius: 12px;
-  background: color-mix(in srgb, var(--ink) 6%, transparent);
-  color: var(--ink);
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+  color: var(--text);
   cursor: pointer;
 }
 
 .profile-header-settings:hover {
-  background: color-mix(in srgb, var(--ink) 10%, transparent);
+  background: color-mix(in srgb, var(--text) 12%, transparent);
 }
 
 .profile-header-settings.is-on {
-  background: color-mix(in srgb, var(--ink) 12%, transparent);
+  background: color-mix(in srgb, var(--text) 14%, transparent);
 }
 
 .profile-header-avatar {
@@ -4071,9 +4129,9 @@ html[data-theme="dark"] .profile-download-btn {
   overflow: hidden;
   display: grid;
   place-items: center;
-  background: color-mix(in srgb, var(--ink) 8%, var(--paper));
-  color: var(--ink);
-  border: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+  background: color-mix(in srgb, var(--text) 10%, var(--bg));
+  color: var(--text);
+  border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
 }
 
 .profile-header-avatar-img {
@@ -4102,7 +4160,7 @@ html[data-theme="dark"] .profile-download-btn {
   font-size: 1.15rem;
   font-weight: 700;
   line-height: 1.25;
-  color: var(--ink);
+  color: var(--text);
 }
 
 .profile-header-lead,
@@ -4110,7 +4168,7 @@ html[data-theme="dark"] .profile-download-btn {
   margin: 0;
   font-size: 0.88rem;
   line-height: 1.35;
-  color: color-mix(in srgb, var(--ink) 62%, transparent);
+  color: var(--muted);
 }
 
 .settings-account-edit {
@@ -4148,8 +4206,8 @@ html[data-theme="dark"] .profile-download-btn {
   min-height: 36px;
   border: 0;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--ink) 6%, var(--paper));
-  color: color-mix(in srgb, var(--ink) 72%, transparent);
+  background: color-mix(in srgb, var(--text) 7%, transparent);
+  color: color-mix(in srgb, var(--text) 72%, transparent);
   font-family: var(--font-ui);
   font-size: 0.82rem;
   font-weight: 650;
@@ -4165,8 +4223,8 @@ html[data-theme="dark"] .profile-download-btn {
 }
 
 .profile-settings-tab:hover {
-  color: var(--ink);
-  background: color-mix(in srgb, var(--ink) 10%, var(--paper));
+  color: var(--text);
+  background: color-mix(in srgb, var(--text) 11%, transparent);
 }
 
 .profile-settings-tab:active {
@@ -4174,13 +4232,13 @@ html[data-theme="dark"] .profile-download-btn {
 }
 
 .profile-settings-tab.is-active {
-  background: var(--ink);
-  color: var(--paper);
+  background: var(--text);
+  color: var(--bg);
 }
 
 .profile-settings-tab.is-active:hover {
-  background: var(--ink);
-  color: var(--paper);
+  background: var(--text);
+  color: var(--bg);
 }
 
 .profile-settings-tabpanel {
@@ -4226,7 +4284,7 @@ html[data-theme="dark"] .profile-download-btn {
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: color-mix(in srgb, var(--ink) 55%, transparent);
+  color: var(--muted);
 }
 
 .settings-group-body {
@@ -4235,8 +4293,8 @@ html[data-theme="dark"] .profile-download-btn {
   min-width: 0;
   padding: 4px 0;
   border-radius: 14px;
-  background: color-mix(in srgb, var(--elevated) 92%, transparent);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--line) 78%, transparent);
+  background: var(--surface);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--line) 85%, transparent);
   overflow: hidden;
 }
 
@@ -4267,13 +4325,14 @@ html[data-theme="dark"] .profile-download-btn {
 }
 
 .settings-row.is-danger .settings-row-label {
-  color: color-mix(in srgb, #b42318 82%, var(--ink));
+  color: var(--danger);
 }
 
 .settings-row-icon,
 .settings-row-chevron {
   flex: none;
-  opacity: 0.72;
+  color: var(--muted);
+  opacity: 0.9;
 }
 
 .settings-row-body {
@@ -4287,12 +4346,13 @@ html[data-theme="dark"] .profile-download-btn {
   font-size: 0.95rem;
   font-weight: 560;
   line-height: 1.25;
-  color: var(--ink);
+  color: var(--text);
 }
 
 .settings-row-value {
   font-size: 0.8rem;
   line-height: 1.3;
+  color: var(--muted);
 }
 
 .settings-hint {
@@ -4312,6 +4372,11 @@ html[data-theme="dark"] .profile-download-btn {
   font-variant-numeric: tabular-nums;
   font-size: 0.85rem;
   font-weight: 600;
+  color: var(--text);
+}
+
+.settings-hint.muted {
+  color: var(--muted);
 }
 
 .profile-admin-workspace {
@@ -10591,11 +10656,10 @@ html[data-theme="dark"] .bible-reader--yv {
   opacity: 1 !important;
 }
 
-/* Trigger ativo = superfície do modal (não tinta preta / hub ink) */
-.bible-reader--yv.is-top-sheet-open .hdr-trigger.is-open,
-.bible-reader--yv.is-top-sheet-open .hdr-trigger.is-active,
-.bible-reader--yv.is-top-sheet-open .bible-yv-passage-chip.is-open,
-.bible-reader--yv.is-top-sheet-open .bible-yv-passage-chip.hdr-trigger.is-open,
+/* Trigger ativo = superfície do modal (não tinta preta / hub ink).
+ * Passage chip aberto: pill + ✕ separados — fora desta regra. */
+.bible-reader--yv.is-top-sheet-open .hdr-trigger.is-open:not(.bible-yv-passage-chip),
+.bible-reader--yv.is-top-sheet-open .hdr-trigger.is-active:not(.bible-yv-passage-chip),
 .bible-reader--yv.is-top-sheet-open .bible-yv-passage-word-search-trigger.is-on,
 .bible-reader--yv.is-top-sheet-open .bible-yv-passage-word-search-trigger.is-open,
 .bible-reader--yv.is-top-sheet-open .bible-yv-history-btn.is-on,
@@ -10665,15 +10729,12 @@ button.hdr-trigger.is-circle.bible-yv-passage-word-search-trigger {
   border-radius: 9999px;
 }
 
-.hdr-trigger.is-open,
-.hdr-trigger.is-active,
-button.hdr-trigger.is-open,
-button.hdr-trigger.is-active,
+.hdr-trigger.is-open:not(.bible-yv-passage-chip),
+.hdr-trigger.is-active:not(.bible-yv-passage-chip),
+button.hdr-trigger.is-open:not(.bible-yv-passage-chip),
+button.hdr-trigger.is-active:not(.bible-yv-passage-chip),
 .bible-yv-passage-word-search-trigger.hdr-trigger.is-on,
-.bible-yv-passage-word-search-trigger.hdr-trigger.is-open,
-.bible-yv-passage-chip.hdr-trigger.is-open,
-.bible-yv-passage-chip.hdr-trigger.is-active,
-button.bible-yv-passage-chip.hdr-trigger.is-open {
+.bible-yv-passage-word-search-trigger.hdr-trigger.is-open {
   z-index: var(--bible-z-hdr-active) !important;
   background: var(--hdr-trigger-active-bg) !important;
   color: var(--hdr-trigger-active-fg) !important;
@@ -10682,10 +10743,16 @@ button.bible-yv-passage-chip.hdr-trigger.is-open {
   box-shadow: var(--top-sheet-shadow, 0 6px 18px rgba(17, 19, 24, 0.16)) !important;
 }
 
-html[data-theme="dark"] .hdr-trigger.is-open,
-html[data-theme="dark"] .hdr-trigger.is-active,
-html[data-theme="dark"] .bible-yv-passage-word-search-trigger.hdr-trigger.is-on,
-html[data-theme="dark"] .bible-yv-passage-chip.hdr-trigger.is-open {
+.bible-yv-passage-chip.hdr-trigger.is-open,
+.bible-yv-passage-chip.hdr-trigger.is-active,
+button.bible-yv-passage-chip.hdr-trigger.is-open {
+  z-index: var(--bible-z-hdr-active) !important;
+  outline: none !important;
+}
+
+html[data-theme="dark"] .hdr-trigger.is-open:not(.bible-yv-passage-chip),
+html[data-theme="dark"] .hdr-trigger.is-active:not(.bible-yv-passage-chip),
+html[data-theme="dark"] .bible-yv-passage-word-search-trigger.hdr-trigger.is-on {
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35) !important;
 }
 
@@ -11482,9 +11549,8 @@ html:has(.bible-study-return-nav) .note-shell .mode-tabs,
   opacity: 0.72;
 }
 
-/* Largura constante — não cresce com o nome do livro nem ao abrir (✕). */
-.bible-yv-passage-chip.hdr-trigger.is-pill,
-.bible-yv-passage-chip.hdr-trigger.is-pill.is-open {
+/* Largura constante em idle — ao abrir, pill de texto + ✕ separados. */
+.bible-yv-passage-chip.hdr-trigger.is-pill {
   --bible-chip-pill-w: min(11rem, 46vw);
   box-sizing: border-box;
   width: var(--bible-chip-pill-w);
@@ -11508,26 +11574,67 @@ html:has(.bible-study-return-nav) .note-shell .mode-tabs,
   overflow: hidden;
 }
 
+/*
+ * Aberto = mesma pill idle (pai): tema chrome, largura fixa.
+ * ← / ✕ vivem nos slots das setas — fora do pill, sem fundo.
+ */
+.bible-yv-passage-chip.hdr-trigger.is-pill.is-open,
+.bible-yv-passage-chip.hdr-trigger.is-pill.is-open.is-active,
+button.bible-yv-passage-chip.hdr-trigger.is-pill.is-open {
+  width: var(--bible-chip-pill-w) !important;
+  min-width: var(--bible-chip-pill-w) !important;
+  max-width: var(--bible-chip-pill-w) !important;
+  height: var(--hdr-size, 44px);
+  min-height: var(--hdr-size, 44px);
+  padding-inline: 12px 10px !important;
+  border-radius: 9999px !important;
+  background: var(--yv-chrome-surface, var(--surface)) !important;
+  border: var(--bible-chrome-trigger-border, var(--yv-hairline, 1px solid var(--line))) !important;
+  box-shadow: none !important;
+  color: var(--yv-text, var(--text)) !important;
+  overflow: hidden;
+}
+
 .bible-yv-passage-chip.hdr-trigger.is-pill.is-open .hdr-trigger-swap {
+  display: grid;
+  place-items: center;
   width: 100%;
-  min-width: 0;
-  max-width: 100%;
-  gap: 0.35em;
-  transition:
-    gap var(--hdr-morph-ms, 260ms) var(--hdr-morph-ease, cubic-bezier(0.22, 1, 0.36, 1));
+  height: 100%;
 }
 
 .bible-yv-passage-chip.hdr-trigger.is-pill.is-open .hdr-icon-idle {
-  flex: 1 1 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
   min-width: 0;
+  max-width: 100%;
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: inherit;
+  overflow: hidden;
 }
 
-.bible-yv-passage-chip.hdr-trigger.is-pill.is-open .hdr-icon-exit {
-  flex: none;
+.bible-yv-passage-chip.hdr-trigger.is-pill.is-open .hdr-trigger-label,
+.bible-yv-passage-chip.hdr-trigger.is-pill.is-open .bible-yv-passage-chip-value,
+.bible-yv-passage-chip.hdr-trigger.is-pill.is-open .bible-yv-passage-chip-ref {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--yv-text, var(--text));
 }
 
+/* ✕ interno escondido — o fecho está no slot da seta direita. */
+.bible-yv-passage-chip.hdr-trigger.is-pill.is-open .hdr-icon-exit,
 .bible-yv-passage-chip.hdr-trigger.is-pill.is-open .hdr-icon-exit.is-shown {
-  transform: scale(1);
+  display: none !important;
 }
 
 .top-floating-sheet .bible-yv-tools-version-chip.is-on,
@@ -12439,14 +12546,7 @@ html[data-passage-bar-panel="test"] .app.is-bible-mode.is-narrow .bible-yv-top {
 }
 
 html[data-passage-bar-panel="test"] .app.is-bible-mode.is-narrow .bible-yv-top-passage-bar,
-html[data-passage-bar-panel="test"]
-  .app.is-bible-mode.is-narrow
-  .bible-yv-passage-roll.is-open
-  .bible-yv-top-passage-bar.is-roll-head,
-html[data-passage-bar-panel="test"] .bible-yv-top-passage-bar,
-html[data-passage-bar-panel="test"]
-  .bible-yv-passage-roll.is-open
-  .bible-yv-top-passage-bar.is-roll-head {
+html[data-passage-bar-panel="test"] .bible-yv-top-passage-bar {
   box-sizing: border-box;
   align-items: center;
   height: var(--bible-passage-bar-title-h);
@@ -12454,6 +12554,28 @@ html[data-passage-bar-panel="test"]
   max-height: var(--bible-passage-bar-title-h);
   grid-template-columns: var(--bible-passage-bar-title-h) minmax(0, 1fr)
     var(--bible-passage-bar-title-h);
+}
+
+/* Roll aberto: mesma grelha idle [←|pill|→] — ícones de fluxo nos slots. */
+html[data-passage-bar-panel="test"]
+  .app.is-bible-mode.is-narrow
+  .bible-yv-passage-roll.is-open
+  .bible-yv-top-passage-bar.is-roll-head,
+html[data-passage-bar-panel="test"]
+  .bible-yv-passage-roll.is-open
+  .bible-yv-top-passage-bar.is-roll-head,
+html[data-passage-bar-panel="test"]
+  .bible-yv-passage-roll.is-open
+  .bible-yv-top-passage-bar.is-pick-flow {
+  box-sizing: border-box;
+  align-items: center;
+  height: var(--bible-passage-bar-title-h);
+  min-height: var(--bible-passage-bar-title-h);
+  max-height: var(--bible-passage-bar-title-h);
+  grid-template-columns: var(--bible-passage-bar-title-h) minmax(0, max-content)
+    var(--bible-passage-bar-title-h);
+  width: fit-content;
+  max-width: min(100%, 22rem);
 }
 
 html[data-passage-bar-panel="test"] .app.is-bible-mode.is-narrow .bible-yv-top-passage-arrow,
@@ -12561,14 +12683,18 @@ html[data-passage-bar-panel="test"]
   align-items: center;
   gap: 10px;
   width: 100%;
-  min-height: 44px;
+  min-height: 52px;
   margin: 0;
-  padding: 8px 4px;
+  padding: 12px 6px;
   border: 0;
   border-radius: 10px;
   background: transparent;
-  font-size: 0.92rem;
-  font-weight: 500;
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  line-height: 1.35;
   text-align: left;
   box-shadow: none;
 }
@@ -12645,6 +12771,11 @@ html[data-passage-bar-panel="test"] .bible-yv-passage-roll.is-open {
   max-width: min(100%, 16.5rem);
 }
 
+/* Aberto: pill (--bible-chip-pill-w) + gap + ✕ (+ ← se capítulo). */
+html[data-passage-bar-panel="test"] .bible-yv-passage-roll.is-open {
+  max-width: min(100%, 22rem);
+}
+
 /* Só sem modal top-sheet — com .is-top-sheet-open o contrato permanente (z80) manda */
 html[data-passage-bar-panel="test"]
   .bible-reader--yv:not(.is-top-sheet-open)
@@ -12673,12 +12804,24 @@ html[data-passage-bar-panel="test"] .bible-yv-top-passage-segments.is-passage-re
   max-width: 11.5rem;
 }
 
-html[data-passage-bar-panel="test"] .bible-yv-passage-chip.is-ref,
-html[data-passage-bar-panel="test"] .bible-yv-passage-chip.is-book,
-html[data-passage-bar-panel="test"] .bible-yv-passage-chip.is-chapter,
-html[data-passage-bar-panel="test"] .bible-yv-passage-chip.is-ref.is-open,
-html[data-passage-bar-panel="test"] .bible-yv-passage-chip.is-book.is-open,
-html[data-passage-bar-panel="test"] .bible-yv-passage-chip.is-chapter.is-open {
+/* Aberto: segments = só o pill no fluxo (mesma largura idle). */
+html[data-passage-bar-panel="test"]
+  .bible-yv-passage-roll.is-open
+  .bible-yv-top-passage-segments,
+html[data-passage-bar-panel="test"]
+  .bible-yv-passage-roll.is-open
+  .bible-yv-top-passage-segments.is-passage-ref-unified,
+html[data-passage-bar-panel="test"] .bible-yv-top-passage-segments.is-roll-open,
+html[data-passage-bar-panel="test"] .bible-yv-top-passage-segments.is-pick-back {
+  flex-wrap: nowrap;
+  max-width: none;
+  width: max-content;
+  overflow: visible;
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-passage-chip.is-ref:not(.is-open),
+html[data-passage-bar-panel="test"] .bible-yv-passage-chip.is-book:not(.is-open),
+html[data-passage-bar-panel="test"] .bible-yv-passage-chip.is-chapter:not(.is-open) {
   flex: none;
   width: var(--bible-chip-pill-w, min(11rem, 46vw));
   min-width: var(--bible-chip-pill-w, min(11rem, 46vw));
@@ -12691,7 +12834,7 @@ html[data-passage-bar-panel="test"]
   .bible-yv-top-passage-bar.is-roll-head {
   width: fit-content;
   max-width: min(100%, 22rem);
-  grid-template-columns: var(--bible-passage-bar-title-h) minmax(0, 1fr)
+  grid-template-columns: var(--bible-passage-bar-title-h) minmax(0, max-content)
     var(--bible-passage-bar-title-h);
 }
 
@@ -12738,15 +12881,17 @@ html[data-passage-bar-panel="test"] .bible-yv-passage-chip:hover:not(:disabled):
   background: var(--yv-chrome-hover);
 }
 
-/* Chip aberto = hub ink + label/✕ (não chrome-surface claro). */
+/* Chip aberto: herda a pill idle (tema + largura) — ícones nos slots das setas. */
 html[data-passage-bar-panel="test"] .bible-yv-passage-chip.is-open,
 html[data-passage-bar-panel="test"] .bible-yv-passage-chip.hdr-trigger.is-open,
 html[data-passage-bar-panel="test"]
   .bible-yv-passage-chip.hdr-trigger.is-open.is-active {
-  background: var(--hdr-trigger-active-bg) !important;
-  color: var(--hdr-trigger-active-fg) !important;
-  border: var(--yv-overlay-border, var(--yv-hairline, 1px solid var(--line))) !important;
-  box-shadow: var(--top-sheet-shadow, 0 6px 18px rgba(17, 19, 24, 0.16)) !important;
+  width: var(--bible-chip-pill-w, min(11rem, 46vw)) !important;
+  min-width: var(--bible-chip-pill-w, min(11rem, 46vw)) !important;
+  max-width: var(--bible-chip-pill-w, min(11rem, 46vw)) !important;
+  background: var(--yv-chrome-surface) !important;
+  border: var(--bible-chrome-trigger-border) !important;
+  box-shadow: none !important;
   outline: none !important;
   z-index: var(--bible-z-hdr-active) !important;
 }
@@ -12759,18 +12904,23 @@ html[data-passage-bar-panel="test"]
   .bible-yv-passage-chip-ref-book,
 html[data-passage-bar-panel="test"]
   .bible-yv-passage-chip.hdr-trigger.is-open
-  .bible-yv-passage-chip-ref-chapter,
+  .bible-yv-passage-chip-ref-chapter {
+  color: var(--yv-text) !important;
+}
+
+/* Setas de fluxo aberto: sem hover fill (ícone nu como idle). */
 html[data-passage-bar-panel="test"]
-  .bible-yv-passage-chip.hdr-trigger.is-open
-  .hdr-trigger-icon {
-  color: var(--hdr-trigger-active-fg) !important;
+  .bible-yv-top-passage-arrow.is-pick-side:hover:not(:disabled) {
+  background: transparent;
+  color: var(--yv-text);
 }
 
 html[data-passage-bar-panel="test"] .bible-yv-passage-chip-caret {
   transition: transform 0.22s ease, color 0.15s ease, opacity 0.15s ease;
 }
 
-html[data-passage-bar-panel="test"] .bible-yv-top-passage-arrow:hover:not(:disabled) {
+html[data-passage-bar-panel="test"]
+  .bible-yv-top-passage-arrow:hover:not(:disabled):not(.is-pick-side) {
   background: color-mix(in srgb, var(--yv-text) 7%, transparent);
 }
 
@@ -13071,13 +13221,10 @@ html[data-passage-bar-panel="test"]
   font-size: 1.15rem;
 }
 
-.bible-yv-pick-roll-subhead {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  min-height: 32px;
-  padding: 0 2px;
-  flex: none;
+/* Subbarra título (DEUTÉRONOME) removida — voltar vive no cluster do pill. */
+.bible-yv-pick-roll-subhead,
+.bible-yv-pick-roll-subhead-label {
+  display: none !important;
 }
 
 .bible-yv-pick-roll-back {
@@ -13092,19 +13239,56 @@ html[data-passage-bar-panel="test"]
   background: color-mix(in srgb, var(--text) 8%, var(--panel));
   color: var(--yv-text);
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.bible-yv-pick-roll-subhead-label {
-  font-family: var(--font-ui);
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--yv-muted);
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+/* Fluxo aberto: mesma grelha da pill pai [slot|pill|slot]. */
+.bible-yv-top-passage-bar.is-pick-flow,
+.bible-yv-top-passage-bar.is-pick-flow.is-roll-head {
+  grid-template-columns: var(--bible-passage-bar-title-h, var(--hdr-size, 44px))
+    minmax(0, max-content)
+    var(--bible-passage-bar-title-h, var(--hdr-size, 44px));
+  width: fit-content;
+  max-width: min(100%, 22rem);
+  height: var(--hdr-size, var(--mobile-touch, 44px));
+  min-height: var(--hdr-size, var(--mobile-touch, 44px));
+  max-height: var(--hdr-size, var(--mobile-touch, 44px));
+}
+
+.bible-yv-top-passage-segments.is-roll-open {
+  display: inline-flex;
+  align-items: center;
+  width: max-content;
+  max-width: none;
+  padding-inline: 0;
+  height: var(--hdr-size, var(--mobile-touch, 44px));
+  min-height: var(--hdr-size, var(--mobile-touch, 44px));
+}
+
+/*
+ * ← / ✕ nos slots das setas: mesma posição, sem fundo
+ * (padrão visual das chevrons idle).
+ */
+.bible-yv-top-passage-arrow.is-pick-side,
+.bible-reader--yv.is-top-sheet-open .bible-yv-top-passage-arrow.is-pick-side {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  color: color-mix(in srgb, var(--yv-text) 82%, transparent);
+}
+
+.bible-yv-top-passage-arrow.is-pick-side.is-shown:hover {
+  background: transparent !important;
+  color: var(--yv-text);
+}
+
+.bible-yv-top-passage-arrow.is-pick-side.is-shown:active {
+  transform: scale(0.94);
+}
+
+.bible-yv-top-passage-arrow.is-pick-side.is-hidden-slot {
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .bible-yv-passage-scroll-panel .bible-yv-pick-grid {
@@ -13158,10 +13342,15 @@ html[data-passage-bar-panel="test"]
 }
 
 .bible-yv-passage-scroll-panel .bible-yv-pick-cell.is-book {
-  min-height: 40px;
+  min-height: 52px;
   width: 100%;
-  padding: 9px 12px;
-  font-size: 0.9rem;
+  padding: 12px 12px;
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  line-height: 1.35;
   text-align: left;
 }
 
@@ -13246,6 +13435,7 @@ html[data-passage-bar-panel="test"]
 .bible-yv-pick-cell-label {
   min-width: 0;
   flex: 1 1 auto;
+  font: inherit;
 }
 
 .bible-yv-pick-cell-count {
@@ -18488,13 +18678,14 @@ html[data-passage-bar-panel="test"]
 }
 
 .bible-yv-pick-cell.is-book {
-  min-height: 48px;
+  min-height: 52px;
   padding: 12px 14px;
-  font-size: 0.95rem;
-  font-weight: 600;
-  font-variant-numeric: normal;
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
   text-align: left;
-  line-height: 1.25;
+  line-height: 1.35;
   letter-spacing: -0.01em;
 }
 
@@ -18526,7 +18717,7 @@ html[data-passage-bar-panel="test"]
 }
 
 .bible-yv-pick-cell-label.is-opaque {
-  font-weight: 600;
+  font-weight: 700;
   opacity: 0.45;
 }
 

@@ -37,7 +37,6 @@ type BiblePassageScrollPickerProps = {
   passageChrome: PassagePickerChrome;
   highlightVerse: number | null;
   verseSelected: (n: number) => boolean;
-  onBack: () => void;
   /** Escape no passo livro — fecha o sheet sem limpar a query. */
   onClose: () => void;
   onSearchChange: (value: string) => void;
@@ -74,7 +73,6 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
       passageChrome,
       highlightVerse,
       verseSelected,
-      onBack,
       onClose,
       onSearchChange,
       onSearchClear,
@@ -182,30 +180,6 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
                 {t("common.clear")}
               </button>
             ) : null}
-          </div>
-        ) : step === "verse" ? (
-          <div className="bible-yv-pick-roll-subhead">
-            <button
-              type="button"
-              className="bible-yv-pick-roll-back"
-              onClick={onBack}
-              aria-label={`Retour aux chapitres de ${bookTitle}`}
-            >
-              <YvIcon name="chevron_left" className="bible-yv-pick-exit-icon" />
-            </button>
-            <span className="bible-yv-pick-roll-subhead-label">Verset</span>
-          </div>
-        ) : step === "chapter" ? (
-          <div className="bible-yv-pick-roll-subhead">
-            <button
-              type="button"
-              className="bible-yv-pick-roll-back"
-              onClick={onBack}
-              aria-label={`Retour à la liste des livres`}
-            >
-              <YvIcon name="chevron_left" className="bible-yv-pick-exit-icon" />
-            </button>
-            <span className="bible-yv-pick-roll-subhead-label">{bookTitle}</span>
           </div>
         ) : null}
         <div

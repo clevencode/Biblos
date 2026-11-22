@@ -1792,7 +1792,9 @@ export function BibleReaderView({
     const splitChrome = isPassageBarPanelCompactTopbar() && !compactBar;
     const unifiedRefPill = isPassagePillUnified();
     const passageRefLabel = formatPassagePillRef(bookTitle, chapterId);
-    const hideSkipArrows = Boolean(pickerOpen || rollOpen);
+    const hideSkipArrows = Boolean(pickerOpen && !rollOpen);
+    const showPickBack =
+      rollOpen && (passageStep === "chapter" || passageStep === "verse");
 
     return (
       <nav
@@ -1806,19 +1808,44 @@ export function BibleReaderView({
             unifiedRefPill ? " is-passage-ref-unified" : ""
           }${
             rollOpen
-              ? " is-roll-head is-roll-chrome-active"
+              ? " is-roll-head is-roll-chrome-active is-pick-flow"
               : pickerOpen
                 ? " is-roll-chrome-active"
                 : ""
           }${hideSkipArrows ? " is-skips-hidden" : ""}${
-            pickerChrome.chipsHydrating ? " is-hydrating" : ""
-          }`}
+            showPickBack ? " is-pick-back" : ""
+          }${pickerChrome.chipsHydrating ? " is-hydrating" : ""}`}
         >
-          {renderTopPassageArrow(-1, hideSkipArrows)}
+          {rollOpen ? (
+            <button
+              type="button"
+              className={`bible-yv-top-passage-arrow is-prev is-pick-side${
+                showPickBack ? " is-shown" : " is-hidden-slot"
+              }`}
+              onClick={handlePickBack}
+              disabled={!showPickBack}
+              tabIndex={showPickBack ? undefined : -1}
+              aria-hidden={!showPickBack}
+              aria-label={
+                showPickBack
+                  ? passageStep === "verse"
+                    ? `Retour aux chapitres de ${bookTitle}`
+                    : "Retour à la liste des livres"
+                  : undefined
+              }
+            >
+              <YvIcon
+                name="chevron_left"
+                className="bible-yv-top-passage-arrow-icon"
+              />
+            </button>
+          ) : (
+            renderTopPassageArrow(-1, hideSkipArrows)
+          )}
           <div
             className={`bible-yv-top-passage-segments${
               unifiedRefPill ? " is-passage-ref-unified" : ""
-            }`}
+            }${rollOpen ? " is-roll-open" : ""}`}
           >
             {unifiedRefPill ? (
               <BiblePassageChip
@@ -1828,12 +1855,16 @@ export function BibleReaderView({
                 loading={pickerChrome.chipsHydrating}
                 open={
                   passageRollOpen &&
-                  (passageStep === "book" || passageStep === "chapter")
+                  (passageStep === "book" ||
+                    passageStep === "chapter" ||
+                    passageStep === "verse")
                 }
                 disabled={pickerChrome.controlsDisabled}
                 ariaLabel={
                   passageRollOpen &&
-                  (passageStep === "book" || passageStep === "chapter")
+                  (passageStep === "book" ||
+                    passageStep === "chapter" ||
+                    passageStep === "verse")
                     ? `Replier le passage · ${passageRefLabel}`
                     : `Choisir un passage · ${passageRefLabel}`
                 }
@@ -1877,7 +1908,19 @@ export function BibleReaderView({
               </>
             )}
           </div>
-          {renderTopPassageArrow(1, hideSkipArrows)}
+          {rollOpen ? (
+            <button
+              type="button"
+              className="bible-yv-top-passage-arrow is-next is-pick-side is-shown"
+              onClick={() => closePicker()}
+              aria-label={`Replier le passage · ${passageRefLabel}`}
+              title={`Replier · ${passageRefLabel}`}
+            >
+              <YvIcon name="close" className="bible-yv-top-passage-arrow-icon" />
+            </button>
+          ) : (
+            renderTopPassageArrow(1, hideSkipArrows)
+          )}
         </div>
       </nav>
     );
@@ -1937,7 +1980,6 @@ export function BibleReaderView({
         passageChrome={pickerPassageChrome}
         highlightVerse={highlightVerse}
         verseSelected={(n) => verseInSelection(selection, n)}
-        onBack={handlePickBack}
         onClose={() => closePicker()}
         onSearchChange={setBookSearchQuery}
         onSearchClear={clearBookSearch}
