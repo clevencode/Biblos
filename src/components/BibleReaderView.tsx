@@ -3452,13 +3452,17 @@ export function BibleReaderView({
     const nestedFromMenu = wordSearchOpen || historyOpen || marksOpen;
     const verseOptionsOpen = showCreateCard;
     const menuSheetOpen = toolsMenuOpen || nestedFromMenu || verseOptionsOpen;
-    /** Menu raiz: ✕ à esquerda (sem seta); jornadas: ←. */
+    /** Menu / Options: ✕ à esquerda (sem seta); jornadas: ←. */
     const isMenuRoot = Boolean(toolsMenuOpen && !nestedFromMenu && !verseOptionsOpen);
-    /** Options: sem seta à esquerda. */
-    const showSectionBack = menuSheetOpen && !verseOptionsOpen;
-    /** History / marques / menu raiz: sem ✕ à direita. Options: só ✕. */
+    const isOptionsRoot = Boolean(verseOptionsOpen);
+    const showSectionBack = menuSheetOpen;
+    /** History / marques / menu / options: sem ✕ à direita. */
     const showSectionClose =
-      menuSheetOpen && !historyOpen && !marksOpen && !isMenuRoot;
+      menuSheetOpen &&
+      !historyOpen &&
+      !marksOpen &&
+      !isMenuRoot &&
+      !isOptionsRoot;
     const sectionPillLabel = verseOptionsOpen
       ? t("verse.passageOptions")
       : marksOpen
@@ -3550,20 +3554,24 @@ export function BibleReaderView({
           className={`bible-yv-top-passage-arrow is-prev is-pick-side${
             showSectionBack ? " is-shown" : " is-hidden-slot"
           }`}
-          onClick={isMenuRoot ? handleSectionClose : handleSectionBack}
+          onClick={
+            isMenuRoot || isOptionsRoot
+              ? handleSectionClose
+              : handleSectionBack
+          }
           disabled={!showSectionBack}
           tabIndex={showSectionBack ? undefined : -1}
           aria-hidden={!showSectionBack}
           aria-label={
             showSectionBack
-              ? isMenuRoot || verseOptionsOpen
+              ? isMenuRoot || isOptionsRoot
                 ? `${t("common.close")} — ${sectionPillLabel}`
                 : `${t("common.back")} — ${sectionPillLabel}`
               : undefined
           }
         >
           <YvIcon
-            name={isMenuRoot ? "close" : "chevron_left"}
+            name={isMenuRoot || isOptionsRoot ? "close" : "chevron_left"}
             className="bible-yv-top-passage-arrow-icon"
           />
         </button>

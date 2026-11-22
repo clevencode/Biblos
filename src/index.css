@@ -10670,7 +10670,8 @@ html[data-theme="dark"] .bible-reader--yv {
   z-index: 1;
   background: var(--yv-chrome-surface, var(--surface)) !important;
   color: var(--yv-text, var(--text)) !important;
-  border: var(--bible-chrome-trigger-border, var(--yv-hairline, 1px solid var(--line))) !important;
+  border: 0 !important;
+  outline: none !important;
   box-shadow: none !important;
 }
 
@@ -10738,7 +10739,7 @@ button.hdr-trigger.is-active:not(.bible-yv-passage-chip),
   z-index: var(--bible-z-hdr-active) !important;
   background: var(--yv-chrome-surface, var(--surface)) !important;
   color: var(--yv-text, var(--text)) !important;
-  border: var(--bible-chrome-trigger-border, var(--yv-hairline, 1px solid var(--line))) !important;
+  border: 0 !important;
   outline: none !important;
   box-shadow: none !important;
 }
@@ -10804,11 +10805,11 @@ button.bible-yv-passage-chip.hdr-trigger.is-open {
   overflow: hidden;
   background: var(--yv-chrome-surface, var(--surface)) !important;
   color: var(--yv-text, var(--text)) !important;
-  border: var(--bible-chrome-trigger-border, var(--yv-hairline, 1px solid var(--line))) !important;
+  border: 0 !important;
+  outline: none !important;
   box-shadow: none !important;
   transition:
     background 0.18s ease,
-    border-color 0.18s ease,
     color 0.15s ease;
 }
 
@@ -10894,38 +10895,12 @@ button.bible-yv-passage-chip.hdr-trigger.is-open {
   display: none;
 }
 
-/* Section-pill: reforço depois das regras genéricas is-pill.is-open. */
+/* Section-pill: ✕ interno sempre oculto (slots .is-section-flow). */
 .hdr-trigger.is-pill.is-open.is-section-pill .hdr-icon-exit,
-.hdr-trigger.is-pill.is-open.is-section-pill .hdr-icon-exit.is-shown {
-  position: absolute;
-  top: 50%;
-  left: 100%;
-  right: auto;
-  width: var(--hdr-size, 44px);
-  height: var(--hdr-size, 44px);
-  min-width: var(--hdr-size, 44px);
-  min-height: var(--hdr-size, 44px);
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: transparent !important;
-  border: 0 !important;
-  box-shadow: none !important;
-  color: color-mix(in srgb, var(--yv-text) 82%, transparent);
-  opacity: 1 !important;
-  transform: translateY(-50%) !important;
-  pointer-events: auto;
-}
-
+.hdr-trigger.is-pill.is-open.is-section-pill .hdr-icon-exit.is-shown,
 .hdr-trigger.is-pill.is-open.is-section-pill.is-exit-back .hdr-icon-exit,
 .hdr-trigger.is-pill.is-open.is-section-pill.is-exit-back .hdr-icon-exit.is-shown {
-  left: auto;
-  right: 100%;
-}
-
-.hdr-trigger.is-pill.is-open.is-section-pill:hover .hdr-icon-exit.is-shown {
-  background: color-mix(in srgb, var(--yv-text) 7%, transparent) !important;
-  color: var(--yv-text);
+  display: none !important;
 }
 
 .hdr-trigger:focus-visible {
@@ -11641,13 +11616,13 @@ button.bible-yv-passage-chip.hdr-trigger.is-pill.is-open {
   padding-inline: 12px 10px !important;
   border-radius: 9999px !important;
   background: var(--yv-chrome-surface, var(--surface)) !important;
-  border: var(--bible-chrome-trigger-border, var(--yv-hairline, 1px solid var(--line))) !important;
+  border: 0 !important;
+  outline: none !important;
   box-shadow: none !important;
   color: var(--yv-text, var(--text)) !important;
   overflow: hidden;
   transition:
     background 0.18s ease,
-    border-color 0.18s ease,
     color 0.15s ease;
 }
 
@@ -12506,17 +12481,24 @@ html[data-passage-bar-panel="test"] .bible-yv-history-btn {
 html[data-passage-bar-panel="test"]
   .bible-yv-tools-menu-btn.hdr-trigger.is-pill.is-section-pill,
 html[data-passage-bar-panel="test"]
-  button.hdr-trigger.is-pill.bible-yv-tools-menu-btn.is-section-pill {
+  button.hdr-trigger.is-pill.bible-yv-tools-menu-btn.is-section-pill,
+html[data-passage-bar-panel="test"]
+  .bible-yv-tools-menu-btn.hdr-trigger.is-pill.is-section-pill.is-on,
+html[data-passage-bar-panel="test"]
+  .bible-yv-tools-menu-btn.hdr-trigger.is-pill.is-section-pill.is-open {
   --bible-section-pill-w: 9.75rem;
   width: var(--bible-section-pill-w);
   min-width: var(--bible-section-pill-w);
   max-width: var(--bible-section-pill-w);
   padding: 0 14px;
   border-radius: 9999px;
-  overflow: visible;
+  overflow: hidden;
+  /* Mesmo tema do book picker — sem contorno */
   background: var(--yv-chrome-surface) !important;
-  border: var(--bible-chrome-trigger-border) !important;
+  border: 0 !important;
+  outline: none !important;
   box-shadow: none !important;
+  color: var(--yv-text) !important;
 }
 
 html[data-passage-bar-panel="test"] .bible-yv-tools-menu,
@@ -12534,7 +12516,7 @@ html[data-passage-bar-panel="test"]
 html[data-passage-bar-panel="test"] .bible-yv-tools-menu-btn.is-on,
 html[data-passage-bar-panel="test"] .bible-yv-history-btn.is-on {
   background: var(--yv-chrome-surface);
-  border: var(--bible-chrome-trigger-border);
+  border: 0;
   outline: none;
   box-shadow: none;
 }
@@ -12946,15 +12928,14 @@ html[data-passage-bar-panel="test"] .bible-yv-top-passage-bar.is-roll-chrome-act
   box-shadow: none;
 }
 
-/* Chip: fill sempre (mesma família que search / menu) */
+/* Chip: fill sempre (mesma família que search / menu) — sem contorno */
 html[data-passage-bar-panel="test"] .bible-yv-passage-chip,
 html[data-passage-bar-panel="test"] .bible-yv-passage-chip.is-ref {
   background: var(--yv-chrome-surface);
-  border: var(--bible-chrome-trigger-border);
+  border: 0;
+  outline: none;
   box-shadow: none;
-  transition:
-    background 0.18s ease,
-    border-color 0.18s ease;
+  transition: background 0.18s ease;
 }
 
 html[data-passage-bar-panel="test"] .bible-yv-passage-chip:hover:not(:disabled):not(.is-hydrating) {
@@ -12970,7 +12951,7 @@ html[data-passage-bar-panel="test"]
   min-width: var(--bible-chip-pill-w, min(11rem, 46vw)) !important;
   max-width: var(--bible-chip-pill-w, min(11rem, 46vw)) !important;
   background: var(--yv-chrome-surface) !important;
-  border: var(--bible-chrome-trigger-border) !important;
+  border: 0 !important;
   box-shadow: none !important;
   outline: none !important;
   z-index: var(--bible-z-hdr-active) !important;
@@ -14529,6 +14510,11 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   min-width: min(9.5rem, 42vw);
   max-width: min(11rem, 46vw);
   padding-inline: 12px 10px;
+  background: var(--yv-chrome-surface, var(--surface)) !important;
+  border: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+  color: var(--yv-text) !important;
 }
 
 .bible-yv-tools-menu.is-section-flow .bible-yv-top-passage-arrow.is-pick-side {
@@ -14573,7 +14559,9 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   font-size: 22px;
 }
 
-.bible-reader--yv.is-compact-tools .bible-yv-tools-menu.is-float-br .bible-yv-tools-menu-btn.is-on {
+.bible-reader--yv.is-compact-tools
+  .bible-yv-tools-menu.is-float-br
+  .bible-yv-tools-menu-btn.is-on:not(.is-section-pill) {
   background: var(--hdr-trigger-active-bg);
   color: var(--hdr-trigger-active-fg);
   box-shadow: 0 6px 18px rgba(17, 19, 24, 0.16);
@@ -14615,13 +14603,45 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   max-width: var(--bible-section-pill-w);
   height: var(--hdr-size, 44px);
   min-height: var(--hdr-size, 44px);
-  padding: 0 14px 0 10px;
+  padding: 0 14px;
   border-radius: 9999px;
 }
 
-.bible-yv-tools-menu-btn:hover,
-.bible-yv-tools-menu-btn.is-on {
+/* Idle circle only — section-pill usa tema book picker abaixo. */
+.bible-yv-tools-menu-btn:hover:not(.is-section-pill),
+.bible-yv-tools-menu-btn.is-on:not(.is-section-pill) {
   background: color-mix(in srgb, var(--yv-text) 6%, transparent);
+}
+
+/*
+ * Options / history / search / marques / menu:
+ * mesmo fundo e borda do book picker (--yv-chrome-surface).
+ */
+.bible-yv-tools-menu-btn.hdr-trigger.is-pill.is-section-pill,
+.bible-yv-tools-menu-btn.hdr-trigger.is-pill.is-section-pill.is-on,
+.bible-yv-tools-menu-btn.hdr-trigger.is-pill.is-section-pill.is-open,
+.bible-yv-tools-menu-btn.hdr-trigger.is-pill.is-section-pill.is-active,
+.bible-reader--yv.is-top-sheet-open
+  .bible-yv-tools-menu-btn.hdr-trigger.is-pill.is-section-pill,
+.bible-reader--yv.is-top-sheet-open
+  .bible-yv-tools-menu-btn.hdr-trigger.is-pill.is-section-pill.is-on,
+.bible-reader--yv.is-compact-tools
+  .bible-yv-tools-menu.is-float-br
+  .bible-yv-tools-menu-btn.is-section-pill.is-on {
+  background: var(--yv-chrome-surface, var(--surface)) !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  color: var(--yv-text, var(--text)) !important;
+}
+
+.bible-yv-tools-menu-btn.hdr-trigger.is-pill.is-section-pill:hover:not(:disabled),
+.bible-reader--yv.is-top-sheet-open
+  .bible-yv-tools-menu-btn.hdr-trigger.is-pill.is-section-pill:hover:not(:disabled),
+.bible-reader--yv.is-compact-tools
+  .bible-yv-tools-menu.is-float-br
+  .bible-yv-tools-menu-btn.is-section-pill.is-on:hover:not(:disabled) {
+  background: var(--yv-chrome-hover) !important;
 }
 
 .bible-yv-tools-menu-btn:focus-visible {
@@ -15529,15 +15549,34 @@ html[data-theme="dark"] .bible-chapter-fab {
   grid-template-columns: minmax(0, 1fr);
 }
 
-/* Options: pill à direita no topbar */
+/* Options: mesmo trilho/tema do menu (esquerda, grelha [✕|pill|slot]). */
 .bible-reader--yv.has-verse-actions .bible-yv-top.is-top-sheet-open,
 .bible-reader--yv.has-verse-actions .bible-yv-top {
-  justify-content: flex-end;
+  justify-content: flex-start;
 }
 
 .bible-reader--yv.has-verse-actions .bible-yv-top-tools {
-  margin-left: auto;
+  margin-left: 0;
   flex: none;
+}
+
+.bible-reader--yv.has-verse-actions .bible-yv-tools-menu.is-section-flow {
+  display: grid;
+}
+
+.bible-reader--yv.has-verse-actions
+  .bible-yv-tools-menu.is-section-flow
+  .bible-yv-tools-menu-btn.is-section-pill {
+  background: var(--yv-chrome-surface, var(--surface)) !important;
+  border: var(--bible-chrome-trigger-border, var(--yv-hairline, 1px solid var(--line))) !important;
+  box-shadow: none !important;
+  color: var(--yv-text, var(--text)) !important;
+}
+
+.bible-reader--yv.has-verse-actions
+  .bible-yv-tools-menu.is-section-flow
+  .bible-yv-tools-menu-btn.is-section-pill:hover:not(:disabled) {
+  background: var(--yv-chrome-hover) !important;
 }
 
 /*
