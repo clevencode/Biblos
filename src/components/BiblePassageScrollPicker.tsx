@@ -32,6 +32,12 @@ type BiblePassageScrollPickerProps = {
   onDiscoveryListScroll: (scrollTop: number) => void;
   onDiscoveryExpandedBookChange: (bookId: string | null) => void;
   onDiscoveryVerseListScroll: (bookId: string, scrollTop: number) => void;
+  onDiscoveryChapterGridScroll: (bookId: string, scrollTop: number) => void;
+  onDiscoveryVerseGridScroll: (
+    bookId: string,
+    chapterId: string,
+    scrollTop: number,
+  ) => void;
   chapters: string[];
   verseOptions: number[];
   passageChrome: PassagePickerChrome;
@@ -49,6 +55,18 @@ type BiblePassageScrollPickerProps = {
   /** Split discovery (test): busca do pill só filtra livros / refs. */
   discoveryBooksOnly?: boolean;
 };
+
+function scrollSelectedCellIntoView(grid: HTMLElement) {
+  const selected = grid.querySelector(
+    ".bible-yv-pick-cell.is-on",
+  ) as HTMLElement | null;
+  if (!selected) return;
+  const gridRect = grid.getBoundingClientRect();
+  const cellRect = selected.getBoundingClientRect();
+  if (cellRect.top < gridRect.top || cellRect.bottom > gridRect.bottom) {
+    selected.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }
+}
 
 export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageScrollPickerProps>(
   function BiblePassageScrollPicker(
@@ -68,6 +86,8 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
       onDiscoveryListScroll,
       onDiscoveryExpandedBookChange,
       onDiscoveryVerseListScroll,
+      onDiscoveryChapterGridScroll,
+      onDiscoveryVerseGridScroll,
       chapters,
       verseOptions,
       passageChrome,
@@ -88,19 +108,50 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
     const { t } = useUiLocale();
     const gridRef = useRef<HTMLDivElement>(null);
     const searchInputRef = useRef<HTMLInputElement>(null);
-    const restoredListScrollRef = useRef(false);
+    const restoredScrollKeyRef = useRef<string | null>(null);
+
+    const bookKey = String(bookId || "").toUpperCase();
+    const verseGridKey = `${bookKey}:${String(chapterId || "").trim()}`;
+    const scrollRestoreKey =
+      !open
+        ? null
+        : step === "book"
+          ? "book"
+          : step === "chapter"
+            ? `chapter:${bookKey}`
+            : `verse:${verseGridKey}`;
 
     useLayoutEffect(() => {
-      if (!open) {
-        restoredListScrollRef.current = false;
+      if (!open || !scrollRestoreKey) {
+        restoredScrollKeyRef.current = null;
         return;
       }
-      if (step !== "book" || restoredListScrollRef.current) return;
+      if (restoredScrollKeyRef.current === scrollRestoreKey) return;
       const el = gridRef.current;
       if (!el) return;
-      el.scrollTop = discoverySession.listScrollTop;
-      restoredListScrollRef.current = true;
-    }, [open, step]);
+
+      if (step === "book") {
+        el.scrollTop = discoverySession.listScrollTop;
+      } else if (step === "chapter") {
+        const saved = discoverySession.chapterScrollByBook[bookKey];
+        el.scrollTop = typeof saved === "number" ? saved : 0;
+        scrollSelectedCellIntoView(el);
+      } else {
+        const saved = discoverySession.verseGridScrollByChapter[verseGridKey];
+        el.scrollTop = typeof saved === "number" ? saved : 0;
+        scrollSelectedCellIntoView(el);
+      }
+      restoredScrollKeyRef.current = scrollRestoreKey;
+    }, [
+      open,
+      step,
+      scrollRestoreKey,
+      bookKey,
+      verseGridKey,
+      discoverySession.listScrollTop,
+      discoverySession.chapterScrollByBook,
+      discoverySession.verseGridScrollByChapter,
+    ]);
 
     /** Focus no campo no mesmo frame (padrão search). */
     useLayoutEffect(() => {
@@ -130,11 +181,27 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
     const hasQuery = Boolean(bookSearchQuery.trim());
     const { inFlight } = passageChrome;
 
+    function captureGridScroll() {
+      const top = gridRef.current?.scrollTop;
+      if (typeof top !== "number") return;
+      if (step === "book") onDiscoveryListScroll(top);
+      else if (step === "chapter") onDiscoveryChapterGridScroll(bookId, top);
+      else onDiscoveryVerseGridScroll(bookId, chapterId, top);
+    }
+
     function handlePickVerse(hit: BibleSearchHit) {
-      if (gridRef.current) {
-        onDiscoveryListScroll(gridRef.current.scrollTop);
-      }
+      captureGridScroll();
       onPickVerse(hit);
+    }
+
+    function handlePickChapter(id: string) {
+      captureGridScroll();
+      onPickChapter(id);
+    }
+
+    function handleJumpVerse(n: number) {
+      captureGridScroll();
+      onJumpVerse(n);
     }
 
     return (
@@ -183,14 +250,15 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
           </div>
         ) : null}
         <div
-          ref={step === "book" ? gridRef : undefined}
+          ref={gridRef}
           className={`bible-yv-pick-grid${step === "book" ? " is-books" : ""}`}
           role="listbox"
-          onScroll={
-            step === "book"
-              ? (event) => onDiscoveryListScroll(event.currentTarget.scrollTop)
-              : undefined
-          }
+          onScroll={(event) => {
+            const top = event.currentTarget.scrollTop;
+            if (step === "book") onDiscoveryListScroll(top);
+            else if (step === "chapter") onDiscoveryChapterGridScroll(bookId, top);
+            else onDiscoveryVerseGridScroll(bookId, chapterId, top);
+          }}
         >
           {step === "book" ? (
             <BiblePassageDiscoveryList
@@ -224,7 +292,7 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
                       role="option"
                       aria-selected={on}
                       className={`bible-yv-pick-cell${on ? " is-on" : ""}`}
-                      onClick={() => onPickChapter(id)}
+                      onClick={() => handlePickChapter(id)}
                       disabled={inFlight}
                     >
                       {id}
@@ -241,7 +309,7 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
                     role="option"
                     aria-selected={on}
                     className={`bible-yv-pick-cell${on ? " is-on" : ""}`}
-                    onClick={() => onJumpVerse(n)}
+                    onClick={() => handleJumpVerse(n)}
                     disabled={inFlight}
                   >
                     {n}

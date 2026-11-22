@@ -1012,6 +1012,8 @@ export function BibleReaderView({
     patchDiscoverySession,
     setDiscoveryListScroll,
     setDiscoveryVerseListScroll,
+    setDiscoveryChapterGridScroll,
+    setDiscoveryVerseGridScroll,
     clearBookSearch,
     clearWordSearch,
     closeWordSearch,
@@ -1975,6 +1977,8 @@ export function BibleReaderView({
           patchDiscoverySession({ expandedBookId: bookId })
         }
         onDiscoveryVerseListScroll={setDiscoveryVerseListScroll}
+        onDiscoveryChapterGridScroll={setDiscoveryChapterGridScroll}
+        onDiscoveryVerseGridScroll={setDiscoveryVerseGridScroll}
         chapters={chapters}
         verseOptions={verseOptions}
         passageChrome={pickerPassageChrome}

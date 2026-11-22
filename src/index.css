@@ -11346,12 +11346,9 @@ html[data-theme="dark"] .top-sheet-backdrop {
   height: calc(env(safe-area-inset-bottom, 0px) + 28px);
 }
 
+/* Book picker + menu / Options / retorno estudo: shell navbar some */
 html:has(.bible-yv-passage-scroll-panel.is-open) .note-shell .mode-tabs,
-.app:has(.bible-yv-passage-scroll-panel.is-open) .note-shell .mode-tabs {
-  z-index: calc(var(--bible-z-top-sheet, 70) + 10);
-}
-
-/* Menu (outils) + jornada aninhada / Options / retorno estudo: shell navbar some */
+.app:has(.bible-yv-passage-scroll-panel.is-open) .note-shell .mode-tabs,
 html:has(.bible-reader--yv.is-menu-journey-open) .note-shell .mode-tabs,
 .app:has(.bible-reader--yv.is-menu-journey-open) .note-shell .mode-tabs,
 html:has(.bible-verse-actions.top-floating-sheet.is-open) .note-shell .mode-tabs,
@@ -13384,26 +13381,68 @@ html[data-passage-bar-panel="test"]
 }
 
 .bible-yv-passage-scroll-panel .bible-yv-pick-grid:not(.is-books) {
+  --bible-pick-grid-gap: 10px;
+  --bible-pick-cell-size: 48px;
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-auto-flow: row;
   align-content: start;
+  justify-items: center;
+  gap: var(--bible-pick-grid-gap);
+  padding-top: 6px;
+  padding-right: 4px;
+  padding-left: 4px;
 }
 
-.bible-yv-passage-scroll-panel .bible-yv-pick-cell {
-  min-height: 36px;
-  font-size: 0.85rem;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--text) 6%, var(--panel));
-  border: 1px solid color-mix(in srgb, var(--yv-line) 45%, transparent);
+/*
+ * Capítulo / versículo: square fixo (48px), bold, respiro uniforme.
+ */
+.bible-yv-passage-scroll-panel .bible-yv-pick-grid:not(.is-books) .bible-yv-pick-cell {
+  box-sizing: border-box;
+  width: var(--bible-pick-cell-size);
+  height: var(--bible-pick-cell-size);
+  min-width: var(--bible-pick-cell-size);
+  min-height: var(--bible-pick-cell-size);
+  max-width: var(--bible-pick-cell-size);
+  max-height: var(--bible-pick-cell-size);
+  margin: 0;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--text) 7%, var(--panel, var(--surface)));
+  border: 0;
+  outline: none;
+  box-shadow: none;
+  color: var(--yv-text);
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.14s ease;
 }
 
-.bible-yv-passage-scroll-panel .bible-yv-pick-cell:hover:not(:disabled):not(.is-on) {
-  background: color-mix(in srgb, var(--text) 10%, var(--panel));
+.bible-yv-passage-scroll-panel
+  .bible-yv-pick-grid:not(.is-books)
+  .bible-yv-pick-cell:hover:not(:disabled):not(.is-on) {
+  background: color-mix(in srgb, var(--text) 11%, var(--panel, var(--surface)));
 }
 
-.bible-yv-passage-scroll-panel .bible-yv-pick-cell.is-on {
-  background: color-mix(in srgb, var(--accent) 14%, var(--panel));
-  border-color: color-mix(in srgb, var(--accent) 35%, var(--yv-line));
+.bible-yv-passage-scroll-panel
+  .bible-yv-pick-grid:not(.is-books)
+  .bible-yv-pick-cell:active:not(:disabled) {
+  background: color-mix(in srgb, var(--text) 14%, var(--panel, var(--surface)));
+}
+
+.bible-yv-passage-scroll-panel
+  .bible-yv-pick-grid:not(.is-books)
+  .bible-yv-pick-cell.is-on {
+  background: color-mix(in srgb, var(--text) 14%, var(--panel, var(--surface)));
+  color: var(--yv-text);
+  box-shadow: none;
 }
 
 .bible-yv-passage-scroll-panel .bible-yv-pick-cell.is-book {
@@ -18781,22 +18820,27 @@ html[data-passage-bar-panel="test"]
 
 @media (prefers-reduced-motion: reduce) {
   .bible-yv-pick-exit:active,
-  .bible-yv-pick-close:active {
+  .bible-yv-pick-close:active,
+  .bible-yv-passage-scroll-panel
+    .bible-yv-pick-grid:not(.is-books)
+    .bible-yv-pick-cell:active:not(:disabled) {
     transform: none;
   }
 }
 
 .bible-yv-pick-grid {
+  --bible-pick-grid-gap: 10px;
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-auto-flow: row;
   align-content: start;
-  gap: 8px;
+  gap: var(--bible-pick-grid-gap);
   min-height: 0;
   max-height: none;
   overflow: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
-  padding: 2px 0 8px;
+  padding: 6px 4px 16px;
   margin: 0;
   scrollbar-width: thin;
 }
@@ -18804,6 +18848,7 @@ html[data-passage-bar-panel="test"]
 .bible-yv-pick-grid.is-books {
   grid-template-columns: minmax(0, 1fr);
   gap: 8px;
+  padding: 2px 0 8px;
 }
 
 .app.is-bible-mode.is-narrow .bible-yv-pick-grid,
@@ -18812,28 +18857,30 @@ html[data-passage-bar-panel="test"]
 }
 
 .bible-yv-pick-cell {
+  box-sizing: border-box;
   min-height: 44px;
   border: 0;
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--text) 6%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--text) 7%, transparent);
   color: var(--yv-text);
-  font: inherit;
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
   cursor: pointer;
   box-shadow: none;
-  transition:
-    background 0.14s ease,
-    color 0.14s ease;
+  transition: background 0.14s ease;
 }
 
 .bible-yv-pick-cell:hover:not(:disabled):not(.is-on) {
-  background: color-mix(in srgb, var(--text) 10%, transparent);
+  background: color-mix(in srgb, var(--text) 11%, transparent);
 }
 
 .bible-yv-pick-cell.is-book {
+  aspect-ratio: auto;
   min-height: 52px;
+  width: 100%;
   padding: 12px 14px;
   font-family: var(--font-ui);
   font-size: 1rem;
@@ -18842,12 +18889,20 @@ html[data-passage-bar-panel="test"]
   text-align: left;
   line-height: 1.35;
   letter-spacing: -0.01em;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+  color: var(--yv-text);
 }
 
 .bible-yv-pick-cell.is-on {
-  background: color-mix(in srgb, var(--text) 12%, transparent);
+  background: color-mix(in srgb, var(--text) 14%, transparent);
   color: var(--yv-text);
   box-shadow: none;
+}
+
+.bible-yv-pick-cell.is-book.is-on {
+  box-shadow: none;
+  background: color-mix(in srgb, var(--text) 12%, transparent);
 }
 
 .bible-yv-pick-cell:disabled {

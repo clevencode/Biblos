@@ -108,7 +108,13 @@ export function usePassageBarController({
 
   const discoveryListScrollRaf = useRef(0);
   const discoveryVerseScrollRaf = useRef<Record<string, number>>({});
+  const discoveryChapterScrollRaf = useRef<Record<string, number>>({});
+  const discoveryVerseGridScrollRaf = useRef<Record<string, number>>({});
   const pendingVerseStep = useRef(false);
+  /** Último passo útil ao reabrir o pill (capítulo após escolher número). */
+  const reopenPassageStepRef = useRef<"book" | "chapter">("book");
+  const passageStepRef = useRef<PassageBarStep>(passageStep);
+  passageStepRef.current = passageStep;
   const passageRollRef = useRef<HTMLDivElement | null>(null);
   const wordSearchChromeRef = useRef<HTMLDivElement | null>(null);
   const wordSearchPanelId = useId();
@@ -192,6 +198,43 @@ export function usePassageBarController({
     [],
   );
 
+  const setDiscoveryChapterGridScroll = useCallback(
+    (nextBookId: string, scrollTop: number) => {
+      const id = String(nextBookId || "").toUpperCase();
+      if (!id) return;
+      const prevRaf = discoveryChapterScrollRaf.current[id];
+      if (prevRaf) cancelAnimationFrame(prevRaf);
+      discoveryChapterScrollRaf.current[id] = requestAnimationFrame(() => {
+        setDiscoverySession((prev) => ({
+          ...prev,
+          chapterScrollByBook: { ...prev.chapterScrollByBook, [id]: scrollTop },
+        }));
+      });
+    },
+    [],
+  );
+
+  const setDiscoveryVerseGridScroll = useCallback(
+    (nextBookId: string, nextChapterId: string, scrollTop: number) => {
+      const book = String(nextBookId || "").toUpperCase();
+      const chapter = String(nextChapterId || "").trim();
+      if (!book || !chapter) return;
+      const key = `${book}:${chapter}`;
+      const prevRaf = discoveryVerseGridScrollRaf.current[key];
+      if (prevRaf) cancelAnimationFrame(prevRaf);
+      discoveryVerseGridScrollRaf.current[key] = requestAnimationFrame(() => {
+        setDiscoverySession((prev) => ({
+          ...prev,
+          verseGridScrollByChapter: {
+            ...prev.verseGridScrollByChapter,
+            [key]: scrollTop,
+          },
+        }));
+      });
+    },
+    [],
+  );
+
   const clearBookSearch = useCallback(() => {
     setBookSearchQuery("");
     setDiscoverySession({ ...EMPTY_PASSAGE_DISCOVERY_SESSION });
@@ -240,6 +283,9 @@ export function usePassageBarController({
   const closePicker = useCallback(
     (options?: { restoreFocus?: boolean }) => {
       restorePickerFocusRef.current = options?.restoreFocus !== false;
+      const step = passageStepRef.current;
+      reopenPassageStepRef.current =
+        step === "chapter" || step === "verse" ? "chapter" : "book";
       setPassageStep("book");
       pendingVerseStep.current = false;
       requestClosePicker();
@@ -294,14 +340,15 @@ export function usePassageBarController({
 
   const togglePassagePickerRef = useCallback(() => {
     if (!pickerPanelOpenAllowed) return;
-    const rollRelevant = passageStep === "book" || passageStep === "chapter";
+    const rollRelevant =
+      passageStep === "book" ||
+      passageStep === "chapter" ||
+      passageStep === "verse";
     if (passageRollOpen && rollRelevant) {
       closePicker();
       return;
     }
-    const step: "book" | "chapter" =
-      passageStep === "chapter" ? "chapter" : "book";
-    openPassagePicker(step);
+    openPassagePicker(reopenPassageStepRef.current);
   }, [
     pickerPanelOpenAllowed,
     passageStep,
@@ -474,6 +521,8 @@ export function usePassageBarController({
     patchDiscoverySession,
     setDiscoveryListScroll,
     setDiscoveryVerseListScroll,
+    setDiscoveryChapterGridScroll,
+    setDiscoveryVerseGridScroll,
     clearBookSearch,
     clearWordSearch,
     closeWordSearch,
