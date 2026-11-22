@@ -15549,14 +15549,15 @@ html[data-theme="dark"] .bible-chapter-fab {
   grid-template-columns: minmax(0, 1fr);
 }
 
-/* Options: mesmo trilho/tema do menu (esquerda, grelha [✕|pill|slot]). */
+/* Options: mesma grelha [✕|pill|slot], ancorada à direita (como book picker). */
 .bible-reader--yv.has-verse-actions .bible-yv-top.is-top-sheet-open,
 .bible-reader--yv.has-verse-actions .bible-yv-top {
-  justify-content: flex-start;
+  justify-content: flex-end;
 }
 
 .bible-reader--yv.has-verse-actions .bible-yv-top-tools {
-  margin-left: 0;
+  margin-left: auto;
+  margin-right: 0;
   flex: none;
 }
 
@@ -15568,7 +15569,8 @@ html[data-theme="dark"] .bible-chapter-fab {
   .bible-yv-tools-menu.is-section-flow
   .bible-yv-tools-menu-btn.is-section-pill {
   background: var(--yv-chrome-surface, var(--surface)) !important;
-  border: var(--bible-chrome-trigger-border, var(--yv-hairline, 1px solid var(--line))) !important;
+  border: 0 !important;
+  outline: none !important;
   box-shadow: none !important;
   color: var(--yv-text, var(--text)) !important;
 }
@@ -15815,6 +15817,7 @@ html[data-theme="dark"] .bible-chapter-fab {
   background: var(--bible-nav-surface, var(--yv-bg, var(--bg))) !important;
 }
 
+/* Options pill: tema book picker (chrome, sem contorno), à direita. */
 .bible-reader--yv.has-verse-actions
   .bible-yv-tools-menu-btn.hdr-trigger.is-open,
 .bible-reader--yv.has-verse-actions
@@ -15823,16 +15826,11 @@ html[data-theme="dark"] .bible-chapter-fab {
   .bible-yv-tools-menu-btn.hdr-trigger.is-open,
 .bible-reader--yv.has-verse-actions.is-top-sheet-open
   .bible-yv-tools-menu-btn.hdr-trigger.is-active {
-  background: var(--bible-nav-surface, var(--bg)) !important;
+  background: var(--yv-chrome-surface, var(--surface)) !important;
   color: var(--yv-text, var(--text)) !important;
-  border: 1px solid
-    var(
-      --mode-tabs-outline,
-      var(--yv-outline, color-mix(in srgb, var(--line) 70%, transparent))
-    ) !important;
-  box-shadow:
-    0 1px 0 color-mix(in srgb, var(--ink) 8%, transparent),
-    0 8px 24px color-mix(in srgb, var(--ink) 14%, transparent) !important;
+  border: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .bible-reader--yv.has-verse-actions

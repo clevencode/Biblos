@@ -3456,11 +3456,12 @@ export function BibleReaderView({
     const isMenuRoot = Boolean(toolsMenuOpen && !nestedFromMenu && !verseOptionsOpen);
     const isOptionsRoot = Boolean(verseOptionsOpen);
     const showSectionBack = menuSheetOpen;
-    /** History / marques / menu / options: sem ✕ à direita. */
+    /** History / marques / search / menu / options: sem ✕ à direita. */
     const showSectionClose =
       menuSheetOpen &&
       !historyOpen &&
       !marksOpen &&
+      !wordSearchOpen &&
       !isMenuRoot &&
       !isOptionsRoot;
     const sectionPillLabel = verseOptionsOpen
