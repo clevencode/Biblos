@@ -126,7 +126,6 @@ export type UiCopyKey =
   | "profile.guestSaveTitle"
   | "profile.guestSaveLead"
   | "profile.quotaHint"
-  | "profile.exportBackup"
   | "profile.saveName"
   | "profile.connectedAccount"
   | "profile.group.bible"
@@ -414,7 +413,6 @@ const FR: Dict = {
     "Connecte Google pour synchroniser tes marques, notes et plans.",
   "profile.quotaHint":
     "{used}/{total} surlignages — relie un compte pour continuer sereinement",
-  "profile.exportBackup": "Exporter backup (JSON)",
   "profile.saveName": "Enregistrer",
   "profile.connectedAccount": "Compte connecté",
   "profile.group.bible": "Bible",
@@ -715,7 +713,6 @@ const HT: Dict = {
     "Konekte Google pou senkwonize mak, nòt ak plan ou yo.",
   "profile.quotaHint":
     "{used}/{total} souliyman — konekte yon kont pou kontinye san pwoblèm",
-  "profile.exportBackup": "Ekspòte backup (JSON)",
   "profile.saveName": "Anrejistre",
   "profile.connectedAccount": "Kont konekte",
   "profile.group.bible": "Bib",

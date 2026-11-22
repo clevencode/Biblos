@@ -6,7 +6,6 @@ import {
   splitFullName,
   type UserProfile,
 } from "../../userProfile";
-import { downloadUserBackupJson } from "../../features/user-sync";
 import { useUiLocale } from "../../i18n/UiLocaleContext";
 import { SettingsGroup } from "./SettingsGroup";
 import { SettingsRow } from "./SettingsRow";
@@ -114,16 +113,6 @@ export function AccountSettingsSection({
           onClick={() => setEditingName(true)}
         />
       )}
-
-      <SettingsRow
-        icon="download"
-        label={t("profile.exportBackup")}
-        onClick={() =>
-          downloadUserBackupJson(
-            `biblos-backup-${new Date().toISOString().slice(0, 10)}.json`,
-          )
-        }
-      />
 
       {!guest ? (
         <>
