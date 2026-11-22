@@ -12769,7 +12769,7 @@ html[data-passage-bar-panel="test"]
   border: 0;
   border-radius: 10px;
   background: transparent;
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-size: 1rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -13429,7 +13429,7 @@ html[data-passage-bar-panel="test"]
   min-height: 52px;
   width: 100%;
   padding: 12px 12px;
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-size: 1rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -18798,7 +18798,7 @@ html[data-passage-bar-panel="test"]
 .bible-yv-pick-cell.is-book {
   min-height: 52px;
   padding: 12px 14px;
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-size: 1rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;

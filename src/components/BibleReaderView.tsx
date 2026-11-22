@@ -3452,10 +3452,13 @@ export function BibleReaderView({
     const nestedFromMenu = wordSearchOpen || historyOpen || marksOpen;
     const verseOptionsOpen = showCreateCard;
     const menuSheetOpen = toolsMenuOpen || nestedFromMenu || verseOptionsOpen;
-    /** Menu / search / options: ← sempre visível na margem esquerda. */
-    const showSectionBack = menuSheetOpen;
-    /** History / marques: só ← (sem ✕ à direita). */
-    const showSectionClose = menuSheetOpen && !historyOpen && !marksOpen;
+    /** Menu raiz: ✕ à esquerda (sem seta); jornadas: ←. */
+    const isMenuRoot = Boolean(toolsMenuOpen && !nestedFromMenu && !verseOptionsOpen);
+    /** Options: sem seta à esquerda. */
+    const showSectionBack = menuSheetOpen && !verseOptionsOpen;
+    /** History / marques / menu raiz: sem ✕ à direita. Options: só ✕. */
+    const showSectionClose =
+      menuSheetOpen && !historyOpen && !marksOpen && !isMenuRoot;
     const sectionPillLabel = verseOptionsOpen
       ? t("verse.passageOptions")
       : marksOpen
@@ -3547,20 +3550,20 @@ export function BibleReaderView({
           className={`bible-yv-top-passage-arrow is-prev is-pick-side${
             showSectionBack ? " is-shown" : " is-hidden-slot"
           }`}
-          onClick={handleSectionBack}
+          onClick={isMenuRoot ? handleSectionClose : handleSectionBack}
           disabled={!showSectionBack}
           tabIndex={showSectionBack ? undefined : -1}
           aria-hidden={!showSectionBack}
           aria-label={
             showSectionBack
-              ? nestedFromMenu
-                ? `${t("common.back")} — ${sectionPillLabel}`
-                : `${t("common.close")} — ${sectionPillLabel}`
+              ? isMenuRoot || verseOptionsOpen
+                ? `${t("common.close")} — ${sectionPillLabel}`
+                : `${t("common.back")} — ${sectionPillLabel}`
               : undefined
           }
         >
           <YvIcon
-            name="chevron_left"
+            name={isMenuRoot ? "close" : "chevron_left"}
             className="bible-yv-top-passage-arrow-icon"
           />
         </button>
