@@ -26,9 +26,9 @@ import {
 } from "./shareVerse";
 import {
   isOverFreeMarkQuota,
-  setVerseMarks,
   subscribeVerseMarksRevision,
 } from "./verseMarks";
+import { useReaderChromeStore } from "./store/useReaderChromeStore";
 import {
   completeOnboarding,
   isClevencodeAdminEmail,
@@ -139,6 +139,7 @@ function BiblosConsumerApp() {
   const [tab, setTab] = useState<ShellTab>(() => loadShellTab());
   const [bibleMounted, setBibleMounted] = useState(() => loadShellTab() === "bible");
   const [navHidden, setNavHidden] = useState(false);
+  const readerChromeHidden = useReaderChromeStore((s) => s.chromeHidden);
   const [themePref, setThemePref] = useState<ThemePref>(() => loadThemePref());
   const [bibleFocusRef, setBibleFocusRef] = useState<string | null>(null);
   const [bibleFocusVersion, setBibleFocusVersion] =
@@ -398,9 +399,9 @@ function BiblosConsumerApp() {
     chapterId: string;
     bookTitle: string;
   }) {
-    const { color, verses, bookId, chapterId } = payload;
+    const { color, verses } = payload;
     if (!verses.length) return;
-    setVerseMarks(bookId, chapterId, verses, color);
+    // Persistência + store: já feitos no leitor (`applyMarks`).
     if (color) {
       appendActivity(
         "verse.mark",
@@ -695,7 +696,10 @@ function BiblosConsumerApp() {
             active={tab}
             onSelect={selectTab}
             immersiveHidden={
-              bibleMode && !accountOpen && !adminOpen && navHidden
+              bibleMode &&
+              !accountOpen &&
+              !adminOpen &&
+              (navHidden || readerChromeHidden)
             }
             accountOpen={accountOpen}
             onToggleAccount={toggleAccount}

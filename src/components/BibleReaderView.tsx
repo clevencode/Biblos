@@ -162,7 +162,8 @@ import {
   verseSwatchCheckInk,
 } from "../verseColors";
 import { resolveTheme, type ResolvedTheme } from "../theme";
-import { loadChapterMarks, setVerseMarks } from "../verseMarks";
+import { useReaderChromeStore } from "../store/useReaderChromeStore";
+import { useVerseMarksStore } from "../store/useVerseMarksStore";
 import type { Flashcard } from "../types";
 const STORAGE_KEY = BIBLE_READER_PREFS_KEY;
 /** Panneau verset : pas de Flashcard tant que l’onglet Cartes est désactivé. */
@@ -318,11 +319,59 @@ type BibleVerseButtonProps = {
   planVerseRangeFull: boolean;
   planVerseRangeLo: number | null;
   planVerseRangeHi: number | null;
-  markDisplay: string | null;
+  /** Tema para adaptar a cor da marca (selector Zustand por versículo). */
+  uiTheme: ResolvedTheme;
   hasFlashcard: boolean;
   highlightRef: { current: HTMLElement | null };
   onSelect: (number: number) => void;
 };
+
+const VerseSelectMarkButton = memo(function VerseSelectMarkButton({
+  verseNumber,
+  preview,
+  selected,
+  uiTheme,
+  onSelect,
+}: {
+  verseNumber: number;
+  preview: string;
+  selected: boolean;
+  uiTheme: ResolvedTheme;
+  onSelect: (number: number) => void;
+}) {
+  const rawMark = useVerseMarksStore((s) => s.byVerse[verseNumber]);
+  const markDisplay = rawMark
+    ? adaptVerseColorForTheme(rawMark, uiTheme)
+    : null;
+  return (
+    <button
+      type="button"
+      role="option"
+      data-verse-select={verseNumber}
+      aria-selected={selected}
+      className={[
+        "bible-verse-select-item",
+        selected ? "is-on" : "",
+        markDisplay ? "is-marked" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      style={
+        markDisplay
+          ? ({ ["--verse-mark" as string]: markDisplay } as CSSProperties)
+          : undefined
+      }
+      onClick={() => onSelect(verseNumber)}
+    >
+      <span className="bible-verse-select-num" aria-hidden>
+        {verseNumber}
+      </span>
+      <span className="bible-verse-select-text">
+        {preview || `v. ${verseNumber}`}
+      </span>
+    </button>
+  );
+});
 
 const BibleVerseButton = memo(function BibleVerseButton({
   verse,
@@ -338,11 +387,15 @@ const BibleVerseButton = memo(function BibleVerseButton({
   planVerseRangeFull,
   planVerseRangeLo,
   planVerseRangeHi,
-  markDisplay,
+  uiTheme,
   hasFlashcard,
   highlightRef,
   onSelect,
 }: BibleVerseButtonProps) {
+  const rawMark = useVerseMarksStore((s) => s.byVerse[verse.number]);
+  const markDisplay = rawMark
+    ? adaptVerseColorForTheme(rawMark, uiTheme)
+    : null;
   const inPlanRange = Boolean(
     planRangeActive &&
       (planVerseRangeFull ||
@@ -708,9 +761,8 @@ export function BibleReaderView({
   const [narrowChrome, setNarrowChrome] = useState(false);
   const [cardMsg, setCardMsg] = useState<string | null>(null);
   const [cardColor, setCardColor] = useState(() => loadPreferredVerseColor());
-  const [chapterMarks, setChapterMarks] = useState<ReadonlyMap<number, string>>(
-    () => new Map(),
-  );
+  const hydrateChapterMarks = useVerseMarksStore((s) => s.hydrateChapter);
+  const applyChapterMarks = useVerseMarksStore((s) => s.applyMarks);
   const [chromeHidden, setChromeHidden] = useState(false);
   /** Fade do texto ao trocar de capítulo. */
   const [passageFadeIn, setPassageFadeIn] = useState(false);
@@ -1490,8 +1542,8 @@ export function BibleReaderView({
   }, [bookId, chapterId, fontSize, textVersion]);
 
   useEffect(() => {
-    setChapterMarks(loadChapterMarks(bookId, chapterId));
-  }, [bookId, chapterId]);
+    hydrateChapterMarks(bookId, chapterId);
+  }, [bookId, chapterId, hydrateChapterMarks]);
 
   useEffect(() => {
     if (!active) return;
@@ -2512,8 +2564,14 @@ export function BibleReaderView({
     const next = adaptVerseColorForTheme(normalizeVerseColor(hex), uiTheme);
     pickVerseColor(next);
     if (!selection?.length) return;
-    if (!selectedVerses.some((n) => chapterMarks.has(n))) return;
-    setChapterMarks(setVerseMarks(bookId, chapterId, selection, next));
+    if (
+      !selectedVerses.some((n) =>
+        Boolean(useVerseMarksStore.getState().byVerse[n]),
+      )
+    ) {
+      return;
+    }
+    applyChapterMarks(bookId, chapterId, selection, next);
     onVerseMarked?.({
       color: next,
       verses: [...selection],
@@ -2527,7 +2585,7 @@ export function BibleReaderView({
     if (!selection?.length) return;
     const next = adaptVerseColorForTheme(normalizeVerseColor(hex), uiTheme);
     pickVerseColor(next);
-    setChapterMarks(setVerseMarks(bookId, chapterId, selection, next));
+    applyChapterMarks(bookId, chapterId, selection, next);
     onVerseMarked?.({
       color: next,
       verses: [...selection],
@@ -2575,7 +2633,7 @@ export function BibleReaderView({
       uiTheme,
     );
     pickVerseColor(next);
-    setChapterMarks(setVerseMarks(bookId, chapterId, verses, next));
+    applyChapterMarks(bookId, chapterId, verses, next);
     onVerseMarked?.({
       color: next,
       verses,
@@ -2590,7 +2648,7 @@ export function BibleReaderView({
 
   function clearSelectionMarks() {
     if (!selection?.length) return;
-    setChapterMarks(setVerseMarks(bookId, chapterId, selection, null));
+    applyChapterMarks(bookId, chapterId, selection, null);
     onVerseMarked?.({
       color: null,
       verses: [...selection],
@@ -2602,14 +2660,19 @@ export function BibleReaderView({
   }
 
   const activeVerseColor = adaptVerseColorForTheme(normalizeVerseColor(cardColor), uiTheme);
-  const selectionHasMark = selectedVerses.some((n) => chapterMarks.has(n));
-  const selectionMarkColor = useMemo(() => {
+  const selectionHasMark = useVerseMarksStore((s) =>
+    selectedVerses.some((n) => Boolean(s.byVerse[n])),
+  );
+  const selectionMarkRaw = useVerseMarksStore((s) => {
     for (const n of selectedVerses) {
-      const hex = chapterMarks.get(n);
-      if (hex) return adaptVerseColorForTheme(normalizeVerseColor(hex), uiTheme);
+      const hex = s.byVerse[n];
+      if (hex) return hex;
     }
     return null;
-  }, [selectedVerses, chapterMarks, uiTheme]);
+  });
+  const selectionMarkColor = selectionMarkRaw
+    ? adaptVerseColorForTheme(normalizeVerseColor(selectionMarkRaw), uiTheme)
+    : null;
   /* Tom do CTA Marquer = cor seleccionada (swatch / marca; light + dark). */
   const pickerColor = selectionMarkColor ?? activeVerseColor;
   const actionTone = useMemo(
@@ -3383,43 +3446,18 @@ export function BibleReaderView({
                     {passage.verses.map((verse) => {
                       const on = selectedVerseSet.has(verse.number);
                       const preview = String(verse.text || "").trim();
-                      const markColor = chapterMarks.get(verse.number);
-                      const markDisplay = markColor
-                        ? adaptVerseColorForTheme(markColor, uiTheme)
-                        : null;
                       return (
                         <li
                           key={verse.number}
                           className="bible-verse-select-row"
                         >
-                          <button
-                            type="button"
-                            role="option"
-                            data-verse-select={verse.number}
-                            aria-selected={on}
-                            className={[
-                              "bible-verse-select-item",
-                              on ? "is-on" : "",
-                              markDisplay ? "is-marked" : "",
-                            ]
-                              .filter(Boolean)
-                              .join(" ")}
-                            style={
-                              markDisplay
-                                ? ({
-                                    ["--verse-mark" as string]: markDisplay,
-                                  } as CSSProperties)
-                                : undefined
-                            }
-                            onClick={() => selectVerse(verse.number)}
-                          >
-                            <span className="bible-verse-select-num" aria-hidden>
-                              {verse.number}
-                            </span>
-                            <span className="bible-verse-select-text">
-                              {preview || `v. ${verse.number}`}
-                            </span>
-                          </button>
+                          <VerseSelectMarkButton
+                            verseNumber={verse.number}
+                            preview={preview}
+                            selected={on}
+                            uiTheme={uiTheme}
+                            onSelect={selectVerse}
+                          />
                         </li>
                       );
                     })}
@@ -4030,6 +4068,7 @@ export function BibleReaderView({
     // flushSync: leitor + shell no mesmo paint — evita race classList vs className.
     flushSync(() => {
       setChromeHidden(hidden);
+      useReaderChromeStore.getState().setChromeHidden(hidden);
       onReadingChromeChange?.(hasActiveModalRef.current || hidden);
     });
   }
@@ -4048,6 +4087,7 @@ export function BibleReaderView({
 
   useEffect(() => {
     return () => {
+      useReaderChromeStore.getState().setChromeHidden(false);
       onReadingChromeChange?.(false);
     };
   }, [onReadingChromeChange]);
@@ -4564,10 +4604,6 @@ export function BibleReaderView({
                 : rangeStart != null
                   ? verse.number === rangeStart
                   : highlightVerse === verse.number;
-              const markColor = chapterMarks.get(verse.number);
-              const markDisplay = markColor
-                ? adaptVerseColorForTheme(markColor, uiTheme)
-                : null;
               return (
                 <BibleVerseButton
                   key={verse.number}
@@ -4587,7 +4623,7 @@ export function BibleReaderView({
                   planVerseRangeFull={planVerseRangeFull}
                   planVerseRangeLo={planVerseRangeLo}
                   planVerseRangeHi={planVerseRangeHi}
-                  markDisplay={markDisplay}
+                  uiTheme={uiTheme}
                   hasFlashcard={chapterCardVerses.has(verse.number)}
                   highlightRef={highlightRef}
                   onSelect={selectVerse}
