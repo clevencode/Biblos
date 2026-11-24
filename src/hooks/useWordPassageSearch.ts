@@ -14,9 +14,9 @@ import type { BibleSearchHit } from "../youversion/client";
 import { passageJumpsFromQuery } from "../youversion/bibleRefs";
 
 /**
- * Pesquisa por palavras — worker + facets pré-filtro, debounce 200ms, páginas de 40.
+ * Pesquisa por palavras — worker + facets pré-filtro, debounce 120ms, páginas de 40.
  */
-const DEBOUNCE_MS = 200;
+const DEBOUNCE_MS = 120;
 const MIN_CHARS = 2;
 export const WORD_SEARCH_PAGE_SIZE = 40;
 

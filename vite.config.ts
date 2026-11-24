@@ -10,6 +10,14 @@ const pkg = JSON.parse(readFileSync("./package.json", "utf8")) as {
 };
 
 const isCapacitorBuild = process.env.CAPACITOR === "1";
+/** Web-only: SharedArrayBuffer / OPFS sync — nunca no build Capacitor. */
+const crossOriginIsolation =
+  !isCapacitorBuild && process.env.BIBLOS_CROSS_ORIGIN_ISOLATION === "1";
+
+const coopCoepHeaders: Record<string, string> = {
+  "Cross-Origin-Opener-Policy": "same-origin",
+  "Cross-Origin-Embedder-Policy": "require-corp",
+};
 
 /** Interfaces virtuais/VPN que o Vite lista como "Network" mas o celular não alcança. */
 const SKIP_IFACE =
@@ -199,9 +207,11 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "0.0.0.0",
     port: 5173,
+    ...(crossOriginIsolation ? { headers: coopCoepHeaders } : {}),
   },
   preview: {
     host: "0.0.0.0",
     port: 4173,
+    ...(crossOriginIsolation ? { headers: coopCoepHeaders } : {}),
   },
 }));

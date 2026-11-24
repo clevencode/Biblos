@@ -12284,6 +12284,23 @@ html[data-passage-bar-panel="test"]
   overflow: visible;
 }
 
+html[data-passage-bar-panel="test"]
+  .bible-yv-pick-verse-hits.is-word-search-passages.is-virtual {
+  display: block;
+  gap: 0;
+}
+
+html[data-passage-bar-panel="test"] .bible-yv-pick-verse-hit-virtual {
+  box-sizing: border-box;
+  padding-bottom: 6px;
+}
+
+html[data-passage-bar-panel="test"]
+  .bible-yv-pick-verse-hit-virtual
+  .bible-yv-pick-verse-hit {
+  width: 100%;
+}
+
 html[data-passage-bar-panel="test"] .bible-yv-pick-grid.is-word-search.is-paging {
   opacity: 0.72;
   pointer-events: none;

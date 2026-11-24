@@ -59,9 +59,22 @@ Scripts úteis: `bible:s21`, `bible:study:export`, `bible:study:stage`, `icons:g
 5. Não misturar pasta `Downloads\Archiv1\Bible` (arquivo pessoal) com o repo — só importar via scripts/`data/`.
 6. Commits só quando o utilizador pedir; push a `master` só com pedido explícito.
 7. Preferir português na comunicação com o utilizador.
-8. **Bloco final git (manual):** após qualquer alteração de código/config no repo, terminar a resposta com um bloco pronto a copiar com `git add`, `git commit` e mensagem (assunto + corpo curto, foco no *porquê*). **Não** correr `git add` / `git commit` até pedido explícito. Se não houver mudanças no working tree, omitir o bloco.
+8. **Bloco final git (manual) — obrigatório:** após qualquer alteração de código/config no repo, a resposta **deve sempre** terminar com o bloco pronto a copiar (`git add` + `git commit` + mensagem). **Não importa** o tamanho da resposta (mesmo 1 frase). **Não** omitir por resposta curta, “ajustes finos” ou follow-up. **Não** correr `git add` / `git commit` até pedido explícito. Só omitir se **não** houver mudanças no working tree nesta sessão de edição.
 
-### Formato do bloco git (fim da resposta)
+### Formato do bloco git (sempre no fim da resposta)
+
+Preferir PowerShell (Windows / este repo):
+
+```text
+git add -A
+git commit -m @"
+<tipo>: <assunto em 1 linha>
+
+<1–2 frases do porquê / impacto>
+"@
+```
+
+Bash/macOS (alternativa):
 
 ```text
 git add -A
@@ -71,17 +84,6 @@ git commit -m "$(cat <<'EOF'
 <1–2 frases do porquê / impacto>
 EOF
 )"
-```
-
-No PowerShell (Windows), equivalente pronto a colar:
-
-```text
-git add -A
-git commit -m @"
-<tipo>: <assunto em 1 linha>
-
-<1–2 frases do porquê / impacto>
-"@
 ```
 
 ## Ao criar funcionalidade nova

@@ -6,6 +6,7 @@ import {
   type KeyboardEvent,
   type MouseEvent,
 } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import type { BibleTextVersionId } from "../bible/bibleVersions";
 import {
   isDcBook,
@@ -260,6 +261,15 @@ export function BiblePassageWordSearchPanel({
       versionId: textVersion,
       resultsReady,
     });
+
+  /** Virtualização: páginas de busca e snippets variáveis sem montar todo o DOM. */
+  const hitVirtualizer = useVirtualizer({
+    count: verseHits.length,
+    getScrollElement: () => listRef.current,
+    estimateSize: () => 88,
+    overscan: 6,
+    getItemKey: (index) => verseHits[index]?.usfm ?? index,
+  });
 
   const bookLabel =
     currentBookTitle.trim() ||
@@ -777,22 +787,43 @@ export function BiblePassageWordSearchPanel({
                   : t("word.empty")}
               </p>
             ) : (
-              <ul className="bible-yv-pick-verse-hits is-word-search-passages">
-                {verseHits.map((hit) => {
+              <div
+                className="bible-yv-pick-verse-hits is-word-search-passages is-virtual"
+                style={{
+                  height: hitVirtualizer.getTotalSize(),
+                  width: "100%",
+                  position: "relative",
+                }}
+                role="presentation"
+              >
+                {hitVirtualizer.getVirtualItems().map((virtualRow) => {
+                  const hit = verseHits[virtualRow.index];
+                  if (!hit) return null;
                   const usfmBook = String(hit.usfm || "")
                     .split(".")[0]
                     ?.toUpperCase();
-                  // Títulos só do catálogo da versão / índice (nunca CANON_BOOKS FR)
                   const localizedTitle =
                     (usfmBook ? titleById.get(usfmBook) : null) ||
                     hit.bookTitle ||
                     usfmBook ||
                     "";
                   return (
-                    <li key={hit.usfm}>
+                    <div
+                      key={hit.usfm}
+                      role="option"
+                      data-index={virtualRow.index}
+                      ref={hitVirtualizer.measureElement}
+                      className="bible-yv-pick-verse-hit-virtual"
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        width: "100%",
+                        transform: `translateY(${virtualRow.start}px)`,
+                      }}
+                    >
                       <button
                         type="button"
-                        role="option"
                         className="bible-yv-pick-verse-hit"
                         onClick={() => handlePickVerse(hit)}
                       >
@@ -807,10 +838,10 @@ export function BiblePassageWordSearchPanel({
                           />
                         </span>
                       </button>
-                    </li>
+                    </div>
                   );
                 })}
-              </ul>
+              </div>
             )}
             {pageCount > 1 &&
             !showLoadingResults &&

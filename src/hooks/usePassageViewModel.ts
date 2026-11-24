@@ -5,6 +5,11 @@ import type { BibleTextVersionId } from "../bible/bibleVersions";
 import { loadPassageViewState, resolvePassageLayout } from "../bible/passageRepository";
 import type { PassageLoadErrorKind } from "../bible/passageLoadError";
 import {
+  peekPassageWindow,
+  prefetchAdjacentPassages,
+  putPassageWindow,
+} from "../bible/passageWindowCache";
+import {
   displayPassageFromViewState,
   initialPassageViewState,
   isPassageLoading,
@@ -37,6 +42,7 @@ export function usePassageViewModel(options: UsePassageViewModelOptions) {
   const {
     active,
     textVersion,
+    books,
     catalogOffline,
     offlineReady,
     resolveBookTitle,
@@ -45,6 +51,10 @@ export function usePassageViewModel(options: UsePassageViewModelOptions) {
 
   const textVersionRef = useRef(textVersion);
   textVersionRef.current = textVersion;
+  const booksRef = useRef(books);
+  booksRef.current = books;
+  const resolveBookTitleRef = useRef(resolveBookTitle);
+  resolveBookTitleRef.current = resolveBookTitle;
 
   const [viewState, dispatch] = useReducer(passageReducer, initialPassageViewState);
   const loadGen = useRef(0);
@@ -79,7 +89,45 @@ export function usePassageViewModel(options: UsePassageViewModelOptions) {
       _verseEnd: number | null,
     ) => {
       const gen = ++loadGen.current;
-      const bookTitle = resolveBookTitle(nextBook);
+      const version = textVersionRef.current;
+      const bookTitle = resolveBookTitleRef.current(nextBook);
+
+      const cached = peekPassageWindow(version, nextBook, nextChapter);
+      if (cached) {
+        if (gen !== loadGen.current) return;
+        dispatch({ type: "NAVIGATE", schema: cached.schema });
+        dispatch({
+          type: "RESOLVE_OK",
+          schema: cached.schema,
+          passage: cached.passage,
+          bibleId: cached.bibleId,
+          bible: cached.bible,
+        });
+        const label =
+          verse != null
+            ? `${bookTitle} ${nextChapter}.${verse}`
+            : `${bookTitle} ${nextChapter}`;
+        onResolved?.({
+          bookId: nextBook,
+          chapterId: nextChapter,
+          verse,
+          passage: cached.passage,
+          bibleId: cached.bibleId ?? 0,
+          bible: cached.bible ?? undefined,
+          label,
+        });
+        prefetchAdjacentPassages({
+          version,
+          books: booksRef.current,
+          bookId: nextBook,
+          chapterId: nextChapter,
+          resolveBookTitle: resolveBookTitleRef.current,
+          catalogOffline,
+          offlineIndexReady: offlineReady,
+        });
+        return;
+      }
+
       const schema = await resolvePassageLayout({
         bookId: nextBook,
         chapterId: nextChapter,
@@ -89,7 +137,7 @@ export function usePassageViewModel(options: UsePassageViewModelOptions) {
       dispatch({ type: "NAVIGATE", schema });
 
       const result = await loadPassageViewState({
-        version: textVersionRef.current,
+        version,
         bookId: nextBook,
         chapterId: nextChapter,
         bookTitle,
@@ -101,6 +149,7 @@ export function usePassageViewModel(options: UsePassageViewModelOptions) {
       if (gen !== loadGen.current) return;
 
       if (result.status === "success") {
+        putPassageWindow(version, nextBook, nextChapter, result);
         dispatch({
           type: "RESOLVE_OK",
           schema: result.schema,
@@ -121,6 +170,15 @@ export function usePassageViewModel(options: UsePassageViewModelOptions) {
           bible: result.bible ?? undefined,
           label,
         });
+        prefetchAdjacentPassages({
+          version,
+          books: booksRef.current,
+          bookId: nextBook,
+          chapterId: nextChapter,
+          resolveBookTitle: resolveBookTitleRef.current,
+          catalogOffline,
+          offlineIndexReady: offlineReady,
+        });
         return;
       }
 
@@ -133,7 +191,7 @@ export function usePassageViewModel(options: UsePassageViewModelOptions) {
         });
       }
     },
-    [catalogOffline, offlineReady, onResolved, resolveBookTitle],
+    [catalogOffline, offlineReady, onResolved],
   );
 
   const retryChapter = useCallback(

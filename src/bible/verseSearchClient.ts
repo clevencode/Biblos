@@ -158,13 +158,24 @@ export async function searchInWorker(input: {
   });
 }
 
-export function warmSearchIndexInWorker(versionId: BibleTextVersionId): void {
-  const w = getWorker();
-  if (!w) {
-    scheduleSearchIndexWarmup(versionId);
+/** Agenda warm sem disputar o paint (idle / próximo tick). */
+function scheduleIdle(task: () => void): void {
+  if (typeof requestIdleCallback === "function") {
+    requestIdleCallback(() => task(), { timeout: 2000 });
     return;
   }
-  post({ type: "warm", versionId });
+  setTimeout(task, 0);
+}
+
+export function warmSearchIndexInWorker(versionId: BibleTextVersionId): void {
+  scheduleIdle(() => {
+    const w = getWorker();
+    if (!w) {
+      scheduleSearchIndexWarmup(versionId);
+      return;
+    }
+    post({ type: "warm", versionId });
+  });
 }
 
 export function invalidateSearchIndexInWorker(
