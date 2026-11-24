@@ -175,10 +175,14 @@ export function queueUserDataPush(uid?: string | null): void {
   if (pushTimer) clearTimeout(pushTimer);
   setSyncStatus(navigator.onLine ? "pending" : "offline");
   pushTimer = setTimeout(() => {
-    void pushAll(target).catch((err) => {
-      console.warn("[user-sync] push", err);
-      setSyncStatus(navigator.onLine ? "pending" : "offline");
-    });
+    void import("../../../bible/zeroLag/syncOutbox")
+      .then(({ drainOutbox }) =>
+        drainOutbox(() => pushAll(target)),
+      )
+      .catch((err) => {
+        console.warn("[user-sync] push", err);
+        setSyncStatus(navigator.onLine ? "pending" : "offline");
+      });
   }, 1200);
 }
 
@@ -192,7 +196,8 @@ export async function flushUserDataPush(
     clearTimeout(pushTimer);
     pushTimer = null;
   }
-  await pushAll(target, opts);
+  const { drainOutbox } = await import("../../../bible/zeroLag/syncOutbox");
+  await drainOutbox(() => pushAll(target, opts));
 }
 
 function applyRemoteHighlights(data: Record<string, unknown> | undefined) {

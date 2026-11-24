@@ -110,6 +110,18 @@ export async function searchInWorker(input: {
   scope?: SearchScope;
   preferBookId?: string;
 }): Promise<ClientSearchResult> {
+  // Fase 2: SQLite FTS5 quando o gate está activo (web).
+  try {
+    const { isSqliteFtsEnabled } = await import("./zeroLag/sqliteFtsGate");
+    if (isSqliteFtsEnabled()) {
+      const { searchInSqliteFts } = await import("./zeroLag/sqliteFtsClient");
+      const sqliteHit = await searchInSqliteFts(input);
+      if (sqliteHit) return sqliteHit;
+    }
+  } catch {
+    /* fallback para worker clássico */
+  }
+
   const w = getWorker();
   if (!w) {
     return runLocalVerseSearch({
@@ -169,18 +181,36 @@ function scheduleIdle(task: () => void): void {
 
 export function warmSearchIndexInWorker(versionId: BibleTextVersionId): void {
   scheduleIdle(() => {
-    const w = getWorker();
-    if (!w) {
-      scheduleSearchIndexWarmup(versionId);
-      return;
-    }
-    post({ type: "warm", versionId });
+    void (async () => {
+      try {
+        const { isSqliteFtsEnabled } = await import("./zeroLag/sqliteFtsGate");
+        if (isSqliteFtsEnabled()) {
+          const { warmSqliteFts } = await import("./zeroLag/sqliteFtsClient");
+          const ok = await warmSqliteFts(versionId);
+          if (ok) return;
+        }
+      } catch {
+        /* fall through */
+      }
+      const w = getWorker();
+      if (!w) {
+        scheduleSearchIndexWarmup(versionId);
+        return;
+      }
+      post({ type: "warm", versionId });
+    })();
   });
 }
 
 export function invalidateSearchIndexInWorker(
   versionId?: BibleTextVersionId,
 ): void {
+  void import("./zeroLag/sqliteFtsClient")
+    .then(({ invalidateSqliteFts }) => {
+      invalidateSqliteFts(versionId);
+    })
+    .catch(() => undefined);
+
   const w = getWorker();
   if (!w) {
     void import("./verseIndexCache").then(({ invalidateVerseIndex }) => {

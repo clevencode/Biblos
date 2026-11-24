@@ -1,9 +1,9 @@
 /**
  * Feature gate — SQLite WASM + FTS5 (Fase 2 zero-lag).
- * Desligado por defeito. Não carrega @sqlite.org/sqlite-wasm até enable explícito.
+ * Desligado por defeito. Worker só carrega com enable explícito.
  *
  * Ativar (web): localStorage `biblos_sqlite_fts=1` ou `?sqlite-fts=1`
- * Capacitor: manter off até validação OPFS no WebView.
+ * Capacitor: off (OPFS/COEP não validados no WebView).
  */
 
 export const SQLITE_FTS_STORAGE_KEY = "biblos_sqlite_fts";
@@ -32,7 +32,6 @@ function readStorageFlag(): boolean {
   }
 }
 
-/** Capacitor builds must not enable OPFS path without separate validation. */
 function isCapacitorRuntime(): boolean {
   if (typeof window === "undefined") return false;
   const cap = (
@@ -56,26 +55,12 @@ export function detectSqliteFtsBackend(): SqliteFtsBackend {
   return hasOpfs ? "opfs" : "idb-fallback";
 }
 
-/**
- * Ponto de entrada futuro do motor FTS.
- * Hoje: no-op tipado — o índice continua no verseSearch.worker.
- */
+/** Arranque real do worker SQLite (no-op se gate off). */
 export async function initSqliteFtsPrototype(): Promise<{
   ok: boolean;
   backend: SqliteFtsBackend;
   reason?: string;
 }> {
-  const backend = detectSqliteFtsBackend();
-  if (backend === "disabled") {
-    return {
-      ok: false,
-      backend,
-      reason: "gate_off",
-    };
-  }
-  return {
-    ok: false,
-    backend,
-    reason: "prototype_stub — wire @sqlite.org/sqlite-wasm in worker next",
-  };
+  const { ensureSqliteFtsReady } = await import("./sqliteFtsClient");
+  return ensureSqliteFtsReady();
 }

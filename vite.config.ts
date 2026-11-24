@@ -17,6 +17,8 @@ const crossOriginIsolation =
 const coopCoepHeaders: Record<string, string> = {
   "Cross-Origin-Opener-Policy": "same-origin",
   "Cross-Origin-Embedder-Policy": "require-corp",
+  /* Assets sob COEP precisam de CORP para o browser aceitar o WASM. */
+  "Cross-Origin-Resource-Policy": "same-origin",
 };
 
 /** Interfaces virtuais/VPN que o Vite lista como "Network" mas o celular não alcança. */
@@ -96,6 +98,12 @@ export default defineConfig(({ mode }) => ({
   base: "/",
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
+  },
+  optimizeDeps: {
+    exclude: ["@sqlite.org/sqlite-wasm"],
+  },
+  worker: {
+    format: "es" as const,
   },
   plugins: [
     react(),

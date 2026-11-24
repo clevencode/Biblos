@@ -1,10 +1,11 @@
 /**
  * COOP/COEP — necessário para SharedArrayBuffer / OPFS sync access no SQLite WASM.
  *
- * Avaliação (Biblos):
- * - Build Capacitor: NÃO aplicar (WebView + Firebase auth/embeds quebram com COEP).
- * - Web/PWA: só com `BIBLOS_CROSS_ORIGIN_ISOLATION=1` no Vite (ver vite.config.ts).
- * - Produção (Vercel/host): espelhar os mesmos headers só no target web quando OPFS for adoptado.
+ * Avaliação Fase 2 (Biblos) — confirmado:
+ * - Build Capacitor (`CAPACITOR=1`): headers **nunca** aplicados (vite.config).
+ * - Web/PWA: activar com `BIBLOS_CROSS_ORIGIN_ISOLATION=1` (dev/preview + CORP).
+ * - Sem isolation: gate SQLite usa backend `idb-fallback` (memória no worker).
+ * - Produção: espelhar COOP/COEP/CORP só no target web se OPFS for o default.
  */
 
 export const CROSS_ORIGIN_ISOLATION_ENV = "BIBLOS_CROSS_ORIGIN_ISOLATION";

@@ -248,6 +248,15 @@ export function setVerseMarks(
     writeTouched(touched);
   }
   writeStore(store);
+  // Outbox: UI já actualizada; sync Firestore em background.
+  void import("./bible/zeroLag/syncOutbox")
+    .then(({ enqueueOutbox }) => {
+      enqueueOutbox(
+        "verse_mark",
+        `${bookId}.${chapterId}:${verses.join(",")}`,
+      );
+    })
+    .catch(() => undefined);
   return loadChapterMarks(bookId, chapterId);
 }
 
