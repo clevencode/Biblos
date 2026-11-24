@@ -123,10 +123,37 @@ async function loadOne(
   return promise;
 }
 
-/** Prefetch silencioso dos vizinhos N−1 e N+1 (idle / microtask). */
+/** Política injectada pelo PowerGovernor (defaults = performance). */
+export type PassagePrefetchPolicy = {
+  allowPrev: boolean;
+  allowNext: boolean;
+};
+
+let prefetchPolicy: PassagePrefetchPolicy = {
+  allowPrev: true,
+  allowNext: true,
+};
+
+export function setPrefetchPolicy(policy: PassagePrefetchPolicy): void {
+  prefetchPolicy = {
+    allowPrev: policy.allowPrev,
+    allowNext: policy.allowNext,
+  };
+}
+
+export function getPrefetchPolicy(): PassagePrefetchPolicy {
+  return { ...prefetchPolicy };
+}
+
+/** Prefetch silencioso dos vizinhos conforme política PowerGovernor. */
 export function prefetchAdjacentPassages(opts: PrefetchOpts): void {
+  const deltas: Array<-1 | 1> = [];
+  if (prefetchPolicy.allowPrev) deltas.push(-1);
+  if (prefetchPolicy.allowNext) deltas.push(1);
+  if (deltas.length === 0) return;
+
   const run = () => {
-    for (const delta of [-1, 1] as const) {
+    for (const delta of deltas) {
       const next = adjacentChapter(
         opts.books,
         opts.bookId,

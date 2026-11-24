@@ -62,6 +62,17 @@ let localUnsubs: Array<() => void> = [];
 let syncStatus: SyncStatus = "idle";
 let applyingRemote = false;
 
+/** Debounce do outbox — PowerGovernor: 15s (performance) / 60s (balanced|eco). */
+let syncPushDebounceMs = 1200;
+
+export function setSyncPushDebounceMs(ms: number): void {
+  syncPushDebounceMs = Math.max(0, Math.floor(ms));
+}
+
+export function getSyncPushDebounceMs(): number {
+  return syncPushDebounceMs;
+}
+
 function setSyncStatus(next: SyncStatus) {
   if (syncStatus === next) return;
   syncStatus = next;
@@ -183,7 +194,7 @@ export function queueUserDataPush(uid?: string | null): void {
         console.warn("[user-sync] push", err);
         setSyncStatus(navigator.onLine ? "pending" : "offline");
       });
-  }, 1200);
+  }, syncPushDebounceMs);
 }
 
 export async function flushUserDataPush(

@@ -179,8 +179,17 @@ function scheduleIdle(task: () => void): void {
   setTimeout(task, 0);
 }
 
+/** PowerGovernor: warm SQLite/FTS só em `performance`. */
+let warmSqliteAllowed = true;
+
+export function setWarmSqliteAllowed(allowed: boolean): void {
+  warmSqliteAllowed = allowed;
+}
+
 export function warmSearchIndexInWorker(versionId: BibleTextVersionId): void {
+  if (!warmSqliteAllowed) return;
   scheduleIdle(() => {
+    if (!warmSqliteAllowed) return;
     void (async () => {
       try {
         const { isSqliteFtsEnabled } = await import("./zeroLag/sqliteFtsGate");
