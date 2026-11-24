@@ -32,7 +32,10 @@ export type PrefetchPolicy = {
   allowWarmSqlite: boolean;
   /** Podcast Anchor: preload aos 85% */
   allowAudioPreload85: boolean;
-  /** Intervalo sugerido para sync/telemetria (ms) */
+  /**
+   * Intervalo sugerido para telemetria / drains especulativos (ms).
+   * Não aplica a voidUserDataPush (marcas/notas ficam ~1200ms).
+   */
   syncIntervalMs: number;
 };
 

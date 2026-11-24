@@ -2008,6 +2008,23 @@ html[data-keyboard="open"] .panel-nota-body {
   }
 }
 
+/* PowerGovernor — pausar só loops contínuos (balanced / eco-background).
+   Não toca em enters de sheet/verso/capítulo (leitura continua responsiva). */
+html[data-power-mode="balanced"] .plan-discover-refresh-icon.is-spinning,
+html[data-power-mode="eco-background"] .plan-discover-refresh-icon.is-spinning,
+html[data-power-mode="balanced"] .plan-card.is-skeleton .plan-card-swatch,
+html[data-power-mode="eco-background"] .plan-card.is-skeleton .plan-card-swatch,
+html[data-power-mode="balanced"] .plan-card.is-skeleton .plan-card-skel-bar,
+html[data-power-mode="eco-background"] .plan-card.is-skeleton .plan-card-skel-bar,
+html[data-power-mode="balanced"] .bible-yv-top-loading-bar,
+html[data-power-mode="eco-background"] .bible-yv-top-loading-bar,
+html[data-power-mode="balanced"] .bible-reader--yv .bible-verse.is-skeleton .bible-verse-text,
+html[data-power-mode="eco-background"] .bible-reader--yv .bible-verse.is-skeleton .bible-verse-text,
+html[data-power-mode="balanced"] .bible-yv-dock-play-spinner,
+html[data-power-mode="eco-background"] .bible-yv-dock-play-spinner {
+  animation: none !important;
+}
+
 .flash {
   flex: 1;
   min-height: 0;

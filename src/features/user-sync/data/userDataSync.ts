@@ -62,16 +62,12 @@ let localUnsubs: Array<() => void> = [];
 let syncStatus: SyncStatus = "idle";
 let applyingRemote = false;
 
-/** Debounce do outbox — PowerGovernor: 15s (performance) / 60s (balanced|eco). */
-let syncPushDebounceMs = 1200;
-
-export function setSyncPushDebounceMs(ms: number): void {
-  syncPushDebounceMs = Math.max(0, Math.floor(ms));
-}
-
-export function getSyncPushDebounceMs(): number {
-  return syncPushDebounceMs;
-}
+/**
+ * Debounce do push de marcas/notas (gesto do utilizador) — fixo ~1.2s.
+ * PowerGovernor `syncIntervalMs` (15s/60s) é só para telemetria / drains
+ * especulativos futuros — não sobrescreve este valor.
+ */
+const SYNC_PUSH_DEBOUNCE_MS = 1200;
 
 function setSyncStatus(next: SyncStatus) {
   if (syncStatus === next) return;
@@ -194,7 +190,7 @@ export function queueUserDataPush(uid?: string | null): void {
         console.warn("[user-sync] push", err);
         setSyncStatus(navigator.onLine ? "pending" : "offline");
       });
-  }, syncPushDebounceMs);
+  }, SYNC_PUSH_DEBOUNCE_MS);
 }
 
 export async function flushUserDataPush(

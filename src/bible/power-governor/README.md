@@ -2,6 +2,8 @@
 
 Máquina headless de eficiência energética / rede para a BiblosApp.
 
+**UI silenciosa** — sem badge “Eco” / definições de modo. O utilizador só nota leitura mais leve (menos prefetch, menos loops CSS).
+
 ## Modos
 
 | Modo | Quando |
@@ -10,26 +12,24 @@ Máquina headless de eficiência energética / rede para a BiblosApp.
 | `balanced` | `saveData`, 2g/3g, ou bateria &lt; 15% sem carregar |
 | `eco-background` | `document.hidden` |
 
-## Uso
+## Boot (app)
 
 ```ts
-import {
-  getSharedPowerGovernor,
-  prefetchPolicyFor,
-} from "@/bible/power-governor";
+import { bootPowerGovernor } from "@/hooks/usePowerGovernor";
 
-const gov = getSharedPowerGovernor();
-gov.subscribe((mode) => {
-  document.documentElement.dataset.powerMode = mode; // já aplicado pelo engine
-  const policy = prefetchPolicyFor(mode);
-  // Navigation / sync / Podcast Anchor leem policy
-});
+// App.tsx — useEffect uma vez; sem setState (não re-renderiza o shell)
+useEffect(() => bootPowerGovernor(), []);
 ```
+
+O engine escreve `document.documentElement.dataset.powerMode`.
 
 ## CSS / animações
 
+Em `balanced` / `eco-background`, o CSS pausa **só loops** (skeleton pulse, spinners). Micro-interações de leitura (sheets, seleção de verso) mantêm-se.
+
 ```css
-html[data-power-mode="eco-background"] .heavy-anim {
+html[data-power-mode="balanced"] .loop,
+html[data-power-mode="eco-background"] .loop {
   animation: none !important;
 }
 ```
@@ -40,9 +40,12 @@ html[data-power-mode="eco-background"] .heavy-anim {
 - `balanced` — só N+1
 - `eco-background` — off
 
-Sync outbox: 15s (`performance`) vs 60s (`balanced` / `eco-background`).
+## Sync
 
-Podcast Anchor (quando existir): desactivar preload 85% em `balanced` / `eco-background`.
+- **Push de marcas/notas** (`voidUserDataPush`): debounce fixo ~**1200ms** (gesto do utilizador).
+- **`policy.syncIntervalMs`** (15s / 60s): telemetria / drains especulativos futuros — **não** altera o push interativo.
+
+Podcast Anchor (quando existir): desactivar preload 85% em `balanced` / `eco-background` via `allowAudioPreload85`.
 
 ## Critérios
 

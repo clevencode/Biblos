@@ -70,7 +70,7 @@ import {
 import { InstallBanner } from "./components/InstallBanner";
 import { useApkUpdate } from "./hooks/useApkUpdate";
 import { usePwaInstall } from "./hooks/usePwaInstall";
-import { usePowerGovernor } from "./hooks/usePowerGovernor";
+import { bootPowerGovernor } from "./hooks/usePowerGovernor";
 import { useAppReadiness } from "./context/AppReadinessContext";
 
 type MarkPayload = {
@@ -87,7 +87,7 @@ function isEditorialAdminRoute(): boolean {
 }
 
 export function App() {
-  usePowerGovernor();
+  useEffect(() => bootPowerGovernor(), []);
   const { markShellReady, setCatalogHydrating, setCatalogLocalReady } =
     useAppReadiness();
   const [editorialAdmin, setEditorialAdmin] = useState(() => isEditorialAdminRoute());
