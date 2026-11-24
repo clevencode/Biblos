@@ -95,4 +95,6 @@ export async function downloadHt1998Offline(
 export async function clearHt1998Offline(): Promise<void> {
   const { invalidateHt1998CatalogCache } = await import("./ht1998");
   invalidateHt1998CatalogCache();
+  const { invalidateSearchIndexInWorker } = await import("./verseSearchClient");
+  invalidateSearchIndexInWorker("ht98");
 }

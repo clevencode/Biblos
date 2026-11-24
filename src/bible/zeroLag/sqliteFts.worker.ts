@@ -12,8 +12,11 @@ import {
   normalizeSearchText,
   type SearchScope,
 } from "../verseSearchEngine";
-import type { SqliteFtsBackend } from "./sqliteFtsGate";
-import type { SqliteFtsInbound, SqliteFtsOutbound } from "./sqliteFtsTypes";
+import type {
+  SqliteFtsBackend,
+  SqliteFtsInbound,
+  SqliteFtsOutbound,
+} from "./sqliteFtsTypes";
 
 const ctx: DedicatedWorkerGlobalScope =
   self as unknown as DedicatedWorkerGlobalScope;

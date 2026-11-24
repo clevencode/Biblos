@@ -6,10 +6,12 @@
  * Capacitor: off (OPFS/COEP não validados no WebView).
  */
 
+import type { SqliteFtsBackend } from "./sqliteFtsTypes";
+
+export type { SqliteFtsBackend } from "./sqliteFtsTypes";
+
 export const SQLITE_FTS_STORAGE_KEY = "biblos_sqlite_fts";
 export const SQLITE_FTS_QUERY_PARAM = "sqlite-fts";
-
-export type SqliteFtsBackend = "disabled" | "opfs" | "idb-fallback";
 
 function readQueryFlag(): boolean {
   if (typeof window === "undefined") return false;

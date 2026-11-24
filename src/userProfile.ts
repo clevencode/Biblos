@@ -317,6 +317,10 @@ export async function wipeLocalUserData(): Promise<void> {
   try {
     const { clearOfflineBible } = await import("./bibleOffline");
     await clearOfflineBible();
+    const { invalidateSearchIndexInWorker } = await import(
+      "./bible/verseSearchClient"
+    );
+    invalidateSearchIndexInWorker("s21");
   } catch {
     /* IDB indisponible */
   }

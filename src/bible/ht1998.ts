@@ -37,14 +37,17 @@ let cachedRoot: Ht1998Root | null = null;
 let inflight: Promise<Ht1998Root> | null = null;
 let cachedBooks: YouVersionBook[] | null = null;
 
+/**
+ * Invalida caches HT98 no índice (RAM).
+ * Não importa verseSearchClient aqui — workers partilham este módulo via
+ * verseIndexCache; um import do client cria ciclo Worker A ↔ Worker B no Vite.
+ * O caller na main thread deve também chamar invalidateSearchIndexInWorker("ht98").
+ */
 export function invalidateHt1998CatalogCache() {
   cachedRoot = null;
   cachedBooks = null;
   void import("./verseIndexCache").then(({ invalidateVerseIndex }) => {
     invalidateVerseIndex("ht98");
-  });
-  void import("./verseSearchClient").then(({ invalidateSearchIndexInWorker }) => {
-    invalidateSearchIndexInWorker("ht98");
   });
 }
 

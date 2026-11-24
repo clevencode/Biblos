@@ -162,12 +162,15 @@ export async function resolveS21Book(usfm: string): Promise<S21BookJson | null> 
   }
 }
 
+/**
+ * Invalida índice S21 em RAM.
+ * Não importa verseSearchClient — verseIndexCache é partilhado pelos workers;
+ * puxar o client cria ciclo Worker↔Worker no Vite. Caller na main deve chamar
+ * invalidateSearchIndexInWorker("s21").
+ */
 export async function clearOfflineBible(): Promise<void> {
   const { invalidateVerseIndex } = await import("./bible/verseIndexCache");
   invalidateVerseIndex("s21");
-  void import("./bible/verseSearchClient").then(({ invalidateSearchIndexInWorker }) => {
-    invalidateSearchIndexInWorker("s21");
-  });
 }
 
 export async function getChapterLayout(

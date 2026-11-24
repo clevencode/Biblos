@@ -2345,7 +2345,6 @@ export function BibleReaderView({
         );
         if (!ok) return;
         await clearHt1998Offline();
-        invalidateHt1998CatalogCache();
         setHtOfflineReady(false);
         setOfflineProgress(null);
         clearVersionDownloadProgress("ht98");
@@ -2366,6 +2365,11 @@ export function BibleReaderView({
           setVersionDownloadProgress("ht98", { done: p.done, total: p.total });
         }, ac.signal);
         invalidateHt1998CatalogCache();
+        void import("../bible/verseSearchClient").then(
+          ({ invalidateSearchIndexInWorker }) => {
+            invalidateSearchIndexInWorker("ht98");
+          },
+        );
         setHtOfflineReady(true);
         setOfflineProgress(null);
         clearVersionDownloadProgress("ht98");
@@ -2390,6 +2394,11 @@ export function BibleReaderView({
       );
       if (!ok) return;
       await clearOfflineBible();
+      void import("../bible/verseSearchClient").then(
+        ({ invalidateSearchIndexInWorker }) => {
+          invalidateSearchIndexInWorker("s21");
+        },
+      );
       setOfflineReady(false);
       setOfflineProgress(null);
       clearVersionDownloadProgress("s21");

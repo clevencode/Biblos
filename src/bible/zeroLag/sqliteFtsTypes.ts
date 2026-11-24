@@ -1,7 +1,9 @@
 import type { BibleTextVersionId } from "../bibleVersions";
 import type { MatchMode, SearchFacets, SearchScope } from "../verseSearchEngine";
 import type { BibleSearchHit } from "../../youversion/client";
-import type { SqliteFtsBackend } from "./sqliteFtsGate";
+
+/** Backend efectivo (sem importar o gate — evita ciclo worker ↔ client no Vite). */
+export type SqliteFtsBackend = "disabled" | "opfs" | "idb-fallback";
 
 export type SqliteFtsInbound =
   | {
