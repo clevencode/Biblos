@@ -164,6 +164,11 @@ import {
 import { resolveTheme, type ResolvedTheme } from "../theme";
 import { useReaderChromeStore } from "../store/useReaderChromeStore";
 import { useVerseMarksStore } from "../store/useVerseMarksStore";
+import { useNavigationFlow } from "../hooks/useNavigationFlow";
+import {
+  bookCodeToId,
+  encodeUsfmId,
+} from "../bible/navigation-flow";
 import type { Flashcard } from "../types";
 const STORAGE_KEY = BIBLE_READER_PREFS_KEY;
 /** Panneau verset : pas de Flashcard tant que l’onglet Cartes est désactivé. */
@@ -1644,9 +1649,21 @@ export function BibleReaderView({
     }
   }
 
+  const { engine: navEngine } = useNavigationFlow({
+    enabled: active,
+    books,
+    version: textVersion,
+    bookId,
+    chapterId,
+    verse: highlightVerse,
+  });
+  const navEngineRef = useRef(navEngine);
+  navEngineRef.current = navEngine;
+
   function goAdjacent(delta: -1 | 1) {
     const next = adjacentChapter(books, bookId, chapterId, delta);
     if (!next) return;
+    void navEngineRef.current?.stepChapter(delta > 0 ? "next" : "prev");
     void loadChapter(next.bookId, next.chapterId, null);
   }
 
@@ -2248,6 +2265,14 @@ export function BibleReaderView({
         verse: loc.verse ?? null,
       },
     });
+
+    const destBookNum = bookCodeToId(loc.bookId);
+    if (destBookNum != null) {
+      void navEngineRef.current?.jumpTo(
+        encodeUsfmId(destBookNum, loc.chapter, loc.verse ?? 1),
+        { pushHistory: true, label: usfm },
+      );
+    }
 
     preservePassageNavRef.current = true;
     navigateToParsedPassage(loc);
@@ -4133,6 +4158,32 @@ export function BibleReaderView({
         const delta = top - lastScrollTop.current;
         lastScrollTop.current = top;
         syncHeadCompact(top);
+
+        // Anchor Lock — topVisibleUsfmId para o Navigation Flow Engine.
+        const engine = navEngineRef.current;
+        if (engine) {
+          const rootRect = root.getBoundingClientRect();
+          const nodes = root.querySelectorAll<HTMLElement>("[data-verse]");
+          let topVerse: number | null = null;
+          for (const node of nodes) {
+            const rect = node.getBoundingClientRect();
+            if (rect.bottom > rootRect.top + 8) {
+              const n = Number(node.dataset.verse);
+              if (Number.isFinite(n) && n > 0) {
+                topVerse = n;
+                break;
+              }
+            }
+          }
+          if (topVerse != null) {
+            const bid = bookCodeToId(bookId);
+            if (bid != null) {
+              engine.updateScrollAnchor(
+                encodeUsfmId(bid, Number(chapterId) || 1, topVerse),
+              );
+            }
+          }
+        }
 
         // 1.º scroll do utilizador: desliga o texto opaco.
         if (
