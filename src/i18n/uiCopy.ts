@@ -183,6 +183,17 @@ export type UiCopyKey =
   | "bible.fontSmaller"
   | "bible.fontLarger"
   | "bible.text"
+  | "bible.fontChoose"
+  | "bible.font.literata.label"
+  | "bible.font.literata.desc"
+  | "bible.font.spectral.label"
+  | "bible.font.spectral.desc"
+  | "bible.font.crimson.label"
+  | "bible.font.crimson.desc"
+  | "bible.font.fraunces.label"
+  | "bible.font.fraunces.desc"
+  | "bible.font.playfair.label"
+  | "bible.font.playfair.desc"
   | "bible.planProgress"
   | "bible.planPrev"
   | "bible.planNext"
@@ -492,6 +503,17 @@ const FR: Dict = {
   "bible.fontSmaller": "Réduire la taille du texte",
   "bible.fontLarger": "Augmenter la taille du texte",
   "bible.text": "Texte",
+  "bible.fontChoose": "Choisir votre police",
+  "bible.font.literata.label": "Literata",
+  "bible.font.literata.desc": "Lecture numérique",
+  "bible.font.spectral.label": "Spectral",
+  "bible.font.spectral.desc": "Sophistiquée",
+  "bible.font.crimson.label": "Crimson",
+  "bible.font.crimson.desc": "Classique",
+  "bible.font.fraunces.label": "Fraunces",
+  "bible.font.fraunces.desc": "Accueillante",
+  "bible.font.playfair.label": "Playfair",
+  "bible.font.playfair.desc": "Éditoriale",
   "bible.planProgress": "Progression du plan",
   "bible.planPrev": "Passage précédent du plan",
   "bible.planNext": "Passage suivant du plan",
@@ -811,6 +833,17 @@ const HT: Dict = {
   "bible.fontSmaller": "Redwi gwosè tèks la",
   "bible.fontLarger": "Ogmante gwosè tèks la",
   "bible.text": "Tèks",
+  "bible.fontChoose": "Chwazi polis ou",
+  "bible.font.literata.label": "Literata",
+  "bible.font.literata.desc": "Lekti dijital",
+  "bible.font.spectral.label": "Spectral",
+  "bible.font.spectral.desc": "Sofistike",
+  "bible.font.crimson.label": "Crimson",
+  "bible.font.crimson.desc": "Klasik",
+  "bible.font.fraunces.label": "Fraunces",
+  "bible.font.fraunces.desc": "Akèyisan",
+  "bible.font.playfair.label": "Playfair",
+  "bible.font.playfair.desc": "Editoryal",
   "bible.planProgress": "Pwogrè plan an",
   "bible.planPrev": "Pasaj anvan nan plan an",
   "bible.planNext": "Pasaj apre nan plan an",

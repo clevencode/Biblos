@@ -68,15 +68,15 @@
   --scroll-thumb-hover: color-mix(in srgb, var(--ink) 28%, transparent);
 
   /*
-   * Tipografia (OFL, Google Fonts via Fontsource)
+   * Tipografia (OFL via Fontsource)
    * UI → Outfit Variable — traços arredondados, par com coolicons line/round
-   * Leitura / Bible → Inter Variable — única família de leitura
+   * Leitura / Bible → --font-bible (Literata…Playfair; override no leitor)
    * Código → JetBrains Mono Variable
    */
   /* Fallbacks com métricas próximas — reduz FOUT/CLS tipográfico no cold start. */
   --font-ui: "Outfit Variable", "Outfit", "Segoe UI", system-ui, sans-serif;
   --font-read: "Inter Variable", "Inter", "Segoe UI", system-ui, sans-serif;
-  --font-bible: "Inter Variable", "Inter", "Segoe UI", system-ui, sans-serif;
+  --font-bible: "Literata Variable", Literata, Georgia, serif;
   --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
 
   /* Leitura longa: regular, entrelinha generosa */
@@ -11996,6 +11996,7 @@ html[data-theme="dark"] .top-sheet-backdrop {
 
 .bible-yv-tools-popover.is-open > .bible-yv-tools-item,
 .bible-yv-tools-popover.is-open > .bible-yv-tools-font,
+.bible-yv-tools-popover.is-open > .bible-yv-tools-typeface,
 .bible-yv-tools-popover.is-open > .bible-yv-tools-version {
   animation: tools-menu-item-in var(--mode-tabs-open-ms, 180ms)
     var(--mode-tabs-open-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
@@ -12439,6 +12440,7 @@ button.bible-yv-passage-chip.hdr-trigger.is-pill.is-open:hover:not(:disabled) {
   .top-sheet-backdrop,
   .bible-yv-tools-popover.is-open > .bible-yv-tools-item,
   .bible-yv-tools-popover.is-open > .bible-yv-tools-font,
+  .bible-yv-tools-popover.is-open > .bible-yv-tools-typeface,
   .bible-yv-tools-popover.is-open > .bible-yv-tools-version,
   .bible-yv-tools-item:active {
     transition: none !important;
@@ -16378,6 +16380,103 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
 .bible-yv-tools-font-label {
   color: var(--yv-muted);
   font-size: 0.82rem;
+}
+
+.bible-yv-tools-typeface {
+  display: grid;
+  gap: 8px;
+  margin-top: 4px;
+  padding: 4px 4px 6px 8px;
+}
+
+.bible-yv-tools-typeface-label {
+  color: var(--yv-muted);
+  font-size: 0.82rem;
+}
+
+.bible-yv-typeface-strip {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  padding: 2px 0 4px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  contain: layout style;
+  content-visibility: auto;
+}
+
+.bible-yv-typeface-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.bible-yv-typeface-chip {
+  flex: 0 0 auto;
+  display: grid;
+  gap: 2px;
+  min-width: 6.5rem;
+  max-width: 8.5rem;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--yv-text) 16%, transparent);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--yv-text);
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  contain: layout style;
+  font-family: Georgia, serif;
+}
+
+.bible-yv-typeface-chip[data-font="literata"] {
+  font-family: "Literata Variable", Literata, Georgia, serif;
+}
+
+.bible-yv-typeface-chip[data-font="spectral"] {
+  font-family: Spectral, Georgia, serif;
+}
+
+.bible-yv-typeface-chip[data-font="crimson"] {
+  font-family: "Crimson Text", Georgia, serif;
+}
+
+.bible-yv-typeface-chip[data-font="fraunces"] {
+  font-family: "Fraunces Variable", Fraunces, Georgia, serif;
+}
+
+.bible-yv-typeface-chip[data-font="playfair"] {
+  font-family: "Playfair Display Variable", "Playfair Display", Georgia, serif;
+}
+
+.bible-yv-typeface-chip:hover {
+  background: color-mix(in srgb, var(--yv-text) 5%, transparent);
+}
+
+.bible-yv-typeface-chip.is-active {
+  border-color: var(--yv-text);
+  background: var(--yv-bg, var(--bg));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--yv-text) 12%, transparent);
+}
+
+.bible-yv-typeface-chip-name {
+  font-size: 0.94rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+}
+
+.bible-yv-typeface-chip-desc {
+  font-size: 0.68rem;
+  font-weight: 500;
+  opacity: 0.68;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .bible-yv-read-surface > .bible-yv-error-bar {

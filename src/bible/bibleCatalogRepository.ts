@@ -23,6 +23,8 @@ export type BibleReadingPrefs = {
   bookId?: string;
   chapterId?: string;
   fontSize?: number;
+  /** Família do texto bíblico (`typography/bibleFonts`). */
+  bibleFont?: string;
   textVersion?: "s21" | "ht98";
 };
 

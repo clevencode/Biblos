@@ -1,5 +1,6 @@
 import {
   memo,
+  startTransition,
   useCallback,
   useEffect,
   useId,
@@ -149,6 +150,14 @@ import {
   writeReadingPrefs,
   resolveBookDisplay,
 } from "../bible/bibleCatalogRepository";
+import {
+  bibleFontOption,
+  ensureBibleFontLoaded,
+  parseBibleFontId,
+  preloadBibleFonts,
+  type BibleFontId,
+} from "../typography/bibleFonts";
+import { BibleTypefaceStrip } from "./BibleTypefaceStrip";
 import { useBibleCatalog } from "../hooks/useBibleCatalog";
 import { useLocalBundledBible } from "../bibleEngine";
 import {
@@ -467,6 +476,7 @@ type ReaderPrefs = {
   bookId?: string;
   chapterId?: string;
   fontSize?: number;
+  bibleFont?: string;
   textVersion?: BibleTextVersionId;
 };
 
@@ -760,6 +770,17 @@ export function BibleReaderView({
     const n = Number(prefs.fontSize);
     return Number.isFinite(n) ? clampFontSize(n) : FONT_DEFAULT;
   });
+  const [bibleFont, setBibleFont] = useState<BibleFontId>(() =>
+    parseBibleFontId(prefs.bibleFont),
+  );
+  const bibleFontMeta = bibleFontOption(bibleFont);
+  const selectBibleFont = useCallback((id: BibleFontId) => {
+    setBibleFont(id);
+  }, []);
+
+  useEffect(() => {
+    void ensureBibleFontLoaded(bibleFont);
+  }, [bibleFont]);
   const [narrowChrome, setNarrowChrome] = useState(false);
   const [cardMsg, setCardMsg] = useState<string | null>(null);
   const [cardColor, setCardColor] = useState(() => loadPreferredVerseColor());
@@ -921,6 +942,12 @@ export function BibleReaderView({
       "button.bible-yv-tools-menu-btn",
     ) as HTMLButtonElement | null;
     trigger?.focus({ preventScroll: true });
+  }, [toolsMenuOpen]);
+
+  /** Pré-aquece faces Aa em idle quando o menu abre. */
+  useEffect(() => {
+    if (!toolsMenuOpen) return;
+    preloadBibleFonts();
   }, [toolsMenuOpen]);
 
   const requestOpenPassagePicker = useCallback(() => {
@@ -1535,13 +1562,13 @@ export function BibleReaderView({
   }, [bible.id, setBible, textVersion]);
 
   useEffect(() => {
-    const base = { ...readPrefs(), fontSize, textVersion };
+    const base = { ...readPrefs(), fontSize, bibleFont, textVersion };
     if (isUsfmBookId(bookId)) {
       writePrefs({ ...base, bookId, chapterId });
       return;
     }
     writePrefs(base);
-  }, [bookId, chapterId, fontSize, textVersion]);
+  }, [bookId, chapterId, fontSize, bibleFont, textVersion]);
 
   useEffect(() => {
     hydrateChapterMarks(bookId, chapterId);
@@ -3125,6 +3152,7 @@ export function BibleReaderView({
       bookId,
       chapterId,
       fontSize,
+      bibleFont,
     });
     notifyUiLocale(next);
     if (next === "ht98") {
@@ -3700,7 +3728,11 @@ export function BibleReaderView({
             <button
               type="button"
               className="bible-yv-font-btn"
-              onClick={() => setFontSize((n) => clampFontSize(n - FONT_STEP))}
+              onClick={() =>
+                startTransition(() =>
+                  setFontSize((n) => clampFontSize(n - FONT_STEP)),
+                )
+              }
               disabled={fontSize <= FONT_MIN}
               aria-label={t("bible.fontSmaller")}
             >
@@ -3712,7 +3744,11 @@ export function BibleReaderView({
             <button
               type="button"
               className="bible-yv-font-btn"
-              onClick={() => setFontSize((n) => clampFontSize(n + FONT_STEP))}
+              onClick={() =>
+                startTransition(() =>
+                  setFontSize((n) => clampFontSize(n + FONT_STEP)),
+                )
+              }
               disabled={fontSize >= FONT_MAX}
               aria-label={t("bible.fontLarger")}
             >
@@ -3720,6 +3756,7 @@ export function BibleReaderView({
             </button>
           </div>
         </div>
+        <BibleTypefaceStrip selected={bibleFont} onSelect={selectBibleFont} />
       </div>
     );
   }
@@ -4340,7 +4377,14 @@ export function BibleReaderView({
     <section
       ref={readerRef}
       className={`bible-reader bible-reader--yv${hideChrome ? " is-chrome-hidden" : ""}${hasActiveModal ? " is-overlay-active" : ""}${audioPlaying ? " is-audio-playing" : ""}${showCreateCard ? " has-verse-actions" : ""}${showStudyReturnNav ? " has-study-return" : ""}${showPlanReturnNav ? " has-plan-return" : ""}${shareSheetOpen ? " is-share-open" : ""}${headCompact ? " is-head-compact" : ""}${surfaceChrome.rootClassPassageRollOpen ? " is-passage-roll-open" : ""}${topSheetOpen ? " is-top-sheet-open" : ""}${compactToolsMenu ? " is-compact-tools" : ""}${toolsMenuOpen ? " is-tools-menu-open" : ""}${menuJourneyOpen ? " is-menu-journey-open" : ""}${historyOpen ? " is-history-open" : ""}${coldOpenEmpty ? " is-cold-open-empty" : ""}`}
-      style={{ ["--bible-font-size" as string]: `${fontSize}px` }}
+      data-bible-font={bibleFont}
+      style={
+        {
+          ["--bible-font-size" as string]: `${fontSize}px`,
+          ["--font-bible" as string]: bibleFontMeta.cssFamily,
+          ["--type-bible-lh" as string]: String(bibleFontMeta.lineHeight),
+        } as CSSProperties
+      }
       aria-busy={coldOpenEmpty || undefined}
       aria-hidden={coldOpenEmpty || undefined}
       onKeyDown={(event) => {
