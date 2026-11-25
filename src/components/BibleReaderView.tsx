@@ -3682,14 +3682,11 @@ export function BibleReaderView({
     const nestedFromMenu = wordSearchOpen || historyOpen || marksOpen;
     const verseOptionsOpen = showCreateCard;
     const menuSheetOpen = toolsMenuOpen || nestedFromMenu || verseOptionsOpen;
-    /** Pill à esquerda; botão à direita (✕ menu/options, ← search/history/marks). */
-    const isMenuRoot = Boolean(toolsMenuOpen && !nestedFromMenu && !verseOptionsOpen);
-    const isOptionsRoot = Boolean(verseOptionsOpen);
-    const showRightClose = Boolean(menuSheetOpen && (isMenuRoot || isOptionsRoot));
-    const showRightBack = Boolean(
-      menuSheetOpen && (wordSearchOpen || historyOpen || marksOpen),
-    );
-    const showRightAction = showRightClose || showRightBack;
+    /**
+     * Navbar de retorno (menu / search / history / marks / options):
+     * pill à esquerda (voltar) · ✕ à direita (saída total).
+     */
+    const showRightClose = Boolean(menuSheetOpen);
     const sectionPillLabel = verseOptionsOpen
       ? t("verse.passageOptions")
       : marksOpen
@@ -3700,6 +3697,7 @@ export function BibleReaderView({
             ? t("word.short")
             : t("bible.menu");
 
+    /** Pill: retorno (submenu → menu; menu/options → fechar). */
     function handleSectionBack() {
       setShareSheetOpen(false);
       if (historyOpen || marksOpen) {
@@ -3719,6 +3717,7 @@ export function BibleReaderView({
       toggleOverlay("reader_settings");
     }
 
+    /** ✕: saída total da jornada (fecha tudo). */
     function handleSectionClose() {
       setShareSheetOpen(false);
       if (verseOptionsOpen) {
@@ -3737,78 +3736,57 @@ export function BibleReaderView({
       toggleOverlay("reader_settings");
     }
 
-    function handleSectionPillClick() {
-      setShareSheetOpen(false);
-      if (verseOptionsOpen) {
-        closeCreateCard();
-        return;
-      }
-      if (historyOpen || marksOpen) {
-        leaveHistoryOrMarks("back");
-        return;
-      }
-      if (wordSearchOpen) {
-        restoreHistoryFocusRef.current = false;
-        openOverlay({ type: "reader_settings" });
-        return;
-      }
-      restoreToolsFocusRef.current = true;
-      toggleOverlay("reader_settings");
-    }
-
-    const pill = (
+    const idleMenu = (
       <HeaderTriggerButton
-        open={menuSheetOpen}
-        shape={menuSheetOpen ? "pill" : "circle"}
+        open={false}
+        shape="circle"
         idleIcon="menu"
-        idleLabel={menuSheetOpen ? sectionPillLabel : undefined}
         exitIcon="close"
-        ariaLabel={
-          menuSheetOpen
-            ? `${t("common.close")} — ${sectionPillLabel}`
-            : t("bible.menu")
-        }
+        ariaLabel={t("bible.menu")}
         ariaHaspopup="menu"
-        className={`bible-yv-tools-menu-btn${menuSheetOpen ? " is-on is-section-pill" : ""}`}
-        onClick={menuSheetOpen ? handleSectionPillClick : handleSectionClose}
+        className="bible-yv-tools-menu-btn"
+        onClick={handleSectionClose}
       />
     );
 
+    /** Navbar de retorno: [← título] à esquerda · [✕] à direita. */
     const cluster = menuSheetOpen ? (
       <>
-        {pill}
+        <button
+          type="button"
+          className="bible-yv-section-return"
+          onClick={handleSectionBack}
+          aria-label={`${t("common.back")} — ${sectionPillLabel}`}
+        >
+          <YvIcon
+            name="chevron_left"
+            className="bible-yv-section-return-icon"
+          />
+          <span className="bible-yv-section-return-label">
+            {sectionPillLabel}
+          </span>
+        </button>
         <button
           type="button"
           className={`bible-yv-top-passage-arrow is-next is-pick-side${
-            showRightAction ? " is-shown" : " is-hidden-slot"
+            showRightClose ? " is-shown" : " is-hidden-slot"
           }`}
-          onClick={showRightBack ? handleSectionBack : handleSectionClose}
-          disabled={!showRightAction}
-          tabIndex={showRightAction ? undefined : -1}
-          aria-hidden={!showRightAction}
+          onClick={handleSectionClose}
+          disabled={!showRightClose}
+          tabIndex={showRightClose ? undefined : -1}
+          aria-hidden={!showRightClose}
           aria-label={
-            showRightAction
-              ? showRightBack
-                ? `${t("common.back")} — ${sectionPillLabel}`
-                : `${t("common.close")} — ${sectionPillLabel}`
+            showRightClose
+              ? `${t("common.close")} — ${sectionPillLabel}`
               : undefined
           }
-          title={
-            showRightAction
-              ? showRightBack
-                ? t("common.back")
-                : t("common.close")
-              : undefined
-          }
+          title={showRightClose ? t("common.close") : undefined}
         >
-          <YvIcon
-            name={showRightBack ? "chevron_left" : "close"}
-            className="bible-yv-top-passage-arrow-icon"
-          />
+          <YvIcon name="close" className="bible-yv-top-passage-arrow-icon" />
         </button>
       </>
     ) : (
-      pill
+      idleMenu
     );
 
     /* Float: sheet no FAB. Header: só trigger — sheet na top-sheet-layer. */
@@ -4462,8 +4440,14 @@ export function BibleReaderView({
                 className="bible-yv-pick-search-trigger-icon"
               />
             </button>
-          ) : planReading && !pickerOpen ? null : !pickerOpen &&
-            (!compactToolsMenu || isPassageBarPanelCompactTopbar()) ? (
+          ) : planReading &&
+            !pickerOpen &&
+            !menuJourneyOpen &&
+            !showCreateCard ? null : !pickerOpen &&
+            (menuJourneyOpen ||
+              showCreateCard ||
+              !compactToolsMenu ||
+              isPassageBarPanelCompactTopbar()) ? (
             renderTopToolsMenu("header")
           ) : null}
         </div>
@@ -4761,7 +4745,9 @@ export function BibleReaderView({
 
       {compactToolsMenu &&
       !isPassageBarPanelCompactTopbar() &&
-      !pickerOpen
+      !pickerOpen &&
+      !menuJourneyOpen &&
+      !showCreateCard
         ? renderTopToolsMenu("float")
         : null}
 

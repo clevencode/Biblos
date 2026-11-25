@@ -11234,8 +11234,8 @@ button.bible-yv-passage-chip.hdr-trigger.is-open {
 }
 
 /*
- * Menu / search / history / marks (section-pill): mesma pill do book picker.
- * Botão ✕/← à direita (.is-section-flow).
+ * Menu / search / history / marks: retorno = .bible-yv-section-return;
+ * legado section-pill mantido para Options se ainda montar hdr-trigger.
  */
 .hdr-trigger.is-pill.is-open.is-section-pill,
 .bible-reader--yv.is-top-sheet-open .hdr-trigger.is-pill.is-open.is-section-pill {
@@ -15332,55 +15332,125 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
 }
 
 /*
- * Menu / search / history / marks / options:
- * pill à esquerda, botão (✕/←) à direita — faixa full-width do topbar.
+ * Menu / search / history / marks / options — navbar de retorno:
+ * [← título] à esquerda | ✕ à direita — faixa full-width.
  */
 .bible-yv-tools-menu.is-section-flow {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  column-gap: 8px;
   width: 100%;
   max-width: none;
   height: var(--hdr-size, var(--mobile-touch, 44px));
   min-height: var(--hdr-size, var(--mobile-touch, 44px));
+  direction: ltr;
+}
+
+.bible-reader--yv.is-menu-journey-open .bible-yv-top,
+.bible-reader--yv.is-menu-journey-open .bible-yv-top.is-free,
+.bible-reader--yv.has-verse-actions .bible-yv-top.is-top-sheet-open,
+.bible-reader--yv.has-verse-actions .bible-yv-top {
+  justify-content: flex-start;
 }
 
 .bible-reader--yv.is-menu-journey-open .bible-yv-top-tools,
 .bible-reader--yv.has-verse-actions .bible-yv-top-tools {
   flex: 1 1 auto;
   width: 100%;
+  max-width: none;
   min-width: 0;
   margin-left: 0;
   margin-right: 0;
 }
 
-.bible-yv-tools-menu.is-section-flow .bible-yv-tools-menu-btn.is-section-pill {
-  flex: 0 1 auto;
-  min-width: min(9.5rem, 42vw);
-  max-width: min(11rem, 46vw);
-  padding-inline: 12px 10px;
-  background: var(--yv-chrome-surface, var(--surface)) !important;
-  border: 0 !important;
-  outline: none !important;
-  box-shadow: none !important;
-  color: var(--yv-text) !important;
+.bible-yv-section-return {
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: start;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: min(100%, 16rem);
+  height: var(--hdr-size, 44px);
+  min-height: var(--hdr-size, 44px);
+  margin: 0;
+  padding: 0 14px 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--yv-chrome-surface, var(--surface));
+  color: var(--yv-text, var(--text));
+  font-family: var(--font-ui);
+  font-size: 0.92rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.bible-yv-tools-menu.is-section-flow .bible-yv-top-passage-arrow.is-pick-side {
+.bible-yv-section-return:hover {
+  background: var(--yv-chrome-hover, color-mix(in srgb, var(--yv-text) 7%, var(--surface)));
+}
+
+.bible-yv-section-return:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  outline-offset: 2px;
+}
+
+.bible-yv-section-return-icon {
   flex: none;
-  margin-left: auto;
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+}
+
+.bible-yv-section-return-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ✕ saída total — canto direito. */
+.bible-yv-tools-menu.is-section-flow .bible-yv-top-passage-arrow.is-pick-side,
+.bible-yv-tools-menu.is-section-flow
+  .bible-yv-top-passage-arrow.is-pick-side.is-shown,
+.bible-reader--yv.is-top-sheet-open
+  .bible-yv-tools-menu.is-section-flow
+  .bible-yv-top-passage-arrow.is-pick-side.is-shown {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+  flex: none;
+  margin: 0;
   width: var(--hdr-size, 44px);
   min-width: var(--hdr-size, 44px);
   height: var(--hdr-size, 44px);
   min-height: var(--hdr-size, 44px);
+  border-radius: 999px;
+  background: var(--yv-chrome-surface, var(--surface)) !important;
+  border: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+  color: var(--yv-text, var(--text)) !important;
+}
+
+.bible-yv-tools-menu.is-section-flow
+  .bible-yv-top-passage-arrow.is-pick-side.is-shown:hover:not(:disabled),
+.bible-reader--yv.is-top-sheet-open
+  .bible-yv-tools-menu.is-section-flow
+  .bible-yv-top-passage-arrow.is-pick-side.is-shown:hover:not(:disabled) {
+  background: var(--yv-chrome-hover) !important;
+  color: var(--yv-text, var(--text)) !important;
 }
 
 .bible-yv-tools-menu.is-float-br.is-section-flow {
-  position: fixed;
-  display: flex;
-  width: auto;
-  max-width: min(100%, 22rem);
+  /* Jornada aberta usa a navbar no topbar — float não mostra retorno. */
+  display: none;
 }
 
 /* Mobile unificado : hamburger alinhado ao FAB play (canto inf. direito). */
@@ -16421,30 +16491,9 @@ html[data-theme="dark"] .bible-chapter-fab {
   grid-template-columns: minmax(0, 1fr);
 }
 
-/* Options: pill esquerda + ✕ direita — faixa full-width. */
-.bible-reader--yv.has-verse-actions .bible-yv-top.is-top-sheet-open,
-.bible-reader--yv.has-verse-actions .bible-yv-top {
-  justify-content: flex-start;
-}
-
+/* Options: herda grelha section-flow (pill esq. + ✕ dir. + fundo chrome). */
 .bible-reader--yv.has-verse-actions .bible-yv-tools-menu.is-section-flow {
-  display: flex;
-}
-
-.bible-reader--yv.has-verse-actions
-  .bible-yv-tools-menu.is-section-flow
-  .bible-yv-tools-menu-btn.is-section-pill {
-  background: var(--yv-chrome-surface, var(--surface)) !important;
-  border: 0 !important;
-  outline: none !important;
-  box-shadow: none !important;
-  color: var(--yv-text, var(--text)) !important;
-}
-
-.bible-reader--yv.has-verse-actions
-  .bible-yv-tools-menu.is-section-flow
-  .bible-yv-tools-menu-btn.is-section-pill:hover:not(:disabled) {
-  background: var(--yv-chrome-hover) !important;
+  display: grid;
 }
 
 /*
