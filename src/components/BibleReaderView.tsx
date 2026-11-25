@@ -103,6 +103,7 @@ import { useBibleOverlayController } from "../hooks/useBibleOverlayController";
 import { usePassageBarController } from "../hooks/usePassageBarController";
 import { CircularColorEditor } from "./CircularColorEditor";
 import { ACTIVITY_UI_ENABLED } from "../activityLog";
+import { formatPlanProgressBadge } from "../features/reading-plans/domain/formatPlanProgressBadge";
 import { PlanStageNotePanel } from "../features/reading-plans/presentation/PlanStageNotePanel";
 import {
   bindBibleAudioControls,
@@ -3246,30 +3247,21 @@ export function BibleReaderView({
     const actionLabel = t("plan.returnAction");
     const stageIdx = planReading.stageIndex ?? 1;
     const stageTotal = planReading.stageCount ?? 1;
-    const dayIdx =
-      planReading.stageDayIndex ?? planReading.stepIndex + 1;
-    const dayTotal =
-      planReading.stageDayCount ?? planReading.stepCount ?? 0;
+    const dayIdx = planReading.stageDayIndex ?? planReading.stepIndex + 1;
+    const dayTotal = planReading.stageDayCount ?? planReading.stepCount ?? 0;
     const stageTitle = planReading.stageName?.trim();
-    /* Negócio: etapa só se multi-etapa; dia se o passo tiver total. */
-    const dayProgress =
-      dayTotal > 0 ? `${dayIdx}/${dayTotal}` : null;
-    const stageProgress =
-      stageTotal > 1 ? `${stageIdx}/${stageTotal}` : null;
-    const progressInline = [stageProgress, dayProgress]
-      .filter(Boolean)
-      .join(" · ");
+    const progressInline = formatPlanProgressBadge(planReading);
     const fullLabel = [
       actionLabel,
       planLabel,
       stageTitle,
-      stageProgress
-        ? t("bible.planStage", { n: stageIdx }) +
-          (stageTotal > 1 ? `/${stageTotal}` : "")
+      stageTotal > 1
+        ? `${t("bible.planStage", { n: stageIdx })}/${stageTotal}`
         : null,
-      dayProgress
-        ? t("bible.planDay", { n: dayIdx }) +
-          (dayTotal > 1 ? `/${dayTotal}` : "")
+      dayTotal > 0
+        ? `${t("bible.planDay", { n: dayIdx })}${
+            dayTotal > 1 ? `/${dayTotal}` : ""
+          }`
         : null,
     ]
       .filter(Boolean)

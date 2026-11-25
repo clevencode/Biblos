@@ -1192,7 +1192,8 @@ html:has(.plan-workspace-return-nav) .note-shell .mode-tabs,
   color: var(--yv-text, var(--text));
 }
 
-.plan-workspace-return-nav::before {
+.plan-workspace-return-nav::before,
+.bible-plan-return-nav::before {
   content: "";
   position: absolute;
   left: 0;
@@ -1210,14 +1211,18 @@ html:has(.plan-workspace-return-nav) .note-shell .mode-tabs,
   );
 }
 
-.plan-workspace-return-nav-pill {
+/* Chrome partilhado: workspace return + leitor plan-return. */
+.plan-workspace-return-nav-pill,
+.bible-plan-return-nav-pill {
   position: relative;
   z-index: 1;
   display: flex;
   align-items: center;
   width: 100%;
+  max-width: none;
   height: var(--return-nav-pill-h);
   min-height: var(--return-nav-pill-h);
+  max-height: var(--return-nav-pill-h);
   margin: 0;
   padding: 4px;
   box-sizing: border-box;
@@ -1234,16 +1239,17 @@ html:has(.plan-workspace-return-nav) .note-shell .mode-tabs,
     0 8px 24px color-mix(in srgb, var(--ink) 14%, transparent);
 }
 
-.plan-workspace-return-nav-main {
+.bible-plan-return-nav-pill {
+  pointer-events: auto;
+}
+
+.plan-workspace-return-nav-main,
+.bible-plan-return-nav-main {
   flex: 1 1 auto;
   min-width: 0;
   width: 100%;
   height: 100%;
   margin: 0;
-  padding: 0 14px 0 12px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
   border: 0;
   border-radius: 999px;
   background: var(--mode-tabs-hub-bg, var(--ink, #0d1117));
@@ -1254,16 +1260,34 @@ html:has(.plan-workspace-return-nav) .note-shell .mode-tabs,
   -webkit-tap-highlight-color: transparent;
 }
 
-.plan-workspace-return-nav-main:hover {
+.plan-workspace-return-nav-main {
+  padding: 0 14px 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bible-plan-return-nav-main {
+  padding: 0 6px 0 10px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.plan-workspace-return-nav-main:hover,
+.bible-plan-return-nav-main:hover {
   filter: brightness(1.06);
 }
 
-.plan-workspace-return-nav-main:focus-visible {
+.plan-workspace-return-nav-main:focus-visible,
+.bible-plan-return-nav-main:focus-visible {
   outline: 2px solid var(--accent, #5b7cfa);
   outline-offset: 2px;
 }
 
-.plan-workspace-return-nav-copy {
+.plan-workspace-return-nav-copy,
+.bible-plan-return-nav-copy {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -1271,10 +1295,12 @@ html:has(.plan-workspace-return-nav) .note-shell .mode-tabs,
   gap: 2px;
   min-width: 0;
   flex: 1 1 auto;
+  width: 100%;
   text-align: left;
 }
 
-.plan-workspace-return-nav-verb {
+.plan-workspace-return-nav-verb,
+.bible-plan-return-nav-verb {
   flex: none;
   font-size: 0.62rem;
   font-weight: 650;
@@ -1284,23 +1310,53 @@ html:has(.plan-workspace-return-nav) .note-shell .mode-tabs,
   line-height: 1;
 }
 
-.plan-workspace-return-nav-ref {
+.plan-workspace-return-nav-ref,
+.bible-plan-return-nav-ref {
   min-width: 0;
   max-width: 100%;
+  width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  text-align: left;
   font-size: 0.94rem;
   font-weight: 700;
   letter-spacing: -0.015em;
   line-height: 1.15;
 }
 
-.plan-workspace-return-nav-icon {
+.plan-workspace-return-nav-icon,
+.bible-plan-return-nav-icon {
   width: 1.2rem;
   height: 1.2rem;
   flex: none;
   opacity: 0.92;
+}
+
+/* Badge etapa/dia: pill inline fit-content (`4/5 · 5/10`). */
+.bible-plan-return-nav-progress {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  min-width: 0;
+  max-width: min(42%, 9rem);
+  height: calc(var(--return-nav-pill-h) - 12px);
+  margin: 0;
+  padding: 0 10px;
+  box-sizing: border-box;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mode-tabs-hub-fg, #fff) 16%, transparent);
+  color: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .account-shell-panel {
@@ -9490,10 +9546,6 @@ html[data-theme="dark"] .home-pill.is-accent {
   padding: 0;
 }
 
-.panel-nota-content.plan-yv--workspace.has-plan-return {
-  padding: 0;
-}
-
 .plan-yv--workspace .plan-yv-main {
   flex: 1;
   min-height: 0;
@@ -12077,147 +12129,6 @@ html:has(.bible-plan-return-nav) .note-shell .mode-tabs,
   color: var(--yv-text, var(--text));
 }
 
-.bible-plan-return-nav::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  top: calc(-1 * var(--mode-tabs-mat-fade, 32px));
-  z-index: 0;
-  pointer-events: none;
-  background: linear-gradient(
-    to top,
-    var(--mode-tabs-mat-bg, var(--bible-nav-surface, var(--bg))) 0%,
-    var(--mode-tabs-mat-bg, var(--bible-nav-surface, var(--bg)))
-      calc(100% - var(--mode-tabs-mat-fade, 32px)),
-    transparent 100%
-  );
-}
-
-.bible-plan-return-nav-pill {
-  position: relative;
-  z-index: 1;
-  pointer-events: auto;
-  display: flex;
-  align-items: center;
-  width: 100%;
-  max-width: none;
-  height: var(--return-nav-pill-h);
-  min-height: var(--return-nav-pill-h);
-  max-height: var(--return-nav-pill-h);
-  margin: 0;
-  padding: 4px;
-  box-sizing: border-box;
-  border: 1px solid
-    var(
-      --mode-tabs-outline,
-      var(--yv-outline, color-mix(in srgb, var(--line) 70%, transparent))
-    );
-  border-radius: 999px;
-  background: var(--bible-nav-surface, var(--bg));
-  color: inherit;
-  box-shadow:
-    0 1px 0 color-mix(in srgb, var(--ink) 8%, transparent),
-    0 8px 24px color-mix(in srgb, var(--ink) 14%, transparent);
-}
-
-.bible-plan-return-nav-main {
-  flex: 1 1 auto;
-  min-width: 0;
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  padding: 0 6px 0 10px;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 8px;
-  border: 0;
-  border-radius: 999px;
-  background: var(--mode-tabs-hub-bg, var(--ink, #0d1117));
-  color: var(--mode-tabs-hub-fg, var(--paper, #fff));
-  font: inherit;
-  cursor: pointer;
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.bible-plan-return-nav-main:hover {
-  filter: brightness(1.06);
-}
-
-.bible-plan-return-nav-main:focus-visible {
-  outline: 2px solid var(--accent, #5b7cfa);
-  outline-offset: 2px;
-}
-
-.bible-plan-return-nav-copy {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 2px;
-  min-width: 0;
-  width: 100%;
-  text-align: left;
-}
-
-.bible-plan-return-nav-verb {
-  font-size: 0.62rem;
-  font-weight: 650;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  opacity: 0.68;
-  line-height: 1;
-}
-
-.bible-plan-return-nav-ref {
-  min-width: 0;
-  width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  text-align: left;
-  font-size: 0.94rem;
-  font-weight: 700;
-  letter-spacing: -0.015em;
-  line-height: 1.15;
-}
-
-/* Badge etapa/dia: pill inline fit-content (`4/5 · 5/10`). */
-.bible-plan-return-nav-progress {
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: auto;
-  min-width: 0;
-  max-width: min(42%, 9rem);
-  height: calc(var(--return-nav-pill-h) - 12px);
-  margin: 0;
-  padding: 0 10px;
-  box-sizing: border-box;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--mode-tabs-hub-fg, #fff) 16%, transparent);
-  color: inherit;
-  font-size: 0.72rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
-  line-height: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.bible-plan-return-nav-icon {
-  width: 1.2rem;
-  height: 1.2rem;
-  flex: none;
-  opacity: 0.92;
-}
-
 /* Menu float (compact FAB) — única exceção card flutuante */
 .bible-yv-tools-menu.is-float-br .bible-yv-tools-popover.top-floating-sheet.is-float-anchor {
   position: absolute !important;
@@ -13532,11 +13443,9 @@ html[data-passage-bar-panel="test"] .bible-yv-pick-search-trigger.is-bare.is-on 
   max-width: 100%;
 }
 
+/* Activa: superfície chrome base + padding p/ Effacer; ícone search fixo. */
 .bible-yv-pick-top-search.is-trailing.is-active {
   padding: 0 10px 0 12px;
-  border-radius: 999px;
-  background: var(--yv-chrome-surface, var(--surface));
-  box-shadow: none;
 }
 
 .bible-yv-pick-top-search.is-trailing.is-active
@@ -13546,25 +13455,6 @@ html[data-passage-bar-panel="test"] .bible-yv-pick-search-trigger.is-bare.is-on 
   height: 20px;
   font-size: 20px;
   opacity: 0.92;
-}
-
-.bible-yv-top.is-pick-search-open .bible-yv-top-passage-arrow.is-pick-search-back {
-  flex: none;
-  background: transparent !important;
-  border: 0 !important;
-  box-shadow: none !important;
-  color: var(--yv-text, var(--text));
-}
-
-.bible-yv-top.is-pick-search-open
-  .bible-yv-top-passage-arrow.is-pick-search-back:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--yv-text) 7%, transparent) !important;
-}
-
-.bible-yv-top.is-pick-search-open
-  .bible-yv-top-passage-arrow.is-pick-search-back:focus-visible {
-  outline: 2px solid var(--accent, #5b7cfa);
-  outline-offset: 2px;
 }
 
 .bible-yv-top.is-pick-step-open .bible-yv-top-passage.is-pick-back-nav {
@@ -13580,7 +13470,10 @@ html[data-passage-bar-panel="test"] .bible-yv-pick-search-trigger.is-bare.is-on 
   max-width: min(100%, 18rem);
 }
 
-.bible-yv-top.is-pick-step-open .bible-yv-top-passage-arrow.is-pick-dismiss {
+/* Ghost chrome: dismiss picker (✕) e retorno da pesquisa (←). */
+.bible-yv-top.is-pick-step-open .bible-yv-top-passage-arrow.is-pick-dismiss,
+.bible-yv-top.is-pick-search-open .bible-yv-top-passage-arrow.is-pick-search-back {
+  flex: none;
   background: transparent !important;
   border: 0 !important;
   box-shadow: none !important;
@@ -13588,8 +13481,18 @@ html[data-passage-bar-panel="test"] .bible-yv-pick-search-trigger.is-bare.is-on 
 }
 
 .bible-yv-top.is-pick-step-open
-  .bible-yv-top-passage-arrow.is-pick-dismiss:hover:not(:disabled) {
+  .bible-yv-top-passage-arrow.is-pick-dismiss:hover:not(:disabled),
+.bible-yv-top.is-pick-search-open
+  .bible-yv-top-passage-arrow.is-pick-search-back:hover:not(:disabled) {
   background: color-mix(in srgb, var(--yv-text) 7%, transparent) !important;
+}
+
+.bible-yv-top.is-pick-step-open
+  .bible-yv-top-passage-arrow.is-pick-dismiss:focus-visible,
+.bible-yv-top.is-pick-search-open
+  .bible-yv-top-passage-arrow.is-pick-search-back:focus-visible {
+  outline: 2px solid var(--accent, #5b7cfa);
+  outline-offset: 2px;
 }
 
 .bible-yv-pick-top-search {
