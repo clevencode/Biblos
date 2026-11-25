@@ -2,7 +2,7 @@ import type { PassageLoadErrorKind } from "../passageLoadError";
 import { PASSAGE_LOADING_COPY } from "./loadingConstants";
 import type { PassageViewState } from "./types";
 
-/** Apresentação derivada — barra do topbar + aria-busy (sem skeleton de texto). */
+/** Apresentação derivada — barra do topbar só em reload/swap (não no cold open). */
 export type PassagePresentation = {
   inFlight: boolean;
   isOpening: boolean;

@@ -10845,6 +10845,34 @@ ul.plan-yv-day-note-ref {
   padding: 0 0 12px;
 }
 
+/*
+ * Cold open vazio: leitor + shell tabs invisíveis até haver texto.
+ * Só o fundo do painel — sem chrome de entrada.
+ */
+.bible-reader--yv.is-cold-open-empty {
+  pointer-events: none;
+}
+
+.bible-reader--yv.is-cold-open-empty .bible-yv-top,
+.bible-reader--yv.is-cold-open-empty .bible-yv-dock,
+.bible-reader--yv.is-cold-open-empty .bible-yv-read-surface,
+.bible-reader--yv.is-cold-open-empty .bible-yv-tools-menu,
+.bible-reader--yv.is-cold-open-empty .top-sheet-layer,
+.bible-reader--yv.is-cold-open-empty .top-sheet-backdrop,
+.bible-reader--yv.is-cold-open-empty .bible-study-return-nav,
+.bible-reader--yv.is-cold-open-empty .bible-plan-return-nav {
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.app.is-bible-mode:has(.bible-reader--yv.is-cold-open-empty) .mode-tabs,
+.app.is-bible-mode:has(.bible-reader--yv.is-cold-open-empty) .mode-tabs-stage {
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
 .bible-reader--yv {
   /*
    * Ladder: L0 canvas → L1 chrome → L2 overlay → L3 inverse → L4 mark.
@@ -16087,8 +16115,27 @@ html[data-theme="dark"] .bible-chapter-fab {
   }
 }
 
+/* Test entrada: esvanecimento gradual no 1.º paint do capítulo. */
+.bible-reader--yv .bible-passage.is-entry-fade .bible-passage-head,
+.bible-reader--yv .bible-passage.is-entry-fade .bible-text,
+.bible-reader--yv .bible-verses.is-entry-fade {
+  animation: bible-entry-fade-in 520ms ease-out both;
+}
+
+@keyframes bible-entry-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .bible-reader--yv .bible-verses.is-chapter-fade {
+  .bible-reader--yv .bible-verses.is-chapter-fade,
+  .bible-reader--yv .bible-passage.is-entry-fade .bible-passage-head,
+  .bible-reader--yv .bible-passage.is-entry-fade .bible-text,
+  .bible-reader--yv .bible-verses.is-entry-fade {
     animation: none;
   }
   .bible-chapter-fab {
@@ -16105,35 +16152,6 @@ html[data-theme="dark"] .bible-chapter-fab {
 .bible-reader--yv .bible-verses {
   display: grid;
   gap: 0.2em;
-}
-
-/* Cold open sem versos: mesma coluna dos versos + altura — evita encolhimento. */
-.bible-reader--yv .bible-passage.is-waiting {
-  flex: 1 1 auto;
-  align-self: stretch;
-  width: 100%;
-  max-width: 40rem;
-  min-width: 0;
-  min-height: min(70dvh, 28rem);
-  box-sizing: border-box;
-}
-
-.bible-reader--yv .bible-passage-waiting {
-  display: block;
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-  margin: 0;
-  padding: 6px 10px; /* igual a .bible-verse */
-  font-family: var(--font-bible);
-  font-size: var(--bible-font-size, var(--type-body-size));
-  font-weight: var(--type-bible-weight);
-  line-height: var(--type-bible-lh);
-  letter-spacing: var(--type-bible-tracking);
-  text-align: left;
-  color: var(--yv-muted, var(--muted));
-  user-select: none;
-  pointer-events: none;
 }
 
 @keyframes bible-verse-select-in {

@@ -764,6 +764,9 @@ export function BibleReaderView({
   const [chromeHidden, setChromeHidden] = useState(false);
   /** Fade do texto ao trocar de capítulo. */
   const [passageFadeIn, setPassageFadeIn] = useState(false);
+  /** Test: entrada cold open — esvanecimento gradual do passage. */
+  const [entryFadeIn, setEntryFadeIn] = useState(false);
+  const entryFadePlayedRef = useRef(false);
   const [audioByUsfm, setAudioByUsfm] = useState<Record<string, BibleAudioEpisode>>({});
   const [audioPodcast, setAudioPodcast] = useState("Bible | Podcast.s21");
   const [audioPlaying, setAudioPlaying] = useState(false);
@@ -1584,6 +1587,22 @@ export function BibleReaderView({
     chapterId,
     passageViewState.status,
     passage?.id,
+    passage?.verses?.length,
+    passage?.content,
+  ]);
+
+  /* Test entrada: 1.º texto visível → fade gradual (não o chapter-fade curto). */
+  useEffect(() => {
+    if (!active || entryFadePlayedRef.current) return;
+    if (presentation.isOpening) return;
+    if (!passage?.verses?.length && !passage?.content) return;
+    entryFadePlayedRef.current = true;
+    setEntryFadeIn(true);
+    const t = window.setTimeout(() => setEntryFadeIn(false), 560);
+    return () => window.clearTimeout(t);
+  }, [
+    active,
+    presentation.isOpening,
     passage?.verses?.length,
     passage?.content,
   ]);
@@ -4283,12 +4302,21 @@ export function BibleReaderView({
     marksOpen ||
     toolsMenuOpen ||
     showCreateCard;
+  /** Cold open: ecrã vazio — sem chrome/passage até haver texto. */
+  const coldOpenEmpty =
+    presentation.isOpening &&
+    !passage?.verses?.length &&
+    !passage?.content &&
+    !showOfflineChapterGateUi &&
+    !passageLoadError;
 
   return (
     <section
       ref={readerRef}
-      className={`bible-reader bible-reader--yv${hideChrome ? " is-chrome-hidden" : ""}${hasActiveModal ? " is-overlay-active" : ""}${audioPlaying ? " is-audio-playing" : ""}${showCreateCard ? " has-verse-actions" : ""}${showStudyReturnNav ? " has-study-return" : ""}${showPlanReturnNav ? " has-plan-return" : ""}${shareSheetOpen ? " is-share-open" : ""}${headCompact ? " is-head-compact" : ""}${surfaceChrome.rootClassPassageRollOpen ? " is-passage-roll-open" : ""}${topSheetOpen ? " is-top-sheet-open" : ""}${compactToolsMenu ? " is-compact-tools" : ""}${toolsMenuOpen ? " is-tools-menu-open" : ""}${menuJourneyOpen ? " is-menu-journey-open" : ""}${historyOpen ? " is-history-open" : ""}`}
+      className={`bible-reader bible-reader--yv${hideChrome ? " is-chrome-hidden" : ""}${hasActiveModal ? " is-overlay-active" : ""}${audioPlaying ? " is-audio-playing" : ""}${showCreateCard ? " has-verse-actions" : ""}${showStudyReturnNav ? " has-study-return" : ""}${showPlanReturnNav ? " has-plan-return" : ""}${shareSheetOpen ? " is-share-open" : ""}${headCompact ? " is-head-compact" : ""}${surfaceChrome.rootClassPassageRollOpen ? " is-passage-roll-open" : ""}${topSheetOpen ? " is-top-sheet-open" : ""}${compactToolsMenu ? " is-compact-tools" : ""}${toolsMenuOpen ? " is-tools-menu-open" : ""}${menuJourneyOpen ? " is-menu-journey-open" : ""}${historyOpen ? " is-history-open" : ""}${coldOpenEmpty ? " is-cold-open-empty" : ""}`}
       style={{ ["--bible-font-size" as string]: `${fontSize}px` }}
+      aria-busy={coldOpenEmpty || undefined}
+      aria-hidden={coldOpenEmpty || undefined}
       onKeyDown={(event) => {
         /* Escape deve fechar overlays mesmo com focus no input (padrão dialog). */
         if (
@@ -4388,10 +4416,14 @@ export function BibleReaderView({
     >
       <header
         className={`bible-yv-top is-free${planReading ? " is-plan-reading" : ""}${topSheetOpen ? " is-top-sheet-open" : ""}${surfaceChrome.rootClassPassageRollOpen ? " is-passage-roll-open" : ""}${catalogOfflineHint ? " is-catalog-offline" : ""}${compactToolsMenu ? " is-compact-tools" : ""}${
-          presentation.inFlight ? " is-loading" : ""
+          presentation.inFlight && !presentation.isOpening ? " is-loading" : ""
         }`}
         aria-label={t("bible.nav")}
-        aria-busy={presentation.inFlight || undefined}
+        aria-busy={
+          presentation.inFlight && !presentation.isOpening
+            ? true
+            : undefined
+        }
       >
         {!menuJourneyOpen && !showCreateCard ? (
           discoverySplitSearch ? (
@@ -4451,7 +4483,7 @@ export function BibleReaderView({
             renderTopToolsMenu("header")
           ) : null}
         </div>
-        {presentation.inFlight ? (
+        {presentation.inFlight && !presentation.isOpening ? (
           <div
             className="bible-yv-top-loading-bar"
             role="progressbar"
@@ -4644,13 +4676,7 @@ export function BibleReaderView({
 
         <article
         ref={passageScrollRef}
-        className={`bible-passage${
-          (presentation.inFlight || presentation.isOpening) &&
-          !passage?.verses?.length &&
-          !passage?.content
-            ? " is-waiting"
-            : ""
-        }`}
+        className={`bible-passage${entryFadeIn ? " is-entry-fade" : ""}`}
         aria-busy={presentation.ariaBusy || undefined}
         aria-hidden={surfaceChrome.passageInputBlocked || undefined}
         inert={surfaceChrome.passageInputBlocked || undefined}
@@ -4685,7 +4711,8 @@ export function BibleReaderView({
           <div
             className={[
               "bible-verses",
-              passageFadeIn ? "is-chapter-fade" : "",
+              entryFadeIn ? "is-entry-fade" : "",
+              !entryFadeIn && passageFadeIn ? "is-chapter-fade" : "",
               selection?.length ? "is-dimming" : "",
               !selection?.length &&
               focusDimActive &&
@@ -4733,11 +4760,7 @@ export function BibleReaderView({
           </div>
         ) : passage?.content ? (
           <p className="bible-text">{passage.content}</p>
-        ) : presentation.inFlight || presentation.isOpening ? (
-          <p className="bible-passage-waiting" aria-live="polite">
-            {PASSAGE_LOADING_COPY.waitingPassage}
-          </p>
-        ) : !isUsfmBookId(bookId) ? (
+        ) : !presentation.inFlight && !isUsfmBookId(bookId) ? (
           <p className="bible-yv-muted">{PASSAGE_LOADING_COPY.emptyPassage}</p>
         ) : null}
       </article>
