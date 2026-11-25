@@ -1154,13 +1154,20 @@ html:has(.plan-workspace-return-nav) .note-shell .mode-tabs,
 }
 
 /*
- * Navbar retorno workspace → hub de planos
- * (mesmo contrato study-return / plan-return do leitor).
+ * Contrato único das barras inferiores (workspace / plan / history / study / busca).
+ * Altura = hub; tipografia e ícone fixos (sem shrink dinâmico).
  */
 .plan-workspace-return-nav,
 .bible-plan-return-nav,
-.bible-history-return-nav {
+.bible-history-return-nav,
+.bible-study-return-nav,
+.bible-yv-pick-book-search-bar {
   --return-nav-pill-h: var(--mode-tabs-hub-size, 50px);
+  --return-nav-icon: 1.25rem;
+  --return-nav-verb-size: 0.62rem;
+  --return-nav-ref-size: 0.94rem;
+  --return-nav-progress-h: 28px;
+  --return-nav-progress-size: 0.68rem;
   --return-nav-inset-inline-start: max(
     var(--mode-tabs-inset-x, 12px),
     env(safe-area-inset-left, 0px)
@@ -1242,7 +1249,8 @@ html:has(.plan-workspace-return-nav) .note-shell .mode-tabs,
     0 8px 24px color-mix(in srgb, var(--ink) 14%, transparent);
 }
 
-.bible-plan-return-nav-pill {
+.bible-plan-return-nav-pill,
+.bible-history-return-nav-pill {
   pointer-events: auto;
 }
 
@@ -1265,26 +1273,31 @@ html:has(.plan-workspace-return-nav) .note-shell .mode-tabs,
 }
 
 .plan-workspace-return-nav-main,
+.bible-plan-return-nav-main,
 .bible-history-return-nav-main {
-  padding: 0 14px 0 12px;
-  display: flex;
+  /* Contrato único: ícone · copy (verb+ref) · badge opcional. */
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) max-content;
   align-items: center;
-  gap: 8px;
+  column-gap: 8px;
+  width: 100%;
+  height: 100%;
+  padding: 0 8px 0 12px;
 }
 
-.bible-plan-return-nav-main {
-  padding: 0 14px 0 10px;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 8px;
+.bible-plan-return-nav-main:not(:has(.bible-plan-return-nav-progress)),
+.plan-workspace-return-nav-main,
+.bible-history-return-nav-main {
+  padding-right: 14px;
+  grid-template-columns: auto minmax(0, 1fr);
 }
 
 /* X só no topo — navbar de retorno sem dismiss. */
 .plan-workspace-return-nav-pill:not(:has(.plan-workspace-return-nav-dismiss)),
 .bible-plan-return-nav-pill:not(:has(.bible-plan-return-nav-dismiss)),
 .bible-history-return-nav-pill {
-  padding-right: 4px;
+  padding: 4px;
 }
 
 .plan-workspace-return-nav-main:hover,
@@ -1309,26 +1322,27 @@ html:has(.plan-workspace-return-nav) .note-shell .mode-tabs,
   justify-content: center;
   gap: 2px;
   min-width: 0;
-  flex: 1 1 auto;
   width: 100%;
   text-align: left;
 }
 
 .plan-workspace-return-nav-verb,
 .bible-plan-return-nav-verb,
-.bible-history-return-nav-verb {
+.bible-history-return-nav-verb,
+.bible-study-return-nav-verb {
   flex: none;
-  font-size: 0.62rem;
+  font-size: var(--return-nav-verb-size);
   font-weight: 650;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  opacity: 0.68;
+  opacity: 0.72;
   line-height: 1;
 }
 
 .plan-workspace-return-nav-ref,
 .bible-plan-return-nav-ref,
-.bible-history-return-nav-ref {
+.bible-history-return-nav-ref,
+.bible-study-return-nav-ref {
   min-width: 0;
   max-width: 100%;
   width: 100%;
@@ -1336,7 +1350,7 @@ html:has(.plan-workspace-return-nav) .note-shell .mode-tabs,
   text-overflow: ellipsis;
   white-space: nowrap;
   text-align: left;
-  font-size: 0.94rem;
+  font-size: var(--return-nav-ref-size);
   font-weight: 700;
   letter-spacing: -0.015em;
   line-height: 1.15;
@@ -1344,9 +1358,10 @@ html:has(.plan-workspace-return-nav) .note-shell .mode-tabs,
 
 .plan-workspace-return-nav-icon,
 .bible-plan-return-nav-icon,
-.bible-history-return-nav-icon {
-  width: 1.2rem;
-  height: 1.2rem;
+.bible-history-return-nav-icon,
+.bible-study-return-nav-icon {
+  width: var(--return-nav-icon);
+  height: var(--return-nav-icon);
   flex: none;
   opacity: 0.92;
 }
@@ -1365,8 +1380,8 @@ html:has(.plan-workspace-return-nav) .note-shell .mode-tabs,
   flex: none;
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
+  width: calc(var(--return-nav-pill-h) - 8px);
+  height: calc(var(--return-nav-pill-h) - 8px);
   margin: 0;
   padding: 0;
   border: 0;
@@ -1432,30 +1447,32 @@ html:has(.plan-workspace-return-nav) .note-shell .mode-tabs,
   height: 1.15rem;
 }
 
-/* Badge etapa/dia: pill inline fit-content (`4/5 · 5/10`). */
+/* Badge etapa/dia: pill compacta dentro do hub 50px (`4/5 · 5/10`). */
 .bible-plan-return-nav-progress {
-  flex: none;
+  flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: auto;
+  width: max-content;
   min-width: 0;
-  max-width: min(42%, 9rem);
-  height: calc(var(--return-nav-pill-h) - 12px);
+  max-width: none;
+  height: var(--return-nav-progress-h);
+  min-height: var(--return-nav-progress-h);
+  max-height: var(--return-nav-progress-h);
   margin: 0;
   padding: 0 10px;
   box-sizing: border-box;
   border-radius: 999px;
   background: color-mix(in srgb, var(--mode-tabs-hub-fg, #fff) 16%, transparent);
   color: inherit;
-  font-size: 0.72rem;
+  font-size: var(--return-nav-progress-size);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
+  letter-spacing: 0.01em;
   line-height: 1;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow: visible;
+  text-overflow: clip;
 }
 
 .account-shell-panel {
@@ -12087,17 +12104,20 @@ html:has(.bible-verse-actions.top-floating-sheet.is-open) .note-shell .mode-tabs
 html:has(.bible-study-return-nav) .note-shell .mode-tabs,
 .app:has(.bible-study-return-nav) .note-shell .mode-tabs,
 html:has(.bible-plan-return-nav) .note-shell .mode-tabs,
-.app:has(.bible-plan-return-nav) .note-shell .mode-tabs {
+.app:has(.bible-plan-return-nav) .note-shell .mode-tabs,
+html:has(.bible-history-return-nav) .note-shell .mode-tabs,
+.app:has(.bible-history-return-nav) .note-shell .mode-tabs {
   transform: translateY(calc(100% + 16px));
   opacity: 0;
   pointer-events: none;
 }
 
 /*
- * Navbar estudo LIFO — hub «Retour» + ref + ×
- * (mesmo contrato Options / mode-tabs: primário preenchido, dismiss fantasma).
+ * Barras fixas (study / plan / history) — mesmo chrome + insets do contrato hub.
  */
-.bible-study-return-nav {
+.bible-study-return-nav,
+.bible-plan-return-nav,
+.bible-history-return-nav {
   position: fixed;
   left: 0;
   right: 0;
@@ -12105,13 +12125,13 @@ html:has(.bible-plan-return-nav) .note-shell .mode-tabs,
   z-index: calc(var(--bible-z-top-sheet, 70) + 10);
   width: 100%;
   margin: 0;
-  padding: 0 var(--mode-tabs-inset-x, 12px)
-    calc(var(--mode-tabs-float-gap, 14px) + env(safe-area-inset-bottom, 0px));
+  padding: 0 var(--return-nav-inset-inline-end) var(--return-nav-inset-block-end)
+    var(--return-nav-inset-inline-start);
   border: 0;
   background: transparent;
   pointer-events: none;
   display: flex;
-  justify-content: center;
+  justify-content: stretch;
   align-items: flex-end;
   box-sizing: border-box;
   font-family: var(--font-ui);
@@ -12143,9 +12163,11 @@ html:has(.bible-plan-return-nav) .note-shell .mode-tabs,
   display: flex;
   align-items: center;
   gap: 2px;
-  width: min(100%, 22rem);
-  height: var(--mode-tabs-pill-h, 56px);
-  min-height: var(--mode-tabs-pill-h, 56px);
+  width: 100%;
+  max-width: none;
+  height: var(--return-nav-pill-h);
+  min-height: var(--return-nav-pill-h);
+  max-height: var(--return-nav-pill-h);
   margin: 0;
   padding: 4px;
   box-sizing: border-box;
@@ -12162,28 +12184,30 @@ html:has(.bible-plan-return-nav) .note-shell .mode-tabs,
     0 8px 24px color-mix(in srgb, var(--ink) 14%, transparent);
 }
 
-/* Primário = pop LIFO (hub ink/paper, como tab activa / Marquer). */
+/* Primário = pop LIFO (hub ink/paper); tipografia = contrato return-nav. */
 .bible-study-return-nav-main {
   flex: 1 1 auto;
   min-width: 0;
   height: 100%;
   margin: 0;
-  padding: 0 12px 0 14px;
-  display: flex;
+  padding: 0 8px 0 12px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) max-content;
   align-items: center;
-  justify-content: flex-start;
-  gap: 8px;
+  column-gap: 8px;
   border: 0;
   border-radius: 999px;
   background: var(--mode-tabs-hub-bg, var(--ink, #0d1117));
   color: var(--mode-tabs-hub-fg, var(--paper, #fff));
   font: inherit;
-  font-size: 0.92rem;
-  font-weight: 650;
-  letter-spacing: 0.01em;
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
+}
+
+.bible-study-return-nav-main:not(:has(.bible-study-return-nav-depth)) {
+  grid-template-columns: auto minmax(0, 1fr);
+  padding-right: 14px;
 }
 
 .bible-study-return-nav-main:hover {
@@ -12192,44 +12216,33 @@ html:has(.bible-plan-return-nav) .note-shell .mode-tabs,
 
 .bible-study-return-nav-main:focus-visible {
   outline: 2px solid var(--accent, #5b7cfa);
-  outline-offset: 1px;
+  outline-offset: 2px;
 }
 
 .bible-study-return-nav-copy {
   display: flex;
-  align-items: baseline;
-  gap: 0.35em;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2px;
   min-width: 0;
-  flex: 1 1 auto;
+  width: 100%;
   text-align: left;
-}
-
-.bible-study-return-nav-verb {
-  flex: none;
-  font-weight: 600;
-  opacity: 0.78;
-}
-
-.bible-study-return-nav-ref {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-weight: 700;
 }
 
 .bible-study-return-nav-depth {
   flex: none;
-  display: grid;
-  place-items: center;
-  min-width: 1.35rem;
-  height: 1.35rem;
-  margin-left: auto;
-  padding: 0 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--return-nav-progress-h);
+  height: var(--return-nav-progress-h);
+  margin: 0;
+  padding: 0 8px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--mode-tabs-hub-fg, #fff) 18%, transparent);
+  background: color-mix(in srgb, var(--mode-tabs-hub-fg, #fff) 16%, transparent);
   color: inherit;
-  font-size: 0.75rem;
+  font-size: var(--return-nav-progress-size);
   font-weight: 700;
   line-height: 1;
 }
@@ -12246,8 +12259,8 @@ html:has(.bible-plan-return-nav) .note-shell .mode-tabs,
   flex: none;
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
+  width: calc(var(--return-nav-pill-h) - 8px);
+  height: calc(var(--return-nav-pill-h) - 8px);
   margin: 0;
   padding: 0;
   border: 0;
@@ -12268,36 +12281,10 @@ html:has(.bible-plan-return-nav) .note-shell .mode-tabs,
   outline-offset: 1px;
 }
 
-.bible-study-return-nav-icon,
 .bible-study-return-nav-dismiss-icon {
   width: 1.15rem;
   height: 1.15rem;
   flex: none;
-}
-
-/*
- * Navbar retorno ao plan workspace — mesmo contrato visual que study-return.
- * onClick → returnFromPlanReading (tab Plan + workspace).
- */
-.bible-plan-return-nav {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: calc(var(--bible-z-top-sheet, 70) + 10);
-  width: 100%;
-  margin: 0;
-  padding: 0 var(--return-nav-inset-inline-end) var(--return-nav-inset-block-end)
-    var(--return-nav-inset-inline-start);
-  border: 0;
-  background: transparent;
-  pointer-events: none;
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
-  box-sizing: border-box;
-  font-family: var(--font-ui);
-  color: var(--yv-text, var(--text));
 }
 
 /* Menu float (compact FAB) — única exceção card flutuante */

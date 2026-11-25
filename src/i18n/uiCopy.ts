@@ -333,7 +333,7 @@ const FR: Dict = {
   "plan.continue": "Continuer",
   "plan.review": "Revoir",
   "plan.returnAction": "Retour",
-  "plan.returnToPlans": "Plans",
+  "plan.returnToPlans": "Plan",
   "plan.stages": "Étapes",
   "plan.days": "Jours",
   "plan.today": "Aujourd’hui",

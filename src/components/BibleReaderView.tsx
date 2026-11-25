@@ -806,7 +806,6 @@ export function BibleReaderView({
   /** Fin d’étape / fin de plan → retour plans après la note. */
   const [dayNoteReturnsToPlans, setDayNoteReturnsToPlans] = useState(false);
   const toolsMenuRef = useRef<HTMLDivElement | null>(null);
-  const planReturnTitleRef = useRef<HTMLSpanElement | null>(null);
   const verseSelectListRef = useRef<HTMLUListElement | null>(null);
   const verseSelectAnchoredRef = useRef(false);
   const restoreHistoryFocusRef = useRef(true);
@@ -2737,34 +2736,6 @@ export function BibleReaderView({
       !showPlanReturnNav &&
       !showCreateCard,
   );
-  const planReturnTitle = planReading?.planName?.trim() || "";
-
-  /** Nome completo numa linha: shrink-to-fit dentro da pill (altura hub fixa). */
-  useLayoutEffect(() => {
-    if (!showPlanReturnNav) return;
-    const el = planReturnTitleRef.current;
-    if (!el) return;
-
-    const fit = () => {
-      const maxPx = 15;
-      const minPx = 11;
-      let size = maxPx;
-      el.style.fontSize = `${size}px`;
-      while (size > minPx && el.scrollWidth > el.clientWidth + 0.5) {
-        size -= 0.5;
-        el.style.fontSize = `${size}px`;
-      }
-    };
-
-    fit();
-    const ro = new ResizeObserver(fit);
-    ro.observe(el);
-    /* Recalcula quando o badge etapa/dia entra ou sai do layout. */
-    const pill = el.closest(".bible-plan-return-nav-main");
-    if (pill) ro.observe(pill);
-    return () => ro.disconnect();
-  }, [showPlanReturnNav, planReturnTitle, planReading?.stageCount, planReading?.stageDayCount, planReading?.stepCount]);
-
   /** Ranges pré-calculados — evita min/max por verso no map. */
   const planVerseRangeFull = Boolean(
     planReading &&
@@ -3360,8 +3331,9 @@ export function BibleReaderView({
 
   function renderPlanReturnNav() {
     if (!planReading || !onBack) return null;
-    const planLabel = planReturnTitle || t("plan.returnToPlans");
     const actionLabel = t("plan.returnAction");
+    const destinationLabel = t("plan.returnToPlans");
+    const planName = planReading.planName?.trim() || destinationLabel;
     const stageIdx = planReading.stageIndex ?? 1;
     const stageTotal = planReading.stageCount ?? 1;
     const dayIdx = planReading.stageDayIndex ?? planReading.stepIndex + 1;
@@ -3369,8 +3341,8 @@ export function BibleReaderView({
     const stageTitle = planReading.stageName?.trim();
     const progressInline = formatPlanProgressBadge(planReading);
     const fullLabel = [
-      actionLabel,
-      planLabel,
+      `${actionLabel} - ${destinationLabel}`,
+      planName,
       stageTitle,
       stageTotal > 1
         ? `${t("bible.planStage", { n: stageIdx })}/${stageTotal}`
@@ -3398,12 +3370,7 @@ export function BibleReaderView({
             />
             <span className="bible-plan-return-nav-copy">
               <span className="bible-plan-return-nav-verb">{actionLabel}</span>
-              <span
-                ref={planReturnTitleRef}
-                className="bible-plan-return-nav-ref"
-              >
-                {planLabel}
-              </span>
+              <span className="bible-plan-return-nav-ref">{destinationLabel}</span>
             </span>
             {progressInline ? (
               <span className="bible-plan-return-nav-progress" aria-hidden>

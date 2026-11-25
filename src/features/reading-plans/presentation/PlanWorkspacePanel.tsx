@@ -450,7 +450,8 @@ export function PlanWorkspacePanel({
   }
 
   const returnAction = t("plan.returnAction");
-  const returnLabel = `${returnAction} · ${planTitle}`;
+  const returnDestination = t("plan.returnToPlans");
+  const returnLabel = `${returnAction} - ${returnDestination}`;
 
   return (
     <div className="today-view panel-nota-content plan-yv plan-yv--workspace has-plan-return">
@@ -723,7 +724,9 @@ export function PlanWorkspacePanel({
               <span className="plan-workspace-return-nav-verb">
                 {returnAction}
               </span>
-              <span className="plan-workspace-return-nav-ref">{planTitle}</span>
+              <span className="plan-workspace-return-nav-ref">
+                {returnDestination}
+              </span>
             </span>
           </button>
         </div>
