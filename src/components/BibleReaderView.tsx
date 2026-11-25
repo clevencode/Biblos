@@ -802,6 +802,7 @@ export function BibleReaderView({
   /** Fin d’étape / fin de plan → retour plans après la note. */
   const [dayNoteReturnsToPlans, setDayNoteReturnsToPlans] = useState(false);
   const toolsMenuRef = useRef<HTMLDivElement | null>(null);
+  const pickSearchInputRef = useRef<HTMLInputElement | null>(null);
   const planReturnTitleRef = useRef<HTMLSpanElement | null>(null);
   const verseSelectListRef = useRef<HTMLUListElement | null>(null);
   const verseSelectAnchoredRef = useRef(false);
@@ -1031,6 +1032,12 @@ export function BibleReaderView({
     passageStep,
     setPassageStep,
     passageRollOpen,
+    bookSearchQuery,
+    setBookSearchQuery,
+    pickSearchOpen,
+    togglePickSearch,
+    closePickSearch,
+    clearBookSearch,
     wordSearchQuery,
     setWordSearchQuery,
     wordSearchScopeFilter,
@@ -1123,7 +1130,6 @@ export function BibleReaderView({
   const booted = useRef(false);
   /** 1.ª alinhamento de scroll (ou gate offline) antes de libertar o splash. */
   const bootAlignReadyRef = useRef(false);
-  const [bootAlignReady, setBootAlignReady] = useState(false);
   const [bootAlignNudge, setBootAlignNudge] = useState(0);
   const skipNextChapterFadeRef = useRef(true);
 
@@ -1154,6 +1160,15 @@ export function BibleReaderView({
   const syncHeadCompact = (scrollTop: number) => {
     setHeadCompact((prev) => nextHeadCompact(prev, scrollTop));
   };
+
+  useEffect(() => {
+    if (!pickSearchOpen) return;
+    const id = window.requestAnimationFrame(() => {
+      pickSearchInputRef.current?.focus();
+      pickSearchInputRef.current?.select();
+    });
+    return () => window.cancelAnimationFrame(id);
+  }, [pickSearchOpen]);
 
   useEffect(() => {
     let cancelled = false;
@@ -2056,7 +2071,7 @@ export function BibleReaderView({
         bookId={bookId}
         bookTitle={bookTitle}
         chapterId={chapterId}
-        bookSearchQuery=""
+        bookSearchQuery={bookSearchQuery}
         books={books}
         discovery={passageDiscovery}
         discoveryBusy={passageDiscoveryBusy}
@@ -2432,7 +2447,6 @@ export function BibleReaderView({
       (Boolean(passageLoadError) && !hasPassageSurface)
     ) {
       bootAlignReadyRef.current = true;
-      setBootAlignReady(true);
     }
   }, [
     active,
@@ -3279,7 +3293,7 @@ export function BibleReaderView({
             <span
               className={`bible-plan-return-nav-progress${
                 hasProgress ? "" : " is-empty"
-              }${stageProgress && dayProgress ? " is-stacked" : ""}`}
+              }${stageProgress && dayProgress ? " is-inline" : ""}`}
               aria-hidden
             >
               {stageProgress ? <span>{stageProgress}</span> : null}
@@ -3784,7 +3798,6 @@ export function BibleReaderView({
       if (frames < 45) raf = window.requestAnimationFrame(tick);
       else {
         bootAlignReadyRef.current = true;
-        setBootAlignReady(true);
       }
     };
     raf = window.requestAnimationFrame(tick);
@@ -3806,7 +3819,6 @@ export function BibleReaderView({
     const markBootAligned = () => {
       if (bootAlignReadyRef.current) return;
       bootAlignReadyRef.current = true;
-      setBootAlignReady(true);
     };
 
     /* Retourner: com Options aberto, repõe o offset exacto memorizado no salto. */
@@ -4327,6 +4339,10 @@ export function BibleReaderView({
             closeOverlay();
             return;
           }
+          if (pickerOpen && passageStep === "book" && pickSearchOpen) {
+            closePickSearch();
+            return;
+          }
           if (pickerOpen) {
             closeAll();
             return;
@@ -4357,6 +4373,10 @@ export function BibleReaderView({
             passageStep === "verse")
             ? " is-pick-step-open"
             : ""
+        }${
+          passageRollOpen && passageStep === "book" && pickSearchOpen
+            ? " is-pick-search-open"
+            : ""
         }`}
         aria-label={t("bible.nav")}
         aria-busy={
@@ -4365,7 +4385,10 @@ export function BibleReaderView({
             : undefined
         }
       >
-        {!menuJourneyOpen && !showCreateCard ? (
+        {/* Com pesquisa activa: esconde a pill do livro (← + nome). */}
+        {!menuJourneyOpen &&
+        !showCreateCard &&
+        !(passageRollOpen && passageStep === "book" && pickSearchOpen) ? (
           discoverySplitSearch ? (
             <div className="bible-yv-passage-chrome-cluster">
               {onBack && !planReading ? (
@@ -4392,7 +4415,67 @@ export function BibleReaderView({
           )
         ) : null}
         <div className="bible-yv-top-tools">
-          {passageRollOpen ? (
+          {passageRollOpen && passageStep === "book" ? (
+            pickSearchOpen ? (
+              <>
+                <div className="bible-yv-pick-top-search is-trailing is-active">
+                  <YvIcon
+                    name="search"
+                    className="bible-yv-pick-search-trigger-icon"
+                    aria-hidden
+                  />
+                  <input
+                    ref={pickSearchInputRef}
+                    type="search"
+                    className="bible-yv-pick-top-search-input"
+                    value={bookSearchQuery}
+                    onChange={(event) => setBookSearchQuery(event.target.value)}
+                    placeholder={t("searchBooks.placeholder")}
+                    aria-label={t("searchBooks.search")}
+                    enterKeyHint="search"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    spellCheck={false}
+                  />
+                  <button
+                    type="button"
+                    className="bible-yv-pick-top-search-clear"
+                    onClick={() => clearBookSearch()}
+                    disabled={!bookSearchQuery.trim()}
+                    aria-label={t("common.clear")}
+                  >
+                    {t("common.clear")}
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  className="bible-yv-top-passage-arrow is-prev is-pick-side is-shown is-pick-search-back"
+                  onClick={() => closePickSearch()}
+                  aria-label={t("common.back")}
+                  title={t("common.back")}
+                >
+                  <YvIcon
+                    name="chevron_left"
+                    className="bible-yv-top-passage-arrow-icon"
+                  />
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                className="bible-yv-pick-search-trigger is-bare"
+                onClick={() => togglePickSearch()}
+                aria-label={t("searchBooks.search")}
+                title={t("searchBooks.search")}
+                aria-pressed={false}
+              >
+                <YvIcon
+                  name="search"
+                  className="bible-yv-pick-search-trigger-icon"
+                />
+              </button>
+            )
+          ) : passageRollOpen ? (
             <button
               type="button"
               className="bible-yv-top-passage-arrow is-next is-pick-side is-shown is-pick-dismiss"

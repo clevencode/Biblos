@@ -1162,13 +1162,16 @@ html:has(.plan-workspace-return-nav) .note-shell .mode-tabs,
   z-index: 2;
   flex: none;
   width: 100%;
+  max-width: none;
   margin: 0;
-  padding: 0 var(--mode-tabs-inset-x, 12px)
-    calc(var(--mode-tabs-float-gap, 14px) + env(safe-area-inset-bottom, 0px));
+  padding: 0
+    max(var(--mode-tabs-inset-x, 12px), env(safe-area-inset-right, 0px))
+    calc(var(--mode-tabs-float-gap, 14px) + env(safe-area-inset-bottom, 0px))
+    max(var(--mode-tabs-inset-x, 12px), env(safe-area-inset-left, 0px));
   border: 0;
   background: transparent;
   display: flex;
-  justify-content: center;
+  justify-content: stretch;
   align-items: flex-end;
   box-sizing: border-box;
   font-family: var(--font-ui);
@@ -7948,8 +7951,11 @@ html[data-theme="dark"] .profile-download-btn {
   }
 
   .home-view,
-  .plan-discover {
+  .plan-discover,
+  .plan-workspace-host,
+  .panel-nota-content.plan-yv--workspace {
     max-width: none;
+    margin: 0;
     padding-left: 0;
     padding-right: 0;
     padding-bottom: 0;
@@ -8087,9 +8093,13 @@ html[data-theme="dark"] .profile-download-btn {
 .plan-workspace-host {
   display: flex;
   flex-direction: column;
+  width: 100%;
+  max-width: none;
+  margin: 0;
   min-height: 0;
   height: 100%;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .plan-discover-surface .plan-discover-empty {
@@ -9442,15 +9452,19 @@ html[data-theme="dark"] .home-pill.is-accent {
   display: flex;
   flex-direction: column;
   gap: 0;
+  width: 100%;
+  max-width: none;
+  margin: 0;
   height: 100%;
   min-height: 0;
   overflow: hidden;
-  /* Navbar shell oculta — reserva para return nav inferior. */
-  padding-bottom: 0;
+  box-sizing: border-box;
+  /* Pleno: sem gutter do .panel-nota-content — só safe-area / gutters internos. */
+  padding: 0;
 }
 
 .panel-nota-content.plan-yv--workspace.has-plan-return {
-  padding-bottom: 0;
+  padding: 0;
 }
 
 .plan-yv--workspace .plan-yv-main {
@@ -9466,6 +9480,8 @@ html[data-theme="dark"] .home-pill.is-accent {
   gap: var(--plan-space-3);
   align-content: start;
   width: 100%;
+  max-width: none;
+  margin: 0;
   box-sizing: border-box;
   padding: var(--plan-space-1)
     max(var(--mobile-gutter, 14px), env(safe-area-inset-right, 0px))
@@ -12055,7 +12071,6 @@ html:has(.bible-plan-return-nav) .note-shell .mode-tabs,
 
 .bible-plan-return-nav-pill {
   --plan-return-pill-h: var(--mode-tabs-hub-size, 50px);
-  --plan-return-badge-w: 2.85rem;
   position: relative;
   z-index: 1;
   pointer-events: auto;
@@ -12090,7 +12105,7 @@ html:has(.bible-plan-return-nav) .note-shell .mode-tabs,
   margin: 0;
   padding: 0 6px 0 10px;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) var(--plan-return-badge-w);
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 8px;
   border: 0;
@@ -12144,37 +12159,48 @@ html:has(.bible-plan-return-nav) .note-shell .mode-tabs,
   line-height: 1.15;
 }
 
+/* Badge etapa/dia: pill inline (fit-content), não círculo empilhado. */
 .bible-plan-return-nav-progress {
   flex: none;
   display: inline-flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: 1px;
-  width: var(--plan-return-badge-w);
-  min-width: var(--plan-return-badge-w);
-  max-width: var(--plan-return-badge-w);
+  gap: 5px;
+  width: auto;
+  min-width: 0;
+  max-width: none;
   height: calc(var(--plan-return-pill-h) - 12px);
   margin: 0;
-  padding: 0 4px;
+  padding: 0 10px;
   box-sizing: border-box;
   border-radius: 999px;
   background: color-mix(in srgb, var(--mode-tabs-hub-fg, #fff) 16%, transparent);
   color: inherit;
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
-  line-height: 1.05;
+  line-height: 1;
   white-space: nowrap;
 }
 
-.bible-plan-return-nav-progress.is-stacked {
-  font-size: 0.62rem;
+.bible-plan-return-nav-progress.is-inline {
+  gap: 0;
+}
+
+.bible-plan-return-nav-progress.is-inline > span + span::before {
+  content: "·";
+  margin: 0 5px;
+  opacity: 0.55;
+  font-weight: 600;
 }
 
 .bible-plan-return-nav-progress.is-empty {
   visibility: hidden;
+  width: 2.5rem;
+  min-width: 2.5rem;
+  padding: 0;
 }
 
 .bible-plan-return-nav-icon {
@@ -13464,6 +13490,64 @@ html[data-passage-bar-panel="test"] .bible-yv-pick-search-trigger.is-bare.is-on 
 .bible-yv-top.is-pick-step-open .bible-yv-top-tools {
   flex: none;
   margin-left: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+/* Livros: 🔍 abre campo à direita (pill ← livro fica à esquerda). */
+/* Pesquisa activa: sem pill do livro — o campo ocupa a faixa até ao ✕. */
+.bible-yv-top.is-pick-search-open .bible-yv-passage-chrome-cluster,
+.bible-yv-top.is-pick-search-open > .bible-yv-passage-roll,
+.bible-yv-top.is-pick-search-open .bible-yv-section-return,
+.bible-yv-top.is-pick-search-open .bible-yv-top-passage.is-pick-back-nav {
+  display: none !important;
+}
+
+.bible-yv-top.is-pick-search-open .bible-yv-top-tools {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  margin-left: 0;
+  justify-content: flex-start;
+  gap: 4px;
+}
+
+.bible-yv-pick-top-search.is-trailing {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Pesquisa activa: superfície chrome (pill) + ícone + Effacer. */
+.bible-yv-pick-top-search.is-trailing.is-active {
+  padding: 0 10px 0 12px;
+  border-radius: 999px;
+  background: var(--yv-chrome-surface, var(--surface));
+  box-shadow: none;
+}
+
+.bible-yv-pick-top-search.is-trailing.is-active
+  .bible-yv-pick-search-trigger-icon {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  font-size: 20px;
+  opacity: 0.92;
+}
+
+/* ✕ → retorno (fecha só a pesquisa, volta à pill do livro). */
+.bible-yv-top.is-pick-search-open .bible-yv-top-passage-arrow.is-pick-search-back {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  color: var(--yv-text, var(--text));
+}
+
+.bible-yv-top.is-pick-search-open
+  .bible-yv-top-passage-arrow.is-pick-search-back:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--yv-text) 7%, transparent) !important;
 }
 
 .bible-yv-top.is-pick-step-open .bible-yv-top-passage.is-pick-back-nav {
@@ -13571,9 +13655,14 @@ html[data-passage-bar-panel="test"] .bible-yv-pick-search-trigger.is-bare.is-on 
   cursor: pointer;
 }
 
-.bible-yv-pick-top-search-clear:hover {
+.bible-yv-pick-top-search-clear:hover:not(:disabled) {
   background: color-mix(in srgb, var(--yv-text, var(--text)) 8%, transparent);
   color: var(--yv-text, var(--text));
+}
+
+.bible-yv-pick-top-search-clear:disabled {
+  opacity: 0.38;
+  cursor: default;
 }
 
 .bible-yv-pick-top-search-clear-icon {
