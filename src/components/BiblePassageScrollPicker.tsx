@@ -1,10 +1,12 @@
 import {
   forwardRef,
   useLayoutEffect,
+  useMemo,
   useRef,
 } from "react";
 import type { PassageDiscoverySession } from "../bible/passageDiscovery/session";
 import type { PickGridScrollKind } from "../bible/passageDiscovery/pickGridScroll";
+import { buildChapterIdsByBook } from "../bible/passageDiscovery/chapterIdsByBook";
 import type { BibleSearchHit, YouVersionBook } from "../youversion/client";
 import { BiblePassageDiscoveryList } from "./BiblePassageDiscoveryList";
 import { PASSAGE_LOADING_COPY } from "../bible/viewState/loadingConstants";
@@ -106,6 +108,10 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
     const restoredScrollKeyRef = useRef<string | null>(null);
     const getPickGridScrollRef = useRef(getPickGridScroll);
     getPickGridScrollRef.current = getPickGridScroll;
+    const chapterIdsByBook = useMemo(
+      () => buildChapterIdsByBook(books),
+      [books],
+    );
 
     const bookKey = String(bookId || "").toUpperCase();
     const chapterKey = String(chapterId || "").trim();
@@ -220,12 +226,7 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
               expandedBookId={discoverySession.expandedBookId}
               anchorVerseUsfm={discoverySession.anchorVerseUsfm}
               verseScrollByBook={discoverySession.verseScrollByBook}
-              getChapterIds={(id) => {
-                const book = books.find(
-                  (b) => b.id.toUpperCase() === id.toUpperCase(),
-                );
-                return book?.chapters?.map((c) => c.id) ?? [];
-              }}
+              chapterIdsByBook={chapterIdsByBook}
               onExpandedBookChange={onDiscoveryExpandedBookChange}
               onVerseListScroll={onDiscoveryVerseListScroll}
               onPickBook={onPickBook}

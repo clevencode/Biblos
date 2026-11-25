@@ -1,4 +1,5 @@
 import {
+  startTransition,
   useCallback,
   useEffect,
   useId,
@@ -246,8 +247,10 @@ export function usePassageBarController({
   const setDiscoveryExpandedBook = useCallback(
     (nextBookId: string | null) => {
       flushVerseListScrollToSession();
-      patchDiscoverySession({
-        expandedBookId: nextBookId ? String(nextBookId).toUpperCase() : null,
+      const id = nextBookId ? String(nextBookId).toUpperCase() : null;
+      /* Montagem da grelha de capítulos é transition (não bloqueia o gesture). */
+      startTransition(() => {
+        patchDiscoverySession({ expandedBookId: id });
       });
     },
     [flushVerseListScrollToSession, patchDiscoverySession],

@@ -1,5 +1,9 @@
 import { YvIcon } from "./YvIcon";
 import type { DiscoveryJump, PassageDiscoverySections } from "../bible/passageDiscovery/types";
+import {
+  chapterIdsForBook,
+  EMPTY_CHAPTER_IDS,
+} from "../bible/passageDiscovery/chapterIdsByBook";
 import type { BibleTextVersionId } from "../bible/bibleVersions";
 import type { BibleSearchHit } from "../youversion/client";
 import { BiblePassageDiscoveryBookRow } from "./BiblePassageDiscoveryBookRow";
@@ -20,7 +24,8 @@ type BiblePassageDiscoveryListProps = {
   expandedBookId: string | null;
   anchorVerseUsfm: string | null;
   verseScrollByBook: Record<string, number>;
-  getChapterIds: (bookId: string) => string[];
+  /** Mapa estável bookId→capítulo ids (ver `buildChapterIdsByBook`). */
+  chapterIdsByBook: Readonly<Record<string, readonly string[]>>;
   onExpandedBookChange: (id: string | null) => void;
   onVerseListScroll: (bookId: string, scrollTop: number) => void;
   onPickBook: (id: string) => void;
@@ -44,9 +49,8 @@ function renderBooks(
 ) {
   if (!hits.length) return null;
   return hits.map((hit) => {
-    const chapterIds = props.getChapterIds(hit.id);
-    const sameBook =
-      hit.id.toUpperCase() === props.bookId.toUpperCase();
+    const chapterIds = chapterIdsForBook(props.chapterIdsByBook, hit.id);
+    const sameBook = hit.id.toUpperCase() === props.bookId.toUpperCase();
     return (
       <BiblePassageDiscoveryBookRow
         key={hit.id}
@@ -55,7 +59,7 @@ function renderBooks(
         hasQuery={props.hasQuery}
         textVersion={props.textVersion}
         currentBookId={props.bookId}
-        chapterIds={chapterIds}
+        chapterIds={chapterIds.length ? chapterIds : EMPTY_CHAPTER_IDS}
         highlightChapterId={sameBook ? props.highlightChapterId : ""}
         loading={props.loading}
         expanded={props.expandedBookId?.toUpperCase() === hit.id.toUpperCase()}
@@ -87,7 +91,7 @@ export function BiblePassageDiscoveryList({
   expandedBookId,
   anchorVerseUsfm,
   verseScrollByBook,
-  getChapterIds,
+  chapterIdsByBook,
   onExpandedBookChange,
   onVerseListScroll,
   onPickBook,
@@ -111,7 +115,7 @@ export function BiblePassageDiscoveryList({
     expandedBookId,
     anchorVerseUsfm,
     verseScrollByBook,
-    getChapterIds,
+    chapterIdsByBook,
     verseDiscoveryEnabled,
     bookNavigateEnabled,
     onExpandedBookChange,

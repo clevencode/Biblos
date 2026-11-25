@@ -14450,6 +14450,15 @@ html[data-passage-bar-panel="test"]
   display: flex;
   flex-direction: column;
   gap: 0;
+  /* Lista longa (~66 livros): salta layout/paint off-screen. */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 48px;
+}
+
+.bible-yv-pick-book-row.is-expanded {
+  /* Painel aberto precisa de layout completo. */
+  content-visibility: visible;
+  contain-intrinsic-size: none;
 }
 
 .bible-yv-pick-book-row.is-expandable .bible-yv-pick-cell.is-book {
@@ -14487,6 +14496,9 @@ html[data-passage-bar-panel="test"]
   border-radius: 10px;
   background: color-mix(in srgb, var(--text) 4%, var(--panel));
   border: 1px solid color-mix(in srgb, var(--yv-line) 40%, transparent);
+  contain: layout style;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 120px;
 }
 
 .bible-yv-pick-chapter-panel .bible-yv-pick-cell {
