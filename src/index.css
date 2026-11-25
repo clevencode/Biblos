@@ -1247,7 +1247,7 @@ html:has(.plan-workspace-return-nav) .note-shell .mode-tabs,
 .bible-plan-return-nav-main {
   flex: 1 1 auto;
   min-width: 0;
-  width: 100%;
+  width: auto;
   height: 100%;
   margin: 0;
   border: 0;
@@ -1268,11 +1268,17 @@ html:has(.plan-workspace-return-nav) .note-shell .mode-tabs,
 }
 
 .bible-plan-return-nav-main {
-  padding: 0 6px 0 10px;
+  padding: 0 14px 0 10px;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 8px;
+}
+
+/* X só no topo — navbar de retorno sem dismiss. */
+.plan-workspace-return-nav-pill:not(:has(.plan-workspace-return-nav-dismiss)),
+.bible-plan-return-nav-pill:not(:has(.bible-plan-return-nav-dismiss)) {
+  padding-right: 4px;
 }
 
 .plan-workspace-return-nav-main:hover,
@@ -1331,6 +1337,87 @@ html:has(.plan-workspace-return-nav) .note-shell .mode-tabs,
   height: 1.2rem;
   flex: none;
   opacity: 0.92;
+}
+
+.plan-workspace-return-nav-sep,
+.bible-plan-return-nav-sep {
+  flex: none;
+  width: 1px;
+  height: 1.35rem;
+  margin: 0 2px;
+  background: color-mix(in srgb, var(--yv-text, var(--text)) 16%, transparent);
+}
+
+.plan-workspace-return-nav-dismiss,
+.bible-plan-return-nav-dismiss {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.plan-workspace-return-nav-dismiss:hover,
+.bible-plan-return-nav-dismiss:hover {
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+.plan-workspace-return-nav-dismiss:focus-visible,
+.bible-plan-return-nav-dismiss:focus-visible {
+  outline: 2px solid var(--accent, #5b7cfa);
+  outline-offset: 1px;
+}
+
+.plan-workspace-return-nav-dismiss-icon,
+.bible-plan-return-nav-dismiss-icon {
+  width: 1.15rem;
+  height: 1.15rem;
+  flex: none;
+}
+
+.plan-yv--workspace .shell-topbar-actions {
+  margin-left: auto;
+  flex: none;
+}
+
+.plan-yv-topbar-close {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+  color: var(--yv-text, var(--text));
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  contain: layout style;
+}
+
+.plan-yv-topbar-close:hover {
+  background: color-mix(in srgb, var(--text) 12%, transparent);
+}
+
+.plan-yv-topbar-close:focus-visible {
+  outline: 2px solid var(--accent, #5b7cfa);
+  outline-offset: 2px;
+}
+
+.plan-yv-topbar-close-icon {
+  width: 1.15rem;
+  height: 1.15rem;
 }
 
 /* Badge etapa/dia: pill inline fit-content (`4/5 · 5/10`). */
@@ -14631,9 +14718,48 @@ html[data-passage-bar-panel="test"]
   min-width: 0;
 }
 
-.bible-yv-top.is-plan .bible-yv-plan-exit {
+/* Plan reading: tools só com o X — canto superior direito. */
+.bible-yv-top.is-plan-reading > .bible-yv-top-tools:has(.bible-yv-plan-exit) {
+  margin-left: auto;
   flex: none;
   align-self: center;
+}
+
+.bible-yv-top.is-plan .bible-yv-plan-exit,
+.bible-yv-top.is-plan-reading .bible-yv-plan-exit {
+  flex: none;
+  align-self: center;
+}
+
+.bible-yv-plan-exit {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+  color: var(--yv-text, var(--text));
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  contain: layout style;
+}
+
+.bible-yv-plan-exit:hover {
+  background: color-mix(in srgb, var(--text) 12%, transparent);
+}
+
+.bible-yv-plan-exit:focus-visible {
+  outline: 2px solid var(--accent, #5b7cfa);
+  outline-offset: 2px;
+}
+
+.bible-yv-plan-exit-icon {
+  width: 1.15rem;
+  height: 1.15rem;
 }
 
 .bible-yv-top-passage.is-plan-inline .bible-yv-passage-roll,

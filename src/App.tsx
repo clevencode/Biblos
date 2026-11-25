@@ -1,4 +1,5 @@
 import {
+  startTransition,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -263,8 +264,10 @@ function BiblosConsumerApp() {
   }, []);
 
   const leavePlanWorkspace = useCallback(() => {
-    setWorkspacePlan(null);
-    setWorkspaceJour(undefined);
+    startTransition(() => {
+      setWorkspacePlan(null);
+      setWorkspaceJour(undefined);
+    });
   }, []);
 
   const returnFromPlanReading = useCallback(() => {
@@ -273,6 +276,15 @@ function BiblosConsumerApp() {
     setTab("plan");
     setWorkspaceResumeSeq((n) => n + 1);
   }, [clearPlan]);
+
+  /** X do leitor: sai do plano e volta ao hub (não ao workspace). */
+  const exitPlanReadingToHub = useCallback(() => {
+    startTransition(() => {
+      clearPlan();
+      leavePlanWorkspace();
+      setTab("plan");
+    });
+  }, [clearPlan, leavePlanWorkspace]);
 
   const selectTab = useCallback(
     (next: ShellTab) => {
@@ -652,6 +664,9 @@ function BiblosConsumerApp() {
                       }
                       onBack={
                         planReading ? returnFromPlanReading : undefined
+                      }
+                      onExitPlanToHub={
+                        planReading ? exitPlanReadingToHub : undefined
                       }
                       requireAccountToMark={requireAccountToMark}
                       onRequestAccountToMark={requestAccountForMark}

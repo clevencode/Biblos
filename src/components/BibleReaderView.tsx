@@ -481,6 +481,8 @@ type BibleReaderViewProps = {
   /** Onglet Lecture visible (le panneau peut être `hidden` au montage). */
   active?: boolean;
   onBack?: () => void;
+  /** X canto superior: sair totalmente do plano → hub de planos. */
+  onExitPlanToHub?: () => void;
   /** Mode lecture de plan : un pas = un chapitre, › = chapitre suivant. */
   planReading?: {
     planId: string;
@@ -677,6 +679,7 @@ export function BibleReaderView({
   focusSeq = 0,
   active = true,
   onBack,
+  onExitPlanToHub,
   planReading = null,
   existingVerseCardIds,
   existingVerseCardColors,
@@ -4520,9 +4523,20 @@ export function BibleReaderView({
               <YvIcon name="close" className="bible-yv-top-passage-arrow-icon" />
             </button>
           ) : planReading &&
+            (onExitPlanToHub || onBack) &&
             !pickerOpen &&
             !menuJourneyOpen &&
-            !showCreateCard ? null : !pickerOpen &&
+            !showCreateCard ? (
+            <button
+              type="button"
+              className="bible-yv-plan-exit"
+              onClick={() => (onExitPlanToHub ?? onBack)?.()}
+              aria-label={t("common.close")}
+              title={t("common.close")}
+            >
+              <YvIcon name="close" className="bible-yv-plan-exit-icon" />
+            </button>
+          ) : !pickerOpen &&
             (menuJourneyOpen ||
               showCreateCard ||
               !compactToolsMenu ||

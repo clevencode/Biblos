@@ -454,7 +454,23 @@ export function PlanWorkspacePanel({
 
   return (
     <div className="today-view panel-nota-content plan-yv plan-yv--workspace has-plan-return">
-      <ShellPageTopbar className="plan-yv-topbar" title={planTitle} />
+      <ShellPageTopbar
+        className="plan-yv-topbar"
+        title={planTitle}
+        actions={
+          onLeave ? (
+            <button
+              type="button"
+              className="plan-yv-topbar-close"
+              onClick={() => onLeave?.()}
+              aria-label={t("common.close")}
+              title={t("common.close")}
+            >
+              <YvIcon name="close" className="plan-yv-topbar-close-icon" />
+            </button>
+          ) : null
+        }
+      />
       <div className="plan-yv-main">
       {days.length ? (
         <section
