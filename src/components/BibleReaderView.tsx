@@ -3332,8 +3332,8 @@ export function BibleReaderView({
   function renderPlanReturnNav() {
     if (!planReading || !onBack) return null;
     const actionLabel = t("plan.returnAction");
-    const destinationLabel = t("plan.returnToPlans");
-    const planName = planReading.planName?.trim() || destinationLabel;
+    const planLabel =
+      planReading.planName?.trim() || t("plan.returnToPlans");
     const stageIdx = planReading.stageIndex ?? 1;
     const stageTotal = planReading.stageCount ?? 1;
     const dayIdx = planReading.stageDayIndex ?? planReading.stepIndex + 1;
@@ -3341,8 +3341,8 @@ export function BibleReaderView({
     const stageTitle = planReading.stageName?.trim();
     const progressInline = formatPlanProgressBadge(planReading);
     const fullLabel = [
-      `${actionLabel} - ${destinationLabel}`,
-      planName,
+      actionLabel,
+      planLabel,
       stageTitle,
       stageTotal > 1
         ? `${t("bible.planStage", { n: stageIdx })}/${stageTotal}`
@@ -3370,7 +3370,7 @@ export function BibleReaderView({
             />
             <span className="bible-plan-return-nav-copy">
               <span className="bible-plan-return-nav-verb">{actionLabel}</span>
-              <span className="bible-plan-return-nav-ref">{destinationLabel}</span>
+              <span className="bible-plan-return-nav-ref">{planLabel}</span>
             </span>
             {progressInline ? (
               <span className="bible-plan-return-nav-progress" aria-hidden>
