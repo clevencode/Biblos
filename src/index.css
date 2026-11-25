@@ -11913,6 +11913,12 @@ html[data-theme="dark"] .top-sheet-backdrop {
 .bible-yv-tools-popover.is-open > *:nth-child(5) {
   animation-delay: calc(var(--mode-tabs-stagger-ms, 32ms) * 4);
 }
+.bible-yv-tools-popover.is-open > *:nth-child(6) {
+  animation-delay: calc(var(--mode-tabs-stagger-ms, 32ms) * 5);
+}
+.bible-yv-tools-popover.is-open > *:nth-child(7) {
+  animation-delay: calc(var(--mode-tabs-stagger-ms, 32ms) * 6);
+}
 
 .bible-yv-passage-word-search-panel.is-open .bible-yv-pick-grid.is-word-search,
 .bible-yv-passage-word-search-panel.is-open .bible-yv-word-search-book-picker,

@@ -3216,6 +3216,22 @@ export function BibleReaderView({
     openOverlay({ type: "word_search" });
   }
 
+  function openHistoryFromMenu() {
+    restoreToolsFocusRef.current = false;
+    overlayReturnToProfileRef.current = false;
+    setShareSheetOpen(false);
+    sheetEnterFromMenuRef.current = true;
+    openOverlay({ type: "history" });
+  }
+
+  function openMarksFromMenu() {
+    restoreToolsFocusRef.current = false;
+    overlayReturnToProfileRef.current = false;
+    setShareSheetOpen(false);
+    sheetEnterFromMenuRef.current = true;
+    openOverlay({ type: "marks" });
+  }
+
   function studyReturnSurfaceLabel(returnTo: StudyJumpReturnTo): string {
     switch (returnTo) {
       case "history":
@@ -3673,6 +3689,26 @@ export function BibleReaderView({
             </button>
           </div>
         </div>
+        {ACTIVITY_UI_ENABLED ? (
+          <button
+            type="button"
+            role="menuitem"
+            className="bible-yv-tools-item"
+            onClick={openHistoryFromMenu}
+          >
+            <YvIcon name="history" className="bible-yv-tools-item-icon" />
+            <span>{t("history.title")}</span>
+          </button>
+        ) : null}
+        <button
+          type="button"
+          role="menuitem"
+          className="bible-yv-tools-item"
+          onClick={openMarksFromMenu}
+        >
+          <YvIcon name="style" className="bible-yv-tools-item-icon" />
+          <span>{t("profile.marks")}</span>
+        </button>
       </div>
     );
   }
