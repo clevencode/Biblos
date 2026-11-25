@@ -75,9 +75,12 @@ function isIosSafariFamily(): boolean {
   );
 }
 
-function resolveMenuMode(standalone: boolean): PwaInstallMenuMode {
+function resolveMenuMode(
+  standalone: boolean,
+  allowApkDownload: boolean,
+): PwaInstallMenuMode {
   if (Capacitor.isNativePlatform() || standalone) return "hidden";
-  if (isAndroidBrowser()) return "apk-download";
+  if (isAndroidBrowser()) return allowApkDownload ? "apk-download" : "hidden";
   if (isIosSafariFamily()) return "ios-hint";
   return "hidden";
 }
@@ -100,7 +103,15 @@ function triggerApkDownload(url: string): void {
   anchor.remove();
 }
 
-export function usePwaInstall(): PwaInstallState {
+export type UsePwaInstallOptions = {
+  /** APK no menu — só admin (`isClevencodeAdminEmail`). Default: false. */
+  allowApkDownload?: boolean;
+};
+
+export function usePwaInstall(
+  options: UsePwaInstallOptions = {},
+): PwaInstallState {
+  const allowApkDownload = Boolean(options.allowApkDownload);
   const [dismissed, setDismissed] = useState(readDismissedSync);
   const [busy, setBusy] = useState(false);
   const [standalone, setStandalone] = useState(isStandaloneDisplay);
@@ -145,7 +156,7 @@ export function usePwaInstall(): PwaInstallState {
     void getStorageAdapter().setString(DISMISS_KEY, DISMISS_VALUE);
   }, []);
 
-  const menuMode = resolveMenuMode(standalone);
+  const menuMode = resolveMenuMode(standalone, allowApkDownload);
 
   const mode: PwaInstallBannerMode = (() => {
     if (dismissed || Capacitor.isNativePlatform() || standalone) {
@@ -162,6 +173,7 @@ export function usePwaInstall(): PwaInstallState {
       const source = opts?.source ?? "banner";
 
       const downloadApk = async () => {
+        if (!allowApkDownload) return;
         if (!isAndroidBrowser() || Capacitor.isNativePlatform() || standalone) {
           return;
         }
@@ -201,7 +213,7 @@ export function usePwaInstall(): PwaInstallState {
 
       await downloadApk();
     },
-    [busy, deferredPrompt, standalone],
+    [allowApkDownload, busy, deferredPrompt, standalone],
   );
 
   return {

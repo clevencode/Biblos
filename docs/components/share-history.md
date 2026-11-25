@@ -5,7 +5,7 @@
 | **ID** | `share-history` |
 | **Componentes** | `BibleShareSheet`, `BibleHistorySheet`, `BibleHistoryPanel` |
 | **Dono do estado (leitor)** | `BibleReaderView` (`shareSheetOpen`, `historyOpen`, `shareMode`) |
-| **Dados** | `activityLog.ts`, `shareVerse.ts`, `shareVerseCard.ts` |
+| **Dados** | `activityLog.ts` (local + Preferences + Firestore `users/{uid}/activity`), `shareVerse.ts`, `shareVerseCard.ts` |
 
 ---
 
@@ -63,9 +63,11 @@ Variante painel alternativa; a shell actual usa o sheet no leitor.
 
 ## Fluxo de actividade
 
-1. `recordBibleRead` / `onBibleRead` no leitor → `activityLog`.
-2. `activityTick` no `App` refresca Home (resume).
-3. Marca de versículo → `appendActivity("verse.mark", ...)`.
+1. `recordBibleRead` / `onBibleRead` no leitor → `activityLog` (`persistLocalString` + Preferences no APK).
+2. Com Auth Firebase (anónimo ou Google) + rede: `user-sync` faz push/pull de `users/{uid}/activity/state` (cap 300). Limpar o browser e voltar a autenticar com o mesmo `uid` repõe o Historique.
+3. `activityTick` no `App` refresca Home (resume).
+4. Marca de versículo → `appendActivity("verse.mark", …)` (auditoria UI; dados reais em `verseMarks` + sync highlights).
+5. Login / upgrade: `reassignActivityUserIds` liga eventos do `legacyLocalId` ao `uid`; o filtro do Historique aceita ambos.
 
 ---
 

@@ -126,8 +126,6 @@ function BiblosConsumerApp() {
   const narrow = useNarrow();
   const { t } = useUiLocale();
   const { markShellReady } = useAppReadiness();
-  const pwaInstall = usePwaInstall();
-  const apkUpdate = useApkUpdate();
   const {
     profile,
     refreshProfile,
@@ -137,6 +135,8 @@ function BiblosConsumerApp() {
   } = useConsumerAuth();
   const showAdminNav =
     isAuthenticated && isClevencodeAdminEmail(user?.email);
+  const pwaInstall = usePwaInstall({ allowApkDownload: showAdminNav });
+  const apkUpdate = useApkUpdate({ enabled: showAdminNav });
   const [tab, setTab] = useState<ShellTab>(() => loadShellTab());
   const [bibleMounted, setBibleMounted] = useState(() => loadShellTab() === "bible");
   const [navHidden, setNavHidden] = useState(false);
@@ -554,7 +554,7 @@ function BiblosConsumerApp() {
           </button>
         </div>
       ) : null}
-      {!swUpdatePending && apkUpdate.available && !bibleMode ? (
+      {!swUpdatePending && showAdminNav && apkUpdate.available && !bibleMode ? (
         <div className="sw-update-banner" role="status" aria-live="polite">
           <div className="sw-update-banner-copy">
             <p className="sw-update-banner-title">{t("swUpdate.title")}</p>
@@ -693,6 +693,7 @@ function BiblosConsumerApp() {
                       onReadingHistoryChange={() => setActivityTick((n) => n + 1)}
                       onReadingChromeChange={narrow ? setNavHidden : undefined}
                       compactToolsMenu={bibleCompactTools}
+                      allowApkDownload={showAdminNav}
                       openOverlayRequest={openOverlayRequest}
                       onOpenOverlayRequestConsumed={() =>
                         setOpenOverlayRequest(null)

@@ -1,5 +1,5 @@
 /**
- * Sync offline-first Auth: highlights / notes / verseNotes / planProgress
+ * Sync offline-first Auth: highlights / notes / verseNotes / planProgress / activity
  * → users/{uid}/… (nunca textos bíblicos).
  *
  * Ciclo: startUserDataSync(uid) após anonymous/authenticated;
@@ -18,6 +18,13 @@ import {
   type Unsubscribe,
 } from "firebase/firestore";
 import { ensureFirebase, getFirebaseDb } from "../../../lib/firebase";
+import {
+  clearActivityStore,
+  exportActivityStore,
+  importActivityStore,
+  subscribeActivity,
+  type ActivityStore,
+} from "../../../activityLog";
 import {
   exportVerseMarkRemoved,
   exportVerseMarkStore,
@@ -45,6 +52,7 @@ import {
   subscribeVerseNotes,
 } from "../../../bible/verseNotes";
 import {
+  userActivityDoc,
   userHighlightsDoc,
   userNotesDoc,
   userPlanProgressDoc,
@@ -118,6 +126,7 @@ async function pushAll(
   const notes = exportDayNoteStore();
   const verseNotes = exportVerseNoteStore();
   const planProgress = exportPlanProgressStore();
+  const activity = exportActivityStore();
 
   if (!skipEmpty || !isEmptyStore(highlights)) {
     writes.push(
@@ -156,6 +165,15 @@ async function pushAll(
       setDoc(
         pathDoc(db, userPlanProgressDoc(uid)),
         { store: planProgress, updatedAt },
+        { merge: true },
+      ),
+    );
+  }
+  if (!skipEmpty || !isEmptyActivityStore(activity)) {
+    writes.push(
+      setDoc(
+        pathDoc(db, userActivityDoc(uid)),
+        { store: activity, updatedAt },
         { merge: true },
       ),
     );
@@ -271,6 +289,21 @@ function applyRemotePlanProgress(data: Record<string, unknown> | undefined) {
   if (changed) queueUserDataPush(currentUid);
 }
 
+function applyRemoteActivity(data: Record<string, unknown> | undefined) {
+  if (!data) return;
+  applyingRemote = true;
+  let changed = false;
+  try {
+    changed = importActivityStore(
+      (data.store ?? { events: [] }) as ActivityStore,
+      true,
+    );
+  } finally {
+    applyingRemote = false;
+  }
+  if (changed) queueUserDataPush(currentUid);
+}
+
 function onWindowOnline() {
   if (!currentUid) return;
   void flushUserDataPush(currentUid).catch((err) => {
@@ -298,6 +331,12 @@ function isEmptyStore(value: unknown): boolean {
   return Object.keys(value as Record<string, unknown>).length === 0;
 }
 
+function isEmptyActivityStore(value: unknown): boolean {
+  if (value == null || typeof value !== "object") return true;
+  const events = (value as ActivityStore).events;
+  return !Array.isArray(events) || events.length === 0;
+}
+
 /**
  * Seed cloud por documento: só escreve se remoto falta/vazio E local tem dados.
  * Nunca faz flush global de stores vazios (evita wipe cross-device).
@@ -306,11 +345,12 @@ async function seedCloudIfNeeded(
   db: Firestore,
   uid: string,
 ): Promise<void> {
-  const [hi, notes, verseNotes, planProgress] = await Promise.all([
+  const [hi, notes, verseNotes, planProgress, activity] = await Promise.all([
     getDoc(pathDoc(db, userHighlightsDoc(uid))),
     getDoc(pathDoc(db, userNotesDoc(uid))),
     getDoc(pathDoc(db, userVerseNotesDoc(uid))),
     getDoc(pathDoc(db, userPlanProgressDoc(uid))),
+    getDoc(pathDoc(db, userActivityDoc(uid))),
   ]);
 
   const online =
@@ -322,6 +362,7 @@ async function seedCloudIfNeeded(
   const localNotes = exportDayNoteStore();
   const localVerseNotes = exportVerseNoteStore();
   const localPlan = exportPlanProgressStore();
+  const localActivity = exportActivityStore();
 
   const remoteHiEmpty = !hi.exists() || isEmptyStore(hi.data()?.store);
   const remoteNotesEmpty =
@@ -330,6 +371,8 @@ async function seedCloudIfNeeded(
     !verseNotes.exists() || isEmptyStore(verseNotes.data()?.store);
   const remotePlanEmpty =
     !planProgress.exists() || isEmptyStore(planProgress.data()?.store);
+  const remoteActivityEmpty =
+    !activity.exists() || isEmptyActivityStore(activity.data()?.store);
 
   if (remoteHiEmpty && !isEmptyStore(localHi)) {
     writes.push(
@@ -368,6 +411,15 @@ async function seedCloudIfNeeded(
       setDoc(
         pathDoc(db, userPlanProgressDoc(uid)),
         { store: localPlan, updatedAt },
+        { merge: true },
+      ),
+    );
+  }
+  if (remoteActivityEmpty && !isEmptyActivityStore(localActivity)) {
+    writes.push(
+      setDoc(
+        pathDoc(db, userActivityDoc(uid)),
+        { store: localActivity, updatedAt },
         { merge: true },
       ),
     );
@@ -436,6 +488,15 @@ export async function startUserDataSync(uid: string): Promise<void> {
       (err) => console.warn("[user-sync] planProgress", err),
     ),
   );
+  unsubs.push(
+    onSnapshot(
+      pathDoc(db, userActivityDoc(uid)),
+      (snap) => {
+        applyRemoteActivity(snap.data() as Record<string, unknown> | undefined);
+      },
+      (err) => console.warn("[user-sync] activity", err),
+    ),
+  );
 
   unsubs.push(
     onSnapshotsInSync(db, () => {
@@ -451,6 +512,7 @@ export async function startUserDataSync(uid: string): Promise<void> {
   localUnsubs.push(subscribeDayNotes(onLocal));
   localUnsubs.push(subscribeVerseNotes(onLocal));
   localUnsubs.push(subscribePlanProgress(onLocal));
+  localUnsubs.push(subscribeActivity(onLocal));
 
   if (typeof window !== "undefined") {
     window.addEventListener("online", onWindowOnline);
@@ -482,6 +544,7 @@ export function snapshotLocalUserData() {
     notes: exportDayNoteStore(),
     verseNotes: exportVerseNoteStore(),
     planProgress: exportPlanProgressStore(),
+    activity: exportActivityStore(),
   };
 }
 
@@ -499,6 +562,7 @@ export function mergeLocalSnapshotIntoStores(
   importDayNoteStore(snapshot.notes, true);
   if (snapshot.verseNotes) importVerseNoteStore(snapshot.verseNotes, true);
   importPlanProgressStore(snapshot.planProgress, true);
+  if (snapshot.activity) importActivityStore(snapshot.activity, true);
 }
 
 /** Efface données personnelles locales — conserve Bibles offline. */
@@ -507,11 +571,7 @@ export function clearPersonalLocalData(): void {
   clearDayNoteStore();
   clearVerseNoteStore();
   clearPlanProgressStore();
-  try {
-    localStorage.removeItem("biblos-activity-v1");
-  } catch {
-    /* ignore */
-  }
+  clearActivityStore();
 }
 
 export async function deleteUserCloudData(uid: string): Promise<void> {
@@ -522,6 +582,7 @@ export async function deleteUserCloudData(uid: string): Promise<void> {
     deleteDoc(pathDoc(db, userNotesDoc(uid))).catch(() => undefined),
     deleteDoc(pathDoc(db, userVerseNotesDoc(uid))).catch(() => undefined),
     deleteDoc(pathDoc(db, userPlanProgressDoc(uid))).catch(() => undefined),
+    deleteDoc(pathDoc(db, userActivityDoc(uid))).catch(() => undefined),
   ]);
 }
 
@@ -541,6 +602,7 @@ export function exportUserBackupJson(meta?: {
     notes: exportDayNoteStore(),
     verseNotes: exportVerseNoteStore(),
     planProgress: exportPlanProgressStore(),
+    activity: exportActivityStore(),
   };
   return JSON.stringify(payload, null, 2);
 }

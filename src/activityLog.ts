@@ -1,9 +1,14 @@
-/** Journal d’activité local (lecture, marques, thème). */
+/** Journal d’activité local (lecture, marques, thème) — sync via user-sync. */
 
 import { loadOrCreateProfile } from "./userProfile";
+import {
+  persistLocalString,
+  removePersistedString,
+} from "./services/storage/StorageAdapter";
 
-const ACTIVITY_KEY = "biblos-activity-v1";
-const MAX_EVENTS = 300;
+export const ACTIVITY_KEY = "biblos-activity-v1";
+export const MAX_EVENTS = 300;
+const ACTIVITY_EVENT = "biblos-activity";
 
 export const ACTIVITY_TRACKING_ENABLED = true;
 export const ACTIVITY_UI_ENABLED = true;
@@ -21,7 +26,7 @@ export type ActivityEvent = {
   meta?: Record<string, string | number | boolean | null>;
 };
 
-type ActivityStore = {
+export type ActivityStore = {
   events: ActivityEvent[];
 };
 
@@ -32,14 +37,39 @@ function newEventId(): string {
   return `a-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+function normalizeStore(raw: unknown): ActivityStore {
+  if (!raw || typeof raw !== "object") return { events: [] };
+  const events = (raw as ActivityStore).events;
+  if (!Array.isArray(events)) return { events: [] };
+  const cleaned: ActivityEvent[] = [];
+  for (const item of events) {
+    if (!item || typeof item !== "object") continue;
+    const id = String((item as ActivityEvent).id || "").trim();
+    const userId = String((item as ActivityEvent).userId || "").trim();
+    const type = (item as ActivityEvent).type;
+    const at = String((item as ActivityEvent).at || "").trim();
+    if (!id || !userId || !at) continue;
+    if (type !== "verse.mark" && type !== "theme.change" && type !== "bible.read") {
+      continue;
+    }
+    cleaned.push({
+      id,
+      userId,
+      type,
+      at,
+      ...((item as ActivityEvent).meta
+        ? { meta: (item as ActivityEvent).meta }
+        : {}),
+    });
+  }
+  return { events: cleaned };
+}
+
 function readStore(): ActivityStore {
   try {
     const raw = localStorage.getItem(ACTIVITY_KEY);
     if (!raw) return { events: [] };
-    const parsed = JSON.parse(raw) as unknown;
-    if (!parsed || typeof parsed !== "object") return { events: [] };
-    const events = (parsed as ActivityStore).events;
-    return { events: Array.isArray(events) ? events : [] };
+    return normalizeStore(JSON.parse(raw) as unknown);
   } catch {
     return { events: [] };
   }
@@ -47,9 +77,15 @@ function readStore(): ActivityStore {
 
 function writeStore(store: ActivityStore): void {
   try {
-    localStorage.setItem(ACTIVITY_KEY, JSON.stringify(store));
+    const capped: ActivityStore = {
+      events: store.events.slice(0, MAX_EVENTS),
+    };
+    persistLocalString(ACTIVITY_KEY, JSON.stringify(capped));
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent(ACTIVITY_EVENT));
+    }
   } catch {
-    /* ignore */
+    /* quota / private mode */
   }
 }
 
@@ -57,6 +93,17 @@ export function resolveActivityUserId(userId?: string): string {
   const profile = loadOrCreateProfile();
   const uid = String(userId || profile.id || "").trim();
   return uid || profile.id;
+}
+
+/** Ids de utilizador a incluir no Historique (uid actual + legado pré-login). */
+export function activityUserIdAliases(userId?: string): Set<string> {
+  const profile = loadOrCreateProfile();
+  const primary = resolveActivityUserId(userId);
+  const aliases = new Set<string>([primary]);
+  const legacy = profile.legacyLocalId?.trim();
+  if (legacy) aliases.add(legacy);
+  if (profile.id?.trim()) aliases.add(profile.id.trim());
+  return aliases;
 }
 
 export function appendActivity(
@@ -84,9 +131,11 @@ export function listBibleReadingHistory(
   limit = 30,
 ): ActivityEvent[] {
   if (!ACTIVITY_TRACKING_ENABLED) return [];
-  const uid = resolveActivityUserId(userId);
+  const aliases = activityUserIdAliases(userId);
   return readStore()
-    .events.filter((event) => event.userId === uid && event.type === "bible.read")
+    .events.filter(
+      (event) => aliases.has(event.userId) && event.type === "bible.read",
+    )
     .sort((a, b) => {
       const ta = Date.parse(a.at) || 0;
       const tb = Date.parse(b.at) || 0;
@@ -99,22 +148,23 @@ export function removeActivityById(id: string, userId?: string): boolean {
   if (!ACTIVITY_TRACKING_ENABLED) return false;
   const target = String(id || "").trim();
   if (!target) return false;
-  const uid = userId ?? loadOrCreateProfile().id;
+  const aliases = activityUserIdAliases(userId);
   const store = readStore();
   const next = store.events.filter(
-    (event) => !(event.id === target && event.userId === uid),
+    (event) => !(event.id === target && aliases.has(event.userId)),
   );
   if (next.length === store.events.length) return false;
   writeStore({ events: next });
-  return false;
+  return true;
 }
 
 export function clearBibleReadingHistory(userId?: string): number {
   if (!ACTIVITY_TRACKING_ENABLED) return 0;
-  const uid = userId ?? loadOrCreateProfile().id;
+  const aliases = activityUserIdAliases(userId);
   const store = readStore();
   const next = store.events.filter(
-    (event) => !(event.userId === uid && event.type === "bible.read"),
+    (event) =>
+      !(aliases.has(event.userId) && event.type === "bible.read"),
   );
   const removed = store.events.length - next.length;
   if (removed > 0) writeStore({ events: next });
@@ -185,4 +235,98 @@ export function formatActivityWhen(iso: string, localeTag = "fr-FR"): string {
   } catch {
     return iso.slice(0, 16);
   }
+}
+
+export function exportActivityStore(): ActivityStore {
+  return readStore();
+}
+
+export function importActivityStore(
+  incoming: ActivityStore,
+  merge = true,
+): boolean {
+  const remote = normalizeStore(incoming);
+  if (!merge) {
+    const local = readStore();
+    const same = JSON.stringify(local.events) === JSON.stringify(remote.events);
+    if (same) return false;
+    writeStore(remote);
+    return true;
+  }
+  const byId = new Map<string, ActivityEvent>();
+  for (const event of readStore().events) {
+    byId.set(event.id, event);
+  }
+  let changed = false;
+  for (const event of remote.events) {
+    const existing = byId.get(event.id);
+    if (!existing) {
+      byId.set(event.id, event);
+      changed = true;
+      continue;
+    }
+    const existingAt = Date.parse(existing.at) || 0;
+    const remoteAt = Date.parse(event.at) || 0;
+    if (remoteAt > existingAt || JSON.stringify(existing) !== JSON.stringify(event)) {
+      byId.set(event.id, event);
+      changed = true;
+    }
+  }
+  if (!changed) return false;
+  const events = [...byId.values()].sort((a, b) => {
+    const ta = Date.parse(a.at) || 0;
+    const tb = Date.parse(b.at) || 0;
+    return tb - ta;
+  });
+  writeStore({ events });
+  return true;
+}
+
+export function clearActivityStore(): void {
+  removePersistedString(ACTIVITY_KEY);
+  try {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent(ACTIVITY_EVENT));
+    }
+  } catch {
+    /* ignore */
+  }
+}
+
+export function subscribeActivity(onChange: () => void): () => void {
+  if (typeof window === "undefined") return () => undefined;
+  const handler = () => onChange();
+  window.addEventListener(ACTIVITY_EVENT, handler);
+  window.addEventListener("storage", handler);
+  return () => {
+    window.removeEventListener(ACTIVITY_EVENT, handler);
+    window.removeEventListener("storage", handler);
+  };
+}
+
+/**
+ * Reescreve userId legado → uid Firebase (antes do flush sync).
+ * @returns true se algum evento mudou.
+ */
+export function reassignActivityUserIds(
+  fromUserIds: Iterable<string>,
+  toUserId: string,
+): boolean {
+  const target = String(toUserId || "").trim();
+  if (!target) return false;
+  const from = new Set(
+    [...fromUserIds].map((id) => String(id || "").trim()).filter(Boolean),
+  );
+  from.delete(target);
+  if (!from.size) return false;
+  const store = readStore();
+  let changed = false;
+  const events = store.events.map((event) => {
+    if (!from.has(event.userId)) return event;
+    changed = true;
+    return { ...event, userId: target };
+  });
+  if (!changed) return false;
+  writeStore({ events });
+  return true;
 }

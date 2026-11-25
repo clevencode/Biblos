@@ -2,7 +2,7 @@
  * Storage híbrido WebApp + Capacitor (fase 1: prefs KV).
  * Nativo → @capacitor/preferences; Web → localStorage.
  * Conteúdo bíblico: assets APK / Cache Storage (sem IndexedDB).
- * Pending: perfil, marks, notes, activity → Preferences nas próximas fases.
+ * Pending: perfil → Preferences nas próximas fases.
  */
 
 import { Capacitor } from "@capacitor/core";
@@ -179,6 +179,7 @@ export const STORAGE_PREF_KEYS = {
   planProgress: "biblos-plan-progress-v1",
   dayNotes: "biblos-day-notes-v1",
   verseNotes: "biblos-verse-notes-v1",
+  activity: "biblos-activity-v1",
   readingPlansCatalog: "biblos-reading-plans-catalog-v1",
 } as const;
 

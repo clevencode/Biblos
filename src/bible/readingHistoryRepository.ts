@@ -1,6 +1,7 @@
 /**
  * Repositório de histórico de leitura com isolamento por versão.
- * Lê/escreve via activityLog (localStorage), tipado como ReadingHistoryItem.
+ * Fonte: activityLog (local + Preferences + sync Firestore users/{uid}/activity).
+ * Filtro de userId inclui legacyLocalId (leituras pré-login).
  */
 
 import {

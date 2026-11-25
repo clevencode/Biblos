@@ -80,7 +80,15 @@ async function openApkUrl(url: string): Promise<void> {
   }
 }
 
-export function useApkUpdate(): ApkUpdateState {
+export type UseApkUpdateOptions = {
+  /** Update APK — só admin. Default: false. */
+  enabled?: boolean;
+};
+
+export function useApkUpdate(
+  options: UseApkUpdateOptions = {},
+): ApkUpdateState {
+  const enabled = Boolean(options.enabled);
   const [available, setAvailable] = useState(false);
   const [busy, setBusy] = useState(false);
   const [pendingFingerprint, setPendingFingerprint] = useState<string | null>(
@@ -89,6 +97,11 @@ export function useApkUpdate(): ApkUpdateState {
   const [sessionDismissed, setSessionDismissed] = useState(false);
 
   useEffect(() => {
+    if (!enabled) {
+      setAvailable(false);
+      setPendingFingerprint(null);
+      return;
+    }
     if (!Capacitor.isNativePlatform()) return;
     if (typeof navigator !== "undefined" && navigator.onLine === false) return;
 
@@ -134,7 +147,7 @@ export function useApkUpdate(): ApkUpdateState {
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, []);
+  }, [enabled]);
 
   const dismiss = useCallback(() => {
     setSessionDismissed(true);
@@ -142,6 +155,7 @@ export function useApkUpdate(): ApkUpdateState {
   }, []);
 
   const update = useCallback(async () => {
+    if (!enabled) return;
     const url = apkDownloadUrl();
     if (!url || busy) return;
     setBusy(true);
@@ -171,7 +185,7 @@ export function useApkUpdate(): ApkUpdateState {
     } finally {
       setBusy(false);
     }
-  }, [busy, pendingFingerprint]);
+  }, [busy, enabled, pendingFingerprint]);
 
   return {
     available: available && !sessionDismissed,

@@ -16,3 +16,8 @@ export function userVerseNotesDoc(uid: string) {
 export function userPlanProgressDoc(uid: string) {
   return `users/${uid}/planProgress/state`;
 }
+
+/** Journal d’activité / historique de lecture (cap local 300). */
+export function userActivityDoc(uid: string) {
+  return `users/${uid}/activity/state`;
+}

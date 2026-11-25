@@ -26,6 +26,8 @@ Snapshot vazio `fromCache` no APK **não** fecha como empty definitivo: mantém 
 
 **Progresso:** `planProgress` em localStorage + sync `users/{uid}/planProgress` via `user-sync` quando há Auth (anónimo ou Google) + rede. Upgrade para conta existente: merge local → flush. Volta online: flush automático.
 
+**Historique / activity:** `biblos-activity-v1` (Preferences no APK) + sync `users/{uid}/activity/state` no mesmo `user-sync` — sobrevive a limpar o storage do browser com a mesma conta.
+
 ## Sécurité
 
 Voir `firestore.rules` — lecture publique si `isPublished`.

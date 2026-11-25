@@ -7,6 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { reassignActivityUserIds } from "../../../../activityLog";
 import {
   applyFirebaseAuthUser,
   clearFirebaseFromProfile,
@@ -36,6 +37,14 @@ import {
   type LocalUserDataSnapshot,
 } from "../../../user-sync";
 import { mapAuthErrorToMessage } from "../mapAuthErrorToMessage";
+
+/** Liga eventos de activity ao uid Firebase antes do sync. */
+function migrateActivityUserIds(profile: UserProfile, uid: string): void {
+  const from = [profile.legacyLocalId, profile.id].filter(
+    (id): id is string => Boolean(id && id !== uid),
+  );
+  if (from.length) reassignActivityUserIds(from, uid);
+}
 
 export type AuthSessionState =
   | { status: "initializing" }
@@ -118,6 +127,8 @@ export function ConsumerAuthProvider({ children }: { children: ReactNode }) {
     let sawFirstAuth = false;
 
     function applyUser(next: ConsumerAuthUser) {
+      const before = loadOrCreateProfile();
+      migrateActivityUserIds(before, next.uid);
       const p = applyFirebaseAuthUser(next);
       setUser(next);
       setProfile(p);
@@ -191,6 +202,8 @@ export function ConsumerAuthProvider({ children }: { children: ReactNode }) {
           /* Conta existente (uid novo): fundir dados locais do anónimo/guest. */
           mergeLocalSnapshotIntoStores(snapshot);
         }
+        const before = loadOrCreateProfile();
+        migrateActivityUserIds(before, result.user.uid);
         setUser(result.user);
         setProfile(applyFirebaseAuthUser(result.user));
         setSession(sessionFromUser(result.user, result.user.uid));

@@ -598,6 +598,8 @@ type BibleReaderViewProps = {
   compactToolsMenu?: boolean;
   /** Viewport compact (sincronizado com `app.is-narrow`). */
   compactViewport?: boolean;
+  /** Download APK no menu — só admin Clevencode. */
+  allowApkDownload?: boolean;
 };
 
 /** Ids USFM (JHN, 1SA) — ignore un livre fantôme type VERSECARD. */
@@ -712,13 +714,14 @@ export function BibleReaderView({
   onReadingHistoryChange,
   compactToolsMenu = false,
   compactViewport = false,
+  allowApkDownload = false,
   openOverlayRequest = null,
   onOpenOverlayRequestConsumed,
   onReturnToProfile,
   onProfileReadingChromeChange,
 }: BibleReaderViewProps) {
   const { t } = useUiLocale();
-  const pwaInstall = usePwaInstall();
+  const pwaInstall = usePwaInstall({ allowApkDownload });
   const prefs = readPrefs();
   const prefsBookOk = isUsfmBookId(prefs.bookId || "");
   const initialParts = parseUsfmParts(
