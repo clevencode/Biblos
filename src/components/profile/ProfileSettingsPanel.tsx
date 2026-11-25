@@ -75,6 +75,9 @@ export function ProfileSettingsPanel({
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [prefsTab, setPrefsTab] = useState<PrefsTab>(initialPrefsTab);
+  const [online, setOnline] = useState(
+    () => typeof navigator === "undefined" || navigator.onLine,
+  );
 
   const markedCount = useMemo(() => {
     void activityTick;
@@ -97,6 +100,8 @@ export function ProfileSettingsPanel({
       setAccountOpen(false);
       return;
     }
+    /* Convidado: só gate de conta — sem abas de prefs. */
+    if (guest) setAccountOpen(false);
     let cancelled = false;
     void (async () => {
       const health = await getStorageHealth();
@@ -106,7 +111,19 @@ export function ProfileSettingsPanel({
     return () => {
       cancelled = true;
     };
-  }, [active, activityTick]);
+  }, [active, activityTick, guest]);
+
+  useEffect(() => {
+    function syncOnline() {
+      setOnline(navigator.onLine);
+    }
+    window.addEventListener("online", syncOnline);
+    window.addEventListener("offline", syncOnline);
+    return () => {
+      window.removeEventListener("online", syncOnline);
+      window.removeEventListener("offline", syncOnline);
+    };
+  }, []);
 
   async function handleSignOut() {
     if (signOutBusy) return;
@@ -142,11 +159,35 @@ export function ProfileSettingsPanel({
         showQuota={showQuota}
         quotaPct={quotaPct}
         settingsOpen={accountOpen}
-        onOpenSettings={() => setAccountOpen((open) => !open)}
+        onOpenSettings={
+          guest ? undefined : () => setAccountOpen((open) => !open)
+        }
       />
 
       <div className="profile-settings-groups">
-        {accountOpen ? (
+        {guest ? (
+          <div className="profile-guest-gate">
+            <p className="profile-guest-gate-notice" role="status">
+              {t("profile.guestGateNotice")}
+            </p>
+            {!online ? (
+              <p className="profile-guest-gate-offline" role="alert">
+                {t("auth.offlineRequired")}
+              </p>
+            ) : null}
+            <AccountSettingsSection
+              guest
+              loading={loading || !online}
+              profile={profile}
+              signOutBusy={signOutBusy}
+              deleteBusy={deleteBusy}
+              onRequestSignIn={onRequestSignIn}
+              onRefreshProfile={refreshProfile}
+              onSignOut={() => void handleSignOut()}
+              onDeleteAccount={() => void handleDeleteConfirm()}
+            />
+          </div>
+        ) : accountOpen ? (
           <AccountSettingsSection
             guest={guest}
             loading={loading}

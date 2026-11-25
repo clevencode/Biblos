@@ -72,6 +72,9 @@ export type UiCopyKey =
   | "profile.signIn"
   | "profile.signOut"
   | "profile.connectAccount"
+  | "profile.guestGateNotice"
+  | "auth.offlineRequired"
+  | "auth.loginFailed"
   | "profile.tab.account"
   | "profile.tab.prefs"
   | "profile.tab.storage"
@@ -360,6 +363,11 @@ const FR: Dict = {
   "profile.signIn": "Se connecter",
   "profile.signOut": "Se déconnecter",
   "profile.connectAccount": "Connecter un compte",
+  "profile.guestGateNotice":
+    "Un compte est requis pour accéder aux réglages, à l’historique et à la synchronisation.",
+  "auth.offlineRequired":
+    "Connexion Internet requise pour te connecter. Vérifie ton réseau puis réessaie.",
+  "auth.loginFailed": "La connexion a échoué.",
   "profile.tab.account": "Compte",
   "profile.tab.prefs": "Préfs",
   "profile.tab.storage": "Stockage",
@@ -675,6 +683,11 @@ const HT: Dict = {
   "profile.signIn": "Konekte",
   "profile.signOut": "Dekonekte",
   "profile.connectAccount": "Konekte yon kont",
+  "profile.guestGateNotice":
+    "Ou bezwen yon kont pou jwenn aksè a reglaj, istorik ak senkwonizasyon.",
+  "auth.offlineRequired":
+    "Ou bezwen entènèt pou konekte. Verifye rezo a epi eseye ankò.",
+  "auth.loginFailed": "Koneksyon an echwe.",
   "profile.tab.account": "Kont",
   "profile.tab.prefs": "Preferans",
   "profile.tab.storage": "Depo",

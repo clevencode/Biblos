@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { YvIcon } from "../../../components/YvIcon";
 import { useUiLocale } from "../../../i18n/UiLocaleContext";
 import { useConsumerAuth } from "./hooks/useConsumerAuth";
+import { mapAuthErrorToMessage } from "./mapAuthErrorToMessage";
 
 type SignInModalProps = {
   open: boolean;
@@ -40,6 +41,9 @@ export function SignInModal({
 
   const [busy, setBusy] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [offline, setOffline] = useState(
+    () => typeof navigator !== "undefined" && !navigator.onLine,
+  );
 
   busyRef.current = busy;
 
@@ -86,10 +90,18 @@ export function SignInModal({
       }
     }
 
+    function syncOnline() {
+      setOffline(!navigator.onLine);
+    }
+    syncOnline();
+    window.addEventListener("online", syncOnline);
+    window.addEventListener("offline", syncOnline);
     window.addEventListener("keydown", onKey);
     return () => {
       window.cancelAnimationFrame(focusTimer);
       window.removeEventListener("keydown", onKey);
+      window.removeEventListener("online", syncOnline);
+      window.removeEventListener("offline", syncOnline);
       document.body.style.overflow = prevOverflow;
       const restore = restoreFocusRef.current;
       restoreFocusRef.current = null;
@@ -124,12 +136,16 @@ export function SignInModal({
     if (busy) return;
     clearError();
     setLocalError(null);
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      setLocalError(t("auth.offlineRequired"));
+      return;
+    }
     setBusy(true);
     try {
       await signInWithGoogle();
       await finishOk();
-    } catch {
-      /* context */
+    } catch (err) {
+      setLocalError(mapAuthErrorToMessage(err) || t("auth.loginFailed"));
     } finally {
       setBusy(false);
     }
@@ -169,17 +185,23 @@ export function SignInModal({
         <p id={leadId} className="profile-onboarding-lead muted">
           {resolvedLead}
         </p>
-        {displayError ? (
-          <p className="profile-onboarding-error" role="alert">
-            {displayError}
+        {offline ? (
+          <p className="profile-onboarding-warn" role="status">
+            {t("auth.offlineRequired")}
           </p>
+        ) : null}
+        {displayError ? (
+          <div className="profile-onboarding-error-block" role="alert">
+            <p className="profile-onboarding-error-title">{t("auth.loginFailed")}</p>
+            <p className="profile-onboarding-error">{displayError}</p>
+          </div>
         ) : null}
 
         <button
           ref={googleBtnRef}
           type="button"
           className="auth-google-btn"
-          disabled={busy}
+          disabled={busy || offline}
           aria-busy={busy}
           onClick={() => void handleGoogle()}
         >

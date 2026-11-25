@@ -5985,10 +5985,56 @@ html[data-theme="dark"] .profile-download-btn {
   margin-top: 4px;
 }
 
+.profile-guest-gate {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.profile-guest-gate-notice {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent, #5b7cfa) 10%, var(--surface));
+  color: var(--text);
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.profile-guest-gate-offline,
+.profile-onboarding-warn {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: color-mix(in srgb, #b45309 12%, var(--surface));
+  color: color-mix(in srgb, #92400e 70%, var(--text));
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+
+.profile-onboarding-error-block {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--danger, #b42318) 10%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--danger, #b42318) 28%, transparent);
+}
+
+.profile-onboarding-error-title {
+  margin: 0;
+  color: var(--danger, #b42318);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
 .profile-onboarding-error {
   margin: 0;
   color: var(--danger, #b42318);
   font-size: 0.85rem;
+  line-height: 1.35;
 }
 
 .profile-onboarding-submit {
