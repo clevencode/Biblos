@@ -203,42 +203,12 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
       <div
         ref={ref}
         id={panelId}
-        className={`bible-yv-passage-scroll-panel top-floating-sheet is-open is-${step}${step === "book" ? " has-inline-search" : ""}`}
+        className={`bible-yv-passage-scroll-panel top-floating-sheet is-open is-${step}${step === "book" ? " has-book-search-bar" : ""}`}
         data-top-sheet="book"
         role="dialog"
         aria-modal="false"
         aria-label={ariaLabel}
       >
-        {step === "book" ? (
-          <div className="bible-yv-pick-inline-search" role="search">
-            <YvIcon
-              name="search"
-              className="bible-yv-pick-inline-search-icon"
-              aria-hidden
-            />
-            <input
-              type="search"
-              className="bible-yv-pick-inline-search-input"
-              value={bookSearchQuery}
-              onChange={(event) => onBookSearchChange(event.target.value)}
-              placeholder={searchPlaceholder}
-              aria-label={searchLabel}
-              enterKeyHint="search"
-              autoComplete="off"
-              autoCorrect="off"
-              spellCheck={false}
-            />
-            <button
-              type="button"
-              className="bible-yv-pick-inline-search-clear"
-              onClick={onClearBookSearch}
-              disabled={!bookSearchQuery.trim()}
-              aria-label={clearSearchLabel}
-            >
-              {clearSearchLabel}
-            </button>
-          </div>
-        ) : null}
         <div
           ref={gridRef}
           className={`bible-yv-pick-grid${step === "book" ? " is-books" : ""}`}
@@ -323,6 +293,41 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
               ? PASSAGE_LOADING_COPY.pickerVerseOpening
               : "Aucun verset"}
           </p>
+        ) : null}
+        {step === "book" ? (
+          <nav
+            className="bible-yv-pick-book-search-bar"
+            aria-label={searchLabel}
+          >
+            <div className="bible-yv-pick-book-search-pill" role="search">
+              <YvIcon
+                name="search"
+                className="bible-yv-pick-search-trigger-icon"
+                aria-hidden
+              />
+              <input
+                type="search"
+                className="bible-yv-pick-book-search-input"
+                value={bookSearchQuery}
+                onChange={(event) => onBookSearchChange(event.target.value)}
+                placeholder={searchPlaceholder}
+                aria-label={searchLabel}
+                enterKeyHint="search"
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+              />
+              <button
+                type="button"
+                className="bible-yv-pick-book-search-clear"
+                onClick={onClearBookSearch}
+                disabled={!bookSearchQuery.trim()}
+                aria-label={clearSearchLabel}
+              >
+                {clearSearchLabel}
+              </button>
+            </div>
+          </nav>
         ) : null}
       </div>
     );
