@@ -38,6 +38,8 @@ android/captures/
 android/local.properties
 android/key.properties
 android/keystore/
+android/app/google-services.json
+
 *.jks
 *.keystore
 *.apk
