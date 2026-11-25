@@ -806,6 +806,7 @@ export function BibleReaderView({
   /** Fin d’étape / fin de plan → retour plans après la note. */
   const [dayNoteReturnsToPlans, setDayNoteReturnsToPlans] = useState(false);
   const toolsMenuRef = useRef<HTMLDivElement | null>(null);
+  const planReturnTitleRef = useRef<HTMLSpanElement | null>(null);
   const verseSelectListRef = useRef<HTMLUListElement | null>(null);
   const verseSelectAnchoredRef = useRef(false);
   const pickSearchInputRef = useRef<HTMLInputElement | null>(null);
@@ -2733,6 +2734,30 @@ export function BibleReaderView({
   const showPlanReturnNav = Boolean(
     planReading && onBack && !showStudyReturnNav && !showCreateCard,
   );
+  const planReturnTitle = planReading?.planName?.trim() || "";
+
+  /** Nome completo numa linha: shrink-to-fit dentro da pill de altura fixa. */
+  useLayoutEffect(() => {
+    if (!showPlanReturnNav) return;
+    const el = planReturnTitleRef.current;
+    if (!el) return;
+
+    const fit = () => {
+      const maxPx = 15;
+      const minPx = 11;
+      let size = maxPx;
+      el.style.fontSize = `${size}px`;
+      while (size > minPx && el.scrollWidth > el.clientWidth + 0.5) {
+        size -= 0.5;
+        el.style.fontSize = `${size}px`;
+      }
+    };
+
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [showPlanReturnNav, planReturnTitle]);
 
   /** Ranges pré-calculados — evita min/max por verso no map. */
   const planVerseRangeFull = Boolean(
@@ -3281,8 +3306,7 @@ export function BibleReaderView({
 
   function renderPlanReturnNav() {
     if (!planReading || !onBack) return null;
-    const planLabel =
-      planReading.planName?.trim() || t("plan.returnToPlans");
+    const planLabel = planReturnTitle || t("plan.returnToPlans");
     const actionLabel = t("plan.returnAction");
     const stageIdx = planReading.stageIndex ?? 1;
     const stageTotal = planReading.stageCount ?? 1;
@@ -3291,15 +3315,24 @@ export function BibleReaderView({
     const dayTotal =
       planReading.stageDayCount ?? planReading.stepCount ?? 0;
     const stageTitle = planReading.stageName?.trim();
-    const stageText = `${t("bible.planStage", { n: stageIdx })}${
-      stageTotal > 1 ? `/${stageTotal}` : ""
-    }`;
-    const progressBits = [
-      stageText,
-      dayTotal > 1 ? `${dayIdx}/${dayTotal}` : null,
-    ].filter(Boolean);
-    const progressLabel = progressBits.join(" · ");
-    const fullLabel = [actionLabel, planLabel, progressLabel, stageTitle]
+    const dayProgress =
+      dayTotal > 0 ? `${dayIdx}/${dayTotal}` : null;
+    const stageProgress =
+      stageTotal > 1 ? `${stageIdx}/${stageTotal}` : null;
+    const hasProgress = Boolean(stageProgress || dayProgress);
+    const fullLabel = [
+      actionLabel,
+      planLabel,
+      stageTitle,
+      stageProgress
+        ? t("bible.planStage", { n: stageIdx }) +
+          (stageTotal > 1 ? `/${stageTotal}` : "")
+        : null,
+      dayProgress
+        ? t("bible.planDay", { n: dayIdx }) +
+          (dayTotal > 1 ? `/${dayTotal}` : "")
+        : null,
+    ]
       .filter(Boolean)
       .join(" · ");
     return (
@@ -3316,11 +3349,23 @@ export function BibleReaderView({
               className="bible-plan-return-nav-icon"
             />
             <span className="bible-plan-return-nav-copy">
-              <span className="bible-plan-return-nav-verb">
-                {actionLabel}
-                {progressLabel ? ` · ${progressLabel}` : ""}
+              <span className="bible-plan-return-nav-verb">{actionLabel}</span>
+              <span
+                ref={planReturnTitleRef}
+                className="bible-plan-return-nav-ref"
+              >
+                {planLabel}
               </span>
-              <span className="bible-plan-return-nav-ref">{planLabel}</span>
+            </span>
+            <span
+              className={`bible-plan-return-nav-progress${
+                hasProgress ? "" : " is-empty"
+              }${stageProgress && dayProgress ? " is-stacked" : ""}`}
+              aria-hidden
+            >
+              {stageProgress ? <span>{stageProgress}</span> : null}
+              {dayProgress ? <span>{dayProgress}</span> : null}
+              {!hasProgress ? "\u00a0" : null}
             </span>
           </button>
         </div>

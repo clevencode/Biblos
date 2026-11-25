@@ -2,12 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ShellPageTopbar } from "../../../components/ShellPageTopbar";
 import { YvIcon } from "../../../components/YvIcon";
 import { isPassageRef } from "../../../youversion/usfm";
-import {
-  calendarPlanJour,
-  formatPlanTileDate,
-  latestPlanJour,
-  planJourDate,
-} from "../domain/planCalendar";
+import { calendarPlanJour, latestPlanJour } from "../domain/planCalendar";
 import { loadDayNote } from "../domain/planDayNote";
 import { PlanPersonalNotePanel } from "./PlanStageNotePanel";
 import {
@@ -452,33 +447,23 @@ export function PlanWorkspacePanel({
     );
   }
 
+  const returnAction = t("plan.returnAction");
+  const returnTarget = t("plan.returnToPlans");
+  const returnLabel = `${returnAction} · ${returnTarget}`;
+
   return (
-    <div className="today-view panel-nota-content plan-yv plan-yv--workspace">
-      <ShellPageTopbar
-        className="plan-yv-topbar"
-        title={planTitle}
-        subtitle={t("shell.plan")}
-        leading={
-          <button
-            type="button"
-            className="plan-yv-chrome-back"
-            onClick={() => onLeave?.()}
-            aria-label="Retour aux plans"
-          >
-            <YvIcon name="chevron_left" className="plan-yv-chrome-back-icon" />
-          </button>
-        }
-      />
+    <div className="today-view panel-nota-content plan-yv plan-yv--workspace has-plan-return">
+      <ShellPageTopbar className="plan-yv-topbar" title={planTitle} />
       <div className="plan-yv-main">
       {days.length ? (
         <section
           className={`plan-yv-timeline${hasStages ? " has-stages" : ""}`}
-          aria-label={hasStages ? "Navigation du plan" : "Progression du plan"}
+          aria-label={hasStages ? t("plan.stages") : t("plan.days")}
         >
           {hasStages && selectedStage ? (
             <div className="plan-yv-stage-catalog">
               <p className="plan-yv-section-label" id="plan-yv-stages-label">
-                Étapes
+                {t("plan.stages")}
               </p>
               <div
                 ref={stagesStripRef}
@@ -517,7 +502,7 @@ export function PlanWorkspacePanel({
                         .join(" ")}
                       onClick={() => selectStage(stage)}
                       title={`${stage.title} · ${stageDoneCountLocal}/${stageTotalLocal}`}
-                      aria-label={`Étape ${stage.id} · ${stage.title} · ${stageDoneCountLocal} sur ${stageTotalLocal}`}
+                      aria-label={`${t("bible.planStage", { n: stage.id })} · ${stage.title} · ${stageDoneCountLocal}/${stageTotalLocal}`}
                     >
                       <span
                         className="plan-yv-stage-num"
@@ -526,7 +511,7 @@ export function PlanWorkspacePanel({
                       >
                         {stageDone ? "✓" : stage.id}
                       </span>
-                      <span className="plan-yv-stage-name">{stage.title}</span>
+                      <span className="sr-only">{stage.title}</span>
                     </button>
                   );
                 })}
@@ -537,12 +522,12 @@ export function PlanWorkspacePanel({
           <div className="plan-yv-days-block">
             <div className="plan-yv-days-head">
               <p className="plan-yv-section-label" id="plan-yv-days-label">
-                {hasStages && selectedStage
-                  ? `Étape ${selectedStage.id}`
-                  : "Jours"}
+                {hasStages && selectedStage?.title
+                  ? selectedStage.title
+                  : t("plan.days")}
               </p>
               {selectedDay?.jour === planJour ? (
-                <span className="plan-yv-days-today">Aujourd’hui</span>
+                <span className="plan-yv-days-today">{t("plan.today")}</span>
               ) : null}
             </div>
             <div
@@ -555,9 +540,6 @@ export function PlanWorkspacePanel({
                 const selected = day.jour === selectedDay?.jour;
                 const read = isJourComplete(progress, day.jour);
                 const isCurrent = day.jour === planJour;
-                const startDate = progress?.startedAt;
-                const realDate = startDate ? planJourDate(startDate, day.jour) : null;
-                const dateLabel = realDate ? formatPlanTileDate(realDate) : "Jour";
                 const tileNum = hasStages ? idx + 1 : day.jour;
                 return (
                   <button
@@ -577,11 +559,10 @@ export function PlanWorkspacePanel({
                     onClick={() => setSelectedJour(day.jour)}
                     aria-label={[
                       hasStages && selectedStage
-                        ? `Étape ${selectedStage.id}, jour ${tileNum}`
-                        : `Jour ${day.jour}`,
-                      realDate ? dateLabel : null,
+                        ? `${t("bible.planStage", { n: selectedStage.id })}, ${t("bible.planDay", { n: tileNum })}`
+                        : t("bible.planDay", { n: day.jour }),
                       selected ? "sélectionné" : null,
-                      isCurrent ? "jour actuel" : null,
+                      isCurrent ? t("plan.today") : null,
                       read ? "terminé" : null,
                     ]
                       .filter(Boolean)
@@ -593,7 +574,6 @@ export function PlanWorkspacePanel({
                       </span>
                     ) : null}
                     <span className="plan-yv-day-num">{tileNum}</span>
-                    <span className="plan-yv-day-label">{dateLabel}</span>
                   </button>
                 );
               })}
@@ -617,38 +597,70 @@ export function PlanWorkspacePanel({
           <div className="plan-yv-hero-top">
             <p className="plan-yv-hero-eyebrow">
               {displayJourIndex > 0
-                ? `Jour ${displayJourIndex}${displayProgressTotal > 0 ? ` sur ${displayProgressTotal}` : ""}`
-                : "Lecture du jour"}
-              {selectedDay.jour === planJour ? " · Aujourd’hui" : null}
+                ? t("plan.dayOf", {
+                    done: displayJourIndex,
+                    total: Math.max(displayProgressTotal, displayJourIndex),
+                  })
+                : t("plan.dayReading")}
+              {selectedDay.jour === planJour
+                ? ` · ${t("plan.today")}`
+                : null}
             </p>
           </div>
           {passageRefs.length > 0 || passageLabel ? (
             <PassageRefsList
-              refs={passageRefs.length ? passageRefs : [passageLabel || "Passage du jour"]}
+              refs={
+                passageRefs.length
+                  ? passageRefs
+                  : [passageLabel || t("plan.dayPassage")]
+              }
               className="plan-yv-hero-title"
               done={passageRead}
-              onToggleDone={selectedDay ? markJourDone : undefined}
+              onToggleDone={
+                selectedDay && (passageRead || hasStartedPlan)
+                  ? markJourDone
+                  : undefined
+              }
               onOpenRef={canOpenPassage ? openPassageAt : undefined}
             />
           ) : (
-            <h3 className="plan-yv-hero-title">Passage du jour</h3>
+            <h3 className="plan-yv-hero-title">{t("plan.dayPassage")}</h3>
           )}
           {readingMinutes ? (
             <p className="plan-yv-hero-meta">{readingMinutes}</p>
           ) : null}
-          <button
-            type="button"
-            className="plan-yv-start"
-            disabled={
-              !planComplete &&
-              !(passageRead && nextUnreadDay) &&
-              !canOpenPassage &&
-              !hasDescription
-            }
-            onClick={startReading}
-          >
-            {primaryCtaLabel}
-          </button>
+          <div className="plan-yv-hero-actions">
+            <button
+              type="button"
+              className="plan-yv-start"
+              disabled={
+                !planComplete &&
+                !(passageRead && nextUnreadDay) &&
+                !canOpenPassage &&
+                !hasDescription
+              }
+              onClick={startReading}
+            >
+              {primaryCtaLabel}
+            </button>
+            {hasDefinedChapter ? (
+              <button
+                type="button"
+                className={`plan-yv-note-btn${
+                  dayNoteDone || noteSaved ? " is-done" : ""
+                }`}
+                onClick={openDayNote}
+                aria-label={
+                  dayNoteDone || noteSaved
+                    ? t("plan.personalNoteDone")
+                    : t("plan.personalNote")
+                }
+                title={t("plan.personalNote")}
+              >
+                <YvIcon name="bookmark" className="plan-yv-note-btn-icon" />
+              </button>
+            ) : null}
+          </div>
           {passageRead && nextUnreadDay && canOpenPassage ? (
             <button
               type="button"
@@ -665,30 +677,29 @@ export function PlanWorkspacePanel({
         </p>
       )}
       </div>
-
-      {hasDefinedChapter ? (
-        <nav className="plan-yv-secondary" aria-label="Actions secondaires">
+      <nav className="plan-workspace-return-nav" aria-label={returnLabel}>
+        <div className="plan-workspace-return-nav-pill" role="group">
           <button
             type="button"
-            className={`plan-yv-secondary-row${dayNoteDone || noteSaved ? " is-done" : ""}`}
-            onClick={openDayNote}
+            className="plan-workspace-return-nav-main"
+            onClick={() => onLeave?.()}
+            aria-label={returnLabel}
           >
-            <span className="plan-yv-secondary-stack">
-              <span className="plan-yv-secondary-label">
-                {t("plan.personalNote")}
+            <YvIcon
+              name="chevron_left"
+              className="plan-workspace-return-nav-icon"
+            />
+            <span className="plan-workspace-return-nav-copy">
+              <span className="plan-workspace-return-nav-verb">
+                {returnAction}
               </span>
-              <span className="plan-yv-secondary-meta">
-                {dayNoteDone || noteSaved
-                  ? t("plan.personalNoteDone")
-                  : t("plan.personalNoteHint")}
+              <span className="plan-workspace-return-nav-ref">
+                {returnTarget}
               </span>
-            </span>
-            <span className="plan-yv-secondary-chevron" aria-hidden="true">
-              ›
             </span>
           </button>
-        </nav>
-      ) : null}
+        </div>
+      </nav>
     </div>
   );
 }

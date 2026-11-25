@@ -47,6 +47,11 @@ export type UiCopyKey =
   | "plan.review"
   | "plan.returnAction"
   | "plan.returnToPlans"
+  | "plan.stages"
+  | "plan.days"
+  | "plan.today"
+  | "plan.dayReading"
+  | "plan.dayPassage"
   | "plan.empty"
   | "plan.resume"
   | "plan.start"
@@ -326,6 +331,11 @@ const FR: Dict = {
   "plan.review": "Revoir",
   "plan.returnAction": "Retour",
   "plan.returnToPlans": "Plans",
+  "plan.stages": "Étapes",
+  "plan.days": "Jours",
+  "plan.today": "Aujourd’hui",
+  "plan.dayReading": "Lecture du jour",
+  "plan.dayPassage": "Passage du jour",
   "plan.empty": "Aucun plan disponible",
   "plan.resume": "Reprendre",
   "plan.start": "Commencer",
@@ -637,6 +647,11 @@ const HT: Dict = {
   "plan.review": "Revize",
   "plan.returnAction": "Tounen",
   "plan.returnToPlans": "Plan",
+  "plan.stages": "Etap",
+  "plan.days": "Jou",
+  "plan.today": "Jodi a",
+  "plan.dayReading": "Lekti jou a",
+  "plan.dayPassage": "Pasaj jou a",
   "plan.empty": "Pa gen plan disponib",
   "plan.resume": "Rekòmanse",
   "plan.start": "Kòmanse",

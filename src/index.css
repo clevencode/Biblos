@@ -1137,9 +1137,11 @@ html[data-theme="dark"] .mode-tabs {
   opacity: 0.55;
 }
 
-/* Plan workspace aberto: navbar totalmente oculta (retorno via topbar ←). */
+/* Plan workspace aberto: shell navbar oculta (retorno via plan-workspace-return-nav). */
 .app:has(.plan-workspace-host) .mode-tabs,
-.app:has(.plan-workspace-host) .mode-tabs.is-immersive-hidden {
+.app:has(.plan-workspace-host) .mode-tabs.is-immersive-hidden,
+html:has(.plan-workspace-return-nav) .note-shell .mode-tabs,
+.app:has(.plan-workspace-return-nav) .note-shell .mode-tabs {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
@@ -1148,6 +1150,131 @@ html[data-theme="dark"] .mode-tabs {
 .app:has(.plan-workspace-host) .mode-tabs.is-immersive-hidden .mode-tabs-hub {
   pointer-events: none;
   opacity: 0;
+}
+
+/*
+ * Navbar retorno workspace → hub de planos
+ * (mesmo contrato study-return / plan-return do leitor).
+ */
+.plan-workspace-return-nav {
+  position: relative;
+  z-index: 2;
+  flex: none;
+  width: 100%;
+  margin: 0;
+  padding: 0 var(--mode-tabs-inset-x, 12px)
+    calc(var(--mode-tabs-float-gap, 14px) + env(safe-area-inset-bottom, 0px));
+  border: 0;
+  background: transparent;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  box-sizing: border-box;
+  font-family: var(--font-ui);
+  color: var(--yv-text, var(--text));
+}
+
+.plan-workspace-return-nav::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: calc(-1 * var(--mode-tabs-mat-fade, 32px));
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to top,
+    var(--mode-tabs-mat-bg, var(--bible-nav-surface, var(--bg))) 0%,
+    var(--mode-tabs-mat-bg, var(--bible-nav-surface, var(--bg)))
+      calc(100% - var(--mode-tabs-mat-fade, 32px)),
+    transparent 100%
+  );
+}
+
+.plan-workspace-return-nav-pill {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: var(--mode-tabs-hub-size, 50px);
+  min-height: var(--mode-tabs-hub-size, 50px);
+  margin: 0;
+  padding: 4px;
+  box-sizing: border-box;
+  border: 1px solid
+    var(
+      --mode-tabs-outline,
+      var(--yv-outline, color-mix(in srgb, var(--line) 70%, transparent))
+    );
+  border-radius: 999px;
+  background: var(--bible-nav-surface, var(--bg));
+  color: inherit;
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--ink) 8%, transparent),
+    0 8px 24px color-mix(in srgb, var(--ink) 14%, transparent);
+}
+
+.plan-workspace-return-nav-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0 14px 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--mode-tabs-hub-bg, var(--ink, #0d1117));
+  color: var(--mode-tabs-hub-fg, var(--paper, #fff));
+  font: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.plan-workspace-return-nav-main:hover {
+  filter: brightness(1.06);
+}
+
+.plan-workspace-return-nav-main:focus-visible {
+  outline: 2px solid var(--accent, #5b7cfa);
+  outline-offset: 2px;
+}
+
+.plan-workspace-return-nav-copy {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35em;
+  min-width: 0;
+  flex: 1 1 auto;
+  text-align: left;
+}
+
+.plan-workspace-return-nav-verb {
+  flex: none;
+  font-size: 0.92rem;
+  font-weight: 600;
+  opacity: 0.78;
+}
+
+.plan-workspace-return-nav-ref {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.plan-workspace-return-nav-icon {
+  width: 1.2rem;
+  height: 1.2rem;
+  flex: none;
+  opacity: 0.92;
 }
 
 .account-shell-panel {
@@ -7969,14 +8096,33 @@ html[data-theme="dark"] .profile-download-btn {
 .plan-discover-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 10px;
-  max-width: 40rem;
-  margin: 0 auto;
+  gap: 12px;
+  max-width: none;
+  margin: 0;
   width: 100%;
+  list-style: none;
+  padding: 0;
 }
 
 .plan-discover-grid.is-stack {
-  gap: 10px;
+  gap: 12px;
+}
+
+.plan-discover-grid > li,
+.plan-discover-grid > [role="listitem"] {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+/* Hub minimalista: sem topbar / tabs — só grelha. */
+.plan-discover.is-minimal-hub .plan-discover-scroller {
+  padding-top: max(12px, env(safe-area-inset-top, 0px));
+}
+
+.plan-discover.is-minimal-hub .plan-discover-surface {
+  --plan-gallery-body-min: calc(3 * var(--plan-gallery-row-min, 6.25rem) + 2 * 12px);
 }
 
 .plan-card {
@@ -9292,8 +9438,12 @@ html[data-theme="dark"] .home-pill.is-accent {
   height: 100%;
   min-height: 0;
   overflow: hidden;
-  /* Navbar oculta no workspace — só safe-area. */
-  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  /* Navbar shell oculta — reserva para return nav inferior. */
+  padding-bottom: 0;
+}
+
+.panel-nota-content.plan-yv--workspace.has-plan-return {
+  padding-bottom: 0;
 }
 
 .plan-yv--workspace .plan-yv-main {
@@ -9314,12 +9464,6 @@ html[data-theme="dark"] .home-pill.is-accent {
   width: 100%;
 }
 
-.plan-yv--workspace .plan-yv-secondary {
-  flex: none;
-  width: auto;
-  margin: 12px max(var(--mobile-gutter, 14px), env(safe-area-inset-right, 0px)) 0
-    max(var(--mobile-gutter, 14px), env(safe-area-inset-left, 0px));
-}
 
 .plan-yv--workspace .plan-yv-timeline,
 .plan-yv--workspace .plan-yv-hero {
@@ -9461,32 +9605,38 @@ html[data-theme="dark"] .home-pill.is-accent {
   display: none;
 }
 
+/* Etapas: tamanho único em todos os estados (só nº/✓; título fica no label abaixo). */
 .plan-yv-stage {
-  flex: 0 0 auto;
-  max-width: min(9.5rem, 42vw);
+  --plan-stage-size: 40px;
+  flex: 0 0 var(--plan-stage-size);
+  width: var(--plan-stage-size);
+  height: var(--plan-stage-size);
+  min-width: var(--plan-stage-size);
+  min-height: var(--plan-stage-size);
+  max-width: var(--plan-stage-size);
+  max-height: var(--plan-stage-size);
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: 8px;
-  min-height: 40px;
-  padding: 6px 14px 6px 6px;
+  place-items: center;
+  padding: 0;
   border: 1px solid transparent;
   border-radius: 999px;
   background: transparent;
   color: var(--muted);
   font-family: var(--font-ui);
   cursor: pointer;
+  box-sizing: border-box;
   transition:
     background 160ms ease,
     color 160ms ease,
-    border-color 160ms ease;
+    border-color 160ms ease,
+    box-shadow 160ms ease;
 }
 
 .plan-yv-stage-num {
   --stage-pct: 0;
   position: relative;
-  width: 22px;
-  height: 22px;
+  width: 28px;
+  height: 28px;
   display: grid;
   place-items: center;
   border-radius: 999px;
@@ -9497,7 +9647,7 @@ html[data-theme="dark"] .home-pill.is-accent {
       color-mix(in srgb, var(--surface) 70%, transparent) 0
     );
   color: inherit;
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   font-weight: var(--type-label-weight);
   line-height: 1;
   isolation: isolate;
@@ -9512,19 +9662,7 @@ html[data-theme="dark"] .home-pill.is-accent {
   z-index: -1;
 }
 
-.plan-yv-stage-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: var(--type-caption-size);
-  line-height: 1.25;
-  text-align: left;
-}
-
 .plan-yv-stage.is-active {
-  flex: 1 1 auto;
-  max-width: none;
-  min-width: 0;
   border-color: color-mix(in srgb, var(--text) 18%, transparent);
   background: var(--elevated);
   color: var(--text);
@@ -9619,13 +9757,13 @@ html[data-theme="dark"] .home-pill.is-accent {
 .plan-yv-day {
   position: relative;
   flex: 0 0 auto;
-  width: 64px;
-  min-height: 68px;
+  width: 56px;
+  min-height: 52px;
   display: grid;
   place-content: center;
   align-content: center;
-  gap: 3px;
-  padding: 10px 4px 12px;
+  gap: 0;
+  padding: 10px 4px;
   border: 1px solid color-mix(in srgb, var(--line) 85%, transparent);
   border-radius: 14px;
   background: color-mix(in srgb, var(--surface) 55%, transparent);
@@ -9933,6 +10071,15 @@ html[data-theme="dark"] .home-pill.is-accent {
     color 160ms ease;
 }
 
+/* Hero: marca secundária — CTA Continuer é o caminho principal. */
+.plan-yv-hero .plan-yv-ref-mark {
+  width: 28px;
+  height: 28px;
+  border-width: 1.25px;
+  font-size: 0.68rem;
+  opacity: 0.85;
+}
+
 .plan-yv-ref-mark:hover {
   border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
 }
@@ -9967,7 +10114,66 @@ ul.plan-yv-hero-title {
 }
 
 .plan-yv-hero .plan-yv-start {
+  margin-top: 0;
+}
+
+.plan-yv-hero-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
+  gap: 10px;
   margin-top: 6px;
+}
+
+.plan-yv-hero-actions .plan-yv-start {
+  width: auto;
+  min-width: 0;
+}
+
+.plan-yv-note-btn {
+  flex: none;
+  box-sizing: border-box;
+  width: 52px;
+  min-width: 52px;
+  min-height: 52px;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  color: var(--muted);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+.plan-yv-note-btn:hover {
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--line));
+  background: color-mix(in srgb, var(--elevated) 88%, transparent);
+}
+
+.plan-yv-note-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.plan-yv-note-btn.is-done {
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--text);
+}
+
+.plan-yv-note-btn-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  font-size: 1.25rem;
+  line-height: 1;
 }
 
 .plan-yv-empty {
@@ -11662,14 +11868,18 @@ html:has(.bible-plan-return-nav) .note-shell .mode-tabs,
 }
 
 .bible-plan-return-nav-pill {
+  --plan-return-pill-h: var(--mode-tabs-hub-size, 50px);
+  --plan-return-badge-w: 2.85rem;
   position: relative;
   z-index: 1;
   pointer-events: auto;
   display: flex;
   align-items: center;
-  width: min(100%, 22rem);
-  height: var(--mode-tabs-pill-h, 56px);
-  min-height: var(--mode-tabs-pill-h, 56px);
+  width: 100%;
+  max-width: none;
+  height: var(--plan-return-pill-h);
+  min-height: var(--plan-return-pill-h);
+  max-height: var(--plan-return-pill-h);
   margin: 0;
   padding: 4px;
   box-sizing: border-box;
@@ -11689,21 +11899,19 @@ html:has(.bible-plan-return-nav) .note-shell .mode-tabs,
 .bible-plan-return-nav-main {
   flex: 1 1 auto;
   min-width: 0;
+  width: 100%;
   height: 100%;
   margin: 0;
-  padding: 0 16px 0 14px;
-  display: flex;
+  padding: 0 6px 0 10px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) var(--plan-return-badge-w);
   align-items: center;
-  justify-content: flex-start;
   gap: 8px;
   border: 0;
   border-radius: 999px;
   background: var(--mode-tabs-hub-bg, var(--ink, #0d1117));
   color: var(--mode-tabs-hub-fg, var(--paper, #fff));
   font: inherit;
-  font-size: 0.92rem;
-  font-weight: 650;
-  letter-spacing: 0.01em;
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
@@ -11722,33 +11930,72 @@ html:has(.bible-plan-return-nav) .note-shell .mode-tabs,
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 1px;
+  justify-content: center;
+  gap: 2px;
   min-width: 0;
+  width: 100%;
+  text-align: left;
 }
 
 .bible-plan-return-nav-verb {
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  font-size: 0.62rem;
+  font-weight: 650;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  opacity: 0.72;
-  line-height: 1.1;
+  opacity: 0.68;
+  line-height: 1;
 }
 
 .bible-plan-return-nav-ref {
-  max-width: 100%;
+  min-width: 0;
+  width: 100%;
   overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 0.95rem;
-  font-weight: 650;
+  text-align: left;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
   line-height: 1.15;
 }
 
-.bible-plan-return-nav-icon {
-  width: 1.15rem;
-  height: 1.15rem;
+.bible-plan-return-nav-progress {
   flex: none;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  width: var(--plan-return-badge-w);
+  min-width: var(--plan-return-badge-w);
+  max-width: var(--plan-return-badge-w);
+  height: calc(var(--plan-return-pill-h) - 12px);
+  margin: 0;
+  padding: 0 4px;
+  box-sizing: border-box;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mode-tabs-hub-fg, #fff) 16%, transparent);
+  color: inherit;
+  font-size: 0.68rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  white-space: nowrap;
+}
+
+.bible-plan-return-nav-progress.is-stacked {
+  font-size: 0.62rem;
+}
+
+.bible-plan-return-nav-progress.is-empty {
+  visibility: hidden;
+}
+
+.bible-plan-return-nav-icon {
+  width: 1.2rem;
+  height: 1.2rem;
+  flex: none;
+  opacity: 0.92;
 }
 
 /* Menu float (compact FAB) — única exceção card flutuante */
