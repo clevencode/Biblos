@@ -19,7 +19,7 @@ Shell com **navbar radial** (`SHELL_TABS`: Bible · Plan).
 - Modo narrow + tab Bible → `immersiveHidden` na nav (`navHidden` do leitor).
 - **Profil + Settings** via hub Conta → `#panel-account` (`ProfileSettingsPanel`: header + grupos).
 - **Admin** (email Clevencode) via hub pill → `#panel-admin` (`AdminReadingPlansWorkspace`); fora do Profile.
-- **Plan hub** (`PlanDiscoverPanel`): hub minimalista — só grelha de cards a largura total (sem topbar / tabs). Workspace aberto → navbar shell oculta; navbar inferior **Retour · Plans** → hub. Workspace → `openPlanAtJour` → leitor (`planReading`); no leitor, navbar inferior **Retour · [plano]** chama `returnFromPlanReading`. Note pessoal opcional só no workspace.
+- **Plan hub** (`PlanDiscoverPanel`): hub minimalista — só grelha de cards a largura total (sem topbar / tabs). Workspace aberto → navbar shell oculta; navbar inferior **Retour · [nome do plano]** → hub. Workspace → `openPlanAtJour` → leitor (`planReading`); no leitor, navbar inferior **Retour · [plano]** chama `returnFromPlanReading`. Note pessoal opcional só no workspace.
 - Tema global: `theme.ts` — `onSetTheme` no perfil (clair / sombre / système).
 
 ---

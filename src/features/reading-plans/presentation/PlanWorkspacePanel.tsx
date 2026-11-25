@@ -101,7 +101,9 @@ function PassageRefsList({
               }
               disabled={done}
             >
-              {done ? <span aria-hidden="true">✓</span> : null}
+              {done ? (
+                <YvIcon name="check" opsz={20} className="plan-yv-ref-mark-icon" />
+              ) : null}
             </button>
           ) : null}
         </li>
@@ -448,8 +450,7 @@ export function PlanWorkspacePanel({
   }
 
   const returnAction = t("plan.returnAction");
-  const returnTarget = t("plan.returnToPlans");
-  const returnLabel = `${returnAction} · ${returnTarget}`;
+  const returnLabel = `${returnAction} · ${planTitle}`;
 
   return (
     <div className="today-view panel-nota-content plan-yv plan-yv--workspace has-plan-return">
@@ -462,14 +463,11 @@ export function PlanWorkspacePanel({
         >
           {hasStages && selectedStage ? (
             <div className="plan-yv-stage-catalog">
-              <p className="plan-yv-section-label" id="plan-yv-stages-label">
-                {t("plan.stages")}
-              </p>
               <div
                 ref={stagesStripRef}
                 className="plan-yv-stages"
                 role="tablist"
-                aria-labelledby="plan-yv-stages-label"
+                aria-label={t("plan.stages")}
               >
                 {stages.map((stage) => {
                   const active = selectedStage.id === stage.id;
@@ -484,8 +482,9 @@ export function PlanWorkspacePanel({
                     stageTotalLocal > 0 && stageDoneCountLocal === stageTotalLocal;
                   const stagePct =
                     stageTotalLocal > 0
-                      ? Math.min(100, (stageDoneCountLocal / stageTotalLocal) * 100)
+                      ? Math.min(1, stageDoneCountLocal / stageTotalLocal)
                       : 0;
+                  const stageLabel = t("bible.planStage", { n: stage.id });
                   return (
                     <button
                       key={stage.id}
@@ -500,16 +499,27 @@ export function PlanWorkspacePanel({
                       ]
                         .filter(Boolean)
                         .join(" ")}
+                      style={{ ["--stage-pct" as string]: String(stagePct) }}
                       onClick={() => selectStage(stage)}
                       title={`${stage.title} · ${stageDoneCountLocal}/${stageTotalLocal}`}
-                      aria-label={`${t("bible.planStage", { n: stage.id })} · ${stage.title} · ${stageDoneCountLocal}/${stageTotalLocal}`}
+                      aria-label={`${stageLabel} · ${stage.title} · ${stageDoneCountLocal}/${stageTotalLocal}`}
                     >
-                      <span
-                        className="plan-yv-stage-num"
-                        style={{ ["--stage-pct" as string]: String(stagePct / 100) }}
-                        aria-hidden
-                      >
-                        {stageDone ? "✓" : stage.id}
+                      <span className="plan-yv-stage-face">
+                        <span
+                          className={`plan-yv-stage-check-slot${
+                            stageDone ? " is-on" : ""
+                          }`}
+                          aria-hidden
+                        >
+                          {stageDone ? (
+                            <YvIcon
+                              name="check"
+                              opsz={20}
+                              className="plan-yv-stage-check"
+                            />
+                          ) : null}
+                        </span>
+                        <span className="plan-yv-stage-label">{stageLabel}</span>
                       </span>
                       <span className="sr-only">{stage.title}</span>
                     </button>
@@ -570,7 +580,11 @@ export function PlanWorkspacePanel({
                   >
                     {read ? (
                       <span className="plan-yv-day-check" aria-hidden="true">
-                        ✓
+                        <YvIcon
+                          name="check"
+                          opsz={20}
+                          className="plan-yv-day-check-icon"
+                        />
                       </span>
                     ) : null}
                     <span className="plan-yv-day-num">{tileNum}</span>
@@ -693,9 +707,7 @@ export function PlanWorkspacePanel({
               <span className="plan-workspace-return-nav-verb">
                 {returnAction}
               </span>
-              <span className="plan-workspace-return-nav-ref">
-                {returnTarget}
-              </span>
+              <span className="plan-workspace-return-nav-ref">{planTitle}</span>
             </span>
           </button>
         </div>
