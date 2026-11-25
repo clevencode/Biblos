@@ -13444,21 +13444,10 @@ html[data-passage-bar-panel="test"] .bible-yv-pick-search-trigger.is-bare.is-on 
   background: var(--yv-chrome-hover, color-mix(in srgb, var(--text) 8%, transparent));
 }
 
-/* Picker: grupo esquerdo (search | ←+pill) · ✕ à direita — mesmo contrato. */
-.bible-yv-top.is-pick-book-open,
+/* Picker aberto: ← + nome do livro à esquerda · ✕ à direita. */
 .bible-yv-top.is-pick-step-open {
   justify-content: space-between;
   gap: 8px;
-}
-
-.bible-yv-top.is-pick-book-open .bible-yv-passage-chrome-cluster,
-.bible-yv-top.is-pick-book-open > .bible-yv-passage-roll {
-  flex: 1 1 auto;
-  min-width: 0;
-  margin-left: 0;
-  margin-right: 0;
-  display: flex;
-  justify-content: flex-start;
 }
 
 .bible-yv-top.is-pick-step-open .bible-yv-passage-chrome-cluster,
@@ -13472,20 +13461,11 @@ html[data-passage-bar-panel="test"] .bible-yv-pick-search-trigger.is-bare.is-on 
   justify-content: flex-start;
 }
 
-.bible-yv-top.is-pick-book-open .bible-yv-top-tools,
 .bible-yv-top.is-pick-step-open .bible-yv-top-tools {
   flex: none;
   margin-left: 0;
 }
 
-.bible-yv-top.is-pick-book-open
-  .bible-yv-top-passage-arrow.is-next.is-hidden-slot,
-.bible-yv-top.is-pick-book-open
-  .bible-yv-top-passage-arrow.is-prev.is-hidden-slot {
-  display: none;
-}
-
-/* Capítulo/verso: pill única estilo Menu (← + nome do livro). */
 .bible-yv-top.is-pick-step-open .bible-yv-top-passage.is-pick-back-nav {
   flex: none;
   opacity: 1;
@@ -13499,7 +13479,6 @@ html[data-passage-bar-panel="test"] .bible-yv-pick-search-trigger.is-bare.is-on 
   max-width: min(100%, 18rem);
 }
 
-.bible-yv-top.is-pick-book-open .bible-yv-top-passage-arrow.is-pick-dismiss,
 .bible-yv-top.is-pick-step-open .bible-yv-top-passage-arrow.is-pick-dismiss {
   background: transparent !important;
   border: 0 !important;
@@ -13507,111 +13486,9 @@ html[data-passage-bar-panel="test"] .bible-yv-pick-search-trigger.is-bare.is-on 
   color: var(--yv-text, var(--text));
 }
 
-.bible-yv-top.is-pick-book-open
-  .bible-yv-top-passage-arrow.is-pick-dismiss:hover:not(:disabled),
 .bible-yv-top.is-pick-step-open
   .bible-yv-top-passage-arrow.is-pick-dismiss:hover:not(:disabled) {
   background: color-mix(in srgb, var(--yv-text) 7%, transparent) !important;
-}
-
-/*
- * Campo de pesquisa flat: desde o canto do ícone search até ao ✕.
- * Sem pill / sem superfície arredondada.
- */
-.bible-yv-top.is-pick-search-flat {
-  gap: 4px;
-}
-
-.bible-yv-pick-flat-search {
-  flex: 1 1 auto;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  height: var(--hdr-size, var(--mobile-touch, 44px));
-  min-height: var(--hdr-size, var(--mobile-touch, 44px));
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  color: var(--yv-text, var(--text));
-}
-
-.bible-yv-pick-flat-search-icon {
-  flex: none;
-  width: 22px;
-  height: 22px;
-  font-size: 22px;
-  margin-inline-start: 2px;
-  color: var(--yv-text, var(--text));
-  opacity: 0.92;
-  pointer-events: none;
-}
-
-.bible-yv-pick-flat-search-input {
-  flex: 1 1 auto;
-  min-width: 0;
-  width: 100%;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  outline: none;
-  background: transparent;
-  color: var(--yv-text, var(--text));
-  font-family: var(--font-ui);
-  font-size: 0.95rem;
-  font-weight: 550;
-  line-height: 1.2;
-  -webkit-appearance: none;
-  appearance: none;
-}
-
-/* Nome do livro seleccionado (seed) — opaco, não placeholder. */
-.bible-yv-pick-flat-search-input.is-seed {
-  color: var(--yv-text, var(--text));
-  opacity: 1;
-  font-weight: 650;
-}
-
-.bible-yv-pick-flat-search-input::placeholder {
-  color: color-mix(in srgb, var(--yv-muted, var(--muted)) 92%, transparent);
-}
-
-.bible-yv-pick-flat-search-input::-webkit-search-cancel-button {
-  -webkit-appearance: none;
-  display: none;
-}
-
-.bible-yv-pick-flat-search-clear {
-  flex: none;
-  margin: 0;
-  padding: 0 6px;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  color: color-mix(in srgb, var(--yv-text, var(--text)) 72%, transparent);
-  font-family: var(--font-ui);
-  font-size: 0.82rem;
-  font-weight: 600;
-  line-height: 1;
-  cursor: pointer;
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.bible-yv-pick-flat-search-clear:hover:not(:disabled) {
-  color: var(--yv-text, var(--text));
-}
-
-.bible-yv-pick-flat-search-clear:disabled {
-  opacity: 0.35;
-  cursor: default;
-}
-
-.bible-yv-top.is-pick-search-flat .bible-yv-top-tools {
-  flex: none;
 }
 
 .bible-yv-pick-top-search {

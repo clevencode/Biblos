@@ -805,7 +805,6 @@ export function BibleReaderView({
   const planReturnTitleRef = useRef<HTMLSpanElement | null>(null);
   const verseSelectListRef = useRef<HTMLUListElement | null>(null);
   const verseSelectAnchoredRef = useRef(false);
-  const pickSearchInputRef = useRef<HTMLInputElement | null>(null);
   const restoreHistoryFocusRef = useRef(true);
   const historyWasOpenRef = useRef(false);
   const restoreToolsFocusRef = useRef(true);
@@ -1032,10 +1031,6 @@ export function BibleReaderView({
     passageStep,
     setPassageStep,
     passageRollOpen,
-    bookSearchQuery,
-    setBookSearchQuery,
-    pickSearchOpen,
-    setPickSearchOpen,
     wordSearchQuery,
     setWordSearchQuery,
     wordSearchScopeFilter,
@@ -1066,7 +1061,6 @@ export function BibleReaderView({
     getPickGridScroll,
     setDiscoveryExpandedBook,
     setDiscoveryVerseListScroll,
-    clearBookSearch,
     clearWordSearch,
     closeWordSearch,
     closePicker,
@@ -1089,20 +1083,6 @@ export function BibleReaderView({
     presentationInFlight: presentation.inFlight,
     markOverlayDismissSwallow,
   });
-
-  /* Picker livros: campo directo — foca e selecciona o nome do livro (seed). */
-  useLayoutEffect(() => {
-    if (passageStep !== "book" || !passageRollOpen) return;
-    const input = pickSearchInputRef.current;
-    if (!input) return;
-    input.focus({ preventScroll: true });
-    input.select();
-  }, [passageStep, passageRollOpen]);
-
-  useEffect(() => {
-    if (!passageRollOpen || passageStep !== "book") return;
-    if (!pickSearchOpen) setPickSearchOpen(true);
-  }, [passageRollOpen, passageStep, pickSearchOpen, setPickSearchOpen]);
 
   const pickerPassageChrome = useMemo(
     () => passagePickerChromeFromPresentation(presentation, activeSchema),
@@ -1900,18 +1880,19 @@ export function BibleReaderView({
     const unifiedRefPill = isPassagePillUnified();
     const passageRefLabel = formatPassagePillRef(bookTitle, chapterId);
     const hideSkipArrows = Boolean(pickerOpen && !rollOpen);
-    const showPickBack =
-      rollOpen && (passageStep === "chapter" || passageStep === "verse");
-    const showPickSearch = rollOpen && passageStep === "book";
-    const pickSearchExpanded = showPickSearch && pickSearchOpen;
-    /** Pill Menu-style: ← + nome do livro (+ capítulo se útil). */
+    const showPickReturnPill =
+      rollOpen &&
+      (passageStep === "book" ||
+        passageStep === "chapter" ||
+        passageStep === "verse");
+    /** Pill Menu-style: ← + nome do livro (+ capítulo no passo verso). */
     const pickBackLabel =
       passageStep === "verse"
         ? passageRefLabel
         : bookTitle.trim() || passageRefLabel;
 
-    /* Capítulo/verso: uma só pill de retorno (estilo Menu), sem grelha ←|pill|✕. */
-    if (showPickBack) {
+    /* Picker aberto: pill ← + livro (sem campo de pesquisa). */
+    if (showPickReturnPill) {
       return (
         <nav
           className={`bible-yv-compact-ref bible-yv-top-passage is-pick-back-nav${extraClass}${
@@ -1922,11 +1903,15 @@ export function BibleReaderView({
           <button
             type="button"
             className="bible-yv-section-return"
-            onClick={handlePickBack}
+            onClick={
+              passageStep === "book" ? () => closePicker() : handlePickBack
+            }
             aria-label={
-              passageStep === "verse"
-                ? `Retour aux chapitres de ${bookTitle}`
-                : "Retour à la liste des livres"
+              passageStep === "book"
+                ? `Replier le passage · ${pickBackLabel}`
+                : passageStep === "verse"
+                  ? `Retour aux chapitres de ${bookTitle}`
+                  : "Retour à la liste des livres"
             }
             title={pickBackLabel}
           >
@@ -1957,100 +1942,77 @@ export function BibleReaderView({
                 ? " is-roll-chrome-active"
                 : ""
           }${hideSkipArrows ? " is-skips-hidden" : ""}${
-            showPickSearch ? " is-pick-search" : ""
-          }${
-            pickSearchExpanded ? " is-pick-search-open" : ""
-          }${pickerChrome.chipsHydrating ? " is-hydrating" : ""}`}
+            pickerChrome.chipsHydrating ? " is-hydrating" : ""
+          }`}
         >
-          {rollOpen ? (
-            <span
-              className="bible-yv-top-passage-arrow is-prev is-pick-side is-hidden-slot"
-              aria-hidden
-            />
-          ) : (
-            renderTopPassageArrow(-1, hideSkipArrows)
-          )}
-          {pickSearchExpanded ? (
-            <span
-              className="bible-yv-top-passage-segments is-roll-open is-hidden-slot"
-              aria-hidden
-            />
-          ) : (
-            <div
-              className={`bible-yv-top-passage-segments${
-                unifiedRefPill ? " is-passage-ref-unified" : ""
-              }${rollOpen ? " is-roll-open" : ""}`}
-            >
-              {unifiedRefPill ? (
+          {renderTopPassageArrow(-1, hideSkipArrows)}
+          <div
+            className={`bible-yv-top-passage-segments${
+              unifiedRefPill ? " is-passage-ref-unified" : ""
+            }${rollOpen ? " is-roll-open" : ""}`}
+          >
+            {unifiedRefPill ? (
+              <BiblePassageChip
+                variant="ref"
+                label={bookTitle}
+                chapterLabel={chapterId}
+                loading={pickerChrome.chipsHydrating}
+                open={
+                  passageRollOpen &&
+                  (passageStep === "book" ||
+                    passageStep === "chapter" ||
+                    passageStep === "verse")
+                }
+                disabled={pickerChrome.controlsDisabled}
+                ariaLabel={
+                  passageRollOpen &&
+                  (passageStep === "book" ||
+                    passageStep === "chapter" ||
+                    passageStep === "verse")
+                    ? `Replier le passage · ${passageRefLabel}`
+                    : `Choisir un passage · ${passageRefLabel}`
+                }
+                title={passageRefLabel}
+                panelId={passagePickerPanelId}
+                onClick={togglePassagePickerRef}
+              />
+            ) : (
+              <>
                 <BiblePassageChip
-                  variant="ref"
+                  variant="book"
                   label={bookTitle}
-                  chapterLabel={chapterId}
                   loading={pickerChrome.chipsHydrating}
-                  open={
-                    passageRollOpen &&
-                    (passageStep === "book" ||
-                      passageStep === "chapter" ||
-                      passageStep === "verse")
-                  }
+                  open={passageRollOpen && passageStep === "book"}
                   disabled={pickerChrome.controlsDisabled}
                   ariaLabel={
-                    passageRollOpen &&
-                    (passageStep === "book" ||
-                      passageStep === "chapter" ||
-                      passageStep === "verse")
-                      ? `Replier le passage · ${passageRefLabel}`
-                      : `Choisir un passage · ${passageRefLabel}`
+                    passageRollOpen && passageStep === "book"
+                      ? `Replier · livre ${bookTitle}`
+                      : `Choisir un livre · ${bookTitle}`
                   }
-                  title={passageRefLabel}
+                  title={bookTitle}
                   panelId={passagePickerPanelId}
-                  onClick={togglePassagePickerRef}
+                  onClick={() => togglePassagePicker("book")}
                 />
-              ) : (
-                <>
-                  <BiblePassageChip
-                    variant="book"
-                    label={bookTitle}
-                    loading={pickerChrome.chipsHydrating}
-                    open={passageRollOpen && passageStep === "book"}
-                    disabled={pickerChrome.controlsDisabled}
-                    ariaLabel={
-                      passageRollOpen && passageStep === "book"
-                        ? `Replier · livre ${bookTitle}`
-                        : `Choisir un livre · ${bookTitle}`
-                    }
-                    title={bookTitle}
-                    panelId={passagePickerPanelId}
-                    onClick={() => togglePassagePicker("book")}
-                  />
-                  <span className="bible-yv-top-passage-divider" aria-hidden />
-                  <BiblePassageChip
-                    variant="chapter"
-                    label={chapterId}
-                    loading={pickerChrome.chipsHydrating}
-                    open={passageRollOpen && passageStep === "chapter"}
-                    disabled={pickerChrome.controlsDisabled}
-                    ariaLabel={
-                      passageRollOpen && passageStep === "chapter"
-                        ? `Replier · chapitre ${chapterId}`
-                        : `Choisir un chapitre · ${chapterId}`
-                    }
-                    title={t("bible.chapterN", { n: chapterId })}
-                    panelId={passagePickerPanelId}
-                    onClick={() => togglePassagePicker("chapter")}
-                  />
-                </>
-              )}
-            </div>
-          )}
-          {rollOpen ? (
-            <span
-              className="bible-yv-top-passage-arrow is-next is-pick-side is-hidden-slot"
-              aria-hidden
-            />
-          ) : (
-            renderTopPassageArrow(1, hideSkipArrows)
-          )}
+                <span className="bible-yv-top-passage-divider" aria-hidden />
+                <BiblePassageChip
+                  variant="chapter"
+                  label={chapterId}
+                  loading={pickerChrome.chipsHydrating}
+                  open={passageRollOpen && passageStep === "chapter"}
+                  disabled={pickerChrome.controlsDisabled}
+                  ariaLabel={
+                    passageRollOpen && passageStep === "chapter"
+                      ? `Replier · chapitre ${chapterId}`
+                      : `Choisir un chapitre · ${chapterId}`
+                  }
+                  title={t("bible.chapterN", { n: chapterId })}
+                  panelId={passagePickerPanelId}
+                  onClick={() => togglePassagePicker("chapter")}
+                />
+              </>
+            )}
+          </div>
+          {renderTopPassageArrow(1, hideSkipArrows)}
         </div>
       </nav>
     );
@@ -2094,7 +2056,7 @@ export function BibleReaderView({
         bookId={bookId}
         bookTitle={bookTitle}
         chapterId={chapterId}
-        bookSearchQuery={bookSearchQuery}
+        bookSearchQuery=""
         books={books}
         discovery={passageDiscovery}
         discoveryBusy={passageDiscoveryBusy}
@@ -4389,12 +4351,10 @@ export function BibleReaderView({
         className={`bible-yv-top is-free${planReading ? " is-plan-reading" : ""}${topSheetOpen ? " is-top-sheet-open" : ""}${surfaceChrome.rootClassPassageRollOpen ? " is-passage-roll-open" : ""}${catalogOfflineHint ? " is-catalog-offline" : ""}${compactToolsMenu ? " is-compact-tools" : ""}${
           presentation.inFlight && !presentation.isOpening ? " is-loading" : ""
         }${
-          passageRollOpen && passageStep === "book"
-            ? " is-pick-book-open is-pick-search-flat"
-            : ""
-        }${
           passageRollOpen &&
-          (passageStep === "chapter" || passageStep === "verse")
+          (passageStep === "book" ||
+            passageStep === "chapter" ||
+            passageStep === "verse")
             ? " is-pick-step-open"
             : ""
         }`}
@@ -4405,57 +4365,7 @@ export function BibleReaderView({
             : undefined
         }
       >
-        {passageRollOpen && passageStep === "book" ? (
-          <div className="bible-yv-pick-flat-search">
-            <YvIcon
-              name="search"
-              className="bible-yv-pick-flat-search-icon"
-              aria-hidden
-            />
-            <input
-              ref={pickSearchInputRef}
-              type="search"
-              className={`bible-yv-pick-flat-search-input${
-                bookSearchQuery.trim() ? "" : " is-seed"
-              }`}
-              value={
-                bookSearchQuery.trim()
-                  ? bookSearchQuery
-                  : formatPassagePillRef(bookTitle, chapterId)
-              }
-              placeholder={
-                discoverySplitSearch
-                  ? "Livre ou référence…"
-                  : "Livre, mot ou référence…"
-              }
-              autoComplete="off"
-              autoCorrect="off"
-              spellCheck={false}
-              enterKeyHint="search"
-              aria-label={
-                discoverySplitSearch
-                  ? "Rechercher un livre ou une référence"
-                  : "Rechercher un livre, un mot ou une référence"
-              }
-              onChange={(event) => setBookSearchQuery(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key !== "Escape") return;
-                event.preventDefault();
-                event.stopPropagation();
-                closePicker();
-              }}
-            />
-            <button
-              type="button"
-              className="bible-yv-pick-flat-search-clear"
-              onClick={clearBookSearch}
-              disabled={!bookSearchQuery.trim()}
-              aria-label={t("common.clear")}
-            >
-              {t("common.clear")}
-            </button>
-          </div>
-        ) : !menuJourneyOpen && !showCreateCard ? (
+        {!menuJourneyOpen && !showCreateCard ? (
           discoverySplitSearch ? (
             <div className="bible-yv-passage-chrome-cluster">
               {onBack && !planReading ? (
