@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { startTransition, useEffect, useMemo, useRef, useState } from "react";
 import { ShellPageTopbar } from "../../../components/ShellPageTopbar";
 import { YvIcon } from "../../../components/YvIcon";
 import { isPassageRef } from "../../../youversion/usfm";
@@ -14,7 +14,6 @@ import {
   passageHasDefinedChapter,
 } from "../domain/planReadingEstimates";
 import {
-  isJourComplete,
   isPlanComplete,
   loadPlanProgress,
   markJourComplete,
@@ -162,7 +161,9 @@ export function PlanWorkspacePanel({
   const { t } = useUiLocale();
   const [progressTick, setProgressTick] = useState(0);
   useEffect(() => {
-    const onChange = () => setProgressTick((n) => n + 1);
+    const onChange = () => {
+      startTransition(() => setProgressTick((n) => n + 1));
+    };
     window.addEventListener("biblos-plan-progress", onChange);
     return () => window.removeEventListener("biblos-plan-progress", onChange);
   }, []);
@@ -170,6 +171,11 @@ export function PlanWorkspacePanel({
   const progress = useMemo(
     () => progressProp ?? loadPlanProgress(plan.id),
     [plan.id, progressProp, progressTick],
+  );
+  /** Set O(1) para tiles/etapas — evita `.includes` repetido no render. */
+  const completedJours = useMemo(
+    () => new Set(progress?.completedJours ?? []),
+    [progress?.completedJours],
   );
   const planJour = calendarPlanJour(plan, progress);
   const resumeJour = useMemo(() => {
@@ -203,6 +209,29 @@ export function PlanWorkspacePanel({
       (day) => day.jour >= selectedStage.fromJour && day.jour <= selectedStage.toJour,
     );
   }, [days, hasStages, selectedStage]);
+  /** Progresso por etapa pré-calculado (negócio: done/total → anel --stage-pct). */
+  const stageProgressById = useMemo(() => {
+    const map = new Map<
+      number,
+      { done: number; total: number; pct: number; complete: boolean }
+    >();
+    for (const stage of stages) {
+      let done = 0;
+      let total = 0;
+      for (const day of days) {
+        if (day.jour < stage.fromJour || day.jour > stage.toJour) continue;
+        total += 1;
+        if (completedJours.has(day.jour)) done += 1;
+      }
+      map.set(stage.id, {
+        done,
+        total,
+        pct: total > 0 ? Math.min(1, done / total) : 0,
+        complete: total > 0 && done === total,
+      });
+    }
+    return map;
+  }, [stages, days, completedJours]);
   const stageDayTotal = stageDays.length;
   const stageDayIndex = hasStages
     ? Math.max(0, stageDays.findIndex((day) => day.jour === selectedJour) + 1)
@@ -262,22 +291,25 @@ export function PlanWorkspacePanel({
   useEffect(() => {
     if (!hasStages || !selectedStage || !stageDays.length) return;
     if (stageDays.some((day) => day.jour === selectedJour)) return;
-    const unread = stageDays.find((day) => !isJourComplete(progress, day.jour));
+    const unread = stageDays.find((day) => !completedJours.has(day.jour));
     stripScrollBehaviorRef.current = "auto";
     setSelectedJour(unread?.jour ?? stageDays[0]!.jour);
-  }, [hasStages, selectedStage?.id, selectedJour, stageDays, progress]);
+  }, [hasStages, selectedStage?.id, selectedJour, stageDays, completedJours]);
 
   const planTitle = plan.title.trim() || "Plan de lecture";
 
   const selectedDay =
     days.find((day) => day.jour === selectedJour) ?? days[0] ?? null;
   const passage = selectedDay?.passage ?? "";
-  const passageRefs = extractPassageRefs(passage);
+  const passageRefs = useMemo(
+    () => extractPassageRefs(passage),
+    [passage],
+  );
   const passageLabel =
     passageRefs.length > 1 ? passageRefs.join("; ") : (passageRefs[0] ?? passage);
   const firstPassage = passageRefs[0] ?? extractPassageRef(passage);
   const passageRead = selectedDay
-    ? isJourComplete(progress, selectedDay.jour)
+    ? completedJours.has(selectedDay.jour)
     : false;
   const canOpenPassage = Boolean(
     firstPassage && onStartPlanReading && isPassageRef(firstPassage),
@@ -298,19 +330,19 @@ export function PlanWorkspacePanel({
   const nextUnreadDay = useMemo(() => {
     if (!days.length) return null;
     const after = days.find(
-      (day) => day.jour > selectedJour && !isJourComplete(progress, day.jour),
+      (day) => day.jour > selectedJour && !completedJours.has(day.jour),
     );
     if (after) return after;
-    const any = days.find((day) => !isJourComplete(progress, day.jour));
+    const any = days.find((day) => !completedJours.has(day.jour));
     if (any && any.jour !== selectedJour) return any;
     return null;
-  }, [days, selectedJour, progress]);
+  }, [days, selectedJour, completedJours]);
 
   function pickStageJour(stage: { fromJour: number; toJour: number }) {
     const inStage = days.filter(
       (day) => day.jour >= stage.fromJour && day.jour <= stage.toJour,
     );
-    const unread = inStage.find((day) => !isJourComplete(progress, day.jour));
+    const unread = inStage.find((day) => !completedJours.has(day.jour));
     return unread?.jour ?? inStage[0]?.jour ?? stage.fromJour;
   }
 
@@ -507,19 +539,11 @@ export function PlanWorkspacePanel({
               >
                 {stages.map((stage) => {
                   const active = selectedStage.id === stage.id;
-                  const inStage = days.filter(
-                    (d) => d.jour >= stage.fromJour && d.jour <= stage.toJour,
-                  );
-                  const stageDoneCountLocal = inStage.filter((d) =>
-                    isJourComplete(progress, d.jour),
-                  ).length;
-                  const stageTotalLocal = inStage.length;
-                  const stageDone =
-                    stageTotalLocal > 0 && stageDoneCountLocal === stageTotalLocal;
-                  const stagePct =
-                    stageTotalLocal > 0
-                      ? Math.min(1, stageDoneCountLocal / stageTotalLocal)
-                      : 0;
+                  const stats = stageProgressById.get(stage.id);
+                  const stageDoneCountLocal = stats?.done ?? 0;
+                  const stageTotalLocal = stats?.total ?? 0;
+                  const stageDone = Boolean(stats?.complete);
+                  const stagePct = stats?.pct ?? 0;
                   const stageLabel = t("bible.planStage", { n: stage.id });
                   return (
                     <button
@@ -584,7 +608,7 @@ export function PlanWorkspacePanel({
             >
               {stageDays.map((day, idx) => {
                 const selected = day.jour === selectedDay?.jour;
-                const read = isJourComplete(progress, day.jour);
+                const read = completedJours.has(day.jour);
                 const isCurrent = day.jour === planJour;
                 const tileNum = hasStages ? idx + 1 : day.jour;
                 return (

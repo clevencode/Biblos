@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { YvIcon } from "./YvIcon";
 import type { DiscoveryJump, PassageDiscoverySections } from "../bible/passageDiscovery/types";
 import {
@@ -77,7 +78,7 @@ function renderBooks(
   });
 }
 
-export function BiblePassageDiscoveryList({
+export const BiblePassageDiscoveryList = memo(function BiblePassageDiscoveryList({
   sections,
   jumps,
   busy,
@@ -163,4 +164,4 @@ export function BiblePassageDiscoveryList({
       ) : null}
     </>
   );
-}
+});

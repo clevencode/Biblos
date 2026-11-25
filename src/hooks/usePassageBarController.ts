@@ -1,6 +1,7 @@
 import {
   startTransition,
   useCallback,
+  useDeferredValue,
   useEffect,
   useId,
   useLayoutEffect,
@@ -153,8 +154,10 @@ export function usePassageBarController({
   );
 
   const passageDiscoveryEnabled = passageRollOpen && passageStep === "book";
+  /** Input imediato; filtro discovery em baixa prioridade (padrão picker). */
+  const deferredBookSearchQuery = useDeferredValue(bookSearchQuery);
   const { result: passageDiscovery, busy: passageDiscoveryBusy } = usePassageDiscovery(
-    bookSearchQuery,
+    deferredBookSearchQuery,
     books,
     passageDiscoveryEnabled,
     textVersion,

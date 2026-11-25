@@ -271,10 +271,12 @@ function BiblosConsumerApp() {
   }, []);
 
   const returnFromPlanReading = useCallback(() => {
-    const jour = clearPlan();
-    if (typeof jour === "number") setWorkspaceJour(jour);
-    setTab("plan");
-    setWorkspaceResumeSeq((n) => n + 1);
+    startTransition(() => {
+      const jour = clearPlan();
+      if (typeof jour === "number") setWorkspaceJour(jour);
+      setTab("plan");
+      setWorkspaceResumeSeq((n) => n + 1);
+    });
   }, [clearPlan]);
 
   /** X do leitor: sai do plano e volta ao hub (não ao workspace). */

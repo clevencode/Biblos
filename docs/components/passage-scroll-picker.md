@@ -41,7 +41,7 @@ Ver tipos em `BiblePassageScrollPicker.tsx`:
 - **Scroll lista livros:** só passo `book`; restaura scroll da grelha uma vez por abertura.
 - **Acordeão capítulos:** sem query de texto, tap no livro expande `bible-yv-pick-chapter-panel` (grelha 5 colunas); `onPickChapterFromBook` → `pickChapter` (fecha no fluxo default).
 - **Busca inline:** campo `bible-yv-pick-inline-search` no topo do passo `book` (sem fluxo lupa → ecrã de pesquisa).
-- **Perf:** `startTransition` no expand; `memo` na row; mapa estável `chapterIdsByBook`; delegação de clique na grelha; `content-visibility` nas rows.
+- **Perf:** `startTransition` no expand; `useDeferredValue` na query de livros; `memo` na lista e na row; mapa estável `chapterIdsByBook`; delegação de clique na grelha; `content-visibility` nas rows.
 - **Acordeão versículos:** com query + hits, mantém `bible-yv-pick-verse-panel`.
 - **Passo `chapter`:** legado / inalcançável no fluxo canónico (chip capítulo abre `book` + expand do livro actual).
 - **Verse grid:** só se `VITE_PASSAGE_PICKER_FLOW` for `legacy`/`verse`/`0`.
