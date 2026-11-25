@@ -157,7 +157,15 @@ import {
   preloadBibleFonts,
   type BibleFontId,
 } from "../typography/bibleFonts";
+import {
+  BIBLE_FONT_SIZE_DEFAULT,
+  BIBLE_FONT_SIZE_MAX,
+  BIBLE_FONT_SIZE_MIN,
+  nearestBibleFontSize,
+  stepBibleFontSize,
+} from "../typography/bibleFontSize";
 import { BibleTypefaceStrip } from "./BibleTypefaceStrip";
+import { BibleFontSizeSlider } from "./BibleFontSizeSlider";
 import { useBibleCatalog } from "../hooks/useBibleCatalog";
 import { useLocalBundledBible } from "../bibleEngine";
 import {
@@ -179,16 +187,15 @@ import {
   encodeUsfmId,
 } from "../bible/navigation-flow";
 import type { Flashcard } from "../types";
+
 const STORAGE_KEY = BIBLE_READER_PREFS_KEY;
 /** Panneau verset : pas de Flashcard tant que l’onglet Cartes est désactivé. */
-const FONT_MIN = 15;
-const FONT_MAX = 28;
-const FONT_DEFAULT = 19;
-const FONT_STEP = 0.5;
+const FONT_MIN = BIBLE_FONT_SIZE_MIN;
+const FONT_MAX = BIBLE_FONT_SIZE_MAX;
+const FONT_DEFAULT = BIBLE_FONT_SIZE_DEFAULT;
 
 function clampFontSize(n: number) {
-  const stepped = Math.round(n / FONT_STEP) * FONT_STEP;
-  return Math.min(FONT_MAX, Math.max(FONT_MIN, stepped));
+  return nearestBibleFontSize(n);
 }
 /**
  * Título do capítulo: estado discreto + histerese (anti-tremedeira).
@@ -3222,7 +3229,9 @@ export function BibleReaderView({
         setFontSize(clampFontSize(size));
       },
       bumpFontSize: (delta) => {
-        setFontSize((n) => clampFontSize(n + delta));
+        startTransition(() => {
+          setFontSize((n) => stepBibleFontSize(n, delta > 0 ? 1 : -1));
+        });
       },
     });
   }, [
@@ -3722,40 +3731,10 @@ export function BibleReaderView({
             </p>
           </div>
         ) : null}
-        <div className="bible-yv-tools-font" role="group" aria-label={t("bible.fontSize")}>
-          <span className="bible-yv-tools-font-label">{t("bible.text")}</span>
-          <div className="bible-yv-font">
-            <button
-              type="button"
-              className="bible-yv-font-btn"
-              onClick={() =>
-                startTransition(() =>
-                  setFontSize((n) => clampFontSize(n - FONT_STEP)),
-                )
-              }
-              disabled={fontSize <= FONT_MIN}
-              aria-label={t("bible.fontSmaller")}
-            >
-              A−
-            </button>
-            <span className="bible-yv-font-value" aria-live="polite">
-              {Number.isInteger(fontSize) ? fontSize : fontSize.toFixed(1)}
-            </span>
-            <button
-              type="button"
-              className="bible-yv-font-btn"
-              onClick={() =>
-                startTransition(() =>
-                  setFontSize((n) => clampFontSize(n + FONT_STEP)),
-                )
-              }
-              disabled={fontSize >= FONT_MAX}
-              aria-label={t("bible.fontLarger")}
-            >
-              A+
-            </button>
-          </div>
-        </div>
+        <BibleFontSizeSlider
+          value={fontSize}
+          onChange={(size) => setFontSize(clampFontSize(size))}
+        />
         <BibleTypefaceStrip selected={bibleFont} onSelect={selectBibleFont} />
       </div>
     );

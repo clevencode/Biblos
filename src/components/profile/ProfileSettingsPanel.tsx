@@ -8,6 +8,7 @@ import { useUiLocale } from "../../i18n/UiLocaleContext";
 import { ACTIVITY_UI_ENABLED } from "../../activityLog";
 import { BIBLE_TEXT_VERSIONS } from "../../bible/bibleVersions";
 import type { ProfileReadingChrome } from "../../bible/profileReadingChrome";
+import { BibleFontSizeSlider } from "../BibleFontSizeSlider";
 import { AccountSettingsSection } from "./AccountSettingsSection";
 import { ProfileHeader } from "./ProfileHeader";
 import { SettingsGroup } from "./SettingsGroup";
@@ -89,11 +90,6 @@ export function ProfileSettingsPanel({
   const showQuota = guest && markedCount >= 7;
   const quotaPct = Math.min((markedCount / FREE_MARK_QUOTA) * 100, 100);
   const chromeReady = Boolean(readingChrome);
-  const fontSizeLabel = readingChrome
-    ? Number.isInteger(readingChrome.fontSize)
-      ? String(readingChrome.fontSize)
-      : readingChrome.fontSize.toFixed(1)
-    : "—";
 
   useEffect(() => {
     if (!active) {
@@ -374,52 +370,19 @@ export function ProfileSettingsPanel({
 
               {prefsTab === "reading" ? (
                 <SettingsGroup title={t(activeTabMeta.labelKey)}>
-                  <div className="settings-row is-static">
+                  <div className="settings-row is-static profile-font-row">
                     <YvIcon
                       name="settings"
                       className="settings-row-icon"
                       opsz={20}
                     />
-                    <span className="settings-row-body">
-                      <span className="settings-row-label">
-                        {t("bible.fontSize")}
-                      </span>
-                    </span>
-                    <div
-                      className="profile-theme-seg profile-font-seg"
-                      role="group"
-                      aria-label={t("bible.fontSize")}
-                    >
-                      <button
-                        type="button"
-                        disabled={
-                          !chromeReady ||
-                          (readingChrome != null &&
-                            readingChrome.fontSize <= readingChrome.fontMin)
-                        }
-                        aria-label={t("bible.fontSmaller")}
-                        onClick={() => readingChrome?.bumpFontSize(-0.5)}
-                      >
-                        A−
-                      </button>
-                      <span
-                        className="profile-font-size-value"
-                        aria-live="polite"
-                      >
-                        {fontSizeLabel}
-                      </span>
-                      <button
-                        type="button"
-                        disabled={
-                          !chromeReady ||
-                          (readingChrome != null &&
-                            readingChrome.fontSize >= readingChrome.fontMax)
-                        }
-                        aria-label={t("bible.fontLarger")}
-                        onClick={() => readingChrome?.bumpFontSize(0.5)}
-                      >
-                        A+
-                      </button>
+                    <div className="settings-row-body profile-font-slider-wrap">
+                      <BibleFontSizeSlider
+                        embed
+                        value={readingChrome?.fontSize ?? 19}
+                        disabled={!chromeReady || !readingChrome}
+                        onChange={(size) => readingChrome?.setFontSize(size)}
+                      />
                     </div>
                   </div>
                   {!chromeReady ? (
