@@ -3691,6 +3691,7 @@ export function BibleReaderView({
         role="menu"
         aria-label={t("bible.menuBible")}
       >
+        {/* Categoria navegação: pesquisa + histórico + surlignages (acima do divisor Texte). */}
         {discoverySplitSearch && !planReading ? (
           <button
             type="button"
@@ -3702,6 +3703,26 @@ export function BibleReaderView({
             <span>{t("word.panel")}</span>
           </button>
         ) : null}
+        {ACTIVITY_UI_ENABLED ? (
+          <button
+            type="button"
+            role="menuitem"
+            className="bible-yv-tools-item"
+            onClick={openHistoryFromMenu}
+          >
+            <YvIcon name="history" className="bible-yv-tools-item-icon" />
+            <span>{t("history.title")}</span>
+          </button>
+        ) : null}
+        <button
+          type="button"
+          role="menuitem"
+          className="bible-yv-tools-item"
+          onClick={openMarksFromMenu}
+        >
+          <YvIcon name="style" className="bible-yv-tools-item-icon" />
+          <span>{t("profile.marks")}</span>
+        </button>
         {pwaInstall.menuMode === "apk-download" ? (
           <button
             type="button"
@@ -3709,7 +3730,7 @@ export function BibleReaderView({
             className={`bible-yv-tools-item${pwaInstall.busy ? " is-busy" : ""}`}
             disabled={pwaInstall.busy}
             onClick={() => void pwaInstall.install({ source: "menu" })}
-            >
+          >
             <YvIcon name="download" className="bible-yv-tools-item-icon" />
             <span>
               {pwaInstall.busy ? t("pwaInstall.busy") : t("pwaInstall.apkCta")}
@@ -3757,27 +3778,6 @@ export function BibleReaderView({
             </button>
           </div>
         </div>
-        {/* Mesmo nível visual que a pesquisa — sem grupo Bibliothèque / card. */}
-        {ACTIVITY_UI_ENABLED ? (
-          <button
-            type="button"
-            role="menuitem"
-            className="bible-yv-tools-item"
-            onClick={openHistoryFromMenu}
-          >
-            <YvIcon name="history" className="bible-yv-tools-item-icon" />
-            <span>{t("history.title")}</span>
-          </button>
-        ) : null}
-        <button
-          type="button"
-          role="menuitem"
-          className="bible-yv-tools-item"
-          onClick={openMarksFromMenu}
-        >
-          <YvIcon name="style" className="bible-yv-tools-item-icon" />
-          <span>{t("profile.marks")}</span>
-        </button>
       </div>
     );
   }
