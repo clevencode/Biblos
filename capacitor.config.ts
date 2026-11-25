@@ -50,8 +50,10 @@ const config: CapacitorConfig = {
       overlaysWebView: false,
     },
     SplashScreen: {
+      /* Mantém fundo sólido até hideAppSplash após 1.º paint do shell (anti-CLS). */
       launchShowDuration: 0,
       launchAutoHide: false,
+      launchFadeOutDuration: 0,
       backgroundColor: "#0D1117",
       showSpinner: false,
     },

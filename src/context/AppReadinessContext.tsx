@@ -3,6 +3,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -14,13 +15,16 @@ import { syncNativeChrome } from "../nativeChrome";
 import { isPrefsMirrorReady } from "../services/storage/StorageAdapter";
 import { applyTheme } from "../theme";
 
-export type AppLifecyclePhase = "hydrating" | "local_ready" | "fully_synced";
+/**
+ * Boot leve: prefs + shell.
+ * Splash nativa só esconde após shell estável (2 rAF) — evita CLS empty→chrome.
+ * Loading de conteúdo fica por ecrã (skeleton / barra / stale).
+ */
+export type AppLifecyclePhase = "hydrating" | "local_ready";
 
 type AppReadinessContextValue = {
   phase: AppLifecyclePhase;
-  setCatalogHydrating: (value: boolean) => void;
-  setCatalogLocalReady: (value: boolean) => void;
-  /** Shell montado (home/today/profile) — evita deadlock se bible não montar. */
+  /** Shell montado (Plan / Bible / account). Preferir useLayoutEffect. */
   markShellReady: () => void;
   /** Prefs reader/tema já espelhadas no boot. */
   markPrefsHydrated: () => void;
@@ -28,14 +32,7 @@ type AppReadinessContextValue = {
 
 const AppReadinessContext = createContext<AppReadinessContextValue | null>(null);
 
-/** Shell montado sem hidratação activa (Plan / Bible não montada). */
-const SHELL_FALLBACK_MS = 900;
-/** Último recurso se a Bible ficar presa em hydrating. */
-const HYDRATING_FALLBACK_MS = 8000;
-
 export function AppReadinessProvider({ children }: { children: ReactNode }) {
-  const [catalogHydrating, setCatalogHydrating] = useState(true);
-  const [catalogLocalReady, setCatalogLocalReady] = useState(false);
   const [shellReady, setShellReady] = useState(false);
   const [prefsHydrated, setPrefsHydrated] = useState(isPrefsMirrorReady);
   const [, setBrowserOffline] = useState(readBrowserOffline);
@@ -44,20 +41,12 @@ export function AppReadinessProvider({ children }: { children: ReactNode }) {
   const markShellReady = useCallback(() => setShellReady(true), []);
   const markPrefsHydrated = useCallback(() => setPrefsHydrated(true), []);
 
-  const phase: AppLifecyclePhase = useMemo(() => {
-    if (!prefsHydrated) return "hydrating";
-    if (catalogLocalReady || (shellReady && !catalogHydrating)) {
-      return "local_ready";
-    }
-    if (shellReady && catalogHydrating) return "hydrating";
-    return "hydrating";
-  }, [prefsHydrated, catalogLocalReady, catalogHydrating, shellReady]);
+  const phase: AppLifecyclePhase =
+    prefsHydrated && shellReady ? "local_ready" : "hydrating";
 
   const value = useMemo<AppReadinessContextValue>(
     () => ({
       phase,
-      setCatalogHydrating,
-      setCatalogLocalReady,
       markShellReady,
       markPrefsHydrated,
     }),
@@ -76,30 +65,29 @@ export function AppReadinessProvider({ children }: { children: ReactNode }) {
   }, []);
 
   /**
-   * Fallback curto só sem hidratação activa (herança BibleReaderView manda).
-   * Com `catalogHydrating`, esperar o gate passage+boot — evita CLS pós-splash.
+   * Padrão anti-CLS definitivo:
+   * 1) sync chrome nativo na cor do tema
+   * 2) 2 rAF (layout + paint do shell)
+   * 3) hide splash (fundo sólido → UI já estável)
    */
-  useEffect(() => {
-    if (!shellReady || catalogLocalReady) return;
-    const ms = catalogHydrating ? HYDRATING_FALLBACK_MS : SHELL_FALLBACK_MS;
-    const id = window.setTimeout(() => {
-      setCatalogHydrating(false);
-      setCatalogLocalReady(true);
-    }, ms);
-    return () => window.clearTimeout(id);
-  }, [shellReady, catalogLocalReady, catalogHydrating]);
-
-  useEffect(() => {
-    if (phase === "hydrating" || splashHiddenRef.current) return;
+  useLayoutEffect(() => {
+    if (phase !== "local_ready" || splashHiddenRef.current) return;
     let cancelled = false;
 
     const reveal = async () => {
+      try {
+        await syncNativeChrome(applyTheme());
+      } catch {
+        /* ignore */
+      }
+      if (cancelled || splashHiddenRef.current) return;
+
       try {
         if (typeof document !== "undefined" && document.fonts?.ready) {
           await Promise.race([
             document.fonts.ready,
             new Promise<void>((resolve) => {
-              window.setTimeout(resolve, 450);
+              window.setTimeout(resolve, 120);
             }),
           ]);
         }
@@ -107,20 +95,14 @@ export function AppReadinessProvider({ children }: { children: ReactNode }) {
         /* ignore */
       }
       if (cancelled || splashHiddenRef.current) return;
-      /* Chrome nativo antes do fade — evita salto de safe-area/status bar. */
-      try {
-        await syncNativeChrome(applyTheme());
-      } catch {
-        /* ignore */
-      }
-      if (cancelled || splashHiddenRef.current) return;
-      /* 2 rAF: espera layout + paint (scroll boot) antes do fade do splash. */
+
       await new Promise<void>((resolve) => {
         window.requestAnimationFrame(() => {
           window.requestAnimationFrame(() => resolve());
         });
       });
       if (cancelled || splashHiddenRef.current) return;
+
       splashHiddenRef.current = true;
       void hideAppSplash();
     };

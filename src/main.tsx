@@ -10,7 +10,6 @@ import {
 } from "./features/reading-plans";
 import { ConsumerAuthProvider } from "./features/consumer-auth";
 import { ensureCleanSlate } from "./cleanSlate";
-import { syncNativeChrome } from "./nativeChrome";
 import { scheduleIdle } from "./scheduleIdle";
 import { applyTheme } from "./theme";
 import { bootPassageBarPanelLayout } from "./bible/passageBarPanelLayout";
@@ -33,11 +32,12 @@ bootPassageBarPanelLayout();
 bootKeyboardInsets();
 
 async function boot() {
+  /* Splash nativa fica até AppReadiness (shell + 2 rAF) — anti-CLS no relançamento. */
   await ensureCleanSlate();
   await hydratePrefsMirror(STORAGE_PREF_KEY_LIST);
   markPrefsMirrorReady();
 
-  void syncNativeChrome(applyTheme());
+  applyTheme();
   void requestPersistentStorage();
   void bootSwUpdateManager();
 
@@ -73,22 +73,57 @@ class BootErrorBoundary extends Component<{ children: ReactNode }, { error: Erro
 
   render() {
     if (this.state.error) {
+      const dark =
+        typeof document !== "undefined" &&
+        document.documentElement.dataset.theme !== "light";
       return (
-        <div className="boot-shell" role="alert">
-          <p className="boot-brand">Biblos</p>
-          <p className="boot-muted">Une erreur est survenue</p>
-          <p className="muted" style={{ maxWidth: "28rem", margin: "8px auto 0", fontSize: "0.85rem" }}>
+        <div
+          role="alert"
+          style={{
+            margin: 0,
+            minHeight: "100%",
+            display: "grid",
+            placeContent: "center",
+            gap: 6,
+            padding: 24,
+            textAlign: "center",
+            fontFamily: 'Outfit, "Avenir Next", "Segoe UI", sans-serif',
+            background: dark ? "#0d1117" : "#ffffff",
+            color: dark ? "#ffffff" : "#0d1117",
+          }}
+        >
+          <p style={{ margin: 0, fontSize: "1.4rem", fontWeight: 700 }}>
+            Biblos
+          </p>
+          <p
+            style={{
+              margin: 0,
+              fontSize: "0.9rem",
+              opacity: 0.7,
+            }}
+          >
+            Une erreur est survenue
+          </p>
+          <p
+            style={{
+              maxWidth: "28rem",
+              margin: "8px auto 0",
+              fontSize: "0.85rem",
+              opacity: 0.55,
+            }}
+          >
             {this.state.error.message}
           </p>
           <button
             type="button"
             style={{
               marginTop: 16,
+              justifySelf: "center",
               padding: "10px 16px",
               borderRadius: 10,
-              border: "1px solid #d1d5db",
-              background: "#fff",
-              color: "#0d1117",
+              border: dark ? "1px solid #374151" : "1px solid #d1d5db",
+              background: dark ? "#1f2937" : "#fff",
+              color: dark ? "#f9fafb" : "#0d1117",
               font: "inherit",
               fontWeight: 600,
               cursor: "pointer",

@@ -61,6 +61,14 @@ assert.equal(state.reload, false);
 /** Troca de capítulo mantém texto anterior (anti-CLS); barra no topbar. */
 assert.equal(displayPassageFromViewState(state)?.id, "JHN.1");
 
+const openingIdle = passagePresentation({
+  viewState: { status: "idle", schema: null },
+  loading: true,
+});
+assert.equal(openingIdle.isOpening, true);
+assert.equal(openingIdle.inFlight, true);
+assert.equal(openingIdle.statusLine, "opening");
+
 const openingCold = passagePresentation({
   viewState: { status: "loading", schema: jhn2, reload: false, stalePassage: null },
   loading: true,

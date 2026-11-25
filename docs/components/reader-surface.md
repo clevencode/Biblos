@@ -14,14 +14,14 @@
 | Estado UI | Componente / condição |
 |-----------|-------------------------|
 | Capítulo offline em falta | `BibleOfflineChapterGate` |
-| Abertura (boot) | Splash HTML até 1.ª superfície pronta (versos / gate / erro) |
+| Abertura (boot) | Splash cor até shell estável; sinal = `.bible-yv-top-loading-bar` (sem skeleton de versos) |
 | Reload / troca | Barra `.bible-yv-top-loading-bar` + `stalePassage` (texto anterior) |
 | Texto pronto | Grelha `.bible-verses` → botões `.bible-verse` |
 | Seleção activa | `showCreateCard` → `.bible-verse-actions` (marcas, partilha, flashcard) |
 
 A passagem bloqueia interacção quando overlays estão abertos (`readerSurfaceChrome.passageInputBlocked`).
 
-Navegação de capítulo: `.bible-passage-start-skips` (anterior, após o cabeçalho) + `.bible-passage-end-skips` (seguinte, no fim). Sem swipe; sem FAB ‹ ›. Sem skeleton de versículos — sinal de carga = barra do topbar.
+Navegação de capítulo: `.bible-passage-start-skips` (anterior, após o cabeçalho) + `.bible-passage-end-skips` (seguinte, no fim). Sem swipe; sem FAB ‹ ›. Carga: só barra do topbar; trocas com `stalePassage`.
 
 ---
 

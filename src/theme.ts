@@ -80,10 +80,13 @@ export function updateThemeColorMeta(resolved: ResolvedTheme): void {
 export function applyTheme(pref: ThemePref = loadThemePref()): ResolvedTheme {
   const resolved = resolveTheme(pref);
   const root = document.documentElement;
+  const bg = THEME_COLORS[resolved];
+  const fg = resolved === "dark" ? BRAND_PAPER : BRAND_INK;
   root.dataset.theme = resolved;
   root.style.colorScheme = resolved;
-  root.style.backgroundColor = "";
-  root.style.color = "";
+  /* Mantém inline até o CSS do tema estar activo — evita flash/CLS no relançamento. */
+  root.style.backgroundColor = bg;
+  root.style.color = fg;
   updateThemeColorMeta(resolved);
   return resolved;
 }

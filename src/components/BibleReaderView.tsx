@@ -101,7 +101,6 @@ import {
 import { usePassageViewModel } from "../hooks/usePassageViewModel";
 import { useBibleOverlayController } from "../hooks/useBibleOverlayController";
 import { usePassageBarController } from "../hooks/usePassageBarController";
-import { useAppReadiness } from "../context/AppReadinessContext";
 import { CircularColorEditor } from "./CircularColorEditor";
 import { ACTIVITY_UI_ENABLED } from "../activityLog";
 import { PlanStageNotePanel } from "../features/reading-plans/presentation/PlanStageNotePanel";
@@ -195,11 +194,6 @@ const CHROME_PROGRAMMATIC_LOCK_MS = 320;
 const FOCUS_DIM_CLEAR_PX = 6;
 
 const EMPTY_VERSES: number[] = [];
-
-/** Larguras % das linhas skeleton no cold open (anti-CLS). */
-const PASSAGE_OPENING_SKELETON_WIDTHS = [
-  92, 78, 88, 64, 84, 71, 90, 58, 86, 74, 81, 67,
-] as const;
 
 /** UI atom: hero ↔ compacto no topo (histerese). Devolve o próximo estado — React controla a classe. */
 function nextHeadCompact(compact: boolean, scrollTop: number): boolean {
@@ -738,7 +732,6 @@ export function BibleReaderView({
     (id: string) => resolveBookDisplay(id, books),
     [books],
   );
-  const { setCatalogHydrating, setCatalogLocalReady } = useAppReadiness();
   const [, setBibleId] = useState<number | null>(() => bible.id ?? LSG_BIBLE_ID);
   const [bookId, setBookId] = useState(initialParts.bookId);
   const [chapterId, setChapterId] = useState(initialParts.chapterId);
@@ -984,6 +977,7 @@ export function BibleReaderView({
     loadChapter: commitPassageLoad,
     retryChapter,
     presentation,
+    viewState: passageViewState,
     activeSchema,
   } = usePassageViewModel({
     active,
@@ -1563,7 +1557,9 @@ export function BibleReaderView({
 
   useEffect(() => {
     if (!active) return;
-    if (presentation.inFlight) return;
+    /* Não usar presentation.inFlight: idle também é inFlight na UI (barra),
+     * mas o 1.º loadChapter tem de correr a partir de idle — senão deadlock. */
+    if (passageViewState.status === "loading") return;
     if (passage?.verses?.length || passage?.content) return;
     if (!isUsfmBookId(bookId)) return;
     if (!booted.current) {
@@ -1586,7 +1582,7 @@ export function BibleReaderView({
     active,
     bookId,
     chapterId,
-    presentation.inFlight,
+    passageViewState.status,
     passage?.id,
     passage?.verses?.length,
     passage?.content,
@@ -2473,54 +2469,25 @@ export function BibleReaderView({
     versesInMemory: Boolean(passage?.verses?.length),
   });
 
-  /**
-   * Boot anti-CLS: splash só some com superfície + scroll inicial aplicados.
-   * Loads seguintes usam a barra do topbar + stalePassage (sem esvaziar o corpo).
-   * Com aba inactiva: não promover catalogLocalReady só pelo catálogo (shell fallback + Plan skeleton).
-   */
+  /** Gate / erro sem versos: não esperar scroll para marcar alinhamento inicial. */
   useEffect(() => {
-    const catalogLoading = catalogViewState.status === "loading";
-    const catalogReady = catalogViewState.status === "ready";
-
-    if (!active) {
-      setCatalogHydrating(catalogLoading);
-      return;
-    }
-
+    if (!active || bootAlignReadyRef.current) return;
     const hasPassageSurface = Boolean(
       passage?.verses?.length || passage?.content,
     );
-    const passageSurfaceReady =
-      hasPassageSurface ||
-      showOfflineChapterGateUi ||
-      (Boolean(passageLoadError) && !hasPassageSurface);
-
     if (
-      !bootAlignReadyRef.current &&
-      (showOfflineChapterGateUi ||
-        (Boolean(passageLoadError) && !hasPassageSurface))
+      showOfflineChapterGateUi ||
+      (Boolean(passageLoadError) && !hasPassageSurface)
     ) {
       bootAlignReadyRef.current = true;
       setBootAlignReady(true);
     }
-
-    setCatalogHydrating(
-      catalogLoading ||
-        (catalogReady && !(passageSurfaceReady && bootAlignReady)),
-    );
-    setCatalogLocalReady(
-      catalogReady && passageSurfaceReady && bootAlignReady,
-    );
   }, [
     active,
-    catalogViewState.status,
     passage?.verses?.length,
     passage?.content,
     passageLoadError,
     showOfflineChapterGateUi,
-    bootAlignReady,
-    setCatalogHydrating,
-    setCatalogLocalReady,
   ]);
 
   const locationLabel = selection?.length
@@ -3715,17 +3682,14 @@ export function BibleReaderView({
     const nestedFromMenu = wordSearchOpen || historyOpen || marksOpen;
     const verseOptionsOpen = showCreateCard;
     const menuSheetOpen = toolsMenuOpen || nestedFromMenu || verseOptionsOpen;
-    /** Menu: ✕ à esquerda (sem seta). Options: ✕ à direita. Jornadas: ←. */
+    /** Pill à esquerda; botão à direita (✕ menu/options, ← search/history/marks). */
     const isMenuRoot = Boolean(toolsMenuOpen && !nestedFromMenu && !verseOptionsOpen);
     const isOptionsRoot = Boolean(verseOptionsOpen);
-    const showSectionBack = menuSheetOpen && !isOptionsRoot;
-    /** History / marques / search / menu: sem ✕ à direita. Options: ✕ à direita. */
-    const showSectionClose =
-      menuSheetOpen &&
-      !historyOpen &&
-      !marksOpen &&
-      !wordSearchOpen &&
-      !isMenuRoot;
+    const showRightClose = Boolean(menuSheetOpen && (isMenuRoot || isOptionsRoot));
+    const showRightBack = Boolean(
+      menuSheetOpen && (wordSearchOpen || historyOpen || marksOpen),
+    );
+    const showRightAction = showRightClose || showRightBack;
     const sectionPillLabel = verseOptionsOpen
       ? t("verse.passageOptions")
       : marksOpen
@@ -3812,46 +3776,35 @@ export function BibleReaderView({
 
     const cluster = menuSheetOpen ? (
       <>
-        <button
-          type="button"
-          className={`bible-yv-top-passage-arrow is-prev is-pick-side${
-            showSectionBack ? " is-shown" : " is-hidden-slot"
-          }`}
-          onClick={isMenuRoot ? handleSectionClose : handleSectionBack}
-          disabled={!showSectionBack}
-          tabIndex={showSectionBack ? undefined : -1}
-          aria-hidden={!showSectionBack}
-          aria-label={
-            showSectionBack
-              ? isMenuRoot
-                ? `${t("common.close")} — ${sectionPillLabel}`
-                : `${t("common.back")} — ${sectionPillLabel}`
-              : undefined
-          }
-        >
-          <YvIcon
-            name={isMenuRoot ? "close" : "chevron_left"}
-            className="bible-yv-top-passage-arrow-icon"
-          />
-        </button>
         {pill}
         <button
           type="button"
           className={`bible-yv-top-passage-arrow is-next is-pick-side${
-            showSectionClose ? " is-shown" : " is-hidden-slot"
+            showRightAction ? " is-shown" : " is-hidden-slot"
           }`}
-          onClick={handleSectionClose}
-          disabled={!showSectionClose}
-          tabIndex={showSectionClose ? undefined : -1}
-          aria-hidden={!showSectionClose}
+          onClick={showRightBack ? handleSectionBack : handleSectionClose}
+          disabled={!showRightAction}
+          tabIndex={showRightAction ? undefined : -1}
+          aria-hidden={!showRightAction}
           aria-label={
-            showSectionClose
-              ? `${t("common.close")} — ${sectionPillLabel}`
+            showRightAction
+              ? showRightBack
+                ? `${t("common.back")} — ${sectionPillLabel}`
+                : `${t("common.close")} — ${sectionPillLabel}`
               : undefined
           }
-          title={showSectionClose ? t("common.close") : undefined}
+          title={
+            showRightAction
+              ? showRightBack
+                ? t("common.back")
+                : t("common.close")
+              : undefined
+          }
         >
-          <YvIcon name="close" className="bible-yv-top-passage-arrow-icon" />
+          <YvIcon
+            name={showRightBack ? "chevron_left" : "close"}
+            className="bible-yv-top-passage-arrow-icon"
+          />
         </button>
       </>
     ) : (
@@ -4462,32 +4415,6 @@ export function BibleReaderView({
         aria-label={t("bible.nav")}
         aria-busy={presentation.inFlight || undefined}
       >
-        <div className="bible-yv-top-tools">
-          {passageRollOpen && passageStep === "book" ? (
-            <button
-              type="button"
-              className={`bible-yv-pick-search-trigger${
-                pickSearchOpen ? " is-on" : ""
-              }`}
-              onClick={togglePickSearch}
-              aria-pressed={pickSearchOpen}
-              aria-label={
-                pickSearchOpen
-                  ? `${t("common.close")} — ${t("searchBooks.search")}`
-                  : t("searchBooks.search")
-              }
-              title={t("searchBooks.search")}
-            >
-              <YvIcon
-                name="search"
-                className="bible-yv-pick-search-trigger-icon"
-              />
-            </button>
-          ) : planReading && !pickerOpen ? null : !pickerOpen &&
-            (!compactToolsMenu || isPassageBarPanelCompactTopbar()) ? (
-            renderTopToolsMenu("header")
-          ) : null}
-        </div>
         {!menuJourneyOpen && !showCreateCard ? (
           discoverySplitSearch ? (
             <div className="bible-yv-passage-chrome-cluster">
@@ -4514,6 +4441,32 @@ export function BibleReaderView({
             renderPassageRoll()
           )
         ) : null}
+        <div className="bible-yv-top-tools">
+          {passageRollOpen && passageStep === "book" ? (
+            <button
+              type="button"
+              className={`bible-yv-pick-search-trigger${
+                pickSearchOpen ? " is-on" : ""
+              }`}
+              onClick={togglePickSearch}
+              aria-pressed={pickSearchOpen}
+              aria-label={
+                pickSearchOpen
+                  ? `${t("common.close")} — ${t("searchBooks.search")}`
+                  : t("searchBooks.search")
+              }
+              title={t("searchBooks.search")}
+            >
+              <YvIcon
+                name="search"
+                className="bible-yv-pick-search-trigger-icon"
+              />
+            </button>
+          ) : planReading && !pickerOpen ? null : !pickerOpen &&
+            (!compactToolsMenu || isPassageBarPanelCompactTopbar()) ? (
+            renderTopToolsMenu("header")
+          ) : null}
+        </div>
         {presentation.inFlight ? (
           <div
             className="bible-yv-top-loading-bar"
@@ -4707,7 +4660,13 @@ export function BibleReaderView({
 
         <article
         ref={passageScrollRef}
-        className="bible-passage"
+        className={`bible-passage${
+          (presentation.inFlight || presentation.isOpening) &&
+          !passage?.verses?.length &&
+          !passage?.content
+            ? " is-waiting"
+            : ""
+        }`}
         aria-busy={presentation.ariaBusy || undefined}
         aria-hidden={surfaceChrome.passageInputBlocked || undefined}
         inert={surfaceChrome.passageInputBlocked || undefined}
@@ -4790,22 +4749,10 @@ export function BibleReaderView({
           </div>
         ) : passage?.content ? (
           <p className="bible-text">{passage.content}</p>
-        ) : presentation.isOpening ||
-          (presentation.inFlight && !passage?.verses?.length) ? (
-          <div className="bible-verses is-skeleton" aria-hidden="true">
-            {PASSAGE_OPENING_SKELETON_WIDTHS.map((widthPct, index) => (
-              <div
-                key={`opening-skel-${index}`}
-                className="bible-verse is-skeleton"
-              >
-                <sup className="bible-verse-num">{index + 1}</sup>
-                <span
-                  className="bible-verse-text"
-                  style={{ width: `${widthPct}%` }}
-                />
-              </div>
-            ))}
-          </div>
+        ) : presentation.inFlight || presentation.isOpening ? (
+          <p className="bible-passage-waiting" aria-live="polite">
+            {PASSAGE_LOADING_COPY.waitingPassage}
+          </p>
         ) : !isUsfmBookId(bookId) ? (
           <p className="bible-yv-muted">{PASSAGE_LOADING_COPY.emptyPassage}</p>
         ) : null}

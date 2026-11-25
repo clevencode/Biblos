@@ -73,9 +73,10 @@
    * Leitura / Bible → Inter Variable — única família de leitura
    * Código → JetBrains Mono Variable
    */
-  --font-ui: "Outfit Variable", "Outfit", system-ui, sans-serif;
-  --font-read: "Inter Variable", "Inter", system-ui, sans-serif;
-  --font-bible: "Inter Variable", "Inter", system-ui, sans-serif;
+  /* Fallbacks com métricas próximas — reduz FOUT/CLS tipográfico no cold start. */
+  --font-ui: "Outfit Variable", "Outfit", "Segoe UI", system-ui, sans-serif;
+  --font-read: "Inter Variable", "Inter", "Segoe UI", system-ui, sans-serif;
+  --font-bible: "Inter Variable", "Inter", "Segoe UI", system-ui, sans-serif;
   --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
 
   /* Leitura longa: regular, entrelinha generosa */
@@ -2166,8 +2167,6 @@ html[data-power-mode="balanced"] .plan-card.is-skeleton .plan-card-skel-bar,
 html[data-power-mode="eco-background"] .plan-card.is-skeleton .plan-card-skel-bar,
 html[data-power-mode="balanced"] .bible-yv-top-loading-bar,
 html[data-power-mode="eco-background"] .bible-yv-top-loading-bar,
-html[data-power-mode="balanced"] .bible-reader--yv .bible-verse.is-skeleton .bible-verse-text,
-html[data-power-mode="eco-background"] .bible-reader--yv .bible-verse.is-skeleton .bible-verse-text,
 html[data-power-mode="balanced"] .bible-yv-dock-play-spinner,
 html[data-power-mode="eco-background"] .bible-yv-dock-play-spinner {
   animation: none !important;
@@ -10997,6 +10996,8 @@ html[data-theme="dark"] .bible-reader--yv {
   top: 0;
   left: 0;
   right: 0;
+  width: 100%;
+  box-sizing: border-box;
   z-index: var(--bible-z-top);
   display: flex;
   align-items: center;
@@ -11018,19 +11019,34 @@ html[data-theme="dark"] .bible-reader--yv {
     opacity calc(var(--yv-chrome-ms) * 0.85) var(--yv-chrome-ease),
     box-shadow var(--yv-chrome-ms) var(--yv-chrome-ease);
   contain: layout style;
+  isolation: isolate;
 }
 
-/* Barra de carregamento — bordo inferior do topbar (Opção 2 / slideBar). */
+/* Carga: altura mínima estável — evita topbar a colapsar sobre os triggers. */
+.bible-yv-top.is-loading {
+  min-height: calc(
+    var(--bible-passage-bar-h, 44px) + 12px + env(safe-area-inset-top, 0px)
+  );
+}
+
+/* Chrome acima da slide-bar (sem overlay nos botões). */
+.bible-yv-top > *:not(.bible-yv-top-loading-bar) {
+  position: relative;
+  z-index: 1;
+}
+
+/* Barra de carregamento — só no bordo inferior, atrás do chrome. */
 .bible-yv-top-loading-bar {
   position: absolute;
   bottom: 0;
   left: 0;
-  z-index: 2;
+  z-index: 0;
   height: 2px;
   width: 0;
+  max-width: 100%;
   pointer-events: none;
   background: color-mix(in srgb, var(--accent, #38bdf8) 88%, white);
-  box-shadow: 0 0 8px color-mix(in srgb, var(--accent, #38bdf8) 65%, transparent);
+  box-shadow: none;
   animation: bible-yv-slide-bar 0.9s ease-in-out infinite;
 }
 
@@ -11218,8 +11234,8 @@ button.bible-yv-passage-chip.hdr-trigger.is-open {
 }
 
 /*
- * Menu / search / options (section-pill): mesma pill pai do book picker.
- * ←/✕ nos slots laterais (.is-section-flow), dentro da margem.
+ * Menu / search / history / marks (section-pill): mesma pill do book picker.
+ * Botão ✕/← à direita (.is-section-flow).
  */
 .hdr-trigger.is-pill.is-open.is-section-pill,
 .bible-reader--yv.is-top-sheet-open .hdr-trigger.is-pill.is-open.is-section-pill {
@@ -13222,8 +13238,8 @@ html[data-passage-bar-panel="test"]
   width: auto;
   min-width: 0;
   max-width: min(100%, 16.5rem);
-  margin-inline-start: auto;
-  margin-inline-end: 0;
+  margin-inline-start: 0;
+  margin-inline-end: auto;
 }
 
 html[data-passage-bar-panel="test"] .app.is-bible-mode.is-narrow .bible-yv-top {
@@ -13264,7 +13280,7 @@ html[data-passage-bar-panel="test"]
   max-width: min(100%, 22rem);
 }
 
-/* Search no slot hamburger (.bible-yv-top-tools): roll mantém cluster [pill|✕]. */
+/* Search no slot tools (direita): roll mantém cluster [pill|✕] à esquerda. */
 
 html[data-passage-bar-panel="test"] .app.is-bible-mode.is-narrow .bible-yv-top-passage-arrow,
 html[data-passage-bar-panel="test"] .bible-yv-top-passage-arrow {
@@ -13573,14 +13589,15 @@ html[data-passage-bar-panel="test"] .bible-yv-top.is-free .bible-yv-passage-roll
   flex: 0 1 auto;
   width: auto;
   max-width: min(100%, 22rem);
-  margin-inline-start: auto;
-  margin-inline-end: 0;
+  margin-inline-start: 0;
+  margin-inline-end: auto;
 }
 
 html[data-passage-bar-panel="test"]
   .bible-yv-top.is-free
   .bible-yv-passage-chrome-cluster {
-  margin-inline-start: auto;
+  margin-inline-start: 0;
+  margin-inline-end: auto;
 }
 
 html[data-passage-bar-panel="test"] .bible-yv-passage-roll:not(.is-open),
@@ -15023,21 +15040,23 @@ html[data-colortest*="BiblePassageChip:red"] .bible-yv-passage-chip {
   gap: 8px;
   flex: none;
   flex-shrink: 0;
-  margin-left: 0;
+  margin-left: auto;
 }
 
-/* Chip/passagem à direita — hamburger fica à esquerda */
+/* Book picker à esquerda — hamburger à direita */
 .bible-yv-top.is-free .bible-yv-passage-chrome-cluster,
 .bible-yv-top.is-free > .bible-yv-passage-roll {
-  margin-left: auto;
+  margin-left: 0;
+  margin-right: 0;
 }
 
-/* Plan reading: ← substitui o menu à esquerda; pill fica à direita. */
+/* Plan reading: pill/cluster à esquerda; tools (se houver) à direita. */
 .bible-yv-top.is-free.is-plan-reading .bible-yv-passage-chrome-cluster {
-  margin-left: auto;
+  margin-left: 0;
+  margin-right: auto;
   flex: 1 1 auto;
   min-width: 0;
-  justify-content: flex-end;
+  justify-content: flex-start;
 }
 
 .bible-yv-top-passage.is-plan-back-chrome,
@@ -15313,22 +15332,31 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
 }
 
 /*
- * Menu / search / options aberto: mesma grelha do book picker
- * [← margem | pill | ✕] — ícones sem fundo, dentro do gutter.
+ * Menu / search / history / marks / options:
+ * pill à esquerda, botão (✕/←) à direita — faixa full-width do topbar.
  */
 .bible-yv-tools-menu.is-section-flow {
-  display: grid;
-  grid-template-columns: var(--hdr-size, var(--mobile-touch, 44px))
-    minmax(0, max-content)
-    var(--hdr-size, var(--mobile-touch, 44px));
+  display: flex;
   align-items: center;
-  width: fit-content;
-  max-width: min(100%, 22rem);
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  max-width: none;
   height: var(--hdr-size, var(--mobile-touch, 44px));
   min-height: var(--hdr-size, var(--mobile-touch, 44px));
 }
 
+.bible-reader--yv.is-menu-journey-open .bible-yv-top-tools,
+.bible-reader--yv.has-verse-actions .bible-yv-top-tools {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  margin-left: 0;
+  margin-right: 0;
+}
+
 .bible-yv-tools-menu.is-section-flow .bible-yv-tools-menu-btn.is-section-pill {
+  flex: 0 1 auto;
   min-width: min(9.5rem, 42vw);
   max-width: min(11rem, 46vw);
   padding-inline: 12px 10px;
@@ -15340,6 +15368,8 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
 }
 
 .bible-yv-tools-menu.is-section-flow .bible-yv-top-passage-arrow.is-pick-side {
+  flex: none;
+  margin-left: auto;
   width: var(--hdr-size, 44px);
   min-width: var(--hdr-size, 44px);
   height: var(--hdr-size, 44px);
@@ -15348,7 +15378,9 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
 
 .bible-yv-tools-menu.is-float-br.is-section-flow {
   position: fixed;
-  display: grid;
+  display: flex;
+  width: auto;
+  max-width: min(100%, 22rem);
 }
 
 /* Mobile unificado : hamburger alinhado ao FAB play (canto inf. direito). */
@@ -15693,8 +15725,10 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   display: flex;
   flex-direction: column;
   flex: 1;
+  width: 100%;
   min-height: 0;
   min-width: 0;
+  box-sizing: border-box;
 }
 
 /* Scrim legado sem contextual: hit-target transparente (fallback) */
@@ -16003,38 +16037,33 @@ html[data-theme="dark"] .bible-chapter-fab {
   gap: 0.2em;
 }
 
-.bible-reader--yv .bible-verses.is-skeleton {
-  pointer-events: none;
+/* Cold open sem versos: mesma coluna dos versos + altura — evita encolhimento. */
+.bible-reader--yv .bible-passage.is-waiting {
+  flex: 1 1 auto;
+  align-self: stretch;
+  width: 100%;
+  max-width: 40rem;
+  min-width: 0;
+  min-height: min(70dvh, 28rem);
+  box-sizing: border-box;
+}
+
+.bible-reader--yv .bible-passage-waiting {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 6px 10px; /* igual a .bible-verse */
+  font-family: var(--font-bible);
+  font-size: var(--bible-font-size, var(--type-body-size));
+  font-weight: var(--type-bible-weight);
+  line-height: var(--type-bible-lh);
+  letter-spacing: var(--type-bible-tracking);
+  text-align: left;
+  color: var(--yv-muted, var(--muted));
   user-select: none;
-}
-
-.bible-reader--yv .bible-verse.is-skeleton {
-  cursor: default;
   pointer-events: none;
-}
-
-.bible-reader--yv .bible-verse.is-skeleton .bible-verse-num {
-  opacity: 0.28;
-}
-
-.bible-reader--yv .bible-verse.is-skeleton .bible-verse-text {
-  display: inline-block;
-  min-height: 1.2em;
-  vertical-align: baseline;
-  border-radius: 4px;
-  background: color-mix(in srgb, var(--yv-muted, var(--muted)) 22%, transparent);
-  color: transparent;
-  animation: bible-verse-skeleton-pulse 1.1s ease-in-out infinite;
-}
-
-@keyframes bible-verse-skeleton-pulse {
-  0%,
-  100% {
-    opacity: 0.55;
-  }
-  50% {
-    opacity: 0.92;
-  }
 }
 
 @keyframes bible-verse-select-in {
@@ -16392,20 +16421,14 @@ html[data-theme="dark"] .bible-chapter-fab {
   grid-template-columns: minmax(0, 1fr);
 }
 
-/* Options: mesma grelha [slot|pill|✕], ancorada à direita (como book picker). */
+/* Options: pill esquerda + ✕ direita — faixa full-width. */
 .bible-reader--yv.has-verse-actions .bible-yv-top.is-top-sheet-open,
 .bible-reader--yv.has-verse-actions .bible-yv-top {
-  justify-content: flex-end;
-}
-
-.bible-reader--yv.has-verse-actions .bible-yv-top-tools {
-  margin-left: auto;
-  margin-right: 0;
-  flex: none;
+  justify-content: flex-start;
 }
 
 .bible-reader--yv.has-verse-actions .bible-yv-tools-menu.is-section-flow {
-  display: grid;
+  display: flex;
 }
 
 .bible-reader--yv.has-verse-actions
@@ -19428,11 +19451,6 @@ html[data-passage-bar-panel="test"]
   .bible-yv-passage-chip.is-hydrating .bible-yv-passage-chip-value {
     animation: none;
     background: color-mix(in srgb, var(--text) 7%, var(--panel));
-  }
-
-  .bible-reader--yv .bible-verse.is-skeleton .bible-verse-text {
-    animation: none;
-    opacity: 0.7;
   }
 
   .plan-card.is-skeleton .plan-card-skel-bar,

@@ -2,7 +2,7 @@ import type { PassageLoadErrorKind } from "../passageLoadError";
 import { PASSAGE_LOADING_COPY } from "./loadingConstants";
 import type { PassageViewState } from "./types";
 
-/** Apresentação derivada — topbar bar + aria-busy; skeleton só no cold open (`isOpening`). */
+/** Apresentação derivada — barra do topbar + aria-busy (sem skeleton de texto). */
 export type PassagePresentation = {
   inFlight: boolean;
   isOpening: boolean;
@@ -15,8 +15,13 @@ export function passagePresentation(input: {
   viewState: PassageViewState;
   loading: boolean;
 }): PassagePresentation {
+  /**
+   * Cold open: `idle` (antes do 1.º NAVIGATE) ou `loading` sem stale.
+   * Evita frame vazio → CLS no relançamento (shell já visível, corpo null).
+   */
   const isOpening =
-    input.viewState.status === "loading" && !input.viewState.stalePassage;
+    input.viewState.status === "idle" ||
+    (input.viewState.status === "loading" && !input.viewState.stalePassage);
   const isReloading =
     input.viewState.status === "loading" &&
     input.viewState.reload &&
@@ -31,11 +36,13 @@ export function passagePresentation(input: {
   if (isOpening || isChapterSwap) statusLine = "opening";
   else if (isReloading) statusLine = "reload";
 
+  const inFlight = input.loading || input.viewState.status === "idle";
+
   return {
-    inFlight: input.loading,
+    inFlight,
     isOpening,
     isReloading,
-    ariaBusy: input.loading,
+    ariaBusy: inFlight,
     statusLine,
   };
 }

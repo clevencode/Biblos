@@ -75,13 +75,14 @@ Catálogo: preferir `useBibleCatalog().viewState.status` (`CatalogViewState`) em
 
 ## Predictable State UI
 
-Fases (`AppReadinessContext`):
+Fases (`AppReadinessContext`) — só boot leve (prefs + shell); **sem** gate anti-CLS:
 
 | Fase | Critério |
 |------|----------|
-| `hydrating` | Catálogo ainda em `isHydrating` (máx. 100 ms) ou `!isLocalReady` |
-| `local_ready` | Seed + prefs; leitura e navegação liberadas |
-| `fully_synced` | Auth + catálogo prontos; sem sync Firebase/CMS em curso |
+| `hydrating` | Prefs ainda não espelhadas ou shell ainda não montou |
+| `local_ready` | Prefs + shell prontos; chrome nativo sincronizado |
+
+Loading de conteúdo é **por ecrã** (Bible skeleton/barra, Plan cards skeleton, Profile `loading`).
 
 Chrome da Bíblia:
 
@@ -90,7 +91,7 @@ Chrome da Bíblia:
 - Cabeçalho **sem** indicador nuvem/sync (toast global `Hors ligne` + ícone offline só se reactivado).
 - Classe `is-catalog-offline` segue **evento offline do navegador**, não só a fonte do catálogo em rede.
 - Capítulo: sinal de carga = barra `.bible-yv-top-loading-bar` no topbar; troca mantém versos (`stalePassage`).
-- **Boot:** splash HTML até a 1.ª superfície (versos / gate / erro) — evita CLS do corpo vazio → texto.
+- **Boot / cold open:** splash nativa (só cor) até shell + 2 rAF (`hideAppSplash`); Bible = barra `.bible-yv-top-loading-bar` (sem skeleton de texto); Plan = cards skeleton. Chrome paint-stable no `index.html`.
 - **Não** limpar passage na navegação: o ViewModel emite `loading` com schema de destino + stale.
 - Offline sem IDB: `BibleOfflineChapterGate` + CTA téléchargement (só sem versículos em memória; texto já lido permanece ao falhar recarga).
 
@@ -104,7 +105,7 @@ No `.bible-reader--yv`, partilhar `--yv-overlay-surface`, `--yv-overlay-border` 
 2. **Transição abrupta** — online → offline durante leitura: sem desaparecimento do texto da barra nem do capítulo em cache; hamburger e chips estáveis (sem dot «live»).
 3. **Min-width** — livros curtos (ex. Job): chip livro com largura mínima, caret separado do rótulo.
 4. **Picker pergaminho** — roll aberto; barra `is-roll-head` visível durante todos os passos (livro/capítulo/versículo).
-5. **Cold start** — tab Bíblia: splash até 1.º capítulo/gate; chips shimmer &lt;100 ms sob o splash.
+5. **Cold start** — tab Bíblia: barra de progresso no topbar → capítulo/gate; tab Plan: cards skeleton.
 6. **Capítulo lento** — throttle rede: barra superior + texto anterior (`stalePassage`); sem esvaziar o corpo.
 7. **Capítulo não indexado** — offline + sem IDB: ecrã gate + botão de download.
 8. **Picker sans texte** — deux sections AT / NT, ordre canon.

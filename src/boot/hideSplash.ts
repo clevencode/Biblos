@@ -1,5 +1,6 @@
 /**
- * Oculta splash nativa + overlay web no gate local_ready.
+ * Esconde a splash nativa (Capacitor).
+ * Chamar só após shell estável (prefs + markShellReady + 2 rAF) — anti-CLS no relançamento.
  */
 
 import { Capacitor } from "@capacitor/core";
@@ -12,18 +13,11 @@ export async function hideAppSplash(): Promise<void> {
   hidden = true;
 
   const overlay = document.getElementById("splash-overlay");
-  if (overlay) {
-    overlay.setAttribute("data-hidden", "true");
-    overlay.setAttribute("aria-busy", "false");
-    overlay.setAttribute("aria-hidden", "true");
-    window.setTimeout(() => {
-      overlay.remove();
-    }, 280);
-  }
+  if (overlay) overlay.remove();
 
   if (!Capacitor.isNativePlatform()) return;
   try {
-    await SplashScreen.hide({ fadeOutDuration: 200 });
+    await SplashScreen.hide({ fadeOutDuration: 0 });
   } catch (error) {
     console.warn("[splash] hide failed", error);
   }

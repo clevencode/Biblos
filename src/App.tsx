@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { BibleReaderView } from "./components/BibleReaderView";
 import { AppShellNav } from "./components/AppShellNav";
 import {
@@ -88,8 +94,7 @@ function isEditorialAdminRoute(): boolean {
 
 export function App() {
   useEffect(() => bootPowerGovernor(), []);
-  const { markShellReady, setCatalogHydrating, setCatalogLocalReady } =
-    useAppReadiness();
+  const { markShellReady } = useAppReadiness();
   const [editorialAdmin, setEditorialAdmin] = useState(() => isEditorialAdminRoute());
   useEffect(() => {
     const onHash = () => setEditorialAdmin(isEditorialAdminRoute());
@@ -97,17 +102,10 @@ export function App() {
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!editorialAdmin) return;
     markShellReady();
-    setCatalogHydrating(false);
-    setCatalogLocalReady(true);
-  }, [
-    editorialAdmin,
-    markShellReady,
-    setCatalogHydrating,
-    setCatalogLocalReady,
-  ]);
+  }, [editorialAdmin, markShellReady]);
 
   if (editorialAdmin) {
     return (
@@ -189,7 +187,8 @@ function BiblosConsumerApp() {
 
   useEffect(() => subscribeSwUpdate(setSwUpdatePending), []);
 
-  useEffect(() => {
+  /** Antes do paint seguinte — shell conta como estável para hideSplash. */
+  useLayoutEffect(() => {
     markShellReady();
   }, [markShellReady]);
 
