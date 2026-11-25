@@ -9730,8 +9730,10 @@ html[data-theme="dark"] .home-pill.is-accent {
 
 .plan-yv--workspace .plan-yv-main {
   flex: 1;
+  min-width: 0;
   min-height: 0;
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
   display: grid;
   gap: var(--plan-space-3);
   align-content: start;
@@ -9773,6 +9775,7 @@ html[data-theme="dark"] .home-pill.is-accent {
 .plan-yv--workspace .plan-yv-timeline,
 .plan-yv--workspace .plan-yv-hero {
   width: 100%;
+  min-width: 0;
   max-width: none;
   box-sizing: border-box;
 }
@@ -9900,7 +9903,9 @@ html[data-theme="dark"] .home-pill.is-accent {
   display: flex;
   gap: 10px;
   width: 100%;
+  min-width: 0;
   overflow-x: auto;
+  overscroll-behavior-x: contain;
   padding: 2px 2px 4px;
   scroll-padding-inline: 2px;
   scrollbar-width: none;
@@ -10114,8 +10119,10 @@ html[data-theme="light"] .plan-yv-stage.is-done.is-active {
   display: flex;
   gap: 8px;
   width: 100%;
+  min-width: 0;
   box-sizing: border-box;
   overflow-x: auto;
+  overscroll-behavior-x: contain;
   padding: 2px 0;
   margin: 0;
   scroll-padding-inline: 2px;

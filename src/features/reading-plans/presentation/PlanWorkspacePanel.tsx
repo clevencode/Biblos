@@ -45,6 +45,22 @@ type PlanWorkspacePanelProps = {
 
 type PlanScreen = "timeline" | "intro" | "dayNote";
 
+/** Scroll só na faixa — evita scrollIntoView a deslocar `.plan-yv-main`. */
+function scrollStripChildIntoView(
+  strip: HTMLElement,
+  child: HTMLElement,
+  behavior: ScrollBehavior = "smooth",
+) {
+  const nextLeft =
+    strip.scrollLeft +
+    (child.offsetLeft - strip.clientWidth / 2 + child.offsetWidth / 2);
+  const max = Math.max(0, strip.scrollWidth - strip.clientWidth);
+  strip.scrollTo({
+    left: Math.max(0, Math.min(max, nextLeft)),
+    behavior,
+  });
+}
+
 function PassageRefsList({
   refs,
   fallback,
@@ -222,7 +238,7 @@ export function PlanWorkspacePanel({
     const root = daysStripRef.current;
     if (!root) return;
     const selected = root.querySelector<HTMLElement>(".plan-yv-day.is-selected");
-    selected?.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+    if (selected) scrollStripChildIntoView(root, selected);
   }, [screen, selectedJour, stageDays.length]);
 
   useEffect(() => {
@@ -232,7 +248,7 @@ export function PlanWorkspacePanel({
     const active = root.querySelector<HTMLElement>(
       `[data-stage="${selectedStage.id}"]`,
     );
-    active?.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+    if (active) scrollStripChildIntoView(root, active);
   }, [screen, hasStages, selectedStage?.id]);
 
   useEffect(() => {
@@ -296,7 +312,7 @@ export function PlanWorkspacePanel({
       const strip = daysStripRef.current;
       if (!strip) return;
       const btn = strip.querySelector<HTMLButtonElement>(`button[data-jour="${next}"]`);
-      btn?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+      if (btn) scrollStripChildIntoView(strip, btn);
     });
   }
 
