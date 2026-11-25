@@ -1,5 +1,10 @@
 import type { ReadingPlan } from "../domain/types";
-import { isPlanComplete, loadPlanProgress, progressCounts } from "../domain/planProgress";
+import {
+  isPlanComplete,
+  loadPlanProgress,
+  progressCounts,
+} from "../domain/planProgress";
+import { useUiLocale } from "../../../i18n/UiLocaleContext";
 
 type PlanCardRowProps = {
   plan: ReadingPlan;
@@ -8,7 +13,12 @@ type PlanCardRowProps = {
   emphasize?: boolean;
 };
 
-export function PlanCardRow({ plan, onSelect, emphasize = false }: PlanCardRowProps) {
+export function PlanCardRow({
+  plan,
+  onSelect,
+  emphasize = false,
+}: PlanCardRowProps) {
+  const { t } = useUiLocale();
   const progress = loadPlanProgress(plan.id);
   const { done, total } = progressCounts(plan, progress);
   const complete = isPlanComplete(plan, progress);
@@ -16,26 +26,35 @@ export function PlanCardRow({ plan, onSelect, emphasize = false }: PlanCardRowPr
   const pct =
     total > 0 ? Math.min(100, Math.round((done / total) * 100)) : 0;
 
-  const meta =
-    total > 0
-      ? `${done}/${total} jour${total > 1 ? "s" : ""}`
+  const meta = started
+    ? total > 0
+      ? t("plan.dayOf", { done, total })
+      : null
+    : total > 0
+      ? t("plan.daysCount", { total: plan.totalDays > 0 ? plan.totalDays : total })
       : plan.totalDays > 0
-        ? `${plan.totalDays} jour${plan.totalDays > 1 ? "s" : ""}`
+        ? t("plan.daysCount", { total: plan.totalDays })
         : null;
 
-  const cta = !started ? "Commencer" : complete ? "Revoir" : "Continuer";
+  const cta = !started
+    ? t("plan.start")
+    : complete
+      ? t("plan.review")
+      : t("plan.continue");
 
   return (
     <button
       type="button"
-      className={`plan-card${emphasize || started ? " is-on" : ""}`}
+      className={`plan-card${emphasize || started ? " is-on" : ""}${
+        complete ? " is-complete" : ""
+      }`}
       onClick={() => onSelect(plan)}
       aria-label={`${cta} : ${plan.title}`}
     >
       <span
         className="plan-card-swatch"
         style={{
-          background: `linear-gradient(135deg, color-mix(in srgb, var(--accent) 72%, var(--elevated)), color-mix(in srgb, var(--accent) 38%, var(--surface)))`,
+          background: `linear-gradient(145deg, color-mix(in srgb, var(--accent) 78%, var(--elevated)), color-mix(in srgb, var(--accent) 32%, var(--surface)))`,
         }}
         aria-hidden
       >
@@ -49,10 +68,7 @@ export function PlanCardRow({ plan, onSelect, emphasize = false }: PlanCardRowPr
           <p className="plan-card-meta type-label muted">{meta}</p>
         ) : null}
         {started && total > 0 ? (
-          <span
-            className="plan-card-progress"
-            aria-hidden="true"
-          >
+          <span className="plan-card-progress" aria-hidden="true">
             <span className="plan-card-progress-track">
               <span
                 className="plan-card-progress-fill"
@@ -61,7 +77,7 @@ export function PlanCardRow({ plan, onSelect, emphasize = false }: PlanCardRowPr
             </span>
           </span>
         ) : null}
-        {plan.description ? (
+        {plan.description && !started ? (
           <p className="plan-card-desc type-caption muted">{plan.description}</p>
         ) : null}
       </span>

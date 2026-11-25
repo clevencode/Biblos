@@ -1785,8 +1785,12 @@ export function BibleReaderView({
           planReading.isStageLast || planReading.isLast,
         );
         planReading.onAdvance();
-        setDayNoteReturnsToPlans(returnToPlans);
-        setDayNoteOpen(true);
+        /* Sem ecrã de nota pessoal no avanço — nota opcional só no workspace. */
+        if (returnToPlans) {
+          onBack?.();
+        } else {
+          planReading.onAdvanceAfterNote?.();
+        }
       }
       return;
     }
@@ -2725,6 +2729,10 @@ export function BibleReaderView({
   const showStudyReturnNav = Boolean(
     studyJumpDepth > 0 && !showCreateCard && !pendingStudyReturn,
   );
+  /** Navbar inferior → ecrã de planos (workspace), não resync de capítulo. */
+  const showPlanReturnNav = Boolean(
+    planReading && onBack && !showStudyReturnNav && !showCreateCard,
+  );
 
   /** Ranges pré-calculados — evita min/max por verso no map. */
   const planVerseRangeFull = Boolean(
@@ -3265,6 +3273,55 @@ export function BibleReaderView({
             aria-label={t("study.dismissStudyJump")}
           >
             <YvIcon name="close" className="bible-study-return-nav-dismiss-icon" />
+          </button>
+        </div>
+      </nav>
+    );
+  }
+
+  function renderPlanReturnNav() {
+    if (!planReading || !onBack) return null;
+    const planLabel =
+      planReading.planName?.trim() || t("plan.returnToPlans");
+    const actionLabel = t("plan.returnAction");
+    const stageIdx = planReading.stageIndex ?? 1;
+    const stageTotal = planReading.stageCount ?? 1;
+    const dayIdx =
+      planReading.stageDayIndex ?? planReading.stepIndex + 1;
+    const dayTotal =
+      planReading.stageDayCount ?? planReading.stepCount ?? 0;
+    const stageTitle = planReading.stageName?.trim();
+    const stageText = `${t("bible.planStage", { n: stageIdx })}${
+      stageTotal > 1 ? `/${stageTotal}` : ""
+    }`;
+    const progressBits = [
+      stageText,
+      dayTotal > 1 ? `${dayIdx}/${dayTotal}` : null,
+    ].filter(Boolean);
+    const progressLabel = progressBits.join(" · ");
+    const fullLabel = [actionLabel, planLabel, progressLabel, stageTitle]
+      .filter(Boolean)
+      .join(" · ");
+    return (
+      <nav className="bible-plan-return-nav" aria-label={fullLabel}>
+        <div className="bible-plan-return-nav-pill" role="group">
+          <button
+            type="button"
+            className="bible-plan-return-nav-main"
+            onClick={() => onBack()}
+            aria-label={fullLabel}
+          >
+            <YvIcon
+              name="chevron_left"
+              className="bible-plan-return-nav-icon"
+            />
+            <span className="bible-plan-return-nav-copy">
+              <span className="bible-plan-return-nav-verb">
+                {actionLabel}
+                {progressLabel ? ` · ${progressLabel}` : ""}
+              </span>
+              <span className="bible-plan-return-nav-ref">{planLabel}</span>
+            </span>
           </button>
         </div>
       </nav>
@@ -4254,7 +4311,7 @@ export function BibleReaderView({
   return (
     <section
       ref={readerRef}
-      className={`bible-reader bible-reader--yv${hideChrome ? " is-chrome-hidden" : ""}${hasActiveModal ? " is-overlay-active" : ""}${audioPlaying ? " is-audio-playing" : ""}${showCreateCard ? " has-verse-actions" : ""}${showStudyReturnNav ? " has-study-return" : ""}${shareSheetOpen ? " is-share-open" : ""}${headCompact ? " is-head-compact" : ""}${surfaceChrome.rootClassPassageRollOpen ? " is-passage-roll-open" : ""}${topSheetOpen ? " is-top-sheet-open" : ""}${compactToolsMenu ? " is-compact-tools" : ""}${toolsMenuOpen ? " is-tools-menu-open" : ""}${menuJourneyOpen ? " is-menu-journey-open" : ""}${historyOpen ? " is-history-open" : ""}`}
+      className={`bible-reader bible-reader--yv${hideChrome ? " is-chrome-hidden" : ""}${hasActiveModal ? " is-overlay-active" : ""}${audioPlaying ? " is-audio-playing" : ""}${showCreateCard ? " has-verse-actions" : ""}${showStudyReturnNav ? " has-study-return" : ""}${showPlanReturnNav ? " has-plan-return" : ""}${shareSheetOpen ? " is-share-open" : ""}${headCompact ? " is-head-compact" : ""}${surfaceChrome.rootClassPassageRollOpen ? " is-passage-roll-open" : ""}${topSheetOpen ? " is-top-sheet-open" : ""}${compactToolsMenu ? " is-compact-tools" : ""}${toolsMenuOpen ? " is-tools-menu-open" : ""}${menuJourneyOpen ? " is-menu-journey-open" : ""}${historyOpen ? " is-history-open" : ""}`}
       style={{ ["--bible-font-size" as string]: `${fontSize}px` }}
       onKeyDown={(event) => {
         /* Escape deve fechar overlays mesmo com focus no input (padrão dialog). */
@@ -4354,7 +4411,7 @@ export function BibleReaderView({
       tabIndex={-1}
     >
       <header
-        className={`bible-yv-top is-free${topSheetOpen ? " is-top-sheet-open" : ""}${surfaceChrome.rootClassPassageRollOpen ? " is-passage-roll-open" : ""}${catalogOfflineHint ? " is-catalog-offline" : ""}${compactToolsMenu ? " is-compact-tools" : ""}${
+        className={`bible-yv-top is-free${planReading ? " is-plan-reading" : ""}${topSheetOpen ? " is-top-sheet-open" : ""}${surfaceChrome.rootClassPassageRollOpen ? " is-passage-roll-open" : ""}${catalogOfflineHint ? " is-catalog-offline" : ""}${compactToolsMenu ? " is-compact-tools" : ""}${
           presentation.inFlight ? " is-loading" : ""
         }`}
         aria-label={t("bible.nav")}
@@ -4381,7 +4438,7 @@ export function BibleReaderView({
                 className="bible-yv-pick-search-trigger-icon"
               />
             </button>
-          ) : !pickerOpen &&
+          ) : planReading && !pickerOpen ? null : !pickerOpen &&
             (!compactToolsMenu || isPassageBarPanelCompactTopbar()) ? (
             renderTopToolsMenu("header")
           ) : null}
@@ -4389,18 +4446,12 @@ export function BibleReaderView({
         {!menuJourneyOpen && !showCreateCard ? (
           discoverySplitSearch ? (
             <div className="bible-yv-passage-chrome-cluster">
-              {onBack ? (
+              {onBack && !planReading ? (
                 <button
                   type="button"
                   className="bible-yv-passage-word-search-trigger"
                   onClick={handlePlanBack}
-                  aria-label={
-                    planReading
-                      ? onPlanStep
-                        ? "Quitter la lecture du plan"
-                        : "Retour au passage du plan"
-                      : t("profile.settings")
-                  }
+                  aria-label={t("profile.settings")}
                 >
                   <YvIcon
                     name="chevron_left"
@@ -4560,6 +4611,7 @@ export function BibleReaderView({
         ? renderVerseActionsToolbar()
         : null}
       {showStudyReturnNav ? renderStudyReturnNav() : null}
+      {showPlanReturnNav ? renderPlanReturnNav() : null}
       <div id={statusId} className="sr-only" aria-live="polite">
         {passageLiveStatusLabel({ presentation, locationLabel, error })}
       </div>
@@ -4723,46 +4775,13 @@ export function BibleReaderView({
 
       {(() => {
         const compactDock = compactViewport || narrowChrome;
-        const stageIdx = planReading?.stageIndex ?? 1;
-        const stageTotal = planReading?.stageCount ?? 1;
-        const dayIdx =
-          planReading?.stageDayIndex ?? (planReading ? planReading.stepIndex + 1 : 0);
-        const dayTotal =
-          planReading?.stageDayCount ?? planReading?.stepCount ?? 0;
-        const stageTitle = planReading?.stageName?.trim();
         return (
           <footer
-            className={`bible-yv-dock${planReading ? " is-plan-progress" : ""}${
+            className={`bible-yv-dock${
               audioPlaying ? " is-playing" : ""
             }${compactDock ? " is-floating" : ""} is-play-only`}
-            aria-label={
-              planReading ? t("bible.planProgress") : t("bible.audioPlayer")
-            }
+            aria-label={t("bible.audioPlayer")}
           >
-            {planReading ? (
-              <div
-                className="bible-yv-plan-progress-chip"
-                role="status"
-                aria-live="polite"
-                title={
-                  stageTitle
-                    ? `${t("bible.planStage", { n: stageIdx })} · ${stageTitle}`
-                    : t("bible.planStage", { n: stageIdx })
-                }
-              >
-                <span className="bible-yv-plan-progress-stage">
-                  {t("bible.planStage", { n: stageIdx })}
-                  {stageTotal > 1 ? `/${stageTotal}` : ""}
-                </span>
-                <span className="bible-yv-plan-progress-sep" aria-hidden>
-                  ·
-                </span>
-                <span className="bible-yv-plan-progress-day">
-                  {t("bible.planDay", { n: dayIdx })}
-                  {dayTotal > 1 ? `/${dayTotal}` : ""}
-                </span>
-              </div>
-            ) : null}
             <BibleAudioFloat
               hasAudio={canPlayBookAudio}
               playing={audioPlaying}

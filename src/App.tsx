@@ -698,10 +698,11 @@ function BiblosConsumerApp() {
             active={tab}
             onSelect={selectTab}
             immersiveHidden={
-              bibleMode &&
-              !accountOpen &&
-              !adminOpen &&
-              (navHidden || readerChromeHidden)
+              Boolean(workspacePlan) ||
+              (bibleMode &&
+                !accountOpen &&
+                !adminOpen &&
+                (navHidden || readerChromeHidden))
             }
             accountOpen={accountOpen}
             onToggleAccount={toggleAccount}

@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { BibleShareSheet } from "../../../components/BibleShareSheet";
 import { ShellPageTopbar } from "../../../components/ShellPageTopbar";
 import { YvIcon } from "../../../components/YvIcon";
 import { isPassageRef } from "../../../youversion/usfm";
@@ -171,7 +170,6 @@ export function PlanWorkspacePanel({
   const [selectedJour, setSelectedJour] = useState(jumpJour);
   const [introSeen, setIntroSeen] = useState(false);
   const [noteSaved, setNoteSaved] = useState(false);
-  const [shareOpen, setShareOpen] = useState(false);
   const daysStripRef = useRef<HTMLDivElement>(null);
   const stagesStripRef = useRef<HTMLDivElement>(null);
 
@@ -248,16 +246,6 @@ export function PlanWorkspacePanel({
   }, [hasStages, selectedStage?.id, selectedJour, stageDays, progress]);
 
   const planTitle = plan.title.trim() || "Plan de lecture";
-  const planShareMeta = (() => {
-    const parts: string[] = [];
-    if (scheduleTotal > 0) {
-      parts.push(`${scheduleTotal} jour${scheduleTotal > 1 ? "s" : ""}`);
-    }
-    if (stages.length > 0) {
-      parts.push(`${stages.length} étape${stages.length > 1 ? "s" : ""}`);
-    }
-    return parts.join(" · ");
-  })();
 
   const selectedDay =
     days.find((day) => day.jour === selectedJour) ?? days[0] ?? null;
@@ -480,32 +468,8 @@ export function PlanWorkspacePanel({
             <YvIcon name="chevron_left" className="plan-yv-chrome-back-icon" />
           </button>
         }
-        actions={
-          <button
-            type="button"
-            className="plan-yv-share-btn"
-            aria-label="Partager le plan"
-            title="Partager le plan"
-            onClick={() => setShareOpen(true)}
-          >
-            <YvIcon name="ios_share" className="plan-yv-share-icon" />
-          </button>
-        }
       />
       <div className="plan-yv-main">
-        <BibleShareSheet
-          open={shareOpen}
-          onClose={() => setShareOpen(false)}
-          mode="plan"
-          refLabel={planTitle}
-          verseText=""
-          usfm=""
-          planTitle={planTitle}
-          planDescription={plan.description ?? ""}
-          planMeta={planShareMeta}
-          planId={plan.id}
-        />
-
       {days.length ? (
         <section
           className={`plan-yv-timeline${hasStages ? " has-stages" : ""}`}
@@ -574,7 +538,7 @@ export function PlanWorkspacePanel({
             <div className="plan-yv-days-head">
               <p className="plan-yv-section-label" id="plan-yv-days-label">
                 {hasStages && selectedStage
-                  ? `Étape ${selectedStage.id}${selectedStage.title ? ` · ${selectedStage.title}` : ""}`
+                  ? `Étape ${selectedStage.id}`
                   : "Jours"}
               </p>
               {selectedDay?.jour === planJour ? (
@@ -583,7 +547,7 @@ export function PlanWorkspacePanel({
             </div>
             <div
               ref={daysStripRef}
-              className={`plan-yv-days${stageDays.length <= 7 ? " is-fit" : ""}`}
+              className={`plan-yv-days${stageDays.length <= 8 ? " is-fit" : ""}`}
               role="listbox"
               aria-labelledby="plan-yv-days-label"
             >

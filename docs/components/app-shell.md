@@ -19,7 +19,7 @@ Shell com **navbar radial** (`SHELL_TABS`: Bible · Plan).
 - Modo narrow + tab Bible → `immersiveHidden` na nav (`navHidden` do leitor).
 - **Profil + Settings** via hub Conta → `#panel-account` (`ProfileSettingsPanel`: header + grupos).
 - **Admin** (email Clevencode) via hub pill → `#panel-admin` (`AdminReadingPlansWorkspace`); fora do Profile.
-- **Plan reading:** workspace → `openPlanAtJour` → leitor (`planReading`); back unificado: day-note → resync off-step → workspace (chevron = Esc = Android). Note de complete só no leitor; note pessoal opcional no workspace. Dock: chip progresso + áudio S21.
+- **Plan hub** (`PlanDiscoverPanel`): estilo YouVersion Plans — tabs **Mes plans** / **Découvrir** (sem Accueil/Today). Workspace aberto → navbar shell oculta (retorno pelo ← do topbar). Workspace → `openPlanAtJour` → leitor (`planReading`); no leitor, navbar inferior **Retour · Plan** chama `returnFromPlanReading` (volta ao workspace). Note pessoal opcional só no workspace.
 - Tema global: `theme.ts` — `onSetTheme` no perfil (clair / sombre / système).
 
 ---

@@ -38,6 +38,15 @@ export type UiCopyKey =
   | "home.browsePlans"
   | "plan.title"
   | "plan.discover"
+  | "plan.myPlans"
+  | "plan.findPlans"
+  | "plan.dayOf"
+  | "plan.daysCount"
+  | "plan.mineEmpty"
+  | "plan.continue"
+  | "plan.review"
+  | "plan.returnAction"
+  | "plan.returnToPlans"
   | "plan.empty"
   | "plan.resume"
   | "plan.start"
@@ -308,6 +317,15 @@ const FR: Dict = {
   "home.browsePlans": "Parcourir les plans",
   "plan.title": "Plans",
   "plan.discover": "Découvrir",
+  "plan.myPlans": "Mes plans",
+  "plan.findPlans": "Découvrir",
+  "plan.dayOf": "Jour {done} sur {total}",
+  "plan.daysCount": "{total} jours",
+  "plan.mineEmpty": "Vous n’avez pas encore de plan en cours.",
+  "plan.continue": "Continuer",
+  "plan.review": "Revoir",
+  "plan.returnAction": "Retour",
+  "plan.returnToPlans": "Plans",
   "plan.empty": "Aucun plan disponible",
   "plan.resume": "Reprendre",
   "plan.start": "Commencer",
@@ -610,6 +628,15 @@ const HT: Dict = {
   "home.browsePlans": "Gade plan yo",
   "plan.title": "Plan",
   "plan.discover": "Dekouvri",
+  "plan.myPlans": "Plan mwen",
+  "plan.findPlans": "Dekouvri",
+  "plan.dayOf": "Jou {done} sou {total}",
+  "plan.daysCount": "{total} jou",
+  "plan.mineEmpty": "Ou poko gen plan an kou.",
+  "plan.continue": "Kontinye",
+  "plan.review": "Revize",
+  "plan.returnAction": "Tounen",
+  "plan.returnToPlans": "Plan",
   "plan.empty": "Pa gen plan disponib",
   "plan.resume": "Rekòmanse",
   "plan.start": "Kòmanse",

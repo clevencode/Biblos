@@ -26,16 +26,18 @@ type PlanDiscoverPanelProps = {
   onRestartPlan?: () => void;
 };
 
-function isPlanInProgress(plan: ReadingPlan): boolean {
+type CatalogTab = "mine" | "find";
+
+function hasStartedPlan(plan: ReadingPlan): boolean {
   const progress = loadPlanProgress(plan.id);
   if (!progress) return false;
-  if (isPlanComplete(plan, progress)) return false;
+  if (isPlanComplete(plan, progress)) return true;
   const { done } = progressCounts(plan, progress);
   return done > 0 || progress.lastJour != null;
 }
 
 /**
- * Presentation — catálogo ou workspace (timeline / étapes).
+ * Presentation — catálogo YouVersion Plans (Mes plans / Découvrir) ou workspace.
  */
 export function PlanDiscoverPanel({
   active,
@@ -53,31 +55,40 @@ export function PlanDiscoverPanel({
   const { status, plans, error, isInitialLoading, emptyAfterSync, retry } =
     useReadingPlansCatalog(active && !workspacePlan);
   const [progressTick, setProgressTick] = useState(0);
+  const [catalogTab, setCatalogTab] = useState<CatalogTab | null>(null);
 
   useEffect(() => subscribePlanProgress(() => setProgressTick((n) => n + 1)), []);
 
-  const { inProgress, rest } = useMemo(() => {
+  const { mine, discover } = useMemo(() => {
     void progressTick;
-    const activePlans: ReadingPlan[] = [];
-    const others: ReadingPlan[] = [];
+    const owned: ReadingPlan[] = [];
+    const browse: ReadingPlan[] = [];
     for (const plan of plans) {
-      if (isPlanInProgress(plan)) activePlans.push(plan);
-      else others.push(plan);
+      if (hasStartedPlan(plan)) owned.push(plan);
+      else browse.push(plan);
     }
-    activePlans.sort((a, b) => {
+    owned.sort((a, b) => {
+      const aComplete = isPlanComplete(a, loadPlanProgress(a.id));
+      const bComplete = isPlanComplete(b, loadPlanProgress(b.id));
+      if (aComplete !== bComplete) return aComplete ? 1 : -1;
       const aAt = loadPlanProgress(a.id)?.startedAt || "";
       const bAt = loadPlanProgress(b.id)?.startedAt || "";
       return bAt.localeCompare(aAt);
     });
-    return { inProgress: activePlans, rest: others };
+    return { mine: owned, discover: browse };
   }, [plans, progressTick]);
+
+  const resolvedTab: CatalogTab =
+    catalogTab ?? (mine.length > 0 ? "mine" : "find");
 
   const showList = !isInitialLoading && plans.length > 0;
   const showSkeleton = isInitialLoading && plans.length === 0;
   const showEmpty = !isInitialLoading && status === "ready" && plans.length === 0;
   const showError = status === "error" && plans.length === 0;
   const showUnconfigured = status === "unconfigured";
-  const splitCatalog = inProgress.length > 0;
+  const listPlans = resolvedTab === "mine" ? mine : discover;
+  const showMineEmpty = showList && resolvedTab === "mine" && mine.length === 0;
+  const showFindEmpty = showList && resolvedTab === "find" && discover.length === 0;
 
   if (workspacePlan) {
     return (
@@ -115,12 +126,59 @@ export function PlanDiscoverPanel({
         title={t("shell.plan")}
         subtitle={t("home.plans")}
       />
+      {showList || showSkeleton ? (
+        <div
+          className="plan-discover-head"
+          role="tablist"
+          aria-label={t("home.plans")}
+        >
+          <div className="flash-deck-tabs plan-discover-tabs">
+            <button
+              type="button"
+              role="tab"
+              id="plan-tab-mine"
+              aria-selected={resolvedTab === "mine"}
+              aria-controls="plan-catalog-panel"
+              className={`flash-deck-tab${resolvedTab === "mine" ? " is-on" : ""}${
+                mine.length === 0 ? " is-empty" : ""
+              }`}
+              onClick={() => setCatalogTab("mine")}
+            >
+              <span className="flash-deck-tab-label">{t("plan.myPlans")}</span>
+              {mine.length > 0 ? (
+                <span className="flash-deck-tab-count">{mine.length}</span>
+              ) : null}
+            </button>
+            <button
+              type="button"
+              role="tab"
+              id="plan-tab-find"
+              aria-selected={resolvedTab === "find"}
+              aria-controls="plan-catalog-panel"
+              className={`flash-deck-tab${resolvedTab === "find" ? " is-on" : ""}`}
+              onClick={() => setCatalogTab("find")}
+            >
+              <span className="flash-deck-tab-label">{t("plan.findPlans")}</span>
+              {discover.length > 0 ? (
+                <span className="flash-deck-tab-count">{discover.length}</span>
+              ) : null}
+            </button>
+          </div>
+        </div>
+      ) : null}
       <div
         className="plan-discover-scroller"
         aria-busy={isInitialLoading || undefined}
         aria-live="polite"
       >
-        <div className="plan-discover-surface">
+        <div
+          id="plan-catalog-panel"
+          role="tabpanel"
+          aria-labelledby={
+            resolvedTab === "mine" ? "plan-tab-mine" : "plan-tab-find"
+          }
+          className="plan-discover-surface"
+        >
           {showSkeleton ? (
             <div className="plan-discover-catalog" aria-hidden="true">
               <ul className="plan-discover-grid is-stack" role="presentation">
@@ -148,68 +206,53 @@ export function PlanDiscoverPanel({
             </div>
           ) : null}
 
-          {showList ? (
+          {showList && listPlans.length > 0 ? (
             <div className="plan-discover-catalog">
-              {splitCatalog ? (
-                <>
-                  <section
-                    className="plan-discover-section"
-                    aria-labelledby="plan-section-active"
+              <ul className="plan-discover-grid is-stack" role="list">
+                {listPlans.map((plan) => (
+                  <li key={plan.id}>
+                    <PlanCardRow
+                      plan={plan}
+                      emphasize={resolvedTab === "mine"}
+                      onSelect={(p) => onSelectPlan?.(p)}
+                    />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          {showMineEmpty ? (
+            <div className="plan-discover-empty" role="status">
+              <p className="plan-discover-empty-title">{t("plan.mineEmpty")}</p>
+              <p className="muted">{t("home.browsePlans")}</p>
+              <div className="plan-discover-empty-actions">
+                <button
+                  type="button"
+                  className="home-empty-cta type-label"
+                  onClick={() => setCatalogTab("find")}
+                >
+                  {t("plan.findPlans")}
+                </button>
+              </div>
+            </div>
+          ) : null}
+
+          {showFindEmpty ? (
+            <div className="plan-discover-empty" role="status">
+              <p className="plan-discover-empty-title">{t("plan.empty")}</p>
+              <p className="muted">{t("plan.emptyHint")}</p>
+              {mine.length > 0 ? (
+                <div className="plan-discover-empty-actions">
+                  <button
+                    type="button"
+                    className="home-empty-cta type-label"
+                    onClick={() => setCatalogTab("mine")}
                   >
-                    <h2
-                      id="plan-section-active"
-                      className="plan-discover-section-title type-eyebrow"
-                    >
-                      {t("plan.inProgress")}
-                    </h2>
-                    <ul className="plan-discover-grid is-stack" role="list">
-                      {inProgress.map((plan) => (
-                        <li key={plan.id}>
-                          <PlanCardRow
-                            plan={plan}
-                            emphasize
-                            onSelect={(p) => onSelectPlan?.(p)}
-                          />
-                        </li>
-                      ))}
-                    </ul>
-                  </section>
-                  {rest.length > 0 ? (
-                    <section
-                      className="plan-discover-section"
-                      aria-labelledby="plan-section-all"
-                    >
-                      <h2
-                        id="plan-section-all"
-                        className="plan-discover-section-title type-eyebrow"
-                      >
-                        {t("plan.all")}
-                      </h2>
-                      <ul className="plan-discover-grid is-stack" role="list">
-                        {rest.map((plan) => (
-                          <li key={plan.id}>
-                            <PlanCardRow
-                              plan={plan}
-                              onSelect={(p) => onSelectPlan?.(p)}
-                            />
-                          </li>
-                        ))}
-                      </ul>
-                    </section>
-                  ) : null}
-                </>
-              ) : (
-                <ul className="plan-discover-grid is-stack" role="list">
-                  {plans.map((plan) => (
-                    <li key={plan.id}>
-                      <PlanCardRow
-                        plan={plan}
-                        onSelect={(p) => onSelectPlan?.(p)}
-                      />
-                    </li>
-                  ))}
-                </ul>
-              )}
+                    {t("plan.myPlans")}
+                  </button>
+                </div>
+              ) : null}
             </div>
           ) : null}
 

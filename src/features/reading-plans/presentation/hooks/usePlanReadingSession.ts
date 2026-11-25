@@ -39,9 +39,9 @@ export type PlanReadingChrome = {
   verseStart?: number | null;
   verseEnd?: number | null;
   onPrev: () => void;
-  /** Marque le jour lu — sans naviguer (la note s’affiche d’abord). */
+  /** Marque le jour lu. */
   onAdvance: () => void;
-  /** Après la note du jour : passe au jour suivant s’il existe. */
+  /** Passe au jour suivant s’il existe (après onAdvance). */
   onAdvanceAfterNote: () => void;
 };
 
@@ -159,7 +159,6 @@ export function usePlanReadingSession({ onNavigate }: UsePlanReadingSessionOptio
       },
       onAdvance: () => {
         markJourComplete(activePlan.id, step.jour);
-        // Reste sur le pas — l’UI ouvre « Note du jour ».
       },
       onAdvanceAfterNote: () => {
         if (stepIndex < steps.length - 1) {

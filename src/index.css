@@ -1137,6 +1137,19 @@ html[data-theme="dark"] .mode-tabs {
   opacity: 0.55;
 }
 
+/* Plan workspace aberto: navbar totalmente oculta (retorno via topbar ←). */
+.app:has(.plan-workspace-host) .mode-tabs,
+.app:has(.plan-workspace-host) .mode-tabs.is-immersive-hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.app:has(.plan-workspace-host) .mode-tabs.is-immersive-hidden .mode-tabs-hub {
+  pointer-events: none;
+  opacity: 0;
+}
+
 .account-shell-panel {
   --yv-bg: var(--bg);
   --yv-text: var(--text);
@@ -7816,7 +7829,8 @@ html[data-theme="dark"] .profile-download-btn {
     );
   }
 
-  .plan-discover-scroller {
+  .plan-discover-scroller,
+  .plan-discover-head {
     padding-left: max(var(--mobile-gutter), env(safe-area-inset-left, 0px));
     padding-right: max(var(--mobile-gutter), env(safe-area-inset-right, 0px));
   }
@@ -7848,6 +7862,9 @@ html[data-theme="dark"] .profile-download-btn {
 
 .plan-discover-head {
   flex-shrink: 0;
+  padding-left: max(var(--panel-gutter, 14px), env(safe-area-inset-left, 0px));
+  padding-right: max(var(--panel-gutter, 14px), env(safe-area-inset-right, 0px));
+  background: var(--bg);
 }
 
 .plan-discover-head .flash-deck-tabs,
@@ -7855,6 +7872,7 @@ html[data-theme="dark"] .profile-download-btn {
   flex: 1;
   max-width: none;
   min-width: 0;
+  width: 100%;
 }
 
 .plan-discover-tabs {
@@ -7863,7 +7881,9 @@ html[data-theme="dark"] .profile-download-btn {
 }
 
 .plan-discover-tabs .flash-deck-tab {
+  flex: 1 1 0;
   padding: 10px 12px 12px;
+  min-width: 0;
 }
 
 .plan-discover-title {
@@ -7903,8 +7923,8 @@ html[data-theme="dark"] .profile-download-btn {
 }
 
 .plan-discover-surface {
-  --plan-gallery-row-min: 5.75rem;
-  --plan-gallery-body-min: calc(4 * var(--plan-gallery-row-min) + 3 * 10px);
+  --plan-gallery-row-min: 6.25rem;
+  --plan-gallery-body-min: calc(4 * var(--plan-gallery-row-min) + 3 * 12px);
   flex: 1;
   min-height: min(58vh, var(--plan-gallery-body-min));
   display: flex;
@@ -7913,7 +7933,7 @@ html[data-theme="dark"] .profile-download-btn {
 
 .plan-discover-catalog {
   display: grid;
-  gap: 22px;
+  gap: 12px;
   width: 100%;
   min-width: 0;
 }
@@ -7962,22 +7982,20 @@ html[data-theme="dark"] .profile-download-btn {
 .plan-card {
   appearance: none;
   display: grid;
-  grid-template-columns: 52px minmax(0, 1fr) auto;
-  align-items: start;
+  grid-template-columns: 72px minmax(0, 1fr) auto;
+  align-items: center;
   gap: 14px;
   width: 100%;
   min-width: 0;
   max-width: 100%;
   box-sizing: border-box;
-  min-height: var(--plan-gallery-row-min, 5.75rem);
+  min-height: var(--plan-gallery-row-min, 6.25rem);
   margin: 0;
-  padding: 14px;
-  border: var(--stroke-elevated, 1px solid color-mix(in srgb, var(--line) 70%, transparent));
-  border-radius: 18px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
+  border-radius: 14px;
   background: var(--surface);
-  box-shadow:
-    0 1px 0 color-mix(in srgb, var(--text) 4%, transparent),
-    0 8px 24px color-mix(in srgb, var(--text) 6%, transparent);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--text) 3%, transparent);
   color: inherit;
   font: inherit;
   text-align: left;
@@ -7992,9 +8010,7 @@ html[data-theme="dark"] .profile-download-btn {
 
 .plan-card:hover,
 .plan-card.is-active {
-  box-shadow:
-    0 1px 0 color-mix(in srgb, var(--text) 5%, transparent),
-    0 12px 28px color-mix(in srgb, var(--text) 9%, transparent);
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--text) 7%, transparent);
 }
 
 .plan-card:active {
@@ -8002,11 +8018,13 @@ html[data-theme="dark"] .profile-download-btn {
 }
 
 .plan-card.is-on {
-  background: color-mix(in srgb, var(--accent) 8%, var(--elevated));
-  border-color: color-mix(in srgb, var(--accent) 28%, transparent);
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent),
-    0 10px 26px color-mix(in srgb, var(--accent) 10%, transparent);
+  background: color-mix(in srgb, var(--accent) 6%, var(--elevated));
+  border-color: color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.plan-card.is-complete {
+  background: var(--surface);
+  border-color: color-mix(in srgb, var(--line) 70%, transparent);
 }
 
 .plan-card:focus-visible {
@@ -8018,12 +8036,13 @@ html[data-theme="dark"] .profile-download-btn {
   position: relative;
   display: grid;
   place-items: center;
-  width: 52px;
-  height: 52px;
-  border-radius: 16px;
+  width: 72px;
+  height: 72px;
+  border-radius: 12px;
   overflow: hidden;
   color: #fff;
   flex-shrink: 0;
+  align-self: center;
   box-shadow: inset 0 0 0 1px color-mix(in srgb, #fff 14%, transparent);
 }
 
@@ -8041,9 +8060,9 @@ html[data-theme="dark"] .profile-download-btn {
   position: relative;
   z-index: 1;
   font-family: var(--font-ui);
-  font-size: var(--type-title-size);
-  font-weight: var(--type-title-weight);
-  letter-spacing: var(--type-title-tracking);
+  font-size: var(--type-headline-size);
+  font-weight: var(--type-headline-weight);
+  letter-spacing: var(--type-headline-tracking);
   line-height: 1;
 }
 
@@ -8051,10 +8070,12 @@ html[data-theme="dark"] .profile-download-btn {
   display: grid;
   gap: 4px;
   min-width: 0;
-  padding-top: 1px;
+  padding-top: 0;
+  align-content: center;
 }
 
 .plan-card-title {
+  margin: 0;
   font-family: var(--font-ui);
   font-size: var(--type-title-size);
   font-weight: var(--type-title-weight);
@@ -8130,12 +8151,13 @@ html[data-theme="dark"] .profile-download-btn {
 
 .plan-card-progress {
   display: block;
-  margin-top: 6px;
+  margin-top: 8px;
+  max-width: 11rem;
 }
 
 .plan-card-progress-track {
   display: block;
-  height: 5px;
+  height: 4px;
   border-radius: 999px;
   background: color-mix(in srgb, var(--text) 8%, transparent);
   overflow: hidden;
@@ -8164,10 +8186,13 @@ html[data-theme="dark"] .profile-download-btn {
 .plan-card-cta {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 3px;
   flex-shrink: 0;
-  margin-top: 2px;
-  padding: 7px 10px;
+  align-self: center;
+  min-height: var(--mobile-touch, 44px);
+  margin-top: 0;
+  padding: 8px 12px;
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
   background: color-mix(in srgb, var(--accent) 12%, var(--elevated));
@@ -8179,6 +8204,12 @@ html[data-theme="dark"] .profile-download-btn {
   line-height: var(--type-label-lh);
   white-space: nowrap;
   pointer-events: none;
+}
+
+.plan-card.is-complete .plan-card-cta {
+  border-color: color-mix(in srgb, var(--text) 14%, transparent);
+  background: color-mix(in srgb, var(--text) 5%, var(--elevated));
+  color: var(--muted);
 }
 
 .plan-discover-empty {
@@ -8211,20 +8242,21 @@ html[data-theme="dark"] .profile-download-btn {
   }
 
   .plan-card {
-    grid-template-columns: 48px minmax(0, 1fr) auto;
+    grid-template-columns: 64px minmax(0, 1fr) auto;
     gap: 12px;
-    padding: 12px;
-    border-radius: 16px;
-  }
-
-  .plan-card-swatch {
-    width: 48px;
-    height: 48px;
+    padding: 10px;
     border-radius: 14px;
   }
 
+  .plan-card-swatch {
+    width: 64px;
+    height: 64px;
+    border-radius: 10px;
+  }
+
   .plan-card-cta {
-    padding: 6px 9px;
+    min-height: 40px;
+    padding: 6px 10px;
   }
 }
 
@@ -9260,7 +9292,8 @@ html[data-theme="dark"] .home-pill.is-accent {
   height: 100%;
   min-height: 0;
   overflow: hidden;
-  padding-bottom: 12px;
+  /* Navbar oculta no workspace — só safe-area. */
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
 }
 
 .plan-yv--workspace .plan-yv-main {
@@ -9269,18 +9302,30 @@ html[data-theme="dark"] .home-pill.is-accent {
   overflow: auto;
   display: grid;
   gap: 16px;
-  padding: 12px max(16px, env(safe-area-inset-right, 0px)) 8px
-    max(16px, env(safe-area-inset-left, 0px));
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px max(var(--mobile-gutter, 14px), env(safe-area-inset-right, 0px)) 24px
+    max(var(--mobile-gutter, 14px), env(safe-area-inset-left, 0px));
   -webkit-overflow-scrolling: touch;
 }
 
 .plan-yv--workspace > .shell-topbar {
   flex: none;
+  width: 100%;
 }
 
 .plan-yv--workspace .plan-yv-secondary {
   flex: none;
-  margin-top: 10px;
+  width: auto;
+  margin: 12px max(var(--mobile-gutter, 14px), env(safe-area-inset-right, 0px)) 0
+    max(var(--mobile-gutter, 14px), env(safe-area-inset-left, 0px));
+}
+
+.plan-yv--workspace .plan-yv-timeline,
+.plan-yv--workspace .plan-yv-hero {
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
 }
 
 .plan-yv-head {
@@ -9379,12 +9424,13 @@ html[data-theme="dark"] .home-pill.is-accent {
 
 .plan-yv-timeline {
   display: grid;
-  gap: 16px;
+  gap: 18px;
   margin: 2px 0 2px;
 }
 
 .plan-yv-section-label {
   margin: 0;
+  padding-inline: 2px;
   font-family: var(--font-ui);
   font-size: var(--type-caption-size);
   font-weight: var(--type-eyebrow-weight);
@@ -9396,15 +9442,17 @@ html[data-theme="dark"] .home-pill.is-accent {
 
 .plan-yv-stage-catalog {
   display: grid;
-  gap: 8px;
+  gap: 10px;
+  width: 100%;
   min-width: 0;
 }
 
 .plan-yv-stages {
   display: flex;
-  gap: 8px;
+  gap: 10px;
+  width: 100%;
   overflow-x: auto;
-  padding: 0 0 2px;
+  padding: 0 0 4px;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
 }
@@ -9415,14 +9463,14 @@ html[data-theme="dark"] .home-pill.is-accent {
 
 .plan-yv-stage {
   flex: 0 0 auto;
-  max-width: min(200px, 70vw);
+  max-width: min(9.5rem, 42vw);
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: 8px;
-  min-height: 36px;
-  padding: 6px 12px 6px 6px;
-  border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+  min-height: 40px;
+  padding: 6px 14px 6px 6px;
+  border: 1px solid transparent;
   border-radius: 999px;
   background: transparent;
   color: var(--muted);
@@ -9469,39 +9517,42 @@ html[data-theme="dark"] .home-pill.is-accent {
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: var(--type-caption-size);
-  line-height: 1.2;
+  line-height: 1.25;
   text-align: left;
 }
 
 .plan-yv-stage.is-active {
-  border-color: var(--text);
-  background: var(--text);
-  color: var(--bg, #fff);
+  flex: 1 1 auto;
+  max-width: none;
+  min-width: 0;
+  border-color: color-mix(in srgb, var(--text) 18%, transparent);
+  background: var(--elevated);
+  color: var(--text);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--text) 10%, transparent);
 }
 
 .plan-yv-stage.is-active .plan-yv-stage-num::after {
-  background: color-mix(in srgb, var(--text) 92%, #000);
+  background: var(--elevated);
 }
 
 .plan-yv-stage.is-active .plan-yv-stage-num {
   background:
     conic-gradient(
       from -90deg,
-      color-mix(in srgb, var(--bg, #fff) 88%, transparent) calc(var(--stage-pct) * 100%),
-      color-mix(in srgb, var(--bg, #fff) 22%, transparent) 0
+      var(--accent) calc(var(--stage-pct) * 100%),
+      color-mix(in srgb, var(--line) 70%, transparent) 0
     );
-  color: var(--bg, #fff);
+  color: var(--text);
 }
 
 .plan-yv-stage.is-done:not(.is-active) {
-  border-color: color-mix(in srgb, var(--line) 70%, transparent);
-  background: color-mix(in srgb, var(--surface) 88%, var(--muted));
-  color: color-mix(in srgb, var(--text) 55%, var(--muted));
+  color: color-mix(in srgb, var(--text) 62%, var(--muted));
 }
 
 .plan-yv-days-block {
   display: grid;
-  gap: 8px;
+  gap: 12px;
+  width: 100%;
   min-width: 0;
 }
 
@@ -9511,6 +9562,7 @@ html[data-theme="dark"] .home-pill.is-accent {
   justify-content: space-between;
   gap: 10px;
   min-width: 0;
+  padding-inline: 2px;
 }
 
 .plan-yv-days-head .plan-yv-section-label {
@@ -9520,7 +9572,7 @@ html[data-theme="dark"] .home-pill.is-accent {
   white-space: nowrap;
   text-transform: none;
   letter-spacing: -0.01em;
-  font-size: 0.92rem;
+  font-size: 0.95rem;
   font-weight: 600;
   color: var(--text);
 }
@@ -9533,15 +9585,17 @@ html[data-theme="dark"] .home-pill.is-accent {
 }
 
 .plan-yv-timeline.has-stages {
-  gap: 14px;
+  gap: 18px;
 }
 
 .plan-yv-days {
   display: flex;
   gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
   overflow-x: auto;
-  padding: 2px 2px 2px;
-  margin: 0 -2px;
+  padding: 2px 0;
+  margin: 0;
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
@@ -9558,7 +9612,7 @@ html[data-theme="dark"] .home-pill.is-accent {
 .plan-yv-days.is-fit .plan-yv-day {
   flex: 1 1 0;
   width: auto;
-  min-width: 56px;
+  min-width: 0;
   max-width: none;
 }
 
@@ -9574,7 +9628,7 @@ html[data-theme="dark"] .home-pill.is-accent {
   padding: 10px 4px 12px;
   border: 1px solid color-mix(in srgb, var(--line) 85%, transparent);
   border-radius: 14px;
-  background: transparent;
+  background: color-mix(in srgb, var(--surface) 55%, transparent);
   color: var(--muted);
   cursor: pointer;
   scroll-snap-align: center;
@@ -9591,26 +9645,26 @@ html[data-theme="dark"] .home-pill.is-accent {
 }
 
 .plan-yv-day .plan-yv-day-num {
-  color: color-mix(in srgb, var(--text) 62%, var(--muted));
+  color: color-mix(in srgb, var(--text) 72%, var(--muted));
 }
 
-/* Futur = outline (default). Aujourd'hui non lu = plein sombre, sans check. */
-.plan-yv-day.is-today {
-  border-color: var(--text);
-  background: var(--text);
-  color: color-mix(in srgb, var(--bg, #fff) 78%, transparent);
-  box-shadow: 0 6px 16px color-mix(in srgb, var(--text) 14%, transparent);
+/* Aujourd'hui non sélectionné = contour accent (pas invert harsh). */
+.plan-yv-day.is-today:not(.is-selected) {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+  color: var(--text);
+  box-shadow: none;
 }
 
-.plan-yv-day.is-today .plan-yv-day-num {
-  color: var(--bg, #fff);
+.plan-yv-day.is-today:not(.is-selected) .plan-yv-day-num {
+  color: var(--text);
 }
 
-.plan-yv-day.is-today .plan-yv-day-label {
-  color: color-mix(in srgb, var(--bg, #fff) 68%, transparent);
+.plan-yv-day.is-today:not(.is-selected) .plan-yv-day-label {
+  color: var(--muted);
 }
 
-/* Fait = gris clair + check (y compris aujourd'hui déjà lu). */
+/* Fait = surface muted + check. */
 .plan-yv-day.is-read {
   border-color: color-mix(in srgb, var(--line) 70%, transparent);
   background: color-mix(in srgb, var(--surface) 88%, var(--muted));
@@ -9626,16 +9680,26 @@ html[data-theme="dark"] .home-pill.is-accent {
   color: var(--muted);
 }
 
-/* Sélection = anneau, pas un bloc “terminé”. */
+/* Sélection = fill elevated + anneau accent (lisível em dark). */
 .plan-yv-day.is-selected {
+  border-color: color-mix(in srgb, var(--accent) 48%, var(--line));
+  background: color-mix(in srgb, var(--accent) 16%, var(--elevated));
+  color: var(--text);
   box-shadow:
-    0 0 0 2px color-mix(in srgb, var(--accent) 55%, transparent),
-    0 4px 12px color-mix(in srgb, var(--text) 8%, transparent);
+    0 0 0 2px color-mix(in srgb, var(--accent) 38%, transparent),
+    0 4px 14px color-mix(in srgb, var(--text) 8%, transparent);
 }
 
-.plan-yv-day.is-selected:not(.is-today):not(.is-read) {
-  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
-  background: color-mix(in srgb, var(--accent-soft) 40%, transparent);
+.plan-yv-day.is-selected .plan-yv-day-num {
+  color: var(--text);
+}
+
+.plan-yv-day.is-selected .plan-yv-day-label {
+  color: color-mix(in srgb, var(--text) 68%, var(--muted));
+}
+
+.plan-yv-day.is-selected.is-read {
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
 }
 
 .plan-yv-day-check {
@@ -9734,19 +9798,12 @@ html[data-theme="dark"] .home-pill.is-accent {
 .plan-yv-hero {
   display: grid;
   gap: 12px;
-  margin: 18px 0 4px;
-  padding: 20px 16px 16px;
+  margin: 8px 0 4px;
+  padding: 18px 16px 16px;
   border: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
-  border-radius: 18px;
-  background:
-    linear-gradient(
-      165deg,
-      var(--elevated) 0%,
-      color-mix(in srgb, var(--surface) 70%, var(--elevated)) 100%
-    );
-  box-shadow:
-    0 1px 0 color-mix(in srgb, var(--sheen) 88%, transparent),
-    0 8px 22px color-mix(in srgb, var(--text) 6%, transparent);
+  border-radius: 16px;
+  background: var(--elevated);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--sheen, transparent) 70%, transparent);
 }
 
 .plan-yv-hero.is-done {
@@ -11371,7 +11428,9 @@ html:has(.bible-reader--yv.is-menu-journey-open) .note-shell .mode-tabs,
 html:has(.bible-verse-actions.top-floating-sheet.is-open) .note-shell .mode-tabs,
 .app:has(.bible-verse-actions.top-floating-sheet.is-open) .note-shell .mode-tabs,
 html:has(.bible-study-return-nav) .note-shell .mode-tabs,
-.app:has(.bible-study-return-nav) .note-shell .mode-tabs {
+.app:has(.bible-study-return-nav) .note-shell .mode-tabs,
+html:has(.bible-plan-return-nav) .note-shell .mode-tabs,
+.app:has(.bible-plan-return-nav) .note-shell .mode-tabs {
   transform: translateY(calc(100% + 16px));
   opacity: 0;
   pointer-events: none;
@@ -11554,6 +11613,139 @@ html:has(.bible-study-return-nav) .note-shell .mode-tabs,
 
 .bible-study-return-nav-icon,
 .bible-study-return-nav-dismiss-icon {
+  width: 1.15rem;
+  height: 1.15rem;
+  flex: none;
+}
+
+/*
+ * Navbar retorno ao plan workspace — mesmo contrato visual que study-return.
+ * onClick → returnFromPlanReading (tab Plan + workspace).
+ */
+.bible-plan-return-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: calc(var(--bible-z-top-sheet, 70) + 10);
+  width: 100%;
+  margin: 0;
+  padding: 0 var(--mode-tabs-inset-x, 12px)
+    calc(var(--mode-tabs-float-gap, 14px) + env(safe-area-inset-bottom, 0px));
+  border: 0;
+  background: transparent;
+  pointer-events: none;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  box-sizing: border-box;
+  font-family: var(--font-ui);
+  color: var(--yv-text, var(--text));
+}
+
+.bible-plan-return-nav::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: calc(-1 * var(--mode-tabs-mat-fade, 32px));
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to top,
+    var(--mode-tabs-mat-bg, var(--bible-nav-surface, var(--bg))) 0%,
+    var(--mode-tabs-mat-bg, var(--bible-nav-surface, var(--bg)))
+      calc(100% - var(--mode-tabs-mat-fade, 32px)),
+    transparent 100%
+  );
+}
+
+.bible-plan-return-nav-pill {
+  position: relative;
+  z-index: 1;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  width: min(100%, 22rem);
+  height: var(--mode-tabs-pill-h, 56px);
+  min-height: var(--mode-tabs-pill-h, 56px);
+  margin: 0;
+  padding: 4px;
+  box-sizing: border-box;
+  border: 1px solid
+    var(
+      --mode-tabs-outline,
+      var(--yv-outline, color-mix(in srgb, var(--line) 70%, transparent))
+    );
+  border-radius: 999px;
+  background: var(--bible-nav-surface, var(--bg));
+  color: inherit;
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--ink) 8%, transparent),
+    0 8px 24px color-mix(in srgb, var(--ink) 14%, transparent);
+}
+
+.bible-plan-return-nav-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  margin: 0;
+  padding: 0 16px 0 14px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--mode-tabs-hub-bg, var(--ink, #0d1117));
+  color: var(--mode-tabs-hub-fg, var(--paper, #fff));
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.bible-plan-return-nav-main:hover {
+  filter: brightness(1.06);
+}
+
+.bible-plan-return-nav-main:focus-visible {
+  outline: 2px solid var(--accent, #5b7cfa);
+  outline-offset: 2px;
+}
+
+.bible-plan-return-nav-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  min-width: 0;
+}
+
+.bible-plan-return-nav-verb {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.72;
+  line-height: 1.1;
+}
+
+.bible-plan-return-nav-ref {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.95rem;
+  font-weight: 650;
+  line-height: 1.15;
+}
+
+.bible-plan-return-nav-icon {
   width: 1.15rem;
   height: 1.15rem;
   flex: none;
@@ -14451,6 +14643,27 @@ html[data-colortest*="BiblePassageChip:red"] .bible-yv-passage-chip {
   margin-left: auto;
 }
 
+/* Plan reading: ← substitui o menu à esquerda; pill fica à direita. */
+.bible-yv-top.is-free.is-plan-reading .bible-yv-passage-chrome-cluster {
+  margin-left: auto;
+  flex: 1 1 auto;
+  min-width: 0;
+  justify-content: flex-end;
+}
+
+.bible-yv-top-passage.is-plan-back-chrome,
+.bible-yv-top-passage-bar.is-plan-back-chrome {
+  max-width: min(100%, 18rem);
+}
+
+.bible-yv-top-passage-bar.is-plan-back-chrome {
+  grid-template-columns: minmax(0, 1fr) 36px;
+}
+
+.bible-yv-top-passage-bar.is-plan-back-chrome .bible-yv-top-passage-arrow.is-prev {
+  display: none;
+}
+
 .bible-yv-history-menu {
   position: static;
   flex: none;
@@ -15183,8 +15396,9 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   );
 }
 
-/* Return-nav (estudo): clearance = pill mode-tabs + gap + safe-area */
-.bible-reader--yv.has-study-return .bible-passage {
+/* Return-nav (estudo / plano): clearance = pill mode-tabs + gap + safe-area */
+.bible-reader--yv.has-study-return .bible-passage,
+.bible-reader--yv.has-plan-return .bible-passage {
   padding-bottom: calc(
     var(--mode-tabs-bar-body, 62px) + var(--mode-tabs-dome-rise, 34px) + 12px +
       env(safe-area-inset-bottom, 0px)
@@ -15195,7 +15409,8 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   );
 }
 
-.app.is-bible-mode.is-narrow .bible-reader--yv.has-study-return .bible-passage {
+.app.is-bible-mode.is-narrow .bible-reader--yv.has-study-return .bible-passage,
+.app.is-bible-mode.is-narrow .bible-reader--yv.has-plan-return .bible-passage {
   padding-bottom: calc(
     var(--mode-tabs-bar-body, 62px) + var(--mode-tabs-dome-rise, 34px) + 12px +
       env(safe-area-inset-bottom, 0px)
@@ -15672,9 +15887,9 @@ html[data-theme="dark"] .bible-chapter-fab {
   margin-right: 0.28em;
   min-width: 0;
   font-family: inherit;
-  font-size: 0.62em;
-  font-weight: 500;
-  color: var(--yv-muted);
+  font-size: 0.64em;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--yv-text) 48%, var(--yv-muted));
   vertical-align: super;
   line-height: 0;
   user-select: none;
@@ -16979,13 +17194,20 @@ html[data-theme="dark"] .bible-chapter-fab {
   }
 
   .app.is-bible-mode .bible-yv-dock.is-play-only.is-plan-progress {
-    max-width: var(--bible-audio-lane-end, 42vw);
-    gap: 8px;
+    flex-direction: column;
+    align-items: flex-start;
+    max-width: min(38vw, 9.75rem);
+    gap: 6px;
+    /* Acima do hub pill — evita overlap com “Bible”. */
+    bottom: calc(
+      var(--bible-audio-float-bottom, var(--mobile-bottom-chrome, 72px)) + 2px
+    );
   }
 
   .app.is-bible-mode .bible-yv-dock.is-plan-progress .bible-yv-plan-progress-chip {
     pointer-events: auto;
     flex: none;
+    max-width: 100%;
   }
 }
 
@@ -17014,16 +17236,16 @@ html[data-theme="dark"] .bible-chapter-fab {
 .bible-yv-plan-progress-chip {
   display: inline-flex;
   align-items: baseline;
-  gap: 6px;
-  max-width: min(14rem, 46vw);
+  gap: 5px;
+  max-width: min(12rem, 42vw);
   margin: 0;
-  padding: 10px 14px;
+  padding: 8px 12px;
   border: var(--bible-chrome-fab-border, var(--yv-chrome-border));
   border-radius: 999px;
   background: color-mix(in srgb, var(--yv-overlay-surface, var(--panel, #0d1117)) 92%, transparent);
   box-shadow: var(--bible-chrome-fab-shadow, var(--yv-audio-fab-shadow));
   color: var(--yv-text, var(--text));
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-weight: 600;
   line-height: 1.2;
   letter-spacing: -0.01em;
@@ -18754,7 +18976,8 @@ html[data-passage-bar-panel="test"]
 }
 
 .app.is-bible-mode.is-narrow .bible-reader--yv.has-verse-actions .bible-yv-dock.is-floating,
-.app.is-bible-mode.is-narrow .bible-reader--yv.has-study-return .bible-yv-dock.is-floating {
+.app.is-bible-mode.is-narrow .bible-reader--yv.has-study-return .bible-yv-dock.is-floating,
+.app.is-bible-mode.is-narrow .bible-reader--yv.has-plan-return .bible-yv-dock.is-floating {
   opacity: 0;
   pointer-events: none;
   transform: translate3d(0, 10px, 0);
