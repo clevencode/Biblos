@@ -185,6 +185,8 @@ export function PlanWorkspacePanel({
   const [noteSaved, setNoteSaved] = useState(false);
   const daysStripRef = useRef<HTMLDivElement>(null);
   const stagesStripRef = useRef<HTMLDivElement>(null);
+  /** `smooth` só após gesto; resume/mount/sync usam `auto`. */
+  const stripScrollBehaviorRef = useRef<ScrollBehavior>("auto");
 
   const days = useMemo(() => planDaysFromReadingPlan(plan), [plan]);
   const stages = useMemo(() => stagesFromReadingPlan(plan), [plan]);
@@ -235,26 +237,33 @@ export function PlanWorkspacePanel({
 
   useEffect(() => {
     if (screen !== "timeline") return;
-    const root = daysStripRef.current;
-    if (!root) return;
-    const selected = root.querySelector<HTMLElement>(".plan-yv-day.is-selected");
-    if (selected) scrollStripChildIntoView(root, selected);
-  }, [screen, selectedJour, stageDays.length]);
-
-  useEffect(() => {
-    if (screen !== "timeline" || !hasStages || !selectedStage) return;
-    const root = stagesStripRef.current;
-    if (!root) return;
-    const active = root.querySelector<HTMLElement>(
-      `[data-stage="${selectedStage.id}"]`,
-    );
-    if (active) scrollStripChildIntoView(root, active);
-  }, [screen, hasStages, selectedStage?.id]);
+    const behavior = stripScrollBehaviorRef.current;
+    stripScrollBehaviorRef.current = "auto";
+    const frame = requestAnimationFrame(() => {
+      const daysRoot = daysStripRef.current;
+      const selected = daysRoot?.querySelector<HTMLElement>(
+        ".plan-yv-day.is-selected",
+      );
+      if (daysRoot && selected) {
+        scrollStripChildIntoView(daysRoot, selected, behavior);
+      }
+      if (!hasStages || !selectedStage) return;
+      const stagesRoot = stagesStripRef.current;
+      const active = stagesRoot?.querySelector<HTMLElement>(
+        `[data-stage="${selectedStage.id}"]`,
+      );
+      if (stagesRoot && active) {
+        scrollStripChildIntoView(stagesRoot, active, behavior);
+      }
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [screen, selectedJour, stageDays.length, hasStages, selectedStage?.id]);
 
   useEffect(() => {
     if (!hasStages || !selectedStage || !stageDays.length) return;
     if (stageDays.some((day) => day.jour === selectedJour)) return;
     const unread = stageDays.find((day) => !isJourComplete(progress, day.jour));
+    stripScrollBehaviorRef.current = "auto";
     setSelectedJour(unread?.jour ?? stageDays[0]!.jour);
   }, [hasStages, selectedStage?.id, selectedJour, stageDays, progress]);
 
@@ -306,14 +315,8 @@ export function PlanWorkspacePanel({
   }
 
   function selectStage(stage: { fromJour: number; toJour: number }) {
-    const next = pickStageJour(stage);
-    setSelectedJour(next);
-    requestAnimationFrame(() => {
-      const strip = daysStripRef.current;
-      if (!strip) return;
-      const btn = strip.querySelector<HTMLButtonElement>(`button[data-jour="${next}"]`);
-      if (btn) scrollStripChildIntoView(strip, btn);
-    });
+    stripScrollBehaviorRef.current = "smooth";
+    setSelectedJour(pickStageJour(stage));
   }
 
   function openPassageAt(ref?: string) {
@@ -470,7 +473,7 @@ export function PlanWorkspacePanel({
   const returnLabel = `${returnAction} - ${returnDestination}`;
 
   return (
-    <div className="today-view panel-nota-content plan-yv plan-yv--workspace has-plan-return">
+    <div className="today-view panel-nota-content plan-yv plan-yv--workspace">
       <ShellPageTopbar
         className="plan-yv-topbar"
         title={planTitle}
@@ -599,7 +602,10 @@ export function PlanWorkspacePanel({
                     ]
                       .filter(Boolean)
                       .join(" ")}
-                    onClick={() => setSelectedJour(day.jour)}
+                    onClick={() => {
+                      stripScrollBehaviorRef.current = "smooth";
+                      setSelectedJour(day.jour);
+                    }}
                     aria-label={[
                       hasStages && selectedStage
                         ? `${t("bible.planStage", { n: selectedStage.id })}, ${t("bible.planDay", { n: tileNum })}`

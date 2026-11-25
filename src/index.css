@@ -9734,6 +9734,7 @@ html[data-theme="dark"] .home-pill.is-accent {
   min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
+  overscroll-behavior: contain;
   display: grid;
   gap: var(--plan-space-3);
   align-content: start;

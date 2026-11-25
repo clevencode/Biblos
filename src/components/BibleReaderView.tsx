@@ -3334,25 +3334,8 @@ export function BibleReaderView({
     const actionLabel = t("plan.returnAction");
     const planLabel =
       planReading.planName?.trim() || t("plan.returnToPlans");
-    const stageIdx = planReading.stageIndex ?? 1;
-    const stageTotal = planReading.stageCount ?? 1;
-    const dayIdx = planReading.stageDayIndex ?? planReading.stepIndex + 1;
-    const dayTotal = planReading.stageDayCount ?? planReading.stepCount ?? 0;
-    const stageTitle = planReading.stageName?.trim();
     const progressInline = formatPlanProgressBadge(planReading);
-    const fullLabel = [
-      actionLabel,
-      planLabel,
-      stageTitle,
-      stageTotal > 1
-        ? `${t("bible.planStage", { n: stageIdx })}/${stageTotal}`
-        : null,
-      dayTotal > 0
-        ? `${t("bible.planDay", { n: dayIdx })}${
-            dayTotal > 1 ? `/${dayTotal}` : ""
-          }`
-        : null,
-    ]
+    const fullLabel = [actionLabel, planLabel, progressInline]
       .filter(Boolean)
       .join(" · ");
     return (
