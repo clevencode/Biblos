@@ -13685,18 +13685,26 @@ html[data-passage-bar-panel="test"] .bible-yv-pick-search-trigger.is-bare.is-on 
   max-width: min(100%, 18rem);
 }
 
-/* Ghost chrome: dismiss picker (✕). */
+/* ✕ fechar picker — mesmo fundo chrome da pill ← Genèse. */
 .bible-yv-top.is-pick-step-open .bible-yv-top-passage-arrow.is-pick-dismiss {
   flex: none;
-  background: transparent !important;
+  width: var(--hdr-size, 44px);
+  min-width: var(--hdr-size, 44px);
+  height: var(--hdr-size, 44px);
+  min-height: var(--hdr-size, 44px);
   border: 0 !important;
+  border-radius: 999px;
+  background: var(--yv-chrome-surface, var(--surface)) !important;
   box-shadow: none !important;
   color: var(--yv-text, var(--text));
 }
 
 .bible-yv-top.is-pick-step-open
   .bible-yv-top-passage-arrow.is-pick-dismiss:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--yv-text) 7%, transparent) !important;
+  background: var(
+    --yv-chrome-hover,
+    color-mix(in srgb, var(--yv-text) 7%, var(--surface))
+  ) !important;
 }
 
 .bible-yv-top.is-pick-step-open
