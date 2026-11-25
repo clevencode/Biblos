@@ -1032,6 +1032,8 @@ export function BibleReaderView({
     discoverySplitSearch,
     passageStep,
     setPassageStep,
+    pickerBookId,
+    setPickerBookId,
     passageRollOpen,
     bookSearchQuery,
     setBookSearchQuery,
@@ -1787,7 +1789,7 @@ export function BibleReaderView({
   }
 
   function planOrChapterSkip(delta: -1 | 1) {
-    if (pickerOpen) setPassageStep("chapter");
+    if (pickerOpen) setPassageStep("book");
     // Escopo plan : skips = uniquement le flux du plan (jamais chapitres libres).
     // Chip = lecture libre ; hors pas → d’abord revenir au passage du plan.
     if (planReading) {
@@ -1901,11 +1903,13 @@ export function BibleReaderView({
       (passageStep === "book" ||
         passageStep === "chapter" ||
         passageStep === "verse");
-    /** Pill Menu-style: ← + nome do livro (+ capítulo no passo verso). */
+    /** Pill Menu-style: ← + nome do livro sob consulta (+ capítulo no passo verso). */
     const pickBackLabel =
       passageStep === "verse"
-        ? passageRefLabel
-        : bookTitle.trim() || passageRefLabel;
+        ? formatPassagePillRef(browsingBookTitle, chapterId)
+        : passageStep === "chapter"
+          ? browsingBookTitle.trim() || bookTitle.trim() || passageRefLabel
+          : bookTitle.trim() || passageRefLabel;
 
     /* Picker aberto: pill ← + livro (sem campo de pesquisa). */
     if (showPickReturnPill) {
@@ -1926,7 +1930,7 @@ export function BibleReaderView({
               passageStep === "book"
                 ? `Replier le passage · ${pickBackLabel}`
                 : passageStep === "verse"
-                  ? `Retour aux chapitres de ${bookTitle}`
+                  ? `Retour à la liste des livres · ${browsingBookTitle}`
                   : "Retour à la liste des livres"
             }
             title={pickBackLabel}
@@ -2064,14 +2068,20 @@ export function BibleReaderView({
   }
 
   function renderPassageBookSheet() {
+    const sheetBookId =
+      passageStep === "book" ? bookId : browsingBookId;
+    const sheetBookTitle =
+      passageStep === "book" ? bookTitle : browsingBookTitle;
+    const sheetChapterId =
+      passageStep === "chapter" ? pickChapterHighlightId : chapterId;
     return (
       <BiblePassageScrollPicker
         id={passagePickerPanelId}
         open={passageRollOpen}
         step={passageStep}
-        bookId={bookId}
-        bookTitle={bookTitle}
-        chapterId={chapterId}
+        bookId={sheetBookId}
+        bookTitle={sheetBookTitle}
+        chapterId={sheetChapterId}
         bookSearchQuery={bookSearchQuery}
         books={books}
         discovery={passageDiscovery}
@@ -2091,6 +2101,7 @@ export function BibleReaderView({
         onPickJump={pickDiscoveryJump}
         onPickVerse={pickVerseSearchHit}
         onPickChapter={pickChapter}
+        onPickChapterFromBook={pickChapterFromBook}
         onJumpVerse={jumpToVerse}
         discoveryBooksOnly={discoverySplitSearch}
       />
@@ -2099,21 +2110,31 @@ export function BibleReaderView({
 
   function handlePickBack() {
     if (passageStep === "verse") {
-      setPassageStep("chapter");
+      const target = (pickerBookId ?? bookId).trim() || bookId;
+      setPickerBookId(target);
+      setDiscoveryExpandedBook(target);
+      setPassageStep("book");
       return;
     }
     if (passageStep === "chapter") {
+      setPickerBookId(null);
       setPassageStep("book");
       return;
     }
     closePicker();
   }
 
+  /** Expandir acordeão de capítulos (sem ecrã chapter). */
   function pickBook(nextBook: string) {
     armPendingVerseStep(false);
-    setPassageStep("chapter");
-    if (nextBook.toUpperCase() === bookId.toUpperCase()) return;
-    void loadChapter(nextBook, "1", null);
+    setPickerBookId(nextBook);
+    setDiscoveryExpandedBook(nextBook);
+    setPassageStep("book");
+  }
+
+  function pickChapterFromBook(nextBook: string, nextChapter: string) {
+    setPickerBookId(nextBook);
+    pickChapter(nextChapter, nextBook);
   }
 
   function pickVerseSearchHit(hit: BibleSearchHit) {
@@ -2274,20 +2295,23 @@ export function BibleReaderView({
     pendingPassageScrollRestoreRef.current = null;
   }
 
-  function pickChapter(nextChapter: string) {
+  function pickChapter(nextChapter: string, bookOverride?: string) {
+    const targetBook =
+      (bookOverride ?? pickerBookId ?? bookId).trim() || bookId;
+    const sameBook = targetBook.toUpperCase() === bookId.toUpperCase();
     if (passagePickerSkipsVerseStep()) {
-      if (nextChapter !== chapterId || !passage?.verses?.length) {
-        void loadChapter(bookId, nextChapter, null);
+      if (!sameBook || nextChapter !== chapterId || !passage?.verses?.length) {
+        void loadChapter(targetBook, nextChapter, null);
       }
       closePicker({ restoreFocus: false });
       return;
     }
-    if (nextChapter === chapterId && passage?.verses?.length) {
+    if (sameBook && nextChapter === chapterId && passage?.verses?.length) {
       setPassageStep("verse");
       return;
     }
     armPendingVerseStep(true);
-    void loadChapter(bookId, nextChapter, null);
+    void loadChapter(targetBook, nextChapter, null);
   }
 
   function closeCreateCard() {
@@ -2420,10 +2444,24 @@ export function BibleReaderView({
   }
 
   const selectedBook = books.find((b) => b.id.toUpperCase() === bookId.toUpperCase());
+  const browsingBookId = (pickerBookId ?? bookId).trim() || bookId;
+  const browsingBook = books.find(
+    (b) => b.id.toUpperCase() === browsingBookId.toUpperCase(),
+  );
   const chapters =
-    selectedBook?.chapters?.length
-      ? selectedBook.chapters.map((c) => c.id)
-      : Array.from({ length: 50 }, (_, i) => String(i + 1));
+    browsingBook?.chapters?.length
+      ? browsingBook.chapters.map((c) => c.id)
+      : selectedBook?.chapters?.length
+        ? selectedBook.chapters.map((c) => c.id)
+        : Array.from({ length: 50 }, (_, i) => String(i + 1));
+  const browsingSameAsReader =
+    browsingBookId.toUpperCase() === bookId.toUpperCase();
+  /** Destaque na grelha só quando o livro sob consulta é o do leitor. */
+  const pickChapterHighlightId = browsingSameAsReader ? chapterId : "";
+  const browsingBookTitle =
+    resolveBookTitleActive(browsingBookId) ||
+    browsingBook?.title ||
+    browsingBookId;
 
   const canPrev = Boolean(adjacentChapter(books, bookId, chapterId, -1));
   const canNext = Boolean(adjacentChapter(books, bookId, chapterId, 1));

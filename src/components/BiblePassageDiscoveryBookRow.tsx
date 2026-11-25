@@ -5,12 +5,17 @@ import type { DiscoveryBookHit } from "../bible/passageDiscovery/types";
 import { useBookVerseDiscovery } from "../hooks/useBookVerseDiscovery";
 import type { BibleTextVersionId } from "../bible/bibleVersions";
 import type { BibleSearchHit } from "../youversion/client";
+
 type BiblePassageDiscoveryBookRowProps = {
   hit: DiscoveryBookHit;
   searchQuery: string;
   hasQuery: boolean;
   textVersion: BibleTextVersionId;
   currentBookId: string;
+  /** Capítulos do catálogo para este livro (acordeão sem query). */
+  chapterIds: string[];
+  /** Capítulo actual do leitor, se este for o livro sob consulta. */
+  highlightChapterId: string;
   loading: boolean;
   expanded: boolean;
   anchorVerseUsfm: string | null;
@@ -18,6 +23,7 @@ type BiblePassageDiscoveryBookRowProps = {
   onToggleExpand: (bookId: string | null) => void;
   onVerseListScroll: (bookId: string, scrollTop: number) => void;
   onPickBook: (id: string) => void;
+  onPickChapter: (bookId: string, chapterId: string) => void;
   onPickVerse: (hit: BibleSearchHit) => void;
   verseDiscoveryEnabled?: boolean;
   /** `false` no painel de palavras — cabeçalho só expande hits, não navega para o livro. */
@@ -30,6 +36,8 @@ export function BiblePassageDiscoveryBookRow({
   hasQuery,
   textVersion,
   currentBookId,
+  chapterIds,
+  highlightChapterId,
   loading,
   expanded,
   anchorVerseUsfm,
@@ -37,6 +45,7 @@ export function BiblePassageDiscoveryBookRow({
   onToggleExpand,
   onVerseListScroll,
   onPickBook,
+  onPickChapter,
   onPickVerse,
   verseDiscoveryEnabled = true,
   bookNavigateEnabled = true,
@@ -45,25 +54,40 @@ export function BiblePassageDiscoveryBookRow({
   const verseListRef = useRef<HTMLUListElement | null>(null);
   const on = hit.id.toUpperCase() === currentBookId.toUpperCase();
   const contentHits = (hit.count ?? 0) > 0;
-  const expandable = verseDiscoveryEnabled && hasQuery && contentHits;
+  /** Query com hits de conteúdo → acordeão de versículos. */
+  const verseExpandable = verseDiscoveryEnabled && hasQuery && contentHits;
+  /** Sem hits de versículo → acordeão de capítulos (também com filtro só por título). */
+  const chapterExpandable =
+    bookNavigateEnabled && !verseExpandable && chapterIds.length > 0;
+  const expandable = verseExpandable || chapterExpandable;
   const { hits, total, busy, error } = useBookVerseDiscovery(
     searchQuery,
-    expanded && expandable ? hit.id : null,
+    expanded && verseExpandable ? hit.id : null,
     textVersion,
   );
 
   useLayoutEffect(() => {
     const ul = verseListRef.current;
-    if (!ul || !expanded || busy) return;
+    if (!ul || !expanded || !verseExpandable || busy) return;
     ul.scrollTop = verseScrollTop;
     if (verseScrollTop > 0) return;
     const anchor = anchorVerseUsfm?.toUpperCase() ?? "";
     if (!anchor.startsWith(`${hit.id.toUpperCase()}.`)) return;
-    const btn = Array.from(ul.querySelectorAll<HTMLElement>("[data-discovery-usfm]")).find(
+    const btn = Array.from(
+      ul.querySelectorAll<HTMLElement>("[data-discovery-usfm]"),
+    ).find(
       (el) => el.getAttribute("data-discovery-usfm")?.toUpperCase() === anchor,
     );
     btn?.scrollIntoView({ block: "nearest" });
-  }, [expanded, busy, hits.length, verseScrollTop, anchorVerseUsfm, hit.id]);
+  }, [
+    expanded,
+    verseExpandable,
+    busy,
+    hits.length,
+    verseScrollTop,
+    anchorVerseUsfm,
+    hit.id,
+  ]);
 
   function handleRowActivate() {
     if (expandable) {
@@ -81,9 +105,16 @@ export function BiblePassageDiscoveryBookRow({
     onPickVerse(verseHit);
   }
 
+  const chapterCountLabel =
+    chapterExpandable && chapterIds.length
+      ? chapterIds.length
+      : verseExpandable && hit.count != null
+        ? hit.count
+        : null;
+
   return (
     <div
-      className={`bible-yv-pick-book-row${expanded ? " is-expanded" : ""}${expandable ? " is-expandable" : ""}`}
+      className={`bible-yv-pick-book-row${expanded ? " is-expanded" : ""}${expandable ? " is-expandable" : ""}${chapterExpandable ? " is-chapter-accordion" : ""}`}
     >
       <button
         id={`bible-pick-book-${hit.id}`}
@@ -99,11 +130,13 @@ export function BiblePassageDiscoveryBookRow({
         <span className="bible-yv-pick-cell-label">{hit.title}</span>
         {expandable ? (
           <span className="bible-yv-pick-cell-expand-meta" aria-hidden>
-            {hit.count != null ? (
-              <span className="bible-yv-pick-cell-count">{hit.count}</span>
+            {chapterCountLabel != null ? (
+              <span className="bible-yv-pick-cell-count">
+                {chapterExpandable ? `(${chapterCountLabel})` : chapterCountLabel}
+              </span>
             ) : null}
             <YvIcon
-              name={expanded ? "expand_less" : "unfold_more"}
+              name={expanded ? "keyboard_arrow_down" : "chevron_right"}
               opsz={24}
               className="bible-yv-pick-cell-expand-icon"
             />
@@ -111,7 +144,33 @@ export function BiblePassageDiscoveryBookRow({
         ) : null}
       </button>
 
-      {expandable && expanded ? (
+      {chapterExpandable && expanded ? (
+        <div
+          id={panelId}
+          className="bible-yv-pick-chapter-panel"
+          role="listbox"
+          aria-label={`Chapitres de ${hit.title}`}
+        >
+          {chapterIds.map((id) => {
+            const selected = id === highlightChapterId && on;
+            return (
+              <button
+                key={id}
+                type="button"
+                role="option"
+                aria-selected={selected}
+                className={`bible-yv-pick-cell${selected ? " is-on" : ""}`}
+                onClick={() => onPickChapter(hit.id, id)}
+                disabled={loading}
+              >
+                {id}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+
+      {verseExpandable && expanded ? (
         <div
           id={panelId}
           className="bible-yv-pick-verse-panel"

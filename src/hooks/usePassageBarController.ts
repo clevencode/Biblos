@@ -70,6 +70,11 @@ export function usePassageBarController({
   markOverlayDismissSwallow,
 }: UsePassageBarControllerArgs) {
   const [passageStep, setPassageStep] = useState<PassageBarStep>("book");
+  /**
+   * Livro sob consulta no picker (passo chapter/verse).
+   * Null = usar o bookId do leitor; limpar ao voltar à lista / fechar.
+   */
+  const [pickerBookId, setPickerBookId] = useState<string | null>(null);
   const [bookSearchQuery, setBookSearchQuery] = useState("");
   /** Barra de pesquisa do book picker — fechada ao abrir o picker. */
   const [pickSearchOpen, setPickSearchOpen] = useState(false);
@@ -324,6 +329,7 @@ export function usePassageBarController({
       flushVerseListScrollToSession();
       setPickSearchOpen(false);
       setBookSearchQuery("");
+      setPickerBookId(null);
       setPassageStep("book");
       pendingVerseStep.current = false;
       requestClosePicker();
@@ -359,23 +365,67 @@ export function usePassageBarController({
       if (!pickerPanelOpenAllowed) return;
       setPickSearchOpen(false);
       setBookSearchQuery("");
-      setPassageStep(step);
+      /* Capítulos via acordeão no passo book — sem ecrã chapter. */
+      if (step === "chapter") {
+        setPickerBookId(bookId);
+        setPassageStep("book");
+        setDiscoveryExpandedBook(bookId);
+      } else {
+        setPickerBookId(null);
+        setPassageStep("book");
+      }
       pendingVerseStep.current = false;
       requestOpenPassagePicker();
     },
-    [pickerPanelOpenAllowed, requestOpenPassagePicker],
+    [
+      pickerPanelOpenAllowed,
+      requestOpenPassagePicker,
+      bookId,
+      setDiscoveryExpandedBook,
+    ],
   );
 
   const togglePassagePicker = useCallback(
     (step: "book" | "chapter") => {
       if (!pickerPanelOpenAllowed) return;
+      if (passageRollOpen && passageStep === "book") {
+        if (step === "book") {
+          closePicker();
+          return;
+        }
+        const expanded =
+          discoverySession.expandedBookId?.toUpperCase() ?? "";
+        if (expanded === bookId.toUpperCase()) {
+          closePicker();
+          return;
+        }
+        setPickerBookId(bookId);
+        setDiscoveryExpandedBook(bookId);
+        return;
+      }
+      if (passageRollOpen && passageStep === "verse" && step === "chapter") {
+        setPickerBookId(bookId);
+        setDiscoveryExpandedBook(bookId);
+        setPassageStep("book");
+        return;
+      }
       if (passageRollOpen && passageStep === step) {
         closePicker();
         return;
       }
       openPassagePicker(step);
     },
-    [pickerPanelOpenAllowed, passageRollOpen, passageStep, closePicker, openPassagePicker],
+    [
+      pickerPanelOpenAllowed,
+      passageRollOpen,
+      passageStep,
+      closePicker,
+      openPassagePicker,
+      discoverySession.expandedBookId,
+      bookId,
+      setDiscoveryExpandedBook,
+      setPickerBookId,
+    ],
   );
 
   const togglePassagePickerRef = useCallback(() => {
@@ -399,6 +449,7 @@ export function usePassageBarController({
 
   const toggleWordSearch = useCallback(() => {
     if (!wordSearchOpen) {
+      setPickerBookId(null);
       setPassageStep("book");
       pendingVerseStep.current = false;
     }
@@ -517,6 +568,8 @@ export function usePassageBarController({
     pickerOpen,
     passageStep,
     setPassageStep,
+    pickerBookId,
+    setPickerBookId,
     passageRollOpen,
     bookSearchQuery,
     setBookSearchQuery,

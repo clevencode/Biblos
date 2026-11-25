@@ -14,13 +14,17 @@ type BiblePassageDiscoveryListProps = {
   hasQuery: boolean;
   searchQuery: string;
   bookId: string;
+  /** Capítulo do leitor — destaque na grelha do livro actual. */
+  highlightChapterId: string;
   loading: boolean;
   expandedBookId: string | null;
   anchorVerseUsfm: string | null;
   verseScrollByBook: Record<string, number>;
+  getChapterIds: (bookId: string) => string[];
   onExpandedBookChange: (id: string | null) => void;
   onVerseListScroll: (bookId: string, scrollTop: number) => void;
   onPickBook: (id: string) => void;
+  onPickChapter: (bookId: string, chapterId: string) => void;
   onPickJump: (jump: DiscoveryJump) => void;
   onPickVerse: (hit: BibleSearchHit) => void;
   /** `false` no passo livro (só títulos) — default `true`. */
@@ -39,26 +43,34 @@ function renderBooks(
   >,
 ) {
   if (!hits.length) return null;
-  return hits.map((hit) => (
-    <BiblePassageDiscoveryBookRow
-      key={hit.id}
-      hit={hit}
-      searchQuery={props.searchQuery}
-      hasQuery={props.hasQuery}
-      textVersion={props.textVersion}
-      currentBookId={props.bookId}
-      loading={props.loading}
-      expanded={props.expandedBookId?.toUpperCase() === hit.id.toUpperCase()}
-      anchorVerseUsfm={props.anchorVerseUsfm}
-      verseScrollTop={props.verseScrollByBook[hit.id.toUpperCase()] ?? 0}
-      verseDiscoveryEnabled={props.verseDiscoveryEnabled ?? true}
-      bookNavigateEnabled={props.bookNavigateEnabled ?? true}
-      onToggleExpand={props.onExpandedBookChange}
-      onVerseListScroll={props.onVerseListScroll}
-      onPickBook={props.onPickBook}
-      onPickVerse={props.onPickVerse}
-    />
-  ));
+  return hits.map((hit) => {
+    const chapterIds = props.getChapterIds(hit.id);
+    const sameBook =
+      hit.id.toUpperCase() === props.bookId.toUpperCase();
+    return (
+      <BiblePassageDiscoveryBookRow
+        key={hit.id}
+        hit={hit}
+        searchQuery={props.searchQuery}
+        hasQuery={props.hasQuery}
+        textVersion={props.textVersion}
+        currentBookId={props.bookId}
+        chapterIds={chapterIds}
+        highlightChapterId={sameBook ? props.highlightChapterId : ""}
+        loading={props.loading}
+        expanded={props.expandedBookId?.toUpperCase() === hit.id.toUpperCase()}
+        anchorVerseUsfm={props.anchorVerseUsfm}
+        verseScrollTop={props.verseScrollByBook[hit.id.toUpperCase()] ?? 0}
+        verseDiscoveryEnabled={props.verseDiscoveryEnabled ?? true}
+        bookNavigateEnabled={props.bookNavigateEnabled ?? true}
+        onToggleExpand={props.onExpandedBookChange}
+        onVerseListScroll={props.onVerseListScroll}
+        onPickBook={props.onPickBook}
+        onPickChapter={props.onPickChapter}
+        onPickVerse={props.onPickVerse}
+      />
+    );
+  });
 }
 
 export function BiblePassageDiscoveryList({
@@ -70,13 +82,16 @@ export function BiblePassageDiscoveryList({
   hasQuery,
   searchQuery,
   bookId,
+  highlightChapterId,
   loading,
   expandedBookId,
   anchorVerseUsfm,
   verseScrollByBook,
+  getChapterIds,
   onExpandedBookChange,
   onVerseListScroll,
   onPickBook,
+  onPickChapter,
   onPickJump,
   onPickVerse,
   verseDiscoveryEnabled = true,
@@ -91,15 +106,18 @@ export function BiblePassageDiscoveryList({
     hasQuery,
     textVersion,
     bookId,
+    highlightChapterId,
     loading,
     expandedBookId,
     anchorVerseUsfm,
     verseScrollByBook,
+    getChapterIds,
     verseDiscoveryEnabled,
     bookNavigateEnabled,
     onExpandedBookChange,
     onVerseListScroll,
     onPickBook,
+    onPickChapter,
     onPickJump,
     onPickVerse,
   };

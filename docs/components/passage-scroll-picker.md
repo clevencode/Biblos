@@ -7,7 +7,7 @@
 | **Tipo** | Componente **controlado** — sem estado de passo interno |
 | **Pai** | `renderPassageRoll` em `BibleReaderView` |
 
-Agrega os três passos (`book`, `chapter`, `verse`) num único painel. A documentação por passo está nos módulos filhos; este ficheiro descreve o **contrato único** e comportamento transversal.
+Agrega os passos (`book`, `verse`; `chapter` legado) num único painel. Capítulos escolhem-se no **acordeão** do passo `book`.
 
 ---
 
@@ -15,8 +15,8 @@ Agrega os três passos (`book`, `chapter`, `verse`) num único painel. A documen
 
 - Retorna `null` se `!open`.
 - Classe painel: `bible-yv-passage-scroll-panel is-open is-header-roll is-${step}`.
-- Cabeçalho contextual: busca (book), subhead com back (chapter/verse).
-- Grelha `role="listbox"` — conteúdo varia por `step`.
+- Cabeçalho contextual: busca (book), pill de retorno; passo `verse` só no fluxo legacy.
+- Grelha `role="listbox"` — no passo `book`, lista + acordeão de capítulos / hits de versículo.
 
 ---
 
@@ -30,7 +30,7 @@ Ver tipos em `BiblePassageScrollPicker.tsx`:
 | Contexto | `bookId`, `bookTitle`, `chapterId`, `textVersion` |
 | Book | `bookSearchQuery`, `books`, `discovery*`, `discoverySession`, callbacks discovery |
 | Chapter/verse | `chapters`, `verseOptions`, `passageChrome`, `highlightVerse`, `verseSelected` |
-| Acções | `onBack`, `onPickBook`, `onPickChapter`, `onJumpVerse`, `onPickVerse`, `onPickJump`, search handlers |
+| Acções | `onPickBook`, `onPickChapter`, `onPickChapterFromBook`, `onJumpVerse`, `onPickVerse`, `onPickJump` |
 
 `forwardRef` no contentor externo para medição/foco no pai.
 
@@ -38,9 +38,11 @@ Ver tipos em `BiblePassageScrollPicker.tsx`:
 
 ## Comportamento transversal
 
-- **Scroll lista livros:** só passo `book`; restaura `discoverySession.listScrollTop` uma vez por abertura.
-- **Chapter grid:** botões numéricos ou `BiblePickGridSkeleton` se `chapters` vazio.
-- **Verse grid:** skeleton se `passageChrome.showDeferredUi`; senão map `verseOptions`.
+- **Scroll lista livros:** só passo `book`; restaura scroll da grelha uma vez por abertura.
+- **Acordeão capítulos:** sem query de texto, tap no livro expande `bible-yv-pick-chapter-panel` (grelha 5 colunas); `onPickChapterFromBook` → `pickChapter` (fecha no fluxo default).
+- **Acordeão versículos:** com query + hits, mantém `bible-yv-pick-verse-panel`.
+- **Passo `chapter`:** legado / inalcançável no fluxo canónico (chip capítulo abre `book` + expand do livro actual).
+- **Verse grid:** só se `VITE_PASSAGE_PICKER_FLOW` for `legacy`/`verse`/`0`.
 - **Empty states:** copy em `PASSAGE_LOADING_COPY` e mensagens FR locais.
 
 ---
@@ -49,8 +51,9 @@ Ver tipos em `BiblePassageScrollPicker.tsx`:
 
 | Filho | Passo |
 |-------|--------|
-| `BiblePassageDiscoveryList` | book |
-| `BiblePickGridSkeleton` | chapter/verse loading |
+| `BiblePassageDiscoveryList` + acordeão capítulos | book (canónico) |
+| Grelha chapter | legado / inalcançável no fluxo default |
+| Grelha verse | só fluxo `legacy`/`verse` |
 
 ---
 

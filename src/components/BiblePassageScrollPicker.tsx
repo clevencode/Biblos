@@ -48,7 +48,9 @@ type BiblePassageScrollPickerProps = {
   onPickBook: (id: string) => void;
   onPickJump: (jump: DiscoveryJump) => void;
   onPickVerse: (hit: BibleSearchHit) => void;
+  /** Passo chapter legado; acordeão no passo book usa `onPickChapterFromBook`. */
   onPickChapter: (id: string) => void;
+  onPickChapterFromBook: (bookId: string, chapterId: string) => void;
   onJumpVerse: (n: number) => void;
   /** Split discovery (test): busca do pill só filtra livros / refs. */
   discoveryBooksOnly?: boolean;
@@ -94,6 +96,7 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
       onPickJump,
       onPickVerse,
       onPickChapter,
+      onPickChapterFromBook,
       onJumpVerse,
       discoveryBooksOnly = false,
     },
@@ -212,13 +215,21 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
               hasQuery={hasQuery}
               searchQuery={bookSearchQuery}
               bookId={bookId}
+              highlightChapterId={chapterId}
               loading={inFlight}
               expandedBookId={discoverySession.expandedBookId}
               anchorVerseUsfm={discoverySession.anchorVerseUsfm}
               verseScrollByBook={discoverySession.verseScrollByBook}
+              getChapterIds={(id) => {
+                const book = books.find(
+                  (b) => b.id.toUpperCase() === id.toUpperCase(),
+                );
+                return book?.chapters?.map((c) => c.id) ?? [];
+              }}
               onExpandedBookChange={onDiscoveryExpandedBookChange}
               onVerseListScroll={onDiscoveryVerseListScroll}
               onPickBook={onPickBook}
+              onPickChapter={onPickChapterFromBook}
               onPickJump={onPickJump}
               onPickVerse={handlePickVerse}
               verseDiscoveryEnabled={!discoveryBooksOnly}

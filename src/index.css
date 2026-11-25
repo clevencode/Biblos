@@ -14272,9 +14272,10 @@ html[data-passage-bar-panel="test"]
   align-content: start;
   justify-items: center;
   gap: var(--bible-pick-grid-gap);
-  padding-top: 6px;
-  padding-right: 4px;
-  padding-left: 4px;
+  /* Respiro lateral alinhado ao menu de capítulos (step-by-step). */
+  padding-top: 8px;
+  padding-right: 10px;
+  padding-left: 10px;
 }
 
 /*
@@ -14469,6 +14470,59 @@ html[data-passage-bar-panel="test"]
 
 .bible-yv-pick-book-row.is-expanded .bible-yv-pick-cell-expand-icon {
   color: var(--accent);
+}
+
+/* Acordeão de capítulos no passo book (substitui o ecrã chapter). */
+.bible-yv-pick-chapter-panel {
+  --bible-pick-grid-gap: 10px;
+  --bible-pick-cell-size: 48px;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-auto-flow: row;
+  align-content: start;
+  justify-items: center;
+  gap: var(--bible-pick-grid-gap);
+  margin: 0 2px 8px;
+  padding: 8px 6px 10px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--text) 4%, var(--panel));
+  border: 1px solid color-mix(in srgb, var(--yv-line) 40%, transparent);
+}
+
+.bible-yv-pick-chapter-panel .bible-yv-pick-cell {
+  box-sizing: border-box;
+  width: var(--bible-pick-cell-size);
+  height: var(--bible-pick-cell-size);
+  min-width: var(--bible-pick-cell-size);
+  min-height: var(--bible-pick-cell-size);
+  max-width: var(--bible-pick-cell-size);
+  max-height: var(--bible-pick-cell-size);
+  margin: 0;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--text) 7%, var(--panel, var(--surface)));
+  border: 0;
+  color: var(--yv-text);
+  cursor: pointer;
+}
+
+.bible-yv-pick-chapter-panel .bible-yv-pick-cell.is-on {
+  background: color-mix(in srgb, var(--accent) 18%, var(--panel));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent);
+  color: var(--yv-text);
+}
+
+.bible-yv-pick-chapter-panel .bible-yv-pick-cell:disabled {
+  opacity: 0.45;
+  cursor: default;
 }
 
 .bible-yv-pick-verse-panel {
