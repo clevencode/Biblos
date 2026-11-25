@@ -13,6 +13,7 @@ import { PASSAGE_LOADING_COPY } from "../bible/viewState/loadingConstants";
 import type { PassagePickerChrome } from "../bible/viewState/passagePickerChrome";
 import type { DiscoveryJump, PassageDiscoveryResult } from "../bible/passageDiscovery/types";
 import type { BibleTextVersionId } from "../bible/bibleVersions";
+import { YvIcon } from "./YvIcon";
 
 export type PassagePickStep = "book" | "chapter" | "verse";
 
@@ -24,6 +25,11 @@ type BiblePassageScrollPickerProps = {
   bookTitle: string;
   chapterId: string;
   bookSearchQuery: string;
+  onBookSearchChange: (query: string) => void;
+  onClearBookSearch: () => void;
+  searchPlaceholder: string;
+  searchLabel: string;
+  clearSearchLabel: string;
   books: YouVersionBook[];
   discovery: PassageDiscoveryResult;
   discoveryBusy: boolean;
@@ -80,6 +86,11 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
       bookTitle,
       chapterId,
       bookSearchQuery,
+      onBookSearchChange,
+      onClearBookSearch,
+      searchPlaceholder,
+      searchLabel,
+      clearSearchLabel,
       books,
       discovery,
       discoveryBusy,
@@ -192,12 +203,42 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
       <div
         ref={ref}
         id={panelId}
-        className={`bible-yv-passage-scroll-panel top-floating-sheet is-open is-${step}`}
+        className={`bible-yv-passage-scroll-panel top-floating-sheet is-open is-${step}${step === "book" ? " has-inline-search" : ""}`}
         data-top-sheet="book"
         role="dialog"
         aria-modal="false"
         aria-label={ariaLabel}
       >
+        {step === "book" ? (
+          <div className="bible-yv-pick-inline-search" role="search">
+            <YvIcon
+              name="search"
+              className="bible-yv-pick-inline-search-icon"
+              aria-hidden
+            />
+            <input
+              type="search"
+              className="bible-yv-pick-inline-search-input"
+              value={bookSearchQuery}
+              onChange={(event) => onBookSearchChange(event.target.value)}
+              placeholder={searchPlaceholder}
+              aria-label={searchLabel}
+              enterKeyHint="search"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
+            />
+            <button
+              type="button"
+              className="bible-yv-pick-inline-search-clear"
+              onClick={onClearBookSearch}
+              disabled={!bookSearchQuery.trim()}
+              aria-label={clearSearchLabel}
+            >
+              {clearSearchLabel}
+            </button>
+          </div>
+        ) : null}
         <div
           ref={gridRef}
           className={`bible-yv-pick-grid${step === "book" ? " is-books" : ""}`}

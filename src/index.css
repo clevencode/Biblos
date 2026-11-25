@@ -13543,8 +13543,8 @@ html[data-passage-bar-panel="test"] .bible-yv-pick-search-trigger.is-bare.is-on 
 /*
  * Pesquisa activa (passo livro):
  * - esconde pill do livro
- * - campo com superfície chrome + Effacer
- * - retorno (chevron) à direita — fecha só a pesquisa (não o picker)
+ * - ✕ só no canto superior direito
+ * - campo na navbar inferior (`.bible-yv-pick-search-nav`)
  */
 .bible-yv-top.is-pick-search-open .bible-yv-passage-chrome-cluster,
 .bible-yv-top.is-pick-search-open > .bible-yv-passage-roll,
@@ -13554,32 +13554,122 @@ html[data-passage-bar-panel="test"] .bible-yv-pick-search-trigger.is-bare.is-on 
 }
 
 .bible-yv-top.is-pick-search-open .bible-yv-top-tools {
-  flex: 1 1 auto;
+  flex: none;
+  margin-left: auto;
+  justify-content: flex-end;
+  align-self: center;
+}
+
+.bible-yv-pick-search-exit {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+  color: var(--yv-text, var(--text));
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  contain: layout style;
+}
+
+.bible-yv-pick-search-exit:hover {
+  background: color-mix(in srgb, var(--text) 12%, transparent);
+}
+
+.bible-yv-pick-search-exit:focus-visible {
+  outline: 2px solid var(--accent, #5b7cfa);
+  outline-offset: 2px;
+}
+
+.bible-yv-pick-search-exit-icon {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.bible-yv-pick-search-nav {
+  --return-nav-pill-h: var(--mode-tabs-hub-size, 50px);
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: calc(var(--bible-z-top-sheet, 70) + 10);
   width: 100%;
-  min-width: 0;
-  margin-left: 0;
-  justify-content: flex-start;
-  gap: 6px;
+  margin: 0;
+  padding: 0 max(var(--mode-tabs-inset-x, 12px), env(safe-area-inset-right, 0px))
+    calc(var(--mode-tabs-float-gap, 14px) + env(safe-area-inset-bottom, 0px))
+    max(var(--mode-tabs-inset-x, 12px), env(safe-area-inset-left, 0px));
+  border: 0;
+  background: transparent;
+  pointer-events: none;
+  display: flex;
+  justify-content: stretch;
+  align-items: flex-end;
+  box-sizing: border-box;
+  font-family: var(--font-ui);
+  color: var(--yv-text, var(--text));
 }
 
-.bible-yv-pick-top-search.is-trailing {
-  flex: 1 1 auto;
-  min-width: 0;
-  max-width: 100%;
+.bible-yv-pick-search-nav::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: calc(-1 * var(--mode-tabs-mat-fade, 32px));
+  pointer-events: none;
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--bible-nav-surface, var(--bg)) 92%, transparent) 40%,
+    transparent 100%
+  );
 }
 
-/* Activa: superfície chrome base + padding p/ Effacer; ícone search fixo. */
-.bible-yv-pick-top-search.is-trailing.is-active {
-  padding: 0 10px 0 12px;
+.bible-yv-pick-search-nav-pill {
+  position: relative;
+  z-index: 1;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: var(--return-nav-pill-h);
+  min-height: var(--return-nav-pill-h);
+  max-height: var(--return-nav-pill-h);
+  margin: 0;
+  padding: 0 14px 0 16px;
+  box-sizing: border-box;
+  border-radius: 999px;
+  border: 1px solid
+    var(
+      --mode-tabs-outline,
+      var(--yv-outline, color-mix(in srgb, var(--line) 70%, transparent))
+    );
+  background: var(--bible-nav-surface, var(--bg));
+  color: inherit;
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--ink) 8%, transparent),
+    0 8px 24px color-mix(in srgb, var(--ink) 14%, transparent);
+  contain: layout style;
 }
 
-.bible-yv-pick-top-search.is-trailing.is-active
-  .bible-yv-pick-search-trigger-icon {
+.bible-yv-pick-search-nav-pill .bible-yv-pick-search-trigger-icon {
   flex: none;
   width: 20px;
   height: 20px;
   font-size: 20px;
   opacity: 0.92;
+}
+
+.bible-reader--yv.has-pick-search-nav .bible-yv-passage-scroll-panel.is-open {
+  padding-bottom: calc(
+    var(--mode-tabs-hub-size, 50px) + var(--mode-tabs-float-gap, 14px) +
+      env(safe-area-inset-bottom, 0px) + 12px
+  );
 }
 
 .bible-yv-top.is-pick-step-open .bible-yv-top-passage.is-pick-back-nav {
@@ -13595,9 +13685,8 @@ html[data-passage-bar-panel="test"] .bible-yv-pick-search-trigger.is-bare.is-on 
   max-width: min(100%, 18rem);
 }
 
-/* Ghost chrome: dismiss picker (✕) e retorno da pesquisa (←). */
-.bible-yv-top.is-pick-step-open .bible-yv-top-passage-arrow.is-pick-dismiss,
-.bible-yv-top.is-pick-search-open .bible-yv-top-passage-arrow.is-pick-search-back {
+/* Ghost chrome: dismiss picker (✕). */
+.bible-yv-top.is-pick-step-open .bible-yv-top-passage-arrow.is-pick-dismiss {
   flex: none;
   background: transparent !important;
   border: 0 !important;
@@ -13606,16 +13695,12 @@ html[data-passage-bar-panel="test"] .bible-yv-pick-search-trigger.is-bare.is-on 
 }
 
 .bible-yv-top.is-pick-step-open
-  .bible-yv-top-passage-arrow.is-pick-dismiss:hover:not(:disabled),
-.bible-yv-top.is-pick-search-open
-  .bible-yv-top-passage-arrow.is-pick-search-back:hover:not(:disabled) {
+  .bible-yv-top-passage-arrow.is-pick-dismiss:hover:not(:disabled) {
   background: color-mix(in srgb, var(--yv-text) 7%, transparent) !important;
 }
 
 .bible-yv-top.is-pick-step-open
-  .bible-yv-top-passage-arrow.is-pick-dismiss:focus-visible,
-.bible-yv-top.is-pick-search-open
-  .bible-yv-top-passage-arrow.is-pick-search-back:focus-visible {
+  .bible-yv-top-passage-arrow.is-pick-dismiss:focus-visible {
   outline: 2px solid var(--accent, #5b7cfa);
   outline-offset: 2px;
 }
@@ -14380,6 +14465,83 @@ html[data-passage-bar-panel="test"]
   );
   gap: 6px;
   -webkit-overflow-scrolling: touch;
+}
+
+.bible-yv-passage-scroll-panel.has-inline-search {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-height: 0;
+}
+
+.bible-yv-pick-inline-search {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 2px 8px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--text) 6%, var(--panel, var(--surface)));
+  border: 1px solid color-mix(in srgb, var(--yv-line, var(--line)) 45%, transparent);
+  contain: layout style;
+}
+
+.bible-yv-pick-inline-search-icon {
+  flex: none;
+  width: 1.1rem;
+  height: 1.1rem;
+  opacity: 0.55;
+  color: var(--yv-muted, var(--muted));
+}
+
+.bible-yv-pick-inline-search-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--yv-text, var(--text));
+  font: inherit;
+  font-size: 0.95rem;
+  line-height: 1.3;
+  outline: none;
+}
+
+.bible-yv-pick-inline-search-input::placeholder {
+  color: color-mix(in srgb, var(--yv-muted, var(--muted)) 85%, transparent);
+}
+
+.bible-yv-pick-inline-search-clear {
+  flex: none;
+  margin: 0;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--yv-muted, var(--muted));
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.bible-yv-pick-inline-search-clear:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.bible-yv-pick-inline-search-clear:not(:disabled):hover {
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+  color: var(--yv-text, var(--text));
+}
+
+.bible-yv-passage-scroll-panel.has-inline-search .bible-yv-pick-grid.is-books {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .bible-yv-passage-scroll-panel .bible-yv-pick-grid.is-books {
