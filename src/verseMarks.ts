@@ -282,9 +282,10 @@ export function isOverFreeMarkQuota(quota = FREE_MARK_QUOTA): boolean {
   return countMarkedVerses() >= quota;
 }
 
-/** Tous les versets marqués (local), du plus récent chapitre en dernier. */
+/** Tous les versets marqués (local) — plus récent (`touched`) en premier. */
 export function listAllVerseMarks(): SavedVerseMark[] {
   const store = readStore();
+  const touched = readTouched();
   const out: SavedVerseMark[] = [];
   for (const [chapter, verses] of Object.entries(store)) {
     const dot = chapter.indexOf(".");
@@ -307,6 +308,16 @@ export function listAllVerseMarks(): SavedVerseMark[] {
     }
   }
   return out.sort((a, b) => {
+    const ta =
+      Date.parse(
+        touched[verseTouchKey(a.bookId, a.chapterId, a.verse)] || "",
+      ) || 0;
+    const tb =
+      Date.parse(
+        touched[verseTouchKey(b.bookId, b.chapterId, b.verse)] || "",
+      ) || 0;
+    if (tb !== ta) return tb - ta;
+    /* Tie-break canónico se o mesmo instante / sem touched. */
     const byBook = a.bookId.localeCompare(b.bookId, "fr");
     if (byBook !== 0) return byBook;
     const byChapter = Number(a.chapterId) - Number(b.chapterId);

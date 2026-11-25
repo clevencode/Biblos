@@ -87,6 +87,11 @@ export function listBibleReadingHistory(
   const uid = resolveActivityUserId(userId);
   return readStore()
     .events.filter((event) => event.userId === uid && event.type === "bible.read")
+    .sort((a, b) => {
+      const ta = Date.parse(a.at) || 0;
+      const tb = Date.parse(b.at) || 0;
+      return tb - ta;
+    })
     .slice(0, Math.max(1, limit));
 }
 

@@ -1158,7 +1158,8 @@ html:has(.plan-workspace-return-nav) .note-shell .mode-tabs,
  * (mesmo contrato study-return / plan-return do leitor).
  */
 .plan-workspace-return-nav,
-.bible-plan-return-nav {
+.bible-plan-return-nav,
+.bible-history-return-nav {
   --return-nav-pill-h: var(--mode-tabs-hub-size, 50px);
   --return-nav-inset-inline-start: max(
     var(--mode-tabs-inset-x, 12px),
@@ -1193,7 +1194,8 @@ html:has(.plan-workspace-return-nav) .note-shell .mode-tabs,
 }
 
 .plan-workspace-return-nav::before,
-.bible-plan-return-nav::before {
+.bible-plan-return-nav::before,
+.bible-history-return-nav::before {
   content: "";
   position: absolute;
   left: 0;
@@ -1211,9 +1213,10 @@ html:has(.plan-workspace-return-nav) .note-shell .mode-tabs,
   );
 }
 
-/* Chrome partilhado: workspace return + leitor plan-return. */
+/* Chrome partilhado: workspace / plan / history-marks return. */
 .plan-workspace-return-nav-pill,
-.bible-plan-return-nav-pill {
+.bible-plan-return-nav-pill,
+.bible-history-return-nav-pill {
   position: relative;
   z-index: 1;
   display: flex;
@@ -1244,7 +1247,8 @@ html:has(.plan-workspace-return-nav) .note-shell .mode-tabs,
 }
 
 .plan-workspace-return-nav-main,
-.bible-plan-return-nav-main {
+.bible-plan-return-nav-main,
+.bible-history-return-nav-main {
   flex: 1 1 auto;
   min-width: 0;
   width: auto;
@@ -1260,7 +1264,8 @@ html:has(.plan-workspace-return-nav) .note-shell .mode-tabs,
   -webkit-tap-highlight-color: transparent;
 }
 
-.plan-workspace-return-nav-main {
+.plan-workspace-return-nav-main,
+.bible-history-return-nav-main {
   padding: 0 14px 0 12px;
   display: flex;
   align-items: center;
@@ -1277,23 +1282,27 @@ html:has(.plan-workspace-return-nav) .note-shell .mode-tabs,
 
 /* X só no topo — navbar de retorno sem dismiss. */
 .plan-workspace-return-nav-pill:not(:has(.plan-workspace-return-nav-dismiss)),
-.bible-plan-return-nav-pill:not(:has(.bible-plan-return-nav-dismiss)) {
+.bible-plan-return-nav-pill:not(:has(.bible-plan-return-nav-dismiss)),
+.bible-history-return-nav-pill {
   padding-right: 4px;
 }
 
 .plan-workspace-return-nav-main:hover,
-.bible-plan-return-nav-main:hover {
+.bible-plan-return-nav-main:hover,
+.bible-history-return-nav-main:hover {
   filter: brightness(1.06);
 }
 
 .plan-workspace-return-nav-main:focus-visible,
-.bible-plan-return-nav-main:focus-visible {
+.bible-plan-return-nav-main:focus-visible,
+.bible-history-return-nav-main:focus-visible {
   outline: 2px solid var(--accent, #5b7cfa);
   outline-offset: 2px;
 }
 
 .plan-workspace-return-nav-copy,
-.bible-plan-return-nav-copy {
+.bible-plan-return-nav-copy,
+.bible-history-return-nav-copy {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -1306,7 +1315,8 @@ html:has(.plan-workspace-return-nav) .note-shell .mode-tabs,
 }
 
 .plan-workspace-return-nav-verb,
-.bible-plan-return-nav-verb {
+.bible-plan-return-nav-verb,
+.bible-history-return-nav-verb {
   flex: none;
   font-size: 0.62rem;
   font-weight: 650;
@@ -1317,7 +1327,8 @@ html:has(.plan-workspace-return-nav) .note-shell .mode-tabs,
 }
 
 .plan-workspace-return-nav-ref,
-.bible-plan-return-nav-ref {
+.bible-plan-return-nav-ref,
+.bible-history-return-nav-ref {
   min-width: 0;
   max-width: 100%;
   width: 100%;
@@ -1332,7 +1343,8 @@ html:has(.plan-workspace-return-nav) .note-shell .mode-tabs,
 }
 
 .plan-workspace-return-nav-icon,
-.bible-plan-return-nav-icon {
+.bible-plan-return-nav-icon,
+.bible-history-return-nav-icon {
   width: 1.2rem;
   height: 1.2rem;
   flex: none;
@@ -15946,6 +15958,56 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   width: 20px;
   height: 20px;
   font-size: 20px;
+}
+
+.bible-yv-tools-item-label {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.bible-yv-tools-item-chevron {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  opacity: 0.45;
+}
+
+/* Menu → Bibliothèque (mesmo contrato visual do perfil). */
+.bible-yv-tools-library {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 10px 0 4px;
+  padding: 0 2px;
+  flex: none;
+  opacity: 1;
+  animation: none;
+}
+
+.bible-yv-tools-library-label {
+  margin: 0 4px;
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--yv-text, var(--text)) 48%, transparent);
+}
+
+.bible-yv-tools-library-card {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--text) 6%, var(--panel, var(--surface)));
+  contain: layout style;
+}
+
+.bible-yv-tools-library-card .bible-yv-tools-item.is-library-row {
+  opacity: 1;
+  animation: none;
+  border-radius: 10px;
+  padding: 12px 10px;
 }
 
 .bible-yv-tools-item.is-ready {

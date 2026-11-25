@@ -2709,6 +2709,13 @@ export function BibleReaderView({
   const showPlanReturnNav = Boolean(
     planReading && onBack && !showStudyReturnNav && !showCreateCard,
   );
+  /** Navbar inferior no histórico / surlignages (volta ao Menu). */
+  const showHistoryOrMarksReturnNav = Boolean(
+    (historyOpen || marksOpen) &&
+      !showStudyReturnNav &&
+      !showPlanReturnNav &&
+      !showCreateCard,
+  );
   const planReturnTitle = planReading?.planName?.trim() || "";
 
   /** Nome completo numa linha: shrink-to-fit dentro da pill (altura hub fixa). */
@@ -3298,6 +3305,36 @@ export function BibleReaderView({
     );
   }
 
+  function renderHistoryOrMarksReturnNav() {
+    if (!showHistoryOrMarksReturnNav) return null;
+    const sectionLabel = marksOpen
+      ? t("profile.marks")
+      : t("history.title");
+    const actionLabel = t("plan.returnAction");
+    const fullLabel = `${actionLabel} · ${sectionLabel}`;
+    return (
+      <nav className="bible-history-return-nav" aria-label={fullLabel}>
+        <div className="bible-history-return-nav-pill" role="group">
+          <button
+            type="button"
+            className="bible-history-return-nav-main"
+            onClick={() => leaveHistoryOrMarks("back")}
+            aria-label={fullLabel}
+          >
+            <YvIcon
+              name="chevron_left"
+              className="bible-history-return-nav-icon"
+            />
+            <span className="bible-history-return-nav-copy">
+              <span className="bible-history-return-nav-verb">{actionLabel}</span>
+              <span className="bible-history-return-nav-ref">{sectionLabel}</span>
+            </span>
+          </button>
+        </div>
+      </nav>
+    );
+  }
+
   function renderPlanReturnNav() {
     if (!planReading || !onBack) return null;
     const planLabel = planReturnTitle || t("plan.returnToPlans");
@@ -3689,26 +3726,50 @@ export function BibleReaderView({
             </button>
           </div>
         </div>
-        {ACTIVITY_UI_ENABLED ? (
-          <button
-            type="button"
-            role="menuitem"
-            className="bible-yv-tools-item"
-            onClick={openHistoryFromMenu}
-          >
-            <YvIcon name="history" className="bible-yv-tools-item-icon" />
-            <span>{t("history.title")}</span>
-          </button>
-        ) : null}
-        <button
-          type="button"
-          role="menuitem"
-          className="bible-yv-tools-item"
-          onClick={openMarksFromMenu}
+        {/* Mesmas opções que Perfil → Bibliothèque */}
+        <div
+          className="bible-yv-tools-library"
+          role="group"
+          aria-label={t("profile.group.library")}
         >
-          <YvIcon name="style" className="bible-yv-tools-item-icon" />
-          <span>{t("profile.marks")}</span>
-        </button>
+          <p className="bible-yv-tools-library-label">{t("profile.group.library")}</p>
+          <div className="bible-yv-tools-library-card">
+            {ACTIVITY_UI_ENABLED ? (
+              <button
+                type="button"
+                role="menuitem"
+                className="bible-yv-tools-item is-library-row"
+                onClick={openHistoryFromMenu}
+              >
+                <YvIcon name="history" className="bible-yv-tools-item-icon" />
+                <span className="bible-yv-tools-item-label">
+                  {t("history.title")}
+                </span>
+                <YvIcon
+                  name="chevron_right"
+                  className="bible-yv-tools-item-chevron"
+                  opsz={20}
+                />
+              </button>
+            ) : null}
+            <button
+              type="button"
+              role="menuitem"
+              className="bible-yv-tools-item is-library-row"
+              onClick={openMarksFromMenu}
+            >
+              <YvIcon name="style" className="bible-yv-tools-item-icon" />
+              <span className="bible-yv-tools-item-label">
+                {t("profile.marks")}
+              </span>
+              <YvIcon
+                name="chevron_right"
+                className="bible-yv-tools-item-chevron"
+                opsz={20}
+              />
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -4723,6 +4784,7 @@ export function BibleReaderView({
         : null}
       {showStudyReturnNav ? renderStudyReturnNav() : null}
       {showPlanReturnNav ? renderPlanReturnNav() : null}
+      {showHistoryOrMarksReturnNav ? renderHistoryOrMarksReturnNav() : null}
       <div id={statusId} className="sr-only" aria-live="polite">
         {passageLiveStatusLabel({ presentation, locationLabel, error })}
       </div>
