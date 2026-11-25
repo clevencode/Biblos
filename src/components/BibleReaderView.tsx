@@ -2669,7 +2669,7 @@ export function BibleReaderView({
   );
   const planReturnTitle = planReading?.planName?.trim() || "";
 
-  /** Nome completo numa linha: shrink-to-fit dentro da pill de altura fixa. */
+  /** Nome completo numa linha: shrink-to-fit dentro da pill (altura hub fixa). */
   useLayoutEffect(() => {
     if (!showPlanReturnNav) return;
     const el = planReturnTitleRef.current;
@@ -2689,8 +2689,11 @@ export function BibleReaderView({
     fit();
     const ro = new ResizeObserver(fit);
     ro.observe(el);
+    /* Recalcula quando o badge etapa/dia entra ou sai do layout. */
+    const pill = el.closest(".bible-plan-return-nav-main");
+    if (pill) ro.observe(pill);
     return () => ro.disconnect();
-  }, [showPlanReturnNav, planReturnTitle]);
+  }, [showPlanReturnNav, planReturnTitle, planReading?.stageCount, planReading?.stageDayCount, planReading?.stepCount]);
 
   /** Ranges pré-calculados — evita min/max por verso no map. */
   const planVerseRangeFull = Boolean(
@@ -3248,11 +3251,14 @@ export function BibleReaderView({
     const dayTotal =
       planReading.stageDayCount ?? planReading.stepCount ?? 0;
     const stageTitle = planReading.stageName?.trim();
+    /* Negócio: etapa só se multi-etapa; dia se o passo tiver total. */
     const dayProgress =
       dayTotal > 0 ? `${dayIdx}/${dayTotal}` : null;
     const stageProgress =
       stageTotal > 1 ? `${stageIdx}/${stageTotal}` : null;
-    const hasProgress = Boolean(stageProgress || dayProgress);
+    const progressInline = [stageProgress, dayProgress]
+      .filter(Boolean)
+      .join(" · ");
     const fullLabel = [
       actionLabel,
       planLabel,
@@ -3290,16 +3296,11 @@ export function BibleReaderView({
                 {planLabel}
               </span>
             </span>
-            <span
-              className={`bible-plan-return-nav-progress${
-                hasProgress ? "" : " is-empty"
-              }${stageProgress && dayProgress ? " is-inline" : ""}`}
-              aria-hidden
-            >
-              {stageProgress ? <span>{stageProgress}</span> : null}
-              {dayProgress ? <span>{dayProgress}</span> : null}
-              {!hasProgress ? "\u00a0" : null}
-            </span>
+            {progressInline ? (
+              <span className="bible-plan-return-nav-progress" aria-hidden>
+                {progressInline}
+              </span>
+            ) : null}
           </button>
         </div>
       </nav>
@@ -4440,7 +4441,10 @@ export function BibleReaderView({
                   <button
                     type="button"
                     className="bible-yv-pick-top-search-clear"
-                    onClick={() => clearBookSearch()}
+                    onClick={() => {
+                      clearBookSearch();
+                      pickSearchInputRef.current?.focus();
+                    }}
                     disabled={!bookSearchQuery.trim()}
                     aria-label={t("common.clear")}
                   >

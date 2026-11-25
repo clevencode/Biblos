@@ -1157,6 +1157,22 @@ html:has(.plan-workspace-return-nav) .note-shell .mode-tabs,
  * Navbar retorno workspace → hub de planos
  * (mesmo contrato study-return / plan-return do leitor).
  */
+.plan-workspace-return-nav,
+.bible-plan-return-nav {
+  --return-nav-pill-h: var(--mode-tabs-hub-size, 50px);
+  --return-nav-inset-inline-start: max(
+    var(--mode-tabs-inset-x, 12px),
+    env(safe-area-inset-left, 0px)
+  );
+  --return-nav-inset-inline-end: max(
+    var(--mode-tabs-inset-x, 12px),
+    env(safe-area-inset-right, 0px)
+  );
+  --return-nav-inset-block-end: calc(
+    var(--mode-tabs-float-gap, 14px) + env(safe-area-inset-bottom, 0px)
+  );
+}
+
 .plan-workspace-return-nav {
   position: relative;
   z-index: 2;
@@ -1164,10 +1180,8 @@ html:has(.plan-workspace-return-nav) .note-shell .mode-tabs,
   width: 100%;
   max-width: none;
   margin: 0;
-  padding: 0
-    max(var(--mode-tabs-inset-x, 12px), env(safe-area-inset-right, 0px))
-    calc(var(--mode-tabs-float-gap, 14px) + env(safe-area-inset-bottom, 0px))
-    max(var(--mode-tabs-inset-x, 12px), env(safe-area-inset-left, 0px));
+  padding: 0 var(--return-nav-inset-inline-end) var(--return-nav-inset-block-end)
+    var(--return-nav-inset-inline-start);
   border: 0;
   background: transparent;
   display: flex;
@@ -1202,8 +1216,8 @@ html:has(.plan-workspace-return-nav) .note-shell .mode-tabs,
   display: flex;
   align-items: center;
   width: 100%;
-  height: var(--mode-tabs-hub-size, 50px);
-  min-height: var(--mode-tabs-hub-size, 50px);
+  height: var(--return-nav-pill-h);
+  min-height: var(--return-nav-pill-h);
   margin: 0;
   padding: 4px;
   box-sizing: border-box;
@@ -1276,7 +1290,7 @@ html:has(.plan-workspace-return-nav) .note-shell .mode-tabs,
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 0.9rem;
+  font-size: 0.94rem;
   font-weight: 700;
   letter-spacing: -0.015em;
   line-height: 1.15;
@@ -9449,6 +9463,19 @@ html[data-theme="dark"] .home-pill.is-accent {
 
 /* Timeline: scroll no miolo; Note du jour fica fixa acima da tab bar. */
 .panel-nota-content.plan-yv--workspace {
+  --plan-gutter-inline-start: max(
+    var(--mobile-gutter, 14px),
+    env(safe-area-inset-left, 0px)
+  );
+  --plan-gutter-inline-end: max(
+    var(--mobile-gutter, 14px),
+    env(safe-area-inset-right, 0px)
+  );
+  --plan-space-1: 8px;
+  --plan-space-2: 12px;
+  --plan-space-3: 16px;
+  --plan-space-4: 24px;
+  --plan-touch: 44px;
   display: flex;
   flex-direction: column;
   gap: 0;
@@ -9459,7 +9486,7 @@ html[data-theme="dark"] .home-pill.is-accent {
   min-height: 0;
   overflow: hidden;
   box-sizing: border-box;
-  /* Pleno: sem gutter do .panel-nota-content — só safe-area / gutters internos. */
+  /* Pleno: sem gutter do .panel-nota-content — gutters só no topbar/main. */
   padding: 0;
 }
 
@@ -9468,11 +9495,6 @@ html[data-theme="dark"] .home-pill.is-accent {
 }
 
 .plan-yv--workspace .plan-yv-main {
-  --plan-space-1: 8px;
-  --plan-space-2: 12px;
-  --plan-space-3: 16px;
-  --plan-space-4: 24px;
-  --plan-touch: 44px;
   flex: 1;
   min-height: 0;
   overflow: auto;
@@ -9483,10 +9505,8 @@ html[data-theme="dark"] .home-pill.is-accent {
   max-width: none;
   margin: 0;
   box-sizing: border-box;
-  padding: var(--plan-space-1)
-    max(var(--mobile-gutter, 14px), env(safe-area-inset-right, 0px))
-    var(--plan-space-3)
-    max(var(--mobile-gutter, 14px), env(safe-area-inset-left, 0px));
+  padding: var(--plan-space-1) var(--plan-gutter-inline-end) var(--plan-space-3)
+    var(--plan-gutter-inline-start);
   -webkit-overflow-scrolling: touch;
 }
 
@@ -9494,6 +9514,12 @@ html[data-theme="dark"] .home-pill.is-accent {
   flex: none;
   width: 100%;
   padding-bottom: var(--plan-space-1, 8px);
+}
+
+/* Topbar e miolo partilham o mesmo eixo horizontal (layout pleno alinhado). */
+.plan-yv--workspace > .shell-topbar.bible-yv-top.is-shell {
+  padding-left: var(--plan-gutter-inline-start);
+  padding-right: var(--plan-gutter-inline-end);
 }
 
 .plan-yv--workspace .shell-topbar-title {
@@ -12038,8 +12064,8 @@ html:has(.bible-plan-return-nav) .note-shell .mode-tabs,
   z-index: calc(var(--bible-z-top-sheet, 70) + 10);
   width: 100%;
   margin: 0;
-  padding: 0 var(--mode-tabs-inset-x, 12px)
-    calc(var(--mode-tabs-float-gap, 14px) + env(safe-area-inset-bottom, 0px));
+  padding: 0 var(--return-nav-inset-inline-end) var(--return-nav-inset-block-end)
+    var(--return-nav-inset-inline-start);
   border: 0;
   background: transparent;
   pointer-events: none;
@@ -12070,7 +12096,6 @@ html:has(.bible-plan-return-nav) .note-shell .mode-tabs,
 }
 
 .bible-plan-return-nav-pill {
-  --plan-return-pill-h: var(--mode-tabs-hub-size, 50px);
   position: relative;
   z-index: 1;
   pointer-events: auto;
@@ -12078,9 +12103,9 @@ html:has(.bible-plan-return-nav) .note-shell .mode-tabs,
   align-items: center;
   width: 100%;
   max-width: none;
-  height: var(--plan-return-pill-h);
-  min-height: var(--plan-return-pill-h);
-  max-height: var(--plan-return-pill-h);
+  height: var(--return-nav-pill-h);
+  min-height: var(--return-nav-pill-h);
+  max-height: var(--return-nav-pill-h);
   margin: 0;
   padding: 4px;
   box-sizing: border-box;
@@ -12151,26 +12176,25 @@ html:has(.bible-plan-return-nav) .note-shell .mode-tabs,
   min-width: 0;
   width: 100%;
   overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
   text-align: left;
-  font-size: 15px;
+  font-size: 0.94rem;
   font-weight: 700;
   letter-spacing: -0.015em;
   line-height: 1.15;
 }
 
-/* Badge etapa/dia: pill inline (fit-content), não círculo empilhado. */
+/* Badge etapa/dia: pill inline fit-content (`4/5 · 5/10`). */
 .bible-plan-return-nav-progress {
   flex: none;
   display: inline-flex;
-  flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: 5px;
   width: auto;
   min-width: 0;
-  max-width: none;
-  height: calc(var(--plan-return-pill-h) - 12px);
+  max-width: min(42%, 9rem);
+  height: calc(var(--return-nav-pill-h) - 12px);
   margin: 0;
   padding: 0 10px;
   box-sizing: border-box;
@@ -12183,24 +12207,8 @@ html:has(.bible-plan-return-nav) .note-shell .mode-tabs,
   letter-spacing: -0.02em;
   line-height: 1;
   white-space: nowrap;
-}
-
-.bible-plan-return-nav-progress.is-inline {
-  gap: 0;
-}
-
-.bible-plan-return-nav-progress.is-inline > span + span::before {
-  content: "·";
-  margin: 0 5px;
-  opacity: 0.55;
-  font-weight: 600;
-}
-
-.bible-plan-return-nav-progress.is-empty {
-  visibility: hidden;
-  width: 2.5rem;
-  min-width: 2.5rem;
-  padding: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .bible-plan-return-nav-icon {
@@ -13496,8 +13504,12 @@ html[data-passage-bar-panel="test"] .bible-yv-pick-search-trigger.is-bare.is-on 
   min-width: 0;
 }
 
-/* Livros: 🔍 abre campo à direita (pill ← livro fica à esquerda). */
-/* Pesquisa activa: sem pill do livro — o campo ocupa a faixa até ao ✕. */
+/*
+ * Pesquisa activa (passo livro):
+ * - esconde pill do livro
+ * - campo com superfície chrome + Effacer
+ * - retorno (chevron) à direita — fecha só a pesquisa (não o picker)
+ */
 .bible-yv-top.is-pick-search-open .bible-yv-passage-chrome-cluster,
 .bible-yv-top.is-pick-search-open > .bible-yv-passage-roll,
 .bible-yv-top.is-pick-search-open .bible-yv-section-return,
@@ -13511,7 +13523,7 @@ html[data-passage-bar-panel="test"] .bible-yv-pick-search-trigger.is-bare.is-on 
   min-width: 0;
   margin-left: 0;
   justify-content: flex-start;
-  gap: 4px;
+  gap: 6px;
 }
 
 .bible-yv-pick-top-search.is-trailing {
@@ -13520,7 +13532,6 @@ html[data-passage-bar-panel="test"] .bible-yv-pick-search-trigger.is-bare.is-on 
   max-width: 100%;
 }
 
-/* Pesquisa activa: superfície chrome (pill) + ícone + Effacer. */
 .bible-yv-pick-top-search.is-trailing.is-active {
   padding: 0 10px 0 12px;
   border-radius: 999px;
@@ -13537,8 +13548,8 @@ html[data-passage-bar-panel="test"] .bible-yv-pick-search-trigger.is-bare.is-on 
   opacity: 0.92;
 }
 
-/* ✕ → retorno (fecha só a pesquisa, volta à pill do livro). */
 .bible-yv-top.is-pick-search-open .bible-yv-top-passage-arrow.is-pick-search-back {
+  flex: none;
   background: transparent !important;
   border: 0 !important;
   box-shadow: none !important;
@@ -13548,6 +13559,12 @@ html[data-passage-bar-panel="test"] .bible-yv-pick-search-trigger.is-bare.is-on 
 .bible-yv-top.is-pick-search-open
   .bible-yv-top-passage-arrow.is-pick-search-back:hover:not(:disabled) {
   background: color-mix(in srgb, var(--yv-text) 7%, transparent) !important;
+}
+
+.bible-yv-top.is-pick-search-open
+  .bible-yv-top-passage-arrow.is-pick-search-back:focus-visible {
+  outline: 2px solid var(--accent, #5b7cfa);
+  outline-offset: 2px;
 }
 
 .bible-yv-top.is-pick-step-open .bible-yv-top-passage.is-pick-back-nav {
