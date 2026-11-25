@@ -391,7 +391,8 @@ export function ProfileSettingsPanel({
 
               {prefsTab === "library" ? (
                 <>
-                  <SettingsGroup title={t(activeTabMeta.labelKey)}>
+                  {/* Sem título « Bibliothèque » duplicado sob a pill; linhas planas. */}
+                  <SettingsGroup>
                     {ACTIVITY_UI_ENABLED ? (
                       <SettingsRow
                         icon="history"

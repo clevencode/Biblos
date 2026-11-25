@@ -815,8 +815,11 @@ export function BibleReaderView({
   const restoreToolsFocusRef = useRef(true);
   /** Micro: próxima tela aberta a partir do menu hamburger. */
   const sheetEnterFromMenuRef = useRef(false);
-  /** History/marks abertos via Profile — back devolve ao Profile, não ao menu. */
-  const overlayReturnToProfileRef = useRef(false);
+  /**
+   * Origem estável de history/marks — não limpar ao escolher um verso.
+   * `back` devolve à origem; `dismiss` (✕) fecha a jornada.
+   */
+  const libraryOverlayOriginRef = useRef<"menu" | "profile" | null>(null);
   const onReturnToProfileRef = useRef(onReturnToProfile);
   onReturnToProfileRef.current = onReturnToProfile;
   const toolsWasOpenRef = useRef(false);
@@ -950,14 +953,16 @@ export function BibleReaderView({
   );
 
   /**
-   * Fecha history/marks.
-   * Se veio do Profile → reabre Profile (pill Bibliothèque).
-   * Senão: back → menu leitor; dismiss → fecha.
+   * Fecha history/marks conforme a origem:
+   * - back + profile → Profile (aba library)
+   * - back + menu → menu do leitor
+   * - dismiss → saída total (sem reabrir origem)
    */
   const leaveHistoryOrMarks = useCallback(
     (mode: "back" | "dismiss" = "back") => {
-      if (overlayReturnToProfileRef.current) {
-        overlayReturnToProfileRef.current = false;
+      const origin = libraryOverlayOriginRef.current;
+      if (mode === "back" && origin === "profile") {
+        libraryOverlayOriginRef.current = null;
         restoreHistoryFocusRef.current = false;
         restoreToolsFocusRef.current = false;
         closeOverlay();
@@ -965,10 +970,12 @@ export function BibleReaderView({
         return;
       }
       if (mode === "back") {
+        libraryOverlayOriginRef.current = null;
         restoreHistoryFocusRef.current = false;
         openOverlay({ type: "reader_settings" });
         return;
       }
+      libraryOverlayOriginRef.current = null;
       restoreHistoryFocusRef.current = true;
       closeOverlay();
     },
@@ -2200,40 +2207,62 @@ export function BibleReaderView({
     returnTo?: StudyJumpReturnTo;
     dest?: { bookId: string; chapterId: string; verse?: number | null };
   }): number | null {
+    const returnTo = opts?.returnTo ?? "refs";
+    /** Histórico / marcas / pesquisa: barra de retorno sempre (mesmo livro activo). */
+    const alwaysPushReturn =
+      returnTo === "history" ||
+      returnTo === "marks" ||
+      returnTo === "word_search";
+
     const fromVerse =
       selection?.[0] ??
       highlightVerse ??
       passage?.verses?.[0]?.number ??
-      null;
+      (alwaysPushReturn ? 1 : null);
     if (fromVerse == null) return null;
 
     const dest = opts?.dest;
+    /* Só em Référence: evita push inútil no mesmo versículo exacto. */
     if (
+      !alwaysPushReturn &&
       dest &&
       dest.bookId.toUpperCase() === bookId.toUpperCase() &&
       String(dest.chapterId) === String(chapterId) &&
-      (dest.verse == null || dest.verse === fromVerse)
+      dest.verse != null &&
+      dest.verse === fromVerse
     ) {
       return null;
     }
 
+    const originBook = (bookId || dest?.bookId || "").trim() || "GEN";
+    const originChapter = String(chapterId || dest?.chapterId || "1");
     const originTitle =
-      resolveBookTitleActive(bookId) ||
-      books.find((b) => b.id.toUpperCase() === bookId.toUpperCase())?.title ||
-      bookId;
-    const label = formatStudyOriginLabel(originTitle, chapterId, fromVerse);
-    const scrollKey = verseStudyKey(textVersion, bookId, chapterId, fromVerse);
+      resolveBookTitleActive(originBook) ||
+      books.find((b) => b.id.toUpperCase() === originBook.toUpperCase())
+        ?.title ||
+      originBook;
+    const label = formatStudyOriginLabel(
+      originTitle,
+      originChapter,
+      fromVerse,
+    );
+    const scrollKey = verseStudyKey(
+      textVersion,
+      originBook,
+      originChapter,
+      fromVerse,
+    );
     const refsScrollTop =
       opts?.refsScrollTop ?? getRefsListScroll(scrollKey);
     setRefsListScroll(scrollKey, refsScrollTop);
     pushStudyJump({
-      bookId,
-      chapterId,
+      bookId: originBook,
+      chapterId: originChapter,
       verse: fromVerse,
       label,
       refsScrollTop,
       passageScrollTop: passageScrollRef.current?.scrollTop ?? 0,
-      returnTo: opts?.returnTo ?? "refs",
+      returnTo,
     });
     return fromVerse;
   }
@@ -3168,7 +3197,8 @@ export function BibleReaderView({
   useEffect(() => {
     if (!active || !openOverlayRequest) return;
     const request = openOverlayRequest;
-    overlayReturnToProfileRef.current = true;
+    libraryOverlayOriginRef.current = "profile";
+    sheetEnterFromMenuRef.current = false;
     restoreToolsFocusRef.current = false;
     restoreHistoryFocusRef.current = false;
     setShareSheetOpen(false);
@@ -3218,6 +3248,7 @@ export function BibleReaderView({
 
   function openWordSearchFromMenu() {
     restoreToolsFocusRef.current = false;
+    libraryOverlayOriginRef.current = "menu";
     setShareSheetOpen(false);
     sheetEnterFromMenuRef.current = true;
     openOverlay({ type: "word_search" });
@@ -3225,7 +3256,7 @@ export function BibleReaderView({
 
   function openHistoryFromMenu() {
     restoreToolsFocusRef.current = false;
-    overlayReturnToProfileRef.current = false;
+    libraryOverlayOriginRef.current = "menu";
     setShareSheetOpen(false);
     sheetEnterFromMenuRef.current = true;
     openOverlay({ type: "history" });
@@ -3233,7 +3264,7 @@ export function BibleReaderView({
 
   function openMarksFromMenu() {
     restoreToolsFocusRef.current = false;
-    overlayReturnToProfileRef.current = false;
+    libraryOverlayOriginRef.current = "menu";
     setShareSheetOpen(false);
     sheetEnterFromMenuRef.current = true;
     openOverlay({ type: "marks" });
@@ -3726,50 +3757,27 @@ export function BibleReaderView({
             </button>
           </div>
         </div>
-        {/* Mesmas opções que Perfil → Bibliothèque */}
-        <div
-          className="bible-yv-tools-library"
-          role="group"
-          aria-label={t("profile.group.library")}
+        {/* Mesmo nível visual que a pesquisa — sem grupo Bibliothèque / card. */}
+        {ACTIVITY_UI_ENABLED ? (
+          <button
+            type="button"
+            role="menuitem"
+            className="bible-yv-tools-item"
+            onClick={openHistoryFromMenu}
+          >
+            <YvIcon name="history" className="bible-yv-tools-item-icon" />
+            <span>{t("history.title")}</span>
+          </button>
+        ) : null}
+        <button
+          type="button"
+          role="menuitem"
+          className="bible-yv-tools-item"
+          onClick={openMarksFromMenu}
         >
-          <p className="bible-yv-tools-library-label">{t("profile.group.library")}</p>
-          <div className="bible-yv-tools-library-card">
-            {ACTIVITY_UI_ENABLED ? (
-              <button
-                type="button"
-                role="menuitem"
-                className="bible-yv-tools-item is-library-row"
-                onClick={openHistoryFromMenu}
-              >
-                <YvIcon name="history" className="bible-yv-tools-item-icon" />
-                <span className="bible-yv-tools-item-label">
-                  {t("history.title")}
-                </span>
-                <YvIcon
-                  name="chevron_right"
-                  className="bible-yv-tools-item-chevron"
-                  opsz={20}
-                />
-              </button>
-            ) : null}
-            <button
-              type="button"
-              role="menuitem"
-              className="bible-yv-tools-item is-library-row"
-              onClick={openMarksFromMenu}
-            >
-              <YvIcon name="style" className="bible-yv-tools-item-icon" />
-              <span className="bible-yv-tools-item-label">
-                {t("profile.marks")}
-              </span>
-              <YvIcon
-                name="chevron_right"
-                className="bible-yv-tools-item-chevron"
-                opsz={20}
-              />
-            </button>
-          </div>
-        </div>
+          <YvIcon name="style" className="bible-yv-tools-item-icon" />
+          <span>{t("profile.marks")}</span>
+        </button>
       </div>
     );
   }
@@ -4723,7 +4731,7 @@ export function BibleReaderView({
               leaveHistoryOrMarks("dismiss");
             }}
             onSelect={({ versionId, bookId: destBookId, chapterId: destChapterId, verse }) => {
-              overlayReturnToProfileRef.current = false;
+              /* Mantém libraryOverlayOriginRef — Retour após o salto volta à origem. */
               restoreHistoryFocusRef.current = false;
               closeOverlay();
               pushStudyOriginFromCurrent({
@@ -4753,7 +4761,7 @@ export function BibleReaderView({
             leaveHistoryOrMarks("back");
           }}
           onSelect={({ versionId, bookId: destBookId, chapterId: destChapterId, verse }) => {
-            overlayReturnToProfileRef.current = false;
+            /* Mantém libraryOverlayOriginRef — Retour após o salto volta à origem. */
             closeOverlay();
             pushStudyOriginFromCurrent({
               returnTo: "marks",

@@ -4634,6 +4634,26 @@ html[data-theme="dark"] .profile-download-btn {
   overflow: hidden;
 }
 
+/* Aba library: linhas sem título duplicado nem card (estilo menu / pesquisa). */
+.settings-group.is-untitled .settings-group-body {
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+  gap: 4px;
+}
+
+.settings-group.is-untitled .settings-row {
+  border-radius: 10px;
+  background: transparent;
+}
+
+.settings-group.is-untitled .settings-row:hover,
+.settings-group.is-untitled .settings-row:focus-visible {
+  background: color-mix(in srgb, var(--text) 7%, transparent);
+}
+
 .settings-row {
   display: flex;
   align-items: center;
@@ -15970,44 +15990,6 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   width: 18px;
   height: 18px;
   opacity: 0.45;
-}
-
-/* Menu → Bibliothèque (mesmo contrato visual do perfil). */
-.bible-yv-tools-library {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin: 10px 0 4px;
-  padding: 0 2px;
-  flex: none;
-  opacity: 1;
-  animation: none;
-}
-
-.bible-yv-tools-library-label {
-  margin: 0 4px;
-  font-size: 0.68rem;
-  font-weight: 650;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: color-mix(in srgb, var(--yv-text, var(--text)) 48%, transparent);
-}
-
-.bible-yv-tools-library-card {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 4px;
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--text) 6%, var(--panel, var(--surface)));
-  contain: layout style;
-}
-
-.bible-yv-tools-library-card .bible-yv-tools-item.is-library-row {
-  opacity: 1;
-  animation: none;
-  border-radius: 10px;
-  padding: 12px 10px;
 }
 
 .bible-yv-tools-item.is-ready {
