@@ -1,11 +1,16 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // CMS lecture (offline-first) — lecture publique des plans publiés
+    // Editor CMS: custom claim `admin: true` (Admin SDK / scripts/set-editor-claim.mjs).
+    // Nunca confiar só em e-mail no cliente — anónimos têm request.auth.uid.
+    function isEditor() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+
+    // CMS lecture (offline-first) — leitura pública só de planos publicados
     match /reading_plans/{planId} {
-      allow read: if resource.data.isPublished == true
-        || (request.auth != null && request.auth.uid != null);
-      allow create, update, delete: if request.auth != null && request.auth.uid != null;
+      allow read: if resource.data.isPublished == true || isEditor();
+      allow create, update, delete: if isEditor();
     }
 
     // Données personnelles utilisateur (anonymous ou authenticated).

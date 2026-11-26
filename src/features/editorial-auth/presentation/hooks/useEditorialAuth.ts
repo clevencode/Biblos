@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import type { User } from "firebase/auth";
 import {
+  isEditorialEditor,
   signInEditor,
   signOutEditor,
   subscribeEditorialAuth,
 } from "../../data/editorialFirebaseAuth";
-import { isClevencodeAdminEmail } from "../../../../userProfile";
 
 export type EditorialAuthPhase = "checking" | "signed_out" | "signed_in";
 
@@ -15,25 +15,42 @@ export function useEditorialAuth() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let alive = true;
     const stop = subscribeEditorialAuth((next) => {
-      if (next && !isClevencodeAdminEmail(next.email)) {
-        setUser(null);
-        setPhase("signed_out");
-        return;
-      }
-      setUser(next);
-      setPhase(next ? "signed_in" : "signed_out");
+      void (async () => {
+        if (!next) {
+          if (!alive) return;
+          setUser(null);
+          setPhase("signed_out");
+          return;
+        }
+        const ok = await isEditorialEditor(next);
+        if (!alive) return;
+        if (!ok) {
+          setUser(null);
+          setPhase("signed_out");
+          return;
+        }
+        setUser(next);
+        setPhase("signed_in");
+      })();
     });
-    return stop;
+    return () => {
+      alive = false;
+      stop();
+    };
   }, []);
 
   async function signIn(email: string, password: string) {
     setError(null);
     try {
       const next = await signInEditor(email, password);
-      if (!isClevencodeAdminEmail(next.email)) {
+      if (await isEditorialEditor(next)) return;
+      await next.getIdToken(true);
+      if (!(await isEditorialEditor(next))) {
         await signOutEditor();
-        const message = "Compte non autorisé pour l’édition CMS";
+        const message =
+          "Compte non autorisé pour l’édition CMS (claim admin requis)";
         setError(message);
         throw new Error(message);
       }

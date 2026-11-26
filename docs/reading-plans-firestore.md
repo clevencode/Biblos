@@ -30,12 +30,19 @@ Snapshot vazio `fromCache` no APK **não** fecha como empty definitivo: mantém 
 
 ## Sécurité
 
-Voir `firestore.rules` — lecture publique si `isPublished`.
+Voir `firestore.rules` :
+
+- **Lecture publique** : só `isPublished == true`
+- **Create/update/delete** : só se `request.auth.token.admin == true` (custom claim)
+- Contas anónimas **não** podem escrever nem ler rascunhos
 
 ## CMS editorial (`#admin`)
 
 - URL : `https://…/#admin`
-- Firebase Auth **e-mail / mot de passe** (compte éditeur créé dans la console)
+- Firebase Auth **e-mail / mot de passe** (compte éditeur criado na consola)
+- **Autorização**: custom claim `admin: true` (obrigatório nas rules e em `requireEditorialUser`)
+- UX extra: `VITE_CLEVENCODE_ADMIN_EMAIL` (link no Profil) — não substitui o claim
+- Atribuir claim: `npm run firebase:set-editor-claim -- --email …` (service account local)
 - Écritures : `upsertReadingPlan` / `deleteReadingPlan` après `requireEditorialUser()`
 - Parser : `extractionArea` → `parsePlanExtraction` (Étape / Jour, sans IA)
 - Liste admin : `onSnapshot` sur toute la collection ; app public : query `isPublished`
@@ -43,7 +50,8 @@ Voir `firestore.rules` — lecture publique si `isPublished`.
 ## Déploiement des règles
 
 ```bash
-firebase deploy --only firestore:rules
+npm run firebase:set-editor-claim -- --email admin@example.com
+npm run firebase:deploy-rules
 ```
 
-Ne pas commiter `.env` ; variables : `VITE_FIREBASE_*` (voir `.env.example`).
+Ne pas commiter `.env` ni service accounts ; variables : `VITE_FIREBASE_*` (voir `.env.example`).

@@ -14,6 +14,8 @@
     "build:mobile": "node scripts/stage-bible-assets.mjs && node scripts/stage-study-assets.mjs && cross-env CAPACITOR=1 tsc && cross-env CAPACITOR=1 vite build",
     "ensure:mobile-remote": "node scripts/ensure-mobile-remote.mjs",
     "firebase:google-services": "node scripts/fetch-google-services.mjs",
+    "firebase:set-editor-claim": "node scripts/set-editor-claim.mjs",
+    "firebase:deploy-rules": "npx -y firebase-tools@latest deploy --only firestore:rules",
     "mobile:sync": "npm run ensure:mobile-remote && npm run build:mobile && npx cap sync android",
     "mobile:open": "npx cap open android",
     "mobile:apk": "npm run mobile:sync && npm run mobile:gradle",

@@ -1,5 +1,6 @@
 /**
  * Data — Firebase Auth (e-mail / senha) para CMS editorial.
+ * Autorização real: custom claim `admin` (espelha firestore.rules).
  * Credenciais Firebase só via reading-plans/data/firebaseConfig (mesmo app).
  */
 
@@ -12,7 +13,10 @@ import {
   type User,
 } from "firebase/auth";
 import { ensureFirebase } from "../../../lib/firebase";
-import { isClevencodeAdminEmail } from "../../../userProfile";
+import {
+  getClevencodeAdminEmail,
+  isClevencodeAdminEmail,
+} from "../../../userProfile";
 
 let auth: Auth | null = null;
 
@@ -32,6 +36,32 @@ async function ensureAuthReady(): Promise<Auth | null> {
 
 export function getEditorialAuth(): Auth | null {
   return auth;
+}
+
+/** True se o ID token tem claim `admin` (fonte de verdade alinhada às rules). */
+export async function hasEditorialAdminClaim(
+  user: User,
+  forceRefresh = false,
+): Promise<boolean> {
+  const token = await user.getIdTokenResult(forceRefresh);
+  return token.claims.admin === true;
+}
+
+/**
+ * Editor autorizado: claim `admin` obrigatório.
+ * E-mail allowlist (env) é UX defensiva adicional, não substitui o claim.
+ */
+export async function isEditorialEditor(user: User | null): Promise<boolean> {
+  if (!user) return false;
+  if (!(await hasEditorialAdminClaim(user))) return false;
+  const emailGate = isClevencodeAdminEmail(user.email);
+  // Sem VITE_CLEVENCODE_ADMIN_EMAIL, só o claim conta.
+  if (!emailGate && getAdminEmailConfigured()) return false;
+  return true;
+}
+
+function getAdminEmailConfigured(): boolean {
+  return Boolean(getClevencodeAdminEmail());
 }
 
 export function subscribeEditorialAuth(
@@ -71,19 +101,16 @@ export async function signOutEditor(): Promise<void> {
   await signOut(instance);
 }
 
-function isEditorialAllowlisted(email: string | null | undefined): boolean {
-  return isClevencodeAdminEmail(email);
-}
-
 /** Barreira obrigatória antes de qualquer write Firestore. */
 export async function requireEditorialUser(): Promise<User> {
   const instance = await ensureAuthReady();
   const user = instance?.currentUser ?? null;
   if (!user) throw new EditorialAuthRequiredError();
-  if (!isEditorialAllowlisted(user.email)) {
-    throw new EditorialAuthRequiredError(
-      "Compte non autorisé pour l’édition CMS",
-    );
-  }
-  return user;
+  if (await isEditorialEditor(user)) return user;
+  // Claim acabado de atribuir via Admin SDK — forçar refresh do ID token
+  await user.getIdToken(true);
+  if (await isEditorialEditor(user)) return user;
+  throw new EditorialAuthRequiredError(
+    "Compte non autorisé pour l’édition CMS (claim admin requis)",
+  );
 }
