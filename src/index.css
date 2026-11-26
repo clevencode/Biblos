@@ -17142,8 +17142,7 @@ html[data-theme="dark"] .bible-chapter-fab {
   background: transparent;
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
-  transition: background-color var(--bible-press-ms, 160ms)
-    var(--mode-tabs-open-ease, cubic-bezier(0.22, 1, 0.36, 1));
+  /* Sem transition no ink base — animação só em .is-selected.is-marked (keyframe). */
 }
 
 .bible-reader--yv .bible-verse {
@@ -17915,18 +17914,24 @@ html[data-theme="dark"] .bible-chapter-fab {
   -webkit-tap-highlight-color: transparent;
   transition:
     opacity 0.22s ease,
-    color 0.22s ease,
-    background-color var(--bible-press-ms, 160ms)
-      var(--mode-tabs-open-ease, cubic-bezier(0.22, 1, 0.36, 1));
+    color 0.22s ease;
 }
 
+/* Mesmo padrão do leitor: dimming em massa sem interpolar N itens. */
 .bible-verse-select-list.is-dimming .bible-verse-select-item:not(.is-on) {
+  transition: none;
   opacity: 0.36;
   color: color-mix(
     in srgb,
     var(--yv-text, var(--text)) 68%,
     var(--yv-muted, var(--muted))
   );
+}
+
+.bible-verse-select-list.is-dimming .bible-verse-select-item.is-on {
+  transition:
+    opacity 0.22s ease,
+    color 0.22s ease;
 }
 
 /* Tinta no ink (como o leitor) — shell sem caixa cinzenta. */
@@ -17937,8 +17942,6 @@ html[data-theme="dark"] .bible-chapter-fab {
   background: transparent;
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
-  transition: background-color var(--bible-press-ms, 160ms)
-    var(--mode-tabs-open-ease, cubic-bezier(0.22, 1, 0.36, 1));
 }
 
 .bible-verse-select-item.is-marked {

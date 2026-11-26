@@ -187,7 +187,11 @@ import {
 } from "../verseColors";
 import { resolveTheme, type ResolvedTheme } from "../theme";
 import { useReaderChromeStore } from "../store/useReaderChromeStore";
-import { useVerseMarksStore } from "../store/useVerseMarksStore";
+import {
+  useVerseMarkNeighbors,
+  useVerseMarksStore,
+} from "../store/useVerseMarksStore";
+import { useShallow } from "zustand/react/shallow";
 import { useNavigationFlow } from "../hooks/useNavigationFlow";
 import {
   bookCodeToId,
@@ -253,25 +257,30 @@ function selectionEdgeClassFromSet(
 /** Extremidade de uma run de marca (versos contíguos com a mesma cor). */
 type MarkRunEdge = "start" | "mid" | "end" | "single";
 
-function markRunEdgeForVerse(
-  byVerse: Record<number, string>,
-  verseNumber: number,
+/**
+ * Deriva a run a partir de n-1 / n / n+1.
+ * Cores em `byVerse` já vêm normalizadas no write — comparação por ===.
+ */
+function markRunEdgeFromNeighbors(
+  raw: string | undefined,
+  prevRaw: string | undefined,
+  nextRaw: string | undefined,
 ): MarkRunEdge | null {
-  const raw = byVerse[verseNumber];
   if (!raw) return null;
-  const color = normalizeVerseColor(raw);
-  const prevRaw = byVerse[verseNumber - 1];
-  const nextRaw = byVerse[verseNumber + 1];
-  const prevSame = Boolean(
-    prevRaw && normalizeVerseColor(prevRaw) === color,
-  );
-  const nextSame = Boolean(
-    nextRaw && normalizeVerseColor(nextRaw) === color,
-  );
+  const prevSame = prevRaw === raw;
+  const nextSame = nextRaw === raw;
   if (!prevSame && !nextSame) return "single";
   if (!prevSame && nextSame) return "start";
   if (prevSame && !nextSame) return "end";
   return "mid";
+}
+
+function markRunEdgeClass(edge: MarkRunEdge | null): string {
+  if (!edge) return "";
+  if (edge === "single") return "is-mark-run-start is-mark-run-end";
+  if (edge === "start") return "is-mark-run-start";
+  if (edge === "end") return "is-mark-run-end";
+  return "is-mark-run-mid";
 }
 
 /** Regroupe 7,8,9,12 → [{7,9},{12,12}]. */
@@ -356,7 +365,6 @@ type BibleVerseButtonProps = {
   verse: { number: number; text: string };
   selected: boolean;
   selectionEdge: string;
-  markRunEdge: MarkRunEdge | null;
   hasSelection: boolean;
   isFocus: boolean;
   isRangeAnchor: boolean;
@@ -378,8 +386,7 @@ const VerseSelectMarkButton = memo(function VerseSelectMarkButton({
   verseNumber,
   preview,
   selected,
-  markRunEdge,
-  /** Cor do seletor circular (mesma lógica adaptVerseColorForTheme). */
+  /** Cor do seletor circular — só passar quando `selected` (memo dos off). */
   pickColor,
   uiTheme,
   onSelect,
@@ -387,17 +394,19 @@ const VerseSelectMarkButton = memo(function VerseSelectMarkButton({
   verseNumber: number;
   preview: string;
   selected: boolean;
-  markRunEdge: MarkRunEdge | null;
-  pickColor: string;
+  pickColor?: string;
   uiTheme: ResolvedTheme;
   onSelect: (number: number) => void;
 }) {
-  const rawMark = useVerseMarksStore((s) => s.byVerse[verseNumber]);
-  const markDisplay = rawMark
-    ? adaptVerseColorForTheme(rawMark, uiTheme)
-    : null;
+  const { raw, prev, next } = useVerseMarkNeighbors(verseNumber);
+  const markRunEdge = markRunEdgeFromNeighbors(raw, prev, next);
+  const markDisplay = useMemo(
+    () => (raw ? adaptVerseColorForTheme(raw, uiTheme) : null),
+    [raw, uiTheme],
+  );
   /* Seleccionado: tinta = swatch circular; senão: cor da marca guardada. */
-  const inkColor = selected ? pickColor : markDisplay;
+  const inkColor = selected && pickColor ? pickColor : markDisplay;
+  const runClass = markRunEdgeClass(markRunEdge);
   return (
     <button
       type="button"
@@ -408,13 +417,7 @@ const VerseSelectMarkButton = memo(function VerseSelectMarkButton({
         "bible-verse-select-item",
         selected ? "is-on" : "",
         markDisplay ? "is-marked" : "",
-        markRunEdge === "start" || markRunEdge === "single"
-          ? "is-mark-run-start"
-          : "",
-        markRunEdge === "end" || markRunEdge === "single"
-          ? "is-mark-run-end"
-          : "",
-        markRunEdge === "mid" ? "is-mark-run-mid" : "",
+        runClass,
       ]
         .filter(Boolean)
         .join(" ")}
@@ -441,7 +444,6 @@ const BibleVerseButton = memo(function BibleVerseButton({
   verse,
   selected,
   selectionEdge,
-  markRunEdge,
   hasSelection,
   isFocus,
   isRangeAnchor,
@@ -457,10 +459,12 @@ const BibleVerseButton = memo(function BibleVerseButton({
   highlightRef,
   onSelect,
 }: BibleVerseButtonProps) {
-  const rawMark = useVerseMarksStore((s) => s.byVerse[verse.number]);
-  const markDisplay = rawMark
-    ? adaptVerseColorForTheme(rawMark, uiTheme)
-    : null;
+  const { raw, prev, next } = useVerseMarkNeighbors(verse.number);
+  const markRunEdge = markRunEdgeFromNeighbors(raw, prev, next);
+  const markDisplay = useMemo(
+    () => (raw ? adaptVerseColorForTheme(raw, uiTheme) : null),
+    [raw, uiTheme],
+  );
   const inPlanRange = Boolean(
     planRangeActive &&
       (planVerseRangeFull ||
@@ -479,6 +483,14 @@ const BibleVerseButton = memo(function BibleVerseButton({
   );
   const inRange = inPlanRange || inDeeplink;
   const titleLike = isLikelyVerseTitle(verse.text, verse.number);
+  const runClass = markRunEdgeClass(markRunEdge);
+  const markStyle = useMemo(
+    () =>
+      markDisplay
+        ? ({ ["--verse-mark" as string]: markDisplay } as CSSProperties)
+        : undefined,
+    [markDisplay],
+  );
 
   return (
     <span
@@ -490,13 +502,7 @@ const BibleVerseButton = memo(function BibleVerseButton({
         inRange ? "is-in-range" : "",
         selected ? "is-selected" : "",
         markDisplay ? "is-marked" : "",
-        markRunEdge === "start" || markRunEdge === "single"
-          ? "is-mark-run-start"
-          : "",
-        markRunEdge === "end" || markRunEdge === "single"
-          ? "is-mark-run-end"
-          : "",
-        markRunEdge === "mid" ? "is-mark-run-mid" : "",
+        runClass,
         hasFlashcard ? "has-card" : "",
         selectionEdge,
         titleLike ? "is-title" : "",
@@ -504,11 +510,7 @@ const BibleVerseButton = memo(function BibleVerseButton({
         .filter(Boolean)
         .join(" ")}
       data-verse={verse.number}
-      style={
-        markDisplay
-          ? ({ ["--verse-mark" as string]: markDisplay } as CSSProperties)
-          : undefined
-      }
+      style={markStyle}
       aria-label={
         hasFlashcard
           ? `Verset ${verse.number}, flashcard`
@@ -2676,17 +2678,6 @@ export function BibleReaderView({
     () => new Set(selectedVerses),
     [selectedVerses],
   );
-  const chapterMarksByVerse = useVerseMarksStore((s) => s.byVerse);
-  const markRunByVerse = useMemo(() => {
-    const map = new Map<number, MarkRunEdge>();
-    const verses = passage?.verses;
-    if (!verses?.length) return map;
-    for (const verse of verses) {
-      const edge = markRunEdgeForVerse(chapterMarksByVerse, verse.number);
-      if (edge) map.set(verse.number, edge);
-    }
-    return map;
-  }, [chapterMarksByVerse, passage?.verses]);
   const selectedVerseText =
     selectedVerses.length && passage?.verses
       ? formatSelectedVersesForShare(
@@ -2732,20 +2723,18 @@ export function BibleReaderView({
     const next = adaptVerseColorForTheme(normalizeVerseColor(hex), uiTheme);
     pickVerseColor(next);
     if (!selection?.length) return;
-    if (
-      !selectedVerses.some((n) =>
-        Boolean(useVerseMarksStore.getState().byVerse[n]),
-      )
-    ) {
-      return;
-    }
+    const byVerse = useVerseMarksStore.getState().byVerse;
+    if (!selectedVerses.some((n) => Boolean(byVerse[n]))) return;
+    /* Tinta imediata; side-effects de actividade em transição. */
     applyChapterMarks(bookId, chapterId, selection, next);
-    onVerseMarked?.({
-      color: next,
-      verses: [...selection],
-      bookId,
-      chapterId,
-      bookTitle: selectedBook?.title ?? bookId,
+    startTransition(() => {
+      onVerseMarked?.({
+        color: next,
+        verses: [...selection],
+        bookId,
+        chapterId,
+        bookTitle: selectedBook?.title ?? bookId,
+      });
     });
   }
 
@@ -2754,15 +2743,19 @@ export function BibleReaderView({
     const next = adaptVerseColorForTheme(normalizeVerseColor(hex), uiTheme);
     pickVerseColor(next);
     applyChapterMarks(bookId, chapterId, selection, next);
-    onVerseMarked?.({
-      color: next,
-      verses: [...selection],
-      bookId,
-      chapterId,
-      bookTitle: selectedBook?.title ?? bookId,
-    });
+    const verses = [...selection];
+    const bookTitle = selectedBook?.title ?? bookId;
     /* Marquer → fecha Options (desmarcar mantém o sheet). */
     closeCreateCard();
+    startTransition(() => {
+      onVerseMarked?.({
+        color: next,
+        verses,
+        bookId,
+        chapterId,
+        bookTitle,
+      });
+    });
   }
 
   function requestMarkSelection(hex: string) {
@@ -2816,31 +2809,42 @@ export function BibleReaderView({
 
   function clearSelectionMarks() {
     if (!selection?.length) return;
+    const verses = [...selection];
+    const bookTitle = selectedBook?.title ?? bookId;
     applyChapterMarks(bookId, chapterId, selection, null);
-    onVerseMarked?.({
-      color: null,
-      verses: [...selection],
-      bookId,
-      chapterId,
-      bookTitle: selectedBook?.title ?? bookId,
-    });
     setCardMsg(t("verse.unmarkDone"));
+    startTransition(() => {
+      onVerseMarked?.({
+        color: null,
+        verses,
+        bookId,
+        chapterId,
+        bookTitle,
+      });
+    });
   }
 
   const activeVerseColor = adaptVerseColorForTheme(normalizeVerseColor(cardColor), uiTheme);
-  const selectionHasMark = useVerseMarksStore((s) =>
-    selectedVerses.some((n) => Boolean(s.byVerse[n])),
+  const { selectionHasMark, selectionMarkRaw } = useVerseMarksStore(
+    useShallow((s) => {
+      let raw: string | null = null;
+      let has = false;
+      for (const n of selectedVerses) {
+        const hex = s.byVerse[n];
+        if (!hex) continue;
+        has = true;
+        if (!raw) raw = hex;
+      }
+      return { selectionHasMark: has, selectionMarkRaw: raw };
+    }),
   );
-  const selectionMarkRaw = useVerseMarksStore((s) => {
-    for (const n of selectedVerses) {
-      const hex = s.byVerse[n];
-      if (hex) return hex;
-    }
-    return null;
-  });
-  const selectionMarkColor = selectionMarkRaw
-    ? adaptVerseColorForTheme(normalizeVerseColor(selectionMarkRaw), uiTheme)
-    : null;
+  const selectionMarkColor = useMemo(
+    () =>
+      selectionMarkRaw
+        ? adaptVerseColorForTheme(normalizeVerseColor(selectionMarkRaw), uiTheme)
+        : null,
+    [selectionMarkRaw, uiTheme],
+  );
   /* Tom do CTA Marquer = cor seleccionada (swatch / marca; light + dark). */
   const pickerColor = selectionMarkColor ?? activeVerseColor;
   const actionTone = useMemo(
@@ -3723,10 +3727,7 @@ export function BibleReaderView({
                             verseNumber={verse.number}
                             preview={preview}
                             selected={on}
-                            markRunEdge={
-                              markRunByVerse.get(verse.number) ?? null
-                            }
-                            pickColor={pickerColor}
+                            pickColor={on ? pickerColor : undefined}
                             uiTheme={uiTheme}
                             onSelect={selectVerse}
                           />
@@ -4912,7 +4913,6 @@ export function BibleReaderView({
                     selectedVerseSet,
                     verse.number,
                   )}
-                  markRunEdge={markRunByVerse.get(verse.number) ?? null}
                   hasSelection={hasSelection}
                   isFocus={isFocus}
                   isRangeAnchor={isFocus}
