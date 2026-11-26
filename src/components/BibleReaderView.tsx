@@ -164,8 +164,15 @@ import {
   nearestBibleFontSize,
   stepBibleFontSize,
 } from "../typography/bibleFontSize";
+import {
+  parseBibleDisplayMode,
+  parseBibleTextAlign,
+  type BibleDisplayMode,
+  type BibleTextAlign,
+} from "../typography/bibleLayout";
 import { BibleTypefaceStrip } from "./BibleTypefaceStrip";
 import { BibleFontSizeSlider } from "./BibleFontSizeSlider";
+import { BibleLayoutOptions } from "./BibleLayoutOptions";
 import { useBibleCatalog } from "../hooks/useBibleCatalog";
 import { useLocalBundledBible } from "../bibleEngine";
 import {
@@ -241,6 +248,30 @@ function selectionEdgeClassFromSet(
   if (!prev && next) return "is-sel-start";
   if (prev && !next) return "is-sel-end";
   return "is-sel-mid";
+}
+
+/** Extremidade de uma run de marca (versos contíguos com a mesma cor). */
+type MarkRunEdge = "start" | "mid" | "end" | "single";
+
+function markRunEdgeForVerse(
+  byVerse: Record<number, string>,
+  verseNumber: number,
+): MarkRunEdge | null {
+  const raw = byVerse[verseNumber];
+  if (!raw) return null;
+  const color = normalizeVerseColor(raw);
+  const prevRaw = byVerse[verseNumber - 1];
+  const nextRaw = byVerse[verseNumber + 1];
+  const prevSame = Boolean(
+    prevRaw && normalizeVerseColor(prevRaw) === color,
+  );
+  const nextSame = Boolean(
+    nextRaw && normalizeVerseColor(nextRaw) === color,
+  );
+  if (!prevSame && !nextSame) return "single";
+  if (!prevSame && nextSame) return "start";
+  if (prevSame && !nextSame) return "end";
+  return "mid";
 }
 
 /** Regroupe 7,8,9,12 → [{7,9},{12,12}]. */
@@ -325,6 +356,7 @@ type BibleVerseButtonProps = {
   verse: { number: number; text: string };
   selected: boolean;
   selectionEdge: string;
+  markRunEdge: MarkRunEdge | null;
   hasSelection: boolean;
   isFocus: boolean;
   isRangeAnchor: boolean;
@@ -346,12 +378,17 @@ const VerseSelectMarkButton = memo(function VerseSelectMarkButton({
   verseNumber,
   preview,
   selected,
+  markRunEdge,
+  /** Cor do seletor circular (mesma lógica adaptVerseColorForTheme). */
+  pickColor,
   uiTheme,
   onSelect,
 }: {
   verseNumber: number;
   preview: string;
   selected: boolean;
+  markRunEdge: MarkRunEdge | null;
+  pickColor: string;
   uiTheme: ResolvedTheme;
   onSelect: (number: number) => void;
 }) {
@@ -359,6 +396,8 @@ const VerseSelectMarkButton = memo(function VerseSelectMarkButton({
   const markDisplay = rawMark
     ? adaptVerseColorForTheme(rawMark, uiTheme)
     : null;
+  /* Seleccionado: tinta = swatch circular; senão: cor da marca guardada. */
+  const inkColor = selected ? pickColor : markDisplay;
   return (
     <button
       type="button"
@@ -369,21 +408,30 @@ const VerseSelectMarkButton = memo(function VerseSelectMarkButton({
         "bible-verse-select-item",
         selected ? "is-on" : "",
         markDisplay ? "is-marked" : "",
+        markRunEdge === "start" || markRunEdge === "single"
+          ? "is-mark-run-start"
+          : "",
+        markRunEdge === "end" || markRunEdge === "single"
+          ? "is-mark-run-end"
+          : "",
+        markRunEdge === "mid" ? "is-mark-run-mid" : "",
       ]
         .filter(Boolean)
         .join(" ")}
       style={
-        markDisplay
-          ? ({ ["--verse-mark" as string]: markDisplay } as CSSProperties)
+        inkColor
+          ? ({ ["--verse-mark" as string]: inkColor } as CSSProperties)
           : undefined
       }
       onClick={() => onSelect(verseNumber)}
     >
-      <span className="bible-verse-select-num" aria-hidden>
-        {verseNumber}
-      </span>
-      <span className="bible-verse-select-text">
-        {preview || `v. ${verseNumber}`}
+      <span className="bible-verse-select-ink">
+        <span className="bible-verse-select-num" aria-hidden>
+          {verseNumber}
+        </span>
+        <span className="bible-verse-select-text">
+          {preview || `v. ${verseNumber}`}
+        </span>
       </span>
     </button>
   );
@@ -393,6 +441,7 @@ const BibleVerseButton = memo(function BibleVerseButton({
   verse,
   selected,
   selectionEdge,
+  markRunEdge,
   hasSelection,
   isFocus,
   isRangeAnchor,
@@ -432,14 +481,22 @@ const BibleVerseButton = memo(function BibleVerseButton({
   const titleLike = isLikelyVerseTitle(verse.text, verse.number);
 
   return (
-    <button
-      type="button"
+    <span
+      role="button"
+      tabIndex={0}
       className={[
         "bible-verse",
         isFocus ? "is-focus" : "",
         inRange ? "is-in-range" : "",
         selected ? "is-selected" : "",
         markDisplay ? "is-marked" : "",
+        markRunEdge === "start" || markRunEdge === "single"
+          ? "is-mark-run-start"
+          : "",
+        markRunEdge === "end" || markRunEdge === "single"
+          ? "is-mark-run-end"
+          : "",
+        markRunEdge === "mid" ? "is-mark-run-mid" : "",
         hasFlashcard ? "has-card" : "",
         selectionEdge,
         titleLike ? "is-title" : "",
@@ -467,15 +524,23 @@ const BibleVerseButton = memo(function BibleVerseButton({
           : undefined
       }
       onClick={() => onSelect(verse.number)}
+      onKeyDown={(event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        onSelect(verse.number);
+      }}
     >
-      <sup className="bible-verse-num">{verse.number}</sup>
-      {hasFlashcard ? (
-        <span className="bible-verse-card-icon" aria-hidden="true">
-          <YvIcon name="style" />
-        </span>
-      ) : null}
-      <span className="bible-verse-text">{verse.text}</span>
-    </button>
+      {/* Contrato: tinta de marca só em .bible-verse-ink (inline), nunca no shell. */}
+      <span className="bible-verse-ink">
+        <sup className="bible-verse-num">{verse.number}</sup>
+        {hasFlashcard ? (
+          <span className="bible-verse-card-icon" aria-hidden="true">
+            <YvIcon name="style" />
+          </span>
+        ) : null}
+        <span className="bible-verse-text">{verse.text}</span>
+      </span>
+    </span>
   );
 });
 
@@ -484,6 +549,8 @@ type ReaderPrefs = {
   chapterId?: string;
   fontSize?: number;
   bibleFont?: string;
+  textAlign?: BibleTextAlign;
+  displayMode?: BibleDisplayMode;
   textVersion?: BibleTextVersionId;
 };
 
@@ -783,9 +850,21 @@ export function BibleReaderView({
   const [bibleFont, setBibleFont] = useState<BibleFontId>(() =>
     parseBibleFontId(prefs.bibleFont),
   );
+  const [textAlign, setTextAlign] = useState<BibleTextAlign>(() =>
+    parseBibleTextAlign(prefs.textAlign),
+  );
+  const [displayMode, setDisplayMode] = useState<BibleDisplayMode>(() =>
+    parseBibleDisplayMode(prefs.displayMode),
+  );
   const bibleFontMeta = bibleFontOption(bibleFont);
   const selectBibleFont = useCallback((id: BibleFontId) => {
     setBibleFont(id);
+  }, []);
+  const selectTextAlign = useCallback((value: BibleTextAlign) => {
+    setTextAlign(value);
+  }, []);
+  const selectDisplayMode = useCallback((value: BibleDisplayMode) => {
+    setDisplayMode(value);
   }, []);
 
   useEffect(() => {
@@ -1572,13 +1651,20 @@ export function BibleReaderView({
   }, [bible.id, setBible, textVersion]);
 
   useEffect(() => {
-    const base = { ...readPrefs(), fontSize, bibleFont, textVersion };
+    const base = {
+      ...readPrefs(),
+      fontSize,
+      bibleFont,
+      textAlign,
+      displayMode,
+      textVersion,
+    };
     if (isUsfmBookId(bookId)) {
       writePrefs({ ...base, bookId, chapterId });
       return;
     }
     writePrefs(base);
-  }, [bookId, chapterId, fontSize, bibleFont, textVersion]);
+  }, [bookId, chapterId, fontSize, bibleFont, textAlign, displayMode, textVersion]);
 
   useEffect(() => {
     hydrateChapterMarks(bookId, chapterId);
@@ -2590,6 +2676,17 @@ export function BibleReaderView({
     () => new Set(selectedVerses),
     [selectedVerses],
   );
+  const chapterMarksByVerse = useVerseMarksStore((s) => s.byVerse);
+  const markRunByVerse = useMemo(() => {
+    const map = new Map<number, MarkRunEdge>();
+    const verses = passage?.verses;
+    if (!verses?.length) return map;
+    for (const verse of verses) {
+      const edge = markRunEdgeForVerse(chapterMarksByVerse, verse.number);
+      if (edge) map.set(verse.number, edge);
+    }
+    return map;
+  }, [chapterMarksByVerse, passage?.verses]);
   const selectedVerseText =
     selectedVerses.length && passage?.verses
       ? formatSelectedVersesForShare(
@@ -3163,6 +3260,8 @@ export function BibleReaderView({
       chapterId,
       fontSize,
       bibleFont,
+      textAlign,
+      displayMode,
     });
     notifyUiLocale(next);
     if (next === "ht98") {
@@ -3624,6 +3723,10 @@ export function BibleReaderView({
                             verseNumber={verse.number}
                             preview={preview}
                             selected={on}
+                            markRunEdge={
+                              markRunByVerse.get(verse.number) ?? null
+                            }
+                            pickColor={pickerColor}
                             uiTheme={uiTheme}
                             onSelect={selectVerse}
                           />
@@ -3739,6 +3842,12 @@ export function BibleReaderView({
           onChange={(size) => setFontSize(clampFontSize(size))}
         />
         <BibleTypefaceStrip selected={bibleFont} onSelect={selectBibleFont} />
+        <BibleLayoutOptions
+          textAlign={textAlign}
+          displayMode={displayMode}
+          onTextAlign={selectTextAlign}
+          onDisplayMode={selectDisplayMode}
+        />
       </div>
     );
   }
@@ -4360,6 +4469,8 @@ export function BibleReaderView({
       ref={readerRef}
       className={`bible-reader bible-reader--yv${hideChrome ? " is-chrome-hidden" : ""}${hasActiveModal ? " is-overlay-active" : ""}${audioPlaying ? " is-audio-playing" : ""}${showCreateCard ? " has-verse-actions" : ""}${showStudyReturnNav ? " has-study-return" : ""}${showPlanReturnNav ? " has-plan-return" : ""}${shareSheetOpen ? " is-share-open" : ""}${headCompact ? " is-head-compact" : ""}${surfaceChrome.rootClassPassageRollOpen ? " is-passage-roll-open" : ""}${topSheetOpen ? " is-top-sheet-open" : ""}${compactToolsMenu ? " is-compact-tools" : ""}${toolsMenuOpen ? " is-tools-menu-open" : ""}${menuJourneyOpen ? " is-menu-journey-open" : ""}${historyOpen ? " is-history-open" : ""}${coldOpenEmpty ? " is-cold-open-empty" : ""}`}
       data-bible-font={bibleFont}
+      data-bible-align={textAlign}
+      data-bible-display={displayMode}
       style={
         {
           ["--bible-font-size" as string]: `${fontSize}px`,
@@ -4801,6 +4912,7 @@ export function BibleReaderView({
                     selectedVerseSet,
                     verse.number,
                   )}
+                  markRunEdge={markRunByVerse.get(verse.number) ?? null}
                   hasSelection={hasSelection}
                   isFocus={isFocus}
                   isRangeAnchor={isFocus}

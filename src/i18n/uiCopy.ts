@@ -184,6 +184,12 @@ export type UiCopyKey =
   | "bible.fontLarger"
   | "bible.text"
   | "bible.fontChoose"
+  | "bible.align"
+  | "bible.alignLeft"
+  | "bible.alignJustify"
+  | "bible.display"
+  | "bible.displayParagraphs"
+  | "bible.displayVerses"
   | "bible.font.literata.label"
   | "bible.font.literata.desc"
   | "bible.font.spectral.label"
@@ -504,6 +510,12 @@ const FR: Dict = {
   "bible.fontLarger": "Augmenter la taille du texte",
   "bible.text": "Texte",
   "bible.fontChoose": "Choisir votre police",
+  "bible.align": "Alignement",
+  "bible.alignLeft": "À gauche",
+  "bible.alignJustify": "Justifié",
+  "bible.display": "Affichage",
+  "bible.displayParagraphs": "Paragraphes",
+  "bible.displayVerses": "Versets",
   "bible.font.literata.label": "Literata",
   "bible.font.literata.desc": "Lecture numérique",
   "bible.font.spectral.label": "Spectral",
@@ -834,6 +846,12 @@ const HT: Dict = {
   "bible.fontLarger": "Ogmante gwosè tèks la",
   "bible.text": "Tèks",
   "bible.fontChoose": "Chwazi polis ou",
+  "bible.align": "Aliyman",
+  "bible.alignLeft": "Agòch",
+  "bible.alignJustify": "Jistifye",
+  "bible.display": "Afiche",
+  "bible.displayParagraphs": "Paragraf",
+  "bible.displayVerses": "Vèsè",
   "bible.font.literata.label": "Literata",
   "bible.font.literata.desc": "Lekti dijital",
   "bible.font.spectral.label": "Spectral",

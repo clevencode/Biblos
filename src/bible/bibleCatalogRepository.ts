@@ -25,6 +25,10 @@ export type BibleReadingPrefs = {
   fontSize?: number;
   /** Família do texto bíblico (`typography/bibleFonts`). */
   bibleFont?: string;
+  /** Alinhamento do texto (`typography/bibleLayout`). */
+  textAlign?: "left" | "justify";
+  /** Exibição: versículos em bloco ou fluxo de parágrafos. */
+  displayMode?: "verses" | "paragraphs";
   textVersion?: "s21" | "ht98";
 };
 

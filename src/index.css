@@ -2329,7 +2329,8 @@ html[data-keyboard="open"] .panel-nota-body {
   }
 
   .bible-reader--yv .bible-verse.is-selected:not(.is-marked),
-  .bible-reader--yv .bible-verse.is-marked.is-selected {
+  .bible-reader--yv .bible-verse.is-marked.is-selected,
+  .bible-reader--yv .bible-verse.is-marked.is-selected .bible-verse-ink {
     animation: none !important;
   }
 
@@ -12007,6 +12008,7 @@ html[data-theme="dark"] .top-sheet-backdrop {
 .bible-yv-tools-popover.is-open > .bible-yv-tools-item,
 .bible-yv-tools-popover.is-open > .bible-yv-tools-font,
 .bible-yv-tools-popover.is-open > .bible-yv-tools-typeface,
+.bible-yv-tools-popover.is-open > .bible-yv-tools-layout,
 .bible-yv-tools-popover.is-open > .bible-yv-tools-version {
   animation: tools-menu-item-in var(--mode-tabs-open-ms, 180ms)
     var(--mode-tabs-open-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
@@ -12451,6 +12453,7 @@ button.bible-yv-passage-chip.hdr-trigger.is-pill.is-open:hover:not(:disabled) {
   .bible-yv-tools-popover.is-open > .bible-yv-tools-item,
   .bible-yv-tools-popover.is-open > .bible-yv-tools-font,
   .bible-yv-tools-popover.is-open > .bible-yv-tools-typeface,
+  .bible-yv-tools-popover.is-open > .bible-yv-tools-layout,
   .bible-yv-tools-popover.is-open > .bible-yv-tools-version,
   .bible-yv-tools-item:active {
     transition: none !important;
@@ -16616,6 +16619,74 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   text-overflow: ellipsis;
 }
 
+/* Alignement + Affichage (YouVersion). */
+.bible-yv-tools-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 16px;
+  margin-top: 2px;
+  padding: 8px 4px 4px 8px;
+  border-top: 1px solid color-mix(in srgb, var(--yv-text) 10%, transparent);
+  font-family: var(--font-ui);
+}
+
+.bible-yv-layout-col {
+  display: grid;
+  gap: 2px;
+  align-content: start;
+  min-width: 0;
+}
+
+.bible-yv-layout-col-label {
+  margin-bottom: 4px;
+  color: var(--yv-muted, var(--muted));
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.bible-yv-layout-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin: 0;
+  padding: 8px 6px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--yv-text);
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.bible-yv-layout-option:hover {
+  background: color-mix(in srgb, var(--yv-text) 5%, transparent);
+}
+
+.bible-yv-layout-option.is-active {
+  background: color-mix(in srgb, var(--yv-text) 8%, transparent);
+  font-weight: 650;
+}
+
+.bible-yv-layout-icon {
+  flex: none;
+  width: 1.1rem;
+  height: 1.1rem;
+  opacity: 0.72;
+}
+
+.bible-yv-layout-option.is-active .bible-yv-layout-icon {
+  opacity: 1;
+}
+
 .bible-yv-read-surface > .bible-yv-error-bar {
   flex: none;
   position: relative;
@@ -16997,6 +17068,41 @@ html[data-theme="dark"] .bible-chapter-fab {
   gap: 0.2em;
 }
 
+.bible-reader--yv[data-bible-align="justify"] .bible-verse {
+  text-align: justify;
+  text-justify: inter-word;
+  hyphens: auto;
+}
+
+.bible-reader--yv[data-bible-display="paragraphs"] .bible-verses {
+  display: block;
+}
+
+.bible-reader--yv[data-bible-display="paragraphs"] .bible-verse {
+  display: inline;
+  width: auto;
+  padding: 0;
+  border-radius: 0;
+  vertical-align: baseline;
+  background: transparent;
+}
+
+.bible-reader--yv[data-bible-display="paragraphs"] .bible-verse.is-title {
+  display: block;
+  width: 100%;
+  margin: 0 0 0.55em;
+  padding: 6px 10px;
+  text-align: center;
+}
+
+.bible-reader--yv[data-bible-display="paragraphs"] .bible-verse:active:not(:disabled) {
+  transform: none;
+}
+
+.bible-reader--yv[data-bible-display="paragraphs"] .bible-verse.is-selected + .bible-verse.is-selected {
+  border-radius: 0;
+}
+
 @keyframes bible-verse-select-in {
   from {
     background-color: color-mix(in srgb, var(--accent) 16%, transparent);
@@ -17010,17 +17116,34 @@ html[data-theme="dark"] .bible-chapter-fab {
   from {
     background-color: color-mix(
       in srgb,
-      var(--verse-mark, var(--accent)) 32%,
+      var(--verse-mark, var(--accent)) 88%,
       transparent
     );
   }
   to {
     background-color: color-mix(
       in srgb,
-      var(--verse-mark, var(--accent)) 22%,
+      var(--verse-mark, var(--accent)) 78%,
       transparent
     );
   }
+}
+
+/*
+ * Contrato de marcação (canónico, zero legado em bloco):
+ * - Tinta só em `.bible-verse-ink` (inline + box-decoration-break: clone).
+ * - `.bible-verse` é shell de hit-target — nunca leva background/radius de marca.
+ * - Sem chip / ícone lateral de marca.
+ */
+.bible-reader--yv .bible-verse-ink {
+  display: inline;
+  padding: 0.05em 0.1em;
+  border-radius: 0.15em;
+  background: transparent;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  transition: background-color var(--bible-press-ms, 160ms)
+    var(--mode-tabs-open-ease, cubic-bezier(0.22, 1, 0.36, 1));
 }
 
 .bible-reader--yv .bible-verse {
@@ -17029,7 +17152,7 @@ html[data-theme="dark"] .bible-chapter-fab {
   margin: 0;
   padding: 6px 10px;
   border: 0;
-  border-radius: 6px;
+  border-radius: 0;
   background: transparent;
   text-align: left;
   cursor: pointer;
@@ -17078,7 +17201,11 @@ html[data-theme="dark"] .bible-chapter-fab {
 }
 
 .bible-reader--yv .bible-verse.is-marked:active:not(:disabled) {
-  background: color-mix(in srgb, var(--verse-mark, var(--accent)) 22%, transparent);
+  background: transparent;
+}
+
+.bible-reader--yv .bible-verse.is-marked:active:not(:disabled) .bible-verse-ink {
+  background: color-mix(in srgb, var(--verse-mark, var(--accent)) 82%, transparent);
 }
 
 .bible-reader--yv .bible-verses.is-dimming .bible-verse:not(.is-selected):not(.is-focus) {
@@ -17097,8 +17224,15 @@ html[data-theme="dark"] .bible-chapter-fab {
   .bible-verse.is-marked:not(.is-selected) {
   opacity: 1;
   color: var(--yv-text);
-  background: color-mix(in srgb, var(--verse-mark, var(--accent)) 14%, transparent);
+  background: transparent;
   box-shadow: none;
+}
+
+.bible-reader--yv.has-verse-actions
+  .bible-verses.is-dimming
+  .bible-verse.is-marked:not(.is-selected)
+  .bible-verse-ink {
+  background: color-mix(in srgb, var(--verse-mark, var(--accent)) 64%, transparent);
 }
 
 .bible-reader--yv.has-verse-actions .bible-verses.is-dimming .bible-verse.is-selected {
@@ -17202,33 +17336,51 @@ html[data-theme="dark"] .bible-chapter-fab {
   gap: 16px;
 }
 
-/* Marca = fill tipo hover/press, tingido com a cor escolhida (--verse-mark), sem contorno. */
+/* Marca = tinta no ink inline; shell permanece transparente. */
 .bible-reader--yv .bible-verse.is-marked {
   opacity: 1;
   color: var(--yv-text);
-  background: color-mix(in srgb, var(--verse-mark, var(--accent)) 14%, transparent);
+  background: transparent;
   box-shadow: none;
-  border-radius: 6px;
+  border-radius: 0;
+}
+
+.bible-reader--yv .bible-verse.is-marked .bible-verse-ink {
+  /* Cor = seletor circular (adaptVerseColorForTheme → --verse-mark). */
+  background: color-mix(in srgb, var(--verse-mark, var(--accent)) 72%, transparent);
+  box-shadow: none;
 }
 
 .bible-reader--yv .bible-verse.is-marked.is-selected {
-  background: color-mix(in srgb, var(--verse-mark, var(--accent)) 22%, transparent);
+  background: transparent;
   box-shadow: none;
+}
+
+.bible-reader--yv .bible-verse.is-marked.is-selected .bible-verse-ink {
+  background: color-mix(in srgb, var(--verse-mark, var(--accent)) 78%, transparent);
   animation: bible-verse-select-marked-in var(--bible-press-ms, 160ms)
     var(--mode-tabs-open-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
 }
 
-.bible-reader--yv .bible-verse.is-marked.is-sel-start:not(.is-sel-end) {
-  border-radius: 6px 6px 0 0;
+/* Runs contíguas: fundir cantos no ink (paragraphs + verses). */
+.bible-reader--yv .bible-verse.is-marked.is-mark-run-start:not(.is-mark-run-end) .bible-verse-ink {
+  border-radius: 0.15em 0 0 0.15em;
+  padding-right: 0.04em;
 }
 
-.bible-reader--yv .bible-verse.is-marked.is-sel-end:not(.is-sel-start) {
-  border-radius: 0 0 6px 6px;
+.bible-reader--yv .bible-verse.is-marked.is-mark-run-end:not(.is-mark-run-start) .bible-verse-ink {
+  border-radius: 0 0.15em 0.15em 0;
+  padding-left: 0.04em;
 }
 
-.bible-reader--yv .bible-verse.is-marked.is-sel-start.is-sel-end,
-.bible-reader--yv .bible-verse.is-marked.is-sel-single {
-  border-radius: 6px;
+.bible-reader--yv .bible-verse.is-marked.is-mark-run-mid .bible-verse-ink {
+  border-radius: 0;
+  padding-left: 0.04em;
+  padding-right: 0.04em;
+}
+
+.bible-reader--yv .bible-verse.is-marked.is-mark-run-start.is-mark-run-end .bible-verse-ink {
+  border-radius: 0.15em;
 }
 
 .bible-reader--yv .bible-verse-num {
@@ -17763,7 +17915,9 @@ html[data-theme="dark"] .bible-chapter-fab {
   -webkit-tap-highlight-color: transparent;
   transition:
     opacity 0.22s ease,
-    color 0.22s ease;
+    color 0.22s ease,
+    background-color var(--bible-press-ms, 160ms)
+      var(--mode-tabs-open-ease, cubic-bezier(0.22, 1, 0.36, 1));
 }
 
 .bible-verse-select-list.is-dimming .bible-verse-select-item:not(.is-on) {
@@ -17775,18 +17929,61 @@ html[data-theme="dark"] .bible-chapter-fab {
   );
 }
 
+/* Tinta no ink (como o leitor) — shell sem caixa cinzenta. */
+.bible-verse-select-ink {
+  display: inline;
+  padding: 0.05em 0.1em;
+  border-radius: 0.15em;
+  background: transparent;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  transition: background-color var(--bible-press-ms, 160ms)
+    var(--mode-tabs-open-ease, cubic-bezier(0.22, 1, 0.36, 1));
+}
+
 .bible-verse-select-item.is-marked {
   opacity: 1;
   color: var(--yv-text, var(--text));
-  background: color-mix(in srgb, var(--verse-mark, var(--accent)) 14%, transparent);
+  background: transparent;
   box-shadow: none;
-  border-radius: 6px;
+  border-radius: 0;
+}
+
+.bible-verse-select-item.is-marked .bible-verse-select-ink {
+  /* Cor = seletor circular (adaptVerseColorForTheme → --verse-mark). */
+  background: color-mix(in srgb, var(--verse-mark, var(--accent)) 72%, transparent);
+}
+
+.bible-verse-select-item.is-marked.is-mark-run-start:not(.is-mark-run-end)
+  .bible-verse-select-ink {
+  border-radius: 0.15em 0.15em 0 0;
+}
+
+.bible-verse-select-item.is-marked.is-mark-run-end:not(.is-mark-run-start)
+  .bible-verse-select-ink {
+  border-radius: 0 0 0.15em 0.15em;
+}
+
+.bible-verse-select-item.is-marked.is-mark-run-mid .bible-verse-select-ink {
+  border-radius: 0;
+}
+
+.bible-verse-select-item.is-marked.is-mark-run-start.is-mark-run-end
+  .bible-verse-select-ink {
+  border-radius: 0.15em;
 }
 
 .bible-verse-select-list.is-dimming
   .bible-verse-select-item.is-marked:not(.is-on) {
   opacity: 1;
   color: var(--yv-text, var(--text));
+  background: transparent;
+}
+
+.bible-verse-select-list.is-dimming
+  .bible-verse-select-item.is-marked:not(.is-on)
+  .bible-verse-select-ink {
+  background: color-mix(in srgb, var(--verse-mark, var(--accent)) 64%, transparent);
 }
 
 .bible-verse-select-item:hover {
@@ -17794,7 +17991,11 @@ html[data-theme="dark"] .bible-chapter-fab {
 }
 
 .bible-verse-select-item.is-marked:hover {
-  background: color-mix(in srgb, var(--verse-mark, var(--accent)) 18%, transparent);
+  background: transparent;
+}
+
+.bible-verse-select-item.is-marked:hover .bible-verse-select-ink {
+  background: color-mix(in srgb, var(--verse-mark, var(--accent)) 78%, transparent);
 }
 
 .bible-verse-select-item.is-on {
@@ -17804,8 +18005,21 @@ html[data-theme="dark"] .bible-chapter-fab {
 }
 
 .bible-verse-select-item.is-on.is-marked {
-  background: color-mix(in srgb, var(--verse-mark, var(--accent)) 22%, transparent);
+  background: transparent;
   box-shadow: none;
+}
+
+.bible-verse-select-item.is-on.is-marked .bible-verse-select-ink {
+  /* Mesma lógica do swatch circular (--verse-mark = adaptVerseColorForTheme). */
+  background: color-mix(in srgb, var(--verse-mark, var(--accent)) 78%, transparent);
+}
+
+.bible-verse-select-item.is-on.is-marked .bible-verse-select-text {
+  text-decoration-color: color-mix(
+    in srgb,
+    var(--verse-mark, var(--accent)) 65%,
+    var(--yv-text, var(--text))
+  );
 }
 
 .bible-verse-select-item:focus-visible {
