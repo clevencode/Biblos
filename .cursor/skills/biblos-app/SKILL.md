@@ -9,7 +9,7 @@ description: >-
 
 # Biblos — engenharia do app
 
-Skill de **criação e manutenção do produto**. Segurança de ficheiros de arquivo/áudio: skill `nao-destrutivo`. Pipeline ElevenLabs: skill `agentask`. Ambiente/builds: skill `pipeline`.
+Skill de **criação e manutenção do produto**. Credenciais/segredos: skill `security`. Segurança de ficheiros de arquivo/áudio: skill `nao-destrutivo`. Pipeline ElevenLabs: skill `agentask`. Ambiente/builds: skill `pipeline`.
 
 ## Projecto
 
