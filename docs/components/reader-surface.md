@@ -48,8 +48,20 @@ Pilha LIFO em `studyJumpStack.ts` (`pushStudyJumpStep` / `popStudyJumpStep` / `c
 
 - **Push** ao saltar a partir de histórico, marcas, pesquisa ou Référence (origem = passagem actual + `returnTo`).
 - **UI** `.bible-study-return-nav` no dock — “voltar” restaura livro/capítulo/verso + scrolls; reabre a superfície de origem (`refs` → Options/Référence; `history` / `marks` / `word_search` → o sheet respectivo, não Options).
+- **Back / Esc da shell** (`subscribeReaderShellBack`): se `studyJumpDepth > 0`, faz **pop** (`returnFromStudyJump`) antes de sair do plano — alinhado à pill ←; ✕ da pill = `dismissStudyJumpStack`.
 
 Contrato Options: `verseActionsOpen` força chrome visível mas **não** põe `passageInputBlocked` (pass-through). Lista Verset espelha `chapterMarks` (`is-marked`). Ver `npm run test:study-nav`.
+
+## Back vs dismiss (histórico / marcas / pesquisa)
+
+Contrato único (topbar + Escape + `onClose` dos sheets):
+
+| Gesto | Resultado |
+|-------|-----------|
+| **←** pill | `leaveHistoryOrMarks("back")` / word search → menu (`reader_settings`) |
+| **✕** / **Escape** / scrim | `leaveHistoryOrMarks("dismiss")` / `closeWordSearch()` → leitura (`none`) |
+
+Origem `libraryOverlayOriginRef`: `back` + `profile` → Profile; `back` + `menu` → menu do leitor.
 
 ---
 

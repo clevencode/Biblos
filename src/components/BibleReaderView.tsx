@@ -3161,7 +3161,7 @@ export function BibleReaderView({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- setReadingChrome is a render-local helper
   }, [closeAll, closeOverlay]);
 
-  /** Back / Esc da shell: day-note → overlays → plan back (resync/workspace). */
+  /** Back / Esc da shell: day-note → overlays → study pop → plan back. */
   useEffect(() => {
     if (!active) return undefined;
     return subscribeReaderShellBack(() => {
@@ -3188,6 +3188,11 @@ export function BibleReaderView({
         closeCreateCard();
         return true;
       }
+      /* Back = pop LIFO (igual à pill); ✕ da pill = dismissStudyJumpStack. */
+      if (studyJumpDepth > 0) {
+        returnFromStudyJump();
+        return true;
+      }
       if (planReading) {
         handlePlanBack();
         return true;
@@ -3210,6 +3215,7 @@ export function BibleReaderView({
     historyOpen,
     marksOpen,
     showCreateCard,
+    studyJumpDepth,
     planReading,
   ]);
 
@@ -3912,6 +3918,12 @@ export function BibleReaderView({
       toggleOverlay("reader_settings");
     }
 
+    /** Hamburger idle: só abre o menu (não misturar com dismiss). */
+    function handleOpenToolsMenu() {
+      restoreToolsFocusRef.current = true;
+      toggleOverlay("reader_settings");
+    }
+
     const idleMenu = (
       <HeaderTriggerButton
         open={false}
@@ -3921,7 +3933,7 @@ export function BibleReaderView({
         ariaLabel={t("bible.menu")}
         ariaHaspopup="menu"
         className="bible-yv-tools-menu-btn"
-        onClick={handleSectionClose}
+        onClick={handleOpenToolsMenu}
       />
     );
 
@@ -4498,11 +4510,11 @@ export function BibleReaderView({
               return;
             }
             if (historyOpen || marksOpen) {
-              leaveHistoryOrMarks("back");
+              leaveHistoryOrMarks("dismiss");
               return;
             }
             if (wordSearchOpen) {
-              openOverlay({ type: "reader_settings" });
+              closeWordSearch();
               return;
             }
             if (toolsMenuOpen) {
@@ -4515,6 +4527,10 @@ export function BibleReaderView({
             }
             if (showCreateCard) {
               closeCreateCard();
+              return;
+            }
+            if (studyJumpDepth > 0) {
+              returnFromStudyJump();
               return;
             }
             handlePlanBack();
@@ -4547,11 +4563,11 @@ export function BibleReaderView({
             return;
           }
           if (historyOpen || marksOpen) {
-            leaveHistoryOrMarks("back");
+            leaveHistoryOrMarks("dismiss");
             return;
           }
           if (wordSearchOpen) {
-            openOverlay({ type: "reader_settings" });
+            closeWordSearch();
             return;
           }
           if (toolsMenuOpen) {
@@ -4564,6 +4580,10 @@ export function BibleReaderView({
           }
           if (showCreateCard) {
             closeCreateCard();
+            return;
+          }
+          if (studyJumpDepth > 0) {
+            returnFromStudyJump();
             return;
           }
         }
@@ -4764,7 +4784,8 @@ export function BibleReaderView({
           open={marksOpen}
           resolveBookTitle={resolveBookTitleActive}
           onClose={() => {
-            leaveHistoryOrMarks("back");
+            /* Escape / fecho do sheet = dismiss (✕), não ← back. */
+            leaveHistoryOrMarks("dismiss");
           }}
           onSelect={({ versionId, bookId: destBookId, chapterId: destChapterId, verse }) => {
             /* Mantém libraryOverlayOriginRef — Retour após o salto volta à origem. */
