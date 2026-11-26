@@ -4,6 +4,7 @@
  */
 
 import { getApp, getApps, initializeApp, type FirebaseApp } from "firebase/app";
+import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 import { getAuth, type Auth } from "firebase/auth";
 import {
   getFirestore,
@@ -52,8 +53,36 @@ export function getFirebaseWebOptionsForInit(): FirebaseWebOptions | null {
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
 let db: Firestore | null = null;
+let appCheckStarted = false;
 let initPromise: Promise<{ app: FirebaseApp; auth: Auth; db: Firestore } | null> | null =
   null;
+
+/**
+ * App Check opcional — só arranca se `VITE_FIREBASE_APPCHECK_SITE_KEY` estiver definida.
+ * Não activar enforcement na consola Firebase até a chave reCAPTCHA v3 estar OK.
+ */
+function ensureAppCheck(firebaseApp: FirebaseApp): void {
+  if (appCheckStarted) return;
+  appCheckStarted = true;
+  const siteKey = cleanEnv(import.meta.env.VITE_FIREBASE_APPCHECK_SITE_KEY);
+  if (!siteKey) return;
+  try {
+    if (import.meta.env.DEV) {
+      const debug = cleanEnv(import.meta.env.VITE_FIREBASE_APPCHECK_DEBUG_TOKEN);
+      (
+        globalThis as typeof globalThis & {
+          FIREBASE_APPCHECK_DEBUG_TOKEN?: boolean | string;
+        }
+      ).FIREBASE_APPCHECK_DEBUG_TOKEN = debug || true;
+    }
+    initializeAppCheck(firebaseApp, {
+      provider: new ReCaptchaV3Provider(siteKey),
+      isTokenAutoRefreshEnabled: true,
+    });
+  } catch (err) {
+    console.warn("[firebase] App Check init failed", err);
+  }
+}
 
 function getOrInitApp(): FirebaseApp | null {
   if (app) return app;
@@ -119,6 +148,7 @@ export async function ensureFirebase(): Promise<{
   initPromise = (async () => {
     const firebaseApp = getOrInitApp();
     if (!firebaseApp) return null;
+    ensureAppCheck(firebaseApp);
     const firebaseAuth = getOrInitAuth(firebaseApp);
     const firestore = getOrInitDb(firebaseApp);
     return { app: firebaseApp, auth: firebaseAuth, db: firestore };

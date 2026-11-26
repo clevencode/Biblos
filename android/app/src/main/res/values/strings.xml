@@ -5,5 +5,9 @@
     <string name="package_name">app.biblos.mobile</string>
     <string name="custom_url_scheme">app.biblos.mobile</string>
     <string name="audio_player_service_description">Permet la lecture audio en arrière-plan (Segond 21).</string>
+    <!-- Allowlist APK: host deve terminar com um destes sufixos (HTTPS + path .apk). -->
+    <string-array name="apk_allowed_host_suffixes">
+        <item>.r2.dev</item>
+    </string-array>
 </resources>
 

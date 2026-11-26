@@ -15,7 +15,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
+import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -41,6 +43,10 @@ public class ApkInstallerPlugin extends Plugin {
       return;
     }
     final String downloadUrl = url.trim();
+    if (!isAllowedApkUrl(downloadUrl, getAllowedHostSuffixes())) {
+      call.reject("URL de APK fora da allowlist");
+      return;
+    }
 
     if (!canInstallPackages()) {
       openUnknownSourcesSettings();
@@ -95,10 +101,67 @@ public class ApkInstallerPlugin extends Plugin {
     getContext().startActivity(intent);
   }
 
+  private String[] getAllowedHostSuffixes() {
+    try {
+      return getContext()
+        .getResources()
+        .getStringArray(R.array.apk_allowed_host_suffixes);
+    } catch (Exception e) {
+      return new String[] { ".r2.dev" };
+    }
+  }
+
+  /**
+   * HTTPS only; host com sufixo allowlist; path {@code .apk}; sem IPs / file://.
+   */
+  static boolean isAllowedApkUrl(String raw, String[] suffixes) {
+    if (raw == null || raw.trim().isEmpty()) return false;
+    try {
+      URI uri = new URI(raw.trim());
+      String scheme = uri.getScheme();
+      if (scheme == null || !"https".equalsIgnoreCase(scheme)) return false;
+      String host = uri.getHost();
+      if (host == null || host.isEmpty()) return false;
+      String h = host.toLowerCase(Locale.US);
+      if (h.matches("^\\d{1,3}(\\.\\d{1,3}){3}$") || h.contains(":")) {
+        return false;
+      }
+      if (!hostMatchesAllowedSuffix(h, suffixes)) return false;
+      String path = uri.getPath();
+      if (path == null) return false;
+      return path.toLowerCase(Locale.US).endsWith(".apk");
+    } catch (Exception e) {
+      return false;
+    }
+  }
+
+  private static boolean hostMatchesAllowedSuffix(
+    String hostLower,
+    String[] suffixes
+  ) {
+    String[] list =
+      suffixes != null && suffixes.length > 0
+        ? suffixes
+        : new String[] { ".r2.dev" };
+    for (String suffix : list) {
+      if (suffix == null || suffix.isEmpty()) continue;
+      String s = suffix.toLowerCase(Locale.US);
+      if (!s.startsWith(".")) s = "." + s;
+      if (hostLower.equals(s.substring(1)) || hostLower.endsWith(s)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private File downloadToCache(String downloadUrl, int redirectDepth)
     throws Exception {
     if (redirectDepth > MAX_REDIRECTS) {
       throw new IllegalStateException("demasiados redirects (" + MAX_REDIRECTS + ")");
+    }
+    String[] suffixes = getAllowedHostSuffixes();
+    if (!isAllowedApkUrl(downloadUrl, suffixes)) {
+      throw new IllegalStateException("URL de APK fora da allowlist");
     }
 
     File target = new File(getContext().getCacheDir(), APK_NAME);
@@ -110,7 +173,8 @@ public class ApkInstallerPlugin extends Plugin {
     try {
       URL url = new URL(downloadUrl);
       conn = (HttpURLConnection) url.openConnection();
-      conn.setInstanceFollowRedirects(true);
+      // Só redirects manuais (revalidados pela allowlist).
+      conn.setInstanceFollowRedirects(false);
       conn.setConnectTimeout(CONNECT_TIMEOUT_MS);
       conn.setReadTimeout(READ_TIMEOUT_MS);
       conn.setRequestMethod("GET");
@@ -132,7 +196,15 @@ public class ApkInstallerPlugin extends Plugin {
         if (location == null || location.isEmpty()) {
           throw new IllegalStateException("redirect sem Location");
         }
-        return downloadToCache(location, redirectDepth + 1);
+        // Absolute ou relativo ao URL anterior
+        String next =
+          location.startsWith("http://") || location.startsWith("https://")
+            ? location
+            : new URL(new URL(downloadUrl), location).toString();
+        if (!isAllowedApkUrl(next, suffixes)) {
+          throw new IllegalStateException("redirect fora da allowlist");
+        }
+        return downloadToCache(next, redirectDepth + 1);
       }
 
       if (code < 200 || code >= 300) {

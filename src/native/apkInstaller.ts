@@ -1,10 +1,23 @@
 import { registerPlugin } from "@capacitor/core";
+import { assertAllowedApkDownloadUrl } from "./apkDownloadAllowlist";
+
+type ApkInstallerNative = {
+  downloadAndInstall(options: { url: string }): Promise<void>;
+};
+
+const native = registerPlugin<ApkInstallerNative>("ApkInstaller");
 
 export type ApkInstallerPlugin = {
   downloadAndInstall(options: { url: string }): Promise<void>;
 };
 
-export const ApkInstaller = registerPlugin<ApkInstallerPlugin>("ApkInstaller");
+/** Wrapper: valida allowlist no JS antes do nativo (nativo revalida). */
+export const ApkInstaller: ApkInstallerPlugin = {
+  async downloadAndInstall(options) {
+    const url = assertAllowedApkDownloadUrl(options.url);
+    await native.downloadAndInstall({ url });
+  },
+};
 
 /** Reject do nativo quando canRequestPackageInstalls() é false. */
 export function isUnknownSourcesError(error: unknown): boolean {

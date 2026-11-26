@@ -28,6 +28,13 @@ interface ImportMetaEnv {
   readonly VITE_FIREBASE_MESSAGING_SENDER_ID: string;
   readonly VITE_FIREBASE_APP_ID: string;
   readonly VITE_FIREBASE_WEB_CLIENT_ID?: string;
+  /** reCAPTCHA v3 site key — App Check (opcional até enforcement na consola). */
+  readonly VITE_FIREBASE_APPCHECK_SITE_KEY?: string;
+  /** Token debug App Check em DEV (ou `true` automático). */
+  readonly VITE_FIREBASE_APPCHECK_DEBUG_TOKEN?: string;
+  readonly VITE_APK_DOWNLOAD_URL?: string;
+  /** Sufixos de host allowlist APK, CSV (default: `.r2.dev`). */
+  readonly VITE_APK_ALLOWED_HOST_SUFFIXES?: string;
   readonly VITE_CLEVENCODE_ADMIN_EMAIL?: string;
   /** `test` (default) = sem passo versículo após capítulo; `legacy` = grelha Verset */
   readonly VITE_PASSAGE_PICKER_FLOW?: string;

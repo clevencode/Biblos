@@ -12,6 +12,7 @@
 import { Capacitor } from "@capacitor/core";
 import { Browser } from "@capacitor/browser";
 import { useCallback, useEffect, useState } from "react";
+import { isAllowedApkDownloadUrl } from "../native/apkDownloadAllowlist";
 import { ApkInstaller, isUnknownSourcesError } from "../native/apkInstaller";
 
 const ETAG_KEY = "biblos-apk-etag";
@@ -26,7 +27,9 @@ export type ApkUpdateState = {
 };
 
 function apkDownloadUrl(): string {
-  return String(import.meta.env.VITE_APK_DOWNLOAD_URL ?? "").trim();
+  const raw = String(import.meta.env.VITE_APK_DOWNLOAD_URL ?? "").trim();
+  if (!raw) return "";
+  return isAllowedApkDownloadUrl(raw) ? raw : "";
 }
 
 /**

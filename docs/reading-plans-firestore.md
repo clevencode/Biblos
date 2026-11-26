@@ -55,3 +55,8 @@ npm run firebase:deploy-rules
 ```
 
 Ne pas commiter `.env` ni service accounts ; variables : `VITE_FIREBASE_*` (voir `.env.example`).
+
+## App Check
+
+Opcional no cliente: `VITE_FIREBASE_APPCHECK_SITE_KEY` (reCAPTCHA v3).  
+Só activar **enforcement** na consola Firebase depois da chave estar a funcionar (DEV usa debug token).
