@@ -92,7 +92,7 @@ function drawWheel(
 
 /**
  * Éditeur circulaire HSV (teinte × saturation).
- * Sem barra de luminosidade: V automático (claro no dark, escuro no light).
+ * Sem barra de luminosidade: V automático (claro no dark, pastel no light).
  */
 export function CircularColorEditor({
   open,
