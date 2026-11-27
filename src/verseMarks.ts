@@ -5,11 +5,13 @@ import {
 } from "./services/storage/StorageAdapter";
 
 const STORAGE_KEY = "biblos.verseMarks";
-const TOUCHED_KEY = "biblos.verseMarks.touched";
-const REMOVED_KEY = "biblos.verseMarks.removed";
+/** `LIVRO.cap:versículo` → data em que foi marcado (ordenação da lista). */
+const MARKED_AT_KEY = "biblos.verseMarks.touched";
+/** Remoções do formato antigo — só lidas para migrar para o user-sync. */
+const LEGACY_REMOVED_KEY = "biblos.verseMarks.removed";
 const REVISION_EVENT = "biblos-verse-marks-revision";
 
-type TouchedStore = Record<string, string>;
+type TimeMap = Record<string, string>;
 
 /** Clé chapitre → map verset → couleur hex. */
 export type VerseMarkStore = Record<string, Record<string, string>>;
@@ -30,61 +32,36 @@ function readStore(): VerseMarkStore {
   }
 }
 
-function readTouched(): TouchedStore {
+function readTimes(key: string): TimeMap {
   try {
-    const raw = localStorage.getItem(TOUCHED_KEY);
+    const raw = localStorage.getItem(key);
     if (!raw) return {};
-    const parsed = JSON.parse(raw) as TouchedStore;
+    const parsed = JSON.parse(raw) as TimeMap;
     return parsed && typeof parsed === "object" ? parsed : {};
   } catch {
     return {};
   }
 }
 
-function writeTouched(store: TouchedStore) {
-  persistLocalString(TOUCHED_KEY, JSON.stringify(store));
+function readMarkedAt(): TimeMap {
+  return readTimes(MARKED_AT_KEY);
 }
 
-function readRemoved(): TouchedStore {
-  try {
-    const raw = localStorage.getItem(REMOVED_KEY);
-    if (!raw) return {};
-    const parsed = JSON.parse(raw) as TouchedStore;
-    return parsed && typeof parsed === "object" ? parsed : {};
-  } catch {
-    return {};
-  }
+function writeMarkedAt(times: TimeMap) {
+  persistLocalString(MARKED_AT_KEY, JSON.stringify(times));
 }
 
-function writeRemoved(store: TouchedStore) {
-  persistLocalString(REMOVED_KEY, JSON.stringify(store));
-}
-
-export function exportVerseMarkRemoved(): TouchedStore {
-  return readRemoved();
-}
-
-function verseTouchKey(bookId: string, chapterId: string, verse: number): string {
+function verseKey(bookId: string, chapterId: string, verse: number): string {
   return `${chapterKey(bookId, chapterId)}:${verse}`;
 }
 
-function touchVerses(
-  bookId: string,
-  chapterId: string,
-  verses: readonly number[],
-  at = new Date().toISOString(),
-) {
-  const touched = readTouched();
-  let changed = false;
-  for (const verse of verses) {
-    if (!Number.isFinite(verse) || verse < 1) continue;
-    const key = verseTouchKey(bookId, chapterId, verse);
-    if (touched[key] !== at) {
-      touched[key] = at;
-      changed = true;
-    }
-  }
-  if (changed) writeTouched(touched);
+/** Migração: remoções do formato antigo (`LIVRO.cap:versículo` → data). */
+export function readLegacyVerseMarkRemovals(): TimeMap {
+  return readTimes(LEGACY_REMOVED_KEY);
+}
+
+export function dropLegacyVerseMarkRemovals(): void {
+  removePersistedString(LEGACY_REMOVED_KEY);
 }
 
 function notifyRevision() {
@@ -98,79 +75,45 @@ function writeStore(store: VerseMarkStore) {
   notifyRevision();
 }
 
-export function exportVerseMarkStore(): VerseMarkStore {
-  return readStore();
+/** Uma marca para o user-sync: cor + data em que foi marcada. */
+export type VerseMarkEntry = { color: string; markedAt: string };
+
+/** Marcas por `LIVRO.cap:versículo` (formato canónico do user-sync). */
+export function exportVerseMarkEntries(): Record<string, VerseMarkEntry> {
+  const store = readStore();
+  const markedAt = readMarkedAt();
+  const out: Record<string, VerseMarkEntry> = {};
+  for (const [chapter, verses] of Object.entries(store)) {
+    for (const [verse, hex] of Object.entries(verses ?? {})) {
+      const n = Number(verse);
+      if (!Number.isFinite(n) || n < 1) continue;
+      const key = `${chapter}:${n}`;
+      out[key] = {
+        color: normalizeVerseColor(hex),
+        markedAt: markedAt[key] || "",
+      };
+    }
+  }
+  return out;
 }
 
-export function exportVerseMarkTouched(): TouchedStore {
-  return readTouched();
-}
-
-/** Fusion multi-appareil (couleur = plus récent `touchedAt`). */
-export function importVerseMarkStore(
-  incoming: VerseMarkStore,
-  touchedIncoming: TouchedStore = {},
-  removedIncoming: TouchedStore = {},
-  merge = true,
-): boolean {
-  if (!incoming || typeof incoming !== "object") return false;
-  const store = merge ? { ...readStore() } : {};
-  const touched = merge ? { ...readTouched() } : {};
-  const removed = merge ? { ...readRemoved() } : {};
-  let changed = false;
-
-  for (const [touchKey, remoteRemovedAt] of Object.entries(removedIncoming)) {
-    if (!remoteRemovedAt) continue;
-    const localRemovedAt = removed[touchKey] || "";
-    const localTouch = touched[touchKey] || "";
-    if (merge && localRemovedAt >= remoteRemovedAt) continue;
-    if (merge && localTouch > remoteRemovedAt) continue;
-    const dot = touchKey.lastIndexOf(":");
-    if (dot < 1) continue;
-    const chapter = touchKey.slice(0, dot);
-    const verseRaw = touchKey.slice(dot + 1);
-    const chapterStore = { ...(store[chapter] ?? {}) };
-    if (chapterStore[verseRaw]) {
-      delete chapterStore[verseRaw];
-      changed = true;
-    }
-    if (Object.keys(chapterStore).length) store[chapter] = chapterStore;
-    else delete store[chapter];
-    removed[touchKey] = remoteRemovedAt;
-    delete touched[touchKey];
+/** Substitui todas as marcas (fusão feita pelo user-sync). */
+export function replaceVerseMarkEntries(
+  entries: Record<string, VerseMarkEntry>,
+): void {
+  const store: VerseMarkStore = {};
+  const markedAt: TimeMap = {};
+  for (const [key, entry] of Object.entries(entries ?? {})) {
+    const dot = key.lastIndexOf(":");
+    if (dot < 1 || !entry || typeof entry.color !== "string") continue;
+    const chapter = key.slice(0, dot);
+    const verse = Number(key.slice(dot + 1));
+    if (!Number.isFinite(verse) || verse < 1) continue;
+    (store[chapter] ??= {})[String(verse)] = normalizeVerseColor(entry.color);
+    if (entry.markedAt) markedAt[`${chapter}:${verse}`] = entry.markedAt;
   }
-
-  for (const [chapter, verses] of Object.entries(incoming)) {
-    if (!verses || typeof verses !== "object") continue;
-    const chapterStore = { ...(store[chapter] ?? {}) };
-    for (const [verseRaw, hex] of Object.entries(verses)) {
-      const verse = Number(verseRaw);
-      if (!Number.isFinite(verse) || verse < 1) continue;
-      const touchKey = `${chapter}:${verse}`;
-      const remoteRemovedAt = removedIncoming[touchKey] || removed[touchKey] || "";
-      const remoteAt = touchedIncoming[touchKey] || "";
-      const localAt = touched[touchKey] || "";
-      if (remoteRemovedAt && (!localAt || remoteRemovedAt >= localAt)) continue;
-      if (merge && localAt && remoteAt && localAt > remoteAt) continue;
-      const color = normalizeVerseColor(hex);
-      if (chapterStore[verseRaw] === color && touched[touchKey] === (remoteAt || touched[touchKey])) {
-        continue;
-      }
-      chapterStore[verseRaw] = color;
-      if (remoteAt) touched[touchKey] = remoteAt;
-      delete removed[touchKey];
-      changed = true;
-    }
-    if (Object.keys(chapterStore).length) store[chapter] = chapterStore;
-    else delete store[chapter];
-  }
-
-  if (changed) {
-    writeStore(store);
-    writeTouched(touched);
-    writeRemoved(removed);
-  }
-  return changed;
+  writeMarkedAt(markedAt);
+  writeStore(store);
 }
 
 export function subscribeVerseMarksRevision(onChange: () => void): () => void {
@@ -186,8 +129,8 @@ export function subscribeVerseMarksRevision(onChange: () => void): () => void {
 /** Efface marques locales (logout / delete) — pas les Bibles IndexedDB. */
 export function clearVerseMarkStore(): void {
   removePersistedString(STORAGE_KEY);
-  removePersistedString(TOUCHED_KEY);
-  removePersistedString(REMOVED_KEY);
+  removePersistedString(MARKED_AT_KEY);
+  dropLegacyVerseMarkRemovals();
   notifyRevision();
 }
 
@@ -223,31 +166,16 @@ export function setVerseMarks(
   }
   if (Object.keys(chapter).length) store[key] = chapter;
   else delete store[key];
+  const markedAt = readMarkedAt();
   const now = new Date().toISOString();
-  if (hex) {
-    touchVerses(bookId, chapterId, verses, now);
-    const removed = readRemoved();
-    let removedChanged = false;
-    for (const verse of verses) {
-      const key = verseTouchKey(bookId, chapterId, verse);
-      if (removed[key]) {
-        delete removed[key];
-        removedChanged = true;
-      }
-    }
-    if (removedChanged) writeRemoved(removed);
-  } else {
-    const removed = readRemoved();
-    const touched = readTouched();
-    for (const verse of verses) {
-      const key = verseTouchKey(bookId, chapterId, verse);
-      removed[key] = now;
-      delete touched[key];
-    }
-    writeRemoved(removed);
-    writeTouched(touched);
+  for (const verse of verses) {
+    if (!Number.isFinite(verse) || verse < 1) continue;
+    const id = verseKey(bookId, chapterId, verse);
+    if (hex) markedAt[id] = now;
+    else delete markedAt[id];
   }
-  /* UI já actualizada; user-sync marca pendente e envia em background. */
+  writeMarkedAt(markedAt);
+  /* UI já actualizada; o user-sync data a mudança e envia em background. */
   writeStore(store);
   return loadChapterMarks(bookId, chapterId);
 }
@@ -277,7 +205,7 @@ export function isOverFreeMarkQuota(quota = FREE_MARK_QUOTA): boolean {
 /** Tous les versets marqués (local) — plus récent (`touched`) en premier. */
 export function listAllVerseMarks(): SavedVerseMark[] {
   const store = readStore();
-  const touched = readTouched();
+  const touched = readMarkedAt();
   const out: SavedVerseMark[] = [];
   for (const [chapter, verses] of Object.entries(store)) {
     const dot = chapter.indexOf(".");
@@ -302,11 +230,11 @@ export function listAllVerseMarks(): SavedVerseMark[] {
   return out.sort((a, b) => {
     const ta =
       Date.parse(
-        touched[verseTouchKey(a.bookId, a.chapterId, a.verse)] || "",
+        touched[verseKey(a.bookId, a.chapterId, a.verse)] || "",
       ) || 0;
     const tb =
       Date.parse(
-        touched[verseTouchKey(b.bookId, b.chapterId, b.verse)] || "",
+        touched[verseKey(b.bookId, b.chapterId, b.verse)] || "",
       ) || 0;
     if (tb !== ta) return tb - ta;
     /* Tie-break canónico se o mesmo instante / sem touched. */

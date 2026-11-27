@@ -4582,6 +4582,11 @@ html[data-theme="dark"] .profile-download-btn {
   background: color-mix(in srgb, var(--text) 12%, transparent);
 }
 
+.profile-sync-hint {
+  margin: 0;
+  padding: 4px 14px 12px 46px;
+}
+
 /* Estado da sync das atividades (conta ligada). */
 .profile-header-sync {
   display: inline-flex;

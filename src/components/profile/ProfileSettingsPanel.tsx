@@ -17,6 +17,7 @@ import {
 import { ProfileHeader } from "./ProfileHeader";
 import { SettingsGroup } from "./SettingsGroup";
 import { SettingsRow } from "./SettingsRow";
+import { SyncSettingsGroup } from "./SyncSettingsGroup";
 
 export type ProfilePrefsTab =
   | "appearance"
@@ -184,17 +185,20 @@ export function ProfileSettingsPanel({
           </p>
         ) : null}
         {!guest && accountOpen ? (
-          <AccountSettingsSection
-            guest={guest}
-            loading={loading}
-            profile={profile}
-            signOutBusy={signOutBusy}
-            deleteBusy={deleteBusy}
-            onRequestSignIn={onRequestSignIn}
-            onRefreshProfile={refreshProfile}
-            onSignOut={() => void handleSignOut()}
-            onDeleteAccount={() => void handleDeleteConfirm()}
-          />
+          <>
+            <AccountSettingsSection
+              guest={guest}
+              loading={loading}
+              profile={profile}
+              signOutBusy={signOutBusy}
+              deleteBusy={deleteBusy}
+              onRequestSignIn={onRequestSignIn}
+              onRefreshProfile={refreshProfile}
+              onSignOut={() => void handleSignOut()}
+              onDeleteAccount={() => void handleDeleteConfirm()}
+            />
+            <SyncSettingsGroup />
+          </>
         ) : (
           <>
             <div

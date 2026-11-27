@@ -5,7 +5,7 @@ import {
 } from "../../userProfile";
 import { FREE_MARK_QUOTA } from "../../verseMarks";
 import { useUiLocale } from "../../i18n/UiLocaleContext";
-import { useSyncStatus } from "../../features/user-sync";
+import { useSyncInfo } from "../../features/user-sync";
 
 function initialsFromName(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -43,7 +43,7 @@ export function ProfileHeader({
   const displayName = preferredDisplayName(profile) || "…";
   const photoURL = profile.photoURL?.trim() || null;
   const initials = initialsFromName(displayName);
-  const syncStatus = useSyncStatus();
+  const { status: syncStatus } = useSyncInfo();
   const syncLabel =
     syncStatus === "synced"
       ? t("sync.synced")

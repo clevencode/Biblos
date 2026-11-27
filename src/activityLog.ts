@@ -241,45 +241,11 @@ export function exportActivityStore(): ActivityStore {
   return readStore();
 }
 
-export function importActivityStore(
-  incoming: ActivityStore,
-  merge = true,
-): boolean {
-  const remote = normalizeStore(incoming);
-  if (!merge) {
-    const local = readStore();
-    const same = JSON.stringify(local.events) === JSON.stringify(remote.events);
-    if (same) return false;
-    writeStore(remote);
-    return true;
-  }
-  const byId = new Map<string, ActivityEvent>();
-  for (const event of readStore().events) {
-    byId.set(event.id, event);
-  }
-  let changed = false;
-  for (const event of remote.events) {
-    const existing = byId.get(event.id);
-    if (!existing) {
-      byId.set(event.id, event);
-      changed = true;
-      continue;
-    }
-    const existingAt = Date.parse(existing.at) || 0;
-    const remoteAt = Date.parse(event.at) || 0;
-    if (remoteAt > existingAt || JSON.stringify(existing) !== JSON.stringify(event)) {
-      byId.set(event.id, event);
-      changed = true;
-    }
-  }
-  if (!changed) return false;
-  const events = [...byId.values()].sort((a, b) => {
-    const ta = Date.parse(a.at) || 0;
-    const tb = Date.parse(b.at) || 0;
-    return tb - ta;
-  });
+/** Substitui o journal (fusão feita pelo user-sync); mais recente primeiro. */
+export function replaceActivityStore(incoming: ActivityStore): void {
+  const { events } = normalizeStore(incoming);
+  events.sort((a, b) => (Date.parse(b.at) || 0) - (Date.parse(a.at) || 0));
   writeStore({ events });
-  return true;
 }
 
 export function clearActivityStore(): void {

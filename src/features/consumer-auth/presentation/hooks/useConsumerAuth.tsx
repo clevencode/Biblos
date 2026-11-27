@@ -30,12 +30,8 @@ import {
   clearPersonalLocalData,
   deleteUserCloudData,
   flushUserDataBeforeSignOut,
-  flushUserDataPush,
-  mergeLocalSnapshotIntoStores,
-  snapshotLocalUserData,
   startUserDataSync,
   stopUserDataSync,
-  type LocalUserDataSnapshot,
 } from "../../../user-sync";
 import { mapAuthErrorToMessage } from "../mapAuthErrorToMessage";
 
@@ -194,23 +190,21 @@ export function ConsumerAuthProvider({ children }: { children: ReactNode }) {
   const runUpgrade = useCallback(
     async (action: () => Promise<{ user: ConsumerAuthUser; linked: boolean }>) => {
       setError(null);
-      /* Para listeners: evita onSnapshot a correr com o merge a meio. */
+      /* Para listeners: evita onSnapshot a correr com o login a meio. */
       stopUserDataSync();
-      const snapshot: LocalUserDataSnapshot = snapshotLocalUserData();
       try {
+        /*
+         * Conta existente (uid novo): os dados locais do anónimo ficam no
+         * aparelho e a reconciliação funde-os com os da conta (por entrada,
+         * última alteração ganha) — nada é apagado.
+         */
         const result = await action();
-        if (!result.linked) {
-          /* Conta existente (uid novo): fundir dados locais do anónimo/guest. */
-          mergeLocalSnapshotIntoStores(snapshot);
-        }
         const before = loadOrCreateProfile();
         migrateActivityUserIds(before, result.user.uid);
         setUser(result.user);
         setProfile(applyFirebaseAuthUser(result.user));
         setSession(sessionFromUser(result.user, result.user.uid));
         await startUserDataSync(result.user.uid);
-        /* Funde o local (anónimo) na conta: envia todos os stores não vazios. */
-        await flushUserDataPush(result.user.uid, { all: true });
       } catch (err) {
         setError(mapAuthErrorToMessage(err));
         throw err;

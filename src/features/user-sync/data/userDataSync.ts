@@ -1,16 +1,17 @@
 /**
- * Sync offline-first das atividades do utilizador → users/{uid}/… (Firestore).
- * Nunca textos bíblicos. Os stores sincronizados vivem em `SYNCED_STORES`.
+ * Sync das atividades do utilizador entre dispositivos → users/{uid}/…
+ * Nunca textos bíblicos. Os stores vivem em `SYNCED_STORES`; a fusão é a de
+ * `syncEntries` (por entrada, última alteração ganha, remoções incluídas).
+ *
+ * Documento (schema 2): `{ schema, entries, meta, updatedAt }`, substituído
+ * por inteiro em cada envio. Documentos do formato antigo (`{ store, … }`)
+ * são lidos, fundidos e reescritos no formato novo.
  *
  * Garantias contra perda de dados:
- * - cada mudança local marca o store como pendente (persistente) antes do push;
- * - push com debounce curto + flush imediato ao esconder/fechar a página;
- * - no arranque (ou após reiniciar o navegador): pull → merge → reenvio do que
- *   ficou pendente e seed do que só existe localmente;
+ * - cada mudança local é datada (meta persistente) e marcada como pendente;
+ * - push com debounce curto + flush ao esconder/fechar a página;
+ * - no arranque: pull → fusão → reenvio do pendente;
  * - logout envia o pendente antes de limpar o aparelho.
- *
- * O Firestore usa cache persistente (IndexedDB): um `setDoc` feito offline fica
- * na fila do SDK e é enviado quando a rede volta, mesmo após reiniciar.
  */
 
 import {
@@ -25,6 +26,10 @@ import {
 } from "firebase/firestore";
 import { ensureFirebase, getFirebaseDb } from "../../../lib/firebase";
 import {
+  persistLocalString,
+  removePersistedString,
+} from "../../../services/storage/StorageAdapter";
+import {
   clearAllPendingStores,
   clearPendingStores,
   hasPendingStores,
@@ -33,9 +38,19 @@ import {
   migrateLegacyOutbox,
 } from "./pendingSync";
 import {
+  cleanValue,
+  mergeEntries,
+  metaFromTimes,
+  pruneTombstones,
+  recordLocalChanges,
+  wins,
+  type Entries,
+  type MetaMap,
+} from "./syncEntries";
+import { clearAllStoreMeta, readStoreMeta, writeStoreMeta } from "./syncMeta";
+import {
   SYNCED_STORES,
   syncedStoreById,
-  type SyncedPayload,
   type SyncedStore,
   type SyncedStoreId,
 } from "./syncedStores";
@@ -48,7 +63,15 @@ import {
  */
 export type SyncStatus = "idle" | "synced" | "pending" | "offline";
 
+export type SyncInfo = {
+  status: SyncStatus;
+  /** ISO da última sincronização completa confirmada (ou null). */
+  lastSyncedAt: string | null;
+};
+
+const DOC_SCHEMA = 2;
 const SYNC_STATUS_EVENT = "biblos-user-sync-status";
+const LAST_SYNCED_KEY = "biblos.userSync.lastSyncedAt";
 
 /** Debounce do push após um gesto (marca, nota, progresso…). */
 const SYNC_PUSH_DEBOUNCE_MS = 1200;
@@ -57,72 +80,64 @@ const SYNC_PUSH_DEBOUNCE_MS = 1200;
 const SIGN_OUT_FLUSH_TIMEOUT_MS = 4000;
 
 let currentUid: string | null = null;
+let currentDb: Firestore | null = null;
 let pushTimer: ReturnType<typeof setTimeout> | null = null;
 let unsubs: Unsubscribe[] = [];
 let localUnsubs: Array<() => void> = [];
 let syncStatus: SyncStatus = "idle";
 let applyingRemote = false;
-/**
- * Último conteúdo conhecido por store. Os stores também emitem em eventos
- * `storage` de outras abas (qualquer chave); só uma mudança real de conteúdo
- * marca pendente — evita ciclos entre abas.
- */
-const lastSeen = new Map<SyncedStoreId, string>();
-
-function fingerprint(store: SyncedStore): string {
-  try {
-    return JSON.stringify(store.exportLocal());
-  } catch {
-    return "";
-  }
-}
-
-/** `true` se o conteúdo mudou desde a última leitura. */
-function refreshSeen(store: SyncedStore): boolean {
-  const next = fingerprint(store);
-  if (lastSeen.get(store.id) === next) return false;
-  lastSeen.set(store.id, next);
-  return true;
-}
 
 function isOnline(): boolean {
   return typeof navigator === "undefined" ? true : navigator.onLine !== false;
 }
 
-function setSyncStatus(next: SyncStatus) {
-  if (syncStatus === next) return;
-  syncStatus = next;
-  if (typeof window !== "undefined") {
-    window.dispatchEvent(new CustomEvent(SYNC_STATUS_EVENT, { detail: next }));
+function nowIso(): string {
+  return new Date().toISOString();
+}
+
+export function getLastSyncedAt(): string | null {
+  try {
+    return localStorage.getItem(LAST_SYNCED_KEY);
+  } catch {
+    return null;
   }
 }
 
-/** Estado após um push / snapshot: pendente local tem prioridade. */
+function emitSyncInfo() {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(
+    new CustomEvent<SyncInfo>(SYNC_STATUS_EVENT, { detail: getSyncInfo() }),
+  );
+}
+
+function setSyncStatus(next: SyncStatus) {
+  if (syncStatus === next) return;
+  syncStatus = next;
+  emitSyncInfo();
+}
+
+/** Estado após push / snapshot: pendente local tem prioridade. */
 function settleSyncStatus() {
-  if (!currentUid) {
-    setSyncStatus("idle");
-    return;
-  }
-  if (!isOnline()) {
-    setSyncStatus("offline");
-    return;
-  }
-  setSyncStatus(hasPendingStores() ? "pending" : "synced");
+  if (!currentUid) return setSyncStatus("idle");
+  if (!isOnline()) return setSyncStatus("offline");
+  if (hasPendingStores()) return setSyncStatus("pending");
+  persistLocalString(LAST_SYNCED_KEY, nowIso());
+  if (syncStatus === "synced") emitSyncInfo();
+  else setSyncStatus("synced");
 }
 
 export function getSyncStatus(): SyncStatus {
   return syncStatus;
 }
 
-export function subscribeSyncStatus(
-  onChange: (status: SyncStatus) => void,
-): () => void {
-  const handler = (event: Event) => {
-    const detail = (event as CustomEvent<SyncStatus>).detail;
-    onChange(detail ?? getSyncStatus());
-  };
+export function getSyncInfo(): SyncInfo {
+  return { status: syncStatus, lastSyncedAt: getLastSyncedAt() };
+}
+
+export function subscribeSyncInfo(onChange: (info: SyncInfo) => void): () => void {
+  const handler = () => onChange(getSyncInfo());
   window.addEventListener(SYNC_STATUS_EVENT, handler);
-  onChange(syncStatus);
+  handler();
   return () => window.removeEventListener(SYNC_STATUS_EVENT, handler);
 }
 
@@ -131,14 +146,107 @@ function pathDoc(db: Firestore, path: string) {
   return doc(db, col!, uid!, sub!, id!);
 }
 
+/* ---------------------------------------------------------------- local */
+
+type LocalState = { entries: Entries; meta: MetaMap; changed: boolean };
+
 /**
- * Envia os stores indicados. Marcas pendentes só são limpas após confirmação
- * do servidor; offline, a promessa espera (o SDK guarda a escrita em IndexedDB).
+ * Estado local + meta atualizada com as mudanças desde a última leitura.
+ * Na 1.ª execução de um store migra datas/remoções do formato antigo.
+ */
+function readLocalState(store: SyncedStore): LocalState {
+  const entries = store.readEntries();
+  const saved = readStoreMeta(store.id);
+  const now = nowIso();
+  if (saved === null) {
+    const migrate = store.migrateLocal;
+    const base = metaFromTimes({}, () => undefined, migrate?.removed?.() ?? {});
+    const { meta } = recordLocalChanges(
+      entries,
+      base,
+      now,
+      migrate?.timeOf ?? (() => undefined),
+    );
+    writeStoreMeta(store.id, meta);
+    migrate?.done?.();
+    return { entries, meta, changed: Object.keys(meta).length > 0 };
+  }
+  const { meta, changed } = recordLocalChanges(entries, saved, now);
+  if (changed) writeStoreMeta(store.id, meta);
+  return { entries, meta, changed };
+}
+
+/* --------------------------------------------------------------- remote */
+
+type RemoteState = { entries: Entries; meta: MetaMap; outdated: boolean };
+
+function objectOf(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+/** Documento → entradas + meta (funde a parte antiga, se existir). */
+function readRemoteState(
+  store: SyncedStore,
+  data: Record<string, unknown> | undefined,
+): RemoteState {
+  if (!data) return { entries: {}, meta: {}, outdated: false };
+  const current = data.schema === DOC_SCHEMA;
+  const entries: Entries = current ? { ...objectOf(data.entries) } : {};
+  const meta: MetaMap = current ? { ...(objectOf(data.meta) as MetaMap) } : {};
+  /* `store` = formato antigo (ou escrito por uma versão antiga da app). */
+  const hasLegacy = data.store !== undefined;
+  if (hasLegacy) {
+    const legacy = store.legacyRemote(data);
+    for (const [key, m] of Object.entries(legacy.meta)) {
+      if (meta[key] && !wins(m, meta[key]!)) continue;
+      meta[key] = m;
+      if (m.d) delete entries[key];
+      else entries[key] = legacy.entries[key];
+    }
+  }
+  return { entries, meta, outdated: !current || hasLegacy };
+}
+
+/** Funde o documento remoto no local; marca pendente se o remoto ficou atrás. */
+function applyRemote(
+  store: SyncedStore,
+  data: Record<string, unknown> | undefined,
+): void {
+  const local = readLocalState(store);
+  const remote = readRemoteState(store, data);
+  const merged = mergeEntries(local.entries, local.meta, remote.entries, remote.meta);
+  let behind = merged.remoteBehind || remote.outdated || local.changed;
+
+  if (merged.localChanged) {
+    applyingRemote = true;
+    try {
+      store.writeEntries(merged.entries);
+    } finally {
+      applyingRemote = false;
+    }
+  }
+  writeStoreMeta(store.id, merged.meta);
+  /* O store pode normalizar o que recebeu (ex. limite do histórico). */
+  if (merged.localChanged && readLocalState(store).changed) behind = true;
+
+  if (behind) {
+    markStorePending(store.id);
+    queueUserDataPush(currentUid);
+  }
+}
+
+/* ----------------------------------------------------------------- push */
+
+/**
+ * Envia os stores indicados (documento inteiro, formato novo). Marcas
+ * pendentes só são limpas após confirmação do servidor; offline, a promessa
+ * espera (o SDK guarda a escrita em IndexedDB e envia depois).
  */
 async function pushStores(
   uid: string,
   ids: readonly SyncedStoreId[],
-  opts?: { skipEmpty?: boolean },
 ): Promise<void> {
   if (!ids.length) {
     settleSyncStatus();
@@ -147,29 +255,28 @@ async function pushStores(
   const ready = await ensureFirebase();
   if (!ready) return;
   const { db } = ready;
-  const sentAt = new Date().toISOString();
+  const sentAt = nowIso();
   setSyncStatus(isOnline() ? "pending" : "offline");
 
-  const sent: SyncedStoreId[] = [];
-  const writes: Array<Promise<unknown>> = [];
-  for (const id of ids) {
+  const writes = ids.flatMap((id) => {
     const store = syncedStoreById(id);
-    if (!store) continue;
-    const payload = store.exportLocal();
-    sent.push(id);
-    if (opts?.skipEmpty && store.isEmpty(payload)) continue;
-    writes.push(
-      setDoc(
-        pathDoc(db, store.docPath(uid)),
-        { ...payload, updatedAt: sentAt },
-        { merge: true },
-      ),
-    );
-  }
+    if (!store) return [];
+    const { entries } = readLocalState(store);
+    const meta = pruneTombstones(readStoreMeta(id) ?? {}, Date.now());
+    writeStoreMeta(id, meta);
+    return [
+      setDoc(pathDoc(db, store.docPath(uid)), {
+        schema: DOC_SCHEMA,
+        entries: cleanValue(entries),
+        meta,
+        updatedAt: sentAt,
+      }),
+    ];
+  });
 
   try {
     await Promise.all(writes);
-    clearPendingStores(sent, sentAt);
+    clearPendingStores([...ids], sentAt);
   } catch (err) {
     console.warn("[user-sync] push", err);
     throw err;
@@ -190,27 +297,13 @@ export function queueUserDataPush(uid?: string | null): void {
   }, SYNC_PUSH_DEBOUNCE_MS);
 }
 
-/**
- * Push imediato. Por omissão envia só o pendente; `all` envia todos os stores
- * (ex. após login, para fundir o anónimo na conta), saltando os vazios.
- */
-export async function flushUserDataPush(
-  uid?: string | null,
-  opts?: { all?: boolean },
-): Promise<void> {
+/** Push imediato do pendente. */
+export async function flushUserDataPush(uid?: string | null): Promise<void> {
   const target = uid ?? currentUid;
   if (!target) return;
   if (pushTimer) {
     clearTimeout(pushTimer);
     pushTimer = null;
-  }
-  if (opts?.all) {
-    await pushStores(
-      target,
-      SYNCED_STORES.map((store) => store.id),
-      { skipEmpty: true },
-    );
-    return;
   }
   await pushStores(target, listPendingStores());
 }
@@ -221,7 +314,10 @@ export async function flushUserDataPush(
  */
 export async function flushUserDataBeforeSignOut(): Promise<void> {
   if (!currentUid) return;
-  if (!pushTimer && !hasPendingStores()) return;
+  for (const store of SYNCED_STORES) {
+    if (readLocalState(store).changed) markStorePending(store.id);
+  }
+  if (!hasPendingStores()) return;
   await Promise.race([
     flushUserDataPush(currentUid).catch(() => undefined),
     new Promise<void>((resolve) =>
@@ -230,26 +326,12 @@ export async function flushUserDataBeforeSignOut(): Promise<void> {
   ]);
 }
 
-function applyRemote(store: SyncedStore, data: SyncedPayload | undefined) {
-  if (!data) return;
-  applyingRemote = true;
-  let changed = false;
-  try {
-    changed = store.mergeRemote(data);
-  } finally {
-    applyingRemote = false;
-  }
-  refreshSeen(store);
-  /* O merge pode juntar dados locais que o remoto ainda não tem → reenvia. */
-  if (changed) {
-    markStorePending(store.id);
-    queueUserDataPush(currentUid);
-  }
-}
+/* ------------------------------------------------------------ lifecycle */
 
 function onLocalChange(store: SyncedStore) {
   if (applyingRemote) return;
-  if (!refreshSeen(store)) return;
+  /* Eventos `storage` de outras abas sem mudança real não geram push. */
+  if (!readLocalState(store).changed) return;
   markStorePending(store.id);
   queueUserDataPush(currentUid);
 }
@@ -291,37 +373,47 @@ function stopListeners() {
   }
 }
 
-/**
- * Arranque / reinício: funde o remoto, depois envia o que ficou pendente
- * e semeia stores que só existem no aparelho. Nunca envia stores vazios
- * por seed (evita apagar dados de outro aparelho).
- */
+/** Pull de todos os documentos → fusão → envio do que ficou pendente. */
 async function reconcile(db: Firestore, uid: string): Promise<void> {
   const snaps = await Promise.all(
     SYNCED_STORES.map((store) => getDoc(pathDoc(db, store.docPath(uid)))),
   );
   if (currentUid !== uid) return;
-
-  const pending = new Set(listPendingStores());
-  const toPush: SyncedStoreId[] = [];
   SYNCED_STORES.forEach((store, i) => {
     const snap = snaps[i]!;
-    const remote = snap.exists()
-      ? (snap.data() as SyncedPayload)
-      : undefined;
-    applyRemote(store, remote);
-    const local = store.exportLocal();
-    const seed = store.isEmpty(remote) && !store.isEmpty(local);
-    if (seed || pending.has(store.id)) toPush.push(store.id);
+    applyRemote(
+      store,
+      snap.exists() ? (snap.data() as Record<string, unknown>) : undefined,
+    );
   });
-
-  for (const id of toPush) markStorePending(id);
   await flushUserDataPush(uid);
 }
 
 /**
- * Inicia a sync para um uid Firebase (anónimo ou autenticado).
- * Pull via onSnapshot + push com debounce nas mudanças locais.
+ * Sincronizar agora (gesto do utilizador): pull completo + envio.
+ * Offline, devolve logo (o envio segue quando a rede voltar).
+ */
+export async function syncUserDataNow(): Promise<void> {
+  const uid = currentUid;
+  const db = currentDb;
+  if (!uid || !db) return;
+  if (!isOnline()) {
+    setSyncStatus("offline");
+    return;
+  }
+  setSyncStatus("pending");
+  try {
+    await reconcile(db, uid);
+  } catch (err) {
+    console.warn("[user-sync] sync now", err);
+    settleSyncStatus();
+  }
+}
+
+/**
+ * Inicia a sync para um uid Firebase (anónimo ou autenticado):
+ * onSnapshot (tempo real) + push com debounce nas mudanças locais.
+ * Resolve depois da 1.ª reconciliação.
  */
 export async function startUserDataSync(uid: string): Promise<void> {
   if (currentUid === uid && unsubs.length) return;
@@ -339,16 +431,17 @@ export async function startUserDataSync(uid: string): Promise<void> {
   }
   if (currentUid !== uid) return;
   const { db } = ready;
+  currentDb = db;
 
   for (const store of SYNCED_STORES) {
     unsubs.push(
       onSnapshot(
         pathDoc(db, store.docPath(uid)),
-        (snap) => applyRemote(store, snap.data() as SyncedPayload | undefined),
+        (snap) =>
+          applyRemote(store, snap.data() as Record<string, unknown> | undefined),
         (err) => console.warn(`[user-sync] ${store.id}`, err),
       ),
     );
-    refreshSeen(store);
     localUnsubs.push(store.subscribe(() => onLocalChange(store)));
   }
 
@@ -361,41 +454,27 @@ export async function startUserDataSync(uid: string): Promise<void> {
     document.addEventListener("visibilitychange", onVisibilityChange);
   }
 
-  void reconcile(db, uid).catch((err) => {
+  try {
+    await reconcile(db, uid);
+  } catch (err) {
     console.warn("[user-sync] reconcile", err);
     settleSyncStatus();
-  });
+  }
 }
 
 export function stopUserDataSync(): void {
   stopListeners();
-  lastSeen.clear();
   currentUid = null;
+  currentDb = null;
   setSyncStatus("idle");
 }
 
-export type LocalUserDataSnapshot = Partial<Record<SyncedStoreId, SyncedPayload>>;
-
-/** Snapshot local antes de entrar numa conta existente (para fundir depois). */
-export function snapshotLocalUserData(): LocalUserDataSnapshot {
-  const out: LocalUserDataSnapshot = {};
-  for (const store of SYNCED_STORES) out[store.id] = store.exportLocal();
-  return out;
-}
-
-export function mergeLocalSnapshotIntoStores(
-  snapshot: LocalUserDataSnapshot,
-): void {
-  for (const store of SYNCED_STORES) {
-    const payload = snapshot[store.id];
-    if (payload) store.mergeRemote(payload);
-  }
-}
-
-/** Apaga dados pessoais locais — mantém Bíblias offline. */
+/** Apaga dados pessoais locais (com a sync parada) — mantém Bíblias offline. */
 export function clearPersonalLocalData(): void {
   for (const store of SYNCED_STORES) store.clearLocal();
+  clearAllStoreMeta();
   clearAllPendingStores();
+  removePersistedString(LAST_SYNCED_KEY);
 }
 
 export async function deleteUserCloudData(uid: string): Promise<void> {
@@ -412,13 +491,10 @@ export function exportUserBackupJson(meta?: {
   uid?: string | null;
   email?: string | null;
 }): string {
+  const stores: Partial<Record<SyncedStoreId, Entries>> = {};
+  for (const store of SYNCED_STORES) stores[store.id] = store.readEntries();
   return JSON.stringify(
-    {
-      exportedAt: new Date().toISOString(),
-      app: "biblos",
-      meta: meta ?? {},
-      stores: snapshotLocalUserData(),
-    },
+    { exportedAt: nowIso(), app: "biblos", meta: meta ?? {}, stores },
     null,
     2,
   );

@@ -9,10 +9,11 @@
 import {
   persistLocalString,
   removePersistedString,
+  STORAGE_PREF_KEYS,
 } from "../../../services/storage/StorageAdapter";
 import { isSyncedStoreId, type SyncedStoreId } from "./syncedStores";
 
-const STORAGE_KEY = "biblos.userSync.pending.v1";
+const STORAGE_KEY = STORAGE_PREF_KEYS.userSyncPending;
 /** Fila anterior (só marcas) — migrada uma vez para este formato. */
 const LEGACY_OUTBOX_KEY = "biblos.syncOutbox.v1";
 

@@ -123,59 +123,9 @@ export function exportPlanProgressStore(): PlanProgressStore {
   return readStore();
 }
 
-export function importPlanProgressStore(
-  incoming: PlanProgressStore,
-  merge = true,
-): boolean {
-  if (!incoming || typeof incoming !== "object") return false;
-  const store = merge ? { ...readStore() } : {};
-  let changed = false;
-  for (const [planId, remote] of Object.entries(incoming)) {
-    if (!remote || typeof remote !== "object") continue;
-    const local = store[planId];
-    const remoteStarted = String(remote.startedAt ?? "");
-    const localStarted = String(local?.startedAt ?? "");
-    const remoteDone = Array.isArray(remote.completedJours)
-      ? remote.completedJours
-      : [];
-    if (!merge || !local) {
-      store[planId] = {
-        startedAt: remoteStarted || new Date().toISOString(),
-        completedJours: [...new Set(remoteDone)].sort((a, b) => a - b),
-        lastJour:
-          typeof remote.lastJour === "number" ? remote.lastJour : undefined,
-      };
-      changed = true;
-      continue;
-    }
-    const mergedJours = [
-      ...new Set([...(local.completedJours ?? []), ...remoteDone]),
-    ].sort((a, b) => a - b);
-    const next: PlanProgress = {
-      startedAt:
-        localStarted && remoteStarted
-          ? localStarted < remoteStarted
-            ? localStarted
-            : remoteStarted
-          : localStarted || remoteStarted || new Date().toISOString(),
-      completedJours: mergedJours,
-      lastJour:
-        typeof remote.lastJour === "number"
-          ? remote.lastJour
-          : local.lastJour,
-    };
-    const same =
-      JSON.stringify(local.completedJours) ===
-        JSON.stringify(next.completedJours) &&
-      local.startedAt === next.startedAt &&
-      local.lastJour === next.lastJour;
-    if (!same) {
-      store[planId] = next;
-      changed = true;
-    }
-  }
-  if (changed) writeStore(store);
-  return changed;
+/** Substitui todo o progresso (fusão feita pelo user-sync). */
+export function replacePlanProgressStore(store: PlanProgressStore): void {
+  writeStore(store ?? {});
 }
 
 export function clearPlanProgressStore(): void {

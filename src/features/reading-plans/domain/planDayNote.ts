@@ -56,38 +56,10 @@ export function exportDayNoteStore(): DayNoteStore {
   return readStore();
 }
 
-export function importDayNoteStore(
-  incoming: DayNoteStore,
-  merge = true,
-): boolean {
-  if (!incoming || typeof incoming !== "object") return false;
-  const store = merge ? { ...readStore() } : {};
-  let changed = false;
-  for (const [key, remote] of Object.entries(incoming)) {
-    if (!remote || typeof remote !== "object") continue;
-    const local = store[key];
-    if (
-      merge &&
-      local?.updatedAt &&
-      remote.updatedAt &&
-      local.updatedAt >= remote.updatedAt
-    ) {
-      continue;
-    }
-    store[key] = {
-      text: String(remote.text ?? ""),
-      updatedAt:
-        typeof remote.updatedAt === "string" && remote.updatedAt
-          ? remote.updatedAt
-          : new Date().toISOString(),
-    };
-    changed = true;
-  }
-  if (changed) {
-    writeStore(store);
-    notifyDayNotesChanged();
-  }
-  return changed;
+/** Substitui todas as notas (fusão feita pelo user-sync). */
+export function replaceDayNoteStore(store: DayNoteStore): void {
+  writeStore(store ?? {});
+  notifyDayNotesChanged();
 }
 
 const DAY_NOTES_EVENT = "biblos-day-notes";

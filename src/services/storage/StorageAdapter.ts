@@ -176,6 +176,8 @@ export const STORAGE_PREF_KEYS = {
   verseMarks: "biblos.verseMarks",
   verseMarksTouched: "biblos.verseMarks.touched",
   verseMarksRemoved: "biblos.verseMarks.removed",
+  userSyncMeta: "biblos.userSync.meta.v1",
+  userSyncPending: "biblos.userSync.pending.v1",
   planProgress: "biblos-plan-progress-v1",
   dayNotes: "biblos-day-notes-v1",
   verseNotes: "biblos-verse-notes-v1",

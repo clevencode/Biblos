@@ -157,6 +157,12 @@ export type UiCopyKey =
   | "sync.synced"
   | "sync.pending"
   | "sync.offline"
+  | "sync.title"
+  | "sync.now"
+  | "sync.lastSynced"
+  | "sync.never"
+  | "sync.offlineDetail"
+  | "sync.scope"
   | "profile.aboutUpdates"
   | "profile.aboutInstalled"
   | "profile.aboutInstallBrowserHint"
@@ -496,6 +502,12 @@ const FR: Dict = {
   "sync.synced": "Activités sauvegardées",
   "sync.pending": "Enregistrement…",
   "sync.offline": "Hors ligne · gardé sur l’appareil",
+  "sync.title": "Synchronisation",
+  "sync.now": "Synchroniser maintenant",
+  "sync.lastSynced": "Dernière synchronisation : {when}",
+  "sync.never": "Pas encore synchronisé",
+  "sync.offlineDetail": "Hors ligne · tes activités seront envoyées au retour du réseau",
+  "sync.scope": "Surlignages, notes, progression des plans et historique sont synchronisés entre tes appareils.",
   "profile.aboutUpdates": "Installation et mises à jour",
   "profile.aboutInstalled": "App installée",
   "profile.aboutInstallBrowserHint": "Ouvrez le menu du navigateur puis « Installer l’app ».",
@@ -848,6 +860,12 @@ const HT: Dict = {
   "sync.synced": "Aktivite yo anrejistre",
   "sync.pending": "Ap anrejistre…",
   "sync.offline": "San entènèt · kenbe sou aparèy la",
+  "sync.title": "Senkronizasyon",
+  "sync.now": "Senkronize kounye a",
+  "sync.lastSynced": "Dènye senkronizasyon : {when}",
+  "sync.never": "Poko senkronize",
+  "sync.offlineDetail": "San entènèt · aktivite ou yo ap voye lè rezo a tounen",
+  "sync.scope": "Souliyaj, nòt, pwogrè plan yo ak istorik la senkronize ant aparèy ou yo.",
   "profile.aboutUpdates": "Enstalasyon ak mizajou",
   "profile.aboutInstalled": "App la enstale",
   "profile.aboutInstallBrowserHint": "Louvri meni navigatè a epi chwazi « Enstale app ».",

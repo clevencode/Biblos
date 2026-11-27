@@ -93,49 +93,10 @@ export function exportVerseNoteStore(): VerseNoteStore {
   return readStore();
 }
 
-export function importVerseNoteStore(
-  incoming: VerseNoteStore,
-  merge = true,
-): boolean {
-  if (!incoming || typeof incoming !== "object") return false;
-  const store = merge ? { ...readStore() } : {};
-  let changed = false;
-  for (const [key, remote] of Object.entries(incoming)) {
-    if (!remote || typeof remote !== "object") continue;
-    const local = store[key];
-    if (
-      merge &&
-      local?.updatedAt &&
-      remote.updatedAt &&
-      local.updatedAt >= remote.updatedAt
-    ) {
-      continue;
-    }
-    store[key] = {
-      text: String(remote.text ?? ""),
-      updatedAt:
-        typeof remote.updatedAt === "string" && remote.updatedAt
-          ? remote.updatedAt
-          : new Date().toISOString(),
-      versionId: remote.versionId === "ht98" ? "ht98" : "s21",
-      usfm: String(remote.usfm || "").toUpperCase(),
-      chapter: Number(remote.chapter) || 1,
-      verse: Number(remote.verse) || 1,
-      universalKey:
-        String(remote.universalKey || "") ||
-        universalVerseKey(
-          String(remote.usfm || ""),
-          remote.chapter,
-          remote.verse,
-        ),
-    };
-    changed = true;
-  }
-  if (changed) {
-    writeStore(store);
-    notify();
-  }
-  return changed;
+/** Substitui todas as notas (fusão feita pelo user-sync). */
+export function replaceVerseNoteStore(store: VerseNoteStore): void {
+  writeStore(store ?? {});
+  notify();
 }
 
 export function clearVerseNoteStore(): void {

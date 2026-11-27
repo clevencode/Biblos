@@ -4,15 +4,15 @@ export {
   queueUserDataPush,
   flushUserDataPush,
   flushUserDataBeforeSignOut,
-  snapshotLocalUserData,
-  mergeLocalSnapshotIntoStores,
+  syncUserDataNow,
   clearPersonalLocalData,
   deleteUserCloudData,
   exportUserBackupJson,
   downloadUserBackupJson,
   getSyncStatus,
-  subscribeSyncStatus,
+  getSyncInfo,
+  subscribeSyncInfo,
   type SyncStatus,
-  type LocalUserDataSnapshot,
+  type SyncInfo,
 } from "./data/userDataSync";
-export { useSyncStatus } from "./useSyncStatus";
+export { useSyncInfo } from "./useSyncInfo";
