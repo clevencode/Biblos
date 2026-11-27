@@ -1244,10 +1244,6 @@ html[data-reader-fullscreen="true"] .app.is-bible-mode .bible-reader--yv::after 
   outline-offset: 3px;
 }
 
-.mode-tabs.is-immersive-hidden .mode-tabs-fullscreen {
-  opacity: 0.55;
-}
-
 /*
  * Tela cheia do leitor (useReaderFullscreen → html[data-reader-fullscreen]):
  * topbar sobe, play e pill descem, ambos a esbater; só o botão de sair fica.
@@ -1391,14 +1387,6 @@ html[data-reader-fullscreen="true"] .mode-tabs.is-reader-fullscreen::before {
   display: none !important;
 }
 
-.mode-tabs.is-reader-fullscreen .mode-tabs-fullscreen {
-  opacity: 0.8;
-}
-
-.mode-tabs.is-reader-fullscreen .mode-tabs-fullscreen:hover,
-.mode-tabs.is-reader-fullscreen .mode-tabs-fullscreen:focus-visible {
-  opacity: 1;
-}
 
 /* Plan workspace aberto: shell navbar oculta (retorno via plan-workspace-return-nav). */
 .app:has(.plan-workspace-host) .mode-tabs,
