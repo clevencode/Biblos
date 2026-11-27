@@ -14016,7 +14016,7 @@ html[data-passage-bar-panel="test"]
   background: transparent;
   font-family: var(--font-ui);
   font-size: 1rem;
-  font-weight: 700;
+  font-weight: 400;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
   line-height: 1.35;
@@ -14876,7 +14876,7 @@ html[data-passage-bar-panel="test"]
   padding: 12px 12px;
   font-family: var(--font-ui);
   font-size: 1rem;
-  font-weight: 700;
+  font-weight: 400;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
   line-height: 1.35;
@@ -14973,7 +14973,7 @@ html[data-passage-bar-panel="test"]
   padding: 2px 7px;
   border-radius: 999px;
   font-size: 0.72rem;
-  font-weight: 700;
+  font-weight: 400;
   font-variant-numeric: tabular-nums;
   text-align: center;
   color: color-mix(in srgb, var(--yv-muted) 35%, var(--yv-text));
@@ -21011,7 +21011,7 @@ html[data-passage-bar-panel="test"]
   padding: 12px 14px;
   font-family: var(--font-ui);
   font-size: 1rem;
-  font-weight: 700;
+  font-weight: 400;
   font-variant-numeric: tabular-nums;
   text-align: left;
   line-height: 1.35;
