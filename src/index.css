@@ -17099,16 +17099,17 @@ html[data-theme="dark"] .chapter-header {
   padding: 0;
   border: 0;
   border-radius: 999px;
-  /* Mesma superfície dos botões redondos da topbar */
-  background: color-mix(in srgb, var(--text) 8%, var(--bible-nav-surface, var(--yv-bg)));
+  /* Herda os botões da topbar: superfície chrome sólida, sem sombra. */
+  background: var(--yv-chrome-surface, var(--surface));
   color: var(--yv-text);
-  box-shadow: 0 4px 14px color-mix(in srgb, var(--ink, #000) 16%, transparent);
+  box-shadow: none;
   pointer-events: auto;
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
   transform: translateY(-50%);
-  opacity: 0.85;
+  /* Opaco; só o estado sem capítulo (disabled) fica esbatido. */
+  opacity: 1;
   transition:
     opacity 220ms ease,
     visibility 220ms ease,
@@ -17126,8 +17127,7 @@ html[data-theme="dark"] .chapter-header {
 
 .bible-chapter-fab:hover:not(:disabled),
 .bible-chapter-fab:focus-visible {
-  opacity: 1;
-  background: color-mix(in srgb, var(--text) 14%, var(--bible-nav-surface, var(--yv-bg)));
+  background: var(--yv-chrome-hover, color-mix(in srgb, var(--surface) 92%, var(--text) 8%));
 }
 
 .bible-chapter-fab:active:not(:disabled) {
