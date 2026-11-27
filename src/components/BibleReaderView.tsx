@@ -1987,7 +1987,8 @@ export function BibleReaderView({
     return formatPassagePillRef(title, next.chapterId);
   }
 
-  function renderTopPassageArrow(delta: -1 | 1, hideVisual: boolean) {
+  /** Skip de capítulo/plano — FAB lateral, centrado na vertical do ecrã. */
+  function renderChapterFab(delta: -1 | 1, hideVisual: boolean) {
     const chapterSkipIcons = passageBarSkipIcons();
     const planSkips = Boolean(planReading);
     const stageComplete = Boolean(planSkips && planReading?.isStageLast);
@@ -2022,9 +2023,9 @@ export function BibleReaderView({
       <button
         key={isPrev ? "prev" : "next"}
         type="button"
-        className={`bible-yv-top-passage-arrow${isPrev ? " is-prev" : " is-next"}${
+        className={`bible-chapter-fab${isPrev ? " is-prev" : " is-next"}${
           nextIsCheck ? " is-stage-complete" : ""
-        }${hideVisual ? " is-hidden-slot" : ""}`}
+        }${hideVisual ? " is-hidden" : ""}`}
         onClick={() => planOrChapterSkip(delta)}
         disabled={disabled || hideVisual}
         tabIndex={hideVisual ? -1 : undefined}
@@ -2044,12 +2045,12 @@ export function BibleReaderView({
               : actionLabel
         }
       >
-        <YvIcon name={iconName} className="bible-yv-top-passage-arrow-icon" />
+        <YvIcon name={iconName} className="bible-chapter-fab-icon" />
       </button>
     );
   }
 
-  /** Topbar: ← · pill book picker · → */
+  /** Topbar: pill book picker (skips ← → são FABs laterais) */
   function renderPassageSkipPickerCluster() {
     return renderPassageRoll();
   }
@@ -2059,7 +2060,6 @@ export function BibleReaderView({
     const splitChrome = isPassageBarPanelCompactTopbar() && !compactBar;
     const unifiedRefPill = isPassagePillUnified();
     const passageRefLabel = formatPassagePillRef(bookTitle, chapterId);
-    const hideSkipArrows = Boolean(pickerOpen && !rollOpen);
     const showPickReturnPill =
       rollOpen &&
       (passageStep === "book" ||
@@ -2123,11 +2123,10 @@ export function BibleReaderView({
               : pickerOpen
                 ? " is-roll-chrome-active"
                 : ""
-          }${hideSkipArrows ? " is-skips-hidden" : ""}${
+          } is-skips-external${
             pickerChrome.chipsHydrating ? " is-hydrating" : ""
           }`}
         >
-          {renderTopPassageArrow(-1, hideSkipArrows)}
           <div
             className={`bible-yv-top-passage-segments${
               unifiedRefPill ? " is-passage-ref-unified" : ""
@@ -2194,7 +2193,6 @@ export function BibleReaderView({
               </>
             )}
           </div>
-          {renderTopPassageArrow(1, hideSkipArrows)}
         </div>
       </nav>
     );
@@ -4517,6 +4515,8 @@ export function BibleReaderView({
     !passage?.content &&
     !showOfflineChapterGateUi &&
     !passageLoadError;
+  /** FABs de skip: fora quando há picker/modal por cima do texto. */
+  const chapterFabsHidden = pickerOpen || hasActiveModal || coldOpenEmpty;
 
   return (
     <section
@@ -5014,6 +5014,11 @@ export function BibleReaderView({
       !showCreateCard
         ? renderTopToolsMenu("float")
         : null}
+
+      <div className="bible-chapter-fabs">
+        {renderChapterFab(-1, chapterFabsHidden)}
+        {renderChapterFab(1, chapterFabsHidden)}
+      </div>
 
       {(() => {
         const compactDock = compactViewport || narrowChrome;
