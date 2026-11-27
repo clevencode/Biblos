@@ -1138,6 +1138,82 @@ html[data-theme="dark"] .mode-tabs {
   opacity: 0.55;
 }
 
+/* Tela cheia: botão redondo à direita do pill (pill segue centrado). */
+.mode-tabs-fullscreen {
+  position: absolute;
+  left: calc(100% + 10px);
+  bottom: 0;
+  z-index: 2;
+  width: var(--mode-tabs-hub-size);
+  height: var(--mode-tabs-hub-size);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--mode-tabs-hub-bg);
+  color: var(--mode-tabs-hub-fg);
+  font-size: 1.3rem;
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--ink) 8%, transparent),
+    0 6px 16px color-mix(in srgb, var(--ink) 12%, transparent);
+  cursor: pointer;
+  pointer-events: auto;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background var(--mode-tabs-close-ms) var(--mode-tabs-close-ease),
+    opacity var(--mode-tabs-close-ms) var(--mode-tabs-close-ease),
+    transform 100ms var(--mode-tabs-close-ease);
+}
+
+.mode-tabs-fullscreen:hover {
+  background: var(--mode-tabs-hub-hover);
+}
+
+.mode-tabs-fullscreen:active {
+  transform: scale(0.96);
+  background: var(--mode-tabs-hub-press);
+}
+
+.mode-tabs-fullscreen:focus-visible {
+  outline: 2px solid var(--mode-tabs-hub-bg);
+  outline-offset: 3px;
+}
+
+.mode-tabs.is-immersive-hidden .mode-tabs-fullscreen {
+  opacity: 0.55;
+}
+
+/*
+ * Tela cheia do leitor (useReaderFullscreen → html[data-reader-fullscreen]):
+ * topbar, play e pill somem; só o botão de sair fica no lugar.
+ */
+html[data-reader-fullscreen="true"] .bible-reader--yv .bible-yv-top,
+html[data-reader-fullscreen="true"] .bible-reader--yv .bible-yv-dock,
+html[data-reader-fullscreen="true"] .mode-tabs.is-reader-fullscreen .mode-tabs-stage {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+html[data-reader-fullscreen="true"] .mode-tabs.is-reader-fullscreen::before {
+  content: none !important;
+  display: none !important;
+}
+
+.mode-tabs.is-reader-fullscreen .mode-tabs-fullscreen {
+  opacity: 0.8;
+}
+
+.mode-tabs.is-reader-fullscreen .mode-tabs-fullscreen:hover,
+.mode-tabs.is-reader-fullscreen .mode-tabs-fullscreen:focus-visible {
+  opacity: 1;
+}
+
 /* Plan workspace aberto: shell navbar oculta (retorno via plan-workspace-return-nav). */
 .app:has(.plan-workspace-host) .mode-tabs,
 .app:has(.plan-workspace-host) .mode-tabs.is-immersive-hidden,

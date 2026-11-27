@@ -11,6 +11,8 @@ export type UiCopyKey =
   | "shell.bible"
   | "shell.profile"
   | "shell.admin"
+  | "shell.fullscreen"
+  | "shell.exitFullscreen"
   | "common.close"
   | "common.back"
   | "common.clear"
@@ -315,6 +317,8 @@ const FR: Dict = {
   "shell.bible": "Bible",
   "shell.profile": "Profil",
   "shell.admin": "Admin",
+  "shell.fullscreen": "Plein écran",
+  "shell.exitFullscreen": "Quitter le plein écran",
   "common.close": "Fermer",
   "common.back": "Retour",
   "common.clear": "Effacer",
@@ -653,6 +657,8 @@ const HT: Dict = {
   "shell.bible": "Bib",
   "shell.profile": "Pwofil",
   "shell.admin": "Admin",
+  "shell.fullscreen": "Plen ekran",
+  "shell.exitFullscreen": "Sòti nan plen ekran",
   "common.close": "Fèmen",
   "common.back": "Tounen",
   "common.clear": "Efase",

@@ -18,6 +18,7 @@ import {
   subscribeShellRadial,
 } from "../shellRadial";
 import { useUiLocale } from "../i18n/UiLocaleContext";
+import { useReaderFullscreen } from "../hooks/useReaderFullscreen";
 
 type AppShellNavProps = {
   active: ShellTab;
@@ -200,6 +201,11 @@ export function AppShellNav({
   }
 
   const overlayOpen = accountOpen || adminOpen;
+  const fullscreen = useReaderFullscreen(hubDest === "bible");
+  const showFullscreen = hubDest === "bible" && !open;
+  const fullscreenLabel = fullscreen.active
+    ? t("shell.exitFullscreen")
+    : t("shell.fullscreen");
 
   return (
     <>
@@ -214,7 +220,7 @@ export function AppShellNav({
           immersiveHidden ? " is-immersive-hidden" : ""
         }${overlayOpen ? " is-account-open" : ""}${
           adminOpen ? " is-admin-open" : ""
-        }`}
+        }${fullscreen.active ? " is-reader-fullscreen" : ""}`}
         id={rootId}
         aria-label={t("shell.nav")}
         data-immersive-hidden={immersiveHidden ? "true" : undefined}
@@ -303,6 +309,23 @@ export function AppShellNav({
               )}
             </button>
           </div>
+
+          {showFullscreen ? (
+            <button
+              type="button"
+              className={`mode-tabs-fullscreen${
+                fullscreen.active ? " is-active" : ""
+              }`}
+              aria-pressed={fullscreen.active}
+              aria-label={fullscreenLabel}
+              title={fullscreenLabel}
+              onClick={fullscreen.active ? fullscreen.exit : fullscreen.enter}
+            >
+              <YvIcon
+                name={fullscreen.active ? "fullscreen_exit" : "fullscreen"}
+              />
+            </button>
+          ) : null}
         </div>
       </nav>
     </>

@@ -16,6 +16,8 @@ import {
   Download,
   Eye,
   EyeOff,
+  Fullscreen,
+  FullscreenExit,
   Highlighter,
   History,
   ListOrdered,
@@ -77,7 +79,9 @@ export type BiblosIconName =
   | "desktop_windows"
   | "cloud_off"
   | "visibility"
-  | "visibility_off";
+  | "visibility_off"
+  | "fullscreen"
+  | "fullscreen_exit";
 
 type IconEntry = {
   line: IconComponent;
@@ -120,6 +124,8 @@ export const ICON_REGISTRY: Record<BiblosIconName, IconEntry> = {
   cloud_off: { line: CloudOff },
   visibility: { line: Eye },
   visibility_off: { line: EyeOff },
+  fullscreen: { line: Fullscreen },
+  fullscreen_exit: { line: FullscreenExit },
 };
 
 export function isBiblosIconName(name: string): name is BiblosIconName {
