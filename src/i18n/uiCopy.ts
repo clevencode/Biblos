@@ -170,6 +170,7 @@ export type UiCopyKey =
   | "bible.nextChapter"
   | "bible.chapters"
   | "bible.chapterN"
+  | "bible.readingMinutes"
   | "bible.bookChapter"
   | "bible.nav"
   | "bible.menu"
@@ -497,6 +498,7 @@ const FR: Dict = {
   "bible.nextChapter": "Chapitre suivant",
   "bible.chapters": "Chapitres",
   "bible.chapterN": "Chapitre {n}",
+  "bible.readingMinutes": "{n} min de lecture",
   "bible.bookChapter": "Livre et chapitre",
   "bible.nav": "Navigation biblique",
   "bible.menu": "Menu",
@@ -835,6 +837,7 @@ const HT: Dict = {
   "bible.nextChapter": "Chapit apre",
   "bible.chapters": "Chapit",
   "bible.chapterN": "Chapit {n}",
+  "bible.readingMinutes": "{n} min lekti",
   "bible.bookChapter": "Liv ak chapit",
   "bible.nav": "Navigasyon biblik",
   "bible.menu": "Meni",

@@ -17011,6 +17011,17 @@ html[data-theme="dark"] .chapter-header {
   color: var(--chapter-header-title);
 }
 
+.chapter-header-meta {
+  margin: 8px 0 0;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--chapter-header-kicker);
+}
+
 .chapter-header-rule {
   width: 45%;
   height: 1px;

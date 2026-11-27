@@ -23,6 +23,7 @@ import {
 } from "../youversion/client";
 import { parseUsfmLocation, type ParsedPassage } from "../youversion/usfm";
 import {
+  BIBLE_TEXT_VERSIONS,
   isBibleTextVersionId,
   readBibleTextVersionPref,
   type BibleTextVersionId,
@@ -49,6 +50,7 @@ import {
   type BibleAudioEpisode,
 } from "../youversion/audio";
 import { ChapterHeader } from "./ChapterHeader";
+import { estimateReadingMinutes } from "../bible/readingTime";
 import { BibleAudioFloat } from "./BibleAudioFloat";
 import { BibleHistorySheet } from "./BibleHistorySheet";
 import { BibleMarksSheet } from "./BibleMarksSheet";
@@ -1162,6 +1164,18 @@ export function BibleReaderView({
       });
     },
   });
+
+  const readingMinutes = useMemo(() => {
+    const texts = passage?.verses?.length
+      ? passage.verses.map((verse) => verse.text)
+      : passage?.content
+        ? [passage.content]
+        : [];
+    const languageCode =
+      BIBLE_TEXT_VERSIONS.find((version) => version.id === textVersion)
+        ?.languageCode ?? "fr";
+    return estimateReadingMinutes(texts, languageCode);
+  }, [passage?.verses, passage?.content, textVersion]);
 
   const pickerChrome = useMemo(
     () =>
@@ -4917,6 +4931,11 @@ export function BibleReaderView({
           className="bible-passage-head"
           subtitulo={t("bible.chapterN", { n: chapterId })}
           titulo={`${bookTitle} ${chapterId}`}
+          meta={
+            readingMinutes != null
+              ? t("bible.readingMinutes", { n: readingMinutes })
+              : undefined
+          }
         />
 
         {showOfflineChapterGateUi ? (
