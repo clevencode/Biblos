@@ -11406,10 +11406,11 @@ html[data-theme="dark"] .bible-reader--yv {
   /* Superfície = navbar (--bible-nav-surface / mode-tabs-canvas) */
   background: var(--bible-nav-surface, var(--yv-bg));
   border-bottom: var(--yv-separator);
-  /* Profundidade — precisa de exceção em `.biblos-shell *` (senão some) */
-  box-shadow:
-    0 1px 0 color-mix(in srgb, var(--ink) 8%, transparent),
-    0 6px 16px color-mix(in srgb, var(--ink) 12%, transparent) !important;
+  /*
+   * Sombra na cor da superfície (= fundo da topbar): o texto esvanece ao
+   * passar por baixo, sem halo escuro. Exceção em `.biblos-shell *` (senão some).
+   */
+  box-shadow: 0 6px 16px 2px var(--bible-nav-surface, var(--yv-bg)) !important;
   transform: translate3d(0, 0, 0);
   opacity: 1;
   visibility: visible;
