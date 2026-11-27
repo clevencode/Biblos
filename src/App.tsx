@@ -75,6 +75,7 @@ import {
   subscribeSwUpdate,
 } from "./swUpdateManager";
 import { InstallBanner } from "./components/InstallBanner";
+import { PullToRelaunchIndicator } from "./components/PullToRelaunchIndicator";
 import { useApkUpdate } from "./hooks/useApkUpdate";
 import { usePwaInstall } from "./hooks/usePwaInstall";
 import { bootPowerGovernor } from "./hooks/usePowerGovernor";
@@ -582,6 +583,8 @@ function BiblosConsumerApp() {
       {!swUpdatePending && !apkUpdate.available && !bibleMode ? (
         <InstallBanner install={pwaInstall} />
       ) : null}
+      {/* Puxar no topo para relançar — igual no navegador, PWA e APK. */}
+      <PullToRelaunchIndicator />
 
       <main id="workspace" className={`workspace${narrow ? " is-mobile-vista" : ""}`}>
         <div className="note-shell">

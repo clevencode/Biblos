@@ -13,6 +13,9 @@ export type UiCopyKey =
   | "shell.admin"
   | "shell.fullscreen"
   | "shell.exitFullscreen"
+  | "pull.idle"
+  | "pull.release"
+  | "pull.relaunching"
   | "shell.fullscreenHintTitle"
   | "shell.fullscreenHintTouch"
   | "shell.fullscreenHintKeys"
@@ -364,6 +367,9 @@ const FR: Dict = {
   "shell.admin": "Admin",
   "shell.fullscreen": "Plein écran",
   "shell.exitFullscreen": "Quitter le plein écran",
+  "pull.idle": "Tirer pour relancer",
+  "pull.release": "Relâcher pour relancer",
+  "pull.relaunching": "Relancement…",
   "shell.fullscreenHintTitle": "Plein écran",
   "shell.fullscreenHintTouch": "Touchez {icon} pour quitter",
   "shell.fullscreenHintKeys": "Échap ou {icon} pour quitter",
@@ -749,6 +755,9 @@ const HT: Dict = {
   "shell.admin": "Admin",
   "shell.fullscreen": "Plen ekran",
   "shell.exitFullscreen": "Sòti nan plen ekran",
+  "pull.idle": "Rale pou relanse",
+  "pull.release": "Lage pou relanse",
+  "pull.relaunching": "Ap relanse…",
   "shell.fullscreenHintTitle": "Plen ekran",
   "shell.fullscreenHintTouch": "Touche {icon} pou soti",
   "shell.fullscreenHintKeys": "Echap oswa {icon} pou soti",
