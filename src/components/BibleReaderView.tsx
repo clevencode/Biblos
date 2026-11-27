@@ -4931,7 +4931,7 @@ export function BibleReaderView({
           className="bible-passage-head"
           subtitulo={t("bible.chapterN", { n: chapterId })}
           titulo={`${bookTitle} ${chapterId}`}
-          meta={
+          tempoLeitura={
             readingMinutes != null
               ? t("bible.readingMinutes", { n: readingMinutes })
               : undefined

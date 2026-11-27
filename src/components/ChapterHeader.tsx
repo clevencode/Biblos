@@ -1,30 +1,39 @@
 type ChapterHeaderProps = {
-  /** Sobretítulo (kicker) — ex.: "Chapitre 4"; renderizado em caixa alta via CSS. */
-  subtitulo: string;
-  /** Título principal — ex.: "Jean 4". */
+  /** Título principal — ex.: "Actes 1". */
   titulo: string;
-  /** Linha discreta sob o título — ex.: "4 min de lecture". */
-  meta?: string;
+  /** Rótulo do capítulo — ex.: "Chapitre 1"; caixa alta via CSS. */
+  subtitulo: string;
+  /** Tempo estimado — ex.: "4 min de lecture" (capitalização normal). */
+  tempoLeitura?: string;
   className?: string;
 };
 
 /**
- * Cabeçalho editorial centralizado do capítulo: kicker + título serifado
- * (+ meta opcional, ex. tempo de leitura) + filete.
+ * Cabeçalho editorial compacto do capítulo (linha única):
+ * título serifado à esquerda · "CHAPITRE 1 • 4 min de lecture" à direita.
+ * Em ecrã estreito quebra para título em cima e metadados por baixo.
  * Estilos em `.chapter-header*` (index.css).
  */
 export function ChapterHeader({
-  subtitulo,
   titulo,
-  meta,
+  subtitulo,
+  tempoLeitura,
   className = "",
 }: ChapterHeaderProps) {
   return (
     <header className={`chapter-header${className ? ` ${className}` : ""}`}>
-      <p className="chapter-header-kicker">{subtitulo}</p>
       <h1 className="chapter-header-title">{titulo}</h1>
-      {meta ? <p className="chapter-header-meta">{meta}</p> : null}
-      <hr className="chapter-header-rule" aria-hidden />
+      <p className="chapter-header-meta">
+        <span className="chapter-header-kicker">{subtitulo}</span>
+        {tempoLeitura ? (
+          <>
+            <span className="chapter-header-dot" aria-hidden>
+              •
+            </span>
+            <span className="chapter-header-time">{tempoLeitura}</span>
+          </>
+        ) : null}
+      </p>
     </header>
   );
 }

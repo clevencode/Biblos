@@ -16969,66 +16969,62 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   }
 }
 
-/* Cabeçalho editorial do capítulo (ChapterHeader) */
+/* Cabeçalho editorial compacto do capítulo (ChapterHeader) — linha única */
 .chapter-header {
-  --chapter-header-kicker: color-mix(in srgb, var(--ink) 55%, var(--paper));
+  --chapter-header-bg: transparent;
+  --chapter-header-meta: color-mix(in srgb, var(--ink) 55%, var(--paper));
   --chapter-header-title: var(--ink);
   --chapter-header-rule: color-mix(in srgb, var(--ink) 14%, var(--paper));
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
   width: 100%;
   box-sizing: border-box;
-  padding-top: 36px;
-  text-align: center;
+  margin: 0 0 16px;
+  /* Inline = padding de `.bible-verse`: título alinha com o texto. */
+  padding: 18px 10px;
+  border-bottom: 1px solid var(--chapter-header-rule);
+  background: var(--chapter-header-bg);
 }
 
 html[data-theme="dark"] .chapter-header {
-  --chapter-header-kicker: #8e929b;
+  --chapter-header-bg: #0f1115;
+  --chapter-header-meta: #8e929b;
   --chapter-header-title: #eaeaea;
   --chapter-header-rule: #2a2d35;
 }
 
-.chapter-header-kicker {
-  margin: 0;
-  font-family: var(--font-ui);
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 1.2;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--chapter-header-kicker);
-}
-
 .chapter-header-title {
-  margin: 7px 0 0;
+  margin: 0;
+  min-width: 0;
   font-family: var(--font-bible);
-  font-size: 30px;
-  font-weight: 600;
+  font-size: 28px;
+  font-weight: 700;
   line-height: 1.15;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
   font-optical-sizing: auto;
   color: var(--chapter-header-title);
 }
 
 .chapter-header-meta {
-  margin: 8px 0 0;
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 0.5em;
+  margin: 0;
   font-family: var(--font-ui);
   font-size: 12px;
   font-weight: 500;
-  line-height: 1.2;
-  letter-spacing: 0.02em;
+  line-height: 1.3;
   font-variant-numeric: tabular-nums;
-  color: var(--chapter-header-kicker);
+  color: var(--chapter-header-meta);
 }
 
-.chapter-header-rule {
-  width: 45%;
-  height: 1px;
-  margin: 20px 0 24px;
-  padding: 0;
-  border: 0;
-  background: var(--chapter-header-rule);
+.chapter-header-kicker {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 /* FABs laterais: skip capítulo anterior / seguinte (centro vertical do ecrã) */
