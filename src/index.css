@@ -18509,6 +18509,40 @@ html[data-reader-fullscreen="true"] .bible-chapter-fab {
   margin: -9px 0 0 -9px;
 }
 
+/* Cores rápidas: últimas 3 aplicadas pela roda */
+.circular-color-recents {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+}
+
+.circular-color-recent {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 18%, transparent);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.circular-color-recent:active {
+  transform: scale(0.92);
+}
+
+.circular-color-recent.is-active,
+.circular-color-recent:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--surface, var(--yv-bg)),
+    0 0 0 4px var(--text);
+}
+
 .app.is-bible-mode.is-narrow .circular-color-footer {
   gap: 8px;
 }

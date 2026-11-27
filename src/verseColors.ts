@@ -20,8 +20,9 @@ export const VERSE_COLOR_PRESETS: readonly VerseColor[] = VERSE_COLORS.slice(0, 
 export const DEFAULT_VERSE_COLOR = VERSE_COLORS[0]!.hex;
 
 const PREFERRED_COLOR_KEY = "biblos.preferredVerseColor";
-const FAVORITE_COLORS_KEY = "biblos.favoriteVerseColors";
-export const MAX_FAVORITE_COLORS = 8;
+const RECENT_COLORS_KEY = "biblos.recentVerseColors";
+/** Cores rápidas: últimas 3 aplicadas pela roda (mais recente primeiro). */
+export const MAX_RECENT_VERSE_COLORS = 3;
 
 /** Accepte #rgb / #rrggbb / id préréglé. */
 export function parseVerseHex(value: string | null | undefined): string | null {
@@ -287,9 +288,9 @@ export function savePreferredVerseColor(hex: string): void {
   }
 }
 
-export function loadFavoriteVerseColors(): string[] {
+export function loadRecentVerseColors(): string[] {
   try {
-    const raw = localStorage.getItem(FAVORITE_COLORS_KEY);
+    const raw = localStorage.getItem(RECENT_COLORS_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw) as unknown;
     if (!Array.isArray(parsed)) return [];
@@ -300,7 +301,7 @@ export function loadFavoriteVerseColors(): string[] {
       if (!hex || seen.has(hex)) continue;
       seen.add(hex);
       out.push(hex);
-      if (out.length >= MAX_FAVORITE_COLORS) break;
+      if (out.length >= MAX_RECENT_VERSE_COLORS) break;
     }
     return out;
   } catch {
@@ -308,27 +309,17 @@ export function loadFavoriteVerseColors(): string[] {
   }
 }
 
-function writeFavoriteVerseColors(colors: string[]): string[] {
-  const next = colors
-    .map((c) => normalizeVerseColor(c))
-    .filter((hex, i, arr) => arr.indexOf(hex) === i)
-    .slice(0, MAX_FAVORITE_COLORS);
+/** Põe a cor no topo das recentes (sem duplicados, máx. 3) e devolve a lista. */
+export function pushRecentVerseColor(hex: string): string[] {
+  const n = normalizeVerseColor(hex);
+  const next = [n, ...loadRecentVerseColors().filter((c) => c !== n)].slice(
+    0,
+    MAX_RECENT_VERSE_COLORS,
+  );
   try {
-    localStorage.setItem(FAVORITE_COLORS_KEY, JSON.stringify(next));
+    localStorage.setItem(RECENT_COLORS_KEY, JSON.stringify(next));
   } catch {
-    /* ignore */
+    /* ignore quota / private mode */
   }
   return next;
-}
-
-/** Ajoute une couleur utilisateur en tête des favoris. */
-export function addFavoriteVerseColor(hex: string): string[] {
-  const n = normalizeVerseColor(hex);
-  const rest = loadFavoriteVerseColors().filter((c) => c !== n);
-  return writeFavoriteVerseColors([n, ...rest]);
-}
-
-export function removeFavoriteVerseColor(hex: string): string[] {
-  const n = normalizeVerseColor(hex);
-  return writeFavoriteVerseColors(loadFavoriteVerseColors().filter((c) => c !== n));
 }

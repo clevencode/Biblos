@@ -11,6 +11,8 @@ import {
   formatVerseColorHex,
   hexToHsv,
   hsvToHex,
+  loadRecentVerseColors,
+  pushRecentVerseColor,
   resolveVerseMarkColor,
   themeMaxSaturation,
   themeTargetValue,
@@ -110,13 +112,26 @@ export function CircularColorEditor({
   const [h, setH] = useState(210);
   /** Saturation UI 0–1 (bord = maxS du thème). */
   const [sNorm, setSNorm] = useState(0.7);
+  /** Últimas cores aplicadas pela roda (máx. 3, mais recente primeiro). */
+  const [recentColors, setRecentColors] = useState<string[]>([]);
+
+  /** Hex → posição na roda (matiz + saturação normalizada ao tema). */
+  function wheelPos(value: string) {
+    const hsv = hexToHsv(resolveVerseMarkColor(value, theme));
+    return { h: hsv.h, s: maxS > 0 ? clamp01(hsv.s / maxS) : 0 };
+  }
+
+  function selectHex(value: string) {
+    const pos = wheelPos(value);
+    setH(pos.h);
+    setSNorm(pos.s);
+  }
 
   useEffect(() => {
     if (!open) return;
-    const resolved = resolveVerseMarkColor(initialHex, theme);
-    const hsv = hexToHsv(resolved);
-    setH(hsv.h);
-    setSNorm(maxS > 0 ? clamp01(hsv.s / maxS) : 0);
+    selectHex(initialHex);
+    setRecentColors(loadRecentVerseColors());
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- selectHex depende só de theme/maxS
   }, [open, initialHex, theme, maxS]);
 
   useEffect(() => {
@@ -262,6 +277,33 @@ export function CircularColorEditor({
 
         <p className="circular-color-tone-hint">{toneHint}</p>
 
+        {recentColors.length ? (
+          <div
+            className="circular-color-recents"
+            role="group"
+            aria-label="Couleurs récentes"
+          >
+            {recentColors.map((recent) => {
+              /* Mesmo caminho da roda: a pastilha mostra o hex que será aplicado. */
+              const pos = wheelPos(recent);
+              const swatch = resolveVerseMarkColor(hsvToHex(pos.h, pos.s, 1), theme);
+              const active = swatch.toLowerCase() === hex.toLowerCase();
+              return (
+                <button
+                  key={recent}
+                  type="button"
+                  className={`circular-color-recent${active ? " is-active" : ""}`}
+                  style={{ background: swatch }}
+                  aria-label={`${verseColorHueLabel(swatch)} · ${formatVerseColorHex(swatch)}`}
+                  aria-pressed={active}
+                  title={formatVerseColorHex(swatch)}
+                  onClick={() => selectHex(recent)}
+                />
+              );
+            })}
+          </div>
+        ) : null}
+
         <div className="circular-color-footer">
           <span
             className="circular-color-preview"
@@ -274,7 +316,10 @@ export function CircularColorEditor({
           <button
             type="button"
             className="circular-color-apply"
-            onClick={() => onConfirm(hex)}
+            onClick={() => {
+              setRecentColors(pushRecentVerseColor(hex));
+              onConfirm(hex);
+            }}
           >
             Appliquer
           </button>
