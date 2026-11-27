@@ -110,7 +110,7 @@ export function ProfileSettingsPanel({
       setAccountOpen(false);
       return;
     }
-    /* Convidado: só gate de conta — sem abas de prefs. */
+    /* Convidado: sem secção Compte (o header mostra « Se connecter »). */
     if (guest) setAccountOpen(false);
     let cancelled = false;
     void (async () => {
@@ -172,33 +172,18 @@ export function ProfileSettingsPanel({
         onOpenSettings={
           guest ? undefined : () => setAccountOpen((open) => !open)
         }
+        /* Convidado: « Se connecter » no lugar da engrenagem. */
+        onSignIn={guest ? onRequestSignIn : undefined}
+        signInDisabled={loading || !online}
       />
 
       <div className="profile-settings-groups">
-        {guest ? (
-          <div className="profile-guest-gate">
-            <p className="profile-guest-gate-notice" role="status">
-              {t("profile.guestGateNotice")}
-            </p>
-            {!online ? (
-              <p className="profile-guest-gate-offline" role="alert">
-                {t("auth.offlineRequired")}
-              </p>
-            ) : null}
-            <AccountSettingsSection
-              guest
-              loading={loading || !online}
-              profile={profile}
-              signOutBusy={signOutBusy}
-              deleteBusy={deleteBusy}
-              onRequestSignIn={onRequestSignIn}
-              onRefreshProfile={refreshProfile}
-              onSignOut={() => void handleSignOut()}
-              onDeleteAccount={() => void handleDeleteConfirm()}
-            />
-            <ProfileAboutSection titled appUpdates={appUpdates} />
-          </div>
-        ) : accountOpen ? (
+        {guest && !online ? (
+          <p className="profile-guest-offline" role="alert">
+            {t("auth.offlineRequired")}
+          </p>
+        ) : null}
+        {!guest && accountOpen ? (
           <AccountSettingsSection
             guest={guest}
             loading={loading}

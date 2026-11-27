@@ -4582,6 +4582,42 @@ html[data-theme="dark"] .profile-download-btn {
   background: color-mix(in srgb, var(--text) 12%, transparent);
 }
 
+/* Convidado: « Se connecter » no lugar da engrenagem (mesma posição). */
+.profile-header-signin {
+  flex: none;
+  align-self: flex-start;
+  min-height: 40px;
+  margin: 0 0 0 auto;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--text);
+  color: var(--bg);
+  font-family: var(--font-ui);
+  font-size: 0.88rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 100ms ease, opacity 160ms ease;
+}
+
+.profile-header-signin:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.profile-header-signin:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.profile-header-signin:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 3px;
+}
+
 .profile-header-settings.is-on {
   background: color-mix(in srgb, var(--text) 14%, transparent);
 }
@@ -6136,24 +6172,7 @@ html[data-theme="dark"] .profile-download-btn {
   margin-top: 4px;
 }
 
-.profile-guest-gate {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  min-width: 0;
-}
-
-.profile-guest-gate-notice {
-  margin: 0;
-  padding: 12px 14px;
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--accent, #5b7cfa) 10%, var(--surface));
-  color: var(--text);
-  font-size: 0.88rem;
-  line-height: 1.4;
-}
-
-.profile-guest-gate-offline,
+.profile-guest-offline,
 .profile-onboarding-warn {
   margin: 0;
   padding: 10px 12px;

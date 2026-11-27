@@ -16,8 +16,6 @@ export type ProfileAppUpdates = {
 };
 
 export type ProfileAboutSectionProps = {
-  /** Convidado (sem abas): mostra o título « À propos » no grupo. */
-  titled?: boolean;
   appUpdates?: ProfileAppUpdates | null;
 };
 
@@ -115,13 +113,12 @@ function AppInstallUpdateRows({ pwaInstall, apkUpdate, swUpdatePending }: Profil
 
 /** Profil › À propos: app, versão, instalar/atualizar e créditos dos textos. */
 export function ProfileAboutSection({
-  titled = false,
   appUpdates = null,
 }: ProfileAboutSectionProps) {
   const { t } = useUiLocale();
   return (
     <>
-      <SettingsGroup title={titled ? t("profile.group.about") : undefined}>
+      <SettingsGroup>
         <div className="settings-row is-static profile-about-brand">
           <img
             src="/favicon.svg"

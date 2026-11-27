@@ -21,6 +21,9 @@ export type ProfileHeaderProps = {
   quotaPct: number;
   settingsOpen?: boolean;
   onOpenSettings?: () => void;
+  /** Convidado: botão « Se connecter » no lugar da engrenagem. */
+  onSignIn?: () => void;
+  signInDisabled?: boolean;
 };
 
 /** Identidade no topo; ícone settings abre a secção Compte. */
@@ -32,6 +35,8 @@ export function ProfileHeader({
   quotaPct,
   settingsOpen = false,
   onOpenSettings,
+  onSignIn,
+  signInDisabled = false,
 }: ProfileHeaderProps) {
   const { t } = useUiLocale();
   const displayName = preferredDisplayName(profile) || "…";
@@ -63,7 +68,16 @@ export function ProfileHeader({
             </>
           )}
         </div>
-        {onOpenSettings ? (
+        {guest && onSignIn ? (
+          <button
+            type="button"
+            className="profile-header-signin"
+            disabled={signInDisabled}
+            onClick={onSignIn}
+          >
+            {t("profile.signIn")}
+          </button>
+        ) : onOpenSettings ? (
           <button
             type="button"
             className={`profile-header-settings${settingsOpen ? " is-on" : ""}`}
