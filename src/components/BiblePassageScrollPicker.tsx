@@ -117,6 +117,8 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
   ) {
     const gridRef = useRef<HTMLDivElement>(null);
     const restoredScrollKeyRef = useRef<string | null>(null);
+    /** scrollTop guardado ainda não aplicável (conteúdo por carregar). */
+    const pendingScrollRef = useRef<number | null>(null);
     const getPickGridScrollRef = useRef(getPickGridScroll);
     getPickGridScrollRef.current = getPickGridScroll;
     const chapterIdsByBook = useMemo(
@@ -150,12 +152,27 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
         bookId,
         step === "verse" ? chapterId : undefined,
       );
-      el.scrollTop = typeof saved === "number" ? saved : 0;
+      const target = typeof saved === "number" ? saved : 0;
+      el.scrollTop = target;
+      /*
+       * Lista ainda vazia/curta (livros chegam async): o browser corta o
+       * scrollTop. Fica pendente e reaplica quando o conteúdo crescer.
+       */
+      pendingScrollRef.current = el.scrollTop < target - 1 ? target : null;
       if (step === "chapter" || step === "verse") {
         scrollSelectedCellIntoView(el);
       }
       restoredScrollKeyRef.current = scrollRestoreKey;
     }, [open, step, bookId, chapterId, scrollRestoreKey, bookKey, chapterKey]);
+
+    /* Conteúdo chegou (discovery / capítulos / versos): aplica o restore pendente. */
+    useLayoutEffect(() => {
+      const target = pendingScrollRef.current;
+      const el = gridRef.current;
+      if (!open || target == null || !el) return;
+      el.scrollTop = target;
+      if (el.scrollTop >= target - 1) pendingScrollRef.current = null;
+    });
 
     if (!open) return null;
 
@@ -214,6 +231,8 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
           className={`bible-yv-pick-grid${step === "book" ? " is-books" : ""}`}
           role="listbox"
           onScroll={(event) => {
+            /* Restore pendente: não gravar a posição cortada por cima da guardada. */
+            if (pendingScrollRef.current != null) return;
             setPickGridScroll(
               gridKind(),
               bookId,

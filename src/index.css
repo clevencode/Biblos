@@ -14990,10 +14990,17 @@ html[data-passage-bar-panel="test"]
 .bible-yv-pick-book-row {
   display: flex;
   flex-direction: column;
+  /*
+   * Item de uma coluna flex de altura fixa: sem isto, linhas off-screen
+   * (content-visibility) encolhem para 0px, a altura total oscila e o
+   * scroll restaurado cai num "buraco" (lista parecia acabar em Proverbes).
+   */
+  flex-shrink: 0;
   gap: 0;
   /* Lista longa (~66 livros): salta layout/paint off-screen. */
   content-visibility: auto;
-  contain-intrinsic-size: auto 48px;
+  /* = altura real da linha (52px) → placeholder não desloca o scroll. */
+  contain-intrinsic-size: auto 52px;
 }
 
 .bible-yv-pick-book-row.is-expanded {

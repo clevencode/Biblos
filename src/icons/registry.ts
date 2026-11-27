@@ -35,6 +35,8 @@ import {
   Sun,
   SunMoon,
   Trash,
+  UnfoldLess,
+  UnfoldMore,
   User,
 } from "@coolicons/react/line/round";
 import {
@@ -81,7 +83,9 @@ export type BiblosIconName =
   | "visibility"
   | "visibility_off"
   | "fullscreen"
-  | "fullscreen_exit";
+  | "fullscreen_exit"
+  | "unfold_more"
+  | "unfold_less";
 
 type IconEntry = {
   line: IconComponent;
@@ -126,6 +130,9 @@ export const ICON_REGISTRY: Record<BiblosIconName, IconEntry> = {
   visibility_off: { line: EyeOff },
   fullscreen: { line: Fullscreen },
   fullscreen_exit: { line: FullscreenExit },
+  /** Chevrons up-down (expandir) / down-up (recolher). */
+  unfold_more: { line: UnfoldMore },
+  unfold_less: { line: UnfoldLess },
 };
 
 export function isBiblosIconName(name: string): name is BiblosIconName {

@@ -153,7 +153,7 @@ export const BiblePassageDiscoveryBookRow = memo(
                 <span className="bible-yv-pick-cell-count">{hitCountLabel}</span>
               ) : null}
               <YvIcon
-                name={expanded ? "keyboard_arrow_down" : "chevron_right"}
+                name={expanded ? "unfold_less" : "unfold_more"}
                 opsz={24}
                 className="bible-yv-pick-cell-expand-icon"
               />
