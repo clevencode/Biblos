@@ -35,7 +35,7 @@ export function StorageSettingsPanel({ active }: StorageSettingsPanelProps) {
   }, [active, refresh]);
 
   const size = (bytes: number | null | undefined) =>
-    bytes == null ? "…" : formatBytes(bytes, dateLocale);
+    bytes == null ? "…" : bytes <= 0 ? "—" : formatBytes(bytes, dateLocale);
 
   const used = report?.usedBytes ?? null;
   const quota = report?.quotaBytes ?? null;

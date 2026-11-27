@@ -22670,3 +22670,70 @@ button.bible-study-ref-modal-title.is-jump:focus-visible {
     transform: none;
   }
 }
+
+/* ==========================================================================
+ * Ajustes finos de UX (revisão)
+ * ========================================================================== */
+
+/*
+ * Aviso de tela cheia junto ao botão a que se refere (⤡, em baixo à direita):
+ * centrado logo acima da linha do botão, em vez de tapar o título no topo.
+ */
+.reader-fs-hint {
+  top: auto;
+  bottom: calc(
+    var(--reader-fs-btn-gap, 22px) + var(--mode-tabs-hub-size, 50px) + 14px +
+      env(safe-area-inset-bottom, 0px)
+  );
+  transform: translate3d(-50%, 12px, 0);
+}
+
+.reader-fs-hint.is-visible {
+  transform: translate3d(-50%, 0, 0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reader-fs-hint {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+/* Perfil (ecrãs estreitos): cabeçalho mais compacto, mais espaço às abas. */
+@media (max-width: 420px) {
+  .profile-header-identity {
+    gap: 12px;
+  }
+
+  .profile-header-avatar {
+    width: 48px;
+    height: 48px;
+  }
+
+  .profile-header-name {
+    font-size: 1.02rem;
+  }
+
+  .profile-header-lead,
+  .profile-header-email {
+    font-size: 0.82rem;
+  }
+
+  .profile-header-signin {
+    min-height: 38px;
+    padding: 0 14px;
+    font-size: 0.84rem;
+  }
+}
+
+@media (max-height: 640px) {
+  .profile-header {
+    padding-bottom: 4px;
+  }
+
+  .profile-header-lead {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
