@@ -29,6 +29,7 @@ import {
 import {
   clearPersonalLocalData,
   deleteUserCloudData,
+  flushUserDataBeforeSignOut,
   flushUserDataPush,
   mergeLocalSnapshotIntoStores,
   snapshotLocalUserData,
@@ -208,7 +209,8 @@ export function ConsumerAuthProvider({ children }: { children: ReactNode }) {
         setProfile(applyFirebaseAuthUser(result.user));
         setSession(sessionFromUser(result.user, result.user.uid));
         await startUserDataSync(result.user.uid);
-        await flushUserDataPush(result.user.uid, { skipEmptyStores: true });
+        /* Funde o local (anónimo) na conta: envia todos os stores não vazios. */
+        await flushUserDataPush(result.user.uid, { all: true });
       } catch (err) {
         setError(mapAuthErrorToMessage(err));
         throw err;
@@ -251,6 +253,8 @@ export function ConsumerAuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     setError(null);
+    /* Envia o que ainda não chegou ao Firestore antes de limpar o aparelho. */
+    await flushUserDataBeforeSignOut();
     stopUserDataSync();
     clearPersonalLocalData();
     await signOutConsumer();

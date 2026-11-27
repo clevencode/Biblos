@@ -154,6 +154,9 @@ export type UiCopyKey =
   | "profile.aboutAppVersion"
   | "profile.aboutTexts"
   | "profile.aboutMadeWith"
+  | "sync.synced"
+  | "sync.pending"
+  | "sync.offline"
   | "profile.aboutUpdates"
   | "profile.aboutInstalled"
   | "profile.aboutInstallBrowserHint"
@@ -490,6 +493,9 @@ const FR: Dict = {
   "profile.aboutAppVersion": "Version de l’app",
   "profile.aboutTexts": "Textes bibliques",
   "profile.aboutMadeWith": "Fait avec soin pour la lecture quotidienne.",
+  "sync.synced": "Activités sauvegardées",
+  "sync.pending": "Enregistrement…",
+  "sync.offline": "Hors ligne · gardé sur l’appareil",
   "profile.aboutUpdates": "Installation et mises à jour",
   "profile.aboutInstalled": "App installée",
   "profile.aboutInstallBrowserHint": "Ouvrez le menu du navigateur puis « Installer l’app ».",
@@ -839,6 +845,9 @@ const HT: Dict = {
   "profile.aboutAppVersion": "Vèsyon aplikasyon an",
   "profile.aboutTexts": "Tèks biblik yo",
   "profile.aboutMadeWith": "Fèt ak swen pou lekti chak jou.",
+  "sync.synced": "Aktivite yo anrejistre",
+  "sync.pending": "Ap anrejistre…",
+  "sync.offline": "San entènèt · kenbe sou aparèy la",
   "profile.aboutUpdates": "Enstalasyon ak mizajou",
   "profile.aboutInstalled": "App la enstale",
   "profile.aboutInstallBrowserHint": "Louvri meni navigatè a epi chwazi « Enstale app ».",

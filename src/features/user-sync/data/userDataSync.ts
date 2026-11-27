@@ -1,10 +1,16 @@
 /**
- * Sync offline-first Auth: highlights / notes / verseNotes / planProgress / activity
- * → users/{uid}/… (nunca textos bíblicos).
+ * Sync offline-first das atividades do utilizador → users/{uid}/… (Firestore).
+ * Nunca textos bíblicos. Os stores sincronizados vivem em `SYNCED_STORES`.
  *
- * Ciclo: startUserDataSync(uid) após anonymous/authenticated;
- * upgrade conta existente = stop → merge snapshot local → start → flush;
- * merge remoto que altera local → re-push; `online` → flush pendente.
+ * Garantias contra perda de dados:
+ * - cada mudança local marca o store como pendente (persistente) antes do push;
+ * - push com debounce curto + flush imediato ao esconder/fechar a página;
+ * - no arranque (ou após reiniciar o navegador): pull → merge → reenvio do que
+ *   ficou pendente e seed do que só existe localmente;
+ * - logout envia o pendente antes de limpar o aparelho.
+ *
+ * O Firestore usa cache persistente (IndexedDB): um `setDoc` feito offline fica
+ * na fila do SDK e é enviado quando a rede volta, mesmo após reiniciar.
  */
 
 import {
@@ -19,49 +25,36 @@ import {
 } from "firebase/firestore";
 import { ensureFirebase, getFirebaseDb } from "../../../lib/firebase";
 import {
-  clearActivityStore,
-  exportActivityStore,
-  importActivityStore,
-  subscribeActivity,
-  type ActivityStore,
-} from "../../../activityLog";
+  clearAllPendingStores,
+  clearPendingStores,
+  hasPendingStores,
+  listPendingStores,
+  markStorePending,
+  migrateLegacyOutbox,
+} from "./pendingSync";
 import {
-  exportVerseMarkRemoved,
-  exportVerseMarkStore,
-  exportVerseMarkTouched,
-  importVerseMarkStore,
-  subscribeVerseMarksRevision,
-  clearVerseMarkStore,
-} from "../../../verseMarks";
-import {
-  clearDayNoteStore,
-  exportDayNoteStore,
-  importDayNoteStore,
-  subscribeDayNotes,
-} from "../../reading-plans/domain/planDayNote";
-import {
-  clearPlanProgressStore,
-  exportPlanProgressStore,
-  importPlanProgressStore,
-  subscribePlanProgress,
-} from "../../reading-plans/domain/planProgress";
-import {
-  clearVerseNoteStore,
-  exportVerseNoteStore,
-  importVerseNoteStore,
-  subscribeVerseNotes,
-} from "../../../bible/verseNotes";
-import {
-  userActivityDoc,
-  userHighlightsDoc,
-  userNotesDoc,
-  userPlanProgressDoc,
-  userVerseNotesDoc,
-} from "./userDataPaths";
+  SYNCED_STORES,
+  syncedStoreById,
+  type SyncedPayload,
+  type SyncedStore,
+  type SyncedStoreId,
+} from "./syncedStores";
 
+/**
+ * - `idle`: sem sessão
+ * - `pending`: há atividades por enviar (a enviar ou à espera)
+ * - `synced`: tudo confirmado pelo servidor
+ * - `offline`: guardado no aparelho; envia quando a rede voltar
+ */
 export type SyncStatus = "idle" | "synced" | "pending" | "offline";
 
 const SYNC_STATUS_EVENT = "biblos-user-sync-status";
+
+/** Debounce do push após um gesto (marca, nota, progresso…). */
+const SYNC_PUSH_DEBOUNCE_MS = 1200;
+
+/** Logout: espera no máximo isto pelo envio antes de limpar o aparelho. */
+const SIGN_OUT_FLUSH_TIMEOUT_MS = 4000;
 
 let currentUid: string | null = null;
 let pushTimer: ReturnType<typeof setTimeout> | null = null;
@@ -69,22 +62,52 @@ let unsubs: Unsubscribe[] = [];
 let localUnsubs: Array<() => void> = [];
 let syncStatus: SyncStatus = "idle";
 let applyingRemote = false;
-
 /**
- * Debounce do push de marcas/notas (gesto do utilizador) — fixo ~1.2s.
- * PowerGovernor `syncIntervalMs` (15s/60s) é só para telemetria / drains
- * especulativos futuros — não sobrescreve este valor.
+ * Último conteúdo conhecido por store. Os stores também emitem em eventos
+ * `storage` de outras abas (qualquer chave); só uma mudança real de conteúdo
+ * marca pendente — evita ciclos entre abas.
  */
-const SYNC_PUSH_DEBOUNCE_MS = 1200;
+const lastSeen = new Map<SyncedStoreId, string>();
+
+function fingerprint(store: SyncedStore): string {
+  try {
+    return JSON.stringify(store.exportLocal());
+  } catch {
+    return "";
+  }
+}
+
+/** `true` se o conteúdo mudou desde a última leitura. */
+function refreshSeen(store: SyncedStore): boolean {
+  const next = fingerprint(store);
+  if (lastSeen.get(store.id) === next) return false;
+  lastSeen.set(store.id, next);
+  return true;
+}
+
+function isOnline(): boolean {
+  return typeof navigator === "undefined" ? true : navigator.onLine !== false;
+}
 
 function setSyncStatus(next: SyncStatus) {
   if (syncStatus === next) return;
   syncStatus = next;
   if (typeof window !== "undefined") {
-    window.dispatchEvent(
-      new CustomEvent(SYNC_STATUS_EVENT, { detail: next }),
-    );
+    window.dispatchEvent(new CustomEvent(SYNC_STATUS_EVENT, { detail: next }));
   }
+}
+
+/** Estado após um push / snapshot: pendente local tem prioridade. */
+function settleSyncStatus() {
+  if (!currentUid) {
+    setSyncStatus("idle");
+    return;
+  }
+  if (!isOnline()) {
+    setSyncStatus("offline");
+    return;
+  }
+  setSyncStatus(hasPendingStores() ? "pending" : "synced");
 }
 
 export function getSyncStatus(): SyncStatus {
@@ -104,116 +127,76 @@ export function subscribeSyncStatus(
 }
 
 function pathDoc(db: Firestore, path: string) {
-  const parts = path.split("/");
-  return doc(db, parts[0]!, parts[1]!, parts[2]!, parts[3]!);
+  const [col, uid, sub, id] = path.split("/");
+  return doc(db, col!, uid!, sub!, id!);
 }
 
-async function pushAll(
+/**
+ * Envia os stores indicados. Marcas pendentes só são limpas após confirmação
+ * do servidor; offline, a promessa espera (o SDK guarda a escrita em IndexedDB).
+ */
+async function pushStores(
   uid: string,
-  opts?: { skipEmptyStores?: boolean },
+  ids: readonly SyncedStoreId[],
+  opts?: { skipEmpty?: boolean },
 ): Promise<void> {
+  if (!ids.length) {
+    settleSyncStatus();
+    return;
+  }
   const ready = await ensureFirebase();
   if (!ready) return;
   const { db } = ready;
-  const online =
-    typeof navigator === "undefined" ? true : navigator.onLine !== false;
-  setSyncStatus(online ? "pending" : "offline");
-  const updatedAt = new Date().toISOString();
-  const skipEmpty = opts?.skipEmptyStores === true;
+  const sentAt = new Date().toISOString();
+  setSyncStatus(isOnline() ? "pending" : "offline");
+
+  const sent: SyncedStoreId[] = [];
   const writes: Array<Promise<unknown>> = [];
-
-  const highlights = exportVerseMarkStore();
-  const notes = exportDayNoteStore();
-  const verseNotes = exportVerseNoteStore();
-  const planProgress = exportPlanProgressStore();
-  const activity = exportActivityStore();
-
-  if (!skipEmpty || !isEmptyStore(highlights)) {
+  for (const id of ids) {
+    const store = syncedStoreById(id);
+    if (!store) continue;
+    const payload = store.exportLocal();
+    sent.push(id);
+    if (opts?.skipEmpty && store.isEmpty(payload)) continue;
     writes.push(
       setDoc(
-        pathDoc(db, userHighlightsDoc(uid)),
-        {
-          store: highlights,
-          touched: exportVerseMarkTouched(),
-          removed: exportVerseMarkRemoved(),
-          updatedAt,
-        },
+        pathDoc(db, store.docPath(uid)),
+        { ...payload, updatedAt: sentAt },
         { merge: true },
       ),
     );
-  }
-  if (!skipEmpty || !isEmptyStore(notes)) {
-    writes.push(
-      setDoc(
-        pathDoc(db, userNotesDoc(uid)),
-        { store: notes, updatedAt },
-        { merge: true },
-      ),
-    );
-  }
-  if (!skipEmpty || !isEmptyStore(verseNotes)) {
-    writes.push(
-      setDoc(
-        pathDoc(db, userVerseNotesDoc(uid)),
-        { store: verseNotes, updatedAt },
-        { merge: true },
-      ),
-    );
-  }
-  if (!skipEmpty || !isEmptyStore(planProgress)) {
-    writes.push(
-      setDoc(
-        pathDoc(db, userPlanProgressDoc(uid)),
-        { store: planProgress, updatedAt },
-        { merge: true },
-      ),
-    );
-  }
-  if (!skipEmpty || !isEmptyActivityStore(activity)) {
-    writes.push(
-      setDoc(
-        pathDoc(db, userActivityDoc(uid)),
-        { store: activity, updatedAt },
-        { merge: true },
-      ),
-    );
-  }
-
-  if (!writes.length) {
-    setSyncStatus(online ? "synced" : "offline");
-    return;
   }
 
   try {
     await Promise.all(writes);
-    setSyncStatus(online ? "synced" : "offline");
+    clearPendingStores(sent, sentAt);
   } catch (err) {
-    console.warn("[user-sync] pushAll", err);
-    setSyncStatus(online ? "pending" : "offline");
+    console.warn("[user-sync] push", err);
     throw err;
+  } finally {
+    if (currentUid === uid) settleSyncStatus();
   }
 }
 
+/** Push com debounce de tudo o que está pendente. */
 export function queueUserDataPush(uid?: string | null): void {
   const target = uid ?? currentUid;
   if (!target) return;
   if (pushTimer) clearTimeout(pushTimer);
-  setSyncStatus(navigator.onLine ? "pending" : "offline");
+  setSyncStatus(isOnline() ? "pending" : "offline");
   pushTimer = setTimeout(() => {
-    void import("../../../bible/zeroLag/syncOutbox")
-      .then(({ drainOutbox }) =>
-        drainOutbox(() => pushAll(target)),
-      )
-      .catch((err) => {
-        console.warn("[user-sync] push", err);
-        setSyncStatus(navigator.onLine ? "pending" : "offline");
-      });
+    pushTimer = null;
+    void pushStores(target, listPendingStores()).catch(() => undefined);
   }, SYNC_PUSH_DEBOUNCE_MS);
 }
 
+/**
+ * Push imediato. Por omissão envia só o pendente; `all` envia todos os stores
+ * (ex. após login, para fundir o anónimo na conta), saltando os vazios.
+ */
 export async function flushUserDataPush(
   uid?: string | null,
-  opts?: { skipEmptyStores?: boolean },
+  opts?: { all?: boolean },
 ): Promise<void> {
   const target = uid ?? currentUid;
   if (!target) return;
@@ -221,94 +204,74 @@ export async function flushUserDataPush(
     clearTimeout(pushTimer);
     pushTimer = null;
   }
-  const { drainOutbox } = await import("../../../bible/zeroLag/syncOutbox");
-  await drainOutbox(() => pushAll(target, opts));
-}
-
-function applyRemoteHighlights(data: Record<string, unknown> | undefined) {
-  if (!data) return;
-  const store = (data.store ?? {}) as Parameters<typeof importVerseMarkStore>[0];
-  const touched = (data.touched ?? {}) as Parameters<
-    typeof importVerseMarkStore
-  >[1];
-  const removed = (data.removed ?? {}) as Parameters<
-    typeof importVerseMarkStore
-  >[2];
-  applyingRemote = true;
-  let changed = false;
-  try {
-    changed = importVerseMarkStore(store, touched, removed, true);
-  } finally {
-    applyingRemote = false;
-  }
-  if (changed) queueUserDataPush(currentUid);
-}
-
-function applyRemoteNotes(data: Record<string, unknown> | undefined) {
-  if (!data) return;
-  applyingRemote = true;
-  let changed = false;
-  try {
-    changed = importDayNoteStore(
-      (data.store ?? {}) as Parameters<typeof importDayNoteStore>[0],
-      true,
+  if (opts?.all) {
+    await pushStores(
+      target,
+      SYNCED_STORES.map((store) => store.id),
+      { skipEmpty: true },
     );
-  } finally {
-    applyingRemote = false;
+    return;
   }
-  if (changed) queueUserDataPush(currentUid);
+  await pushStores(target, listPendingStores());
 }
 
-function applyRemoteVerseNotes(data: Record<string, unknown> | undefined) {
+/**
+ * Antes do logout: envia o pendente (até um limite de tempo). Mesmo que o
+ * tempo esgote, as escritas já ficaram na fila persistente do Firestore.
+ */
+export async function flushUserDataBeforeSignOut(): Promise<void> {
+  if (!currentUid) return;
+  if (!pushTimer && !hasPendingStores()) return;
+  await Promise.race([
+    flushUserDataPush(currentUid).catch(() => undefined),
+    new Promise<void>((resolve) =>
+      setTimeout(resolve, SIGN_OUT_FLUSH_TIMEOUT_MS),
+    ),
+  ]);
+}
+
+function applyRemote(store: SyncedStore, data: SyncedPayload | undefined) {
   if (!data) return;
   applyingRemote = true;
   let changed = false;
   try {
-    changed = importVerseNoteStore(
-      (data.store ?? {}) as Parameters<typeof importVerseNoteStore>[0],
-      true,
-    );
+    changed = store.mergeRemote(data);
   } finally {
     applyingRemote = false;
   }
-  if (changed) queueUserDataPush(currentUid);
+  refreshSeen(store);
+  /* O merge pode juntar dados locais que o remoto ainda não tem → reenvia. */
+  if (changed) {
+    markStorePending(store.id);
+    queueUserDataPush(currentUid);
+  }
 }
 
-function applyRemotePlanProgress(data: Record<string, unknown> | undefined) {
-  if (!data) return;
-  applyingRemote = true;
-  let changed = false;
-  try {
-    changed = importPlanProgressStore(
-      (data.store ?? {}) as Parameters<typeof importPlanProgressStore>[0],
-      true,
-    );
-  } finally {
-    applyingRemote = false;
-  }
-  if (changed) queueUserDataPush(currentUid);
-}
-
-function applyRemoteActivity(data: Record<string, unknown> | undefined) {
-  if (!data) return;
-  applyingRemote = true;
-  let changed = false;
-  try {
-    changed = importActivityStore(
-      (data.store ?? { events: [] }) as ActivityStore,
-      true,
-    );
-  } finally {
-    applyingRemote = false;
-  }
-  if (changed) queueUserDataPush(currentUid);
+function onLocalChange(store: SyncedStore) {
+  if (applyingRemote) return;
+  if (!refreshSeen(store)) return;
+  markStorePending(store.id);
+  queueUserDataPush(currentUid);
 }
 
 function onWindowOnline() {
   if (!currentUid) return;
-  void flushUserDataPush(currentUid).catch((err) => {
-    console.warn("[user-sync] online flush", err);
-  });
+  void flushUserDataPush(currentUid).catch(() => undefined);
+}
+
+function onWindowOffline() {
+  if (currentUid) setSyncStatus("offline");
+}
+
+/** Página a esconder/fechar: não esperar pelo debounce. */
+function onPageHide() {
+  if (!currentUid) return;
+  if (!pushTimer && !hasPendingStores()) return;
+  void flushUserDataPush(currentUid).catch(() => undefined);
+}
+
+function onVisibilityChange() {
+  if (document.visibilityState === "hidden") onPageHide();
 }
 
 function stopListeners() {
@@ -322,289 +285,143 @@ function stopListeners() {
   }
   if (typeof window !== "undefined") {
     window.removeEventListener("online", onWindowOnline);
+    window.removeEventListener("offline", onWindowOffline);
+    window.removeEventListener("pagehide", onPageHide);
+    document.removeEventListener("visibilitychange", onVisibilityChange);
   }
 }
 
-function isEmptyStore(value: unknown): boolean {
-  if (value == null) return true;
-  if (typeof value !== "object") return true;
-  return Object.keys(value as Record<string, unknown>).length === 0;
-}
-
-function isEmptyActivityStore(value: unknown): boolean {
-  if (value == null || typeof value !== "object") return true;
-  const events = (value as ActivityStore).events;
-  return !Array.isArray(events) || events.length === 0;
-}
-
 /**
- * Seed cloud por documento: só escreve se remoto falta/vazio E local tem dados.
- * Nunca faz flush global de stores vazios (evita wipe cross-device).
+ * Arranque / reinício: funde o remoto, depois envia o que ficou pendente
+ * e semeia stores que só existem no aparelho. Nunca envia stores vazios
+ * por seed (evita apagar dados de outro aparelho).
  */
-async function seedCloudIfNeeded(
-  db: Firestore,
-  uid: string,
-): Promise<void> {
-  const [hi, notes, verseNotes, planProgress, activity] = await Promise.all([
-    getDoc(pathDoc(db, userHighlightsDoc(uid))),
-    getDoc(pathDoc(db, userNotesDoc(uid))),
-    getDoc(pathDoc(db, userVerseNotesDoc(uid))),
-    getDoc(pathDoc(db, userPlanProgressDoc(uid))),
-    getDoc(pathDoc(db, userActivityDoc(uid))),
-  ]);
+async function reconcile(db: Firestore, uid: string): Promise<void> {
+  const snaps = await Promise.all(
+    SYNCED_STORES.map((store) => getDoc(pathDoc(db, store.docPath(uid)))),
+  );
+  if (currentUid !== uid) return;
 
-  const online =
-    typeof navigator === "undefined" ? true : navigator.onLine !== false;
-  const updatedAt = new Date().toISOString();
-  const writes: Array<Promise<unknown>> = [];
+  const pending = new Set(listPendingStores());
+  const toPush: SyncedStoreId[] = [];
+  SYNCED_STORES.forEach((store, i) => {
+    const snap = snaps[i]!;
+    const remote = snap.exists()
+      ? (snap.data() as SyncedPayload)
+      : undefined;
+    applyRemote(store, remote);
+    const local = store.exportLocal();
+    const seed = store.isEmpty(remote) && !store.isEmpty(local);
+    if (seed || pending.has(store.id)) toPush.push(store.id);
+  });
 
-  const localHi = exportVerseMarkStore();
-  const localNotes = exportDayNoteStore();
-  const localVerseNotes = exportVerseNoteStore();
-  const localPlan = exportPlanProgressStore();
-  const localActivity = exportActivityStore();
-
-  const remoteHiEmpty = !hi.exists() || isEmptyStore(hi.data()?.store);
-  const remoteNotesEmpty =
-    !notes.exists() || isEmptyStore(notes.data()?.store);
-  const remoteVerseEmpty =
-    !verseNotes.exists() || isEmptyStore(verseNotes.data()?.store);
-  const remotePlanEmpty =
-    !planProgress.exists() || isEmptyStore(planProgress.data()?.store);
-  const remoteActivityEmpty =
-    !activity.exists() || isEmptyActivityStore(activity.data()?.store);
-
-  if (remoteHiEmpty && !isEmptyStore(localHi)) {
-    writes.push(
-      setDoc(
-        pathDoc(db, userHighlightsDoc(uid)),
-        {
-          store: localHi,
-          touched: exportVerseMarkTouched(),
-          removed: exportVerseMarkRemoved(),
-          updatedAt,
-        },
-        { merge: true },
-      ),
-    );
-  }
-  if (remoteNotesEmpty && !isEmptyStore(localNotes)) {
-    writes.push(
-      setDoc(
-        pathDoc(db, userNotesDoc(uid)),
-        { store: localNotes, updatedAt },
-        { merge: true },
-      ),
-    );
-  }
-  if (remoteVerseEmpty && !isEmptyStore(localVerseNotes)) {
-    writes.push(
-      setDoc(
-        pathDoc(db, userVerseNotesDoc(uid)),
-        { store: localVerseNotes, updatedAt },
-        { merge: true },
-      ),
-    );
-  }
-  if (remotePlanEmpty && !isEmptyStore(localPlan)) {
-    writes.push(
-      setDoc(
-        pathDoc(db, userPlanProgressDoc(uid)),
-        { store: localPlan, updatedAt },
-        { merge: true },
-      ),
-    );
-  }
-  if (remoteActivityEmpty && !isEmptyActivityStore(localActivity)) {
-    writes.push(
-      setDoc(
-        pathDoc(db, userActivityDoc(uid)),
-        { store: localActivity, updatedAt },
-        { merge: true },
-      ),
-    );
-  }
-
-  if (writes.length) {
-    setSyncStatus(online ? "pending" : "offline");
-    await Promise.all(writes);
-  }
-  setSyncStatus(online ? "synced" : "offline");
+  for (const id of toPush) markStorePending(id);
+  await flushUserDataPush(uid);
 }
 
 /**
- * Démarre sync pour un uid Firebase (anonymous ou authenticated).
- * Pull via onSnapshot + push debounce sur writes locaux.
+ * Inicia a sync para um uid Firebase (anónimo ou autenticado).
+ * Pull via onSnapshot + push com debounce nas mudanças locais.
  */
 export async function startUserDataSync(uid: string): Promise<void> {
   if (currentUid === uid && unsubs.length) return;
   stopListeners();
   currentUid = uid;
+  migrateLegacyOutbox();
+  setSyncStatus(
+    !isOnline() ? "offline" : hasPendingStores() ? "pending" : "synced",
+  );
 
   const ready = await ensureFirebase();
   if (!ready) {
     setSyncStatus("offline");
     return;
   }
+  if (currentUid !== uid) return;
   const { db } = ready;
 
-  unsubs.push(
-    onSnapshot(
-      pathDoc(db, userHighlightsDoc(uid)),
-      (snap) => {
-        applyRemoteHighlights(snap.data() as Record<string, unknown> | undefined);
-      },
-      (err) => console.warn("[user-sync] highlights", err),
-    ),
-  );
-  unsubs.push(
-    onSnapshot(
-      pathDoc(db, userNotesDoc(uid)),
-      (snap) => {
-        applyRemoteNotes(snap.data() as Record<string, unknown> | undefined);
-      },
-      (err) => console.warn("[user-sync] notes", err),
-    ),
-  );
-  unsubs.push(
-    onSnapshot(
-      pathDoc(db, userVerseNotesDoc(uid)),
-      (snap) => {
-        applyRemoteVerseNotes(
-          snap.data() as Record<string, unknown> | undefined,
-        );
-      },
-      (err) => console.warn("[user-sync] verseNotes", err),
-    ),
-  );
-  unsubs.push(
-    onSnapshot(
-      pathDoc(db, userPlanProgressDoc(uid)),
-      (snap) => {
-        applyRemotePlanProgress(
-          snap.data() as Record<string, unknown> | undefined,
-        );
-      },
-      (err) => console.warn("[user-sync] planProgress", err),
-    ),
-  );
-  unsubs.push(
-    onSnapshot(
-      pathDoc(db, userActivityDoc(uid)),
-      (snap) => {
-        applyRemoteActivity(snap.data() as Record<string, unknown> | undefined);
-      },
-      (err) => console.warn("[user-sync] activity", err),
-    ),
-  );
+  for (const store of SYNCED_STORES) {
+    unsubs.push(
+      onSnapshot(
+        pathDoc(db, store.docPath(uid)),
+        (snap) => applyRemote(store, snap.data() as SyncedPayload | undefined),
+        (err) => console.warn(`[user-sync] ${store.id}`, err),
+      ),
+    );
+    refreshSeen(store);
+    localUnsubs.push(store.subscribe(() => onLocalChange(store)));
+  }
 
-  unsubs.push(
-    onSnapshotsInSync(db, () => {
-      setSyncStatus(navigator.onLine ? "synced" : "offline");
-    }),
-  );
-
-  const onLocal = () => {
-    if (applyingRemote) return;
-    queueUserDataPush(uid);
-  };
-  localUnsubs.push(subscribeVerseMarksRevision(onLocal));
-  localUnsubs.push(subscribeDayNotes(onLocal));
-  localUnsubs.push(subscribeVerseNotes(onLocal));
-  localUnsubs.push(subscribePlanProgress(onLocal));
-  localUnsubs.push(subscribeActivity(onLocal));
+  unsubs.push(onSnapshotsInSync(db, settleSyncStatus));
 
   if (typeof window !== "undefined") {
     window.addEventListener("online", onWindowOnline);
+    window.addEventListener("offline", onWindowOffline);
+    window.addEventListener("pagehide", onPageHide);
+    document.addEventListener("visibilitychange", onVisibilityChange);
   }
 
-  void (async () => {
-    try {
-      await seedCloudIfNeeded(db, uid);
-    } catch {
-      setSyncStatus(navigator.onLine ? "pending" : "offline");
-    }
-  })();
+  void reconcile(db, uid).catch((err) => {
+    console.warn("[user-sync] reconcile", err);
+    settleSyncStatus();
+  });
 }
 
 export function stopUserDataSync(): void {
   stopListeners();
+  lastSeen.clear();
   currentUid = null;
   setSyncStatus("idle");
 }
 
-/** Snapshot local avant login sur compte existant (merge). */
-export function snapshotLocalUserData() {
-  return {
-    highlights: {
-      store: exportVerseMarkStore(),
-      touched: exportVerseMarkTouched(),
-      removed: exportVerseMarkRemoved(),
-    },
-    notes: exportDayNoteStore(),
-    verseNotes: exportVerseNoteStore(),
-    planProgress: exportPlanProgressStore(),
-    activity: exportActivityStore(),
-  };
-}
+export type LocalUserDataSnapshot = Partial<Record<SyncedStoreId, SyncedPayload>>;
 
-export type LocalUserDataSnapshot = ReturnType<typeof snapshotLocalUserData>;
+/** Snapshot local antes de entrar numa conta existente (para fundir depois). */
+export function snapshotLocalUserData(): LocalUserDataSnapshot {
+  const out: LocalUserDataSnapshot = {};
+  for (const store of SYNCED_STORES) out[store.id] = store.exportLocal();
+  return out;
+}
 
 export function mergeLocalSnapshotIntoStores(
   snapshot: LocalUserDataSnapshot,
 ): void {
-  importVerseMarkStore(
-    snapshot.highlights.store,
-    snapshot.highlights.touched,
-    snapshot.highlights.removed,
-    true,
-  );
-  importDayNoteStore(snapshot.notes, true);
-  if (snapshot.verseNotes) importVerseNoteStore(snapshot.verseNotes, true);
-  importPlanProgressStore(snapshot.planProgress, true);
-  if (snapshot.activity) importActivityStore(snapshot.activity, true);
+  for (const store of SYNCED_STORES) {
+    const payload = snapshot[store.id];
+    if (payload) store.mergeRemote(payload);
+  }
 }
 
-/** Efface données personnelles locales — conserve Bibles offline. */
+/** Apaga dados pessoais locais — mantém Bíblias offline. */
 export function clearPersonalLocalData(): void {
-  clearVerseMarkStore();
-  clearDayNoteStore();
-  clearVerseNoteStore();
-  clearPlanProgressStore();
-  clearActivityStore();
+  for (const store of SYNCED_STORES) store.clearLocal();
+  clearAllPendingStores();
 }
 
 export async function deleteUserCloudData(uid: string): Promise<void> {
   const db = getFirebaseDb() ?? (await ensureFirebase())?.db;
   if (!db) return;
-  await Promise.all([
-    deleteDoc(pathDoc(db, userHighlightsDoc(uid))).catch(() => undefined),
-    deleteDoc(pathDoc(db, userNotesDoc(uid))).catch(() => undefined),
-    deleteDoc(pathDoc(db, userVerseNotesDoc(uid))).catch(() => undefined),
-    deleteDoc(pathDoc(db, userPlanProgressDoc(uid))).catch(() => undefined),
-    deleteDoc(pathDoc(db, userActivityDoc(uid))).catch(() => undefined),
-  ]);
+  await Promise.all(
+    SYNCED_STORES.map((store) =>
+      deleteDoc(pathDoc(db, store.docPath(uid))).catch(() => undefined),
+    ),
+  );
 }
 
 export function exportUserBackupJson(meta?: {
   uid?: string | null;
   email?: string | null;
 }): string {
-  const payload = {
-    exportedAt: new Date().toISOString(),
-    app: "biblos",
-    meta: meta ?? {},
-    highlights: {
-      store: exportVerseMarkStore(),
-      touched: exportVerseMarkTouched(),
-      removed: exportVerseMarkRemoved(),
+  return JSON.stringify(
+    {
+      exportedAt: new Date().toISOString(),
+      app: "biblos",
+      meta: meta ?? {},
+      stores: snapshotLocalUserData(),
     },
-    notes: exportDayNoteStore(),
-    verseNotes: exportVerseNoteStore(),
-    planProgress: exportPlanProgressStore(),
-    activity: exportActivityStore(),
-  };
-  return JSON.stringify(payload, null, 2);
+    null,
+    2,
+  );
 }
 
 export function downloadUserBackupJson(filename = "biblos-backup.json"): void {

@@ -3,6 +3,7 @@ export {
   stopUserDataSync,
   queueUserDataPush,
   flushUserDataPush,
+  flushUserDataBeforeSignOut,
   snapshotLocalUserData,
   mergeLocalSnapshotIntoStores,
   clearPersonalLocalData,
@@ -14,3 +15,4 @@ export {
   type SyncStatus,
   type LocalUserDataSnapshot,
 } from "./data/userDataSync";
+export { useSyncStatus } from "./useSyncStatus";

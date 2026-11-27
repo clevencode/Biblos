@@ -247,16 +247,8 @@ export function setVerseMarks(
     writeRemoved(removed);
     writeTouched(touched);
   }
+  /* UI já actualizada; user-sync marca pendente e envia em background. */
   writeStore(store);
-  // Outbox: UI já actualizada; sync Firestore em background.
-  void import("./bible/zeroLag/syncOutbox")
-    .then(({ enqueueOutbox }) => {
-      enqueueOutbox(
-        "verse_mark",
-        `${bookId}.${chapterId}:${verses.join(",")}`,
-      );
-    })
-    .catch(() => undefined);
   return loadChapterMarks(bookId, chapterId);
 }
 

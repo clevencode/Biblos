@@ -5,6 +5,7 @@ import {
 } from "../../userProfile";
 import { FREE_MARK_QUOTA } from "../../verseMarks";
 import { useUiLocale } from "../../i18n/UiLocaleContext";
+import { useSyncStatus } from "../../features/user-sync";
 
 function initialsFromName(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -42,6 +43,15 @@ export function ProfileHeader({
   const displayName = preferredDisplayName(profile) || "…";
   const photoURL = profile.photoURL?.trim() || null;
   const initials = initialsFromName(displayName);
+  const syncStatus = useSyncStatus();
+  const syncLabel =
+    syncStatus === "synced"
+      ? t("sync.synced")
+      : syncStatus === "pending"
+        ? t("sync.pending")
+        : syncStatus === "offline"
+          ? t("sync.offline")
+          : null;
 
   return (
     <header className="profile-header">
@@ -65,6 +75,26 @@ export function ProfileHeader({
               <p className="profile-header-email muted">
                 {profile.email || t("profile.connectedAccount")}
               </p>
+              {syncLabel ? (
+                <p
+                  className={`profile-header-sync is-${syncStatus}`}
+                  role="status"
+                  aria-live="polite"
+                >
+                  <YvIcon
+                    name={
+                      syncStatus === "synced"
+                        ? "check_circle"
+                        : syncStatus === "offline"
+                          ? "cloud_off"
+                          : "sync"
+                    }
+                    className="profile-header-sync-icon"
+                    opsz={20}
+                  />
+                  <span>{syncLabel}</span>
+                </p>
+              ) : null}
             </>
           )}
         </div>

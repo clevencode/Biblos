@@ -4582,6 +4582,43 @@ html[data-theme="dark"] .profile-download-btn {
   background: color-mix(in srgb, var(--text) 12%, transparent);
 }
 
+/* Estado da sync das atividades (conta ligada). */
+.profile-header-sync {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 550;
+  line-height: 1.2;
+}
+
+.profile-header-sync-icon {
+  flex: none;
+  font-size: 15px;
+}
+
+.profile-header-sync.is-synced .profile-header-sync-icon {
+  color: var(--success, #16a34a);
+}
+
+.profile-header-sync.is-pending .profile-header-sync-icon {
+  animation: profile-sync-spin 1.1s linear infinite;
+}
+
+@keyframes profile-sync-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .profile-header-sync.is-pending .profile-header-sync-icon {
+    animation: none;
+  }
+}
+
 /* Convidado: « Se connecter » no lugar da engrenagem (mesma posição). */
 .profile-header-signin {
   flex: none;
