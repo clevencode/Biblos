@@ -389,9 +389,7 @@ html[data-theme="dark"] .biblos-shell {
     .bible-passage-end-skips *
   ):not(.bible-yv-tools-menu-btn):not(.mode-tabs-hub):not(
     .mode-tabs-item
-  ):not(.mode-tabs-account):not(.bible-verse-actions-nav-pill):not(
-    .bible-chapter-fab
-  ):not(.mode-tabs-fullscreen) {
+  ):not(.mode-tabs-account):not(.bible-verse-actions-nav-pill) {
   box-shadow: none !important;
 }
 
@@ -1195,8 +1193,9 @@ html[data-reader-fullscreen="true"] .app.is-bible-mode .bible-reader--yv::after 
   background: var(--mode-tabs-hub-bg);
   color: var(--mode-tabs-hub-fg);
   font-size: 1.3rem;
-  /* Sem sombra (era anulada pelo reset global; agora explícito). */
-  box-shadow: none;
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--ink) 8%, transparent),
+    0 6px 16px color-mix(in srgb, var(--ink) 12%, transparent);
   cursor: pointer;
   pointer-events: auto;
   touch-action: manipulation;
@@ -21939,148 +21938,73 @@ button.bible-study-ref-modal-title.is-jump:focus-visible {
 }
 
 /* ==========================================================================
- * TESTE — Tinted Glassmorphism (vidro fosco matizado) no chrome do leitor.
- * Opt-in: só existe sob html[data-ui-glass] (src/ui/glassTheme.ts, ?glass=).
- * Âmbito: topbar, barra inferior e botões flutuantes. A área de leitura fica
- * limpa sobre --bg-canvas. Painéis abertos (is-top-sheet-open) mantêm a
- * topbar opaca.
- *
- * Boas práticas aplicadas:
- * - backdrop-filter só em pseudo-elementos / elementos sem filhos `fixed`
- *   (backdrop-filter cria containing block para descendentes fixed).
- * - Poucas camadas com blur (3): botões dentro das barras não refazem blur.
- * - Rim light com box-shadow inset (borda em gradiente "vaza" sob fill
- *   translúcido).
- * - Fallback opaco: @supports sem backdrop-filter e
- *   prefers-reduced-transparency; blur menor em ecrãs táteis.
+ * TESTE — Tinted Glassmorphism nos botões da topbar e da navbar.
+ * Mesmo tema: base = superfície actual (--surface / chrome), tinta = --text
+ * do próprio tema (sem cor nova). Só acrescenta interesse visual:
+ *  - base levemente translúcida + backdrop-filter (vidro real sobre o texto
+ *    nos skips ‹ ›; sobre as barras opacas fica quase igual ao sólido);
+ *  - reflexo suave no topo (gradiente da cor do texto);
+ *  - aro especular de 1px em gradiente (padding-box/border-box), em vez de
+ *    box-shadow, porque o reset global anula box-shadow nos botões.
+ * Remover este bloco desfaz o teste por completo.
  * ========================================================================== */
-
-/* 1. Tokens semânticos (cor trocável só via --accent-rgb) */
-html[data-ui-glass] {
-  --accent-rgb: 198, 146, 58; /* âmbar (default) */
-  --bg-canvas: var(--bible-nav-surface, var(--bg));
-  --surface-glass-tint: rgba(var(--accent-rgb), 0.16);
-  --surface-glass-elevated: rgba(var(--accent-rgb), 0.28);
-  --border-specular-top: rgba(var(--accent-rgb), 0.35);
-  --border-specular-bottom: rgba(var(--accent-rgb), 0.1);
-  --text-primary: var(--text);
-  --text-secondary: var(--muted);
-  --glass-blur: 20px;
-  --glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
-  --glass-rim:
-    inset 0 1px 0 var(--border-specular-top),
-    inset 0 -1px 0 var(--border-specular-bottom),
-    inset 0 0 0 1px rgba(var(--accent-rgb), 0.12),
-    inset 0 1px 0 1px rgba(255, 255, 255, 0.06);
+.bible-yv-top .hdr-trigger,
+.bible-yv-top .bible-yv-top-passage-arrow.is-pick-side.is-shown,
+.bible-yv-top .bible-yv-section-return,
+.bible-yv-top .bible-yv-pick-book-search-pill,
+.mode-tabs-hub,
+.mode-tabs-fullscreen,
+.bible-yv-dock-play,
+.bible-chapter-fab {
+  --glass-base: var(--yv-chrome-surface, var(--surface));
+  --glass-fill: color-mix(in srgb, var(--glass-base) 78%, transparent);
+  --glass-sheen: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--text) 13%, transparent) 0%,
+    color-mix(in srgb, var(--text) 4%, transparent) 48%,
+    transparent 100%
+  );
+  --glass-rim: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--text) 32%, transparent) 0%,
+    color-mix(in srgb, var(--text) 8%, transparent) 55%,
+    color-mix(in srgb, var(--text) 16%, transparent) 100%
+  );
+  border: 1px solid transparent !important;
+  background:
+    var(--glass-sheen) padding-box,
+    linear-gradient(var(--glass-fill), var(--glass-fill)) padding-box,
+    var(--glass-rim) border-box !important;
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  backdrop-filter: blur(14px) saturate(160%);
 }
 
-html[data-ui-glass="amber"] {
-  --accent-rgb: 198, 146, 58;
-}
-html[data-ui-glass="sapphire"] {
-  --accent-rgb: 59, 130, 246;
-}
-html[data-ui-glass="emerald"] {
-  --accent-rgb: 16, 185, 129;
-}
-
-/* Tátil: blur menor (custo de composição em Android WebView). */
-@media (pointer: coarse) {
-  html[data-ui-glass] {
-    --glass-blur: 14px;
-  }
+.bible-yv-top .hdr-trigger:hover:not(:disabled),
+.bible-yv-top .bible-yv-top-passage-arrow.is-pick-side.is-shown:hover:not(:disabled),
+.bible-yv-top .bible-yv-section-return:hover,
+.mode-tabs-hub:hover,
+.mode-tabs-fullscreen:hover,
+.bible-yv-dock-play:hover:not(:disabled),
+.bible-chapter-fab:hover:not(:disabled) {
+  --glass-sheen: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--text) 20%, transparent) 0%,
+    color-mix(in srgb, var(--text) 7%, transparent) 55%,
+    transparent 100%
+  );
 }
 
-/* 2. Atmosfera: luz ambiente difusa atrás das zonas de controlo */
-html[data-ui-glass] .bible-reader--yv {
-  background-color: var(--bg-canvas);
-  background-image:
-    radial-gradient(120% 90px at 50% 0, rgba(var(--accent-rgb), 0.08), transparent),
-    radial-gradient(120% 120px at 50% 100%, rgba(var(--accent-rgb), 0.08), transparent);
-}
-
-/* 3a. Topbar: vidro num ::before (o elemento não vira containing block) */
-html[data-ui-glass] .bible-yv-top:not(.is-top-sheet-open) {
-  background: transparent !important;
-  border-bottom: 1px solid var(--border-specular-bottom);
-}
-
-html[data-ui-glass] .bible-yv-top:not(.is-top-sheet-open)::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background: var(--surface-glass-tint);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
-  backdrop-filter: blur(var(--glass-blur)) saturate(140%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
-}
-
-/* 3b. Barra inferior (pseudo do leitor) */
-html[data-ui-glass] .app.is-bible-mode .bible-reader--yv::after {
-  background: var(--surface-glass-tint);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
-  backdrop-filter: blur(var(--glass-blur)) saturate(140%);
-  border-top: 1px solid var(--border-specular-top);
-}
-
-/* 3c. Botões dentro das barras: tint + rim, sem blur próprio */
-html[data-ui-glass] .bible-yv-top:not(.is-top-sheet-open) .hdr-trigger,
-html[data-ui-glass] .mode-tabs:not(.is-open) .mode-tabs-fullscreen {
-  background: var(--surface-glass-tint) !important;
-  color: var(--text-primary) !important;
-  box-shadow: var(--glass-rim) !important;
-}
-
-html[data-ui-glass] .app.is-bible-mode.is-narrow .bible-yv-dock.is-play-only .bible-yv-audio-player {
-  --audio-play-bg: var(--surface-glass-tint);
-  --audio-play-fg: var(--text-primary);
-  --audio-play-hover: var(--surface-glass-elevated);
-  --audio-play-press: var(--surface-glass-elevated);
-}
-
-html[data-ui-glass] .app.is-bible-mode.is-narrow .bible-yv-dock .bible-yv-dock-play {
-  box-shadow: var(--glass-rim) !important;
-}
-
-/* 4. Acção principal / destino activo: vidro elevado */
-html[data-ui-glass] .mode-tabs:not(.is-open) .mode-tabs-hub {
-  background: var(--surface-glass-elevated) !important;
-  color: var(--text-primary) !important;
-  box-shadow: var(--glass-rim) !important;
-}
-
-/* 3d. Skips ‹ › flutuam sobre o texto: única camada de botão com blur */
-html[data-ui-glass] .bible-chapter-fab {
-  background: var(--surface-glass-tint);
-  color: var(--text-primary);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
-  backdrop-filter: blur(var(--glass-blur)) saturate(140%);
-  box-shadow: var(--glass-shadow), var(--glass-rim);
-}
-
-html[data-ui-glass] .bible-chapter-fab:hover:not(:disabled),
-html[data-ui-glass] .bible-chapter-fab:focus-visible {
-  background: var(--surface-glass-elevated);
-}
-
-/* Fallbacks: sem suporte a blur ou utilizador pede menos transparência → opaco */
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  html[data-ui-glass] {
-    --surface-glass-tint: color-mix(in srgb, rgb(var(--accent-rgb)) 16%, var(--bg-canvas));
-    --surface-glass-elevated: color-mix(in srgb, rgb(var(--accent-rgb)) 28%, var(--bg-canvas));
-  }
-}
-
+/* Acessibilidade: quem pede menos transparência recebe a base sólida. */
 @media (prefers-reduced-transparency: reduce) {
-  html[data-ui-glass] {
-    --surface-glass-tint: color-mix(in srgb, rgb(var(--accent-rgb)) 16%, var(--bg-canvas));
-    --surface-glass-elevated: color-mix(in srgb, rgb(var(--accent-rgb)) 28%, var(--bg-canvas));
-  }
-  html[data-ui-glass] .bible-yv-top::before,
-  html[data-ui-glass] .bible-reader--yv::after,
-  html[data-ui-glass] .bible-chapter-fab {
+  .bible-yv-top .hdr-trigger,
+  .bible-yv-top .bible-yv-top-passage-arrow.is-pick-side.is-shown,
+  .bible-yv-top .bible-yv-section-return,
+  .bible-yv-top .bible-yv-pick-book-search-pill,
+  .mode-tabs-hub,
+  .mode-tabs-fullscreen,
+  .bible-yv-dock-play,
+  .bible-chapter-fab {
+    --glass-fill: var(--glass-base);
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }

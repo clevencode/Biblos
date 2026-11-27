@@ -13,7 +13,6 @@ import { ensureCleanSlate } from "./cleanSlate";
 import { scheduleIdle } from "./scheduleIdle";
 import { applyTheme } from "./theme";
 import { bootPassageBarPanelLayout } from "./bible/passageBarPanelLayout";
-import { bootGlassTheme } from "./ui/glassTheme";
 import { bootPassagePillLayoutTest } from "./bible/passagePillLayout";
 import { bootUiColortest } from "./ui/colortest";
 import { bootKeyboardInsets } from "./ui/keyboardInsets";
@@ -30,7 +29,6 @@ import "./index.css";
 bootUiColortest();
 bootPassagePillLayoutTest();
 bootPassageBarPanelLayout();
-bootGlassTheme();
 bootKeyboardInsets();
 
 async function boot() {
