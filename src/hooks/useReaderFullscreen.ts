@@ -1,8 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  browserFullscreenElement,
-  setSystemBarsHidden,
-} from "../native/immersiveMode";
+import { setSystemBarsHidden } from "../native/immersiveMode";
 import { useReaderChromeStore } from "../store/useReaderChromeStore";
 
 /** Duração da transição do chrome (ver CSS `data-reader-fs-anim`). */
@@ -14,10 +11,10 @@ const HINT_MS = 2800;
  * Modo tela cheia do leitor: oculta topbar, navbar, play e skips
  * (CSS via `html[data-reader-fullscreen]`) com transição suave.
  *
- * Barras do sistema: APK → plugin nativo; PWA instalada (tátil) → Fullscreen
- * API (`navigationUI: "hide"`), com o aviso do próprio Chrome; separador
- * normal → só o modo da app, com aviso próprio (`hintVisible`). Esc e
- * « voltar » saem via `useShellBackHandler` (1.ª prioridade).
+ * Nunca usa a Fullscreen API do navegador: ela impõe o aviso do Chrome
+ * (« <domínio> - Faites glisser… »), que não é personalizável. Mostra sempre
+ * o aviso próprio (`hintVisible`). Barras do sistema: só no APK (plugin
+ * nativo). Esc e « voltar » saem via `useShellBackHandler` (1.ª prioridade).
  *
  * Montar uma única vez (AppShellNav) — é dono dos atributos no `<html>`.
  */
@@ -68,34 +65,14 @@ export function useReaderFullscreen(enabled: boolean) {
     if (wasActive.current !== active) {
       wasActive.current = active;
       pulseChromeAnim();
-      if (active) {
-        /* Barras do sistema ocultas (APK / PWA instalada). Se o Chrome entrou
-         * em ecrã inteiro, ele já mostra o seu aviso — não duplicar. */
-        void setSystemBarsHidden(true).then((mode) => {
-          if (mode !== "browser") showHint();
-        });
-      } else {
-        hideHint();
-        void setSystemBarsHidden(false);
-      }
+      /* APK: barras do sistema (estado + navegação) totalmente ocultas. */
+      void setSystemBarsHidden(active);
+      if (active) showHint();
+      else hideHint();
     }
     if (active) root.dataset.readerFullscreen = "true";
     else delete root.dataset.readerFullscreen;
   }, [active, hideHint, pulseChromeAnim, showHint]);
-
-  /* Saída pelo sistema (gesto voltar / deslizar no ecrã inteiro do Chrome). */
-  useEffect(() => {
-    const sync = () => {
-      if (browserFullscreenElement()) return;
-      if (useReaderChromeStore.getState().fullscreen) exit();
-    };
-    document.addEventListener("fullscreenchange", sync);
-    document.addEventListener("webkitfullscreenchange", sync);
-    return () => {
-      document.removeEventListener("fullscreenchange", sync);
-      document.removeEventListener("webkitfullscreenchange", sync);
-    };
-  }, [exit]);
 
   /* Fora do leitor (outra aba / overlay): não fica preso em tela cheia. */
   useEffect(() => {
