@@ -13,7 +13,8 @@ const HINT_MS = 2800;
  *
  * Não usa a Fullscreen API do navegador — ela impõe o aviso nativo
  * (« Prima Esc para sair… »), que não pode ser personalizado. Em vez
- * disso mostra um aviso próprio (`hintVisible`) e sai com Esc.
+ * disso mostra um aviso próprio (`hintVisible`). Esc e « voltar » saem
+ * via `useShellBackHandler` (1.ª prioridade da cadeia de retorno).
  *
  * Montar uma única vez (AppShellNav) — é dono dos atributos no `<html>`.
  */
@@ -41,56 +42,49 @@ export function useReaderFullscreen(enabled: boolean) {
     setHintVisible(false);
   }, []);
 
-  const enter = useCallback(() => {
-    pulseChromeAnim();
-    setActive(true);
-    /* APK: barras do sistema (estado + navegação) totalmente ocultas. */
-    void setSystemBarsHidden(true);
+  const showHint = useCallback(() => {
     setHintVisible(true);
     if (hintTimer.current) clearTimeout(hintTimer.current);
     hintTimer.current = setTimeout(() => {
       setHintVisible(false);
       hintTimer.current = null;
     }, HINT_MS);
-  }, [pulseChromeAnim, setActive]);
+  }, []);
 
-  const exit = useCallback(() => {
-    pulseChromeAnim();
-    setActive(false);
-    hideHint();
-    void setSystemBarsHidden(false);
-  }, [hideHint, pulseChromeAnim, setActive]);
+  /*
+   * Entrar/sair = só mudar o estado. Os efeitos (animação, barras do
+   * sistema, aviso) reagem à mudança — iguais venham do botão, de Esc,
+   * do « voltar » do Android/navegador ou de sair do leitor.
+   */
+  const enter = useCallback(() => setActive(true), [setActive]);
+  const exit = useCallback(() => setActive(false), [setActive]);
 
-  /* Esc sai do modo (o atalho que o aviso nativo ensinava). */
+  const wasActive = useRef(active);
   useEffect(() => {
-    if (!active) return;
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key !== "Escape" || event.defaultPrevented) return;
-      exit();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [active, exit]);
+    const root = document.documentElement;
+    if (wasActive.current !== active) {
+      wasActive.current = active;
+      pulseChromeAnim();
+      /* APK: barras do sistema (estado + navegação) totalmente ocultas. */
+      void setSystemBarsHidden(active);
+      if (active) showHint();
+      else hideHint();
+    }
+    if (active) root.dataset.readerFullscreen = "true";
+    else delete root.dataset.readerFullscreen;
+  }, [active, hideHint, pulseChromeAnim, showHint]);
 
   /* Fora do leitor (outra aba / overlay): não fica preso em tela cheia. */
   useEffect(() => {
     if (!enabled && active) exit();
   }, [enabled, active, exit]);
 
-  useEffect(() => {
-    const root = document.documentElement;
-    if (active) root.dataset.readerFullscreen = "true";
-    else delete root.dataset.readerFullscreen;
-    return () => {
-      delete root.dataset.readerFullscreen;
-    };
-  }, [active]);
-
   useEffect(
     () => () => {
       if (animTimer.current) clearTimeout(animTimer.current);
       if (hintTimer.current) clearTimeout(hintTimer.current);
       delete document.documentElement.dataset.readerFsAnim;
+      delete document.documentElement.dataset.readerFullscreen;
     },
     [],
   );
