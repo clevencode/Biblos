@@ -10,6 +10,14 @@ type BibleBookSearchFieldProps = {
   clearLabel: string;
   /** Foca o campo ao montar (ex.: aberto pelo botão de pesquisa da topbar). */
   autoFocus?: boolean;
+  /** Mostra a lupa à esquerda (barra inferior); a topbar dispensa. */
+  showIcon?: boolean;
+  /**
+   * Campo vazio: o botão vira "Annuler" e chama isto (sair do modo pesquisa).
+   * Sem isto, o botão fica desactivado quando vazio.
+   */
+  onCancel?: () => void;
+  cancelLabel?: string;
   className?: string;
 };
 
@@ -25,9 +33,15 @@ export function BibleBookSearchField({
   label,
   clearLabel,
   autoFocus = false,
+  showIcon = true,
+  onCancel,
+  cancelLabel,
   className = "",
 }: BibleBookSearchFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const empty = !value.trim();
+  const canCancel = empty && Boolean(onCancel);
+  const actionLabel = canCancel ? (cancelLabel ?? clearLabel) : clearLabel;
 
   useEffect(() => {
     if (autoFocus) inputRef.current?.focus({ preventScroll: true });
@@ -38,11 +52,13 @@ export function BibleBookSearchField({
       className={`bible-yv-pick-book-search-pill${className ? ` ${className}` : ""}`}
       role="search"
     >
-      <YvIcon
-        name="search"
-        className="bible-yv-pick-search-trigger-icon"
-        aria-hidden
-      />
+      {showIcon ? (
+        <YvIcon
+          name="search"
+          className="bible-yv-pick-search-trigger-icon"
+          aria-hidden
+        />
+      ) : null}
       <input
         ref={inputRef}
         type="search"
@@ -59,11 +75,11 @@ export function BibleBookSearchField({
       <button
         type="button"
         className="bible-yv-pick-book-search-clear"
-        onClick={onClear}
-        disabled={!value.trim()}
-        aria-label={clearLabel}
+        onClick={canCancel ? onCancel : onClear}
+        disabled={empty && !canCancel}
+        aria-label={actionLabel}
       >
-        {clearLabel}
+        {actionLabel}
       </button>
     </div>
   );

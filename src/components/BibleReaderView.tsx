@@ -2100,6 +2100,9 @@ export function BibleReaderView({
             label={t("searchBooks.search")}
             clearLabel={t("common.clear")}
             autoFocus
+            showIcon={false}
+            onCancel={() => setBookSearchInTopbar(false)}
+            cancelLabel={t("common.cancel")}
           />
         </nav>
       );
