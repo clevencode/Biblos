@@ -1241,14 +1241,141 @@ html[data-reader-fullscreen="true"] .app.is-bible-mode .bible-reader--yv::after 
 
 /*
  * Tela cheia do leitor (useReaderFullscreen → html[data-reader-fullscreen]):
- * topbar, play e pill somem; só o botão de sair fica no lugar.
+ * topbar sobe, play e pill descem, ambos a esbater; só o botão de sair fica.
+ * `data-reader-fs-anim` marca a janela da transição (entrar e sair): durante
+ * ela o chrome continua visível para a animação correr; depois fica oculto.
  */
-html[data-reader-fullscreen="true"] .bible-reader--yv .bible-yv-top,
+html[data-reader-fs-anim] .bible-reader--yv .bible-yv-top,
+html[data-reader-fs-anim] .bible-reader--yv .bible-yv-dock,
+html[data-reader-fs-anim] .mode-tabs .mode-tabs-stage,
+html[data-reader-fs-anim] .bible-chapter-fab {
+  transition:
+    opacity 260ms ease,
+    transform 380ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+
+html[data-reader-fullscreen="true"] .bible-reader--yv .bible-yv-top {
+  opacity: 0 !important;
+  transform: translate3d(0, -16px, 0) !important;
+  pointer-events: none !important;
+}
+
 html[data-reader-fullscreen="true"] .bible-reader--yv .bible-yv-dock,
 html[data-reader-fullscreen="true"] .mode-tabs.is-reader-fullscreen .mode-tabs-stage {
   opacity: 0 !important;
-  visibility: hidden !important;
+  transform: translate3d(0, 16px, 0) !important;
   pointer-events: none !important;
+}
+
+html[data-reader-fullscreen="true"]:not([data-reader-fs-anim])
+  .bible-reader--yv
+  .bible-yv-top,
+html[data-reader-fullscreen="true"]:not([data-reader-fs-anim])
+  .bible-reader--yv
+  .bible-yv-dock,
+html[data-reader-fullscreen="true"]:not([data-reader-fs-anim])
+  .mode-tabs.is-reader-fullscreen
+  .mode-tabs-stage {
+  visibility: hidden !important;
+}
+
+/* Ícone do botão: troca com rotação + escala curtas. */
+.mode-tabs-fullscreen-icon {
+  display: grid;
+  place-items: center;
+  animation: reader-fs-icon-in 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes reader-fs-icon-in {
+  from {
+    opacity: 0;
+    transform: rotate(-90deg) scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Aviso próprio de tela cheia (substitui o aviso nativo do navegador). */
+.reader-fs-hint {
+  position: fixed;
+  top: max(14px, calc(env(safe-area-inset-top, 0px) + 8px));
+  left: 50%;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: calc(100vw - 2 * var(--bible-chrome-inset-x));
+  padding: 10px 16px;
+  border: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  line-height: 1.2;
+  white-space: nowrap;
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--ink) 18%, transparent);
+  opacity: 0;
+  transform: translate3d(-50%, -12px, 0);
+  pointer-events: none;
+  transition:
+    opacity 240ms ease,
+    transform 360ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.reader-fs-hint.is-visible {
+  opacity: 1;
+  transform: translate3d(-50%, 0, 0);
+  pointer-events: auto;
+}
+
+.reader-fs-hint-title {
+  font-weight: 650;
+}
+
+.reader-fs-hint-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  overflow: hidden;
+  color: var(--muted);
+  text-overflow: ellipsis;
+}
+
+.reader-fs-hint-icon {
+  flex: none;
+  font-size: 16px;
+  color: var(--text);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-reader-fs-anim] .bible-reader--yv .bible-yv-top,
+  html[data-reader-fs-anim] .bible-reader--yv .bible-yv-dock,
+  html[data-reader-fs-anim] .mode-tabs .mode-tabs-stage,
+  html[data-reader-fs-anim] .bible-chapter-fab {
+    transition: opacity 160ms ease !important;
+  }
+
+  html[data-reader-fullscreen="true"] .bible-reader--yv .bible-yv-top,
+  html[data-reader-fullscreen="true"] .bible-reader--yv .bible-yv-dock,
+  html[data-reader-fullscreen="true"] .mode-tabs.is-reader-fullscreen .mode-tabs-stage {
+    transform: none !important;
+  }
+
+  .mode-tabs-fullscreen-icon,
+  .bible-chapter-end-next-wrap {
+    animation: none;
+  }
+
+  .reader-fs-hint,
+  .reader-fs-hint.is-visible {
+    transform: translate3d(-50%, 0, 0);
+    transition: opacity 160ms ease;
+  }
 }
 
 html[data-reader-fullscreen="true"] .mode-tabs.is-reader-fullscreen::before {
@@ -17304,6 +17431,22 @@ html[data-reader-fullscreen="true"] .bible-chapter-fab {
 
 .bible-chapter-end-next-wrap .bible-chapter-end-next {
   pointer-events: auto;
+}
+
+/* Entra com o modo tela cheia (sobe + esbate), depois do chrome sair. */
+.bible-chapter-end-next-wrap {
+  animation: reader-fs-next-in 380ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both;
+}
+
+@keyframes reader-fs-next-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 12px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 /*

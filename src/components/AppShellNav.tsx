@@ -206,6 +206,14 @@ export function AppShellNav({
   const fullscreenLabel = fullscreen.active
     ? t("shell.exitFullscreen")
     : t("shell.fullscreen");
+  /* Teclado físico (desktop) → menciona Esc; toque → só o botão. */
+  const fullscreenHint = t(
+    typeof window !== "undefined" &&
+      window.matchMedia?.("(hover: hover) and (pointer: fine)").matches
+      ? "shell.fullscreenHintKeys"
+      : "shell.fullscreenHintTouch",
+  );
+  const [hintBefore, hintAfter = ""] = fullscreenHint.split("{icon}");
 
   return (
     <>
@@ -321,13 +329,38 @@ export function AppShellNav({
               title={fullscreenLabel}
               onClick={fullscreen.active ? fullscreen.exit : fullscreen.enter}
             >
-              <YvIcon
-                name={fullscreen.active ? "fullscreen_exit" : "fullscreen"}
-              />
+              {/* key: remonta o ícone → micro-animação de troca. */}
+              <span
+                key={fullscreen.active ? "exit" : "enter"}
+                className="mode-tabs-fullscreen-icon"
+              >
+                <YvIcon
+                  name={fullscreen.active ? "fullscreen_exit" : "fullscreen"}
+                />
+              </span>
             </button>
           ) : null}
         </div>
       </nav>
+
+      {/* Aviso próprio (substitui o aviso nativo da Fullscreen API). */}
+      {fullscreen.active ? (
+        <div
+          className={`reader-fs-hint${fullscreen.hintVisible ? " is-visible" : ""}`}
+          role="status"
+          aria-live="polite"
+          onClick={fullscreen.hideHint}
+        >
+          <strong className="reader-fs-hint-title">
+            {t("shell.fullscreenHintTitle")}
+          </strong>
+          <span className="reader-fs-hint-text">
+            {hintBefore}
+            <YvIcon name="fullscreen_exit" className="reader-fs-hint-icon" />
+            {hintAfter}
+          </span>
+        </div>
+      ) : null}
     </>
   );
 }

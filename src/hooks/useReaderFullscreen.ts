@@ -1,80 +1,87 @@
-import { useCallback, useEffect } from "react";
+import { Capacitor } from "@capacitor/core";
+import { Animation, StatusBar } from "@capacitor/status-bar";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useReaderChromeStore } from "../store/useReaderChromeStore";
 
-type WebkitDocument = Document & {
-  webkitFullscreenEnabled?: boolean;
-  webkitFullscreenElement?: Element | null;
-  webkitExitFullscreen?: () => Promise<void> | void;
-};
+/** Duração da transição do chrome (ver CSS `data-reader-fs-anim`). */
+const CHROME_ANIM_MS = 420;
+/** Quanto tempo o aviso « como sair » fica visível. */
+const HINT_MS = 2800;
 
-type WebkitElement = HTMLElement & {
-  webkitRequestFullscreen?: () => Promise<void> | void;
-};
-
-function documentFullscreenElement(): Element | null {
-  const doc = document as WebkitDocument;
-  return doc.fullscreenElement ?? doc.webkitFullscreenElement ?? null;
-}
-
-function documentFullscreenSupported(): boolean {
-  const doc = document as WebkitDocument;
-  return Boolean(doc.fullscreenEnabled || doc.webkitFullscreenEnabled);
-}
-
-async function enterDocumentFullscreen() {
-  if (!documentFullscreenSupported() || documentFullscreenElement()) return;
-  const root = document.documentElement as WebkitElement;
+/** Nativo (APK): esconde/mostra a barra de estado — sem aviso do sistema. */
+async function setNativeImmersive(on: boolean) {
+  if (!Capacitor.isNativePlatform()) return;
   try {
-    await (root.requestFullscreen?.({ navigationUI: "hide" }) ??
-      root.webkitRequestFullscreen?.());
+    if (on) await StatusBar.hide({ animation: Animation.Fade });
+    else await StatusBar.show({ animation: Animation.Fade });
   } catch {
-    /* Recusado (gesto/permissão): o modo do leitor segue sem API nativa. */
-  }
-}
-
-async function exitDocumentFullscreen() {
-  if (!documentFullscreenElement()) return;
-  const doc = document as WebkitDocument;
-  try {
-    await (doc.exitFullscreen?.() ?? doc.webkitExitFullscreen?.());
-  } catch {
-    /* Já saiu. */
+    /* plugin indisponível: o modo do leitor segue só com CSS */
   }
 }
 
 /**
- * Modo tela cheia do leitor: oculta topbar, navbar e play (CSS via
- * `html[data-reader-fullscreen]`) e, quando o browser suporta, pede a
- * Fullscreen API. Sair da tela cheia nativa (Esc / gesto) sai do modo.
+ * Modo tela cheia do leitor: oculta topbar, navbar, play e skips
+ * (CSS via `html[data-reader-fullscreen]`) com transição suave.
  *
- * Montar uma única vez (AppShellNav) — é dono do atributo no `<html>`.
+ * Não usa a Fullscreen API do navegador — ela impõe o aviso nativo
+ * (« Prima Esc para sair… »), que não pode ser personalizado. Em vez
+ * disso mostra um aviso próprio (`hintVisible`) e sai com Esc.
+ *
+ * Montar uma única vez (AppShellNav) — é dono dos atributos no `<html>`.
  */
 export function useReaderFullscreen(enabled: boolean) {
   const active = useReaderChromeStore((s) => s.fullscreen);
   const setActive = useReaderChromeStore((s) => s.setFullscreen);
+  const [hintVisible, setHintVisible] = useState(false);
+  const animTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  /** Marca a janela de animação (enter e exit usam a mesma transição). */
+  const pulseChromeAnim = useCallback(() => {
+    const root = document.documentElement;
+    root.dataset.readerFsAnim = "true";
+    if (animTimer.current) clearTimeout(animTimer.current);
+    animTimer.current = setTimeout(() => {
+      delete root.dataset.readerFsAnim;
+      animTimer.current = null;
+    }, CHROME_ANIM_MS);
+  }, []);
+
+  const hideHint = useCallback(() => {
+    if (hintTimer.current) clearTimeout(hintTimer.current);
+    hintTimer.current = null;
+    setHintVisible(false);
+  }, []);
 
   const enter = useCallback(() => {
+    pulseChromeAnim();
     setActive(true);
-    void enterDocumentFullscreen();
-  }, [setActive]);
+    void setNativeImmersive(true);
+    setHintVisible(true);
+    if (hintTimer.current) clearTimeout(hintTimer.current);
+    hintTimer.current = setTimeout(() => {
+      setHintVisible(false);
+      hintTimer.current = null;
+    }, HINT_MS);
+  }, [pulseChromeAnim, setActive]);
 
   const exit = useCallback(() => {
+    pulseChromeAnim();
     setActive(false);
-    void exitDocumentFullscreen();
-  }, [setActive]);
+    hideHint();
+    void setNativeImmersive(false);
+  }, [hideHint, pulseChromeAnim, setActive]);
 
-  /* Saída nativa (Esc, gesto do sistema) → sai do modo do leitor. */
+  /* Esc sai do modo (o atalho que o aviso nativo ensinava). */
   useEffect(() => {
-    const sync = () => {
-      if (!documentFullscreenElement()) setActive(false);
+    if (!active) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || event.defaultPrevented) return;
+      exit();
     };
-    document.addEventListener("fullscreenchange", sync);
-    document.addEventListener("webkitfullscreenchange", sync);
-    return () => {
-      document.removeEventListener("fullscreenchange", sync);
-      document.removeEventListener("webkitfullscreenchange", sync);
-    };
-  }, [setActive]);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [active, exit]);
 
   /* Fora do leitor (outra aba / overlay): não fica preso em tela cheia. */
   useEffect(() => {
@@ -90,5 +97,14 @@ export function useReaderFullscreen(enabled: boolean) {
     };
   }, [active]);
 
-  return { active, enter, exit };
+  useEffect(
+    () => () => {
+      if (animTimer.current) clearTimeout(animTimer.current);
+      if (hintTimer.current) clearTimeout(hintTimer.current);
+      delete document.documentElement.dataset.readerFsAnim;
+    },
+    [],
+  );
+
+  return { active, enter, exit, hintVisible, hideHint };
 }
