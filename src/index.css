@@ -21941,8 +21941,8 @@ button.bible-study-ref-modal-title.is-jump:focus-visible {
  * TESTE — Tinted Glassmorphism nos botões da topbar e da navbar.
  * Mesmo tema: base = superfície actual (--surface / chrome), tinta = --text
  * do próprio tema (sem cor nova). Só acrescenta interesse visual:
- *  - base levemente translúcida + backdrop-filter (vidro real sobre o texto
- *    nos skips ‹ ›; sobre as barras opacas fica quase igual ao sólido);
+ *  - base levemente translúcida; backdrop-filter só nos skips ‹ › (únicos
+ *    sobre conteúdo — ver bloco de performance abaixo);
  *  - reflexo suave no topo (gradiente da cor do texto);
  *  - aro especular de 1px em gradiente (padding-box/border-box), em vez de
  *    box-shadow, porque o reset global anula box-shadow nos botões.
@@ -21975,8 +21975,25 @@ button.bible-study-ref-modal-title.is-jump:focus-visible {
     var(--glass-sheen) padding-box,
     linear-gradient(var(--glass-fill), var(--glass-fill)) padding-box,
     var(--glass-rim) border-box !important;
-  -webkit-backdrop-filter: blur(14px) saturate(160%);
-  backdrop-filter: blur(14px) saturate(160%);
+}
+
+/*
+ * Performance: blur só onde há conteúdo por trás (skips ‹ › sobre o texto).
+ * Os outros botões assentam em barras opacas da mesma cor — o fill
+ * translúcido já resulta idêntico, e backdrop-filter aí custaria GPU em
+ * cada frame sem efeito visível.
+ */
+.bible-chapter-fab:not(.is-hidden) {
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+/* Ecrãs táteis (GPU móvel): raio menor = amostragem mais barata. */
+@media (pointer: coarse) {
+  .bible-chapter-fab:not(.is-hidden) {
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+  }
 }
 
 .bible-yv-top .hdr-trigger:hover:not(:disabled),
@@ -22005,6 +22022,9 @@ button.bible-study-ref-modal-title.is-jump:focus-visible {
   .bible-yv-dock-play,
   .bible-chapter-fab {
     --glass-fill: var(--glass-base);
+  }
+
+  .bible-chapter-fab:not(.is-hidden) {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
