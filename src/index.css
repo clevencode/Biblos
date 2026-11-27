@@ -7,6 +7,15 @@
   --bible-chrome-btn-size: var(--hdr-size, var(--mobile-touch, 44px));
   /* Largura da coluna do leitor (.bible-reader / texto). */
   --bible-reader-max-w: 40rem;
+  /*
+   * Pills à esquerda da topbar (livro, ‹ Menu, ‹ Recherche…): todas com o
+   * tamanho e a tipografia do pill de livro da secção Bible.
+   */
+  --bible-top-pill-w: min(11rem, 46vw);
+  --bible-top-pill-h: var(--bible-chrome-btn-size);
+  --bible-top-pill-font-size: 0.8125rem;
+  --bible-top-pill-font-weight: 600;
+  --bible-top-pill-tracking: 0.02em;
   color-scheme: light;
 
   /*
@@ -22480,4 +22489,35 @@ button.bible-study-ref-modal-title.is-jump:focus-visible {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
+}
+
+/* ==========================================================================
+ * Topbar — pills à esquerda com tamanho único (referência: pill de livro).
+ * Mesma largura, altura, tipografia e margem lateral (chrome inset) em
+ * Bible, seletor de livro/capítulo, Menu, Recherche, Historique, Surlignages.
+ * ========================================================================== */
+.bible-yv-top .bible-yv-passage-chip.is-ref {
+  width: var(--bible-top-pill-w);
+  min-width: var(--bible-top-pill-w);
+  max-width: var(--bible-top-pill-w);
+  height: var(--bible-top-pill-h);
+  min-height: var(--bible-top-pill-h);
+}
+
+/* Começa na margem do chrome (como o hambúrguer à direita). */
+.bible-yv-top .bible-yv-top-passage-segments.is-passage-ref-unified {
+  padding-inline-start: 0;
+}
+
+.bible-yv-top .bible-yv-section-return {
+  justify-content: center;
+  width: var(--bible-top-pill-w);
+  min-width: var(--bible-top-pill-w);
+  max-width: var(--bible-top-pill-w);
+  height: var(--bible-top-pill-h);
+  min-height: var(--bible-top-pill-h);
+  padding-inline: 10px 14px;
+  font-size: var(--bible-top-pill-font-size);
+  font-weight: var(--bible-top-pill-font-weight);
+  letter-spacing: var(--bible-top-pill-tracking);
 }
