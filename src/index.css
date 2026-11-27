@@ -1100,7 +1100,7 @@ html[data-theme] .mode-tabs {
 }
 
 /*
- * Barra inferior (espelho da topbar): mesma superfície, separador e sombra.
+ * Barra inferior (espelho da topbar): mesma superfície e separador, sem sombra.
  * Vive no leitor (`isolation: isolate`) para ficar SOB o play (dock, z 40);
  * pill + tela cheia (.mode-tabs, fora do leitor) pintam por cima.
  */
@@ -1116,7 +1116,8 @@ html[data-theme] .mode-tabs {
   );
   background: var(--bible-nav-surface, var(--yv-bg));
   border-top: var(--yv-separator);
-  box-shadow: 0 -6px 16px 2px var(--bible-nav-surface, var(--yv-bg));
+  /* Sem fade: corte limpo no separador (igual à topbar). */
+  box-shadow: none;
   pointer-events: none;
   transition: opacity var(--yv-chrome-ms, 240ms) var(--yv-chrome-ease, ease);
 }
@@ -11441,11 +11442,8 @@ html[data-theme="dark"] .bible-reader--yv {
   /* Superfície = navbar (--bible-nav-surface / mode-tabs-canvas) */
   background: var(--bible-nav-surface, var(--yv-bg));
   border-bottom: var(--yv-separator);
-  /*
-   * Sombra na cor da superfície (= fundo da topbar): o texto esvanece ao
-   * passar por baixo, sem halo escuro. Exceção em `.biblos-shell *` (senão some).
-   */
-  box-shadow: 0 6px 16px 2px var(--bible-nav-surface, var(--yv-bg)) !important;
+  /* Sem sombra/fade: corte limpo no separador. */
+  box-shadow: none !important;
   transform: translate3d(0, 0, 0);
   opacity: 1;
   visibility: visible;
