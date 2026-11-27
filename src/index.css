@@ -17454,15 +17454,12 @@ html[data-reader-fullscreen="true"] .bible-chapter-fab {
 
 /*
  * Tela cheia: pill « capítulo seguinte » (FABs e chrome ocultos).
- * Sticky no scroll do texto: fica fixo em baixo à esquerda, na mesma linha
- * do botão de tela cheia (direita), e assenta no fim do capítulo.
- * Superfície = botão de tela cheia (ver bloco glass no fim).
+ * Só no fim do texto (no fluxo, sem sticky): aparece quando a leitura
+ * chega ao fim, em baixo à esquerda, na mesma linha do botão de tela cheia.
+ * Superfície opaca = botão de tela cheia (ver bloco glass no fim).
  */
 .bible-chapter-end-next-wrap {
-  position: sticky;
-  bottom: calc(
-    var(--reader-fs-btn-gap, 22px) + env(safe-area-inset-bottom, 0px)
-  );
+  position: relative;
   z-index: 3;
   display: flex;
   justify-content: flex-start;
@@ -17478,9 +17475,24 @@ html[data-reader-fullscreen="true"] .bible-chapter-fab {
   pointer-events: auto;
 }
 
-/* Entra com o modo tela cheia (sobe + esbate), depois do chrome sair. */
+/* Entra (sobe + esbate) quando o fim do texto chega ao ecrã. */
 .bible-chapter-end-next-wrap {
   animation: reader-fs-next-in 380ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both;
+}
+
+@supports (animation-timeline: view()) {
+  .bible-chapter-end-next-wrap {
+    animation: reader-fs-next-in linear both;
+    /* Inset 0: ignora o scroll-padding do texto (senão nunca "entra"). */
+    animation-timeline: view(block 0px);
+    animation-range: entry 10% entry 90%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bible-chapter-end-next-wrap {
+    animation: none;
+  }
 }
 
 @keyframes reader-fs-next-in {
@@ -17495,9 +17507,8 @@ html[data-reader-fullscreen="true"] .bible-chapter-fab {
 }
 
 /*
- * O sticky mede-se pela caixa de conteúdo do scroll: sem padding inferior
- * (o espaço final vem da margem do pill), o pill alinha com o botão de
- * tela cheia em qualquer contexto do leitor.
+ * Sem padding inferior no scroll (o espaço final vem da margem do pill):
+ * no fim do capítulo o pill fica na linha do botão de tela cheia.
  */
 html[data-reader-fullscreen="true"]
   .app
@@ -22451,16 +22462,14 @@ button.bible-study-ref-modal-title.is-jump:focus-visible {
  * translúcido já resulta idêntico, e backdrop-filter aí custaria GPU em
  * cada frame sem efeito visível.
  */
-.bible-chapter-fab:not(.is-hidden),
-.bible-chapter-end-next {
+.bible-chapter-fab:not(.is-hidden) {
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
 }
 
 /* Ecrãs táteis (GPU móvel): raio menor = amostragem mais barata. */
 @media (pointer: coarse) {
-  .bible-chapter-fab:not(.is-hidden),
-  .bible-chapter-end-next {
+  .bible-chapter-fab:not(.is-hidden) {
     -webkit-backdrop-filter: blur(8px);
     backdrop-filter: blur(8px);
   }
@@ -22495,10 +22504,10 @@ button.bible-study-ref-modal-title.is-jump:focus-visible {
   --glass-base: var(--audio-play-bg, var(--surface));
 }
 
-/* Pill capítulo seguinte: base do botão de tela cheia; translúcido sobre o texto. */
+/* Pill capítulo seguinte: base opaca do botão de tela cheia (sem transparência). */
 .bible-chapter-end-next {
   --glass-base: var(--surface);
-  --glass-fill: color-mix(in srgb, var(--glass-base) 90%, transparent);
+  --glass-fill: var(--glass-base);
 }
 
 /* Skips ‹ › (sobre o texto): leve translucidez para o blur se notar. */
@@ -22520,8 +22529,7 @@ button.bible-study-ref-modal-title.is-jump:focus-visible {
     --glass-fill: var(--glass-base);
   }
 
-  .bible-chapter-fab:not(.is-hidden),
-  .bible-chapter-end-next {
+  .bible-chapter-fab:not(.is-hidden) {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }

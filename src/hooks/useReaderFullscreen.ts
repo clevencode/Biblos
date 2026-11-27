@@ -1,23 +1,11 @@
-import { Capacitor } from "@capacitor/core";
-import { Animation, StatusBar } from "@capacitor/status-bar";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { setSystemBarsHidden } from "../native/immersiveMode";
 import { useReaderChromeStore } from "../store/useReaderChromeStore";
 
 /** Duração da transição do chrome (ver CSS `data-reader-fs-anim`). */
 const CHROME_ANIM_MS = 420;
 /** Quanto tempo o aviso « como sair » fica visível. */
 const HINT_MS = 2800;
-
-/** Nativo (APK): esconde/mostra a barra de estado — sem aviso do sistema. */
-async function setNativeImmersive(on: boolean) {
-  if (!Capacitor.isNativePlatform()) return;
-  try {
-    if (on) await StatusBar.hide({ animation: Animation.Fade });
-    else await StatusBar.show({ animation: Animation.Fade });
-  } catch {
-    /* plugin indisponível: o modo do leitor segue só com CSS */
-  }
-}
 
 /**
  * Modo tela cheia do leitor: oculta topbar, navbar, play e skips
@@ -56,7 +44,8 @@ export function useReaderFullscreen(enabled: boolean) {
   const enter = useCallback(() => {
     pulseChromeAnim();
     setActive(true);
-    void setNativeImmersive(true);
+    /* APK: barras do sistema (estado + navegação) totalmente ocultas. */
+    void setSystemBarsHidden(true);
     setHintVisible(true);
     if (hintTimer.current) clearTimeout(hintTimer.current);
     hintTimer.current = setTimeout(() => {
@@ -69,7 +58,7 @@ export function useReaderFullscreen(enabled: boolean) {
     pulseChromeAnim();
     setActive(false);
     hideHint();
-    void setNativeImmersive(false);
+    void setSystemBarsHidden(false);
   }, [hideHint, pulseChromeAnim, setActive]);
 
   /* Esc sai do modo (o atalho que o aviso nativo ensinava). */

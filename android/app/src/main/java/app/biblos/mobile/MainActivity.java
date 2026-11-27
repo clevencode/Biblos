@@ -10,6 +10,7 @@ public class MainActivity extends BridgeActivity {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     registerPlugin(ApkInstallerPlugin.class);
+    registerPlugin(ImmersiveModePlugin.class);
     super.onCreate(savedInstanceState);
     // Ne pas clearCache à chaque démarrage : cela cassait les requêtes réseau
     // (auth/planos Firebase + /api) et pouvait faire croire à un état hors ligne.
