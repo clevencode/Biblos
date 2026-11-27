@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { YvIcon } from "../YvIcon";
 import type { ThemePref } from "../../theme";
-import { getStorageHealth, type StorageHealth } from "../../offlineStorageGuard";
 import { countMarkedVerses, FREE_MARK_QUOTA } from "../../verseMarks";
 import { useConsumerAuth } from "../../features/consumer-auth";
 import { useUiLocale } from "../../i18n/UiLocaleContext";
@@ -17,6 +16,7 @@ import {
 import { ProfileHeader } from "./ProfileHeader";
 import { SettingsGroup } from "./SettingsGroup";
 import { SettingsRow } from "./SettingsRow";
+import { StorageSettingsPanel } from "./StorageSettingsPanel";
 import { SyncSettingsGroup } from "./SyncSettingsGroup";
 
 export type ProfilePrefsTab =
@@ -24,6 +24,7 @@ export type ProfilePrefsTab =
   | "bible"
   | "reading"
   | "library"
+  | "storage"
   | "about";
 
 export type ProfileSettingsPanelProps = {
@@ -50,12 +51,14 @@ const PREFS_TABS: readonly {
     | "profile.group.bible"
     | "profile.group.reading"
     | "profile.group.library"
+    | "profile.tab.storage"
     | "profile.group.about";
 }[] = [
   { id: "appearance", labelKey: "profile.appearance" },
   { id: "bible", labelKey: "profile.group.bible" },
   { id: "reading", labelKey: "profile.group.reading" },
   { id: "library", labelKey: "profile.group.library" },
+  { id: "storage", labelKey: "profile.tab.storage" },
   { id: "about", labelKey: "profile.group.about" },
 ];
 
@@ -86,7 +89,6 @@ export function ProfileSettingsPanel({
     loading,
   } = useConsumerAuth();
 
-  const [storageHealth, setStorageHealth] = useState<StorageHealth | null>(null);
   const [signOutBusy, setSignOutBusy] = useState(false);
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
@@ -113,16 +115,7 @@ export function ProfileSettingsPanel({
     }
     /* Convidado: sem secção Compte (o header mostra « Se connecter »). */
     if (guest) setAccountOpen(false);
-    let cancelled = false;
-    void (async () => {
-      const health = await getStorageHealth();
-      if (cancelled) return;
-      setStorageHealth(health);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [active, activityTick, guest]);
+  }, [active, guest]);
 
   useEffect(() => {
     function syncOnline() {
@@ -416,24 +409,11 @@ export function ProfileSettingsPanel({
                       onClick={() => onOpenMarks?.()}
                     />
                   </SettingsGroup>
-                  <SettingsGroup title={t("profile.storage")}>
-                    <SettingsRow
-                      icon="desktop_windows"
-                      label={
-                        storageHealth
-                          ? `${storageHealth.usedMB} Mo`
-                          : t("profile.calculating")
-                      }
-                      value={
-                        storageHealth
-                          ? storageHealth.isPersisted
-                            ? t("profile.storage")
-                            : t("profile.storageCache")
-                          : "…"
-                      }
-                    />
-                  </SettingsGroup>
                 </>
+              ) : null}
+
+              {prefsTab === "storage" ? (
+                <StorageSettingsPanel active={active} />
               ) : null}
 
               {prefsTab === "about" ? (

@@ -144,6 +144,28 @@ export type UiCopyKey =
   | "profile.marks"
   | "profile.marksEmpty"
   | "profile.calculating"
+  | "storage.used"
+  | "storage.ofQuota"
+  | "storage.offlineFiles"
+  | "storage.appData"
+  | "storage.offlineTitle"
+  | "storage.s21Books"
+  | "storage.bundled"
+  | "storage.ht98Ready"
+  | "storage.ht98Missing"
+  | "storage.offlineHint"
+  | "storage.manageTitle"
+  | "storage.protected"
+  | "storage.protectedHint"
+  | "storage.protect"
+  | "storage.unprotectedHint"
+  | "storage.clearCache"
+  | "storage.clearHint"
+  | "storage.frees"
+  | "storage.cleared"
+  | "storage.clearConfirm"
+  | "storage.clearAction"
+  | "storage.personalSafe"
   | "profile.guestSaveTitle"
   | "profile.guestSaveLead"
   | "profile.quotaHint"
@@ -489,6 +511,28 @@ const FR: Dict = {
   "profile.marks": "Surlignages",
   "profile.marksEmpty": "Aucun verset surligné pour le moment.",
   "profile.calculating": "Calcul…",
+  "storage.used": "{used} utilisés",
+  "storage.ofQuota": "sur {quota} disponibles sur cet appareil",
+  "storage.offlineFiles": "Bibles et fichiers hors ligne",
+  "storage.appData": "Index de recherche et données de l’app",
+  "storage.offlineTitle": "Bibles hors ligne",
+  "storage.s21Books": "{n}/{total} livres disponibles hors ligne",
+  "storage.bundled": "Incluse dans l’app",
+  "storage.ht98Ready": "Disponible hors ligne",
+  "storage.ht98Missing": "Pas encore enregistrée",
+  "storage.offlineHint": "Les livres lus sont gardés automatiquement. Pour toute la Bible, utilise « Télécharger » dans l’onglet Bible.",
+  "storage.manageTitle": "Gérer",
+  "storage.protected": "Stockage protégé",
+  "storage.protectedHint": "Le navigateur ne l’effacera pas automatiquement",
+  "storage.protect": "Protéger le stockage",
+  "storage.unprotectedHint": "Sans protection, le navigateur peut effacer les Bibles hors ligne s’il manque d’espace",
+  "storage.clearCache": "Vider le cache",
+  "storage.clearHint": "Bibles hors ligne et références croisées",
+  "storage.frees": "Libère {size}",
+  "storage.cleared": "Cache vidé",
+  "storage.clearConfirm": "Les Bibles hors ligne seront de nouveau enregistrées à la prochaine lecture (connexion nécessaire).",
+  "storage.clearAction": "Vider",
+  "storage.personalSafe": "Tes surlignages, notes, plans et historique ne sont jamais effacés par cette action.",
   "profile.guestSaveTitle": "Sauvegarder mes études",
   "profile.guestSaveLead":
     "Connecte Google pour synchroniser tes marques, notes et plans.",
@@ -850,6 +894,28 @@ const HT: Dict = {
   "profile.marks": "Souliyman",
   "profile.marksEmpty": "Pa gen vèsè souliye pou kounye a.",
   "profile.calculating": "Ap kalkile…",
+  "storage.used": "{used} itilize",
+  "storage.ofQuota": "sou {quota} disponib sou aparèy sa a",
+  "storage.offlineFiles": "Bib ak fichye san entènèt",
+  "storage.appData": "Endèks rechèch ak done app la",
+  "storage.offlineTitle": "Bib san entènèt",
+  "storage.s21Books": "{n}/{total} liv disponib san entènèt",
+  "storage.bundled": "Enkli nan app la",
+  "storage.ht98Ready": "Disponib san entènèt",
+  "storage.ht98Missing": "Poko anrejistre",
+  "storage.offlineHint": "Liv ou li yo kenbe otomatikman. Pou tout Bib la, sèvi ak « Telechaje » nan onglè Bib la.",
+  "storage.manageTitle": "Jere",
+  "storage.protected": "Depo pwoteje",
+  "storage.protectedHint": "Navigatè a p ap efase l pou kont li",
+  "storage.protect": "Pwoteje depo a",
+  "storage.unprotectedHint": "San pwoteksyon, navigatè a ka efase Bib san entènèt yo si li manke plas",
+  "storage.clearCache": "Vide kach la",
+  "storage.clearHint": "Bib san entènèt ak referans kwaze",
+  "storage.frees": "Libere {size}",
+  "storage.cleared": "Kach la vide",
+  "storage.clearConfirm": "Bib san entènèt yo ap anrejistre ankò nan pwochen lekti (fòk ou gen entènèt).",
+  "storage.clearAction": "Vide",
+  "storage.personalSafe": "Souliyaj, nòt, plan ak istorik ou yo pa janm efase ak aksyon sa a.",
   "profile.guestSaveTitle": "Sove etid mwen yo",
   "profile.guestSaveLead":
     "Konekte Google pou senkwonize mak, nòt ak plan ou yo.",

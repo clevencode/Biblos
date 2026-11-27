@@ -4732,6 +4732,22 @@ html[data-theme="dark"] .profile-download-btn {
   background: color-mix(in srgb, var(--text) 12%, transparent);
 }
 
+/* Profil › Stockage */
+.profile-storage-usage .settings-row-body {
+  gap: 4px;
+}
+
+.profile-storage-bar {
+  display: block;
+  margin-top: 8px;
+  background: color-mix(in srgb, var(--text) 10%, transparent);
+}
+
+.profile-storage-hint {
+  margin: 0;
+  padding: 4px 14px 12px;
+}
+
 .profile-sync-hint {
   margin: 0;
   padding: 4px 14px 12px 46px;
