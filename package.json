@@ -38,6 +38,8 @@
     "bench:search-forms": "npx --yes tsx scripts/search-bench/forms.ts",
     "test:s21-search": "npx --yes tsx scripts/test-s21-search-engine.ts",
     "test:verse-search": "npx --yes tsx scripts/test-s21-search-engine.ts",
+    "test:ht-dictionary": "npx --yes tsx scripts/test-ht-dictionary.ts",
+    "dict:import": "node scripts/import-dicvilsen.mjs",
     "icons:generate": "node scripts/generate-app-icons.mjs"
   },
   "dependencies": {

@@ -203,6 +203,22 @@ export default defineConfig(({ mode }) => ({
                   },
                 },
               },
+              {
+                // Diksyonè Vilsen (HT98) — 1 ficheiro + aliases, offline após 1.º uso.
+                urlPattern: ({ url }) =>
+                  url.pathname.startsWith("/bible/study/dict/"),
+                handler: "CacheFirst",
+                options: {
+                  cacheName: "biblos-dict-json",
+                  expiration: {
+                    maxEntries: 4,
+                    maxAgeSeconds: 60 * 60 * 24 * 365,
+                  },
+                  cacheableResponse: {
+                    statuses: [0, 200],
+                  },
+                },
+              },
             ],
           },
           devOptions: {

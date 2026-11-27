@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "note": "Grafia HT98 → lema do Diksyonè Vilsen (chaves e valores em normalizeSearchText). Só pares verificados pelo sentido do gloss. Os alvos 'iwen'/'iwanj' são lemas com erro de OCR (l→I) na fonte.",
+  "aliases": {
+    "lenmi": "lennmi",
+    "osinon": "osnon",
+    "moutre": "montre",
+    "kounyeya": "kounye a",
+    "lanne": "lane",
+    "mesay": "mesaj",
+    "denmen": "demen",
+    "granneg": "gran neg",
+    "kife": "ki fe",
+    "pral": "prale",
+    "pesonn": "peson",
+    "lwanj": "iwanj",
+    "lwen": "iwen"
+  }
+}

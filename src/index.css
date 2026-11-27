@@ -22760,3 +22760,159 @@ button.bible-study-ref-modal-title.is-jump:focus-visible {
     overflow: hidden;
   }
 }
+
+/*
+ * Diksyonè Vilsen (HT98) — pressão longa numa palavra (useWordLongPress).
+ * Sem seleção nativa / menu "Copiar" no texto HT98 enquanto o dicionário está ativo;
+ * a cópia continua no menu do versículo.
+ */
+.bible-reader.is-dict-active .bible-verse-text {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+::highlight(dict-word) {
+  background-color: color-mix(in srgb, var(--accent, #2f6fde) 28%, transparent);
+  color: inherit;
+}
+
+/* Ao contrário das refs cruzadas, a definição fecha também ao tocar fora. */
+.dict-modal .bible-study-ref-modal-scrim {
+  pointer-events: auto;
+  background: color-mix(in srgb, var(--ink, #000) 14%, transparent);
+}
+
+.dict-modal-verse {
+  margin-left: 8px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  opacity: 0.6;
+}
+
+.dict-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.dict-modal-form {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+}
+
+.dict-entry {
+  margin: 0;
+}
+
+.dict-entry + .dict-entry {
+  padding-top: 12px;
+  border-top: 1px solid color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+.dict-entry-lemma {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 6px;
+  font-family: var(--font-bible, inherit);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.dict-entry-pos {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: color-mix(in srgb, var(--text) 75%, transparent);
+}
+
+.dict-entry-gloss,
+.dict-entry-senses {
+  margin: 0;
+  font-family: var(--font-bible, inherit);
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.dict-entry-senses {
+  padding-left: 1.3em;
+}
+
+.dict-entry-senses li + li {
+  margin-top: 4px;
+}
+
+.dict-modal-expressions {
+  padding-top: 12px;
+  border-top: 1px dashed color-mix(in srgb, var(--text) 14%, transparent);
+}
+
+.dict-modal-subtitle {
+  margin: 0 0 8px;
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.6;
+}
+
+.dict-modal-foot {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.dict-modal-attribution {
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  line-height: 1.35;
+  opacity: 0.55;
+  text-align: center;
+}
+
+/* Skeleton de altura estável (offline-first: sem salto de layout). */
+.dict-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dict-skeleton span {
+  display: block;
+  height: 0.9rem;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+  animation: dict-skeleton-pulse 1.2s ease-in-out infinite;
+}
+
+.dict-skeleton span:first-child {
+  width: 40%;
+  height: 1.1rem;
+}
+
+.dict-skeleton span:last-child {
+  width: 70%;
+}
+
+@keyframes dict-skeleton-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dict-skeleton span {
+    animation: none;
+  }
+}

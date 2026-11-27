@@ -49,6 +49,21 @@ writeFileSync(
   "utf8",
 );
 
+// Diksyonè Vilsen (HT98) — opcional: sem a pasta, o leitor só esconde o dicionário.
+const DICT_SRC = join(SRC, "dict");
+const DICT_DEST = join(DEST, "dict");
+let dictFiles = 0;
+if (existsSync(DICT_SRC)) {
+  mkdirSync(DICT_DEST, { recursive: true });
+  for (const name of readdirSync(DICT_SRC)) {
+    if (!name.endsWith(".json")) continue;
+    cpSync(join(DICT_SRC, name), join(DICT_DEST, name));
+    dictFiles += 1;
+  }
+} else {
+  console.warn("stage-study-assets: data/bible/study/dict ausente (dicionário HT desativado)");
+}
+
 console.log(
-  `OK: staged study assets → public/bible/study (tske ${files.length} + manifest)`,
+  `OK: staged study assets → public/bible/study (tske ${files.length} + manifest, dict ${dictFiles})`,
 );

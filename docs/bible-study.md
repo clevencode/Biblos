@@ -10,6 +10,7 @@ Recursos suportados na app:
 | Segond 21 | `s21` | Texto principal, áudio, offline, busca |
 | Haïtienne 1998 | `ht98` | Texto (`/bibles/ht1998.json`) |
 | Références croisées | TSKe | Painel « Référence croisée » (`/bible/study/tske/{USFM}.{ch}.json`) |
+| Diksyonè Kreyòl Vilsen | `ht-vilsen` | Pressão longa numa palavra do HT98 (`/bible/study/dict/ht-vilsen.json`) |
 
 ## Gerar e incluir no deploy
 
@@ -38,7 +39,24 @@ Sem rede, as refs usam assets Capacitor ou o cache HTTP da PWA.
 ## Licenças
 
 - Sg1910 / TSKe: conforme as fontes MySword / concordance.bible referenciadas no compilado.
+- Diksyonè Kreyòl Vilsen: © Educa Vision Inc., todos os direitos reservados; uso decidido pelo mantenedor (app sem fins lucrativos, público restrito, sem indexação). Atribuição visível em cada definição. Detalhes: `data/bible/study/dict/README.md`.
 - Não incluir Nave, ISBE, LSG paralelo, interlinear ou outros módulos fora deste âmbito.
+
+## Dicionário kreyòl (HT98)
+
+| Peça | Ficheiro |
+|------|----------|
+| Dados (10 773 entradas, versionados) | `data/bible/study/dict/ht-vilsen.json` — gerado por `npm run dict:import` a partir do repo privado `clevencode/dicvilsen` |
+| Grafia HT98 → lema | `data/bible/study/dict/ht-aliases.json` (só pares verificados pelo gloss) |
+| Stage / PWA | `stage-study-assets.mjs` copia para `public/bible/study/dict/`; Workbox `CacheFirst` `biblos-dict-json` |
+| Lookup | `src/bible/htDictionary.ts` — lema (acento exato primeiro) › alias › contração (`m'` → mwen…) › expressões de várias palavras presentes no versículo |
+| Gesto | `src/hooks/useWordLongPress.ts` + `src/bible/wordAtPoint.ts` — 450 ms; o toque curto continua a selecionar o versículo |
+| UI | `src/components/WordDefinitionSheet.tsx` (overlay `word_definition`) |
+
+- Só activo com `ht98` e com o asset presente (sem asset → gesto desligado, nada muda).
+- Com o dicionário activo, o texto HT98 não abre a seleção nativa do sistema; copiar continua no menu do versículo.
+- Cobertura medida no HT98: 74,6% das ocorrências (`npm run test:ht-dictionary` falha se descer).
+- Os glosses vêm de OCR e podem ter ruído; correções fazem-se no repo `dicvilsen` e voltam com `dict:import`.
 
 ## Backlog (ideia) — refs cruzadas deuterocanônicas
 

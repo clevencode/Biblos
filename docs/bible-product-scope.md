@@ -5,6 +5,7 @@
 - Textos : **Segond 21** (`s21`) et **Haïtienne 1998** (`ht98`)
 - **TSKE** (références croisées) — cânon protestante (66 livros)
 - Audio S21, marques locales, partage verset, historique de lecture local
+- **Diksyonè Kreyòl Vilsen** (só `ht98`) — pressão longa numa palavra → definição; ver [bible-study.md](./bible-study.md#dicionário-kreyòl-ht98)
 
 ## Backlog (não incluído)
 

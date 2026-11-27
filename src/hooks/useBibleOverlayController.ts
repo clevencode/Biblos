@@ -8,11 +8,22 @@ export type ActiveBibleOverlay =
   | { type: "verse_actions"; selectedVerseIds: string[] }
   | { type: "reader_settings" }
   | { type: "history" }
-  | { type: "marks" };
+  | { type: "marks" }
+  /** Definição no Diksyonè Vilsen (pressão longa numa palavra do HT98). */
+  | {
+      type: "word_definition";
+      word: string;
+      verseNumber: number | null;
+      verseText: string;
+    };
 
 export type ActiveBibleOverlayType = ActiveBibleOverlay["type"];
 
-export type ToggleableBibleOverlayType = Exclude<ActiveBibleOverlayType, "none">;
+/** Overlays que abrem sem payload (word_definition precisa da palavra → openOverlay). */
+export type ToggleableBibleOverlayType = Exclude<
+  ActiveBibleOverlayType,
+  "none" | "word_definition"
+>;
 
 export function hasActiveBibleOverlay(overlay: ActiveBibleOverlay): boolean {
   return overlay.type !== "none";

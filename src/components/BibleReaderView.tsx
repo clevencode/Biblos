@@ -197,6 +197,9 @@ import {
 } from "../store/useVerseMarksStore";
 import { useShallow } from "zustand/react/shallow";
 import { useNavigationFlow } from "../hooks/useNavigationFlow";
+import { highlightDictWord, useWordLongPress } from "../hooks/useWordLongPress";
+import { loadHtDictionary } from "../bible/htDictionary";
+import { WordDefinitionSheet } from "./WordDefinitionSheet";
 import {
   bookCodeToId,
   encodeUsfmId,
@@ -1026,6 +1029,8 @@ export function BibleReaderView({
   const toolsMenuOpen = activeOverlay.type === "reader_settings";
   const historyOpen = activeOverlay.type === "history";
   const marksOpen = activeOverlay.type === "marks";
+  const wordDefinition =
+    activeOverlay.type === "word_definition" ? activeOverlay : null;
   const hasActiveModalRef = useRef(hasActiveModal);
   hasActiveModalRef.current = hasActiveModal;
 
@@ -1860,6 +1865,45 @@ export function BibleReaderView({
     void navEngineRef.current?.stepChapter(delta > 0 ? "next" : "prev");
     void loadChapter(next.bookId, next.chapterId, null);
   }
+
+  /* Diksyonè Vilsen (só HT98): pré-carrega em idle; sem asset → gesto desligado. */
+  const [htDictReady, setHtDictReady] = useState(false);
+  useEffect(() => {
+    if (textVersion !== "ht98" || htDictReady) return;
+    let cancelled = false;
+    const run = () => {
+      void loadHtDictionary().then((dict) => {
+        if (!cancelled) setHtDictReady(Boolean(dict));
+      });
+    };
+    // WebView antigo pode não ter requestIdleCallback.
+    const hasIdle = "requestIdleCallback" in window;
+    const handle = hasIdle
+      ? window.requestIdleCallback(run)
+      : window.setTimeout(run, 1200);
+    return () => {
+      cancelled = true;
+      if (hasIdle) window.cancelIdleCallback(handle);
+      else window.clearTimeout(handle);
+    };
+  }, [textVersion, htDictReady]);
+  const htDictActive = textVersion === "ht98" && htDictReady;
+
+  useWordLongPress(passageScrollRef, {
+    enabled: htDictActive,
+    onWord: (hit) =>
+      openOverlay({
+        type: "word_definition",
+        word: hit.word,
+        verseNumber: hit.verseNumber,
+        verseText: hit.verseText,
+      }),
+  });
+
+  const closeWordDefinition = useCallback(() => {
+    highlightDictWord(null);
+    closeOverlay();
+  }, [closeOverlay]);
 
   const selectVerse = useCallback((number: number) => {
     if (takeOverlayDismissSwallow()) return;
@@ -4677,7 +4721,7 @@ export function BibleReaderView({
   return (
     <section
       ref={readerRef}
-      className={`bible-reader bible-reader--yv${hideChrome ? " is-chrome-hidden" : ""}${hasActiveModal ? " is-overlay-active" : ""}${audioPlaying ? " is-audio-playing" : ""}${showCreateCard ? " has-verse-actions" : ""}${showStudyReturnNav ? " has-study-return" : ""}${showPlanReturnNav ? " has-plan-return" : ""}${shareSheetOpen ? " is-share-open" : ""}${headCompact ? " is-head-compact" : ""}${surfaceChrome.rootClassPassageRollOpen ? " is-passage-roll-open" : ""}${topSheetOpen ? " is-top-sheet-open" : ""}${compactToolsMenu ? " is-compact-tools" : ""}${toolsMenuOpen ? " is-tools-menu-open" : ""}${menuJourneyOpen ? " is-menu-journey-open" : ""}${historyOpen ? " is-history-open" : ""}${coldOpenEmpty ? " is-cold-open-empty" : ""}`}
+      className={`bible-reader bible-reader--yv${hideChrome ? " is-chrome-hidden" : ""}${hasActiveModal ? " is-overlay-active" : ""}${audioPlaying ? " is-audio-playing" : ""}${showCreateCard ? " has-verse-actions" : ""}${showStudyReturnNav ? " has-study-return" : ""}${showPlanReturnNav ? " has-plan-return" : ""}${shareSheetOpen ? " is-share-open" : ""}${headCompact ? " is-head-compact" : ""}${surfaceChrome.rootClassPassageRollOpen ? " is-passage-roll-open" : ""}${topSheetOpen ? " is-top-sheet-open" : ""}${compactToolsMenu ? " is-compact-tools" : ""}${toolsMenuOpen ? " is-tools-menu-open" : ""}${menuJourneyOpen ? " is-menu-journey-open" : ""}${historyOpen ? " is-history-open" : ""}${coldOpenEmpty ? " is-cold-open-empty" : ""}${htDictActive ? " is-dict-active" : ""}`}
       data-bible-font={bibleFont}
       data-bible-align={textAlign}
       data-bible-display={displayMode}
@@ -5212,6 +5256,20 @@ export function BibleReaderView({
           </footer>
         );
       })()}
+
+      {wordDefinition ? (
+        <WordDefinitionSheet
+          word={wordDefinition.word}
+          verseNumber={wordDefinition.verseNumber}
+          verseText={wordDefinition.verseText}
+          onClose={closeWordDefinition}
+          onSearchBible={(query) => {
+            highlightDictWord(null);
+            setWordSearchQuery(query);
+            openOverlay({ type: "word_search" });
+          }}
+        />
+      ) : null}
 
       <BibleShareSheet
         open={shareSheetOpen}

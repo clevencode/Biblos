@@ -58,9 +58,11 @@ android/app/google-services.json
 *.sw?
 
 public/bible/
-# Study ETL: só TSKE versionado (refs croisées no deploy).
+# Study ETL: TSKE (refs croisées) e Diksyonè Vilsen (HT98) versionados para o deploy.
 data/bible/study/*
 !data/bible/study/tske/
 !data/bible/study/tske/**
+!data/bible/study/dict/
+!data/bible/study/dict/**
 
 .vercel

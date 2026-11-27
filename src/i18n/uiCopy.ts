@@ -308,6 +308,14 @@ export type UiCopyKey =
   | "study.notesDraft"
   | "study.loadError"
   | "study.refUnavailable"
+  | "dict.title"
+  | "dict.loading"
+  | "dict.notFound"
+  | "dict.searchBible"
+  | "dict.expressions"
+  | "dict.verse"
+  | "dict.biblicalForm"
+  | "dict.close"
   | "study.goToPassage"
   | "study.goToChapter"
   | "study.returnToVerse"
@@ -694,6 +702,14 @@ const FR: Dict = {
   "study.notesDraft": "Brouillon local",
   "study.loadError": "Erreur de chargement",
   "study.refUnavailable": "Texte de ce passage indisponible pour cette version.",
+  "dict.title": "Dictionnaire créole",
+  "dict.loading": "Chargement du dictionnaire…",
+  "dict.notFound": "Ce mot n’est pas dans le dictionnaire.",
+  "dict.searchBible": "Chercher dans la Bible",
+  "dict.expressions": "Expressions dans ce verset",
+  "dict.verse": "Verset {n}",
+  "dict.biblicalForm": "Forme dans la Bible : {word}",
+  "dict.close": "Fermer",
   "study.goToPassage": "Aller au verset",
   "study.goToChapter": "Aller au chapitre",
   "study.returnToVerse": "Retourner aux références",
@@ -1081,6 +1097,14 @@ const HT: Dict = {
   "study.notesDraft": "Brouiyon lokal",
   "study.loadError": "Erè chajman",
   "study.refUnavailable": "Tèks pasaj sa a pa disponib pou vèsyon sa a.",
+  "dict.title": "Diksyonè kreyòl",
+  "dict.loading": "Diksyonè a ap chaje…",
+  "dict.notFound": "Mo sa a pa nan diksyonè a.",
+  "dict.searchBible": "Chèche nan Bib la",
+  "dict.expressions": "Ekspresyon nan vèsè a",
+  "dict.verse": "Vèsè {n}",
+  "dict.biblicalForm": "Fòm nan Bib la: {word}",
+  "dict.close": "Fèmen",
   "study.goToPassage": "Ale nan vèsè a",
   "study.goToChapter": "Ale nan chapit la",
   "study.returnToVerse": "Tounen nan referans yo",
