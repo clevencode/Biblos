@@ -848,6 +848,8 @@ export function BibleReaderView({
   const textVersionRef = useRef<BibleTextVersionId>(textVersion);
   /** Tela cheia do shell: mostra o pill « capítulo seguinte » no fim do texto. */
   const readerFullscreen = useReaderChromeStore((st) => st.fullscreen);
+  /** Tela cheia: o último versículo já está no ecrã (capítulo a terminar). */
+  const [nearChapterEnd, setNearChapterEnd] = useState(false);
   const switchTextVersionRef = useRef<
     (next: BibleTextVersionId) => Promise<void>
   >(async () => {});
@@ -2078,10 +2080,16 @@ export function BibleReaderView({
     const destLabel = planSkips ? null : adjacentPassageLabel(1);
     const fullLabel = destLabel ? `${actionLabel} · ${destLabel}` : actionLabel;
     return (
-      <div className="bible-chapter-end-next-wrap">
+      <div
+        className={`bible-chapter-end-next-wrap${
+          nearChapterEnd ? " is-near-end" : ""
+        }`}
+        aria-hidden={!nearChapterEnd || undefined}
+      >
         <button
           type="button"
           className="bible-chapter-end-next"
+          tabIndex={nearChapterEnd ? undefined : -1}
           disabled={
             planSkips ? presentation.inFlight : pickerChrome.controlsDisabled
           }
@@ -2738,6 +2746,34 @@ export function BibleReaderView({
     localBundledAvailable: localBundledBible,
     versesInMemory: Boolean(passage?.verses?.length),
   });
+
+  /**
+   * Tela cheia: o pill « capítulo seguinte » aparece quando o último
+   * versículo entra no ecrã (capítulo prestes a terminar), sem esperar
+   * pelo fundo do scroll; volta a esconder-se se o leitor subir.
+   */
+  useEffect(() => {
+    setNearChapterEnd(false);
+    if (!readerFullscreen) return;
+    const root = passageScrollRef.current;
+    if (!root || typeof IntersectionObserver === "undefined") return;
+    const target = root.querySelector(
+      ".bible-verses > :last-child, .bible-text",
+    );
+    if (!target) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry) return;
+        const passed =
+          entry.rootBounds != null &&
+          entry.boundingClientRect.bottom < entry.rootBounds.top;
+        setNearChapterEnd(entry.isIntersecting || passed);
+      },
+      { root, threshold: 0 },
+    );
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [readerFullscreen, passage, bookId, chapterId, displayMode]);
 
   /** Gate / erro sem versos: não esperar scroll para marcar alinhamento inicial. */
   useEffect(() => {
