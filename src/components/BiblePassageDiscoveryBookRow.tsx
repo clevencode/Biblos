@@ -127,12 +127,9 @@ export const BiblePassageDiscoveryBookRow = memo(
       onPickChapter(hit.id, chapterId);
     }
 
-    const chapterCountLabel =
-      chapterExpandable && chapterIds.length
-        ? chapterIds.length
-        : verseExpandable && hit.count != null
-          ? hit.count
-          : null;
+    /* Só nº de ocorrências na pesquisa por palavra (sem pré-visualização de capítulos). */
+    const hitCountLabel =
+      verseExpandable && hit.count != null ? hit.count : null;
 
     return (
       <div
@@ -152,12 +149,8 @@ export const BiblePassageDiscoveryBookRow = memo(
           <span className="bible-yv-pick-cell-label">{hit.title}</span>
           {expandable ? (
             <span className="bible-yv-pick-cell-expand-meta" aria-hidden>
-              {chapterCountLabel != null ? (
-                <span className="bible-yv-pick-cell-count">
-                  {chapterExpandable
-                    ? `(${chapterCountLabel})`
-                    : chapterCountLabel}
-                </span>
+              {hitCountLabel != null ? (
+                <span className="bible-yv-pick-cell-count">{hitCountLabel}</span>
               ) : null}
               <YvIcon
                 name={expanded ? "keyboard_arrow_down" : "chevron_right"}
