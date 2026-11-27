@@ -21,6 +21,8 @@ const HEAD_TIMEOUT_MS = 5_000;
 
 export type ApkUpdateState = {
   available: boolean;
+  /** Update pendente mesmo após fechar o banner (À propos persistente). */
+  pending: boolean;
   busy: boolean;
   update: () => Promise<void>;
   dismiss: () => void;
@@ -192,6 +194,7 @@ export function useApkUpdate(
 
   return {
     available: available && !sessionDismissed,
+    pending: available,
     busy,
     update,
     dismiss,

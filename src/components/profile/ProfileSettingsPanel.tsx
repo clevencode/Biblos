@@ -10,7 +10,10 @@ import { BIBLE_TEXT_VERSIONS } from "../../bible/bibleVersions";
 import type { ProfileReadingChrome } from "../../bible/profileReadingChrome";
 import { BibleFontSizeSlider } from "../BibleFontSizeSlider";
 import { AccountSettingsSection } from "./AccountSettingsSection";
-import { ProfileAboutSection } from "./ProfileAboutSection";
+import {
+  ProfileAboutSection,
+  type ProfileAppUpdates,
+} from "./ProfileAboutSection";
 import { ProfileHeader } from "./ProfileHeader";
 import { SettingsGroup } from "./SettingsGroup";
 import { SettingsRow } from "./SettingsRow";
@@ -33,6 +36,8 @@ export type ProfileSettingsPanelProps = {
   onOpenMarks?: () => void;
   /** Aba inicial ao montar (ex. retorno do histórico → library). */
   initialPrefsTab?: ProfilePrefsTab;
+  /** Instalar / atualizar (persistente em À propos). */
+  appUpdates?: ProfileAppUpdates | null;
 };
 
 type PrefsTab = ProfilePrefsTab;
@@ -68,6 +73,7 @@ export function ProfileSettingsPanel({
   onOpenHistory,
   onOpenMarks,
   initialPrefsTab = "appearance",
+  appUpdates = null,
 }: ProfileSettingsPanelProps) {
   const { t } = useUiLocale();
   const {
@@ -190,7 +196,7 @@ export function ProfileSettingsPanel({
               onSignOut={() => void handleSignOut()}
               onDeleteAccount={() => void handleDeleteConfirm()}
             />
-            <ProfileAboutSection titled />
+            <ProfileAboutSection titled appUpdates={appUpdates} />
           </div>
         ) : accountOpen ? (
           <AccountSettingsSection
@@ -442,7 +448,7 @@ export function ProfileSettingsPanel({
               ) : null}
 
               {prefsTab === "about" ? (
-                <ProfileAboutSection />
+                <ProfileAboutSection appUpdates={appUpdates} />
               ) : null}
             </div>
           </>

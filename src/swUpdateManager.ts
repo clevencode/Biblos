@@ -41,6 +41,20 @@ export async function applyPendingSwUpdate(): Promise<boolean> {
   return true;
 }
 
+/** À propos: força verificação de nova versão do SW (no-op sem SW). */
+export async function checkForSwUpdate(): Promise<void> {
+  if (Capacitor.isNativePlatform()) return;
+  if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) {
+    return;
+  }
+  try {
+    const registration = await navigator.serviceWorker.getRegistration();
+    await registration?.update();
+  } catch {
+    /* offline / sem SW */
+  }
+}
+
 /**
  * Registra o SW via virtual module do vite-plugin-pwa.
  * No-op em Capacitor nativo.

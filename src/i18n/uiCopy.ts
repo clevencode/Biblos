@@ -155,6 +155,12 @@ export type UiCopyKey =
   | "profile.aboutAppVersion"
   | "profile.aboutTexts"
   | "profile.aboutMadeWith"
+  | "profile.aboutUpdates"
+  | "profile.aboutInstalled"
+  | "profile.aboutInstallBrowserHint"
+  | "profile.aboutUpToDate"
+  | "profile.aboutCheckUpdate"
+  | "profile.aboutChecking"
   | "profile.readingChromeHint"
   | "profile.deleteAccount"
   | "profile.deleteAccountConfirm"
@@ -487,6 +493,12 @@ const FR: Dict = {
   "profile.aboutAppVersion": "Version de l’app",
   "profile.aboutTexts": "Textes bibliques",
   "profile.aboutMadeWith": "Fait avec soin pour la lecture quotidienne.",
+  "profile.aboutUpdates": "Installation et mises à jour",
+  "profile.aboutInstalled": "App installée",
+  "profile.aboutInstallBrowserHint": "Ouvrez le menu du navigateur puis « Installer l’app ».",
+  "profile.aboutUpToDate": "Vous avez la dernière version",
+  "profile.aboutCheckUpdate": "Rechercher une mise à jour",
+  "profile.aboutChecking": "Vérification…",
   "profile.readingChromeHint":
     "Ouvre la Bible une fois pour régler version et typographie ici.",
   "profile.deleteAccount": "Supprimer mon compte",
@@ -832,6 +844,12 @@ const HT: Dict = {
   "profile.aboutAppVersion": "Vèsyon aplikasyon an",
   "profile.aboutTexts": "Tèks biblik yo",
   "profile.aboutMadeWith": "Fèt ak swen pou lekti chak jou.",
+  "profile.aboutUpdates": "Enstalasyon ak mizajou",
+  "profile.aboutInstalled": "App la enstale",
+  "profile.aboutInstallBrowserHint": "Louvri meni navigatè a epi chwazi « Enstale app ».",
+  "profile.aboutUpToDate": "Ou gen dènye vèsyon an",
+  "profile.aboutCheckUpdate": "Chèche yon mizajou",
+  "profile.aboutChecking": "Ap verifye…",
   "profile.readingChromeHint":
     "Louvri Bib la yon fwa pou règle vèsyon ak tipografi isit la.",
   "profile.deleteAccount": "Efase kont mwen",

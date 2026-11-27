@@ -30,11 +30,24 @@ export type PwaInstallMenuMode = "hidden" | "apk-download" | "ios-hint";
 
 export type PwaInstallMode = PwaInstallBannerMode | "apk-download";
 
+/**
+ * Profil › À propos: oferta persistente (ignora o dismiss do banner).
+ * `installed` = standalone / app nativa.
+ */
+export type PwaInstallAboutMode =
+  | "installed"
+  | "browser-install"
+  | "apk-download"
+  | "ios-hint"
+  | "unavailable";
+
 export type PwaInstallState = {
   /** Banner (ignora APK). */
   mode: PwaInstallBannerMode;
   /** Menu: oferta da plataforma (APK / iOS), ignora dismiss do banner. */
   menuMode: PwaInstallMenuMode;
+  /** À propos: sempre visível, sem dismiss. */
+  aboutMode: PwaInstallAboutMode;
   canInstall: boolean;
   busy: boolean;
   /**
@@ -158,6 +171,14 @@ export function usePwaInstall(
 
   const menuMode = resolveMenuMode(standalone, allowApkDownload);
 
+  const aboutMode: PwaInstallAboutMode = (() => {
+    if (Capacitor.isNativePlatform() || standalone) return "installed";
+    if (deferredPrompt) return "browser-install";
+    if (menuMode === "apk-download") return "apk-download";
+    if (isIosSafariFamily()) return "ios-hint";
+    return "unavailable";
+  })();
+
   const mode: PwaInstallBannerMode = (() => {
     if (dismissed || Capacitor.isNativePlatform() || standalone) {
       return "hidden";
@@ -219,6 +240,7 @@ export function usePwaInstall(
   return {
     mode,
     menuMode,
+    aboutMode,
     canInstall: mode === "browser-install" || menuMode === "apk-download",
     busy,
     install,

@@ -602,6 +602,11 @@ function BiblosConsumerApp() {
                       onSetTheme={setTheme}
                       readingChrome={profileReadingChrome}
                       initialPrefsTab={profileFocusTab}
+                      appUpdates={{
+                        pwaInstall,
+                        apkUpdate,
+                        swUpdatePending,
+                      }}
                       onOpenHistory={
                         ACTIVITY_UI_ENABLED
                           ? () => requestProfileOverlay("history")
