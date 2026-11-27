@@ -7,11 +7,14 @@
 import sqlite3InitModule from "@sqlite.org/sqlite-wasm";
 import type { BibleTextVersionId } from "../bibleVersions";
 import { ensureVerseIndex, invalidateVerseIndex } from "../verseIndexCache";
+import { makeSearchSnippet } from "../searchSnippet";
 import {
+  SEARCH_MIN_QUERY_LENGTH,
   emptySearchFacets,
-  normalizeSearchText,
+  prepareQueryTokens,
   type SearchScope,
 } from "../verseSearchEngine";
+import { profileForVersion } from "../verseSearchProfiles";
 import type {
   SqliteFtsBackend,
   SqliteFtsInbound,
@@ -87,17 +90,30 @@ function escapeFtsToken(token: string): string {
   return `"${token.replace(/"/g, '""')}"`;
 }
 
-function buildFtsQuery(q: string): { match: string; terms: string[] } {
-  const norm = normalizeSearchText(q);
-  const terms = norm.split(/\s+/).filter((t) => t.length >= 2);
-  if (terms.length === 0) return { match: "", terms: [] };
-  if (terms.length === 1) {
-    return { match: escapeFtsToken(terms[0]!), terms };
+/**
+ * MATCH FTS5 com as mesmas regras do motor em memória: stopwords do perfil
+ * (só com 2+ termos) e sinónimos em OR dentro de cada grupo.
+ */
+function buildFtsQuery(
+  q: string,
+  versionId: BibleTextVersionId,
+): { match: string; terms: string[]; normQuery: string } {
+  const { normQuery, tokenGroups } = prepareQueryTokens(q, profileForVersion(versionId));
+  if (normQuery.length < SEARCH_MIN_QUERY_LENGTH) {
+    return { match: "", terms: [], normQuery };
   }
-  return {
-    match: terms.map(escapeFtsToken).join(" AND "),
-    terms,
-  };
+  const groups = tokenGroups
+    .map((alts) => alts.filter((t) => t.length >= SEARCH_MIN_QUERY_LENGTH))
+    .filter((alts) => alts.length > 0);
+  if (groups.length === 0) return { match: "", terms: [], normQuery };
+  const match = groups
+    .map((alts) =>
+      alts.length === 1
+        ? escapeFtsToken(alts[0]!)
+        : `(${alts.map(escapeFtsToken).join(" OR ")})`,
+    )
+    .join(" AND ");
+  return { match, terms: groups.flat(), normQuery };
 }
 
 function scopeSql(scope: SearchScope | undefined): {
@@ -231,22 +247,6 @@ async function warmVersion(versionId: BibleTextVersionId): Promise<number> {
   return index.verses.length;
 }
 
-function makeSnippet(text: string, needle: string, radius = 60): string {
-  const raw = String(text || "");
-  const norm = normalizeSearchText(raw);
-  const needleNorm = normalizeSearchText(needle);
-  const idx = needleNorm ? norm.indexOf(needleNorm) : -1;
-  if (idx < 0) {
-    return raw.length > radius * 2 ? `${raw.slice(0, radius * 2).trim()}…` : raw;
-  }
-  const ratio = raw.length / Math.max(1, norm.length);
-  const center = Math.round(idx * ratio);
-  const start = Math.max(0, center - radius);
-  const end = Math.min(raw.length, center + needleNorm.length * ratio + radius);
-  const slice = raw.slice(start, end).trim();
-  return `${start > 0 ? "…" : ""}${slice}${end < raw.length ? "…" : ""}`;
-}
-
 function searchDb(input: {
   versionId: BibleTextVersionId;
   q: string;
@@ -274,7 +274,7 @@ function searchDb(input: {
     throw new Error("index_not_warm");
   }
 
-  const { match, terms } = buildFtsQuery(input.q);
+  const { match, terms, normQuery } = buildFtsQuery(input.q, input.versionId);
   if (!match) {
     return {
       total: 0,
@@ -375,14 +375,14 @@ function searchDb(input: {
     body: string;
   }>;
 
-  const needle = terms[0] ?? input.q;
+  const needle = terms[0] ?? normQuery;
   const results = rows.map((row) => ({
     usfm: row.usfm,
     bookTitle: row.book_title,
     chapter: Number(row.chapter),
     verse: Number(row.verse),
     text: row.body,
-    snippet: makeSnippet(row.body, needle),
+    snippet: makeSearchSnippet(row.body, needle),
   }));
 
   return {

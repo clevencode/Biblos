@@ -57,15 +57,6 @@ function cleanVerseText(text: string): string {
     .trim();
 }
 
-function normalizeSearchText(value: string): string {
-  return String(value || "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
 export async function loadHt1998Root(): Promise<Ht1998Root> {
   if (cachedRoot) return cachedRoot;
   if (!inflight) {
@@ -183,11 +174,9 @@ export async function ht1998Search(
     }
   | { ok: false; error: string }
 > {
+  // Consultas curtas → ok com 0 resultados (mesmo contrato que a S21);
+  // o mínimo vive em SEARCH_MIN_QUERY_LENGTH, no motor.
   const query = String(q || "").trim();
-  if (normalizeSearchText(query).length < 2) {
-    return { ok: false, error: "Tape omwen 2 karaktè" };
-  }
-
   const { runLocalVerseSearch } = await import("./localVerseSearch");
   const found = await runLocalVerseSearch({
     version: "ht98",

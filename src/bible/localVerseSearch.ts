@@ -5,7 +5,9 @@
 import type { BibleTextVersionId } from "./bibleVersions";
 import { profileForVersion } from "./verseSearchProfiles";
 import { ensureVerseIndex } from "./verseIndexCache";
+import { makeSearchSnippet } from "./searchSnippet";
 import {
+  SEARCH_MIN_QUERY_LENGTH,
   emptySearchFacets,
   normalizeSearchText,
   searchVersesCascadeOnIndex,
@@ -33,31 +35,12 @@ export type LocalVerseSearchErr = {
 
 export type LocalVerseSearchResult = LocalVerseSearchOk | LocalVerseSearchErr;
 
-function makeSnippet(
-  text: string,
-  needleNorm: string,
-  radius = 60,
-): string {
-  const raw = String(text || "");
-  const norm = normalizeSearchText(raw);
-  const idx = needleNorm ? norm.indexOf(needleNorm) : -1;
-  if (idx < 0) {
-    return raw.length > radius * 2 ? `${raw.slice(0, radius * 2).trim()}…` : raw;
-  }
-  const ratio = raw.length / Math.max(1, norm.length);
-  const center = Math.round(idx * ratio);
-  const start = Math.max(0, center - radius);
-  const end = Math.min(raw.length, center + needleNorm.length * ratio + radius);
-  const slice = raw.slice(start, end).trim();
-  return `${start > 0 ? "…" : ""}${slice}${end < raw.length ? "…" : ""}`;
-}
-
 export async function runLocalVerseSearch(input: {
   version: BibleTextVersionId;
   q: string;
   limit?: number;
   offset?: number;
-  /** Legado: pré-filtra o índice. Ignorado quando `scope` está definido. */
+  /** Legado: equivale a `scope: { type: "books" }`. Ignorado quando `scope` está definido. */
   bookFilter?: Iterable<string> | null;
   bookOrder?: Map<string, number>;
   /** Escopo pós-rank (preferido para word-search). */
@@ -67,7 +50,7 @@ export async function runLocalVerseSearch(input: {
 }): Promise<LocalVerseSearchResult> {
   const query = String(input.q || "").trim();
   const queryNorm = normalizeSearchText(query);
-  if (queryNorm.length < 2) {
+  if (queryNorm.length < SEARCH_MIN_QUERY_LENGTH) {
     const facets = emptySearchFacets();
     return {
       ok: true,
@@ -104,29 +87,27 @@ export async function runLocalVerseSearch(input: {
           : "Index biblique vide — réessaie après le chargement des livres",
     };
   }
-  let searchIndex = index;
-  const useScope = Boolean(input.scope);
-  if (!useScope && input.bookFilter) {
-    const allowed = new Set(
-      [...input.bookFilter].map((id) => String(id).toUpperCase()).filter(Boolean),
-    );
-    if (allowed.size > 0) {
-      const { buildTokenIndex } = await import("./verseSearchEngine");
-      searchIndex = buildTokenIndex(
-        index.verses.filter((v) => allowed.has(v.bookId)),
-      );
-    }
-  }
+  // bookFilter legado → escopo pós-rank sobre o índice partilhado
+  // (antes reconstruía um tokenMap a cada consulta).
+  const legacyBooks = input.bookFilter
+    ? [...input.bookFilter].map((id) => String(id).toUpperCase()).filter(Boolean)
+    : [];
+  const scope: SearchScope =
+    input.scope ??
+    (legacyBooks.length > 0 ? { type: "books", bookIds: legacyBooks } : { type: "all" });
 
-  const found = searchVersesCascadeOnIndex(searchIndex, query, {
+  const found = searchVersesCascadeOnIndex(index, query, {
     limit: input.limit,
     offset: input.offset,
     profile: profileForVersion(input.version),
-    scope: input.scope ?? { type: "all" },
+    scope,
     preferBookId: input.preferBookId,
   });
+  // Frase inteira quando casou como frase; senão o 1º termo útil.
   const snippetNeedle =
-    found.matchedTerms.find((t) => t.length >= 2) ?? queryNorm;
+    found.matchMode === "exact_phrase"
+      ? queryNorm
+      : (found.matchedTerms.find((t) => t.length >= SEARCH_MIN_QUERY_LENGTH) ?? queryNorm);
 
   const results: BibleSearchHit[] = found.results.map(({ verse }) => ({
     usfm: verse.usfm,
@@ -134,7 +115,7 @@ export async function runLocalVerseSearch(input: {
     chapter: verse.chapter,
     verse: verse.verse,
     text: verse.raw,
-    snippet: makeSnippet(verse.raw, snippetNeedle),
+    snippet: makeSearchSnippet(verse.raw, snippetNeedle),
   }));
 
   return {

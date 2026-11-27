@@ -30,7 +30,8 @@ export type MatchMode =
 
 export type VerseSearchProfile = {
   stopWords: ReadonlySet<string>;
-  synonyms: Readonly<Record<string, string>>;
+  /** termo normalizado → alternativa(s) normalizada(s), aditivas (OR no grupo). */
+  synonyms: Readonly<Record<string, string | readonly string[]>>;
   stemSuffixes: readonly string[];
   /**
    * Outras formas da mesma palavra presentes no vocabulário (plural,
@@ -92,6 +93,9 @@ export type SearchVersesCascadeOptions = {
   /** Livro do leitor — sobe no ranking antes do cânon (evita “começar” em Gênesis). */
   preferBookId?: string;
 };
+
+/** Mínimo de caracteres (normalizados) para disparar uma busca. */
+export const SEARCH_MIN_QUERY_LENGTH = 2;
 
 /** Limite por pedido de página — não teto do universo de hits. */
 export const SEARCH_PAGE_LIMIT_MAX = 100;
@@ -285,10 +289,16 @@ export function tokenAlternatives(
 ): string[] {
   const t = String(token || "");
   if (!t) return [];
-  const syn = profile.synonyms[t];
+  const syn = Object.prototype.hasOwnProperty.call(profile.synonyms, t)
+    ? profile.synonyms[t]
+    : undefined;
   if (!syn) return [t];
-  const mapped = normalizeSearchText(syn);
-  return mapped && mapped !== t ? [t, mapped] : [t];
+  const out = [t];
+  for (const alt of typeof syn === "string" ? [syn] : syn) {
+    const mapped = normalizeSearchText(alt);
+    if (mapped && !out.includes(mapped)) out.push(mapped);
+  }
+  return out;
 }
 
 export function expandSynonyms(
@@ -512,10 +522,37 @@ function unionIndices(lists: number[][]): number[] {
   return [...seen].sort((a, b) => a - b);
 }
 
-/** Expressão exata com limites de palavra (« la vie » ≠ « la vierge »). */
-function phraseMatches(v: IndexedVerse, normQuery: string): boolean {
-  if (!normQuery) return false;
-  return ` ${v.norm} `.includes(` ${normQuery} `);
+/**
+ * Expressão exata com limites de palavra (« la vie » ≠ « la vierge »),
+ * aceitando qualquer variante por sinónimo (ver phraseVariants).
+ */
+function phraseMatches(v: IndexedVerse, phrases: string[]): boolean {
+  const padded = ` ${v.norm} `;
+  return phrases.some((phrase) => phrase && padded.includes(` ${phrase} `));
+}
+
+/** Teto de variantes de frase (produto cartesiano dos sinónimos). */
+const PHRASE_VARIANTS_MAX = 16;
+
+/**
+ * Frase normalizada + variantes trocando cada palavra pelos seus sinónimos
+ * ("jezi" → ["jezi", "jezikri"]; "seye a se gado" → "senye a se gado").
+ * Sem isto a expressão exata (e as aspas) ignorariam os sinónimos.
+ */
+export function phraseVariants(normQuery: string, profile: VerseSearchProfile): string[] {
+  let variants = [""];
+  for (const word of normQuery.split(" ").filter(Boolean)) {
+    const alts = tokenAlternatives(word, profile);
+    const next: string[] = [];
+    for (const prefix of variants) {
+      for (const alt of alts) {
+        if (next.length >= PHRASE_VARIANTS_MAX) break;
+        next.push(prefix ? `${prefix} ${alt}` : alt);
+      }
+    }
+    variants = next;
+  }
+  return variants.filter(Boolean);
 }
 
 /** Aspas (" « “) à volta da consulta = só a expressão exata. */
@@ -622,6 +659,127 @@ function termMatchIn(
 
 type RankedHit = VerseSearchHit & { tier: number; distance: number };
 
+/* ------------------------------------------------------------------------
+ * Desempates dentro do mesmo nível/distância (calculados 1× por hit).
+ * --------------------------------------------------------------------- */
+
+/** Penalidade (em palavras) quando os termos só aparecem fora da ordem da consulta. */
+const OUT_OF_ORDER_PENALTY = 3;
+
+function wordMatchesTerm(word: string, terms: TermWords): boolean {
+  return terms.exact.has(word) || terms.inflected.has(word) || terms.approx.has(word);
+}
+
+/** Menor janela com os termos na ORDEM da consulta; Infinity se não houver. */
+function orderedSpan(occ: { pos: number; g: number }[], order: number[]): number {
+  let best = Number.POSITIVE_INFINITY;
+  for (let i = 0; i < occ.length; i++) {
+    if (occ[i]!.g !== order[0]) continue;
+    let k = 1;
+    let j = i + 1;
+    for (; j < occ.length && k < order.length; j++) {
+      if (occ[j]!.g === order[k]) k += 1;
+    }
+    if (k === order.length) best = Math.min(best, occ[j - 1]!.pos - occ[i]!.pos + 1);
+  }
+  return best;
+}
+
+/**
+ * Proximidade: menor janela (em palavras) com todos os termos presentes no
+ * versículo; fora da ordem da consulta soma OUT_OF_ORDER_PENALTY.
+ * 0 = neutro (consulta de 1 termo).
+ */
+function minTermSpan(v: IndexedVerse, words: TermWords[]): number {
+  if (words.length < 2) return 0;
+  const tokens = v.norm.split(" ");
+  const occ: { pos: number; g: number }[] = [];
+  const present = new Set<number>();
+  for (let pos = 0; pos < tokens.length; pos++) {
+    for (let g = 0; g < words.length; g++) {
+      if (wordMatchesTerm(tokens[pos]!, words[g]!)) {
+        occ.push({ pos, g });
+        present.add(g);
+      }
+    }
+  }
+  if (present.size < 2) return 0;
+  const counts = new Map<number, number>();
+  let covered = 0;
+  let best = Number.MAX_SAFE_INTEGER;
+  let lo = 0;
+  for (let hi = 0; hi < occ.length; hi++) {
+    const gh = occ[hi]!.g;
+    const c = counts.get(gh) ?? 0;
+    if (c === 0) covered += 1;
+    counts.set(gh, c + 1);
+    while (covered === present.size) {
+      best = Math.min(best, occ[hi]!.pos - occ[lo]!.pos + 1);
+      const gl = occ[lo]!.g;
+      const cl = counts.get(gl)! - 1;
+      counts.set(gl, cl);
+      if (cl === 0) covered -= 1;
+      lo += 1;
+    }
+  }
+  const order = [...present].sort((a, b) => a - b);
+  return Math.min(best + OUT_OF_ORDER_PENALTY, orderedSpan(occ, order));
+}
+
+/** Palavras com acentos da consulta, em minúsculas NFC ("pè", "seyè"). */
+function accentedWords(text: string): string[] {
+  return String(text || "")
+    .normalize("NFC")
+    .toLowerCase()
+    .split(/[^\p{L}\p{M}\p{N}]+/u)
+    .filter((w) => w && /[^\u0000-\u007f]/.test(w));
+}
+
+const escapeRegExp = (t: string) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/** Palavra inteira, sensível a acento (texto em NFC), insensível a maiúsculas. */
+function accentWordPattern(word: string): RegExp {
+  const W = String.raw`[\p{L}\p{M}\p{N}]`;
+  return new RegExp(`(?<!${W})${escapeRegExp(word)}(?!${W})`, "iu");
+}
+
+/** Termos cuja palavra digitada (alts[0]) aparece inteira — vs. só o sinónimo. */
+function countLiteralGroups(v: IndexedVerse, tokenGroups: string[][]): number {
+  let n = 0;
+  for (const alts of tokenGroups) if (alts[0] && v.words.includes(alts[0])) n += 1;
+  return n;
+}
+
+/**
+ * Chave de desempate (menor = melhor): proximidade › acento exato ›
+ * palavra digitada antes do sinónimo › livro do leitor ›
+ * cânon protestante antes de DC › ordem canónica.
+ */
+function tieBreakKey(
+  v: IndexedVerse,
+  ctx: {
+    words: TermWords[];
+    tokenGroups: string[][];
+    accentPatterns: RegExp[];
+    preferBookId?: string;
+  },
+): number[] {
+  let accentHits = 0;
+  for (const re of ctx.accentPatterns) if (re.test(v.raw)) accentHits += 1;
+  const prefer =
+    ctx.preferBookId && String(v.bookId || "").toUpperCase() === ctx.preferBookId ? 0 : 1;
+  return [
+    minTermSpan(v, ctx.words),
+    -accentHits,
+    -countLiteralGroups(v, ctx.tokenGroups),
+    prefer,
+    isDcBook(v.bookId) ? 1 : 0,
+    v.canonIndex,
+    v.chapter,
+    v.verse,
+  ];
+}
+
 /**
  * Pesquisa sobre o índice invertido.
  * Facetas = universo completo dos hits **antes** do filtro de escopo / limit.
@@ -640,8 +798,9 @@ export function searchVersesCascadeOnIndex(
   const { verses, tokenMap } = index;
   const { normQuery, tokenGroups } = prepareQueryTokens(rawQuery, profile);
   const quoted = isQuotedQuery(rawQuery);
+  const phrases = phraseVariants(normQuery, profile);
 
-  if (normQuery.length < 2 || tokenGroups.length === 0) {
+  if (normQuery.length < SEARCH_MIN_QUERY_LENGTH || tokenGroups.length === 0) {
     const facets = emptySearchFacets();
     return {
       results: [],
@@ -672,7 +831,7 @@ export function searchVersesCascadeOnIndex(
 
   if (andIndices.length > 0 || slotCount === 1 || quoted) {
     for (const verse of versesFromIndices(verses, andIndices)) {
-      const isPhrase = phraseMatches(verse, normQuery);
+      const isPhrase = phraseMatches(verse, phrases);
       if (quoted && !isPhrase) continue;
       let tier = TIER_EXACT;
       let distance = 0;
@@ -721,21 +880,24 @@ export function searchVersesCascadeOnIndex(
   const preferBookId = String(options.preferBookId || "")
     .trim()
     .toUpperCase() || undefined;
-  matched.sort((a, b) => {
-    if (a.matchCount !== b.matchCount) return b.matchCount - a.matchCount;
-    if (a.tier !== b.tier) return a.tier - b.tier;
-    if (a.distance !== b.distance) return a.distance - b.distance;
-    if (preferBookId) {
-      const pa = String(a.verse.bookId || "").toUpperCase() === preferBookId ? 0 : 1;
-      const pb = String(b.verse.bookId || "").toUpperCase() === preferBookId ? 0 : 1;
-      if (pa !== pb) return pa - pb;
+  const tieCtx = {
+    words,
+    tokenGroups,
+    accentPatterns: accentedWords(rawQuery).map(accentWordPattern),
+    preferBookId,
+  };
+  const ranked = matched.map((hit) => ({ hit, key: tieBreakKey(hit.verse, tieCtx) }));
+  ranked.sort((a, b) => {
+    if (a.hit.matchCount !== b.hit.matchCount) return b.hit.matchCount - a.hit.matchCount;
+    if (a.hit.tier !== b.hit.tier) return a.hit.tier - b.hit.tier;
+    if (a.hit.distance !== b.hit.distance) return a.hit.distance - b.hit.distance;
+    for (let i = 0; i < a.key.length; i++) {
+      const d = a.key[i]! - b.key[i]!;
+      if (d !== 0) return d;
     }
-    return (
-      a.verse.canonIndex - b.verse.canonIndex ||
-      a.verse.chapter - b.verse.chapter ||
-      a.verse.verse - b.verse.verse
-    );
+    return 0;
   });
+  matched = ranked.map((r) => r.hit);
 
   const hits: VerseSearchHit[] = matched.map(({ verse, matchCount }) => ({
     verse,
