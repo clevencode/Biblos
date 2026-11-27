@@ -1088,9 +1088,44 @@ html[data-theme="dark"] .mode-tabs {
   --mode-tabs-canvas: var(--bible-nav-surface, var(--ink));
   --mode-tabs-fg: var(--paper);
   --mode-tabs-mat-bg: var(--bible-nav-surface, var(--ink));
-  /* Hub: inverso do light (claro + ícone escuro) */
-  --mode-tabs-hub-bg: var(--paper);
-  --mode-tabs-hub-fg: var(--ink);
+}
+
+/*
+ * Navbar = espelho da topbar: botões (pill, tela cheia, play) com a superfície
+ * dos triggers da topbar (--surface + --text), em ambos os temas.
+ */
+html[data-theme] .mode-tabs {
+  --mode-tabs-hub-bg: var(--surface);
+  --mode-tabs-hub-fg: var(--text);
+}
+
+/*
+ * Barra inferior (espelho da topbar): mesma superfície, separador e sombra.
+ * Vive no leitor (`isolation: isolate`) para ficar SOB o play (dock, z 40);
+ * pill + tela cheia (.mode-tabs, fora do leitor) pintam por cima.
+ */
+.app.is-bible-mode .bible-reader--yv::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
+  height: calc(
+    var(--bible-nav-bar-h, 80px) + env(safe-area-inset-bottom, 0px)
+  );
+  background: var(--bible-nav-surface, var(--yv-bg));
+  border-top: var(--yv-separator);
+  box-shadow: 0 -6px 16px 2px var(--bible-nav-surface, var(--yv-bg));
+  pointer-events: none;
+  transition: opacity var(--yv-chrome-ms, 240ms) var(--yv-chrome-ease, ease);
+}
+
+/* Imersivo / tela cheia / modal: barra sai junto com o chrome. */
+.app.is-bible-mode .bible-reader--yv.is-chrome-hidden::after,
+.app.is-bible-mode .bible-reader--yv.is-overlay-active::after,
+html[data-reader-fullscreen="true"] .app.is-bible-mode .bible-reader--yv::after {
+  opacity: 0;
 }
 
 .mode-tabs-chrome {
@@ -19050,15 +19085,12 @@ html[data-reader-fullscreen="true"] .bible-chapter-fab {
   }
 }
 
-/*
- * Play FAB + barra: sempre tema dark (ink/#0D1117 + paper),
- * independente de html[data-theme] / hub invertido.
- */
+/* Play FAB: superfície dos triggers da topbar (igual ao pill da navbar). */
 .app.is-bible-mode.is-narrow .bible-yv-dock.is-play-only .bible-yv-audio-player {
-  --audio-play-bg: #0d1117;
-  --audio-play-fg: #ffffff;
-  --audio-play-hover: color-mix(in srgb, #ffffff 12%, #0d1117);
-  --audio-play-press: color-mix(in srgb, #ffffff 18%, #0d1117);
+  --audio-play-bg: var(--surface);
+  --audio-play-fg: var(--text);
+  --audio-play-hover: color-mix(in srgb, var(--text) 10%, var(--surface));
+  --audio-play-press: color-mix(in srgb, var(--text) 16%, var(--surface));
   --audio-play-shadow: none;
   --yv-audio-fab-idle: var(--audio-play-bg);
   --yv-audio-fab-idle-hover: var(--audio-play-hover);
@@ -21933,9 +21965,8 @@ button.bible-study-ref-modal-title.is-jump:focus-visible {
   z-index: var(--bible-z-top-chrome, var(--bible-z-hdr-active, 80)) !important;
   background: var(--bible-nav-surface, var(--yv-bg)) !important;
   border-bottom: var(--yv-separator, 1px solid var(--line)) !important;
-  box-shadow:
-    0 1px 0 color-mix(in srgb, var(--ink) 8%, transparent),
-    0 6px 16px color-mix(in srgb, var(--ink) 12%, transparent) !important;
+  /* Telas (search, surlignages, historique, livros): padrão da topbar sem sombra. */
+  box-shadow: none !important;
   opacity: 1 !important;
   visibility: visible !important;
   transform: none !important;
