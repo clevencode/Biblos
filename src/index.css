@@ -16887,15 +16887,6 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   --bible-passage-clearance: calc(var(--bible-dock-lift) + 14px);
 }
 
-/* Titre livre/chapitre: navigation déjà dans le bandeau supérieur */
-.app.is-bible-mode.is-narrow .bible-reader--yv .bible-passage-head {
-  display: none !important;
-  margin: 0 !important;
-  min-height: 0 !important;
-  opacity: 0;
-  pointer-events: none;
-}
-
 .bible-reader--yv.has-verse-actions .bible-passage {
   padding-bottom: calc(
     var(--verse-actions-sheet-h, var(--bible-verse-actions-sheet-fallback, 340px)) + 16px +
@@ -16965,53 +16956,68 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   );
 }
 
+/* Cabeçalho do capítulo rola com o texto (sem fade/colapso no scroll). */
 .bible-reader--yv .bible-passage-head {
-  /* Hero → compacto: transição CSS discreta (sem margin/progress por pixel = sem tremedeira) */
-  margin: 12px 0 22px;
-  text-align: center;
-  transform-origin: 12% 0%;
-  opacity: 1;
-  transform: translate3d(0, 0, 0) scale(1);
-  transition:
-    opacity var(--yv-chrome-ms) var(--yv-chrome-ease),
-    transform var(--yv-chrome-ms) var(--yv-chrome-ease);
+  margin: 0;
   pointer-events: none;
 }
 
-.bible-reader--yv.is-head-compact .bible-passage-head {
-  opacity: 0;
-  transform: translate3d(-10px, -6px, 0) scale(0.92);
-  /* Mantém o espaço no fluxo — evita salto de scroll ao colapsar */
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .bible-reader--yv .bible-passage-head,
   .bible-yv-compact-ref {
     transition: opacity 1ms linear;
     transform: none;
   }
 }
 
-.bible-book-name {
-  margin: 0;
-  font-family: var(--font-read);
-  font-size: var(--type-headline-size);
-  font-weight: var(--type-headline-weight);
-  letter-spacing: var(--type-headline-tracking);
-  line-height: var(--type-headline-lh);
-  font-optical-sizing: auto;
-  color: var(--yv-muted);
+/* Cabeçalho editorial do capítulo (ChapterHeader) */
+.chapter-header {
+  --chapter-header-kicker: color-mix(in srgb, var(--ink) 55%, var(--paper));
+  --chapter-header-title: var(--ink);
+  --chapter-header-rule: color-mix(in srgb, var(--ink) 14%, var(--paper));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+  padding-top: 36px;
+  text-align: center;
 }
 
-.bible-chapter-num {
-  margin: 8px 0 0;
-  font-family: var(--font-read);
-  font-size: var(--type-display-size);
-  font-weight: var(--type-display-weight);
-  line-height: var(--type-display-lh);
-  letter-spacing: var(--type-display-tracking);
+html[data-theme="dark"] .chapter-header {
+  --chapter-header-kicker: #8e929b;
+  --chapter-header-title: #eaeaea;
+  --chapter-header-rule: #2a2d35;
+}
+
+.chapter-header-kicker {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--chapter-header-kicker);
+}
+
+.chapter-header-title {
+  margin: 7px 0 0;
+  font-family: var(--font-bible);
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
   font-optical-sizing: auto;
-  color: var(--yv-text);
+  color: var(--chapter-header-title);
+}
+
+.chapter-header-rule {
+  width: 45%;
+  height: 1px;
+  margin: 20px 0 24px;
+  padding: 0;
+  border: 0;
+  background: var(--chapter-header-rule);
 }
 
 /* FABs laterais: capítulo anterior / seguinte (centro vertical) */
@@ -17469,6 +17475,18 @@ html[data-theme="dark"] .bible-chapter-fab {
   vertical-align: super;
   line-height: 0;
   user-select: none;
+}
+
+/* Capitular (lettrine) do 1.º versículo — rebaixada em 2 linhas. */
+.bible-reader--yv .bible-verse-dropcap {
+  float: left;
+  margin: 0.06em 0.1em 0 0;
+  font-family: var(--font-bible);
+  font-size: calc(var(--type-bible-lh) * 2em);
+  font-weight: 600;
+  line-height: 0.82;
+  letter-spacing: 0;
+  color: var(--yv-text);
 }
 
 .bible-reader--yv .bible-verse-card-icon {

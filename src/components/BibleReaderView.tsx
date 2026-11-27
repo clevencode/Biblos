@@ -48,6 +48,7 @@ import {
   saveAudioPosition,
   type BibleAudioEpisode,
 } from "../youversion/audio";
+import { ChapterHeader } from "./ChapterHeader";
 import { BibleAudioFloat } from "./BibleAudioFloat";
 import { BibleHistorySheet } from "./BibleHistorySheet";
 import { BibleMarksSheet } from "./BibleMarksSheet";
@@ -440,6 +441,19 @@ const VerseSelectMarkButton = memo(function VerseSelectMarkButton({
   );
 });
 
+/**
+ * Capitular (drop cap / lettrine) do 1.º versículo: pontuação de abertura
+ * («, —, …) fica colada à letra, como em `::first-letter`.
+ */
+const DROP_CAP_RE = /^([\s«»"“”'‘’(\[–—-]*)(\p{L})/u;
+
+function splitDropCap(text: string): { initial: string; rest: string } | null {
+  const match = DROP_CAP_RE.exec(text);
+  if (!match) return null;
+  const initial = `${match[1]!.trim()}${match[2]!}`;
+  return { initial, rest: text.slice(match[0].length) };
+}
+
 const BibleVerseButton = memo(function BibleVerseButton({
   verse,
   selected,
@@ -484,6 +498,10 @@ const BibleVerseButton = memo(function BibleVerseButton({
   const inRange = inPlanRange || inDeeplink;
   const titleLike = isLikelyVerseTitle(verse.text, verse.number);
   const runClass = markRunEdgeClass(markRunEdge);
+  const dropCap = useMemo(
+    () => (verse.number === 1 && !titleLike ? splitDropCap(verse.text) : null),
+    [verse.number, verse.text, titleLike],
+  );
   const markStyle = useMemo(
     () =>
       markDisplay
@@ -534,13 +552,22 @@ const BibleVerseButton = memo(function BibleVerseButton({
     >
       {/* Contrato: tinta de marca só em .bible-verse-ink (inline), nunca no shell. */}
       <span className="bible-verse-ink">
-        <sup className="bible-verse-num">{verse.number}</sup>
+        {dropCap ? null : (
+          <sup className="bible-verse-num">{verse.number}</sup>
+        )}
         {hasFlashcard ? (
           <span className="bible-verse-card-icon" aria-hidden="true">
             <YvIcon name="style" />
           </span>
         ) : null}
-        <span className="bible-verse-text">{verse.text}</span>
+        {dropCap ? (
+          <span className="bible-verse-text">
+            <span className="bible-verse-dropcap">{dropCap.initial}</span>
+            {dropCap.rest}
+          </span>
+        ) : (
+          <span className="bible-verse-text">{verse.text}</span>
+        )}
       </span>
     </span>
   );
@@ -4886,10 +4913,11 @@ export function BibleReaderView({
           if (chromeHiddenRef.current) setReadingChrome(false, true);
         }}
       >
-        <header className="bible-passage-head">
-          <p className="bible-book-name">{bookTitle}</p>
-          <p className="bible-chapter-num">{chapterId}</p>
-        </header>
+        <ChapterHeader
+          className="bible-passage-head"
+          subtitulo={t("bible.chapterN", { n: chapterId })}
+          titulo={`${bookTitle} ${chapterId}`}
+        />
 
         {showOfflineChapterGateUi ? (
           <BibleOfflineChapterGate
