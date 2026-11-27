@@ -50,6 +50,7 @@ import {
   type BibleAudioEpisode,
 } from "../youversion/audio";
 import { ChapterHeader } from "./ChapterHeader";
+import { BibleBookSearchField } from "./BibleBookSearchField";
 import { estimateReadingMinutes } from "../bible/readingTime";
 import { BibleAudioFloat } from "./BibleAudioFloat";
 import { BibleHistorySheet } from "./BibleHistorySheet";
@@ -1258,6 +1259,14 @@ export function BibleReaderView({
     markOverlayDismissSwallow,
   });
 
+  /** Seletor de livros: pesquisa aberta na topbar (esconde o pill de retorno). */
+  const [bookSearchInTopbar, setBookSearchInTopbar] = useState(false);
+  const bookSearchTopbarActive =
+    bookSearchInTopbar && passageRollOpen && passageStep === "book";
+  useEffect(() => {
+    if (!passageRollOpen || passageStep !== "book") setBookSearchInTopbar(false);
+  }, [passageRollOpen, passageStep]);
+
   const pickerPassageChrome = useMemo(
     () => passagePickerChromeFromPresentation(presentation, activeSchema),
     [presentation, activeSchema],
@@ -2073,6 +2082,29 @@ export function BibleReaderView({
           ? browsingBookTitle.trim() || bookTitle.trim() || passageRefLabel
           : bookTitle.trim() || passageRefLabel;
 
+    /* Modo pesquisa (botão 🔍 da topbar): campo no lugar do pill ← livro. */
+    if (showPickReturnPill && bookSearchTopbarActive) {
+      return (
+        <nav
+          className={`bible-yv-compact-ref bible-yv-top-passage is-pick-back-nav is-book-search${extraClass}${
+            splitChrome ? " is-split-chrome" : ""
+          }`.trim()}
+          aria-label={t("searchBooks.search")}
+        >
+          <BibleBookSearchField
+            className="is-topbar"
+            value={bookSearchQuery}
+            onChange={setBookSearchQuery}
+            onClear={clearBookSearch}
+            placeholder={t("searchBooks.placeholder")}
+            label={t("searchBooks.search")}
+            clearLabel={t("common.clear")}
+            autoFocus
+          />
+        </nav>
+      );
+    }
+
     /* Picker aberto: pill ← + livro (sem campo de pesquisa). */
     if (showPickReturnPill) {
       return (
@@ -2269,6 +2301,7 @@ export function BibleReaderView({
         onPickChapterFromBook={pickChapterFromBook}
         onJumpVerse={jumpToVerse}
         discoveryBooksOnly={discoverySplitSearch}
+        searchInTopbar={bookSearchTopbarActive}
       />
     );
   }
@@ -4684,6 +4717,17 @@ export function BibleReaderView({
           )
         ) : null}
         <div className="bible-yv-top-tools">
+          {passageRollOpen && passageStep === "book" && !bookSearchTopbarActive ? (
+            <button
+              type="button"
+              className="bible-yv-top-passage-arrow is-next is-pick-side is-shown is-pick-dismiss is-pick-search"
+              onClick={() => setBookSearchInTopbar(true)}
+              aria-label={t("searchBooks.search")}
+              title={t("searchBooks.search")}
+            >
+              <YvIcon name="search" className="bible-yv-top-passage-arrow-icon" />
+            </button>
+          ) : null}
           {passageRollOpen ? (
             <button
               type="button"

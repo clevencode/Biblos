@@ -14731,6 +14731,28 @@ html[data-passage-bar-panel="test"]
   contain: layout style;
 }
 
+/* Modo pesquisa na topbar: o campo ocupa o lugar do pill ← livro. */
+.bible-yv-passage-chrome-cluster:has(.bible-yv-top-passage.is-book-search),
+.bible-yv-passage-roll:has(.bible-yv-top-passage.is-book-search),
+.bible-yv-top-passage.is-book-search {
+  /* Cresce até ao botão ✕ (tools fica com a largura própria). */
+  flex: 1 1 0;
+  width: auto;
+  min-width: 0;
+  max-width: none !important;
+}
+
+.bible-yv-top:has(.bible-yv-top-passage.is-book-search) .bible-yv-top-tools {
+  flex: none;
+}
+
+.bible-yv-pick-book-search-pill.is-topbar {
+  --return-nav-pill-h: var(--hdr-size, var(--mobile-touch, 44px));
+  background: var(--yv-chrome-surface, var(--surface));
+  border: 0;
+  box-shadow: none;
+}
+
 .bible-yv-pick-book-search-pill .bible-yv-pick-search-trigger-icon {
   flex: none;
   width: 20px;
