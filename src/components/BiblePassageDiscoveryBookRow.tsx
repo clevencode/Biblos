@@ -37,6 +37,42 @@ type BiblePassageDiscoveryBookRowProps = {
   bookNavigateEnabled?: boolean;
 };
 
+const REVEAL_MARGIN_PX = 12;
+
+/**
+ * Rola a lista de livros para mostrar o painel recém-aberto: o máximo
+ * possível do painel, sem nunca esconder o cabeçalho do livro.
+ * Área útil termina acima da barra de pesquisa flutuante (se existir).
+ */
+function revealExpandedRow(row: HTMLElement) {
+  const list = row.closest<HTMLElement>(".bible-yv-pick-grid");
+  if (!list) return;
+  const listRect = list.getBoundingClientRect();
+  const searchBar = list.parentElement?.querySelector<HTMLElement>(
+    ".bible-yv-pick-book-search-bar",
+  );
+  const visibleTop = listRect.top + REVEAL_MARGIN_PX;
+  const visibleBottom =
+    Math.min(
+      listRect.bottom,
+      searchBar ? searchBar.getBoundingClientRect().top : listRect.bottom,
+    ) - REVEAL_MARGIN_PX;
+  const rowRect = row.getBoundingClientRect();
+
+  let delta = 0;
+  if (rowRect.top < visibleTop) {
+    delta = rowRect.top - visibleTop;
+  } else if (rowRect.bottom > visibleBottom) {
+    /* Painel maior que a área: alinha o cabeçalho ao topo. */
+    delta = Math.min(rowRect.bottom - visibleBottom, rowRect.top - visibleTop);
+  }
+  if (Math.abs(delta) < 1) return;
+  const reduceMotion = window.matchMedia?.(
+    "(prefers-reduced-motion: reduce)",
+  ).matches;
+  list.scrollBy({ top: delta, behavior: reduceMotion ? "auto" : "smooth" });
+}
+
 export const BiblePassageDiscoveryBookRow = memo(
   function BiblePassageDiscoveryBookRow({
     hit,
@@ -60,6 +96,9 @@ export const BiblePassageDiscoveryBookRow = memo(
   }: BiblePassageDiscoveryBookRowProps) {
     const panelId = useId();
     const verseListRef = useRef<HTMLUListElement | null>(null);
+    const rowRef = useRef<HTMLDivElement | null>(null);
+    /** Expandido por toque (não por restore de sessão) → revelar o painel. */
+    const revealOnExpandRef = useRef(false);
     const on = hit.id.toUpperCase() === currentBookId.toUpperCase();
     const contentHits = (hit.count ?? 0) > 0;
     const verseExpandable = verseDiscoveryEnabled && hasQuery && contentHits;
@@ -96,9 +135,18 @@ export const BiblePassageDiscoveryBookRow = memo(
       hit.id,
     ]);
 
+    /* Painel aberto pelo utilizador: rolar a lista até ficar visível. */
+    useLayoutEffect(() => {
+      if (!expanded || !revealOnExpandRef.current) return;
+      revealOnExpandRef.current = false;
+      const row = rowRef.current;
+      if (row) revealExpandedRow(row);
+    }, [expanded]);
+
     function handleRowActivate() {
       if (expandable) {
         const next = expanded ? null : hit.id;
+        revealOnExpandRef.current = next != null;
         /* Expandir monta até ~150 células (Salmos) — não bloquear o tap. */
         startTransition(() => {
           onToggleExpand(next);
@@ -133,6 +181,7 @@ export const BiblePassageDiscoveryBookRow = memo(
 
     return (
       <div
+        ref={rowRef}
         className={`bible-yv-pick-book-row${expanded ? " is-expanded" : ""}${expandable ? " is-expandable" : ""}${chapterExpandable ? " is-chapter-accordion" : ""}`}
       >
         <button

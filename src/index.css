@@ -15046,8 +15046,8 @@ html[data-passage-bar-panel="test"]
   background: none;
   border: 0;
   contain: layout style;
-  content-visibility: auto;
-  contain-intrinsic-size: auto 120px;
+  /* Sem content-visibility: o painel só existe aberto e precisa da altura
+     real para o scroll de revelação ao expandir. */
 }
 
 .bible-yv-pick-chapter-panel .bible-yv-pick-cell {
