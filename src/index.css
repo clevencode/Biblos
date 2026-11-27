@@ -13362,9 +13362,44 @@ html[data-passage-bar-panel="test"] .bible-yv-word-search-recent-chip {
 }
 
 html[data-passage-bar-panel="test"] .bible-yv-word-search-recent-chip-icon {
-  font-size: 0.75rem;
+  flex: none;
+  font-size: 0.95rem;
   line-height: 1;
   opacity: 0.7;
+}
+
+/* Cabeçalho RÉCENTS / SUGGESTIONS + « Effacer » (só recentes). */
+.bible-yv-word-search-recents-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.bible-yv-word-search-recents-clear {
+  margin: 0;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: color-mix(in srgb, var(--text) 60%, transparent);
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.bible-yv-word-search-recents-clear:hover {
+  color: var(--text);
+}
+
+/* Dica de pesquisa (aspas = expressão exata). */
+.bible-yv-word-search-tip {
+  margin: 10px 2px 0;
+  color: color-mix(in srgb, var(--text) 50%, transparent);
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  line-height: 1.4;
 }
 
 /* Área de resultados: preenche a caixa fixa do painel (não colapsa) */

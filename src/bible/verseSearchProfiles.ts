@@ -3,6 +3,7 @@ import {
   ROMANCE_STEM_SUFFIXES,
   type VerseSearchProfile,
 } from "./verseSearchEngine";
+import { frenchInflections, noInflections } from "./verseSearchVariants";
 
 const S21_FR_STOP_WORDS = new Set([
   "le",
@@ -48,6 +49,8 @@ export const S21_FR_PROFILE: VerseSearchProfile = {
   stopWords: S21_FR_STOP_WORDS,
   synonyms: S21_FR_SYNONYMS,
   stemSuffixes: ROMANCE_STEM_SUFFIXES,
+  /* Plural, feminino e verbos em -er (validados no vocabulário da S21). */
+  inflect: frenchInflections,
 };
 
 const HT98_STOP_WORDS = new Set([
@@ -73,6 +76,8 @@ export const HT98_PROFILE: VerseSearchProfile = {
   stopWords: HT98_STOP_WORDS,
   synonyms: {},
   stemSuffixes: ROMANCE_STEM_SUFFIXES,
+  /* Créole: palavras invariáveis (plural « yo », tempo por partículas). */
+  inflect: noInflections,
 };
 
 export function profileForVersion(id: BibleTextVersionId): VerseSearchProfile {

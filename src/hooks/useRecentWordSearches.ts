@@ -71,9 +71,14 @@ export function useRecentWordSearches(versionId: BibleTextVersionId) {
     [versionId],
   );
 
+  const clearRecents = useCallback(() => {
+    writeRecents(versionId, []);
+    setRecents([]);
+  }, [versionId]);
+
   const suggestions = wordSearchSuggestions(versionId);
   const chips = recents.length > 0 ? recents : [...suggestions];
   const isSuggestions = recents.length === 0;
 
-  return { recents, chips, isSuggestions, pushRecent };
+  return { recents, chips, isSuggestions, pushRecent, clearRecents };
 }

@@ -287,4 +287,54 @@ assert.ok(normalizeSearchText("résurrection").includes("resurrection"));
   );
 }
 
+// --- Relevância por níveis + formas da palavra (concordância) ---
+{
+  const c: IndexedVerse[] = [
+    verse("GEN.16.7", "L'ange de l'Eternel la trouva près d'une source.", 1),
+    verse("GEN.19.1", "Les deux anges arrivèrent à Sodome le soir.", 1),
+    verse("PSA.23.1", "L'Eternel est mon berger: je ne manquerai de rien.", 19),
+    verse("LUK.2.8", "Il y avait des bergers qui passaient la nuit aux champs.", 42),
+    verse("JHN.10.11", "Je suis le bon berger. Le bon berger donne sa vie.", 43),
+    verse("JHN.10.16", "J'ai encore d'autres brebis; il y aura un seul troupeau, un seul berger, et il est bon.", 43),
+    verse("JHN.3.16", "En effet, Dieu a tant aimé le monde qu'il a donné son Fils.", 43),
+    verse("JHN.13.34", "Aimez-vous les uns les autres comme je vous ai aimés.", 43),
+    verse("JHN.11.5", "Or Jésus aimait Marthe, sa sœur et Lazare.", 43),
+    verse("1JN.4.8", "Celui qui n'aime pas n'a pas connu Dieu, car Dieu est amour.", 61),
+    verse("LUK.1.27", "vers une vierge fiancée à un homme appelé Joseph.", 42),
+    verse("1CO.13.13", "Maintenant donc ces trois choses restent: la foi, l'espérance, l'amour.", 46),
+    verse("GEN.18.32", "Que le Seigneur ne s'irrite pas, je ne parlerai plus que cette fois.", 1),
+    verse("JHN.11.25", "Je suis la résurrection et la vie.", 43),
+    verse("DAN.6.8", "Une restriction fut établie par le roi.", 27),
+  ];
+  const q = (query: string) => searchVersesCascade(c, query, { profile: S21_FR_PROFILE, limit: 40 });
+  const ids = (r: S21SearchResult) => r.results.map((h) => h.verse.usfm);
+
+  // Plural: « ange » também encontra « anges » (forma exata primeiro).
+  assert.deepEqual(ids(q("ange")), ["GEN.16.7", "GEN.19.1"]);
+  // Verbo em -er: « aimer » encontra aime/aimait/aimez/aimé.
+  assert.deepEqual(new Set(ids(q("aimer"))), new Set(["JHN.3.16", "JHN.13.34", "JHN.11.5", "1JN.4.8"]));
+  // Frase primeiro, depois as palavras separadas (sem cortar resultados).
+  assert.deepEqual(ids(q("bon berger")), ["JHN.10.11", "JHN.10.16"]);
+  // Forma exata antes das outras formas (berger antes de bergers).
+  assert.deepEqual(ids(q("berger")).slice(-1), ["LUK.2.8"]);
+  // Limites de palavra: « la vie » não apanha « la vierge » como frase.
+  assert.equal(ids(q("la vie"))[0], "JHN.11.25");
+  assert.ok(!ids(q("la vie")).includes("LUK.1.27"));
+  // Entre aspas: só a expressão exata.
+  assert.deepEqual(ids(q('"bon berger"')), ["JHN.10.11"]);
+  // Palavras curtas não se misturam (foi ≠ fois).
+  assert.deepEqual(ids(q("foi")), ["1CO.13.13"]);
+  // Erro de escrita: só o grupo mais próximo (résurrection, não restriction).
+  const typo = q("resurection");
+  assert.equal(typo.matchMode, "fuzzy");
+  assert.deepEqual(ids(typo), ["JHN.11.25"]);
+  // Início de palavra enquanto se escreve.
+  assert.deepEqual(ids(q("resur")), ["JHN.11.25"]);
+  // Destaque inclui as formas encontradas.
+  assert.ok(q("aimer").matchedTerms.includes("aimait"));
+  // Livro do leitor sobe dentro do mesmo nível.
+  const pref = searchVersesCascade(c, "berger", { profile: S21_FR_PROFILE, limit: 40, preferBookId: "JHN" });
+  assert.equal(pref.results[0]!.verse.bookId, "JHN");
+}
+
 console.log("test-s21-search-engine: ok");

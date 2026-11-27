@@ -340,6 +340,7 @@ export type UiCopyKey =
   | "word.dc"
   | "word.recents"
   | "word.suggestions"
+  | "word.quoteTip"
   | "word.filterBook"
   | "word.apply"
   | "word.showAll"
@@ -725,6 +726,7 @@ const FR: Dict = {
   "word.dc": "Deutéro.",
   "word.recents": "RÉCENTS",
   "word.suggestions": "SUGGESTIONS",
+  "word.quoteTip": "Astuce : mettez une expression entre guillemets pour la trouver telle quelle, ex. « la vie éternelle ».",
   "word.filterBook": "Filtrer un livre…",
   "word.apply": "Appliquer ({n} passages)",
   "word.showAll": "Tout afficher ({n})",
@@ -1111,6 +1113,7 @@ const HT: Dict = {
   "word.dc": "Dewoterokanonik",
   "word.recents": "RESAN",
   "word.suggestions": "SIJESYON",
+  "word.quoteTip": "Konsèy : mete yon ekspresyon ant gimè pou jwenn li egzakteman, egz. « lavi ki p ap janm fini an ».",
   "word.filterBook": "Filtre yon liv…",
   "word.apply": "Aplike ({n} pasaj)",
   "word.showAll": "Montre tout ({n})",

@@ -1,5 +1,13 @@
 /**
- * Motor de busca em cascata (frase → AND → stem → fuzzy/OR).
+ * Motor de pesquisa por palavras (concordância com relevância).
+ *
+ * Recolha única com níveis, em vez de parar no 1.º nível com resultados:
+ *   0 expressão exata (limites de palavra) · 1 todas as palavras na forma
+ *   escrita · 2 outras formas da mesma palavra · 3 início de palavra /
+ *   erro de escrita (só para termos sem forma conhecida).
+ * Dentro do nível: livro do leitor primeiro, depois ordem canónica.
+ * Sem versículo com todas as palavras → « partial_or » (alguma palavra).
+ * Entre aspas → só a expressão exata.
  * Version-agnostic: regras linguísticas via VerseSearchProfile.
  */
 
@@ -24,6 +32,11 @@ export type VerseSearchProfile = {
   stopWords: ReadonlySet<string>;
   synonyms: Readonly<Record<string, string>>;
   stemSuffixes: readonly string[];
+  /**
+   * Outras formas da mesma palavra presentes no vocabulário (plural,
+   * feminino, conjugação). Sem isto: só a forma escrita.
+   */
+  inflect?: (token: string, has: (word: string) => boolean) => string[];
 };
 
 export type IndexedVerse = {
@@ -384,171 +397,17 @@ export function buildIndexedVerse(input: {
   };
 }
 
-function shortTokenMatches(v: IndexedVerse, token: string): boolean {
-  if (token.length >= 4) return v.norm.includes(token);
-  return v.words.some((w) => w === token || w.startsWith(token));
-}
 
-function allTermsMatch(v: IndexedVerse, tokenGroups: string[][]): boolean {
-  return tokenGroups.every((alts) => alts.some((t) => shortTokenMatches(v, t)));
-}
 
-function stemmedMatch(v: IndexedVerse, stemmedGroups: string[][]): boolean {
-  return stemmedGroups.every((alts) =>
-    alts.some((stem) => {
-      if (stem.length >= 4) {
-        return (
-          v.words.some((w) => w === stem || w.startsWith(stem)) || v.norm.includes(stem)
-        );
-      }
-      return v.words.some((w) => w === stem || w.startsWith(stem));
-    }),
-  );
-}
 
-function countWholeWordHits(v: IndexedVerse, tokens: string[]): number {
-  let n = 0;
-  for (const t of tokens) {
-    if (v.words.includes(t)) n += 1;
-  }
-  return n;
-}
 
-function countPrefixHits(v: IndexedVerse, tokens: string[]): number {
-  let n = 0;
-  for (const t of tokens) {
-    if (v.words.includes(t)) continue;
-    if (v.words.some((w) => w.startsWith(t))) n += 1;
-  }
-  return n;
-}
 
-function countSubstringOrStemHits(
-  v: IndexedVerse,
-  tokens: string[],
-  stemmed: string[],
-  profile: VerseSearchProfile,
-): number {
-  let n = 0;
-  for (let i = 0; i < tokens.length; i++) {
-    const t = tokens[i]!;
-    const stem = stemmed[i] ?? stemToken(t, profile);
-    if (v.words.includes(t)) continue;
-    if (v.words.some((w) => w.startsWith(t))) continue;
-    if (v.norm.includes(t) || v.norm.includes(stem) || v.words.some((w) => w.startsWith(stem))) {
-      n += 1;
-    }
-  }
-  return n;
-}
 
-function rankKey(
-  v: IndexedVerse,
-  normQuery: string,
-  tokens: string[],
-  stemmed: string[],
-  matchCount: number,
-  profile: VerseSearchProfile,
-  preferBookId?: string,
-): [
-  number,
-  number,
-  number,
-  number,
-  number,
-  number,
-  number,
-  number,
-  number,
-] {
-  const exactPhrase = normQuery && v.norm.includes(normQuery) ? 1 : 0;
-  const prefer =
-    preferBookId && String(v.bookId || "").toUpperCase() === preferBookId
-      ? 0
-      : 1;
-  return [
-    -exactPhrase,
-    -matchCount,
-    -countWholeWordHits(v, tokens),
-    -countPrefixHits(v, tokens),
-    -countSubstringOrStemHits(v, tokens, stemmed, profile),
-    prefer,
-    v.canonIndex,
-    v.chapter,
-    v.verse,
-  ];
-}
 
-function compareRank(
-  a: VerseSearchHit,
-  b: VerseSearchHit,
-  normQuery: string,
-  tokens: string[],
-  stemmed: string[],
-  profile: VerseSearchProfile,
-  preferBookId?: string,
-): number {
-  const ka = rankKey(
-    a.verse,
-    normQuery,
-    tokens,
-    stemmed,
-    a.matchCount,
-    profile,
-    preferBookId,
-  );
-  const kb = rankKey(
-    b.verse,
-    normQuery,
-    tokens,
-    stemmed,
-    b.matchCount,
-    profile,
-    preferBookId,
-  );
-  for (let i = 0; i < ka.length; i++) {
-    const d = ka[i]! - kb[i]!;
-    if (d !== 0) return d;
-  }
-  return 0;
-}
 
 /** Amostra máxima para extrair termos fuzzy do universo escopado. */
 const MATCHED_TERMS_HIT_CAP = 200;
 
-function collectMatchedTerms(
-  mode: MatchMode,
-  tokens: string[],
-  stemmed: string[],
-  hits: VerseSearchHit[],
-): string[] {
-  const out: string[] = [];
-  const seen = new Set<string>();
-  const add = (t: string) => {
-    if (!t || seen.has(t)) return;
-    seen.add(t);
-    out.push(t);
-  };
-  for (const t of tokens) add(t);
-  if (mode === "stemmed" || mode === "partial_or") {
-    for (const s of stemmed) add(s);
-  }
-  if (mode === "fuzzy") {
-    const token = tokens[0];
-    if (token) {
-      const sample =
-        hits.length > MATCHED_TERMS_HIT_CAP
-          ? hits.slice(0, MATCHED_TERMS_HIT_CAP)
-          : hits;
-      for (const hit of sample) {
-        for (const w of hit.verse.words) {
-          if (fuzzyTokenMatches(w, token)) add(w);
-        }
-      }
-    }
-  }
-  return out;
-}
 
 export function prepareQueryTokens(
   rawQuery: string,
@@ -632,20 +491,6 @@ function intersectSorted(a: number[], b: number[]): number[] {
   return out;
 }
 
-/** Interseção das posting lists (união dentro de cada grupo de sinónimos). */
-function intersectTokenGroups(
-  tokenMap: Record<string, number[]>,
-  tokenGroups: string[][],
-): number[] {
-  let result: number[] | null = null;
-  for (const alts of tokenGroups) {
-    const posting = unionPostings(tokenMap, alts);
-    if (posting.length === 0) return [];
-    result = result == null ? posting : intersectSorted(result, posting);
-    if (result.length === 0) return [];
-  }
-  return result ?? [];
-}
 
 function versesFromIndices(
   verses: IndexedVerse[],
@@ -667,8 +512,118 @@ function unionIndices(lists: number[][]): number[] {
   return [...seen].sort((a, b) => a - b);
 }
 
+/** Expressão exata com limites de palavra (« la vie » ≠ « la vierge »). */
+function phraseMatches(v: IndexedVerse, normQuery: string): boolean {
+  if (!normQuery) return false;
+  return ` ${v.norm} `.includes(` ${normQuery} `);
+}
+
+/** Aspas (" « “) à volta da consulta = só a expressão exata. */
+export function isQuotedQuery(rawQuery: string): boolean {
+  return /^\s*["«“].*\S.*["»”]\s*$/u.test(String(rawQuery || ""));
+}
+
+/** Níveis de correspondência por versículo (menor = mais relevante). */
+const TIER_PHRASE = 0;
+const TIER_EXACT = 1;
+const TIER_INFLECTED = 2;
+const TIER_APPROX = 3;
+
+/** Palavras usadas por um termo da consulta, por tipo de correspondência. */
+type TermWords = {
+  exact: Set<string>;
+  inflected: Set<string>;
+  /** Início de palavra / erro de escrita → distância (0 = prefixo). */
+  approx: Map<string, number>;
+  fuzzy: boolean;
+};
+
+/** Máximo de palavras aproximadas por termo (prefixo / erro de escrita). */
+const APPROX_WORDS_CAP = 400;
+
+function termWords(
+  alts: string[],
+  index: VerseSearchIndex,
+  profile: VerseSearchProfile,
+  allowApprox: boolean,
+): TermWords {
+  const { tokenMap, uniqueTokens } = index;
+  const has = (w: string) => Boolean(tokenMap[w]);
+  const exact = new Set(alts.filter(has));
+  const inflected = new Set<string>();
+  for (const alt of alts) {
+    for (const w of profile.inflect?.(alt, has) ?? []) {
+      if (!exact.has(w)) inflected.add(w);
+    }
+  }
+  const approx = new Map<string, number>();
+  let fuzzy = false;
+  if (allowApprox && exact.size === 0 && inflected.size === 0) {
+    /* Início de palavra (pesquisa enquanto escreve: « resur » → résurrection). */
+    const prefixAlts = alts.filter((t) => t.length >= 3);
+    if (prefixAlts.length) {
+      for (const tok of uniqueTokens) {
+        if (prefixAlts.some((t) => tok.startsWith(t))) {
+          approx.set(tok, 0);
+          if (approx.size >= APPROX_WORDS_CAP) break;
+        }
+      }
+    }
+    /* Erro de escrita (« resurection »), ordenado pela distância. */
+    if (approx.size === 0) {
+      const fuzzyAlts = alts.filter((t) => t.length >= 5);
+      for (const tok of uniqueTokens) {
+        let best = Infinity;
+        for (const t of fuzzyAlts) {
+          if (!fuzzyTokenMatches(tok, t)) continue;
+          best = Math.min(best, levenshtein(tok, t));
+        }
+        if (best !== Infinity) approx.set(tok, best);
+      }
+      /* Só o grupo mais próximo: « resurection » → résurrection (1), não
+       * restriction (2). */
+      const closest = Math.min(...approx.values());
+      for (const [tok, d] of approx) if (d > closest) approx.delete(tok);
+      fuzzy = approx.size > 0;
+    }
+  }
+  return { exact, inflected, approx, fuzzy };
+}
+
+function termPostings(tokenMap: Record<string, number[]>, words: TermWords): number[] {
+  return unionPostings(tokenMap, [
+    ...words.exact,
+    ...words.inflected,
+    ...words.approx.keys(),
+  ]);
+}
+
+/** Melhor correspondência de um termo num versículo (tier + distância). */
+function termMatchIn(
+  v: IndexedVerse,
+  words: TermWords,
+): { tier: number; distance: number } | null {
+  let best: { tier: number; distance: number } | null = null;
+  for (const w of v.words) {
+    let m: { tier: number; distance: number } | null = null;
+    if (words.exact.has(w)) m = { tier: TIER_EXACT, distance: 0 };
+    else if (words.inflected.has(w)) m = { tier: TIER_INFLECTED, distance: 0 };
+    else if (words.approx.has(w)) {
+      m = { tier: TIER_APPROX, distance: words.approx.get(w)! };
+    }
+    if (!m) continue;
+    if (!best || m.tier < best.tier || (m.tier === best.tier && m.distance < best.distance)) {
+      best = m;
+      if (best.tier === TIER_EXACT) break;
+    }
+  }
+  return best;
+}
+
+type RankedHit = VerseSearchHit & { tier: number; distance: number };
+
 /**
- * Cascata otimizada sobre índice invertido.
+ * Pesquisa sobre o índice invertido.
  * Facetas = universo completo dos hits **antes** do filtro de escopo / limit.
  */
 export function searchVersesCascadeOnIndex(
@@ -682,9 +637,9 @@ export function searchVersesCascadeOnIndex(
     Math.max(1, Number(options.limit) || 40),
   );
   const offset = Math.max(0, Math.floor(Number(options.offset) || 0));
-  const { verses, tokenMap, uniqueTokens } = index;
-  const { normQuery, tokenGroups, tokens, stemmedGroups, stemmed } =
-    prepareQueryTokens(rawQuery, profile);
+  const { verses, tokenMap } = index;
+  const { normQuery, tokenGroups } = prepareQueryTokens(rawQuery, profile);
+  const quoted = isQuotedQuery(rawQuery);
 
   if (normQuery.length < 2 || tokenGroups.length === 0) {
     const facets = emptySearchFacets();
@@ -699,127 +654,100 @@ export function searchVersesCascadeOnIndex(
   }
 
   const slotCount = tokenGroups.length;
+  /* Aspas: só formas exatas (sem flexão nem aproximação). */
+  const words = tokenGroups.map((alts) =>
+    quoted
+      ? { exact: new Set(alts.filter((w) => tokenMap[w])), inflected: new Set<string>(), approx: new Map<string, number>(), fuzzy: false }
+      : termWords(alts, index, profile, true),
+  );
+  const postings = words.map((w) => termPostings(tokenMap, w));
+
+  let andIndices: number[] = postings[0] ?? [];
+  for (let g = 1; g < postings.length && andIndices.length; g++) {
+    andIndices = intersectSorted(andIndices, postings[g]!);
+  }
+
   let mode: MatchMode = "exact_phrase";
-  let matched: VerseSearchHit[] = [];
+  let matched: RankedHit[] = [];
 
-  // Candidatos AND via tokenMap (evita full-scan nas etapas 1–2)
-  const andCandidates = intersectTokenGroups(tokenMap, tokenGroups);
-  const andVerses = versesFromIndices(verses, andCandidates);
-
-  matched = andVerses
-    .filter((v) => v.norm.includes(normQuery))
-    .map((verse) => ({ verse, matchCount: slotCount }));
-  if (matched.length > 0) {
-    mode = "exact_phrase";
-  } else {
-    matched = andVerses
-      .filter((v) => allTermsMatch(v, tokenGroups))
-      .map((verse) => ({ verse, matchCount: slotCount }));
-    if (matched.length > 0) {
-      mode = "all_terms";
-    } else {
-      // Stem: matching só em uniqueTokens → postings
-      const stemPostings: number[][] = [];
-      for (const alts of stemmedGroups) {
-        const matchedToks: string[] = [];
-        for (const tok of uniqueTokens) {
-          if (
-            alts.some(
-              (stem) =>
-                tok === stem ||
-                tok.startsWith(stem) ||
-                (stem.length >= 4 && tok.includes(stem)),
-            )
-          ) {
-            matchedToks.push(tok);
-          }
+  if (andIndices.length > 0 || slotCount === 1 || quoted) {
+    for (const verse of versesFromIndices(verses, andIndices)) {
+      const isPhrase = phraseMatches(verse, normQuery);
+      if (quoted && !isPhrase) continue;
+      let tier = TIER_EXACT;
+      let distance = 0;
+      let ok = true;
+      for (const w of words) {
+        const m = termMatchIn(verse, w);
+        if (!m) {
+          ok = false;
+          break;
         }
-        stemPostings.push(unionPostings(tokenMap, matchedToks));
+        tier = Math.max(tier, m.tier);
+        distance += m.distance;
       }
-      let stemIndices =
-        stemPostings.length > 0 ? stemPostings[0]! : ([] as number[]);
-      for (let g = 1; g < stemPostings.length; g++) {
-        stemIndices = intersectSorted(stemIndices, stemPostings[g]!);
-        if (stemIndices.length === 0) break;
-      }
-      const stemVerses = versesFromIndices(verses, stemIndices);
-      matched = stemVerses
-        .filter((v) => stemmedMatch(v, stemmedGroups))
-        .map((verse) => ({ verse, matchCount: slotCount }));
-      if (matched.length > 0) {
-        mode = "stemmed";
-      } else if (tokenGroups.length === 1) {
-        const alts = tokenGroups[0]!;
-        const fuzzyAlts = alts.filter((t) => t.length >= 5);
-        if (fuzzyAlts.length > 0) {
-          const fuzzyToks: string[] = [];
-          for (const tok of uniqueTokens) {
-            if (fuzzyAlts.some((t) => fuzzyTokenMatches(tok, t))) {
-              fuzzyToks.push(tok);
-            }
-          }
-          const fuzzyVerses = versesFromIndices(
-            verses,
-            unionPostings(tokenMap, fuzzyToks),
-          );
-          matched = fuzzyVerses
-            .filter((v) =>
-              v.words.some((w) => fuzzyAlts.some((t) => fuzzyTokenMatches(w, t))),
-            )
-            .map((verse) => ({ verse, matchCount: 1 }));
-          mode = "fuzzy";
-        }
-      } else {
-        // partial OR: união de postings por grupo stem
-        const orLists: number[][] = [];
-        for (const alts of stemmedGroups) {
-          const matchedToks: string[] = [];
-          for (const tok of uniqueTokens) {
-            if (
-              alts.some(
-                (stem) =>
-                  tok === stem ||
-                  tok.startsWith(stem) ||
-                  (stem.length >= 4 && tok.includes(stem)),
-              )
-            ) {
-              matchedToks.push(tok);
-            }
-          }
-          orLists.push(unionPostings(tokenMap, matchedToks));
-        }
-        const orVerses = versesFromIndices(verses, unionIndices(orLists));
-        matched = [];
-        for (const verse of orVerses) {
-          let matchCount = 0;
-          for (const alts of stemmedGroups) {
-            const hit = alts.some(
-              (stem) =>
-                verse.words.some((w) => w === stem || w.startsWith(stem)) ||
-                (stem.length >= 4 && verse.norm.includes(stem)),
-            );
-            if (hit) matchCount += 1;
-          }
-          if (matchCount > 0) matched.push({ verse, matchCount });
-        }
-        mode = "partial_or";
-      }
+      if (!ok) continue;
+      if (isPhrase) tier = TIER_PHRASE;
+      matched.push({ verse, matchCount: slotCount, tier, distance });
     }
+    const bestTier = matched.reduce((min, h) => Math.min(min, h.tier), Infinity);
+    mode = words.some((w) => w.fuzzy)
+      ? "fuzzy"
+      : bestTier <= TIER_PHRASE && slotCount > 1
+        ? "exact_phrase"
+        : bestTier <= TIER_EXACT
+          ? slotCount > 1
+            ? "all_terms"
+            : "exact_phrase"
+          : "stemmed";
+  } else {
+    /* Nenhum versículo com todas as palavras: os que têm alguma. */
+    for (const verse of versesFromIndices(verses, unionIndices(postings))) {
+      let matchCount = 0;
+      let tier = TIER_EXACT;
+      let distance = 0;
+      for (const w of words) {
+        const m = termMatchIn(verse, w);
+        if (!m) continue;
+        matchCount += 1;
+        tier = Math.max(tier, m.tier);
+        distance += m.distance;
+      }
+      if (matchCount > 0) matched.push({ verse, matchCount, tier, distance });
+    }
+    mode = "partial_or";
   }
 
   const preferBookId = String(options.preferBookId || "")
     .trim()
     .toUpperCase() || undefined;
-  matched.sort((a, b) =>
-    compareRank(a, b, normQuery, tokens, stemmed, profile, preferBookId),
-  );
+  matched.sort((a, b) => {
+    if (a.matchCount !== b.matchCount) return b.matchCount - a.matchCount;
+    if (a.tier !== b.tier) return a.tier - b.tier;
+    if (a.distance !== b.distance) return a.distance - b.distance;
+    if (preferBookId) {
+      const pa = String(a.verse.bookId || "").toUpperCase() === preferBookId ? 0 : 1;
+      const pb = String(b.verse.bookId || "").toUpperCase() === preferBookId ? 0 : 1;
+      if (pa !== pb) return pa - pb;
+    }
+    return (
+      a.verse.canonIndex - b.verse.canonIndex ||
+      a.verse.chapter - b.verse.chapter ||
+      a.verse.verse - b.verse.verse
+    );
+  });
+
+  const hits: VerseSearchHit[] = matched.map(({ verse, matchCount }) => ({
+    verse,
+    matchCount,
+  }));
   // Facetas no universo completo (pré-filtro de escopo)
-  const facets = buildSearchFacets(matched);
-  const scoped = applySearchScope(matched, options.scope);
+  const facets = buildSearchFacets(hits);
+  const scoped = applySearchScope(hits, options.scope);
   const totalCount = scoped.length;
   const results = scoped.slice(offset, offset + limit);
-  // Terms no universo escopado (não só a página) — highlight estável entre páginas.
-  const matchedTerms = collectMatchedTerms(mode, tokens, stemmed, scoped);
+  // Termos realmente encontrados (todas as formas) — destaque estável entre páginas.
+  const matchedTerms = collectUsedWords(words, scoped);
 
   return {
     results,
@@ -829,6 +757,34 @@ export function searchVersesCascadeOnIndex(
     bookCounts: facets.byBook,
     facets,
   };
+}
+
+/** Máximo de termos devolvidos para destaque. */
+const MATCHED_TERMS_CAP = 80;
+
+/**
+ * Formas que aparecem de facto nos resultados (para o destaque em todas as
+ * páginas): exatas e flexões sempre; aproximadas (prefixo / erro) só as
+ * vistas nos resultados, até ao limite.
+ */
+function collectUsedWords(words: TermWords[], hits: VerseSearchHit[]): string[] {
+  const out = new Set<string>();
+  for (const w of words) {
+    for (const e of w.exact) out.add(e);
+    for (const x of w.inflected) out.add(x);
+  }
+  const candidates = new Set<string>();
+  for (const w of words) for (const x of w.approx.keys()) candidates.add(x);
+  if (candidates.size) {
+    const sample = hits.length > MATCHED_TERMS_HIT_CAP ? hits.slice(0, MATCHED_TERMS_HIT_CAP) : hits;
+    for (const hit of sample) {
+      for (const word of hit.verse.words) {
+        if (candidates.has(word)) out.add(word);
+        if (out.size >= MATCHED_TERMS_CAP) return [...out];
+      }
+    }
+  }
+  return [...out];
 }
 
 /** Compat: constrói tokenMap on-the-fly (testes / callers legados). */

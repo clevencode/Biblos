@@ -163,7 +163,8 @@ export function BiblePassageWordSearchPanel({
   const { t } = useUiLocale();
   const showDcPill = textVersion === "ht98";
   const inputRef = useRef<HTMLInputElement>(null);
-  const { chips, isSuggestions, pushRecent } = useRecentWordSearches(textVersion);
+  const { chips, isSuggestions, pushRecent, clearRecents } =
+    useRecentWordSearches(textVersion);
   const [pickerMode, setPickerMode] = useState<PickerMode | null>(null);
   const [draftBookIds, setDraftBookIds] = useState<string[]>([]);
   const [bookFilterQuery, setBookFilterQuery] = useState("");
@@ -645,9 +646,20 @@ export function BiblePassageWordSearchPanel({
 
       {!hasActiveQuery ? (
         <div className="bible-yv-word-search-recents">
-          <p className="bible-yv-word-search-recents-label">
-            {isSuggestions ? t("word.suggestions") : t("word.recents")}
-          </p>
+          <div className="bible-yv-word-search-recents-head">
+            <p className="bible-yv-word-search-recents-label">
+              {isSuggestions ? t("word.suggestions") : t("word.recents")}
+            </p>
+            {!isSuggestions ? (
+              <button
+                type="button"
+                className="bible-yv-word-search-recents-clear"
+                onClick={clearRecents}
+              >
+                {t("common.clear")}
+              </button>
+            ) : null}
+          </div>
           <div className="bible-yv-word-search-recents-chips">
             {chips.map((term) => (
               <button
@@ -656,13 +668,16 @@ export function BiblePassageWordSearchPanel({
                 className="bible-yv-word-search-recent-chip"
                 onClick={() => handleRecentChip(term)}
               >
-                <span className="bible-yv-word-search-recent-chip-icon" aria-hidden>
-                  🕒
-                </span>
+                {/* Recentes = histórico; sugestões = pesquisa. */}
+                <YvIcon
+                  name={isSuggestions ? "search" : "history"}
+                  className="bible-yv-word-search-recent-chip-icon"
+                />
                 {term}
               </button>
             ))}
           </div>
+          <p className="bible-yv-word-search-tip">{t("word.quoteTip")}</p>
         </div>
       ) : isBookPickerOpen ? (
         <div className="bible-yv-word-search-book-picker">
