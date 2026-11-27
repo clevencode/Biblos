@@ -16816,6 +16816,11 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   box-sizing: border-box;
 }
 
+/* Superfície de leitura (dark): fundo explícito #0D1117. Light segue o tema. */
+html[data-theme="dark"] .bible-yv-read-surface {
+  background: #0d1117;
+}
+
 /* Scrim legado sem contextual: hit-target transparente (fallback) */
 .bible-yv-passage-roll-scrim:not(.contextual-ui-backdrop) {
   position: absolute;
@@ -16987,7 +16992,7 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
 }
 
 html[data-theme="dark"] .chapter-header {
-  --chapter-header-bg: #0f1115;
+  /* Fundo: herda a reader-surface (#0D1117) — sem cor própria. */
   --chapter-header-meta: #8e929b;
   --chapter-header-title: #eaeaea;
   --chapter-header-rule: #2a2d35;
