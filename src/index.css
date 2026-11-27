@@ -12327,6 +12327,26 @@ html[data-theme="dark"] .top-sheet-backdrop {
     var(--mode-tabs-open-ease, cubic-bezier(0.22, 1, 0.36, 1)) both !important;
 }
 
+/*
+ * Menu: rola na vertical quando o conteúdo não cabe (ecrã baixo, letra
+ * grande, teclado). Os itens não encolhem — o painel é que rola.
+ */
+.bible-yv-tools-popover.top-floating-sheet.is-open:not(.is-float-anchor),
+.top-sheet-layer
+  > .bible-yv-tools-popover.top-floating-sheet.is-open:not(.is-float-anchor) {
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  scrollbar-width: thin;
+}
+
+.bible-yv-tools-popover.top-floating-sheet.is-open:not(.is-float-anchor) > * {
+  flex-shrink: 0;
+}
+
+
 .bible-yv-passage-word-search-panel.top-floating-sheet.is-open.is-menu-enter,
 .top-sheet-layer
   > .bible-yv-passage-word-search-panel.top-floating-sheet.is-open.is-menu-enter,
@@ -12411,6 +12431,22 @@ html[data-theme="dark"] .top-sheet-backdrop {
     var(--yv-bg, var(--bg)) 78%,
     var(--yv-bg, var(--bg)) 100%
   );
+}
+
+/*
+ * Fade inferior do Menu: em vez de `absolute` (que rolaria com o conteúdo
+ * e taparia itens a meio), fica no fluxo depois do último item e `sticky`
+ * ao fundo — cobre o fundo do ecrã ao rolar e, no fim, serve de margem.
+ */
+.bible-yv-tools-popover.top-floating-sheet.is-open:not(.is-float-anchor)::after {
+  position: sticky;
+  bottom: 0;
+  flex: none;
+  margin-inline: calc(-1 * var(--top-sheet-inset-x, 14px))
+    calc(-1 * var(--top-sheet-inset-x-end, 14px));
+  margin-bottom: calc(-1 * env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  box-sizing: content-box;
 }
 
 /* Options sheet: um único fade = clearance da nav inferior (canvas shell) */
