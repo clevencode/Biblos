@@ -2092,7 +2092,6 @@ export function BibleReaderView({
           aria-label={t("searchBooks.search")}
         >
           <BibleBookSearchField
-            className="is-topbar"
             value={bookSearchQuery}
             onChange={setBookSearchQuery}
             onClear={clearBookSearch}
@@ -2100,7 +2099,6 @@ export function BibleReaderView({
             label={t("searchBooks.search")}
             clearLabel={t("common.clear")}
             autoFocus
-            showIcon={false}
             onCancel={() => setBookSearchInTopbar(false)}
             cancelLabel={t("common.cancel")}
           />
@@ -2278,11 +2276,6 @@ export function BibleReaderView({
         bookTitle={sheetBookTitle}
         chapterId={sheetChapterId}
         bookSearchQuery={bookSearchQuery}
-        onBookSearchChange={setBookSearchQuery}
-        onClearBookSearch={clearBookSearch}
-        searchPlaceholder={t("searchBooks.placeholder")}
-        searchLabel={t("searchBooks.search")}
-        clearSearchLabel={t("common.clear")}
         books={books}
         discovery={passageDiscovery}
         discoveryBusy={passageDiscoveryBusy}
@@ -2304,7 +2297,6 @@ export function BibleReaderView({
         onPickChapterFromBook={pickChapterFromBook}
         onJumpVerse={jumpToVerse}
         discoveryBooksOnly={discoverySplitSearch}
-        searchInTopbar={bookSearchTopbarActive}
       />
     );
   }

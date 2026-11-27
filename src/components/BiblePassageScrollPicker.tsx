@@ -13,7 +13,6 @@ import { PASSAGE_LOADING_COPY } from "../bible/viewState/loadingConstants";
 import type { PassagePickerChrome } from "../bible/viewState/passagePickerChrome";
 import type { DiscoveryJump, PassageDiscoveryResult } from "../bible/passageDiscovery/types";
 import type { BibleTextVersionId } from "../bible/bibleVersions";
-import { BibleBookSearchField } from "./BibleBookSearchField";
 
 export type PassagePickStep = "book" | "chapter" | "verse";
 
@@ -25,11 +24,6 @@ type BiblePassageScrollPickerProps = {
   bookTitle: string;
   chapterId: string;
   bookSearchQuery: string;
-  onBookSearchChange: (query: string) => void;
-  onClearBookSearch: () => void;
-  searchPlaceholder: string;
-  searchLabel: string;
-  clearSearchLabel: string;
   books: YouVersionBook[];
   discovery: PassageDiscoveryResult;
   discoveryBusy: boolean;
@@ -62,8 +56,6 @@ type BiblePassageScrollPickerProps = {
   onJumpVerse: (n: number) => void;
   /** Split discovery (test): busca do pill só filtra livros / refs. */
   discoveryBooksOnly?: boolean;
-  /** Pesquisa aberta na topbar: a barra inferior não é renderizada. */
-  searchInTopbar?: boolean;
 };
 
 function scrollSelectedCellIntoView(grid: HTMLElement) {
@@ -88,11 +80,6 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
       bookTitle,
       chapterId,
       bookSearchQuery,
-      onBookSearchChange,
-      onClearBookSearch,
-      searchPlaceholder,
-      searchLabel,
-      clearSearchLabel,
       books,
       discovery,
       discoveryBusy,
@@ -114,7 +101,6 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
       onPickChapterFromBook,
       onJumpVerse,
       discoveryBooksOnly = false,
-      searchInTopbar = false,
     },
     ref,
   ) {
@@ -223,7 +209,7 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
       <div
         ref={ref}
         id={panelId}
-        className={`bible-yv-passage-scroll-panel top-floating-sheet is-open is-${step}${step === "book" && !searchInTopbar ? " has-book-search-bar" : ""}`}
+        className={`bible-yv-passage-scroll-panel top-floating-sheet is-open is-${step}`}
         data-top-sheet="book"
         role="dialog"
         aria-modal="false"
@@ -315,21 +301,6 @@ export const BiblePassageScrollPicker = forwardRef<HTMLDivElement, BiblePassageS
               ? PASSAGE_LOADING_COPY.pickerVerseOpening
               : "Aucun verset"}
           </p>
-        ) : null}
-        {step === "book" && !searchInTopbar ? (
-          <nav
-            className="bible-yv-pick-book-search-bar"
-            aria-label={searchLabel}
-          >
-            <BibleBookSearchField
-              value={bookSearchQuery}
-              onChange={onBookSearchChange}
-              onClear={onClearBookSearch}
-              placeholder={searchPlaceholder}
-              label={searchLabel}
-              clearLabel={clearSearchLabel}
-            />
-          </nav>
         ) : null}
       </div>
     );

@@ -1266,14 +1266,13 @@ html:has(.plan-workspace-return-nav) .note-shell .mode-tabs,
 }
 
 /*
- * Contrato único das barras inferiores (workspace / plan / history / study / busca).
+ * Contrato único das barras inferiores (workspace / plan / history / study).
  * Altura = hub; tipografia e ícone fixos (sem shrink dinâmico).
  */
 .plan-workspace-return-nav,
 .bible-plan-return-nav,
 .bible-history-return-nav,
-.bible-study-return-nav,
-.bible-yv-pick-book-search-bar {
+.bible-study-return-nav {
   --return-nav-pill-h: var(--mode-tabs-hub-size, 50px);
   --return-nav-icon: 1.25rem;
   --return-nav-verb-size: 0.62rem;
@@ -14641,69 +14640,21 @@ html[data-passage-bar-panel="test"]
   -webkit-overflow-scrolling: touch;
 }
 
-/* Picker livro: lista + barra de busca inferior (contrato hub / return-nav). */
-.bible-yv-passage-scroll-panel.has-book-search-bar {
-  --pick-book-search-h: var(--mode-tabs-hub-size, 50px);
-  --pick-book-search-gap: var(--mode-tabs-float-gap, 14px);
+/* Picker livro: lista em coluna (pesquisa vive na topbar). */
+.bible-yv-passage-scroll-panel.is-book {
   display: flex;
   flex-direction: column;
   gap: 0;
   min-height: 0;
 }
 
-.bible-yv-passage-scroll-panel.has-book-search-bar .bible-yv-pick-grid.is-books {
+.bible-yv-passage-scroll-panel.is-book .bible-yv-pick-grid.is-books {
   flex: 1 1 auto;
   min-height: 0;
   padding-bottom: 8px;
 }
 
-.bible-yv-passage-scroll-panel.has-book-search-bar::after {
-  /* Fade do sheet cede à barra padronizada. */
-  height: calc(
-    var(--pick-book-search-h) + var(--pick-book-search-gap) +
-      env(safe-area-inset-bottom, 0px) + 20px
-  );
-}
-
-.bible-yv-pick-book-search-bar {
-  --return-nav-pill-h: var(--pick-book-search-h, var(--mode-tabs-hub-size, 50px));
-  position: relative;
-  z-index: 3;
-  flex: none;
-  width: 100%;
-  margin: 0;
-  padding: 0 max(var(--mode-tabs-inset-x, 12px), env(safe-area-inset-right, 0px))
-    calc(var(--pick-book-search-gap, 14px) + env(safe-area-inset-bottom, 0px))
-    max(var(--mode-tabs-inset-x, 12px), env(safe-area-inset-left, 0px));
-  border: 0;
-  background: transparent;
-  display: flex;
-  justify-content: stretch;
-  align-items: flex-end;
-  box-sizing: border-box;
-  font-family: var(--font-ui);
-  color: var(--yv-text, var(--text));
-  contain: layout style;
-}
-
-.bible-yv-pick-book-search-bar::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  top: calc(-1 * var(--mode-tabs-mat-fade, 32px));
-  z-index: 0;
-  pointer-events: none;
-  background: linear-gradient(
-    to top,
-    var(--mode-tabs-mat-bg, var(--bible-nav-surface, var(--bg))) 0%,
-    var(--mode-tabs-mat-bg, var(--bible-nav-surface, var(--bg)))
-      calc(100% - var(--mode-tabs-mat-fade, 32px)),
-    transparent 100%
-  );
-}
-
+/* Campo de pesquisa de livros (topbar do seletor): mesma altura/superfície dos triggers. */
 .bible-yv-pick-book-search-pill {
   position: relative;
   z-index: 1;
@@ -14711,23 +14662,15 @@ html[data-passage-bar-panel="test"]
   align-items: center;
   gap: 8px;
   width: 100%;
-  height: var(--return-nav-pill-h);
-  min-height: var(--return-nav-pill-h);
-  max-height: var(--return-nav-pill-h);
+  height: var(--hdr-size, var(--mobile-touch, 44px));
   margin: 0;
-  padding: 0 14px 0 16px;
+  padding: 0 6px 0 16px;
   box-sizing: border-box;
   border-radius: 999px;
-  border: 1px solid
-    var(
-      --mode-tabs-outline,
-      var(--yv-outline, color-mix(in srgb, var(--line) 70%, transparent))
-    );
-  background: var(--bible-nav-surface, var(--bg));
+  border: 0;
+  background: var(--yv-chrome-surface, var(--surface));
   color: inherit;
-  box-shadow:
-    0 1px 0 color-mix(in srgb, var(--ink) 8%, transparent),
-    0 8px 24px color-mix(in srgb, var(--ink) 14%, transparent);
+  box-shadow: none;
   contain: layout style;
 }
 
@@ -14744,22 +14687,6 @@ html[data-passage-bar-panel="test"]
 
 .bible-yv-top:has(.bible-yv-top-passage.is-book-search) .bible-yv-top-tools {
   flex: none;
-}
-
-.bible-yv-pick-book-search-pill.is-topbar {
-  --return-nav-pill-h: var(--hdr-size, var(--mobile-touch, 44px));
-  background: var(--yv-chrome-surface, var(--surface));
-  border: 0;
-  box-shadow: none;
-}
-
-.bible-yv-pick-book-search-pill .bible-yv-pick-search-trigger-icon {
-  flex: none;
-  width: 20px;
-  height: 20px;
-  font-size: 20px;
-  opacity: 0.72;
-  color: var(--yv-muted, var(--muted));
 }
 
 .bible-yv-pick-book-search-input {

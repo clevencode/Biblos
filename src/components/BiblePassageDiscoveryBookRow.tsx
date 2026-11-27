@@ -42,21 +42,13 @@ const REVEAL_MARGIN_PX = 12;
 /**
  * Rola a lista de livros para mostrar o painel recém-aberto: o máximo
  * possível do painel, sem nunca esconder o cabeçalho do livro.
- * Área útil termina acima da barra de pesquisa flutuante (se existir).
  */
 function revealExpandedRow(row: HTMLElement) {
   const list = row.closest<HTMLElement>(".bible-yv-pick-grid");
   if (!list) return;
   const listRect = list.getBoundingClientRect();
-  const searchBar = list.parentElement?.querySelector<HTMLElement>(
-    ".bible-yv-pick-book-search-bar",
-  );
   const visibleTop = listRect.top + REVEAL_MARGIN_PX;
-  const visibleBottom =
-    Math.min(
-      listRect.bottom,
-      searchBar ? searchBar.getBoundingClientRect().top : listRect.bottom,
-    ) - REVEAL_MARGIN_PX;
+  const visibleBottom = listRect.bottom - REVEAL_MARGIN_PX;
   const rowRect = row.getBoundingClientRect();
 
   let delta = 0;

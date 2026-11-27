@@ -1,5 +1,4 @@
 import { useEffect, useRef } from "react";
-import { YvIcon } from "./YvIcon";
 
 type BibleBookSearchFieldProps = {
   value: string;
@@ -10,8 +9,6 @@ type BibleBookSearchFieldProps = {
   clearLabel: string;
   /** Foca o campo ao montar (ex.: aberto pelo botão de pesquisa da topbar). */
   autoFocus?: boolean;
-  /** Mostra a lupa à esquerda (barra inferior); a topbar dispensa. */
-  showIcon?: boolean;
   /**
    * Campo vazio: o botão vira "Annuler" e chama isto (sair do modo pesquisa).
    * Sem isto, o botão fica desactivado quando vazio.
@@ -22,8 +19,8 @@ type BibleBookSearchFieldProps = {
 };
 
 /**
- * Pill de pesquisa de livros do seletor — usado na barra inferior e na
- * topbar (modo pesquisa). Estilos em `.bible-yv-pick-book-search-*`.
+ * Campo de pesquisa de livros do seletor, na topbar (modo pesquisa aberto
+ * pelo botão 🔍). Estilos em `.bible-yv-pick-book-search-*`.
  */
 export function BibleBookSearchField({
   value,
@@ -33,7 +30,6 @@ export function BibleBookSearchField({
   label,
   clearLabel,
   autoFocus = false,
-  showIcon = true,
   onCancel,
   cancelLabel,
   className = "",
@@ -52,13 +48,6 @@ export function BibleBookSearchField({
       className={`bible-yv-pick-book-search-pill${className ? ` ${className}` : ""}`}
       role="search"
     >
-      {showIcon ? (
-        <YvIcon
-          name="search"
-          className="bible-yv-pick-search-trigger-icon"
-          aria-hidden
-        />
-      ) : null}
       <input
         ref={inputRef}
         type="search"
