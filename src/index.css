@@ -16816,9 +16816,26 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   box-sizing: border-box;
 }
 
-/* Superfície de leitura (dark): fundo explícito #0D1117. Light segue o tema. */
+/*
+ * Superfície de leitura + vinheta (branco no centro, azul-marinho do tema
+ * --ink #0D1117 nas bordas). Camadas de background na própria superfície:
+ * ela não rola (só o texto dentro), logo a vinheta fica fixa e sem custo
+ * de repaint no scroll; texto e toques ficam por cima, intocados.
+ */
+.bible-yv-read-surface {
+  --reader-vignette-glow: color-mix(in srgb, #ffffff 100%, transparent);
+  --reader-vignette-edge: color-mix(in srgb, var(--ink, #0d1117) 7%, transparent);
+  --reader-vignette-base: var(--bible-nav-surface, var(--paper, #ffffff));
+  background:
+    radial-gradient(120% 85% at 50% 40%, var(--reader-vignette-glow) 0%, transparent 60%),
+    radial-gradient(150% 115% at 50% 45%, transparent 58%, var(--reader-vignette-edge) 100%),
+    var(--reader-vignette-base);
+}
+
 html[data-theme="dark"] .bible-yv-read-surface {
-  background: #0d1117;
+  --reader-vignette-glow: color-mix(in srgb, #ffffff 5%, transparent);
+  --reader-vignette-edge: color-mix(in srgb, #04070d 78%, transparent);
+  --reader-vignette-base: #0d1117;
 }
 
 /* Scrim legado sem contextual: hit-target transparente (fallback) */
