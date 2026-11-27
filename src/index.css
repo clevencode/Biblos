@@ -1,4 +1,12 @@
 :root {
+  /*
+   * Margem lateral do chrome do leitor (hambúrguer na topbar, skips ‹ ›,
+   * botão de tela cheia) e tamanho dos botões circulares.
+   */
+  --bible-chrome-inset-x: 14px;
+  --bible-chrome-btn-size: var(--hdr-size, var(--mobile-touch, 44px));
+  /* Largura da coluna do leitor (.bible-reader / texto). */
+  --bible-reader-max-w: 40rem;
   color-scheme: light;
 
   /*
@@ -1174,10 +1182,17 @@ html[data-reader-fullscreen="true"] .app.is-bible-mode .bible-reader--yv::after 
   opacity: 0.55;
 }
 
-/* Tela cheia: botão redondo à direita do pill (pill segue centrado). */
+/*
+ * Tela cheia: botão redondo à direita, alinhado com o hambúrguer da topbar
+ * (borda direita da coluna do leitor − margem do chrome). O pill segue
+ * centrado; `right` conta a partir da borda do pill (50% = metade dele).
+ */
 .mode-tabs-fullscreen {
   position: absolute;
-  left: calc(100% + 10px);
+  right: calc(
+    50% - min(100vw, var(--bible-reader-max-w)) / 2 +
+      max(var(--bible-chrome-inset-x), env(safe-area-inset-right, 0px))
+  );
   bottom: 0;
   z-index: 2;
   width: var(--mode-tabs-hub-size);
@@ -11316,7 +11331,7 @@ ul.plan-yv-day-note-ref {
 .bible-reader {
   height: 100%;
   min-height: 0;
-  max-width: 42rem;
+  max-width: var(--bible-reader-max-w);
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -11510,7 +11525,7 @@ html[data-theme="dark"] .bible-reader--yv {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 6px 14px;
+  padding: 6px var(--bible-chrome-inset-x);
   /* Superfície = navbar (--bible-nav-surface / mode-tabs-canvas) */
   background: var(--bible-nav-surface, var(--yv-bg));
   border-bottom: var(--yv-separator);
@@ -17014,7 +17029,7 @@ html[data-theme="dark"] .bible-yv-read-surface {
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
   width: 100%;
-  max-width: 40rem;
+  max-width: var(--bible-reader-max-w);
   margin: 0 auto;
   /* Mesmo inset horizontal do modal Options / top-floating-sheet */
   padding: 52px var(--top-sheet-inset-x-end, 14px)
@@ -17200,8 +17215,9 @@ html[data-theme="dark"] .chapter-header {
   box-sizing: border-box;
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  /* Mesmo tamanho e margem do hambúrguer da topbar. */
+  width: var(--bible-chrome-btn-size);
+  height: var(--bible-chrome-btn-size);
   margin: 0;
   padding: 0;
   border: 0;
@@ -17225,11 +17241,11 @@ html[data-theme="dark"] .chapter-header {
 }
 
 .bible-chapter-fab.is-prev {
-  left: max(6px, env(safe-area-inset-left, 0px));
+  left: max(var(--bible-chrome-inset-x), env(safe-area-inset-left, 0px));
 }
 
 .bible-chapter-fab.is-next {
-  right: max(6px, env(safe-area-inset-right, 0px));
+  right: max(var(--bible-chrome-inset-x), env(safe-area-inset-right, 0px));
 }
 
 .bible-chapter-fab:hover:not(:disabled),
