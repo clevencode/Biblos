@@ -11,8 +11,9 @@ import {
   formatVerseColorHex,
   hexToHsv,
   hsvToHex,
-  loadRecentVerseColors,
-  pushRecentVerseColor,
+  loadVerseColorSlots,
+  saveVerseColorSlot,
+  type VerseColorSlots,
   resolveVerseMarkColor,
   themeMaxSaturation,
   themeTargetValue,
@@ -112,13 +113,21 @@ export function CircularColorEditor({
   const [h, setH] = useState(210);
   /** Saturation UI 0–1 (bord = maxS du thème). */
   const [sNorm, setSNorm] = useState(0.7);
-  /** Últimas cores aplicadas pela roda (máx. 3, mais recente primeiro). */
-  const [recentColors, setRecentColors] = useState<string[]>([]);
+  /** Cores rápidas: slots independentes (cada um guarda a sua cor). */
+  const [slots, setSlots] = useState<VerseColorSlots>([]);
+  /** Slot que recebe a cor ao aplicar (`null` = nenhum é sobrescrito). */
+  const [activeSlot, setActiveSlot] = useState<number | null>(null);
 
   /** Hex → posição na roda (matiz + saturação normalizada ao tema). */
   function wheelPos(value: string) {
     const hsv = hexToHsv(resolveVerseMarkColor(value, theme));
     return { h: hsv.h, s: maxS > 0 ? clamp01(hsv.s / maxS) : 0 };
+  }
+
+  /** Hex tal como a roda o produz (mesmo arredondamento do `hex` actual). */
+  function wheelHex(value: string) {
+    const pos = wheelPos(value);
+    return resolveVerseMarkColor(hsvToHex(pos.h, pos.s, 1), theme).toLowerCase();
   }
 
   function selectHex(value: string) {
@@ -127,11 +136,23 @@ export function CircularColorEditor({
     setSNorm(pos.s);
   }
 
+  function selectSlot(index: number) {
+    setActiveSlot(index);
+    const color = slots[index];
+    if (color) selectHex(color);
+  }
+
   useEffect(() => {
     if (!open) return;
     selectHex(initialHex);
-    setRecentColors(loadRecentVerseColors());
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- selectHex depende só de theme/maxS
+    const loaded = loadVerseColorSlots();
+    setSlots(loaded);
+    /* Activo: slot com a cor actual; senão o 1.º vazio; senão nenhum. */
+    const current = wheelHex(initialHex);
+    const match = loaded.findIndex((c) => c != null && wheelHex(c) === current);
+    const empty = loaded.findIndex((c) => c == null);
+    setActiveSlot(match >= 0 ? match : empty >= 0 ? empty : null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- helpers dependem só de theme/maxS
   }, [open, initialHex, theme, maxS]);
 
   useEffect(() => {
@@ -156,7 +177,6 @@ export function CircularColorEditor({
     () => resolveVerseMarkColor(hsvToHex(h, clamp01(sNorm), 1), theme),
     [h, sNorm, theme],
   );
-  const label = verseColorHueLabel(hex);
 
   const thumbStyle = (() => {
     const cx = WHEEL_SIZE / 2;
@@ -277,47 +297,48 @@ export function CircularColorEditor({
 
         <p className="circular-color-tone-hint">{toneHint}</p>
 
-        {recentColors.length ? (
+        <div className="circular-color-footer">
           <div
-            className="circular-color-recents"
-            role="group"
-            aria-label="Couleurs récentes"
+            className="circular-color-slots"
+            role="radiogroup"
+            aria-label="Couleurs rapides"
           >
-            {recentColors.map((recent) => {
-              /* Mesmo caminho da roda: a pastilha mostra o hex que será aplicado. */
-              const pos = wheelPos(recent);
-              const swatch = resolveVerseMarkColor(hsvToHex(pos.h, pos.s, 1), theme);
-              const active = swatch.toLowerCase() === hex.toLowerCase();
+            {slots.map((slotColor, index) => {
+              const active = index === activeSlot;
+              /* Slot activo pré-visualiza a cor da roda (gravada ao aplicar). */
+              const swatch = active
+                ? hex
+                : slotColor
+                  ? wheelHex(slotColor)
+                  : null;
               return (
                 <button
-                  key={recent}
+                  key={index}
                   type="button"
-                  className={`circular-color-recent${active ? " is-active" : ""}`}
-                  style={{ background: swatch }}
-                  aria-label={`${verseColorHueLabel(swatch)} · ${formatVerseColorHex(swatch)}`}
-                  aria-pressed={active}
-                  title={formatVerseColorHex(swatch)}
-                  onClick={() => selectHex(recent)}
+                  role="radio"
+                  aria-checked={active}
+                  className={`circular-color-slot${active ? " is-active" : ""}${
+                    swatch ? "" : " is-empty"
+                  }`}
+                  style={swatch ? { background: swatch } : undefined}
+                  aria-label={
+                    swatch
+                      ? `Couleur rapide ${index + 1} · ${verseColorHueLabel(swatch)} · ${formatVerseColorHex(swatch)}`
+                      : `Couleur rapide ${index + 1} · vide`
+                  }
+                  title={swatch ? formatVerseColorHex(swatch) : undefined}
+                  onClick={() => selectSlot(index)}
                 />
               );
             })}
           </div>
-        ) : null}
-
-        <div className="circular-color-footer">
-          <span
-            className="circular-color-preview"
-            style={{ background: hex }}
-            aria-hidden
-          />
-          <p className="circular-color-meta">
-            {label} · {formatVerseColorHex(hex)}
-          </p>
           <button
             type="button"
             className="circular-color-apply"
             onClick={() => {
-              setRecentColors(pushRecentVerseColor(hex));
+              if (activeSlot != null) {
+                setSlots(saveVerseColorSlot(activeSlot, hex));
+              }
               onConfirm(hex);
             }}
           >

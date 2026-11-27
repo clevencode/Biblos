@@ -18509,14 +18509,17 @@ html[data-reader-fullscreen="true"] .bible-chapter-fab {
   margin: -9px 0 0 -9px;
 }
 
-/* Cores rápidas: últimas 3 aplicadas pela roda */
-.circular-color-recents {
+/* Cores rápidas no rodapé: 3 slots independentes (o activo recebe a cor ao aplicar) */
+.circular-color-slots {
   display: flex;
-  justify-content: center;
+  align-items: center;
   gap: 14px;
+  min-width: 0;
+  /* Folga para o anel do slot activo (4px) não ser cortado. */
+  padding: 4px;
 }
 
-.circular-color-recent {
+.circular-color-slot {
   width: 30px;
   height: 30px;
   flex: none;
@@ -18531,12 +18534,18 @@ html[data-reader-fullscreen="true"] .bible-chapter-fab {
   transition: transform 120ms ease, box-shadow 120ms ease;
 }
 
-.circular-color-recent:active {
+.circular-color-slot:active {
   transform: scale(0.92);
 }
 
-.circular-color-recent.is-active,
-.circular-color-recent:focus-visible {
+.circular-color-slot.is-empty {
+  background: transparent;
+  box-shadow: none;
+  border: 1.5px dashed color-mix(in srgb, var(--text) 35%, transparent);
+}
+
+.circular-color-slot.is-active,
+.circular-color-slot:focus-visible {
   outline: none;
   box-shadow:
     0 0 0 2px var(--surface, var(--yv-bg)),
@@ -18585,29 +18594,9 @@ html[data-reader-fullscreen="true"] .bible-chapter-fab {
 
 .circular-color-footer {
   display: grid;
-  grid-template-columns: 28px minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
-}
-
-.circular-color-preview {
-  width: 28px;
-  height: 28px;
-  border-radius: 999px;
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 18%, transparent);
-}
-
-.circular-color-meta {
-  margin: 0;
-  min-width: 0;
-  font-family: var(--font-ui);
-  font-size: var(--type-caption-size);
-  font-weight: var(--type-caption-weight);
-  color: var(--muted);
-  font-variant-numeric: tabular-nums;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .circular-color-apply {

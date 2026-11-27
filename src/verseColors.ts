@@ -20,9 +20,11 @@ export const VERSE_COLOR_PRESETS: readonly VerseColor[] = VERSE_COLORS.slice(0, 
 export const DEFAULT_VERSE_COLOR = VERSE_COLORS[0]!.hex;
 
 const PREFERRED_COLOR_KEY = "biblos.preferredVerseColor";
-const RECENT_COLORS_KEY = "biblos.recentVerseColors";
-/** Cores rápidas: últimas 3 aplicadas pela roda (mais recente primeiro). */
-export const MAX_RECENT_VERSE_COLORS = 3;
+const COLOR_SLOTS_KEY = "biblos.verseColorSlots";
+/** Cores rápidas: slots fixos e independentes (cada um guarda a sua cor). */
+export const VERSE_COLOR_SLOT_COUNT = 3;
+
+export type VerseColorSlots = (string | null)[];
 
 /** Accepte #rgb / #rrggbb / id préréglé. */
 export function parseVerseHex(value: string | null | undefined): string | null {
@@ -288,38 +290,33 @@ export function savePreferredVerseColor(hex: string): void {
   }
 }
 
-export function loadRecentVerseColors(): string[] {
-  try {
-    const raw = localStorage.getItem(RECENT_COLORS_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed)) return [];
-    const out: string[] = [];
-    const seen = new Set<string>();
-    for (const item of parsed) {
-      const hex = parseVerseHex(String(item ?? ""));
-      if (!hex || seen.has(hex)) continue;
-      seen.add(hex);
-      out.push(hex);
-      if (out.length >= MAX_RECENT_VERSE_COLORS) break;
-    }
-    return out;
-  } catch {
-    return [];
-  }
-}
-
-/** Põe a cor no topo das recentes (sem duplicados, máx. 3) e devolve a lista. */
-export function pushRecentVerseColor(hex: string): string[] {
-  const n = normalizeVerseColor(hex);
-  const next = [n, ...loadRecentVerseColors().filter((c) => c !== n)].slice(
-    0,
-    MAX_RECENT_VERSE_COLORS,
+export function loadVerseColorSlots(): VerseColorSlots {
+  const slots: VerseColorSlots = Array.from(
+    { length: VERSE_COLOR_SLOT_COUNT },
+    () => null,
   );
   try {
-    localStorage.setItem(RECENT_COLORS_KEY, JSON.stringify(next));
+    const raw = localStorage.getItem(COLOR_SLOTS_KEY);
+    const parsed = raw ? (JSON.parse(raw) as unknown) : null;
+    if (!Array.isArray(parsed)) return slots;
+    for (let i = 0; i < VERSE_COLOR_SLOT_COUNT; i++) {
+      slots[i] = parseVerseHex(String(parsed[i] ?? ""));
+    }
+  } catch {
+    /* ignore */
+  }
+  return slots;
+}
+
+/** Grava a cor só no slot `index` (os outros ficam intactos) e devolve os slots. */
+export function saveVerseColorSlot(index: number, hex: string): VerseColorSlots {
+  const slots = loadVerseColorSlots();
+  if (index < 0 || index >= VERSE_COLOR_SLOT_COUNT) return slots;
+  slots[index] = normalizeVerseColor(hex);
+  try {
+    localStorage.setItem(COLOR_SLOTS_KEY, JSON.stringify(slots));
   } catch {
     /* ignore quota / private mode */
   }
-  return next;
+  return slots;
 }
