@@ -16824,17 +16824,33 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
  */
 .bible-yv-read-surface {
   --reader-vignette-glow: color-mix(in srgb, #ffffff 100%, transparent);
-  --reader-vignette-edge: color-mix(in srgb, var(--ink, #0d1117) 7%, transparent);
+  --reader-vignette-edge: color-mix(in srgb, var(--ink, #0d1117) 2.5%, transparent);
   --reader-vignette-base: var(--bible-nav-surface, var(--paper, #ffffff));
+  /*
+   * Difusa e espalhada: elipses maiores que o ecrã e transições que ocupam
+   * quase todo o raio (brilho até 100%, escurecimento a partir de 20%), com
+   * um ponto intermédio para a curva não formar anel.
+   */
   background:
-    radial-gradient(120% 85% at 50% 40%, var(--reader-vignette-glow) 0%, transparent 60%),
-    radial-gradient(150% 115% at 50% 45%, transparent 58%, var(--reader-vignette-edge) 100%),
+    radial-gradient(
+      240% 180% at 50% 40%,
+      var(--reader-vignette-glow) 0%,
+      color-mix(in srgb, var(--reader-vignette-glow) 50%, transparent) 45%,
+      transparent 100%
+    ),
+    radial-gradient(
+      260% 200% at 50% 45%,
+      transparent 15%,
+      color-mix(in srgb, var(--reader-vignette-edge) 45%, transparent) 60%,
+      var(--reader-vignette-edge) 100%
+    ),
     var(--reader-vignette-base);
 }
 
 html[data-theme="dark"] .bible-yv-read-surface {
-  --reader-vignette-glow: color-mix(in srgb, #ffffff 5%, transparent);
-  --reader-vignette-edge: color-mix(in srgb, #04070d 78%, transparent);
+  /* Próximo da cor original (#0D1117): desvios mínimos, só profundidade. */
+  --reader-vignette-glow: color-mix(in srgb, #ffffff 1.5%, transparent);
+  --reader-vignette-edge: color-mix(in srgb, #080b11 30%, transparent);
   --reader-vignette-base: #0d1117;
 }
 
@@ -21963,8 +21979,8 @@ button.bible-study-ref-modal-title.is-jump:focus-visible {
  * TESTE — Tinted Glassmorphism nos botões da topbar e da navbar.
  * Mesmo tema: base = superfície actual (--surface / chrome), tinta = --text
  * do próprio tema (sem cor nova). Só acrescenta interesse visual:
- *  - base levemente translúcida; backdrop-filter só nos skips ‹ › (únicos
- *    sobre conteúdo — ver bloco de performance abaixo);
+ *  - base opaca na cor da superfície (só os skips ‹ › têm 10% de
+ *    translucidez + blur, por estarem sobre o texto);
  *  - reflexo suave no topo (gradiente da cor do texto);
  *  - aro especular de 1px em gradiente (padding-box/border-box), em vez de
  *    box-shadow, porque o reset global anula box-shadow nos botões.
@@ -21979,18 +21995,20 @@ button.bible-study-ref-modal-title.is-jump:focus-visible {
 .bible-yv-dock-play,
 .bible-chapter-fab {
   --glass-base: var(--yv-chrome-surface, var(--surface));
-  --glass-fill: color-mix(in srgb, var(--glass-base) 78%, transparent);
+  /* Base opaca: a cor dominante continua a ser a superfície (#161b22). */
+  --glass-fill: var(--glass-base);
+  /* Reflexo discreto, só no terço superior. */
   --glass-sheen: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--text) 13%, transparent) 0%,
-    color-mix(in srgb, var(--text) 4%, transparent) 48%,
-    transparent 100%
+    color-mix(in srgb, var(--text) 5%, transparent) 0%,
+    transparent 40%
   );
+  /* Aro fino: luz no topo, quase invisível no resto. */
   --glass-rim: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--text) 32%, transparent) 0%,
-    color-mix(in srgb, var(--text) 8%, transparent) 55%,
-    color-mix(in srgb, var(--text) 16%, transparent) 100%
+    color-mix(in srgb, var(--text) 14%, transparent) 0%,
+    color-mix(in srgb, var(--text) 4%, transparent) 50%,
+    color-mix(in srgb, var(--text) 6%, transparent) 100%
   );
   border: 1px solid transparent !important;
   background:
@@ -22027,10 +22045,28 @@ button.bible-study-ref-modal-title.is-jump:focus-visible {
 .bible-chapter-fab:hover:not(:disabled) {
   --glass-sheen: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--text) 20%, transparent) 0%,
-    color-mix(in srgb, var(--text) 7%, transparent) 55%,
+    color-mix(in srgb, var(--text) 9%, transparent) 0%,
+    color-mix(in srgb, var(--text) 3%, transparent) 50%,
     transparent 100%
   );
+}
+
+/*
+ * Navbar: dentro de .mode-tabs, --yv-chrome-surface aponta para o fundo da
+ * barra (#0d1117). A base tem de ser a cor que estes botões já tinham.
+ */
+.mode-tabs-hub,
+.mode-tabs-fullscreen {
+  --glass-base: var(--mode-tabs-hub-bg, var(--surface));
+}
+
+.bible-yv-dock-play {
+  --glass-base: var(--audio-play-bg, var(--surface));
+}
+
+/* Skips ‹ › (sobre o texto): leve translucidez para o blur se notar. */
+.bible-chapter-fab {
+  --glass-fill: color-mix(in srgb, var(--glass-base) 90%, transparent);
 }
 
 /* Acessibilidade: quem pede menos transparência recebe a base sólida. */
