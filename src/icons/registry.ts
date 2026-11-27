@@ -1,5 +1,6 @@
 import type { IconComponent } from "@coolicons/react/line/round";
 import {
+  ArrowRight,
   Bell,
   BellDot,
   Book,
@@ -10,6 +11,7 @@ import {
   ChevronLeft,
   ChevronRight,
   CircleCheck,
+  CircleInfo,
   Close,
   CloudOff,
   Copy,
@@ -85,7 +87,9 @@ export type BiblosIconName =
   | "fullscreen"
   | "fullscreen_exit"
   | "unfold_more"
-  | "unfold_less";
+  | "unfold_less"
+  | "arrow_forward"
+  | "info";
 
 type IconEntry = {
   line: IconComponent;
@@ -133,6 +137,8 @@ export const ICON_REGISTRY: Record<BiblosIconName, IconEntry> = {
   /** Chevrons up-down (expandir) / down-up (recolher). */
   unfold_more: { line: UnfoldMore },
   unfold_less: { line: UnfoldLess },
+  arrow_forward: { line: ArrowRight },
+  info: { line: CircleInfo },
 };
 
 export function isBiblosIconName(name: string): name is BiblosIconName {

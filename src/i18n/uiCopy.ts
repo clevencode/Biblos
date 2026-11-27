@@ -150,6 +150,11 @@ export type UiCopyKey =
   | "profile.group.bible"
   | "profile.group.reading"
   | "profile.group.library"
+  | "profile.group.about"
+  | "profile.aboutTagline"
+  | "profile.aboutAppVersion"
+  | "profile.aboutTexts"
+  | "profile.aboutMadeWith"
   | "profile.readingChromeHint"
   | "profile.deleteAccount"
   | "profile.deleteAccountConfirm"
@@ -476,6 +481,12 @@ const FR: Dict = {
   "profile.group.bible": "Bible",
   "profile.group.reading": "Lecture",
   "profile.group.library": "Bibliothèque",
+  "profile.group.about": "À propos",
+  "profile.aboutTagline":
+    "Lire, étudier et méditer la Bible — même hors ligne.",
+  "profile.aboutAppVersion": "Version de l’app",
+  "profile.aboutTexts": "Textes bibliques",
+  "profile.aboutMadeWith": "Fait avec soin pour la lecture quotidienne.",
   "profile.readingChromeHint":
     "Ouvre la Bible une fois pour régler version et typographie ici.",
   "profile.deleteAccount": "Supprimer mon compte",
@@ -815,6 +826,12 @@ const HT: Dict = {
   "profile.group.bible": "Bib",
   "profile.group.reading": "Lekti",
   "profile.group.library": "Bibliyotèk",
+  "profile.group.about": "Konsènan",
+  "profile.aboutTagline":
+    "Li, etidye e medite Bib la — menm san entènèt.",
+  "profile.aboutAppVersion": "Vèsyon aplikasyon an",
+  "profile.aboutTexts": "Tèks biblik yo",
+  "profile.aboutMadeWith": "Fèt ak swen pou lekti chak jou.",
   "profile.readingChromeHint":
     "Louvri Bib la yon fwa pou règle vèsyon ak tipografi isit la.",
   "profile.deleteAccount": "Efase kont mwen",

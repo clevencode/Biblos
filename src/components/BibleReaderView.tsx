@@ -846,6 +846,8 @@ export function BibleReaderView({
   const [htCatalogLoading, setHtCatalogLoading] = useState(false);
   const [htCatalogError, setHtCatalogError] = useState<string | null>(null);
   const textVersionRef = useRef<BibleTextVersionId>(textVersion);
+  /** Tela cheia do shell: mostra o pill « capítulo seguinte » no fim do texto. */
+  const readerFullscreen = useReaderChromeStore((st) => st.fullscreen);
   const switchTextVersionRef = useRef<
     (next: BibleTextVersionId) => Promise<void>
   >(async () => {});
@@ -2056,6 +2058,53 @@ export function BibleReaderView({
       >
         <YvIcon name={iconName} className="bible-chapter-fab-icon" />
       </button>
+    );
+  }
+
+  /**
+   * Fim do capítulo em tela cheia (sem FABs nem chrome): pill « seguir » com
+   * seta — mesma superfície do botão de tela cheia.
+   */
+  function renderChapterEndNext() {
+    if (!readerFullscreen || pickerOpen || hasActiveModal) return null;
+    const planSkips = Boolean(planReading);
+    if (!planSkips && !canNext) return null;
+    const stageComplete = Boolean(planSkips && planReading?.isStageLast);
+    const actionLabel = planSkips
+      ? stageComplete
+        ? "Terminer"
+        : t("bible.planNext")
+      : t("bible.nextChapter");
+    const destLabel = planSkips ? null : adjacentPassageLabel(1);
+    const fullLabel = destLabel ? `${actionLabel} · ${destLabel}` : actionLabel;
+    return (
+      <div className="bible-chapter-end-next-wrap">
+        <button
+          type="button"
+          className="bible-chapter-end-next"
+          disabled={
+            planSkips ? presentation.inFlight : pickerChrome.controlsDisabled
+          }
+          aria-label={fullLabel}
+          title={fullLabel}
+          onClick={(event) => {
+            /* O article revela o chrome no tap — aqui só avança. */
+            event.stopPropagation();
+            planOrChapterSkip(1);
+          }}
+        >
+          <span className="bible-chapter-end-next-text">
+            <span className="bible-chapter-end-next-action">{actionLabel}</span>
+            {destLabel ? (
+              <span className="bible-chapter-end-next-dest">{destLabel}</span>
+            ) : null}
+          </span>
+          <YvIcon
+            name={stageComplete ? "check" : "arrow_forward"}
+            className="bible-chapter-end-next-icon"
+          />
+        </button>
+      </div>
     );
   }
 
@@ -3911,6 +3960,49 @@ export function BibleReaderView({
             </p>
           </div>
         ) : null}
+        <div
+          className="bible-yv-tools-versions"
+          role="group"
+          aria-label={t("bible.versionGroup")}
+        >
+          <span className="bible-yv-layout-col-label">
+            {t("bible.version")}
+          </span>
+          <div className="bible-yv-tools-versions-options">
+            {BIBLE_TEXT_VERSIONS.map((version) => {
+              const on = textVersion === version.id;
+              const busy = version.id === "ht98" && htCatalogLoading;
+              return (
+                <button
+                  key={version.id}
+                  type="button"
+                  className={`bible-yv-layout-option bible-yv-tools-version-option${
+                    on ? " is-active" : ""
+                  }${busy ? " is-busy" : ""}`}
+                  aria-pressed={on}
+                  disabled={busy}
+                  title={version.title}
+                  onClick={() => {
+                    if (on) return;
+                    void switchTextVersion(version.id);
+                  }}
+                >
+                  <span className="bible-yv-tools-version-abbr">
+                    {version.abbreviation}
+                  </span>
+                  <span className="bible-yv-tools-version-title">
+                    {version.title}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          {htCatalogError ? (
+            <p className="bible-yv-tools-version-msg" role="alert">
+              {htCatalogError}
+            </p>
+          ) : null}
+        </div>
         <BibleFontSizeSlider
           value={fontSize}
           onChange={(size) => setFontSize(clampFontSize(size))}
@@ -5043,6 +5135,10 @@ export function BibleReaderView({
         ) : !presentation.inFlight && !isUsfmBookId(bookId) ? (
           <p className="bible-yv-muted">{PASSAGE_LOADING_COPY.emptyPassage}</p>
         ) : null}
+        {!showOfflineChapterGateUi &&
+        (passage?.verses?.length || passage?.content)
+          ? renderChapterEndNext()
+          : null}
       </article>
       </div>
 

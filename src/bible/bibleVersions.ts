@@ -10,6 +10,8 @@ export type BibleVersionDef = {
   abbreviation: string;
   title: string;
   languageCode: string;
+  /** Crédito do texto (secção « À propos » do perfil). */
+  copyright: string;
 };
 
 export const BIBLE_TEXT_VERSIONS: readonly BibleVersionDef[] = [
@@ -18,12 +20,14 @@ export const BIBLE_TEXT_VERSIONS: readonly BibleVersionDef[] = [
     abbreviation: "S21",
     title: "Segond 21",
     languageCode: "fr",
+    copyright: "© 2007 Société Biblique de Genève",
   },
   {
     id: "ht98",
     abbreviation: "HAT98",
     title: "1998 Haïtienne",
     languageCode: "ht",
+    copyright: "© 1998 Société Biblique Haïtienne",
   },
 ] as const;
 

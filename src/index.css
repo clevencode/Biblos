@@ -5271,6 +5271,18 @@ html[data-theme="dark"] .profile-download-btn {
   font-size: 0.72rem;
 }
 
+.profile-about-logo {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+}
+
+.profile-about-footnote {
+  margin: 4px 4px 0;
+  text-align: center;
+}
+
 .profile-about {
   margin: 0;
   font-size: 0.92rem;
@@ -12118,7 +12130,8 @@ html[data-theme="dark"] .top-sheet-backdrop {
 .bible-yv-tools-popover.is-open > .bible-yv-tools-font,
 .bible-yv-tools-popover.is-open > .bible-yv-tools-typeface,
 .bible-yv-tools-popover.is-open > .bible-yv-tools-layout,
-.bible-yv-tools-popover.is-open > .bible-yv-tools-version {
+.bible-yv-tools-popover.is-open > .bible-yv-tools-version,
+.bible-yv-tools-popover.is-open > .bible-yv-tools-versions {
   animation: tools-menu-item-in var(--mode-tabs-open-ms, 180ms)
     var(--mode-tabs-open-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
 }
@@ -12564,6 +12577,7 @@ button.bible-yv-passage-chip.hdr-trigger.is-pill.is-open:hover:not(:disabled) {
   .bible-yv-tools-popover.is-open > .bible-yv-tools-typeface,
   .bible-yv-tools-popover.is-open > .bible-yv-tools-layout,
   .bible-yv-tools-popover.is-open > .bible-yv-tools-version,
+  .bible-yv-tools-popover.is-open > .bible-yv-tools-versions,
   .bible-yv-tools-item:active {
     transition: none !important;
     animation: none !important;
@@ -16760,6 +16774,51 @@ html[data-passage-bar-panel="test"] .bible-yv-top-tools {
   opacity: 1;
 }
 
+/* Menu do leitor: versão da Bíblia (mesma linguagem de Alignement/Affichage). */
+.bible-yv-tools-versions {
+  display: grid;
+  gap: 2px;
+  margin-top: 2px;
+  padding: 8px 4px 4px 8px;
+  border-top: 1px solid color-mix(in srgb, var(--yv-text) 10%, transparent);
+  font-family: var(--font-ui);
+}
+
+.bible-yv-tools-versions-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 16px;
+}
+
+.bible-yv-tools-version-option {
+  min-width: 0;
+}
+
+.bible-yv-tools-version-abbr {
+  flex: none;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.bible-yv-tools-version-title {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--yv-muted, var(--muted));
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bible-yv-tools-version-option.is-busy {
+  opacity: 0.55;
+  cursor: progress;
+}
+
+.bible-yv-tools-versions .bible-yv-tools-version-msg {
+  margin: 4px 6px 0;
+}
+
 .bible-yv-read-surface > .bible-yv-error-bar {
   flex: none;
   position: relative;
@@ -17139,6 +17198,81 @@ html[data-reader-fullscreen="true"] .bible-chapter-fab {
 }
 
 .bible-chapter-fab-icon {
+  width: 20px;
+  height: 20px;
+  font-size: 20px;
+}
+
+/*
+ * Tela cheia: pill « capítulo seguinte » no fim do texto (FABs e chrome
+ * ocultos). Superfície = botão de tela cheia (ver bloco glass no fim).
+ */
+.bible-chapter-end-next-wrap {
+  display: flex;
+  justify-content: center;
+  margin: 40px 0 max(32px, env(safe-area-inset-bottom, 0px));
+  padding: 0 16px;
+}
+
+.bible-chapter-end-next {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 100%;
+  min-height: 48px;
+  margin: 0;
+  padding: 8px 14px 8px 20px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-ui);
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform 100ms ease,
+    opacity 160ms ease;
+}
+
+.bible-chapter-end-next:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.bible-chapter-end-next:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 3px;
+}
+
+.bible-chapter-end-next:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.bible-chapter-end-next-text {
+  display: grid;
+  min-width: 0;
+  line-height: 1.2;
+}
+
+.bible-chapter-end-next-action {
+  font-size: 0.92rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.bible-chapter-end-next-dest {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bible-chapter-end-next-icon {
+  flex: none;
   width: 20px;
   height: 20px;
   font-size: 20px;
@@ -21993,7 +22127,8 @@ button.bible-study-ref-modal-title.is-jump:focus-visible {
 .mode-tabs-hub,
 .mode-tabs-fullscreen,
 .bible-yv-dock-play,
-.bible-chapter-fab {
+.bible-chapter-fab,
+.bible-chapter-end-next {
   --glass-base: var(--yv-chrome-surface, var(--surface));
   /* Base opaca: a cor dominante continua a ser a superfície (#161b22). */
   --glass-fill: var(--glass-base);
@@ -22042,7 +22177,8 @@ button.bible-study-ref-modal-title.is-jump:focus-visible {
 .mode-tabs-hub:hover,
 .mode-tabs-fullscreen:hover,
 .bible-yv-dock-play:hover:not(:disabled),
-.bible-chapter-fab:hover:not(:disabled) {
+.bible-chapter-fab:hover:not(:disabled),
+.bible-chapter-end-next:hover:not(:disabled) {
   --glass-sheen: linear-gradient(
     180deg,
     color-mix(in srgb, var(--text) 9%, transparent) 0%,
@@ -22064,6 +22200,11 @@ button.bible-study-ref-modal-title.is-jump:focus-visible {
   --glass-base: var(--audio-play-bg, var(--surface));
 }
 
+/* Pill fim de capítulo: mesma base do botão de tela cheia (--surface). */
+.bible-chapter-end-next {
+  --glass-base: var(--surface);
+}
+
 /* Skips ‹ › (sobre o texto): leve translucidez para o blur se notar. */
 .bible-chapter-fab {
   --glass-fill: color-mix(in srgb, var(--glass-base) 90%, transparent);
@@ -22078,7 +22219,8 @@ button.bible-study-ref-modal-title.is-jump:focus-visible {
   .mode-tabs-hub,
   .mode-tabs-fullscreen,
   .bible-yv-dock-play,
-  .bible-chapter-fab {
+  .bible-chapter-fab,
+  .bible-chapter-end-next {
     --glass-fill: var(--glass-base);
   }
 

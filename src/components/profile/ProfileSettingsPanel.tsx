@@ -10,11 +10,17 @@ import { BIBLE_TEXT_VERSIONS } from "../../bible/bibleVersions";
 import type { ProfileReadingChrome } from "../../bible/profileReadingChrome";
 import { BibleFontSizeSlider } from "../BibleFontSizeSlider";
 import { AccountSettingsSection } from "./AccountSettingsSection";
+import { ProfileAboutSection } from "./ProfileAboutSection";
 import { ProfileHeader } from "./ProfileHeader";
 import { SettingsGroup } from "./SettingsGroup";
 import { SettingsRow } from "./SettingsRow";
 
-export type ProfilePrefsTab = "appearance" | "bible" | "reading" | "library";
+export type ProfilePrefsTab =
+  | "appearance"
+  | "bible"
+  | "reading"
+  | "library"
+  | "about";
 
 export type ProfileSettingsPanelProps = {
   active: boolean;
@@ -37,12 +43,14 @@ const PREFS_TABS: readonly {
     | "profile.appearance"
     | "profile.group.bible"
     | "profile.group.reading"
-    | "profile.group.library";
+    | "profile.group.library"
+    | "profile.group.about";
 }[] = [
   { id: "appearance", labelKey: "profile.appearance" },
   { id: "bible", labelKey: "profile.group.bible" },
   { id: "reading", labelKey: "profile.group.reading" },
   { id: "library", labelKey: "profile.group.library" },
+  { id: "about", labelKey: "profile.group.about" },
 ];
 
 /**
@@ -182,6 +190,7 @@ export function ProfileSettingsPanel({
               onSignOut={() => void handleSignOut()}
               onDeleteAccount={() => void handleDeleteConfirm()}
             />
+            <ProfileAboutSection titled />
           </div>
         ) : accountOpen ? (
           <AccountSettingsSection
@@ -430,6 +439,10 @@ export function ProfileSettingsPanel({
                     />
                   </SettingsGroup>
                 </>
+              ) : null}
+
+              {prefsTab === "about" ? (
+                <ProfileAboutSection />
               ) : null}
             </div>
           </>
