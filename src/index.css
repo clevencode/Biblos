@@ -22822,10 +22822,11 @@ button.bible-study-ref-modal-title.is-jump:focus-visible {
   );
 }
 
-/* Pill: contentor a toda a largura, pill encostado à margem esquerda da coluna.
+/* Pill: contentor a toda a largura, pill encostado à margem esquerda da coluna
+ * em todas as telas (Bíblia, Plan, Profil).
  * `50%` resolve contra a área interna da nav (como o `right` da tela cheia),
  * por isso o padding da nav anula-se e o pill alinha com o pill da topbar. */
-.app.is-bible-mode .mode-tabs.is-hub-pill .mode-tabs-chrome.is-hub-only {
+.mode-tabs.is-hub-pill .mode-tabs-chrome.is-hub-only {
   box-sizing: border-box;
   width: 100%;
   margin-inline: 0;
