@@ -17426,9 +17426,10 @@ html[data-theme="dark"] .chapter-header {
   box-sizing: border-box;
   display: grid;
   place-items: center;
-  /* Mesmo tamanho e margem do hambúrguer da topbar. */
-  width: var(--bible-chrome-btn-size);
-  height: var(--bible-chrome-btn-size);
+  /* Mesmo tamanho dos botões redondos da barra inferior (play, tela cheia);
+   * margem lateral = colunas do leitor (como o hambúrguer da topbar). */
+  width: var(--mode-tabs-hub-size, 50px);
+  height: var(--mode-tabs-hub-size, 50px);
   margin: 0;
   padding: 0;
   border: 0;
@@ -17485,10 +17486,11 @@ html[data-reader-fullscreen="true"] .bible-chapter-fab {
   color: var(--accent, #3b82f6);
 }
 
+/* Ícone 24px = play e tela cheia. */
 .bible-chapter-fab-icon {
-  width: 20px;
-  height: 20px;
-  font-size: 20px;
+  width: 24px;
+  height: 24px;
+  font-size: 24px;
 }
 
 /*
