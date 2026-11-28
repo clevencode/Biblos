@@ -22812,7 +22812,9 @@ button.bible-study-ref-modal-title.is-jump:focus-visible {
     50vw - min(100vw, var(--bible-reader-max-w)) / 2 +
       max(var(--bible-chrome-inset-x), env(safe-area-inset-right, 0px))
   );
-  --bible-bottom-gap: 10px;
+  /* Espaçamento único do canto inferior = margem lateral do leitor (14px):
+   * bordas, play ↔ tela cheia e pill de skips ↔ botões. */
+  --bible-bottom-gap: var(--bible-chrome-inset-x, 14px);
   /* Play à esquerda da tela cheia. */
   --bible-play-right-x: calc(
     var(--bible-bottom-right-x) + var(--mode-tabs-hub-size, 50px) +
