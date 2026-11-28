@@ -38,6 +38,7 @@
     "bench:search-forms": "npx --yes tsx scripts/search-bench/forms.ts",
     "test:s21-search": "npx --yes tsx scripts/test-s21-search-engine.ts",
     "test:verse-search": "npx --yes tsx scripts/test-s21-search-engine.ts",
+    "test:version-switch": "npx --yes tsx scripts/test-version-switch.ts",
     "icons:generate": "node scripts/generate-app-icons.mjs"
   },
   "dependencies": {

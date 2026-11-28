@@ -188,6 +188,10 @@ import {
   useVerseMarksStore,
 } from "../store/useVerseMarksStore";
 import { useShallow } from "zustand/react/shallow";
+import {
+  mapPassageBetweenVersions,
+  type VersionPassage,
+} from "../bible/versionPassageMap";
 import { useNavigationFlow } from "../hooks/useNavigationFlow";
 import {
   bookCodeToId,
@@ -829,6 +833,13 @@ export function BibleReaderView({
   const readerFullscreen = useReaderChromeStore((st) => st.fullscreen);
   /** Tela cheia: o último versículo já está no ecrã (capítulo a terminar). */
   const [nearChapterEnd, setNearChapterEnd] = useState(false);
+  /** Troca de versão à espera do render da nova versão (ver efeito em switchTextVersion). */
+  const pendingVersionSwitchRef = useRef<{
+    from: BibleTextVersionId;
+    to: BibleTextVersionId;
+    passage: VersionPassage;
+    sourceBookOrder: string[];
+  } | null>(null);
   const switchTextVersionRef = useRef<
     (next: BibleTextVersionId) => Promise<void>
   >(async () => {});
@@ -3369,12 +3380,41 @@ export function BibleReaderView({
     void clearBibleAudioControls();
   }
 
+  /** Versículo no topo do ecrã (para manter o lugar ao trocar de versão). */
+  function firstVisibleVerse(): number | null {
+    const root = passageScrollRef.current;
+    if (!root) return null;
+    const topLimit =
+      (readerRef.current?.querySelector(".bible-yv-top")?.getBoundingClientRect()
+        .bottom ?? root.getBoundingClientRect().top) + 4;
+    for (const el of root.querySelectorAll<HTMLElement>(".bible-verse[data-verse]")) {
+      if (el.getBoundingClientRect().bottom > topLimit) {
+        const n = Number(el.dataset.verse);
+        return Number.isFinite(n) && n > 1 ? n : null;
+      }
+    }
+    return null;
+  }
+
   async function switchTextVersion(next: BibleTextVersionId) {
     if (next === textVersionRef.current) return;
+    const from = textVersionRef.current;
     /* Ref já na nova versão ANTES de notifyUiLocale: o próprio leitor ouve o
      * evento (subscribeUiLocale) e, com a ref ainda antiga, chamaria
      * switchTextVersion de novo em ciclo até estourar a pilha. */
     textVersionRef.current = next;
+    /* O capítulo só é carregado depois de a nova versão estar no render
+     * (efeito abaixo): carregar já usaria a versão antiga no view model. */
+    pendingVersionSwitchRef.current = {
+      from,
+      to: next,
+      passage: {
+        bookId,
+        chapter: Number(chapterId) || 1,
+        verse: firstVisibleVerse(),
+      },
+      sourceBookOrder: books.map((b) => b.id),
+    };
     stopBibleAudio();
     setTextVersion(next);
     writePrefs({
@@ -3392,14 +3432,7 @@ export function BibleReaderView({
       setHtCatalogLoading(true);
       setHtCatalogError(null);
       try {
-        const list = await ht1998Books();
-        setHtBooks(list);
-        const exists = list.some((b) => b.id.toUpperCase() === bookId.toUpperCase());
-        void loadChapter(
-          exists ? bookId : (list[0]?.id ?? "GEN"),
-          exists ? chapterId : "1",
-          null,
-        );
+        setHtBooks(await ht1998Books());
       } catch (err) {
         setHtCatalogError(
           err instanceof Error ? err.message : "Version haïtienne indisponible",
@@ -3409,14 +3442,41 @@ export function BibleReaderView({
       }
       return;
     }
-    const exists = catalogBooks.some((b) => b.id.toUpperCase() === bookId.toUpperCase());
-    void loadChapter(
-      exists ? bookId : (catalogBooks[0]?.id ?? "GEN"),
-      exists ? chapterId : "1",
-      null,
-    );
+    if (!catalogBooks.length) void refreshCatalog();
   }
   switchTextVersionRef.current = switchTextVersion;
+
+  /*
+   * Troca de versão pendente: corre quando o render já tem a nova versão e o
+   * catálogo dela. Mapeia livro/capítulo/versículo (Joel/Malaquias, livros só
+   * da HT98, capítulos a mais) e volta ao versículo que estava no topo.
+   * Trocas rápidas: só a última fica pendente.
+   */
+  useEffect(() => {
+    const pending = pendingVersionSwitchRef.current;
+    if (!pending || pending.to !== textVersion || !books.length) return;
+    pendingVersionSwitchRef.current = null;
+    const target = mapPassageBetweenVersions({
+      from: pending.from,
+      to: pending.to,
+      passage: pending.passage,
+      sourceBookOrder: pending.sourceBookOrder,
+      targetBooks: books.map((b) => ({
+        id: b.id,
+        chapterCount: b.chapters?.length ?? 0,
+      })),
+    });
+    loadChapter(target.bookId, String(target.chapter), null);
+    if (target.verse != null && target.verse > 1) {
+      // Só scroll (sem realce): o leitor continua onde estava.
+      pendingScrollVerse.current = {
+        number: target.verse,
+        mode: "start",
+        seq: ++verseScrollSeq.current,
+      };
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- loadChapter é desta render
+  }, [textVersion, books]);
 
   function openWordSearchFromMenu() {
     restoreToolsFocusRef.current = false;
