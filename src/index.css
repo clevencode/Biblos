@@ -17452,12 +17452,24 @@ html[data-theme="dark"] .chapter-header {
     background 160ms ease;
 }
 
+/*
+ * Pill único vertical à direita (coluna da tela cheia): ‹ em cima, › em baixo,
+ * encostados no meio do ecrã. O aro de cima do › faz de divisória.
+ */
+.bible-chapter-fab.is-prev,
+.bible-chapter-fab.is-next {
+  left: auto;
+  right: max(var(--bible-chrome-inset-x), env(safe-area-inset-right, 0px));
+}
+
 .bible-chapter-fab.is-prev {
-  left: max(var(--bible-chrome-inset-x), env(safe-area-inset-left, 0px));
+  transform: translateY(-100%);
+  border-radius: 999px 999px 0 0;
 }
 
 .bible-chapter-fab.is-next {
-  right: max(var(--bible-chrome-inset-x), env(safe-area-inset-right, 0px));
+  transform: translateY(0);
+  border-radius: 0 0 999px 999px;
 }
 
 .bible-chapter-fab:hover:not(:disabled),
@@ -17465,13 +17477,19 @@ html[data-theme="dark"] .chapter-header {
   background: var(--yv-chrome-hover, color-mix(in srgb, var(--surface) 92%, var(--text) 8%));
 }
 
+/* Metade do pill: sem scale (desalinharia as metades); o realce de pressão
+ * vem do fundo. */
 .bible-chapter-fab:active:not(:disabled) {
-  transform: translateY(-50%) scale(0.94);
+  --glass-fill: color-mix(in srgb, var(--glass-base) 80%, var(--text) 20%);
 }
 
+/* Sem capítulo: só o ícone esbate — o pill continua inteiro. */
 .bible-chapter-fab:disabled {
-  opacity: 0.3;
   cursor: default;
+}
+
+.bible-chapter-fab:disabled .bible-chapter-fab-icon {
+  opacity: 0.3;
 }
 
 .bible-chapter-fab.is-hidden,
