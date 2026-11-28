@@ -17453,23 +17453,26 @@ html[data-theme="dark"] .chapter-header {
 }
 
 /*
- * Pill único vertical à direita (coluna da tela cheia): ‹ em cima, › em baixo,
- * encostados no meio do ecrã. O aro de cima do › faz de divisória.
+ * Pill único horizontal à direita, a meio do ecrã: [‹ | ›]. O › fica na
+ * coluna da tela cheia e o ‹ encostado à esquerda dele; os aros laterais
+ * das duas metades fazem de divisória.
  */
 .bible-chapter-fab.is-prev,
 .bible-chapter-fab.is-next {
   left: auto;
-  right: max(var(--bible-chrome-inset-x), env(safe-area-inset-right, 0px));
-}
-
-.bible-chapter-fab.is-prev {
-  transform: translateY(-100%);
-  border-radius: 999px 999px 0 0;
 }
 
 .bible-chapter-fab.is-next {
-  transform: translateY(0);
-  border-radius: 0 0 999px 999px;
+  right: max(var(--bible-chrome-inset-x), env(safe-area-inset-right, 0px));
+  border-radius: 0 999px 999px 0;
+}
+
+.bible-chapter-fab.is-prev {
+  right: calc(
+    max(var(--bible-chrome-inset-x), env(safe-area-inset-right, 0px)) +
+      var(--mode-tabs-hub-size, 50px)
+  );
+  border-radius: 999px 0 0 999px;
 }
 
 .bible-chapter-fab:hover:not(:disabled),
