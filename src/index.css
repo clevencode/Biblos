@@ -22890,6 +22890,17 @@ html[data-reader-fullscreen="true"] .bible-reader--yv .bible-yv-dock.is-play-onl
   bottom: calc(var(--mode-tabs-hub-size, 50px) + var(--bible-bottom-gap, 14px));
 }
 
+/* Pill « Chapitre suivant » (fim do capítulo em tela cheia): na mesma linha
+ * do botão de tela cheia — sobe o mesmo que ele (linha da navbar + gap). */
+.app.is-bible-mode .bible-chapter-end-next-wrap {
+  --reader-fs-row-bottom: calc(
+    var(--reader-fs-btn-gap, 22px) + env(safe-area-inset-bottom, 0px) +
+      var(--mode-tabs-hub-size, 50px) + var(--bible-bottom-gap, 14px)
+  );
+  bottom: var(--reader-fs-row-bottom);
+  margin-bottom: var(--reader-fs-row-bottom);
+}
+
 /* ==========================================================================
  * Micro-interações (barra inferior, skips, menu do pill) — tokens únicos.
  * Pressão rápida e a desacelerar; soltar mais lento com leve ressalto, como
