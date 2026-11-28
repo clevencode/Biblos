@@ -22734,13 +22734,15 @@ button.bible-study-ref-modal-title.is-jump:focus-visible {
  * ========================================================================== */
 
 /*
- * Aviso de tela cheia junto ao botão a que se refere (⤡, em baixo à direita):
- * centrado logo acima da linha do botão, em vez de tapar o título no topo.
+ * Aviso de tela cheia junto ao botão a que se refere (⤡, coluna direita):
+ * centrado logo acima do botão — que fica uma linha acima da navbar —, com o
+ * mesmo gap de 14px, em vez de tapar o título no topo.
  */
 .reader-fs-hint {
   top: auto;
   bottom: calc(
-    var(--reader-fs-btn-gap, 22px) + var(--mode-tabs-hub-size, 50px) + 14px +
+    var(--reader-fs-btn-gap, 22px) +
+      2 * (var(--mode-tabs-hub-size, 50px) + var(--bible-bottom-gap, 14px)) +
       env(safe-area-inset-bottom, 0px)
   );
   transform: translate3d(-50%, 12px, 0);
