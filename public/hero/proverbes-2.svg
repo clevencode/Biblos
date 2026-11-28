@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice">
+  <!-- Ilustração original (teste do hero): aurora sobre colinas — "a sabedoria clama ao amanhecer". -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0e1a33"/>
+      <stop offset="0.38" stop-color="#2b3f6b"/>
+      <stop offset="0.62" stop-color="#b8735a"/>
+      <stop offset="0.78" stop-color="#f0b46e"/>
+      <stop offset="1" stop-color="#f7d79a"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="0.62" cy="0.7" r="0.42">
+      <stop offset="0" stop-color="#fff4d6" stop-opacity="1"/>
+      <stop offset="0.12" stop-color="#ffe2a3" stop-opacity="0.95"/>
+      <stop offset="0.35" stop-color="#f6b96a" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#f6b96a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="h1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7d5a6e"/>
+      <stop offset="1" stop-color="#5b4560"/>
+    </linearGradient>
+    <linearGradient id="h2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#433856"/>
+      <stop offset="1" stop-color="#2f2a45"/>
+    </linearGradient>
+    <linearGradient id="h3" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1f2236"/>
+      <stop offset="1" stop-color="#141726"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="800" fill="url(#sky)"/>
+  <rect width="1200" height="800" fill="url(#sun)"/>
+  <circle cx="744" cy="560" r="46" fill="#fff6dc"/>
+
+  <!-- estrelas a desvanecer -->
+  <g fill="#ffffff">
+    <circle cx="140" cy="90" r="1.6" opacity="0.7"/>
+    <circle cx="310" cy="160" r="1.2" opacity="0.5"/>
+    <circle cx="480" cy="70" r="1.4" opacity="0.6"/>
+    <circle cx="900" cy="110" r="1.2" opacity="0.45"/>
+    <circle cx="1060" cy="60" r="1.6" opacity="0.6"/>
+    <circle cx="1130" cy="190" r="1" opacity="0.35"/>
+    <circle cx="640" cy="130" r="1" opacity="0.35"/>
+  </g>
+
+  <!-- colinas em camadas (perspetiva atmosférica) -->
+  <path d="M0 600 C 160 540 300 560 430 590 C 560 620 660 560 790 560 C 930 560 1040 610 1200 580 L1200 800 L0 800 Z" fill="url(#h1)" opacity="0.9"/>
+  <path d="M0 650 C 140 610 260 640 380 660 C 520 684 620 630 760 640 C 900 650 1010 700 1200 660 L1200 800 L0 800 Z" fill="url(#h2)"/>
+  <path d="M0 710 C 180 680 320 720 470 730 C 620 740 760 700 900 712 C 1020 722 1110 750 1200 735 L1200 800 L0 800 Z" fill="url(#h3)"/>
+
+  <!-- caminho que sobe a colina -->
+  <path d="M600 800 C 610 770 640 748 700 734 C 740 726 760 716 772 704" stroke="#f3cf93" stroke-opacity="0.35" stroke-width="5" fill="none" stroke-linecap="round"/>
+</svg>

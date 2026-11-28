@@ -200,6 +200,16 @@ import {
 import type { Flashcard } from "../types";
 
 const STORAGE_KEY = BIBLE_READER_PREFS_KEY;
+
+/**
+ * TESTE — Full-Bleed Hero Image só neste capítulo (qualquer versão).
+ * Apagar esta constante (e o bloco `.bible-passage-hero` no CSS) desliga-o.
+ */
+const HERO_TEST = {
+  bookId: "PRO",
+  chapterId: "2",
+  src: "/hero/proverbes-2.svg",
+} as const;
 /** Panneau verset : pas de Flashcard tant que l’onglet Cartes est désactivé. */
 const FONT_DEFAULT = BIBLE_FONT_SIZE_DEFAULT;
 
@@ -5101,6 +5111,13 @@ export function BibleReaderView({
           if (chromeHiddenRef.current) setReadingChrome(false, true);
         }}
       >
+        {bookId.toUpperCase() === HERO_TEST.bookId &&
+        chapterId === HERO_TEST.chapterId ? (
+          <figure className="bible-passage-hero" aria-hidden="true">
+            <img src={HERO_TEST.src} alt="" decoding="async" draggable={false} />
+          </figure>
+        ) : null}
+
         <ChapterHeader
           className="bible-passage-head"
           subtitulo={t("bible.chapterN", { n: chapterId })}

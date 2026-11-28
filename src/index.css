@@ -23084,3 +23084,78 @@ html[data-reader-fullscreen="true"] .bible-reader--yv .bible-yv-dock.is-play-onl
     animation: none;
   }
 }
+
+/* ==========================================================================
+ * TESTE — Full-Bleed Hero Image no topo do capítulo (HERO_TEST no
+ * BibleReaderView). Imagem de ponta a ponta, por trás da topbar, a
+ * dissolver no fundo de leitura; o título do capítulo sobe para o degradê.
+ * ========================================================================== */
+.bible-reader--yv .bible-passage-hero {
+  position: relative;
+  /* Anula o padding da superfície de leitura (topo + laterais). */
+  margin: -52px calc(-1 * var(--top-sheet-inset-x-end, 14px)) 0
+    calc(-1 * var(--top-sheet-inset-x, 14px));
+  height: clamp(240px, 46vh, 420px);
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+}
+
+.app.is-bible-mode.is-narrow .bible-reader--yv .bible-passage-hero {
+  margin-top: calc(-1 * (var(--bible-top-chrome, 59px) + 12px));
+}
+
+.bible-passage-hero img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  animation: bible-hero-in 700ms var(--ui-ease-out, ease-out) both;
+}
+
+/* Topo escurecido (legibilidade dos botões da topbar) + base a dissolver no
+ * fundo da página (claro ou escuro). */
+.bible-passage-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--yv-bg, var(--bg)) 55%, transparent) 0%,
+    transparent 26%,
+    transparent 52%,
+    color-mix(in srgb, var(--yv-bg, var(--bg)) 70%, transparent) 82%,
+    var(--yv-bg, var(--bg)) 100%
+  );
+}
+
+/* Título do capítulo sobre o degradê. */
+.bible-passage-hero + .bible-passage-head {
+  position: relative;
+  z-index: 1;
+  margin-top: -76px;
+}
+
+/* Topbar transparente enquanto o hero está no topo; sólida ao rolar. */
+.bible-reader--yv:not(.is-head-compact):has(.bible-passage-hero) .bible-yv-top {
+  background: transparent;
+  border-bottom-color: transparent;
+  box-shadow: none;
+}
+
+@keyframes bible-hero-in {
+  from {
+    opacity: 0;
+    scale: 1.04;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bible-passage-hero img {
+    animation: none;
+  }
+}
