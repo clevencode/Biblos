@@ -22864,3 +22864,142 @@ button.bible-study-ref-modal-title.is-jump:focus-visible {
     100vw - var(--bible-play-right-x) - var(--bible-audio-float-inset-x, 12px)
   );
 }
+
+/* ==========================================================================
+ * Micro-interações (barra inferior, skips, menu do pill) — tokens únicos.
+ * Pressão rápida e a desacelerar; soltar mais lento com leve ressalto, como
+ * um objeto elástico a assentar. Usa a propriedade `scale` (independente de
+ * `transform`) para não colidir com animações existentes; os antigos
+ * `transform: scale(.96)` de :active ficam neutralizados.
+ * ========================================================================== */
+:root {
+  --ui-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ui-ease-spring: cubic-bezier(0.34, 1.36, 0.64, 1);
+  --ui-press-ms: 90ms;
+  --ui-release-ms: 320ms;
+  --ui-color-ms: 160ms;
+  /* Botões redondos encolhem mais; superfícies largas, menos. */
+  --ui-press-scale: 0.92;
+  --ui-press-scale-wide: 0.97;
+}
+
+/* --- Botões redondos e pill da navbar: soltar (estado base) --- */
+.mode-tabs .mode-tabs-hub {
+  transition:
+    background var(--ui-color-ms) ease,
+    outline-color var(--ui-color-ms) ease,
+    box-shadow var(--ui-color-ms) ease,
+    height var(--mode-tabs-open-ms) var(--ui-ease-out),
+    border-radius var(--mode-tabs-open-ms) var(--ui-ease-out),
+    scale var(--ui-release-ms) var(--ui-ease-spring);
+}
+
+.mode-tabs .mode-tabs-fullscreen {
+  transition:
+    background var(--ui-color-ms) ease,
+    opacity var(--ui-color-ms) ease,
+    scale var(--ui-release-ms) var(--ui-ease-spring);
+}
+
+.app .bible-yv-dock .bible-yv-dock-play {
+  transition:
+    background var(--ui-color-ms) ease,
+    color var(--ui-color-ms) ease,
+    opacity var(--ui-color-ms) ease,
+    scale var(--ui-release-ms) var(--ui-ease-spring);
+}
+
+/* --- Pressão --- */
+.mode-tabs .mode-tabs-hub:active,
+.mode-tabs .mode-tabs-fullscreen:active,
+.app .bible-yv-dock .bible-yv-dock-play:active:not(:disabled) {
+  transform: none !important;
+  scale: var(--ui-press-scale);
+  transition:
+    background var(--ui-press-ms) ease-out,
+    scale var(--ui-press-ms) var(--ui-ease-out);
+}
+
+/* O pill da navbar é largo: encolhe menos. */
+.mode-tabs .mode-tabs-hub.mode-tabs-hub-pill:active {
+  scale: var(--ui-press-scale-wide);
+}
+
+/* --- Skips [‹ | ›]: o pill fica inteiro; o ícone encolhe e empurra na
+ * direção da seta. --- */
+.bible-chapter-fab-icon {
+  transition:
+    scale var(--ui-release-ms) var(--ui-ease-spring),
+    translate var(--ui-release-ms) var(--ui-ease-spring),
+    opacity var(--ui-color-ms) ease;
+}
+
+.bible-chapter-fab:active:not(:disabled) .bible-chapter-fab-icon {
+  scale: 0.82;
+  transition:
+    scale var(--ui-press-ms) var(--ui-ease-out),
+    translate var(--ui-press-ms) var(--ui-ease-out);
+}
+
+.bible-chapter-fab.is-prev:active:not(:disabled) .bible-chapter-fab-icon {
+  translate: -3px 0;
+}
+
+.bible-chapter-fab.is-next:active:not(:disabled) .bible-chapter-fab-icon {
+  translate: 3px 0;
+}
+
+.bible-chapter-fab {
+  transition:
+    opacity 220ms ease,
+    visibility 220ms ease,
+    background var(--ui-color-ms) ease;
+}
+
+/* --- Menu do pill: cresce a partir do canto do pill (esquerda) --- */
+.mode-tabs .mode-tabs-stage {
+  transform-origin: left bottom;
+}
+
+.mode-tabs.is-open .mode-tabs-stage {
+  animation: mode-tabs-stage-pop 260ms var(--ui-ease-spring) both;
+}
+
+.mode-tabs.is-open .mode-tabs-item.mode-tabs-stack-item {
+  transition:
+    background var(--ui-color-ms) ease,
+    transform var(--mode-tabs-open-ms) var(--ui-ease-out),
+    opacity calc(var(--mode-tabs-open-ms) * 0.85) linear,
+    scale var(--ui-release-ms) var(--ui-ease-spring);
+  transition-delay:
+    0ms,
+    calc(var(--stack-i) * var(--mode-tabs-stagger-ms)),
+    calc(var(--stack-i) * var(--mode-tabs-stagger-ms)),
+    0ms;
+}
+
+.mode-tabs.is-open .mode-tabs-item.mode-tabs-stack-item:active {
+  transform: translateY(0);
+  scale: var(--ui-press-scale-wide);
+  transition:
+    background var(--ui-press-ms) ease-out,
+    scale var(--ui-press-ms) var(--ui-ease-out);
+  transition-delay: 0ms;
+}
+
+/* --- Menos movimento: sem escala nem ressalto, só cor. --- */
+@media (prefers-reduced-motion: reduce) {
+  .mode-tabs .mode-tabs-hub:active,
+  .mode-tabs .mode-tabs-fullscreen:active,
+  .app .bible-yv-dock .bible-yv-dock-play:active:not(:disabled),
+  .mode-tabs .mode-tabs-hub.mode-tabs-hub-pill:active,
+  .mode-tabs.is-open .mode-tabs-item.mode-tabs-stack-item:active,
+  .bible-chapter-fab:active:not(:disabled) .bible-chapter-fab-icon {
+    scale: none;
+    translate: none;
+  }
+
+  .mode-tabs.is-open .mode-tabs-stage {
+    animation: none;
+  }
+}
