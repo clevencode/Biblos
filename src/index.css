@@ -17453,24 +17453,40 @@ html[data-theme="dark"] .chapter-header {
 }
 
 /*
- * Pill único horizontal à direita, a meio do ecrã: [‹ | ›]. O › fica na
- * coluna da tela cheia e o ‹ encostado à esquerda dele; os aros laterais
- * das duas metades fazem de divisória.
+ * Pill único horizontal [‹ | ›] por cima do play + tela cheia (canto inferior
+ * direito): mesmas bordas que esses dois botões (largura = play + gap + tela
+ * cheia) e o mesmo gap vertical. Fixo ao viewport, como o play.
  */
 .bible-chapter-fab.is-prev,
 .bible-chapter-fab.is-next {
+  --bible-skip-half-w: calc(
+    (2 * var(--mode-tabs-hub-size, 50px) + var(--bible-bottom-gap, 10px)) / 2
+  );
+  position: fixed;
+  top: auto;
   left: auto;
+  bottom: calc(
+    var(--bible-audio-float-bottom, 22px) + var(--mode-tabs-hub-size, 50px) +
+      var(--bible-bottom-gap, 10px)
+  );
+  width: var(--bible-skip-half-w);
+  transform: none;
 }
 
 .bible-chapter-fab.is-next {
-  right: max(var(--bible-chrome-inset-x), env(safe-area-inset-right, 0px));
+  right: var(
+    --bible-bottom-right-x,
+    max(var(--bible-chrome-inset-x), env(safe-area-inset-right, 0px))
+  );
   border-radius: 0 999px 999px 0;
 }
 
 .bible-chapter-fab.is-prev {
   right: calc(
-    max(var(--bible-chrome-inset-x), env(safe-area-inset-right, 0px)) +
-      var(--mode-tabs-hub-size, 50px)
+    var(
+        --bible-bottom-right-x,
+        max(var(--bible-chrome-inset-x), env(safe-area-inset-right, 0px))
+      ) + var(--bible-skip-half-w)
   );
   border-radius: 999px 0 0 999px;
 }
