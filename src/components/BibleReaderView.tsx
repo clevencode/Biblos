@@ -3478,6 +3478,43 @@ export function BibleReaderView({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- loadChapter é desta render
   }, [textVersion, books]);
 
+  /*
+   * Passagem que não existe nesta versão (prefs antigas, histórico, plano com a
+   * numeração da outra versão — ex.: HT98 Jowèl 4): em vez do erro « Passage
+   * introuvable », abre o equivalente, como se viesse da outra versão.
+   */
+  useEffect(() => {
+    if (!books.length || pendingVersionSwitchRef.current) return;
+    const id = bookId.toUpperCase();
+    const chapter = Number(chapterId) || 1;
+    const book = books.find((b) => b.id.toUpperCase() === id);
+    const count = book?.chapters?.length ?? 0;
+    if (book && (count === 0 || chapter <= count)) return;
+    const other: BibleTextVersionId = textVersion === "ht98" ? "s21" : "ht98";
+    const target = mapPassageBetweenVersions({
+      from: other,
+      to: textVersion,
+      passage: { bookId: id, chapter, verse: null },
+      sourceBookOrder: (other === "ht98" ? (htBooks ?? []) : catalogBooks).map(
+        (b) => b.id,
+      ),
+      targetBooks: books.map((b) => ({
+        id: b.id,
+        chapterCount: b.chapters?.length ?? 0,
+      })),
+    });
+    if (target.bookId === id && String(target.chapter) === String(chapter)) return;
+    loadChapter(target.bookId, String(target.chapter), null);
+    if (target.verse != null && target.verse > 1) {
+      pendingScrollVerse.current = {
+        number: target.verse,
+        mode: "start",
+        seq: ++verseScrollSeq.current,
+      };
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- loadChapter é desta render
+  }, [books, bookId, chapterId, textVersion]);
+
   function openWordSearchFromMenu() {
     restoreToolsFocusRef.current = false;
     libraryOverlayOriginRef.current = "menu";
@@ -5029,17 +5066,19 @@ export function BibleReaderView({
 
         {error && passageErrorKind !== "offline_not_cached" ? (
           <div className="bible-yv-error-bar" role="alert" aria-live="assertive">
+            <YvIcon name="info" className="bible-yv-error-icon" />
             <p className="bible-yv-error" id={error ? `${statusId}-error` : undefined}>
               {error}
             </p>
             <button
               type="button"
-              className="bible-yv-chip"
+              className="bible-yv-error-retry"
               onClick={() => retryChapter(bookId, chapterId)}
               disabled={presentation.inFlight || pickerOpen}
               aria-describedby={`${statusId}-error`}
             >
-              Réessayer
+              <YvIcon name="sync" className="bible-yv-error-retry-icon" />
+              {t("common.retry")}
             </button>
           </div>
         ) : null}

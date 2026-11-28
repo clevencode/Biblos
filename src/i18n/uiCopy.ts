@@ -20,6 +20,7 @@ export type UiCopyKey =
   | "shell.fullscreenHintTouch"
   | "shell.fullscreenHintKeys"
   | "common.close"
+  | "common.retry"
   | "common.back"
   | "common.clear"
   | "common.confirm"
@@ -369,6 +370,7 @@ const FR: Dict = {
   "shell.fullscreenHintTouch": "Touchez {icon} pour quitter",
   "shell.fullscreenHintKeys": "Échap ou {icon} pour quitter",
   "common.close": "Fermer",
+  "common.retry": "Réessayer",
   "common.back": "Retour",
   "common.clear": "Effacer",
   "common.confirm": "Confirmer ?",
@@ -750,6 +752,7 @@ const HT: Dict = {
   "shell.fullscreenHintTouch": "Touche {icon} pou soti",
   "shell.fullscreenHintKeys": "Echap oswa {icon} pou soti",
   "common.close": "Fèmen",
+  "common.retry": "Eseye ankò",
   "common.back": "Tounen",
   "common.clear": "Efase",
   "common.confirm": "Konfime ?",
