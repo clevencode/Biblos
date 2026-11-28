@@ -3371,6 +3371,10 @@ export function BibleReaderView({
 
   async function switchTextVersion(next: BibleTextVersionId) {
     if (next === textVersionRef.current) return;
+    /* Ref já na nova versão ANTES de notifyUiLocale: o próprio leitor ouve o
+     * evento (subscribeUiLocale) e, com a ref ainda antiga, chamaria
+     * switchTextVersion de novo em ciclo até estourar a pilha. */
+    textVersionRef.current = next;
     stopBibleAudio();
     setTextVersion(next);
     writePrefs({
