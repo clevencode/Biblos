@@ -17453,22 +17453,17 @@ html[data-theme="dark"] .chapter-header {
 }
 
 /*
- * Pill único horizontal [‹ | ›] por cima do play + tela cheia (canto inferior
- * direito): mesmas bordas que esses dois botões (largura = play + gap + tela
- * cheia) e o mesmo gap vertical. Fixo ao viewport, como o play.
+ * Pill único horizontal [‹ | ›] na linha da navbar, à direita (o pill
+ * « Bible » fica à esquerda): mesma altura e mesmo chão dos botões da
+ * navbar. Fixo ao viewport.
  */
 .bible-chapter-fab.is-prev,
 .bible-chapter-fab.is-next {
-  --bible-skip-half-w: calc(
-    (2 * var(--mode-tabs-hub-size, 50px) + var(--bible-bottom-gap, 10px)) / 2
-  );
+  --bible-skip-half-w: var(--mode-tabs-hub-size, 50px);
   position: fixed;
   top: auto;
   left: auto;
-  bottom: calc(
-    var(--bible-audio-float-bottom, 22px) + var(--mode-tabs-hub-size, 50px) +
-      var(--bible-bottom-gap, 10px)
-  );
+  bottom: var(--bible-audio-float-bottom, 22px);
   width: var(--bible-skip-half-w);
   transform: none;
 }
@@ -22802,22 +22797,25 @@ button.bible-study-ref-modal-title.is-jump:focus-visible {
 }
 
 /* ==========================================================================
- * Barra inferior do leitor: pill (navbar) à esquerda; play + tela cheia à direita.
- * Margens = colunas do leitor, como a topbar (pill do livro à esquerda,
- * hambúrguer à direita).
+ * Chrome do leitor:
+ *   topbar  → [pill passagem] …… (▶) (≡)
+ *   flutua  →                       (⛶)   acima da navbar, coluna direita
+ *   navbar  → [pill Bible]  …… [‹ | ›]
+ * Margens = colunas do leitor; espaçamento único de 14px.
  * ========================================================================== */
 .app.is-bible-mode {
-  /* Borda direita da coluna do leitor (= `right` do botão de tela cheia). */
+  /* Borda direita da coluna do leitor (= `right` do ≡ e da tela cheia). */
   --bible-bottom-right-x: calc(
     50vw - min(100vw, var(--bible-reader-max-w)) / 2 +
       max(var(--bible-chrome-inset-x), env(safe-area-inset-right, 0px))
   );
-  /* Espaçamento único do canto inferior = margem lateral do leitor (14px):
-   * bordas, play ↔ tela cheia e pill de skips ↔ botões. */
+  /* Espaçamento único = margem lateral do leitor (14px). */
   --bible-bottom-gap: var(--bible-chrome-inset-x, 14px);
-  /* Play à esquerda da tela cheia. */
+  /* Topo dos botões da topbar (mesmo padding-top da .bible-yv-top). */
+  --bible-top-btn-top: max(6px, env(safe-area-inset-top, 0px));
+  /* Play na topbar, à esquerda do ≡ (botões de 44px). */
   --bible-play-right-x: calc(
-    var(--bible-bottom-right-x) + var(--mode-tabs-hub-size, 50px) +
+    var(--bible-bottom-right-x) + var(--bible-chrome-btn-size, 44px) +
       var(--bible-bottom-gap)
   );
 }
@@ -22837,25 +22835,32 @@ button.bible-study-ref-modal-title.is-jump:focus-visible {
   );
 }
 
-/* Play: ancorado à direita, ao lado da tela cheia; expande para a esquerda. */
+/* Play: na topbar, à esquerda do ≡, com o tamanho dos botões da topbar
+ * (44px, ícone 20px). Expande para a esquerda (por cima do pill da passagem
+ * enquanto toca). */
 .app.is-bible-mode.is-narrow .bible-yv-dock.is-floating:not(.is-plan),
-.app.is-bible-mode .bible-yv-dock.is-play-only:not(.is-plan) {
+.app.is-bible-mode .bible-yv-dock.is-play-only:not(.is-plan),
+.app.is-bible-mode .bible-yv-dock.is-play-only.is-plan-progress:not(.is-plan) {
+  --bible-audio-play-size: var(--bible-chrome-btn-size, 44px);
+  position: fixed;
+  top: var(--bible-top-btn-top);
+  bottom: auto;
   left: auto;
   right: var(--bible-play-right-x);
   justify-content: flex-end;
 }
 
-/* Ancorado à direita: play fica fixo à direita e a faixa (tempo / progresso)
- * cresce para a esquerda ao expandir. */
+/* Ancorado à direita: play fica fixo e a faixa (tempo / progresso) cresce
+ * para a esquerda ao expandir. */
 .app.is-bible-mode .bible-yv-dock.is-play-only:not(.is-plan) .bible-yv-audio-player {
   flex-direction: row-reverse;
 }
 
-/* Ícone do play com o mesmo tamanho do ícone da tela cheia (24px). */
+/* Ícone = ícone do ≡ (20px). */
 .app.is-bible-mode .bible-yv-dock.is-play-only:not(.is-plan) .bible-yv-dock-play .bible-yv-dock-icon {
-  font-size: 24px;
-  width: 24px;
-  height: 24px;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
 }
 
 .app.is-bible-mode.is-narrow:has(.bible-reader--yv.is-audio-playing),
@@ -22863,6 +22868,30 @@ button.bible-study-ref-modal-title.is-jump:focus-visible {
   --bible-audio-expanded-max: calc(
     100vw - var(--bible-play-right-x) - var(--bible-audio-float-inset-x, 12px)
   );
+}
+
+/* Tela cheia: o play sai para cima, com a topbar (antes descia com a navbar). */
+html[data-reader-fullscreen="true"] .bible-reader--yv .bible-yv-dock.is-play-only {
+  transform: translate3d(0, -16px, 0) !important;
+}
+
+/* O play já não ocupa a linha de baixo: a navbar fica visível enquanto toca. */
+.app.is-bible-mode.is-narrow:has(.bible-reader--yv.is-audio-playing) .mode-tabs,
+.app.is-bible-mode.is-narrow:has(.bible-yv-audio-player.is-expanded) .mode-tabs {
+  opacity: 1 !important;
+  visibility: visible;
+  pointer-events: none !important;
+  transform: none;
+}
+
+/* Tela cheia: flutua acima da navbar, na coluna direita (onde o pill de
+ * skips estava). Em modo tela cheia (só o botão de sair) volta ao chão. */
+.app.is-bible-mode .mode-tabs .mode-tabs-fullscreen {
+  bottom: calc(var(--mode-tabs-hub-size, 50px) + var(--bible-bottom-gap, 14px));
+}
+
+.app.is-bible-mode .mode-tabs.is-reader-fullscreen .mode-tabs-fullscreen {
+  bottom: 0;
 }
 
 /* ==========================================================================
