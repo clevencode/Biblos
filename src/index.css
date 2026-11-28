@@ -22760,3 +22760,57 @@ button.bible-study-ref-modal-title.is-jump:focus-visible {
     overflow: hidden;
   }
 }
+
+/* ==========================================================================
+ * Barra inferior do leitor: pill (navbar) à esquerda; play + tela cheia à direita.
+ * Margens = colunas do leitor, como a topbar (pill do livro à esquerda,
+ * hambúrguer à direita).
+ * ========================================================================== */
+.app.is-bible-mode {
+  /* Borda direita da coluna do leitor (= `right` do botão de tela cheia). */
+  --bible-bottom-right-x: calc(
+    50vw - min(100vw, var(--bible-reader-max-w)) / 2 +
+      max(var(--bible-chrome-inset-x), env(safe-area-inset-right, 0px))
+  );
+  --bible-bottom-gap: 10px;
+  /* Play à esquerda da tela cheia. */
+  --bible-play-right-x: calc(
+    var(--bible-bottom-right-x) + var(--mode-tabs-hub-size, 50px) +
+      var(--bible-bottom-gap)
+  );
+}
+
+/* Pill: contentor a toda a largura, pill encostado à margem esquerda da coluna.
+ * `50%` resolve contra a área interna da nav (como o `right` da tela cheia),
+ * por isso o padding da nav anula-se e o pill alinha com o pill da topbar. */
+.app.is-bible-mode .mode-tabs.is-hub-pill .mode-tabs-chrome.is-hub-only {
+  box-sizing: border-box;
+  width: 100%;
+  margin-inline: 0;
+  justify-content: flex-start;
+  padding-inline-start: calc(
+    50% - min(100vw, var(--bible-reader-max-w)) / 2 +
+      max(var(--bible-chrome-inset-x), env(safe-area-inset-left, 0px))
+  );
+}
+
+/* Play: ancorado à direita, ao lado da tela cheia; expande para a esquerda. */
+.app.is-bible-mode.is-narrow .bible-yv-dock.is-floating:not(.is-plan),
+.app.is-bible-mode .bible-yv-dock.is-play-only:not(.is-plan) {
+  left: auto;
+  right: var(--bible-play-right-x);
+  justify-content: flex-end;
+}
+
+/* Ancorado à direita: play fica fixo à direita e a faixa (tempo / progresso)
+ * cresce para a esquerda ao expandir. */
+.app.is-bible-mode .bible-yv-dock.is-play-only:not(.is-plan) .bible-yv-audio-player {
+  flex-direction: row-reverse;
+}
+
+.app.is-bible-mode.is-narrow:has(.bible-reader--yv.is-audio-playing),
+.app.is-bible-mode.is-narrow:has(.bible-yv-audio-player.is-expanded) {
+  --bible-audio-expanded-max: calc(
+    100vw - var(--bible-play-right-x) - var(--bible-audio-float-inset-x, 12px)
+  );
+}
