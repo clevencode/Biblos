@@ -202,8 +202,9 @@ import type { Flashcard } from "../types";
 const STORAGE_KEY = BIBLE_READER_PREFS_KEY;
 
 /**
- * TESTE — Full-Bleed Hero Image só neste capítulo (qualquer versão).
- * Apagar esta constante (e o bloco `.bible-passage-hero` no CSS) desliga-o.
+ * TESTE — Full-Bleed Hero Image só neste capítulo (qualquer versão) e só em
+ * leitura em tela cheia. Apagar esta constante (e o bloco
+ * `.bible-passage-hero` no CSS) desliga-o.
  */
 const HERO_TEST = {
   bookId: "PRO",
@@ -1278,6 +1279,40 @@ export function BibleReaderView({
   const statusId = useId();
   const highlightRef = useRef<HTMLElement | null>(null);
   const passageScrollRef = useRef<HTMLElement | null>(null);
+
+  /* TESTE do hero: só em tela cheia, no capítulo HERO_TEST. */
+  const showHeroTest =
+    readerFullscreen &&
+    bookId.toUpperCase() === HERO_TEST.bookId &&
+    chapterId === HERO_TEST.chapterId;
+  /** Espaço que o hero acrescenta antes do texto (altura + margens negativas). */
+  const heroShiftRef = useRef(0);
+  const heroPrevRef = useRef({ shown: showHeroTest, chapter: `${bookId}.${chapterId}` });
+  /*
+   * Ao entrar/sair da tela cheia a meio do capítulo, o hero entra/sai por
+   * cima do texto: compensa o scroll para o versículo que se lê não saltar.
+   * No topo do capítulo não compensa (o hero deve ficar à vista).
+   */
+  useLayoutEffect(() => {
+    const root = passageScrollRef.current;
+    const chapter = `${bookId}.${chapterId}`;
+    const prev = heroPrevRef.current;
+    heroPrevRef.current = { shown: showHeroTest, chapter };
+    if (!root || prev.shown === showHeroTest || prev.chapter !== chapter) return;
+    if (showHeroTest) {
+      const hero = root.querySelector<HTMLElement>(".bible-passage-hero");
+      const head = root.querySelector<HTMLElement>(".bible-passage-head");
+      if (!hero) return;
+      heroShiftRef.current =
+        hero.offsetHeight +
+        (parseFloat(getComputedStyle(hero).marginTop) || 0) +
+        (head ? parseFloat(getComputedStyle(head).marginTop) || 0 : 0);
+      if (root.scrollTop > 8) root.scrollTop += heroShiftRef.current;
+    } else if (root.scrollTop > 8 && heroShiftRef.current) {
+      root.scrollTop = Math.max(0, root.scrollTop - heroShiftRef.current);
+    }
+  }, [showHeroTest, bookId, chapterId]);
+
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioBookRef = useRef<string>("");
   const lastScrollTop = useRef(0);
@@ -5095,7 +5130,11 @@ export function BibleReaderView({
 
         <article
         ref={passageScrollRef}
-        className={`bible-passage${entryFadeIn ? " is-entry-fade" : ""}`}
+        className={`bible-passage${entryFadeIn ? " is-entry-fade" : ""}${
+          bookId.toUpperCase() === HERO_TEST.bookId && chapterId === HERO_TEST.chapterId
+            ? " is-hero-chapter"
+            : ""
+        }`}
         aria-busy={presentation.ariaBusy || undefined}
         aria-hidden={surfaceChrome.passageInputBlocked || undefined}
         inert={surfaceChrome.passageInputBlocked || undefined}
@@ -5111,8 +5150,7 @@ export function BibleReaderView({
           if (chromeHiddenRef.current) setReadingChrome(false, true);
         }}
       >
-        {bookId.toUpperCase() === HERO_TEST.bookId &&
-        chapterId === HERO_TEST.chapterId ? (
+        {showHeroTest ? (
           <figure className="bible-passage-hero" aria-hidden="true">
             <img src={HERO_TEST.src} alt="" decoding="async" draggable={false} />
           </figure>

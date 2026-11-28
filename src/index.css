@@ -23086,9 +23086,9 @@ html[data-reader-fullscreen="true"] .bible-reader--yv .bible-yv-dock.is-play-onl
 }
 
 /* ==========================================================================
- * TESTE — Full-Bleed Hero Image no topo do capítulo (HERO_TEST no
- * BibleReaderView). Imagem de ponta a ponta, por trás da topbar, a
- * dissolver no fundo de leitura; o título do capítulo sobe para o degradê.
+ * TESTE — Full-Bleed Hero Image no topo do capítulo, só em leitura em tela
+ * cheia (HERO_TEST no BibleReaderView). Imagem de ponta a ponta, a dissolver
+ * no fundo de leitura; o título do capítulo sobe para o degradê.
  * ========================================================================== */
 .bible-reader--yv .bible-passage-hero {
   position: relative;
@@ -23113,20 +23113,26 @@ html[data-reader-fullscreen="true"] .bible-reader--yv .bible-yv-dock.is-play-onl
   animation: bible-hero-in 700ms var(--ui-ease-out, ease-out) both;
 }
 
-/* Topo escurecido (legibilidade dos botões da topbar) + base a dissolver no
- * fundo da página (claro ou escuro). */
+/* Topo levemente velado (só tela cheia: sem topbar por cima) + base a
+ * dissolver no fundo da página (claro ou escuro). */
 .bible-passage-hero::after {
   content: "";
   position: absolute;
   inset: 0;
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--yv-bg, var(--bg)) 55%, transparent) 0%,
-    transparent 26%,
+    color-mix(in srgb, var(--yv-bg, var(--bg)) 18%, transparent) 0%,
+    transparent 20%,
     transparent 52%,
     color-mix(in srgb, var(--yv-bg, var(--bg)) 70%, transparent) 82%,
     var(--yv-bg, var(--bg)) 100%
   );
+}
+
+/* No capítulo do hero o scroll é compensado à mão ao entrar/sair da tela
+ * cheia; a ancoragem do browser (inconsistente durante a animação) somava-se. */
+.bible-passage.is-hero-chapter {
+  overflow-anchor: none;
 }
 
 /* Título do capítulo sobre o degradê. */
@@ -23134,13 +23140,6 @@ html[data-reader-fullscreen="true"] .bible-reader--yv .bible-yv-dock.is-play-onl
   position: relative;
   z-index: 1;
   margin-top: -76px;
-}
-
-/* Topbar transparente enquanto o hero está no topo; sólida ao rolar. */
-.bible-reader--yv:not(.is-head-compact):has(.bible-passage-hero) .bible-yv-top {
-  background: transparent;
-  border-bottom-color: transparent;
-  box-shadow: none;
 }
 
 @keyframes bible-hero-in {
