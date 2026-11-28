@@ -14562,18 +14562,19 @@ html[data-passage-bar-panel="test"]
   }
 }
 
-/* Play FAB (test panel): mesmo tema dark */
+/* Play FAB (test panel): mesmo tema dark. Tamanho da barra inferior
+ * (= pill e tela cheia, --mode-tabs-hub-size), não dos botões da topbar. */
 html[data-passage-bar-panel="test"]
   .app.is-bible-mode.is-narrow
   .bible-yv-dock.is-play-only
   .bible-yv-audio-player
   .bible-yv-dock-play {
-  width: var(--bible-chrome-fab-size);
-  height: var(--bible-chrome-fab-size);
-  min-width: var(--bible-chrome-fab-size);
-  max-width: var(--bible-chrome-fab-size);
-  min-height: var(--bible-chrome-fab-size);
-  max-height: var(--bible-chrome-fab-size);
+  width: var(--bible-audio-play-size, var(--mode-tabs-hub-size, 50px));
+  height: var(--bible-audio-play-size, var(--mode-tabs-hub-size, 50px));
+  min-width: var(--bible-audio-play-size, var(--mode-tabs-hub-size, 50px));
+  max-width: var(--bible-audio-play-size, var(--mode-tabs-hub-size, 50px));
+  min-height: var(--bible-audio-play-size, var(--mode-tabs-hub-size, 50px));
+  max-height: var(--bible-audio-play-size, var(--mode-tabs-hub-size, 50px));
   border: 0;
   background: var(--yv-audio-fab-idle, #0d1117);
   color: var(--yv-audio-fab-active-fg, #ffffff);
@@ -22806,6 +22807,13 @@ button.bible-study-ref-modal-title.is-jump:focus-visible {
  * cresce para a esquerda ao expandir. */
 .app.is-bible-mode .bible-yv-dock.is-play-only:not(.is-plan) .bible-yv-audio-player {
   flex-direction: row-reverse;
+}
+
+/* Ícone do play com o mesmo tamanho do ícone da tela cheia (24px). */
+.app.is-bible-mode .bible-yv-dock.is-play-only:not(.is-plan) .bible-yv-dock-play .bible-yv-dock-icon {
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
 }
 
 .app.is-bible-mode.is-narrow:has(.bible-reader--yv.is-audio-playing),
