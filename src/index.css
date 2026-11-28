@@ -5083,15 +5083,7 @@ html[data-theme="dark"] .profile-download-btn {
   align-items: center;
 }
 
-.profile-font-row {
-  align-items: flex-start;
-}
 
-.profile-font-slider-wrap {
-  flex: 1 1 auto;
-  min-width: 0;
-  width: 100%;
-}
 
 .profile-font-size-value {
   min-width: 2.4em;

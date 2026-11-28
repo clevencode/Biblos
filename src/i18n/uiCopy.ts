@@ -174,9 +174,6 @@ export type UiCopyKey =
   | "profile.quotaHint"
   | "profile.saveName"
   | "profile.connectedAccount"
-  | "profile.group.bible"
-  | "profile.group.reading"
-  | "profile.group.library"
   | "profile.group.about"
   | "profile.aboutTagline"
   | "profile.aboutAppVersion"
@@ -197,7 +194,6 @@ export type UiCopyKey =
   | "profile.aboutUpToDate"
   | "profile.aboutCheckUpdate"
   | "profile.aboutChecking"
-  | "profile.readingChromeHint"
   | "profile.deleteAccount"
   | "profile.deleteAccountConfirm"
   | "profile.deleteAccountAction"
@@ -227,8 +223,6 @@ export type UiCopyKey =
   | "bible.tools"
   | "bible.offlineReady"
   | "bible.offlineDownload"
-  | "bible.offlineDownloading"
-  | "bible.offlineBusy"
   | "bible.fontSize"
   | "bible.fontSmaller"
   | "bible.fontLarger"
@@ -547,9 +541,6 @@ const FR: Dict = {
     "{used}/{total} surlignages — relie un compte pour continuer sereinement",
   "profile.saveName": "Enregistrer",
   "profile.connectedAccount": "Compte connecté",
-  "profile.group.bible": "Bible",
-  "profile.group.reading": "Lecture",
-  "profile.group.library": "Bibliothèque",
   "profile.group.about": "À propos",
   "profile.aboutTagline":
     "Lire, étudier et méditer la Bible — même hors ligne.",
@@ -571,8 +562,6 @@ const FR: Dict = {
   "profile.aboutUpToDate": "Vous avez la dernière version",
   "profile.aboutCheckUpdate": "Rechercher une mise à jour",
   "profile.aboutChecking": "Vérification…",
-  "profile.readingChromeHint":
-    "Ouvre la Bible une fois pour régler version et typographie ici.",
   "profile.deleteAccount": "Supprimer mon compte",
   "profile.deleteAccountConfirm":
     "Les bibles S21/HT98 resteront sur l’appareil. Tes données cloud et locales personnelles seront effacées.",
@@ -603,9 +592,6 @@ const FR: Dict = {
   "bible.tools": "Outils",
   "bible.offlineReady": "Bible hors ligne",
   "bible.offlineDownload": "Télécharger hors ligne",
-  "bible.offlineDownloading": "Téléchargement… {done}/{total}",
-  "bible.offlineBusy":
-    "Téléchargement… {done}/{total} (toucher pour annuler)",
   "bible.fontSize": "Taille du texte",
   "bible.fontSmaller": "Réduire la taille du texte",
   "bible.fontLarger": "Augmenter la taille du texte",
@@ -934,9 +920,6 @@ const HT: Dict = {
     "{used}/{total} souliyman — konekte yon kont pou kontinye san pwoblèm",
   "profile.saveName": "Anrejistre",
   "profile.connectedAccount": "Kont konekte",
-  "profile.group.bible": "Bib",
-  "profile.group.reading": "Lekti",
-  "profile.group.library": "Bibliyotèk",
   "profile.group.about": "Konsènan",
   "profile.aboutTagline":
     "Li, etidye e medite Bib la — menm san entènèt.",
@@ -958,8 +941,6 @@ const HT: Dict = {
   "profile.aboutUpToDate": "Ou gen dènye vèsyon an",
   "profile.aboutCheckUpdate": "Chèche yon mizajou",
   "profile.aboutChecking": "Ap verifye…",
-  "profile.readingChromeHint":
-    "Louvri Bib la yon fwa pou règle vèsyon ak tipografi isit la.",
   "profile.deleteAccount": "Efase kont mwen",
   "profile.deleteAccountConfirm":
     "Bib S21/HT98 yo ap rete sou aparèy la. Done nwaj ak lokal pèsonèl yo ap efase.",
@@ -990,9 +971,6 @@ const HT: Dict = {
   "bible.tools": "Zouti",
   "bible.offlineReady": "Bib offline",
   "bible.offlineDownload": "Telechaje offline",
-  "bible.offlineDownloading": "Ap telechaje… {done}/{total}",
-  "bible.offlineBusy":
-    "Ap telechaje… {done}/{total} (touché pou anile)",
   "bible.fontSize": "Gwosè tèks",
   "bible.fontSmaller": "Redwi gwosè tèks la",
   "bible.fontLarger": "Ogmante gwosè tèks la",

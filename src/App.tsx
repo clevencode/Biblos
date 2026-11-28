@@ -8,10 +8,7 @@ import {
 } from "react";
 import { BibleReaderView } from "./components/BibleReaderView";
 import { AppShellNav } from "./components/AppShellNav";
-import {
-  ProfileSettingsPanel,
-  type ProfilePrefsTab,
-} from "./components/profile/ProfileSettingsPanel";
+import { ProfileSettingsPanel } from "./components/profile/ProfileSettingsPanel";
 import {
   PlanDiscoverPanel,
   flattenPlanSteps,
@@ -23,7 +20,6 @@ import { loadPublishedPlansCache } from "./features/reading-plans/data/readingPl
 import { usePlanReadingSession } from "./features/reading-plans/presentation/hooks/usePlanReadingSession";
 import { useShellBackHandler } from "./hooks/useShellBackHandler";
 import {
-  ACTIVITY_UI_ENABLED,
   recordBibleRead,
   appendActivity,
 } from "./activityLog";
@@ -61,10 +57,6 @@ import {
 import { syncNativeChrome } from "./nativeChrome";
 import { loadShellTab, saveShellTab, type ShellTab } from "./shellNav";
 import type { BibleTextVersionId } from "./bible/bibleVersions";
-import type {
-  ProfileOverlayRequest,
-  ProfileReadingChrome,
-} from "./bible/profileReadingChrome";
 import {
   languageForVersion,
   versionBadgeFor,
@@ -152,13 +144,6 @@ function BiblosConsumerApp() {
   const [accountOpen, setAccountOpen] = useState(false);
   /** Admin editorial — destino do pill (gated). */
   const [adminOpen, setAdminOpen] = useState(false);
-  const [openOverlayRequest, setOpenOverlayRequest] =
-    useState<ProfileOverlayRequest | null>(null);
-  /** Aba Profile a restaurar ao voltar de history/marks. */
-  const [profileFocusTab, setProfileFocusTab] =
-    useState<ProfilePrefsTab>("appearance");
-  const [profileReadingChrome, setProfileReadingChrome] =
-    useState<ProfileReadingChrome | null>(null);
   const [workspacePlan, setWorkspacePlan] = useState<ReadingPlan | null>(null);
   const [workspaceJour, setWorkspaceJour] = useState<number | undefined>();
   const [workspaceResumeSeq, setWorkspaceResumeSeq] = useState(0);
@@ -305,10 +290,7 @@ function BiblosConsumerApp() {
 
   const toggleAccount = useCallback(() => {
     setAdminOpen(false);
-    setAccountOpen((open) => {
-      if (!open) setProfileFocusTab("appearance");
-      return !open;
-    });
+    setAccountOpen((open) => !open);
   }, []);
 
   const toggleAdmin = useCallback(() => {
@@ -385,17 +367,6 @@ function BiblosConsumerApp() {
       setTab("bible");
     },
     [openPlanAtJour, workspacePlan],
-  );
-
-  const requestProfileOverlay = useCallback(
-    (request: ProfileOverlayRequest) => {
-      setProfileFocusTab("library");
-      setAccountOpen(false);
-      setAdminOpen(false);
-      setTab("bible");
-      setOpenOverlayRequest(request);
-    },
-    [],
   );
 
   const setTheme = useCallback(
@@ -603,19 +574,11 @@ function BiblosConsumerApp() {
                       activityTick={activityTick}
                       themePref={themePref}
                       onSetTheme={setTheme}
-                      readingChrome={profileReadingChrome}
-                      initialPrefsTab={profileFocusTab}
                       appUpdates={{
                         pwaInstall,
                         apkUpdate,
                         swUpdatePending,
                       }}
-                      onOpenHistory={
-                        ACTIVITY_UI_ENABLED
-                          ? () => requestProfileOverlay("history")
-                          : undefined
-                      }
-                      onOpenMarks={() => requestProfileOverlay("marks")}
                       onRequestSignIn={() => {
                         setSignInVariant("upgrade");
                         setSignInOpen(true);
@@ -702,16 +665,6 @@ function BiblosConsumerApp() {
                       onReadingChromeChange={narrow ? setNavHidden : undefined}
                       compactToolsMenu={bibleCompactTools}
                       allowApkDownload={showAdminNav}
-                      openOverlayRequest={openOverlayRequest}
-                      onOpenOverlayRequestConsumed={() =>
-                        setOpenOverlayRequest(null)
-                      }
-                      onReturnToProfile={() => {
-                        setAdminOpen(false);
-                        setProfileFocusTab("library");
-                        setAccountOpen(true);
-                      }}
-                      onProfileReadingChromeChange={setProfileReadingChrome}
                     />
                   ) : null}
                 </div>

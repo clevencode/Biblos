@@ -28,10 +28,6 @@ import {
   readBibleTextVersionPref,
   type BibleTextVersionId,
 } from "../bible/bibleVersions";
-import type {
-  ProfileOverlayRequest,
-  ProfileReadingChrome,
-} from "../bible/profileReadingChrome";
 import { versionedBibleId } from "../bible/passageForVersion";
 import {
   HT1998_BIBLE_META,
@@ -140,7 +136,6 @@ import {
   clearOfflineBible,
   downloadOfflineBible,
   isOfflineBibleReady,
-  type OfflineDownloadProgress,
 } from "../bibleOffline";
 import {
   classifyOfflineDownloadError,
@@ -163,10 +158,7 @@ import {
 } from "../typography/bibleFonts";
 import {
   BIBLE_FONT_SIZE_DEFAULT,
-  BIBLE_FONT_SIZE_MAX,
-  BIBLE_FONT_SIZE_MIN,
   nearestBibleFontSize,
-  stepBibleFontSize,
 } from "../typography/bibleFontSize";
 import {
   parseBibleDisplayMode,
@@ -205,8 +197,6 @@ import type { Flashcard } from "../types";
 
 const STORAGE_KEY = BIBLE_READER_PREFS_KEY;
 /** Panneau verset : pas de Flashcard tant que l’onglet Cartes est désactivé. */
-const FONT_MIN = BIBLE_FONT_SIZE_MIN;
-const FONT_MAX = BIBLE_FONT_SIZE_MAX;
 const FONT_DEFAULT = BIBLE_FONT_SIZE_DEFAULT;
 
 function clampFontSize(n: number) {
@@ -647,13 +637,6 @@ type BibleReaderViewProps = {
   onReadingChromeChange?: (hidden: boolean) => void;
   /** Soft gate: exige compte après cota de marques guest. */
   requireAccountToMark?: boolean;
-  /** Pedido externo (perfil) para abrir history/marks quando o leitor fica activo. */
-  openOverlayRequest?: ProfileOverlayRequest | null;
-  onOpenOverlayRequestConsumed?: () => void;
-  /** Fechar history/marks abertos a partir do perfil → reabrir Profile (não o menu). */
-  onReturnToProfile?: () => void;
-  /** Snapshot versão/offline para o painel de conta. */
-  onProfileReadingChromeChange?: (chrome: ProfileReadingChrome) => void;
   /** Demande login antes de marcar; retoma via authorizedMark*. */
   onRequestAccountToMark?: (payload: {
     color: string;
@@ -814,10 +797,6 @@ export function BibleReaderView({
   compactToolsMenu = false,
   compactViewport = false,
   allowApkDownload = false,
-  openOverlayRequest = null,
-  onOpenOverlayRequestConsumed,
-  onReturnToProfile,
-  onProfileReadingChromeChange,
 }: BibleReaderViewProps) {
   const { t } = useUiLocale();
   const pwaInstall = usePwaInstall({ allowApkDownload });
@@ -963,9 +942,7 @@ export function BibleReaderView({
    * Origem estável de history/marks — não limpar ao escolher um verso.
    * `back` devolve à origem; `dismiss` (✕) fecha a jornada.
    */
-  const libraryOverlayOriginRef = useRef<"menu" | "profile" | null>(null);
-  const onReturnToProfileRef = useRef(onReturnToProfile);
-  onReturnToProfileRef.current = onReturnToProfile;
+  const libraryOverlayOriginRef = useRef<"menu" | null>(null);
   const toolsWasOpenRef = useRef(false);
   const overlayDismissSwallowRef = useRef(false);
   const overlayDismissSwallowTimerRef = useRef<number | undefined>(undefined);
@@ -1103,22 +1080,12 @@ export function BibleReaderView({
   );
 
   /**
-   * Fecha history/marks conforme a origem:
-   * - back + profile → Profile (aba library)
-   * - back + menu → menu do leitor
+   * Fecha history/marks:
+   * - back → menu do leitor
    * - dismiss → saída total (sem reabrir origem)
    */
   const leaveHistoryOrMarks = useCallback(
     (mode: "back" | "dismiss" = "back") => {
-      const origin = libraryOverlayOriginRef.current;
-      if (mode === "back" && origin === "profile") {
-        libraryOverlayOriginRef.current = null;
-        restoreHistoryFocusRef.current = false;
-        restoreToolsFocusRef.current = false;
-        closeOverlay();
-        onReturnToProfileRef.current?.();
-        return;
-      }
       if (mode === "back") {
         libraryOverlayOriginRef.current = null;
         restoreHistoryFocusRef.current = false;
@@ -1284,7 +1251,6 @@ export function BibleReaderView({
   const error = bibleReaderErrorMessage(surfaceError);
 
   const [offlineBusy, setOfflineBusy] = useState(false);
-  const [offlineProgress, setOfflineProgress] = useState<OfflineDownloadProgress | null>(null);
   const offlineAbortRef = useRef<AbortController | null>(null);
   const [colorEditorOpen, setColorEditorOpen] = useState(false);
   const [uiTheme, setUiTheme] = useState<ResolvedTheme>(() => resolveTheme());
@@ -2611,7 +2577,6 @@ export function BibleReaderView({
         if (!ok) return;
         await clearHt1998Offline();
         setHtOfflineReady(false);
-        setOfflineProgress(null);
         clearVersionDownloadProgress("ht98");
         clearVersionAvailabilityError("ht98");
         return;
@@ -2620,13 +2585,11 @@ export function BibleReaderView({
       const ac = new AbortController();
       offlineAbortRef.current = ac;
       setOfflineBusy(true);
-      setOfflineProgress({ done: 0, total: 2, usfm: "" });
       setVersionDownloadProgress("ht98", { done: 0, total: 2 });
       clearVersionAvailabilityError("ht98");
       setPassageUiError(null);
       try {
         await downloadHt1998Offline((p) => {
-          setOfflineProgress({ done: p.done, total: p.total, usfm: "" });
           setVersionDownloadProgress("ht98", { done: p.done, total: p.total });
         }, ac.signal);
         invalidateHt1998CatalogCache();
@@ -2636,7 +2599,6 @@ export function BibleReaderView({
           },
         );
         setHtOfflineReady(true);
-        setOfflineProgress(null);
         clearVersionDownloadProgress("ht98");
       } catch (err) {
         clearVersionDownloadProgress("ht98");
@@ -2665,7 +2627,6 @@ export function BibleReaderView({
         },
       );
       setOfflineReady(false);
-      setOfflineProgress(null);
       clearVersionDownloadProgress("s21");
       clearVersionAvailabilityError("s21");
       return;
@@ -2684,7 +2645,6 @@ export function BibleReaderView({
     const ac = new AbortController();
     offlineAbortRef.current = ac;
     setOfflineBusy(true);
-    setOfflineProgress({ done: 0, total: list.length, usfm: "" });
     setVersionDownloadProgress("s21", { done: 0, total: list.length });
     clearVersionAvailabilityError("s21");
     setPassageUiError(null);
@@ -2692,13 +2652,11 @@ export function BibleReaderView({
       await downloadOfflineBible(
         list,
         (p) => {
-          setOfflineProgress({ ...p });
           setVersionDownloadProgress("s21", { done: p.done, total: p.total });
         },
         ac.signal,
       );
       setOfflineReady(true);
-      setOfflineProgress(null);
       clearVersionDownloadProgress("s21");
       await refreshCatalog();
     } catch (err) {
@@ -3455,60 +3413,6 @@ export function BibleReaderView({
     );
   }
   switchTextVersionRef.current = switchTextVersion;
-
-  useEffect(() => {
-    if (!active || !openOverlayRequest) return;
-    const request = openOverlayRequest;
-    libraryOverlayOriginRef.current = "profile";
-    sheetEnterFromMenuRef.current = false;
-    restoreToolsFocusRef.current = false;
-    restoreHistoryFocusRef.current = false;
-    setShareSheetOpen(false);
-    openOverlay({ type: request });
-    onOpenOverlayRequestConsumed?.();
-  }, [active, openOverlayRequest, openOverlay, onOpenOverlayRequestConsumed]);
-
-  useEffect(() => {
-    if (!onProfileReadingChromeChange) return;
-    onProfileReadingChromeChange({
-      textVersion,
-      htCatalogLoading,
-      htCatalogError,
-      versionOfflineReady,
-      offlineBusy,
-      offlineProgress: offlineProgress
-        ? { done: offlineProgress.done, total: offlineProgress.total }
-        : null,
-      offlineHidden: textVersion === "s21" && localBundledBible,
-      fontSize,
-      fontMin: FONT_MIN,
-      fontMax: FONT_MAX,
-      switchTextVersion: (id) => {
-        void switchTextVersionRef.current?.(id);
-      },
-      toggleOfflineBible: () => {
-        void toggleOfflineBible();
-      },
-      setFontSize: (size) => {
-        setFontSize(clampFontSize(size));
-      },
-      bumpFontSize: (delta) => {
-        startTransition(() => {
-          setFontSize((n) => stepBibleFontSize(n, delta > 0 ? 1 : -1));
-        });
-      },
-    });
-  }, [
-    onProfileReadingChromeChange,
-    textVersion,
-    htCatalogLoading,
-    htCatalogError,
-    versionOfflineReady,
-    offlineBusy,
-    offlineProgress,
-    localBundledBible,
-    fontSize,
-  ]);
 
   function openWordSearchFromMenu() {
     restoreToolsFocusRef.current = false;
