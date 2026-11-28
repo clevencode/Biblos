@@ -994,8 +994,9 @@ html[data-theme="dark"] .sw-update-banner-cta {
   --mode-tabs-fade-h: calc(
     var(--mode-tabs-float-gap, 14px) + env(safe-area-inset-bottom, 0px) + 8px
   );
-  /* Largura partilhada: pill + modal */
-  --mode-tabs-pill-width: 11.5rem;
+  /* Largura partilhada: pill + modal — a mesma do pill do livro na topbar
+   * (--bible-top-pill-w), para os dois pills à esquerda terem a mesma largura. */
+  --mode-tabs-pill-width: var(--bible-top-pill-w, 11rem);
   --mode-tabs-item-size: 48px;
   /* Abertura bruta: curta, sem spring */
   --mode-tabs-open-ms: 180ms;
