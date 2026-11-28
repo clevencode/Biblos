@@ -22884,14 +22884,10 @@ html[data-reader-fullscreen="true"] .bible-reader--yv .bible-yv-dock.is-play-onl
   transform: none;
 }
 
-/* Tela cheia: flutua acima da navbar, na coluna direita (onde o pill de
- * skips estava). Em modo tela cheia (só o botão de sair) volta ao chão. */
+/* Tela cheia: flutua acima da navbar, na coluna direita — mesma posição
+ * com o modo tela cheia ligado ou desligado (o botão não salta). */
 .app.is-bible-mode .mode-tabs .mode-tabs-fullscreen {
   bottom: calc(var(--mode-tabs-hub-size, 50px) + var(--bible-bottom-gap, 14px));
-}
-
-.app.is-bible-mode .mode-tabs.is-reader-fullscreen .mode-tabs-fullscreen {
-  bottom: 0;
 }
 
 /* ==========================================================================
